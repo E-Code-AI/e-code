@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as monaco from "monaco-editor";
 import { File } from "@/lib/types";
-import { setupMonacoTheme } from "@/lib/monaco-setup";
 
 interface CodeEditorProps {
   file: File;
@@ -36,71 +35,71 @@ const getLanguage = (filename: string): string => {
   return languageMap[ext] || 'plaintext';
 };
 
+// Simple Monaco setup
+if (typeof window !== 'undefined') {
+  (window as any).MonacoEnvironment = {
+    getWorkerUrl: function() {
+      return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+        self.MonacoEnvironment = {
+          baseUrl: 'https://unpkg.com/monaco-editor@0.36.1/min/'
+        };
+        importScripts('https://unpkg.com/monaco-editor@0.36.1/min/vs/base/worker/workerMain.js');
+      `)}`;
+    }
+  };
+}
+
 const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
-  const monacoEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const [isEditorReady, setIsEditorReady] = useState(false);
+  const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
+  // Init editor
   useEffect(() => {
     if (!editorRef.current) return;
-
-    // Load Monaco editor
-    import('monaco-editor').then(monaco => {
-      // Register Monaco editor
-      if (editorRef.current && !monacoEditorRef.current) {
-        // Setup theme
-        setupMonacoTheme();
-
-        // Create editor instance
-        monacoEditorRef.current = monaco.editor.create(editorRef.current, {
-          value: file.content,
-          language: getLanguage(file.name),
-          automaticLayout: true,
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          fontSize: 14,
-          fontFamily: "'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace",
-          lineNumbers: 'on',
-          padding: { top: 10 },
-          tabSize: 2,
-          theme: 'plotDark',
-        });
-
-        // Set up change handling
-        monacoEditorRef.current.onDidChangeModelContent(() => {
-          if (monacoEditorRef.current) {
-            onChange(monacoEditorRef.current.getValue());
-          }
-        });
-
-        setIsEditorReady(true);
-      }
+    
+    // Create editor
+    const editorInstance = monaco.editor.create(editorRef.current, {
+      value: file.content,
+      language: getLanguage(file.name),
+      automaticLayout: true,
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      fontSize: 14,
+      fontFamily: "'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace",
+      lineNumbers: 'on',
+      tabSize: 2,
+      theme: 'vs-dark',
     });
-
+    
+    // Set up change event
+    editorInstance.onDidChangeModelContent(() => {
+      onChange(editorInstance.getValue());
+    });
+    
+    setEditor(editorInstance);
+    
+    // Cleanup
     return () => {
-      if (monacoEditorRef.current) {
-        monacoEditorRef.current.dispose();
-        monacoEditorRef.current = null;
-      }
+      editorInstance.dispose();
     };
   }, []);
-
-  // Update editor content when file changes
+  
+  // Update content when file changes
   useEffect(() => {
-    if (monacoEditorRef.current && isEditorReady) {
-      // Only update if the model value is different to prevent cursor jumping
-      if (monacoEditorRef.current.getValue() !== file.content) {
-        monacoEditorRef.current.setValue(file.content);
+    if (editor) {
+      // Only update if value is different
+      if (editor.getValue() !== file.content) {
+        editor.setValue(file.content);
       }
       
-      // Update language when file changes
+      // Update language
       monaco.editor.setModelLanguage(
-        monacoEditorRef.current.getModel()!,
+        editor.getModel()!,
         getLanguage(file.name)
       );
     }
-  }, [file, isEditorReady]);
-
+  }, [file, editor]);
+  
   return (
     <div className="flex-1 overflow-auto bg-dark">
       <div ref={editorRef} className="h-full w-full" />
