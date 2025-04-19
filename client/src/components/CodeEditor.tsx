@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as monaco from "monaco-editor";
 import { File } from "@/lib/types";
+import { setupMonacoTheme } from "@/lib/monaco-setup";
 
 interface CodeEditorProps {
   file: File;
@@ -47,23 +48,8 @@ const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
     import('monaco-editor').then(monaco => {
       // Register Monaco editor
       if (editorRef.current && !monacoEditorRef.current) {
-        // Set editor theme
-        monaco.editor.defineTheme('plotDark', {
-          base: 'vs-dark',
-          inherit: true,
-          rules: [],
-          colors: {
-            'editor.background': '#1E1E1E',
-            'editor.foreground': '#FFFFFF',
-            'editorLineNumber.foreground': '#525252',
-            'editorCursor.foreground': '#FFFFFF',
-            'editorSuggestWidget.background': '#2D2D2D',
-            'editorSuggestWidget.border': '#3E3E3E',
-            'editorSuggestWidget.selectedBackground': '#3E3E3E',
-          },
-        });
-
-        monaco.editor.setTheme('plotDark');
+        // Setup theme
+        setupMonacoTheme();
 
         // Create editor instance
         monacoEditorRef.current = monaco.editor.create(editorRef.current, {
