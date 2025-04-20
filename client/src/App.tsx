@@ -8,6 +8,7 @@ import Home from "@/pages/Home";
 import Editor from "@/pages/Editor";
 import AuthPage from "@/pages/auth-page";
 import RuntimesPage from "@/pages/RuntimesPage";
+import RuntimePublicPage from "@/pages/RuntimePublicPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ function AppContent() {
       <Toaster />
       <Switch>
         <Route path="/auth" component={AuthPage} />
+        <Route path="/runtime-test" component={RuntimePublicPage} />
         <ProtectedRoute path="/" component={Home} />
         <ProtectedRoute path="/project/:id" component={Editor} />
         <ProtectedRoute path="/runtimes" component={RuntimesPage} />

@@ -173,28 +173,46 @@ export const languageConfigs: Record<Language, LanguageConfig> = {
 };
 import { Loader2 } from 'lucide-react';
 
-// Importing language icons
-import { SiPython, SiNodedotjs, SiJavascript, SiTypescript, SiJava, SiGo, 
-  SiRuby, SiRust, SiPhp, SiC, SiCplusplus, SiCsharp, SiSwift, 
-  SiKotlin, SiDart, SiBash, SiHtml5, SiNixos, SiDeno } from 'react-icons/si';
+// Importing language icons - using simpler set of icons that are guaranteed to exist
+import {
+  SiPython,
+  SiNodedotjs,
+  SiJavascript,
+  SiTypescript,
+  SiOracle, // Using as Java icon
+  SiGo,
+  SiRuby,
+  SiRust,
+  SiPhp,
+  SiC,
+  SiCplusplus,
+  SiDotnet, // Using as C# icon
+  SiSwift,
+  SiKotlin,
+  SiDart,
+  SiLinux, // Using as Bash icon
+  SiHtml5,
+  SiNixos,
+  SiDeno
+} from 'react-icons/si';
 
 // Map of language icons
 const languageIcons: Record<string, React.ReactNode> = {
   nodejs: <SiNodedotjs className="h-6 w-6 text-green-600" />,
   typescript: <SiTypescript className="h-6 w-6 text-blue-600" />,
   python: <SiPython className="h-6 w-6 text-blue-500" />,
-  java: <SiJava className="h-6 w-6 text-red-600" />,
+  java: <SiOracle className="h-6 w-6 text-red-600" />,  // Using Oracle icon for Java
   go: <SiGo className="h-6 w-6 text-blue-400" />,
   ruby: <SiRuby className="h-6 w-6 text-red-500" />,
   rust: <SiRust className="h-6 w-6 text-orange-700" />,
   php: <SiPhp className="h-6 w-6 text-indigo-600" />,
   c: <SiC className="h-6 w-6 text-blue-800" />,
   cpp: <SiCplusplus className="h-6 w-6 text-blue-700" />,
-  csharp: <SiCsharp className="h-6 w-6 text-purple-600" />,
+  csharp: <SiDotnet className="h-6 w-6 text-purple-600" />, // Using Dotnet icon for C#
   swift: <SiSwift className="h-6 w-6 text-orange-500" />,
   kotlin: <SiKotlin className="h-6 w-6 text-purple-500" />,
   dart: <SiDart className="h-6 w-6 text-blue-500" />,
-  bash: <SiBash className="h-6 w-6 text-gray-800" />,
+  bash: <SiLinux className="h-6 w-6 text-gray-800" />,  // Using Linux icon for Bash
   'html-css-js': <SiHtml5 className="h-6 w-6 text-orange-600" />,
   nix: <SiNixos className="h-6 w-6 text-blue-500" />,
   deno: <SiDeno className="h-6 w-6 text-black" />
