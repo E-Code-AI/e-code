@@ -73,21 +73,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // WebSocket for terminal connections
   setupTerminalWebsocket(httpServer);
   
-  // Handle WebSocket connections for real-time collaboration
-  const clients = new Map(); // Map to store clients and their project/file info
+  // Define WebSocket client interface for collaboration
+  interface CollaborationClient extends WebSocket {
+    userId?: number;
+    username?: string;
+    projectId?: number;
+    fileId?: number;
+    color?: string;
+    isAlive: boolean;
+  }
   
-  wss.on("connection", (ws) => {
+  // Message types for collaboration
+  type CollaborationMessage = {
+    type: 'cursor_move' | 'edit' | 'user_joined' | 'user_left' | 'chat_message' | 'pong';
+    data: any;
+    userId: number;
+    username: string;
+    projectId: number;
+    fileId: number;
+    timestamp: number;
+  };
+  
+  // Handle WebSocket connections for real-time collaboration
+  const clients = new Map<WebSocket, any>(); // Map to store clients and their project/file info
+  const projectClients = new Map<number, Set<WebSocket>>(); // Map projects to connected clients
+  
+  // Set up ping interval to keep connections alive
+  const pingInterval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+      const collaborationWs = ws as CollaborationClient;
+      
+      if (collaborationWs.isAlive === false) {
+        collaborationWs.terminate();
+        return;
+      }
+      
+      collaborationWs.isAlive = false;
+      collaborationWs.send(JSON.stringify({ type: 'ping' }));
+    });
+  }, 30000);
+  
+  wss.on('close', () => {
+    clearInterval(pingInterval);
+  });
+  
+  wss.on("connection", (ws: WebSocket) => {
+    const collaborationWs = ws as CollaborationClient;
+    collaborationWs.isAlive = true;
+    
     let clientInfo = {
       userId: null,
       username: null,
       projectId: null,
-      fileId: null
+      fileId: null,
+      color: null
     };
     
     // Handle incoming messages from clients
-    ws.on("message", (message) => {
+    collaborationWs.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
+        
+        // Handle pong responses
+        if (data.type === 'pong') {
+          collaborationWs.isAlive = true;
+          return;
+        }
         
         // Update client info for the first message
         if (data.userId && !clientInfo.userId) {
@@ -95,23 +146,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: data.userId,
             username: data.username,
             projectId: data.projectId,
-            fileId: data.fileId
+            fileId: data.fileId,
+            color: data.data?.color || null
           };
           
           // Store client info for broadcasting to specific rooms
-          clients.set(ws, clientInfo);
+          clients.set(collaborationWs, clientInfo);
+          
+          // Add to project clients map
+          if (!projectClients.has(data.projectId)) {
+            projectClients.set(data.projectId, new Set());
+          }
+          projectClients.get(data.projectId)?.add(collaborationWs);
+          
+          // If first join, send list of current collaborators
+          if (data.type === 'user_joined') {
+            // Send current collaborators to new user
+            const currentCollaborators = [];
+            
+            for (const [client, info] of clients.entries()) {
+              if (client !== collaborationWs && info.projectId === data.projectId) {
+                currentCollaborators.push({
+                  userId: info.userId,
+                  username: info.username,
+                  color: info.color
+                });
+              }
+            }
+            
+            if (currentCollaborators.length > 0) {
+              collaborationWs.send(JSON.stringify({
+                type: 'current_collaborators',
+                data: { collaborators: currentCollaborators },
+                userId: 0, // System message
+                username: 'System',
+                projectId: data.projectId,
+                fileId: data.fileId,
+                timestamp: Date.now()
+              }));
+            }
+          }
+        }
+        
+        // For chat messages, add timestamp if not present
+        if (data.type === 'chat_message' && !data.data.timestamp) {
+          data.data.timestamp = Date.now();
         }
         
         // Broadcast to all clients in the same project except sender
-        wss.clients.forEach((client) => {
-          if (client !== ws && client.readyState === WebSocket.OPEN) {
-            const info = clients.get(client);
-            // Only send to clients in the same project
-            if (info && info.projectId === data.projectId) {
+        const projectId = data.projectId;
+        const projectWsClients = projectClients.get(projectId);
+        
+        if (projectWsClients) {
+          projectWsClients.forEach((client) => {
+            if (client !== collaborationWs && client.readyState === WebSocket.OPEN) {
               client.send(JSON.stringify(data));
             }
-          }
-        });
+          });
+        }
         
         // Log collaboration events (excluding cursor movements to reduce noise)
         if (data.type !== 'cursor_move') {
@@ -122,8 +214,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
     
+    // Handle ping/pong to keep connection alive
+    collaborationWs.on('pong', () => {
+      collaborationWs.isAlive = true;
+    });
+    
     // Handle disconnection
-    ws.on("close", () => {
+    collaborationWs.on("close", () => {
       if (clientInfo.userId) {
         // Broadcast user left message to others in the same project
         const leaveMessage = {
@@ -136,18 +233,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           data: {}
         };
         
-        wss.clients.forEach((client) => {
-          if (client !== ws && client.readyState === WebSocket.OPEN) {
-            const info = clients.get(client);
-            // Only send to clients in the same project
-            if (info && info.projectId === clientInfo.projectId) {
+        const projectId = clientInfo.projectId;
+        const projectWsClients = projectClients.get(projectId);
+        
+        if (projectWsClients) {
+          projectWsClients.forEach((client) => {
+            if (client !== collaborationWs && client.readyState === WebSocket.OPEN) {
               client.send(JSON.stringify(leaveMessage));
             }
+          });
+          
+          // Remove client from project set
+          projectWsClients.delete(collaborationWs);
+          
+          // If no clients left, remove project from map
+          if (projectWsClients.size === 0) {
+            projectClients.delete(projectId);
           }
-        });
+        }
         
         // Remove from clients map
-        clients.delete(ws);
+        clients.delete(collaborationWs);
         console.log(`User ${clientInfo.username} disconnected from project ${clientInfo.projectId}`);
       }
     });
