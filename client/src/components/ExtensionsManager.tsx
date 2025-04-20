@@ -173,7 +173,7 @@ export function ExtensionsManager({ isOpen, onClose }: ExtensionsManagerProps) {
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] h-[600px] flex flex-col">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] h-[600px] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Puzzle className="h-5 w-5" />
@@ -212,13 +212,13 @@ export function ExtensionsManager({ isOpen, onClose }: ExtensionsManagerProps) {
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className="text-base flex items-center">
-                            {ext.name}
+                          <CardTitle className="text-base flex flex-wrap items-center gap-2">
+                            <span className="break-all">{ext.name}</span>
                             {ext.installed && (
-                              <Badge variant="outline" className="ml-2">Installed</Badge>
+                              <Badge variant="outline">Installed</Badge>
                             )}
                           </CardTitle>
-                          <CardDescription>{ext.description}</CardDescription>
+                          <CardDescription className="line-clamp-2">{ext.description}</CardDescription>
                         </div>
                         
                         {ext.installed ? (
@@ -277,8 +277,8 @@ export function ExtensionsManager({ isOpen, onClose }: ExtensionsManagerProps) {
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className="text-base">{ext.name}</CardTitle>
-                          <CardDescription>{ext.description}</CardDescription>
+                          <CardTitle className="text-base break-all">{ext.name}</CardTitle>
+                          <CardDescription className="line-clamp-2">{ext.description}</CardDescription>
                         </div>
                         
                         <div className="flex items-center space-x-2">

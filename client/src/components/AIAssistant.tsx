@@ -236,29 +236,29 @@ export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps)
           onValueChange={(value) => setMode(value as AIMode)}
           className="w-full"
         >
-          <TabsList className="grid grid-cols-6 w-full h-8 mt-2">
-            <TabsTrigger value={AIMode.Complete} className="text-xs" title="AI code completion">
-              <Code className="h-3.5 w-3.5 mr-2" />
+          <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full h-auto sm:h-8 mt-2 gap-1 sm:gap-0">
+            <TabsTrigger value={AIMode.Complete} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="AI code completion">
+              <Code className="h-3.5 w-3.5 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Complete</span>
             </TabsTrigger>
-            <TabsTrigger value={AIMode.Explain} className="text-xs" title="Explain code">
-              <HelpCircle className="h-3.5 w-3.5 mr-2" />
+            <TabsTrigger value={AIMode.Explain} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="Explain code">
+              <HelpCircle className="h-3.5 w-3.5 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Explain</span>
             </TabsTrigger>
-            <TabsTrigger value={AIMode.Transform} className="text-xs" title="Convert code to another language">
-              <RefreshCw className="h-3.5 w-3.5 mr-2" />
+            <TabsTrigger value={AIMode.Transform} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="Convert code to another language">
+              <RefreshCw className="h-3.5 w-3.5 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Transform</span>
             </TabsTrigger>
-            <TabsTrigger value={AIMode.Document} className="text-xs" title="Generate documentation">
-              <FileText className="h-3.5 w-3.5 mr-2" />
+            <TabsTrigger value={AIMode.Document} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="Generate documentation">
+              <FileText className="h-3.5 w-3.5 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Document</span>
             </TabsTrigger>
-            <TabsTrigger value={AIMode.Test} className="text-xs" title="Generate tests">
-              <CheckSquare className="h-3.5 w-3.5 mr-2" />
+            <TabsTrigger value={AIMode.Test} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="Generate tests">
+              <CheckSquare className="h-3.5 w-3.5 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Test</span>
             </TabsTrigger>
-            <TabsTrigger value={AIMode.Chat} className="text-xs" title="Chat with the AI">
-              <MessageSquare className="h-3.5 w-3.5 mr-2" />
+            <TabsTrigger value={AIMode.Chat} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="Chat with the AI">
+              <MessageSquare className="h-3.5 w-3.5 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Chat</span>
             </TabsTrigger>
           </TabsList>

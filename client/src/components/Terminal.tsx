@@ -215,7 +215,7 @@ export function Terminal({ project, minimized, onMinimize, onMaximize, onClose }
         "fixed bottom-0 right-0 z-50 bg-card border shadow-lg transition-all duration-200 overflow-hidden",
         isMaximized 
           ? "w-full h-full left-0 top-0 rounded-none" 
-          : "w-2/3 h-2/5 max-h-80 mx-4 mb-4 rounded-md"
+          : "w-full md:w-3/4 lg:w-2/3 h-1/3 md:h-2/5 max-h-60 md:max-h-80 mx-0 md:mx-4 mb-0 md:mb-4 rounded-t-md md:rounded-md"
       )}
     >
       <div className="flex items-center justify-between bg-muted py-2 px-3 border-b">
