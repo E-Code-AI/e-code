@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
+import Sidebar from "./Sidebar";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { isLoading } = useAuth();
@@ -17,8 +18,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
   
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      {children}
+    <div className="flex min-h-screen bg-background text-foreground">
+      <Sidebar />
+      <div className="flex-1 overflow-auto">
+        {children}
+      </div>
     </div>
   );
 }
