@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Terminal from './Terminal';
 import { Button } from '@/components/ui/button';
-import { TerminalSquare } from 'lucide-react';
+import { TerminalSquare, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface TerminalPanelProps {
   projectId: number;
@@ -10,7 +10,7 @@ interface TerminalPanelProps {
 
 const TerminalPanel: React.FC<TerminalPanelProps> = ({ 
   projectId,
-  showByDefault = false
+  showByDefault = true // Default to showing the terminal
 }) => {
   const [showTerminal, setShowTerminal] = useState(showByDefault);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -28,21 +28,22 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({
   };
 
   return (
-    <div className="terminal-panel">
+    <div className="terminal-panel border-t bg-slate-950">
       {!showTerminal ? (
-        <div className="flex justify-end p-2">
+        <div className="flex justify-between items-center p-2 bg-slate-900 border-b">
+          <div className="text-sm font-medium">Terminal</div>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={toggleTerminal}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 text-gray-400 hover:text-white"
           >
-            <TerminalSquare className="h-4 w-4" />
-            <span>Show Terminal</span>
+            <ChevronUp className="h-4 w-4" />
+            <span className="sr-only">Show Terminal</span>
           </Button>
         </div>
       ) : (
-        <div className={`terminal-wrapper ${isMaximized ? 'z-50' : ''}`}>
+        <div className={`terminal-wrapper ${isMaximized ? 'z-50 fixed inset-0' : ''}`}>
           <Terminal
             projectId={projectId}
             onClose={toggleTerminal}
