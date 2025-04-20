@@ -7,6 +7,8 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Editor from "@/pages/Editor";
 import AuthPage from "@/pages/auth-page";
+import ProjectsPage from "@/pages/ProjectsPage";
+import ProjectPage from "@/pages/ProjectPage";
 import RuntimesPage from "@/pages/RuntimesPage";
 import RuntimeDiagnosticsPage from "@/pages/RuntimeDiagnosticsPage";
 import RuntimePublicPage from "@/pages/RuntimePublicPage";
@@ -81,7 +83,9 @@ function AppContent() {
         <Route path="/runtime-dependencies" component={RuntimeTest} />
         <Route path="/runtime-diagnostics" component={RuntimeDiagnosticsPage} />
         <ProtectedRoute path="/" component={Home} />
-        <ProtectedRoute path="/project/:id" component={Editor} />
+        <ProtectedRoute path="/projects" component={ProjectsPage} />
+        <ProtectedRoute path="/project/:id" component={ProjectPage} />
+        <ProtectedRoute path="/editor/:id" component={Editor} />
         <ProtectedRoute path="/runtimes" component={RuntimesPage} />
         <Route component={NotFound} />
       </Switch>

@@ -98,6 +98,228 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
   
+  // API Routes for Projects
+  app.get('/api/projects', ensureAuthenticated, async (req, res) => {
+    try {
+      const projects = await storage.getProjectsByUser(req.user.id);
+      res.json(projects);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      res.status(500).json({ error: 'Failed to fetch projects' });
+    }
+  });
+
+  app.get('/api/projects/:id', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      
+      res.json(project);
+    } catch (error) {
+      console.error('Error fetching project:', error);
+      res.status(500).json({ error: 'Failed to fetch project' });
+    }
+  });
+
+  app.post('/api/projects', ensureAuthenticated, async (req, res) => {
+    try {
+      const result = insertProjectSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error.errors });
+      }
+      
+      const newProject = await storage.createProject({
+        ...result.data,
+        userId: req.user.id,
+      });
+      
+      // Create default files for the project
+      const defaultFiles = [
+        {
+          name: 'index.js',
+          content: '// Welcome to your new project!\nconsole.log("Hello, world!");',
+          isFolder: false,
+          parentId: null,
+          projectId: newProject.id,
+        },
+        {
+          name: 'README.md',
+          content: `# ${newProject.name}\n\n${newProject.description || 'A new project'}\n`,
+          isFolder: false,
+          parentId: null,
+          projectId: newProject.id,
+        }
+      ];
+      
+      for (const file of defaultFiles) {
+        await storage.createFile(file);
+      }
+      
+      res.status(201).json(newProject);
+    } catch (error) {
+      console.error('Error creating project:', error);
+      res.status(500).json({ error: 'Failed to create project' });
+    }
+  });
+
+  app.delete('/api/projects/:id', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      await storage.deleteProject(projectId);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      res.status(500).json({ error: 'Failed to delete project' });
+    }
+  });
+
+  // API Routes for Project Files
+  app.get('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const files = await storage.getFilesByProject(projectId);
+      res.json(files);
+    } catch (error) {
+      console.error('Error fetching files:', error);
+      res.status(500).json({ error: 'Failed to fetch files' });
+    }
+  });
+
+  app.post('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const result = insertFileSchema
+        .omit({ id: true, createdAt: true, updatedAt: true })
+        .safeParse({ ...req.body, projectId });
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error.errors });
+      }
+      
+      const newFile = await storage.createFile(result.data);
+      res.status(201).json(newFile);
+    } catch (error) {
+      console.error('Error creating file:', error);
+      res.status(500).json({ error: 'Failed to create file' });
+    }
+  });
+
+  app.get('/api/files/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const fileId = parseInt(req.params.id);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      
+      // Ensure user has access to the project this file belongs to
+      const project = await storage.getProject(file.projectId);
+      if (!project || project.userId !== req.user.id) {
+        const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user.id);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      res.json(file);
+    } catch (error) {
+      console.error('Error fetching file:', error);
+      res.status(500).json({ error: 'Failed to fetch file' });
+    }
+  });
+
+  app.patch('/api/files/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const fileId = parseInt(req.params.id);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      
+      // Ensure user has access to the project this file belongs to
+      const project = await storage.getProject(file.projectId);
+      if (!project || project.userId !== req.user.id) {
+        const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user.id);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      const updatedFile = await storage.updateFile(fileId, req.body);
+      res.json(updatedFile);
+    } catch (error) {
+      console.error('Error updating file:', error);
+      res.status(500).json({ error: 'Failed to update file' });
+    }
+  });
+
+  app.delete('/api/files/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const fileId = parseInt(req.params.id);
+      const file = await storage.getFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      
+      // Ensure user has access to the project this file belongs to
+      const project = await storage.getProject(file.projectId);
+      if (!project || project.userId !== req.user.id) {
+        const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user.id);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      await storage.deleteFile(fileId);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      res.status(500).json({ error: 'Failed to delete file' });
+    }
+  });
+
+  // API Routes for Project Status and Runtime
+  app.get('/api/projects/:id/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const status = getProjectStatus(projectId);
+      res.json(status);
+    } catch (error) {
+      console.error('Error fetching project status:', error);
+      res.status(500).json({ error: 'Failed to fetch project status' });
+    }
+  });
+
+  app.post('/api/projects/:id/start', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const result = await startProject(projectId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error starting project:', error);
+      res.status(500).json({ error: 'Failed to start project' });
+    }
+  });
+
+  app.post('/api/projects/:id/stop', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const result = await stopProject(projectId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error stopping project:', error);
+      res.status(500).json({ error: 'Failed to stop project' });
+    }
+  });
+  
   // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
   
