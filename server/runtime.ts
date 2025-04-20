@@ -439,12 +439,22 @@ export function attachToProjectLogs(
     onStderr(data.toString());
   };
   
-  process.stdout.on('data', stdoutListener);
-  process.stderr.on('data', stderrListener);
+  if (process.stdout) {
+    process.stdout.on('data', stdoutListener);
+  }
+  
+  if (process.stderr) {
+    process.stderr.on('data', stderrListener);
+  }
   
   // Return function to detach listeners
   return () => {
-    process.stdout.removeListener('data', stdoutListener);
-    process.stderr.removeListener('data', stderrListener);
+    if (process.stdout) {
+      process.stdout.removeListener('data', stdoutListener);
+    }
+    
+    if (process.stderr) {
+      process.stderr.removeListener('data', stderrListener);
+    }
   };
 }

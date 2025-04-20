@@ -14,6 +14,7 @@ import {
 } from "./ai";
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, attachToProjectLogs } from "./runtime";
+import { setupLogsWebsocket } from "./logs";
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -73,6 +74,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // WebSocket for terminal connections
   setupTerminalWebsocket(httpServer);
+  
+  // WebSocket for project logs
+  setupLogsWebsocket(httpServer);
   
   // Define WebSocket client interface for collaboration
   interface CollaborationClient extends WebSocket {
@@ -606,6 +610,70 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Generate tests
   app.post('/api/ai/tests', ensureAuthenticated, generateTests);
+  
+  // Project runtime routes
+  
+  // Start a project
+  app.post('/api/projects/:id/start', ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const result = await startProject(projectId);
+      
+      if (!result.success) {
+        return res.status(500).json({ message: result.error || 'Failed to start project' });
+      }
+      
+      res.json({
+        status: 'running',
+        language: result.language,
+        port: result.port
+      });
+    } catch (error) {
+      console.error("Error starting project:", error);
+      res.status(500).json({ message: 'Failed to start project' });
+    }
+  });
+  
+  // Stop a project
+  app.post('/api/projects/:id/stop', ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const result = await stopProject(projectId);
+      
+      if (!result.success) {
+        return res.status(400).json({ message: result.error || 'Failed to stop project' });
+      }
+      
+      res.json({ status: 'stopped' });
+    } catch (error) {
+      console.error("Error stopping project:", error);
+      res.status(500).json({ message: 'Failed to stop project' });
+    }
+  });
+  
+  // Get project status
+  app.get('/api/projects/:id/status', ensureProjectAccess, (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const status = getProjectStatus(projectId);
+      res.json(status);
+    } catch (error) {
+      console.error("Error getting project status:", error);
+      res.status(500).json({ message: 'Failed to get project status' });
+    }
+  });
 
   return httpServer;
 }
