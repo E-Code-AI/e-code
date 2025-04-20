@@ -319,6 +319,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to stop project' });
     }
   });
+
+  // API Routes for Deployments
+  app.get('/api/projects/:id/deployments', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const deployments = await storage.getDeployments(projectId);
+      res.json(deployments);
+    } catch (error) {
+      console.error('Error fetching deployments:', error);
+      res.status(500).json({ error: 'Failed to fetch deployments' });
+    }
+  });
+
+  app.post('/api/projects/:id/deploy', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const result = await deployProject(projectId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error deploying project:', error);
+      res.status(500).json({ error: 'Failed to deploy project' });
+    }
+  });
+
+  app.get('/api/deployments/:id/status', ensureAuthenticated, async (req, res) => {
+    try {
+      const deploymentId = parseInt(req.params.id);
+      const deployment = await storage.getDeployment(deploymentId);
+      
+      if (!deployment) {
+        return res.status(404).json({ error: 'Deployment not found' });
+      }
+      
+      // Ensure user has access to the project this deployment belongs to
+      const project = await storage.getProject(deployment.projectId);
+      if (!project || project.userId !== req.user.id) {
+        const collaborators = await storage.getProjectCollaborators(deployment.projectId);
+        const isCollaborator = collaborators.some(c => c.userId === req.user.id);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      const status = getDeploymentStatus(deploymentId);
+      res.json({ ...deployment, ...status });
+    } catch (error) {
+      console.error('Error fetching deployment status:', error);
+      res.status(500).json({ error: 'Failed to fetch deployment status' });
+    }
+  });
+
+  app.get('/api/deployments/:id/logs', ensureAuthenticated, async (req, res) => {
+    try {
+      const deploymentId = parseInt(req.params.id);
+      const deployment = await storage.getDeployment(deploymentId);
+      
+      if (!deployment) {
+        return res.status(404).json({ error: 'Deployment not found' });
+      }
+      
+      // Ensure user has access to the project this deployment belongs to
+      const project = await storage.getProject(deployment.projectId);
+      if (!project || project.userId !== req.user.id) {
+        const collaborators = await storage.getProjectCollaborators(deployment.projectId);
+        const isCollaborator = collaborators.some(c => c.userId === req.user.id);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      const logs = getDeploymentLogs(deploymentId);
+      res.json({ logs });
+    } catch (error) {
+      console.error('Error fetching deployment logs:', error);
+      res.status(500).json({ error: 'Failed to fetch deployment logs' });
+    }
+  });
+
+  app.post('/api/deployments/:id/stop', ensureAuthenticated, async (req, res) => {
+    try {
+      const deploymentId = parseInt(req.params.id);
+      const deployment = await storage.getDeployment(deploymentId);
+      
+      if (!deployment) {
+        return res.status(404).json({ error: 'Deployment not found' });
+      }
+      
+      // Ensure user has access to the project this deployment belongs to
+      const project = await storage.getProject(deployment.projectId);
+      if (!project || project.userId !== req.user.id) {
+        const collaborators = await storage.getProjectCollaborators(deployment.projectId);
+        const isCollaborator = collaborators.some(c => c.userId === req.user.id);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      const result = await stopDeployment(deploymentId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error stopping deployment:', error);
+      res.status(500).json({ error: 'Failed to stop deployment' });
+    }
+  });
   
   // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
