@@ -316,20 +316,15 @@ export async function checkRuntimeDependencies(): Promise<{
       // First check using the runtime manager
       const runtimeDeps = await runtimeManager.checkRuntimeDependencies();
       
-      return {
-        docker: {
-          available: runtimeDeps.docker
-        },
-        nix: {
-          available: runtimeDeps.nix
-        }
-      };
+      // Direct pass-through of the runtime dependencies
+      return runtimeDeps;
     }
   } catch (error) {
     log(`Error checking runtime dependencies: ${error}`, 'runtime', 'error');
     return { 
       docker: { available: false, error: error instanceof Error ? error.message : 'Unknown error' },
-      nix: { available: false, error: error instanceof Error ? error.message : 'Unknown error' }
+      nix: { available: false, error: error instanceof Error ? error.message : 'Unknown error' },
+      languages: {}
     };
   }
 }
