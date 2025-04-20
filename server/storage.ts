@@ -56,7 +56,37 @@ export class DatabaseStorage implements IStorage {
     this.sessionStore = new PostgresSessionStore({ 
       pool,
       createTableIfMissing: true,
+      tableName: 'session', // Nom de table explicite
+      pruneSessionInterval: 60, // Nettoyer les sessions expirées toutes les 60 secondes
     });
+    
+    // Vérifier et créer la table des sessions
+    this.initializeSessionStore();
+  }
+  
+  private async initializeSessionStore() {
+    try {
+      // Vérifier si la table de session existe déjà
+      const result = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM pg_tables
+          WHERE schemaname = 'public'
+          AND tablename = 'session'
+        );
+      `);
+      
+      const tableExists = result.rows[0].exists;
+      console.log(`Session table exists: ${tableExists}`);
+      
+      // Si la table n'existe pas, la création sera gérée par createTableIfMissing,
+      // mais nous pouvons ajouter un log pour le suivi
+      if (!tableExists) {
+        console.log('Session table will be created automatically');
+      }
+    } catch (error) {
+      console.error('Error checking session table:', error);
+      // Ne pas bloquer le démarrage de l'application en cas d'erreur
+    }
   }
   
   // User methods

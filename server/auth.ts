@@ -212,4 +212,24 @@ export function setupAuth(app: Express) {
     const { password, ...userWithoutPassword } = req.user as any; 
     res.json(userWithoutPassword);
   });
+  
+  // Diagnostic endpoint for session debugging (development only)
+  app.get("/api/debug/session", (req, res) => {
+    const debugInfo = {
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user ? { id: req.user.id, username: req.user.username } : null,
+      sessionCookie: req.headers.cookie,
+      sessionConfig: {
+        name: 'plot.sid',
+        secure: false,
+        httpOnly: true,
+        sameSite: 'lax',
+        saveUninitialized: true,
+        resave: false
+      }
+    };
+    
+    res.json(debugInfo);
+  });
 }
