@@ -1,10 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -24,7 +23,6 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { 
   Sparkles, 
@@ -37,7 +35,6 @@ import {
   CheckSquare, 
   HelpCircle, 
   MessageSquare, 
-  PanelRightClose, 
   Lightbulb, 
   X,
   Zap
@@ -81,7 +78,6 @@ export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps)
   const [showExplanation, setShowExplanation] = useState(true);
   const [prompt, setPrompt] = useState("");
   const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
-  // Removed contentRef as ScrollArea in Shadcn doesn't support viewportRef
   const { toast } = useToast();
   
   const getLanguageFromFilename = (filename: string | undefined): string => {
@@ -114,10 +110,6 @@ export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps)
   const getFileContent = (): string => {
     return activeFile?.content || "";
   };
-  
-  useEffect(() => {
-    // Auto-scroll is now handled by the ScrollArea component
-  }, [result, chatHistory]);
   
   const processRequest = async () => {
     if (!activeFile) {
@@ -300,7 +292,7 @@ export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps)
           
           {result && !isLoading && (
             <div className="flex-grow flex flex-col">
-              <ScrollArea className="flex-grow" viewportRef={contentRef}>
+              <ScrollArea className="flex-grow">
                 <div className="space-y-3">
                   {showExplanation && result.reasoning && (
                     <div className="bg-muted/50 p-3 rounded-md mb-2">
@@ -364,7 +356,7 @@ export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps)
               </div>
             </div>
           ) : result ? (
-            <ScrollArea className="flex-grow border rounded-md p-3" viewportRef={contentRef}>
+            <ScrollArea className="flex-grow border rounded-md p-3">
               <div className="whitespace-pre-wrap text-sm">
                 {result.content}
               </div>
@@ -413,7 +405,7 @@ export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps)
             </div>
           ) : result ? (
             <div className="flex-grow flex flex-col">
-              <ScrollArea className="flex-grow" viewportRef={contentRef}>
+              <ScrollArea className="flex-grow">
                 <div className="space-y-3">
                   {showExplanation && result.reasoning && (
                     <div className="bg-muted/50 p-3 rounded-md mb-2">
@@ -481,7 +473,7 @@ export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps)
             </div>
           ) : result ? (
             <div className="flex-grow flex flex-col">
-              <ScrollArea className="flex-grow" viewportRef={contentRef}>
+              <ScrollArea className="flex-grow">
                 <div className="bg-muted p-3 rounded-md font-mono text-xs whitespace-pre overflow-x-auto">
                   {result.content}
                 </div>
@@ -520,7 +512,7 @@ export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps)
             </div>
           ) : result ? (
             <div className="flex-grow flex flex-col">
-              <ScrollArea className="flex-grow" viewportRef={contentRef}>
+              <ScrollArea className="flex-grow">
                 <div className="bg-muted p-3 rounded-md font-mono text-xs whitespace-pre overflow-x-auto">
                   {result.content}
                 </div>
@@ -546,7 +538,7 @@ export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps)
         </TabsContent>
         
         <TabsContent value={AIMode.Chat} className="h-full flex flex-col mt-0">
-          <ScrollArea className="flex-grow mb-2" viewportRef={contentRef}>
+          <ScrollArea className="flex-grow mb-2">
             {chatHistory.length === 0 ? (
               <div className="h-full flex items-center justify-center text-center p-4">
                 <div>
