@@ -15,6 +15,8 @@ import DeploymentPanel from '@/components/DeploymentPanel';
 import Collaboration from '@/components/Collaboration';
 import GitPanel from '@/components/GitPanel';
 import AIPanel from '@/components/AIPanel';
+import EnvironmentPanel from '@/components/EnvironmentPanel';
+import { EnvironmentProvider } from '@/hooks/useEnvironment';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -68,7 +70,7 @@ const ProjectPage = () => {
   const [terminalVisible, setTerminalVisible] = useState(true);
   const [terminalHeight, setTerminalHeight] = useState(300);
   const [projectRunning, setProjectRunning] = useState(false);
-  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'deployment' | 'git'>('terminal');
+  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'deployment' | 'git' | 'env'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [aiPanelVisible, setAiPanelVisible] = useState(false);
   
