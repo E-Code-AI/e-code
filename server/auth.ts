@@ -50,18 +50,28 @@ async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   // Configure session middleware
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'plot-secret-key',
-    resave: true, // Changed to true to ensure session is saved on every request
-    saveUninitialized: true, // Changed to true to create session for all requests
+    secret: process.env.SESSION_SECRET || 'plot-secret-key-strong-enough-for-development',
+    resave: false, // Changed to false as we're using a store that implements touch
+    saveUninitialized: false, // Changed to false to comply with GDPR
     store: storage.sessionStore,
+    name: 'plot.sid', // Custom name to avoid using the default
     cookie: {
-      secure: false, // Set to false for development
+      secure: process.env.NODE_ENV === 'production', // Only use secure in production
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       path: '/'
     }
   };
+  
+  // Debug session configuration
+  console.log("Session configuration:", {
+    secret: sessionSettings.secret ? 'Set (hidden)' : 'Not set',
+    resave: sessionSettings.resave,
+    saveUninitialized: sessionSettings.saveUninitialized,
+    cookieSecure: sessionSettings.cookie?.secure,
+    environment: process.env.NODE_ENV
+  });
 
   // Setup session middleware and passport
   app.set("trust proxy", 1);
