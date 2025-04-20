@@ -13,6 +13,7 @@ import {
   generateTests 
 } from "./ai";
 import { setupTerminalWebsocket } from "./terminal";
+import { startProject, stopProject, getProjectStatus, attachToProjectLogs } from "./runtime";
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
