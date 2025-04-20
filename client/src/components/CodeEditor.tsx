@@ -2,7 +2,9 @@ import { useRef, useEffect } from "react";
 import * as monaco from "monaco-editor";
 import { File } from "@shared/schema";
 import { setupMonacoTheme } from "@/lib/monaco-setup";
-import { Skeleton } from "@/components/ui/skeleton";
+
+// Initialize Monaco theme
+setupMonacoTheme();
 
 interface CodeEditorProps {
   file: File;
@@ -10,119 +12,96 @@ interface CodeEditorProps {
 }
 
 const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const monacoEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-
+  const containerRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  
+  // Initialize editor
   useEffect(() => {
-    // Setup Monaco theme when component mounts
-    setupMonacoTheme();
-
-    // Dispose editor when component unmounts
-    return () => {
-      if (monacoEditorRef.current) {
-        monacoEditorRef.current.dispose();
+    if (containerRef.current) {
+      // Get language from file extension
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      let language = 'plaintext';
+      
+      // Map extensions to languages
+      switch (ext) {
+        case 'js':
+          language = 'javascript';
+          break;
+        case 'jsx':
+          language = 'javascript';
+          break;
+        case 'ts':
+          language = 'typescript';
+          break;
+        case 'tsx':
+          language = 'typescript';
+          break;
+        case 'html':
+          language = 'html';
+          break;
+        case 'css':
+          language = 'css';
+          break;
+        case 'json':
+          language = 'json';
+          break;
+        case 'md':
+          language = 'markdown';
+          break;
+        case 'py':
+          language = 'python';
+          break;
+        default:
+          language = 'plaintext';
       }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!editorRef.current) return;
-
-    if (!monacoEditorRef.current) {
-      // Create Monaco editor
-      monacoEditorRef.current = monaco.editor.create(editorRef.current, {
-        value: file.content || "",
-        language: getLanguageFromFilename(file.name),
-        theme: "vs-dark",
+      
+      // Create editor
+      const editor = monaco.editor.create(containerRef.current, {
+        value: file.content || '',
+        language,
+        theme: 'replitDark',
         automaticLayout: true,
         minimap: {
           enabled: true,
-          scale: 0.75,
         },
         scrollBeyondLastLine: false,
         fontSize: 14,
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
         tabSize: 2,
-        fontFamily: "'Fira Code', Menlo, Monaco, 'Courier New', monospace",
-        fontLigatures: true,
+        wordWrap: 'on',
       });
-
-      // Set up change handler
-      monacoEditorRef.current.onDidChangeModelContent(() => {
-        const value = monacoEditorRef.current?.getValue() || "";
+      
+      // Set up change event
+      const changeDisposable = editor.onDidChangeModelContent(() => {
+        const value = editor.getValue();
         onChange(value);
       });
-    } else {
-      // Update editor model if file changes
-      const model = monacoEditorRef.current.getModel();
       
-      if (model) {
-        const currentContent = model.getValue();
-        
-        if (file.content !== currentContent) {
-          // Reuse existing model
-          model.setValue(file.content || "");
-          monaco.editor.setModelLanguage(model, getLanguageFromFilename(file.name));
-        }
-      } else {
-        // Create a new model if it doesn't exist
-        const newModel = monaco.editor.createModel(
-          file.content || "",
-          getLanguageFromFilename(file.name)
-        );
-        monacoEditorRef.current.setModel(newModel);
+      editorRef.current = editor;
+      
+      // Cleanup
+      return () => {
+        changeDisposable.dispose();
+        editor.dispose();
+      };
+    }
+  }, [file.id]); // Only recreate the editor when the file changes
+  
+  // Update editor content when file content changes
+  useEffect(() => {
+    if (editorRef.current && containerRef.current) {
+      const currentValue = editorRef.current.getValue();
+      const newValue = file.content || '';
+      
+      // Only update if the values are different to avoid cursor jumping
+      if (currentValue !== newValue) {
+        editorRef.current.setValue(newValue);
       }
     }
-  }, [file, onChange]);
-
-  const getLanguageFromFilename = (filename: string): string => {
-    const extension = filename.split(".").pop()?.toLowerCase() || "";
-    
-    // Map file extensions to Monaco language IDs
-    const languageMap: Record<string, string> = {
-      js: "javascript",
-      jsx: "javascript",
-      ts: "typescript",
-      tsx: "typescript",
-      html: "html",
-      css: "css",
-      json: "json",
-      md: "markdown",
-      py: "python",
-      rb: "ruby",
-      go: "go",
-      java: "java",
-      c: "c",
-      cpp: "cpp",
-      cs: "csharp",
-      php: "php",
-      swift: "swift",
-      rs: "rust",
-      sh: "shell",
-      sql: "sql",
-    };
-
-    return languageMap[extension] || "plaintext";
-  };
-
-  if (!file) {
-    return (
-      <div className="h-full w-full flex items-center justify-center bg-background text-muted-foreground">
-        <p>No file selected</p>
-      </div>
-    );
-  }
-
+  }, [file.content]);
+  
   return (
-    <div className="h-full w-full flex flex-col">
-      <div className="flex items-center px-2 py-1 border-b bg-muted/40">
-        <span className="text-sm">{file.name}</span>
-      </div>
-      {!editorRef.current ? (
-        <Skeleton className="h-full w-full" />
-      ) : (
-        <div ref={editorRef} className="flex-1 overflow-hidden" />
-      )}
-    </div>
+    <div ref={containerRef} className="w-full h-full" />
   );
 };
 
