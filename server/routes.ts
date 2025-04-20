@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertProjectSchema, insertFileSchema, insertProjectCollaboratorSchema, insertDeploymentSchema } from "@shared/schema";
 import * as z from "zod";
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import { 
   generateCompletion, 
   generateExplanation, 
@@ -12,6 +12,7 @@ import {
   generateDocumentation, 
   generateTests 
 } from "./ai";
+import { setupTerminalWebsocket } from "./terminal";
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -56,9 +57,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
   
-  // Create HTTP server and WebSocket server
+  // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
+  
+  // WebSocket for real-time collaboration
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // WebSocket for terminal connections
+  setupTerminalWebsocket(httpServer);
   
   // Handle WebSocket connections for real-time collaboration
   const clients = new Map(); // Map to store clients and their project/file info
