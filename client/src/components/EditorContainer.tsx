@@ -71,7 +71,7 @@ const EditorContainer = ({
   return (
     <div className="h-full flex flex-col">
       {/* Tabs */}
-      <ScrollArea orientation="horizontal" className="border-b">
+      <div className="border-b overflow-x-auto">
         <div className="flex">
           {openFiles.map(file => (
             <div
@@ -115,7 +115,7 @@ const EditorContainer = ({
             </div>
           ))}
         </div>
-      </ScrollArea>
+      </div>
       
       {/* Editor */}
       <div className="flex-1 overflow-hidden">
