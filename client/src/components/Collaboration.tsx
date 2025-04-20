@@ -1,39 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Users,
-  MessageSquare,
-  Send,
-  Settings,
-  X,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Bell,
-  BellOff,
-} from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
 import { User } from '@shared/schema';
-import { getInitials, getRandomColor } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ChevronLeft, MessageSquare, Users } from 'lucide-react';
+import { cn, getInitials, getRandomColor } from '@/lib/utils';
 
 // Types for collaboration
 export type CollaboratorInfo = {
@@ -55,6 +29,7 @@ export type ChatMessage = {
   isSystem?: boolean;
 };
 
+// Component props
 interface CollaborationProps {
   projectId: number;
   fileId: number | null;
@@ -63,486 +38,366 @@ interface CollaborationProps {
   isCollapsed?: boolean;
 }
 
-const Collaboration: React.FC<CollaborationProps> = ({
+// Main component
+export default function Collaboration({
   projectId,
   fileId,
   currentUser,
   onToggle,
-  isCollapsed = false,
-}) => {
-  const { toast } = useToast();
+  isCollapsed = false
+}: CollaborationProps) {
+  // State variables
+  const [activeTab, setActiveTab] = useState<'collaborators' | 'chat'>('collaborators');
   const [collaborators, setCollaborators] = useState<CollaboratorInfo[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'users' | 'chat'>('users');
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const socketRef = useRef<WebSocket | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [userColor] = useState(() => getRandomColor());
+  const webSocketRef = useRef<WebSocket | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Colors
-  const userColor = useRef(getRandomColor());
-
-  // Effect for scrolling chat to bottom
-  useEffect(() => {
-    if (messagesEndRef.current && activeTab === 'chat') {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, activeTab]);
-
-  // Setup WebSocket connection
+  // Connect to WebSocket server
   useEffect(() => {
     if (!projectId || !currentUser) return;
 
+    // Determine the WebSocket URL
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
-    const socket = new WebSocket(wsUrl);
-    socketRef.current = socket;
-
-    socket.onopen = () => {
+    
+    // Create WebSocket connection
+    const ws = new WebSocket(wsUrl);
+    webSocketRef.current = ws;
+    
+    // Connection opened
+    ws.addEventListener('open', () => {
       console.log('Connected to collaboration server');
-      // Send join message once connected
-      const joinMessage = {
+      setIsConnected(true);
+      
+      // Send join message
+      ws.send(JSON.stringify({
         type: 'user_joined',
+        userId: currentUser.id,
+        username: currentUser.username || currentUser.displayName || `User ${currentUser.id}`,
         projectId,
         fileId,
-        userId: currentUser.id,
-        username: currentUser.username || currentUser.displayName || 'Anonymous',
         timestamp: Date.now(),
         data: {
-          color: userColor.current,
-        },
-      };
-      socket.send(JSON.stringify(joinMessage));
-    };
-
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('Received collaboration message:', data);
-
-      // Handle different message types
-      switch (data.type) {
-        case 'user_joined':
-          handleUserJoined(data);
-          break;
-        case 'user_left':
-          handleUserLeft(data);
-          break;
-        case 'cursor_move':
-          handleCursorMove(data);
-          break;
-        case 'chat_message':
-          handleChatMessage(data);
-          break;
-        case 'current_collaborators':
-          handleCurrentCollaborators(data);
-          break;
-        case 'ping':
-          socket.send(JSON.stringify({ type: 'pong' }));
-          break;
-        default:
-          console.log('Unknown message type:', data.type);
-      }
-    };
-
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      toast({
-        title: 'Connection Error',
-        description: 'Failed to connect to collaboration server',
-        variant: 'destructive',
-      });
-    };
-
-    socket.onclose = () => {
-      console.log('Disconnected from collaboration server');
-    };
-
-    return () => {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.close();
-      }
-    };
-  }, [projectId, fileId, currentUser, toast]);
-
-  // Handle user joined
-  const handleUserJoined = useCallback((data: any) => {
-    // Don't add yourself
-    if (data.userId === currentUser.id) return;
-
-    setCollaborators((prev) => {
-      // Check if user already exists
-      if (prev.some((c) => c.userId === data.userId)) {
-        return prev;
-      }
-      return [
-        ...prev,
-        {
-          userId: data.userId,
-          username: data.username,
-          color: data.data.color,
-        },
-      ];
-    });
-
-    // Add system message
-    setMessages((prev) => [
-      ...prev,
-      {
-        userId: data.userId,
-        username: data.username,
-        content: `${data.username} joined the project`,
-        timestamp: data.timestamp,
-        isSystem: true,
-      },
-    ]);
-
-    // Show notification if enabled
-    if (notificationsEnabled && activeTab !== 'chat') {
-      setUnreadCount((prev) => prev + 1);
-      toast({
-        title: 'User Joined',
-        description: `${data.username} joined the project`,
-      });
-    }
-  }, [currentUser.id, notificationsEnabled, activeTab, toast]);
-
-  // Handle user left
-  const handleUserLeft = useCallback((data: any) => {
-    setCollaborators((prev) => prev.filter((c) => c.userId !== data.userId));
-
-    // Add system message
-    setMessages((prev) => [
-      ...prev,
-      {
-        userId: data.userId,
-        username: data.username,
-        content: `${data.username} left the project`,
-        timestamp: data.timestamp,
-        isSystem: true,
-      },
-    ]);
-
-    // Show notification if enabled
-    if (notificationsEnabled && activeTab !== 'chat') {
-      setUnreadCount((prev) => prev + 1);
-    }
-  }, [notificationsEnabled, activeTab]);
-
-  // Handle cursor move
-  const handleCursorMove = useCallback((data: any) => {
-    setCollaborators((prev) => {
-      return prev.map((c) => {
-        if (c.userId === data.userId) {
-          return {
-            ...c,
-            position: data.data.position,
-            lastActivity: new Date(),
-          };
+          color: userColor
         }
-        return c;
-      });
+      }));
     });
-  }, []);
-
-  // Handle chat message
-  const handleChatMessage = useCallback((data: any) => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        userId: data.userId,
-        username: data.username,
-        content: data.data.message,
-        timestamp: data.data.timestamp,
-      },
-    ]);
-
-    // Show notification if enabled and not on chat tab
-    if (notificationsEnabled && activeTab !== 'chat') {
-      setUnreadCount((prev) => prev + 1);
-      toast({
-        title: `Message from ${data.username}`,
-        description: data.data.message.substring(0, 50) + (data.data.message.length > 50 ? '...' : ''),
-      });
+    
+    // Listen for messages
+    ws.addEventListener('message', (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        
+        switch (message.type) {
+          case 'user_joined':
+            // Add new collaborator
+            setCollaborators(prev => {
+              // Don't add if already in the list
+              if (prev.some(col => col.userId === message.userId)) {
+                return prev;
+              }
+              return [...prev, {
+                userId: message.userId,
+                username: message.username,
+                color: message.data.color
+              }];
+            });
+            
+            // Add system message to chat
+            setChatMessages(prev => [...prev, {
+              userId: 0,
+              username: 'System',
+              content: `${message.username} joined the project`,
+              timestamp: message.timestamp,
+              isSystem: true
+            }]);
+            break;
+            
+          case 'user_left':
+            // Remove collaborator
+            setCollaborators(prev => prev.filter(col => col.userId !== message.userId));
+            
+            // Add system message to chat
+            setChatMessages(prev => [...prev, {
+              userId: 0,
+              username: 'System',
+              content: `${message.username} left the project`,
+              timestamp: message.timestamp,
+              isSystem: true
+            }]);
+            break;
+            
+          case 'cursor_move':
+            // Update collaborator position
+            setCollaborators(prev => 
+              prev.map(col => 
+                col.userId === message.userId 
+                  ? { ...col, position: message.data.position, lastActivity: new Date() } 
+                  : col
+              )
+            );
+            break;
+            
+          case 'chat_message':
+            // Add new chat message
+            setChatMessages(prev => [...prev, {
+              userId: message.userId,
+              username: message.username,
+              content: message.data.content,
+              timestamp: message.data.timestamp
+            }]);
+            break;
+            
+          case 'current_collaborators':
+            // Set initial collaborators list
+            setCollaborators(message.data.collaborators);
+            break;
+            
+          case 'ping':
+            // Respond to ping with pong
+            ws.send(JSON.stringify({ type: 'pong' }));
+            break;
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    });
+    
+    // Handle connection close
+    ws.addEventListener('close', () => {
+      console.log('Disconnected from collaboration server');
+      setIsConnected(false);
+    });
+    
+    // Handle errors
+    ws.addEventListener('error', (error) => {
+      console.error('WebSocket error:', error);
+      setIsConnected(false);
+    });
+    
+    // Cleanup on unmount
+    return () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [projectId, currentUser, fileId, userColor]);
+  
+  // Scroll to bottom of chat when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [notificationsEnabled, activeTab, toast]);
-
-  // Handle list of current collaborators
-  const handleCurrentCollaborators = useCallback((data: any) => {
-    if (data.data?.collaborators) {
-      setCollaborators(data.data.collaborators);
-    }
-  }, []);
-
-  // Send chat message
-  const sendMessage = useCallback(() => {
-    if (!socketRef.current || !newMessage.trim()) return;
-
+  }, [chatMessages]);
+  
+  // Handle sending chat messages
+  const sendChatMessage = () => {
+    if (!newMessage.trim() || !webSocketRef.current || !isConnected) return;
+    
     const message = {
       type: 'chat_message',
+      userId: currentUser.id,
+      username: currentUser.username || currentUser.displayName || `User ${currentUser.id}`,
       projectId,
       fileId,
-      userId: currentUser.id,
-      username: currentUser.username || currentUser.displayName || 'Anonymous',
       timestamp: Date.now(),
       data: {
-        message: newMessage,
-        timestamp: Date.now(),
-      },
+        content: newMessage.trim(),
+        timestamp: Date.now()
+      }
     };
-
-    socketRef.current.send(JSON.stringify(message));
-
-    // Add to local messages
-    setMessages((prev) => [
-      ...prev,
-      {
-        userId: currentUser.id,
-        username: currentUser.username || currentUser.displayName || 'Anonymous',
-        content: newMessage,
-        timestamp: Date.now(),
-      },
-    ]);
-
+    
+    webSocketRef.current.send(JSON.stringify(message));
+    
+    // Add message to local state immediately
+    setChatMessages(prev => [...prev, {
+      userId: currentUser.id,
+      username: currentUser.username || currentUser.displayName || `User ${currentUser.id}`,
+      content: newMessage.trim(),
+      timestamp: Date.now()
+    }]);
+    
+    // Clear input
     setNewMessage('');
-    inputRef.current?.focus();
-  }, [projectId, fileId, currentUser, newMessage]);
-
-  // Handle tab change
-  const handleTabChange = (tab: 'users' | 'chat') => {
-    setActiveTab(tab);
-    if (tab === 'chat') {
-      setUnreadCount(0);
-    }
   };
-
-  // Toggle notifications
-  const toggleNotifications = () => {
-    setNotificationsEnabled(!notificationsEnabled);
-  };
-
+  
   // Format timestamp
-  const formatTime = (timestamp: number) => {
-    return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+  const formatTimestamp = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
-
-  // Handle key press in input
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      sendMessage();
-    }
-  };
-
-  if (isCollapsed) {
-    return (
-      <Button
-        variant="ghost" 
-        className="fixed bottom-4 right-4 p-2 rounded-full shadow-md"
-        onClick={onToggle}
-      >
-        <PanelLeftOpen className="h-5 w-5" />
-      </Button>
-    );
-  }
-
+  
   return (
-    <Card className="w-full h-full flex flex-col border-l rounded-none">
-      <CardHeader className="px-2 py-2 border-b flex flex-row items-center justify-between space-y-0">
+    <div className="flex flex-col h-full border-l border-border">
+      {/* Header */}
+      <div className="h-12 flex items-center justify-between px-4 border-b border-border bg-muted/30">
         <div className="flex items-center space-x-2">
-          <CardTitle className="text-sm font-medium">Collaboration</CardTitle>
-          {unreadCount > 0 && activeTab !== 'chat' && (
-            <Badge className="bg-primary text-xs">{unreadCount}</Badge>
+          <h3 className="text-sm font-medium">Collaboration</h3>
+          {isConnected ? (
+            <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+              Connected
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+              Disconnected
+            </Badge>
           )}
         </div>
-        <div className="flex items-center space-x-1">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`h-7 w-7 ${activeTab === 'users' ? 'bg-muted' : ''}`}
-            onClick={() => handleTabChange('users')}
-          >
-            <Users className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`h-7 w-7 relative ${activeTab === 'chat' ? 'bg-muted' : ''}`}
-            onClick={() => handleTabChange('chat')}
-          >
-            <MessageSquare className="h-4 w-4" />
-            {unreadCount > 0 && activeTab !== 'chat' && (
-              <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full" />
-            )}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Collaboration Settings</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={toggleNotifications}>
-                {notificationsEnabled ? (
-                  <>
-                    <BellOff className="h-4 w-4 mr-2" />
-                    <span>Disable Notifications</span>
-                  </>
-                ) : (
-                  <>
-                    <Bell className="h-4 w-4 mr-2" />
-                    <span>Enable Notifications</span>
-                  </>
-                )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {onToggle && (
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggle}>
-            <PanelLeftClose className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 p-0 overflow-hidden">
-        {activeTab === 'users' && (
-          <div className="h-full p-2 space-y-2">
-            <h3 className="text-xs font-medium text-muted-foreground mb-2">
-              {collaborators.length} Online Collaborator{collaborators.length !== 1 ? 's' : ''}
-            </h3>
-            <ScrollArea className="h-[calc(100%-2rem)] pr-2">
-              <div className="space-y-2">
-                {/* Current user */}
-                <div className="flex items-center space-x-2 p-2 rounded-md bg-muted/40">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback style={{ backgroundColor: userColor.current }}>
-                      {getInitials(currentUser.username || currentUser.displayName || 'A')}
+        )}
+      </div>
+      
+      {/* Tabs */}
+      <Tabs defaultValue="collaborators" value={activeTab} onValueChange={(value) => setActiveTab(value as 'collaborators' | 'chat')}>
+        <TabsList className="h-10 w-full flex bg-transparent justify-start px-4 pt-2 border-b border-border">
+          <TabsTrigger 
+            value="collaborators" 
+            className={`data-[state=active]:bg-background ${activeTab === 'collaborators' ? 'border-b-2 border-primary rounded-none' : ''}`}
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Collaborators
+          </TabsTrigger>
+          <TabsTrigger 
+            value="chat" 
+            className={`data-[state=active]:bg-background ${activeTab === 'chat' ? 'border-b-2 border-primary rounded-none' : ''}`}
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Chat
+          </TabsTrigger>
+        </TabsList>
+        
+        {/* Collaborators List */}
+        <TabsContent value="collaborators" className="flex-1 overflow-auto p-4">
+          <Card className="p-0 border-0 shadow-none">
+            <div className="space-y-2">
+              {/* Current user */}
+              <div className="flex items-center space-x-3 p-2 bg-muted/30 rounded-md">
+                <Avatar className="h-8 w-8 border-2" style={{ borderColor: userColor }}>
+                  <AvatarFallback style={{ backgroundColor: 'transparent' }}>
+                    {getInitials(currentUser.username || currentUser.displayName || `User ${currentUser.id}`)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="text-sm font-medium flex items-center">
+                    {currentUser.username || currentUser.displayName || `User ${currentUser.id}`}
+                    <Badge className="ml-2 text-xs" variant="secondary">You</Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Active now</div>
+                </div>
+              </div>
+              
+              {/* Other collaborators */}
+              {collaborators.filter(c => c.userId !== currentUser.id).map((collaborator) => (
+                <div key={collaborator.userId} className="flex items-center space-x-3 p-2 hover:bg-muted/30 rounded-md">
+                  <Avatar className="h-8 w-8 border-2" style={{ borderColor: collaborator.color }}>
+                    <AvatarFallback style={{ backgroundColor: 'transparent' }}>
+                      {getInitials(collaborator.username)}
                     </AvatarFallback>
-                    {currentUser.avatarUrl && <AvatarImage src={currentUser.avatarUrl} />}
                   </Avatar>
                   <div className="flex-1">
-                    <p className="text-sm font-medium">{currentUser.username || currentUser.displayName || 'Anonymous'}</p>
-                    <p className="text-xs text-muted-foreground">You</p>
+                    <div className="text-sm font-medium">{collaborator.username}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {collaborator.lastActivity
+                        ? `Active ${Math.round((Date.now() - collaborator.lastActivity.getTime()) / 1000)}s ago`
+                        : 'Joined recently'}
+                    </div>
                   </div>
                 </div>
-
-                {/* Other collaborators */}
-                {collaborators.map((collaborator) => (
-                  <div key={collaborator.userId} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/40">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback style={{ backgroundColor: collaborator.color }}>
-                              {getInitials(collaborator.username)}
-                            </AvatarFallback>
-                          </Avatar>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{collaborator.username}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{collaborator.username}</p>
-                      {collaborator.position && (
-                        <p className="text-xs text-muted-foreground">
-                          Line {collaborator.position.lineNumber}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-
-                {collaborators.length === 0 && (
-                  <div className="text-center py-4 text-sm text-muted-foreground">
-                    No other collaborators right now
-                  </div>
-                )}
+              ))}
+              
+              {/* Empty state */}
+              {collaborators.length === 0 && (
+                <div className="text-center p-4 text-muted-foreground">
+                  <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No other collaborators yet</p>
+                  <p className="text-xs mt-1">Share your project to invite others</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </TabsContent>
+        
+        {/* Chat */}
+        <TabsContent value="chat" className="flex-1 flex flex-col h-full p-0">
+          {/* Messages */}
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+            {chatMessages.length === 0 && (
+              <div className="text-center p-4 text-muted-foreground h-full flex flex-col justify-center">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">No messages yet</p>
+                <p className="text-xs mt-1">Start the conversation!</p>
               </div>
-            </ScrollArea>
-          </div>
-        )}
-
-        {activeTab === 'chat' && (
-          <div className="h-full flex flex-col">
-            <ScrollArea className="flex-1 p-2">
-              <div className="space-y-2">
-                {messages.length === 0 ? (
-                  <div className="text-center py-8 text-sm text-muted-foreground">
-                    No messages yet. Start the conversation!
+            )}
+            
+            {chatMessages.map((message, index) => (
+              <div 
+                key={index} 
+                className={cn(
+                  "flex flex-col max-w-[85%] space-y-1",
+                  message.userId === currentUser.id ? "ml-auto items-end" : "",
+                  message.isSystem ? "mx-auto items-center" : ""
+                )}
+              >
+                {message.isSystem ? (
+                  <div className="bg-muted/30 text-muted-foreground text-xs py-1 px-3 rounded-full">
+                    {message.content}
                   </div>
                 ) : (
-                  messages.map((msg, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${
-                        msg.isSystem ? 'justify-center' : msg.userId === currentUser.id ? 'justify-end' : 'justify-start'
-                      } mb-2`}
-                    >
-                      {msg.isSystem ? (
-                        <div className="text-xs text-center py-1 px-2 bg-muted rounded-md text-muted-foreground">
-                          {msg.content}
-                        </div>
-                      ) : msg.userId === currentUser.id ? (
-                        <div className="max-w-[70%]">
-                          <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg rounded-br-none">
-                            <p className="text-sm">{msg.content}</p>
-                          </div>
-                          <div className="text-xs text-right mt-1 text-muted-foreground">
-                            {formatTime(msg.timestamp)}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex max-w-[70%]">
-                          <Avatar className="h-8 w-8 mr-2 mt-1">
-                            <AvatarFallback style={{ backgroundColor: collaborators.find(c => c.userId === msg.userId)?.color || 'gray' }}>
-                              {getInitials(msg.username)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="bg-muted px-3 py-2 rounded-lg rounded-bl-none">
-                              <p className="text-xs font-medium mb-1">{msg.username}</p>
-                              <p className="text-sm">{msg.content}</p>
-                            </div>
-                            <div className="text-xs mt-1 text-muted-foreground">
-                              {formatTime(msg.timestamp)}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-medium">{message.username}</span>
+                      <span className="text-xs text-muted-foreground">{formatTimestamp(message.timestamp)}</span>
                     </div>
-                  ))
+                    <div 
+                      className={cn(
+                        "py-2 px-3 rounded-lg text-sm",
+                        message.userId === currentUser.id 
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-muted"
+                      )}
+                    >
+                      {message.content}
+                    </div>
+                  </>
                 )}
-                <div ref={messagesEndRef} />
               </div>
-            </ScrollArea>
-            <div className="p-2 border-t">
-              <div className="flex items-center">
-                <Input
-                  placeholder="Type a message..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  ref={inputRef}
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  size="icon"
-                  className="ml-2"
-                  disabled={!newMessage.trim()}
-                  onClick={sendMessage}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            ))}
           </div>
-        )}
-      </CardContent>
-    </Card>
+          
+          {/* Message input */}
+          <div className="p-3 border-t border-border">
+            <form 
+              className="flex space-x-2" 
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendChatMessage();
+              }}
+            >
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-1"
+                disabled={!isConnected}
+              />
+              <Button 
+                type="submit" 
+                size="sm"
+                disabled={!isConnected || !newMessage.trim()}
+              >
+                Send
+              </Button>
+            </form>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
-};
-
-export default Collaboration;
+}

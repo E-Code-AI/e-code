@@ -21,10 +21,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface TerminalProps {
-  project: {
+  project?: {
     id: number;
     [key: string]: any;
   };
+  projectId?: number;
   onClose?: () => void;
   minimized?: boolean;
   onMinimize?: () => void;
@@ -79,12 +80,13 @@ const terminalThemes = {
 
 const Terminal: React.FC<TerminalProps> = ({ 
   project, 
+  projectId: propProjectId,
   onClose, 
   minimized = false,
   onMinimize,
   onMaximize
 }) => {
-  const projectId = project.id;
+  const projectId = propProjectId || (project?.id);
   const terminalRef = useRef<HTMLDivElement>(null);
   const [terminal, setTerminal] = useState<XTerm | null>(null);
   const [fitAddon, setFitAddon] = useState<FitAddon | null>(null);
