@@ -56,7 +56,8 @@ import {
   Layers,
   Users,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  KeyRound
 } from 'lucide-react';
 
 const ProjectPage = () => {
@@ -653,7 +654,7 @@ const ProjectPage = () => {
                 <div className="flex items-center space-x-4">
                   <Tabs 
                     value={bottomPanelTab} 
-                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'deployment' | 'git')}
+                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'deployment' | 'git' | 'env')}
                     className="w-[500px]"
                   >
                     <TabsList className="h-7 bg-transparent">
@@ -676,6 +677,13 @@ const ProjectPage = () => {
                         <GitBranch className="h-4 w-4 mr-1" />
                         Git
                       </TabsTrigger>
+                      <TabsTrigger 
+                        value="env" 
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'env' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        <KeyRound className="h-4 w-4 mr-1" />
+                        Environment
+                      </TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
@@ -692,6 +700,11 @@ const ProjectPage = () => {
                 {bottomPanelTab === 'terminal' && projectId && <Terminal projectId={projectId} />}
                 {bottomPanelTab === 'deployment' && projectId && <DeploymentPanel projectId={projectId} />}
                 {bottomPanelTab === 'git' && projectId && <GitPanel projectId={projectId} />}
+                {bottomPanelTab === 'env' && projectId && (
+                  <EnvironmentProvider projectId={projectId}>
+                    <EnvironmentPanel projectId={projectId} />
+                  </EnvironmentProvider>
+                )}
               </div>
             </div>
           )}
