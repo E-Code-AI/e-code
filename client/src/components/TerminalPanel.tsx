@@ -45,10 +45,11 @@ const TerminalPanel: React.FC<TerminalPanelProps> = ({
       ) : (
         <div className={`terminal-wrapper ${isMaximized ? 'z-50 fixed inset-0' : ''}`}>
           <Terminal
-            projectId={projectId}
+            project={{ id: projectId }}
             onClose={toggleTerminal}
-            isMaximized={isMaximized}
-            onToggleMaximize={toggleMaximize}
+            minimized={false}
+            onMinimize={() => setIsMaximized(false)}
+            onMaximize={() => setIsMaximized(true)}
           />
         </div>
       )}
