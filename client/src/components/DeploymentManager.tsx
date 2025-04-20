@@ -69,9 +69,9 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
 
   // Create deployment mutation
   const deployMutation = useMutation({
-    mutationFn: async (data: { domain: string; envProduction: boolean }) => {
+    mutationFn: async (data: { url: string; envProduction: boolean }) => {
       const res = await apiRequest('POST', `/api/projects/${project.id}/deployments`, {
-        url: data.domain,
+        url: data.url,
         config: { production: data.envProduction }
       });
       return res.json();
@@ -99,9 +99,9 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
 
   // Handle deploy button click
   const handleDeploy = async () => {
-    const url = useCustomDomain && customDomain ? customDomain : deployUrl;
+    const domainUrl = useCustomDomain && customDomain ? customDomain : deployUrl;
     await deployMutation.mutateAsync({
-      domain: url,
+      url: domainUrl,
       envProduction,
     });
   };
