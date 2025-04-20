@@ -97,10 +97,10 @@ export const insertFileSchema = createInsertSchema(files).pick({
 export const deployments = pgTable("deployments", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull().references(() => projects.id),
-  status: text("status").default("pending").notNull(), // pending, success, failed
+  status: text("status").default("deploying").notNull(), // deploying, running, stopped, failed
   url: text("url"),
-  buildLogs: text("build_logs"),
-  config: json("config"),
+  logs: text("logs"), // JSON string array of deployment logs
+  version: text("version").notNull(),  // Version tag for the deployment (e.g., v1, v2, etc.)
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -109,8 +109,8 @@ export const insertDeploymentSchema = createInsertSchema(deployments).pick({
   projectId: true,
   status: true,
   url: true,
-  buildLogs: true,
-  config: true,
+  logs: true,
+  version: true,
 });
 
 // Define relations after all tables are created

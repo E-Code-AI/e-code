@@ -534,10 +534,18 @@ export class MemStorage implements IStorage {
   }
   
   // Deployment methods
-  async getDeployments(projectId: number): Promise<Deployment[]> {
+  async getDeployments(projectId: number | null): Promise<Deployment[]> {
+    if (projectId === null) {
+      return Array.from(this.deployments.values())
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
     return Array.from(this.deployments.values())
       .filter(deploy => deploy.projectId === projectId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async getDeployment(id: number): Promise<Deployment | undefined> {
+    return this.deployments.get(id);
   }
   
   async createDeployment(deploymentData: InsertDeployment): Promise<Deployment> {
