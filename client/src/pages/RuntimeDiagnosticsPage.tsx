@@ -12,7 +12,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { 
   InfoIcon, AlertCircle, CheckCircle2, XCircle, ServerIcon, 
-  Cpu, Memory, HardDrive, Boxes, TerminalIcon
+  Cpu, HardDrive, Boxes, TerminalIcon
 } from 'lucide-react';
 
 export default function RuntimeDiagnosticsPage() {
