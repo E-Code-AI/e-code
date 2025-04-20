@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import { ResizablePanel, ResizablePanelGroup, ResizeHandle } from "@/components/ui/resizable";
+import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 
 interface EditorLayoutProps {
   editor: ReactNode;
@@ -31,7 +31,7 @@ export default function EditorLayout({
             {fileExplorer}
           </ResizablePanel>
           
-          <ResizeHandle withHandle />
+          <ResizableHandle withHandle />
           
           <ResizablePanelGroup direction="vertical" className="flex-1">
             {/* Editor */}
@@ -46,7 +46,7 @@ export default function EditorLayout({
                     {editor}
                   </ResizablePanel>
                   
-                  <ResizeHandle withHandle />
+                  <ResizableHandle withHandle />
                   
                   <ResizablePanel defaultSize={40} minSize={30} className="overflow-hidden">
                     {preview}
@@ -59,7 +59,7 @@ export default function EditorLayout({
             
             {showBottomPanel && (
               <>
-                <ResizeHandle withHandle />
+                <ResizableHandle withHandle />
                 
                 <ResizablePanel 
                   defaultSize={30} 
