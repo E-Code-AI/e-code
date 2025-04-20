@@ -1,246 +1,358 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
+import { Terminal as XTerm } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from 'xterm-addon-web-links';
+import 'xterm/css/xterm.css';
 import { Button } from "@/components/ui/button";
-import {
-  Maximize2,
-  Minimize2,
-  X,
-  Terminal as TerminalIcon,
-  ArrowUpRight
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Terminal as XtermTerminal } from "xterm";
-import { FitAddon } from "xterm-addon-fit";
-import { WebLinksAddon } from "xterm-addon-web-links";
-import { Project } from "@shared/schema";
-import "xterm/css/xterm.css";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Maximize2, Minimize2, X, RefreshCw } from 'lucide-react';
 
 interface TerminalProps {
-  project: Project | undefined;
-  minimized: boolean;
-  onMinimize: () => void;
-  onMaximize: () => void;
-  onClose: () => void;
+  projectId: number;
+  onClose?: () => void;
+  isMaximized?: boolean;
+  onToggleMaximize?: () => void;
 }
 
-export function Terminal({ project, minimized, onMinimize, onMaximize, onClose }: TerminalProps) {
+const Terminal: React.FC<TerminalProps> = ({ 
+  projectId, 
+  onClose, 
+  isMaximized = false,
+  onToggleMaximize
+}) => {
   const terminalRef = useRef<HTMLDivElement>(null);
-  const xtermRef = useRef<XtermTerminal | null>(null);
-  const fitAddonRef = useRef<FitAddon | null>(null);
-  const socketRef = useRef<WebSocket | null>(null);
-  const [isMaximized, setIsMaximized] = useState(false);
+  const [terminal, setTerminal] = useState<XTerm | null>(null);
+  const [fitAddon, setFitAddon] = useState<FitAddon | null>(null);
+  const websocketRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [output, setOutput] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTerm, setActiveTerm] = useState('term1');
 
-  // Terminal initialization
+  // Create and set up terminal
   useEffect(() => {
-    if (!terminalRef.current || !project || minimized) return;
+    if (!terminalRef.current) return;
 
-    // Clear any existing terminal
-    if (xtermRef.current) {
-      xtermRef.current.dispose();
-      xtermRef.current = null;
-    }
-
-    // Initialize XTerm
-    const term = new XtermTerminal({
+    // Create terminal
+    const term = new XTerm({
       cursorBlink: true,
-      fontFamily: "Menlo, Monaco, 'Courier New', monospace",
+      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
       fontSize: 14,
-      lineHeight: 1.2,
       theme: {
-        background: '#1e1e1e',
-        foreground: '#d4d4d4',
-        cursor: '#aeafad',
-        selectionBackground: '#264f78',
-        black: '#1e1e1e',
-        brightBlack: '#666666',
-        red: '#e06c75',
-        brightRed: '#e06c75',
-        green: '#98c379',
-        brightGreen: '#98c379',
-        yellow: '#e5c07b',
-        brightYellow: '#e5c07b',
-        blue: '#61afef',
-        brightBlue: '#61afef',
-        magenta: '#c678dd',
-        brightMagenta: '#c678dd',
-        cyan: '#56b6c2',
-        brightCyan: '#56b6c2',
-        white: '#d4d4d4',
-        brightWhite: '#ffffff'
+        background: '#1a1b26',
+        foreground: '#c0caf5',
+        cursor: '#c0caf5',
+        black: '#414868',
+        red: '#f7768e',
+        green: '#9ece6a',
+        yellow: '#e0af68',
+        blue: '#7aa2f7',
+        magenta: '#bb9af7',
+        cyan: '#7dcfff',
+        white: '#a9b1d6',
+        brightBlack: '#414868',
+        brightRed: '#f7768e',
+        brightGreen: '#9ece6a',
+        brightYellow: '#e0af68',
+        brightBlue: '#7aa2f7',
+        brightMagenta: '#bb9af7',
+        brightCyan: '#7dcfff',
+        brightWhite: '#c0caf5'
       }
     });
 
-    // Create and attach addons
-    const fitAddon = new FitAddon();
-    const webLinksAddon = new WebLinksAddon();
-    term.loadAddon(fitAddon);
-    term.loadAddon(webLinksAddon);
-    
-    // Store refs for later use
-    xtermRef.current = term;
-    fitAddonRef.current = fitAddon;
+    // Add FitAddon for terminal resizing
+    const fit = new FitAddon();
+    term.loadAddon(fit);
+    setFitAddon(fit);
 
-    // Render the terminal to the container
+    // Add WebLinks addon for clickable links
+    const webLinks = new WebLinksAddon();
+    term.loadAddon(webLinks);
+
+    // Open terminal
     term.open(terminalRef.current);
-    fitAddon.fit();
+    fit.fit();
+    setTerminal(term);
 
-    // Initial welcome message
-    term.writeln('\x1b[1;32m# Terminal initialized for project: ' + project.name + '\x1b[0m');
-    term.writeln('Type commands to interact with your application.');
-    term.writeln('');
-    
-    // Connect to WebSocket for terminal sessions
-    connectWebSocket(project.id);
+    // Cleanup on unmount
+    return () => {
+      term.dispose();
+      if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+        websocketRef.current.close();
+      }
+    };
+  }, []);
 
-    // Resize handler
+  // Connect to WebSocket
+  useEffect(() => {
+    if (!terminal) return;
+
+    const connectWebSocket = () => {
+      // Close existing connection if any
+      if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+        websocketRef.current.close();
+      }
+
+      // Create WebSocket URL
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/terminal?projectId=${projectId}`;
+
+      const ws = new WebSocket(wsUrl);
+      websocketRef.current = ws;
+
+      ws.onopen = () => {
+        setIsConnected(true);
+        setError(null);
+        terminal.clear();
+        terminal.writeln('\x1b[32mTerminal connected. Ready for input.\x1b[0m');
+      };
+
+      ws.onclose = (event) => {
+        setIsConnected(false);
+        if (event.wasClean) {
+          terminal.writeln('\x1b[33mTerminal connection closed.\x1b[0m');
+        } else {
+          terminal.writeln('\x1b[31mTerminal connection lost. Click "Reconnect" to try again.\x1b[0m');
+          setError('Connection lost');
+        }
+      };
+
+      ws.onerror = () => {
+        setError('Connection error');
+        terminal.writeln('\x1b[31mError connecting to terminal. Please try again later.\x1b[0m');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          switch (data.type) {
+            case 'output':
+              terminal.write(data.data);
+              break;
+            case 'connected':
+              terminal.writeln(`\x1b[34m${data.data}\x1b[0m`);
+              break;
+            case 'error':
+              terminal.writeln(`\x1b[31mError: ${data.data}\x1b[0m`);
+              setError(data.data);
+              break;
+            case 'exit':
+              terminal.writeln(`\x1b[33m${data.data}\x1b[0m`);
+              break;
+            case 'started':
+              terminal.writeln(`\x1b[32m${data.data}\x1b[0m`);
+              break;
+            case 'stopped':
+              terminal.writeln(`\x1b[33m${data.data}\x1b[0m`);
+              break;
+            default:
+              terminal.writeln(`\x1b[90mReceived: ${JSON.stringify(data)}\x1b[0m`);
+          }
+        } catch (error) {
+          console.error('Failed to parse message:', event.data, error);
+        }
+      };
+
+      // Send terminal input to server
+      terminal.onData((data) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'input', data }));
+        }
+      });
+
+      // Handle terminal resize
+      terminal.onResize(({ cols, rows }) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'resize', cols, rows }));
+        }
+      });
+    };
+
+    connectWebSocket();
+  }, [terminal, projectId]);
+
+  // Handle window resize
+  useEffect(() => {
+    if (!fitAddon) return;
+
     const handleResize = () => {
-      if (fitAddonRef.current) {
-        fitAddonRef.current.fit();
+      try {
+        fitAddon.fit();
+      } catch (error) {
+        console.error('Failed to resize terminal:', error);
       }
     };
 
     window.addEventListener('resize', handleResize);
+    
+    // Initial fit
+    setTimeout(handleResize, 100);
+
     return () => {
       window.removeEventListener('resize', handleResize);
-      term.dispose();
-      if (socketRef.current) {
-        socketRef.current.close();
-      }
     };
-  }, [project, minimized]);
+  }, [fitAddon, isMaximized]);
 
-  // Handle terminal resize on maximized state change
-  useEffect(() => {
-    if (fitAddonRef.current) {
-      setTimeout(() => {
-        fitAddonRef.current?.fit();
-      }, 100);
+  // Handle reconnect
+  const handleReconnect = () => {
+    if (terminal) {
+      terminal.clear();
+      terminal.writeln('\x1b[33mReconnecting...\x1b[0m');
     }
-  }, [isMaximized]);
-
-  // Connect to terminal WebSocket
-  const connectWebSocket = (projectId: number) => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/terminal/${projectId}`;
+    setError(null);
     
-    try {
-      const socket = new WebSocket(wsUrl);
-      socketRef.current = socket;
+    // Close existing connection
+    if (websocketRef.current) {
+      websocketRef.current.close();
+      websocketRef.current = null;
+    }
+    
+    // Wait a moment before reconnecting
+    setTimeout(() => {
+      // Trigger WebSocket effect again
+      if (terminal) {
+        terminal.clear();
+        terminal.writeln('\x1b[33mConnecting to terminal...\x1b[0m');
+      }
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/terminal?projectId=${projectId}`;
+      const ws = new WebSocket(wsUrl);
+      websocketRef.current = ws;
       
-      socket.onopen = () => {
+      // Set up event handlers again
+      ws.onopen = () => {
         setIsConnected(true);
-        
-        if (xtermRef.current) {
-          xtermRef.current.writeln('\x1b[32mConnected to terminal server\x1b[0m');
+        setError(null);
+        if (terminal) {
+          terminal.clear();
+          terminal.writeln('\x1b[32mTerminal reconnected. Ready for input.\x1b[0m');
         }
       };
       
-      socket.onmessage = (event) => {
+      ws.onclose = () => {
+        setIsConnected(false);
+        setError('Connection lost');
+        if (terminal) {
+          terminal.writeln('\x1b[31mTerminal connection lost. Click "Reconnect" to try again.\x1b[0m');
+        }
+      };
+      
+      ws.onerror = () => {
+        setError('Connection error');
+        if (terminal) {
+          terminal.writeln('\x1b[31mError connecting to terminal. Please try again later.\x1b[0m');
+        }
+      };
+      
+      ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 'output' && xtermRef.current) {
-            xtermRef.current.write(data.content);
-            setOutput(prev => [...prev, data.content]);
+          
+          if (terminal) {
+            switch (data.type) {
+              case 'output':
+                terminal.write(data.data);
+                break;
+              case 'connected':
+                terminal.writeln(`\x1b[34m${data.data}\x1b[0m`);
+                break;
+              case 'error':
+                terminal.writeln(`\x1b[31mError: ${data.data}\x1b[0m`);
+                setError(data.data);
+                break;
+              case 'exit':
+                terminal.writeln(`\x1b[33m${data.data}\x1b[0m`);
+                break;
+              case 'started':
+                terminal.writeln(`\x1b[32m${data.data}\x1b[0m`);
+                break;
+              case 'stopped':
+                terminal.writeln(`\x1b[33m${data.data}\x1b[0m`);
+                break;
+              default:
+                terminal.writeln(`\x1b[90mReceived: ${JSON.stringify(data)}\x1b[0m`);
+            }
           }
-        } catch (err) {
-          if (xtermRef.current) {
-            xtermRef.current.write(event.data);
+        } catch (error) {
+          console.error('Failed to parse message:', event.data, error);
+        }
+      };
+      
+      // Send terminal input to server
+      if (terminal) {
+        terminal.onData((data) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'input', data }));
           }
-        }
-      };
-      
-      socket.onclose = () => {
-        setIsConnected(false);
-        if (xtermRef.current) {
-          xtermRef.current.writeln('\x1b[31mDisconnected from terminal server\x1b[0m');
-        }
-      };
-      
-      socket.onerror = (error) => {
-        console.error('Terminal WebSocket error:', error);
-        if (xtermRef.current) {
-          xtermRef.current.writeln('\x1b[31mError connecting to terminal server\x1b[0m');
-        }
-      };
-      
-      // Handle user input
-      if (xtermRef.current) {
-        xtermRef.current.onData((data) => {
-          if (socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({
-              type: 'input',
-              content: data,
-              projectId: projectId
-            }));
+        });
+        
+        // Handle terminal resize
+        terminal.onResize(({ cols, rows }) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'resize', cols, rows }));
           }
         });
       }
-    } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
-    }
+    }, 500);
   };
-
-  // Toggle maximized state
-  const toggleMaximize = () => {
-    setIsMaximized(!isMaximized);
-    if (!isMaximized) {
-      onMaximize();
-    } else {
-      onMinimize();
-    }
-  };
-
-  if (minimized) {
-    return (
-      <Button 
-        variant="outline" 
-        className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full px-4"
-        onClick={onMinimize}
-      >
-        <TerminalIcon className="h-4 w-4" />
-        <span>Terminal</span>
-      </Button>
-    );
-  }
-
+  
   return (
-    <div 
-      className={cn(
-        "fixed bottom-0 right-0 z-50 bg-card border shadow-lg transition-all duration-200 overflow-hidden",
-        isMaximized 
-          ? "w-full h-full left-0 top-0 rounded-none" 
-          : "w-full md:w-3/4 lg:w-2/3 h-1/3 md:h-2/5 max-h-60 md:max-h-80 mx-0 md:mx-4 mb-0 md:mb-4 rounded-t-md md:rounded-md"
-      )}
-    >
-      <div className="flex items-center justify-between bg-muted py-2 px-3 border-b">
-        <div className="flex items-center gap-2">
-          <TerminalIcon className="h-4 w-4" />
-          <span className="font-medium">{project?.name || 'Terminal'}</span>
-          {isConnected && (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-green-500"></span>
-              Connected
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={onMinimize} title="Minimize">
-            <Minimize2 className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={toggleMaximize} title="Maximize">
-            {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={onClose} title="Close">
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+    <div className={`flex flex-col border rounded-md overflow-hidden shadow-md bg-[#1a1b26] ${isMaximized ? 'fixed top-0 left-0 right-0 bottom-0 z-50' : 'h-80'}`}>
+      <div className="flex items-center justify-between bg-slate-900 p-2 border-b">
+        <Tabs value={activeTerm} onValueChange={setActiveTerm} className="w-full">
+          <div className="flex justify-between items-center">
+            <TabsList>
+              <TabsTrigger value="term1">Terminal</TabsTrigger>
+            </TabsList>
+            
+            <div className="flex items-center space-x-1">
+              {error && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleReconnect}
+                  className="h-6 w-6 text-yellow-500"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {onToggleMaximize && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={onToggleMaximize}
+                  className="h-6 w-6"
+                >
+                  {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </Button>
+              )}
+              
+              {onClose && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={onClose}
+                  className="h-6 w-6"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+          
+          <TabsContent value="term1" className="m-0 p-0">
+            <div 
+              ref={terminalRef} 
+              className={`terminal-container ${isMaximized ? 'h-[calc(100vh-40px)]' : 'h-[calc(320px-40px)]'}`} 
+              style={{ padding: 0 }}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <div 
-        ref={terminalRef} 
-        className="h-full w-full overflow-hidden p-2"
-      />
     </div>
   );
-}
+};
+
+export default Terminal;
