@@ -13,7 +13,7 @@ import {
   generateTests 
 } from "./ai";
 import { setupTerminalWebsocket } from "./terminal";
-import { startProject, stopProject, getProjectStatus, attachToProjectLogs } from "./runtime";
+import { startProject, stopProject, getProjectStatus, attachToProjectLogs, checkRuntimeDependencies } from "./runtime";
 import { setupLogsWebsocket } from "./logs";
 import { deployProject, stopDeployment, getDeploymentStatus, getDeploymentLogs } from "./deployment";
 import { 
@@ -28,6 +28,14 @@ import {
   cloneRepo, 
   getCommitHistory 
 } from "./git";
+import {
+  getRuntimeDependencies,
+  startProjectRuntime,
+  stopProjectRuntime,
+  getProjectRuntimeStatus,
+  executeProjectCommand,
+  getProjectRuntimeLogs
+} from "./runtimes/api";
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -624,9 +632,14 @@ document.addEventListener('DOMContentLoaded', function() {
   // Generate tests
   app.post('/api/ai/tests', ensureAuthenticated, generateTests);
   
+  // Runtime API Routes
+  
+  // Get runtime dependencies status (Docker, Nix, etc.)
+  app.get('/api/runtime/dependencies', ensureAuthenticated, getRuntimeDependencies);
+  
   // Project runtime routes
   
-  // Start a project
+  // Start a project (legacy route - keeping for backward compatibility)
   app.post('/api/projects/:id/start', ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
@@ -642,8 +655,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       res.json({
         status: 'running',
-        language: result.language,
-        port: result.port
+        url: result.url
       });
     } catch (error) {
       console.error("Error starting project:", error);
@@ -651,7 +663,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Stop a project
+  // Stop a project (legacy route - keeping for backward compatibility)
   app.post('/api/projects/:id/stop', ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
@@ -672,7 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Get project status
+  // Get project status (legacy route - keeping for backward compatibility)
   app.get('/api/projects/:id/status', ensureProjectAccess, (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
@@ -687,6 +699,23 @@ document.addEventListener('DOMContentLoaded', function() {
       res.status(500).json({ message: 'Failed to get project status' });
     }
   });
+  
+  // New runtime API routes with enhanced functionality
+  
+  // Start a project runtime with advanced options
+  app.post('/api/projects/:id/runtime/start', ensureProjectAccess, startProjectRuntime);
+  
+  // Stop a project runtime
+  app.post('/api/projects/:id/runtime/stop', ensureProjectAccess, stopProjectRuntime);
+  
+  // Get project runtime status
+  app.get('/api/projects/:id/runtime', ensureProjectAccess, getProjectRuntimeStatus);
+  
+  // Execute command in project runtime
+  app.post('/api/projects/:id/runtime/execute', ensureProjectAccess, executeProjectCommand);
+  
+  // Get project runtime logs
+  app.get('/api/projects/:id/runtime/logs', ensureProjectAccess, getProjectRuntimeLogs);
   
   // Deployment routes
   

@@ -286,8 +286,32 @@ function broadcastLogsToClients(projectId: number, message: string): void {
 export async function checkRuntimeDependencies(): Promise<{
   docker: boolean;
   nix: boolean;
+  languages?: {
+    [language: string]: boolean;
+  };
 }> {
-  return runtimeManager.checkRuntimeDependencies();
+  try {
+    // First check using the runtime manager
+    const runtimeDeps = await runtimeManager.checkRuntimeDependencies();
+    
+    // Then check more detailed system dependencies if available
+    try {
+      const runtimeHealth = await import('./runtimes/runtime-health');
+      const systemDeps = await runtimeHealth.checkSystemDependencies();
+      
+      return {
+        docker: runtimeDeps.docker,
+        nix: runtimeDeps.nix,
+        languages: systemDeps.languages
+      };
+    } catch (error) {
+      // If runtime-health module is not available, return just the basic check
+      return runtimeDeps;
+    }
+  } catch (error) {
+    log(`Error checking runtime dependencies: ${error}`, 'runtime', 'error');
+    return { docker: false, nix: false };
+  }
 }
 
 /**

@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Editor from "@/pages/Editor";
 import AuthPage from "@/pages/auth-page";
+import RuntimesPage from "@/pages/RuntimesPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,7 @@ function AppContent() {
         <Route path="/auth" component={AuthPage} />
         <ProtectedRoute path="/" component={Home} />
         <ProtectedRoute path="/project/:id" component={Editor} />
+        <ProtectedRoute path="/runtimes" component={RuntimesPage} />
         <Route component={NotFound} />
       </Switch>
       <AuthDebug />
