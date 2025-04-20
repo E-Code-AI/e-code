@@ -731,32 +731,58 @@ document.addEventListener('DOMContentLoaded', function() {
   // Public endpoint to get runtime dependencies - no auth required
   app.get('/api/runtime/dependencies', getRuntimeDependencies);
   
-  // Runtime dashboard route for health status and diagnostics
+  // Runtime dashboard route for health status and diagnostics (public)
   app.get('/api/runtime/dashboard', async (req, res) => {
     try {
       // Get system dependencies
       const dependencies = await runtimeHealth.checkSystemDependencies();
       
-      // Get active projects/containers
-      const activeProjects: Array<{id: number, name: string, status: any}> = [];
-      const projectStatuses: Record<string, any> = {};
+      // Get active projects/containers - only if authenticated
+      let activeProjects: Array<{id: number, name: string, status: any}> = [];
+      let projectStatuses: Record<string, any> = {};
       
-      // Get all projects user has access to
-      const projects = req.isAuthenticated() 
-        ? await storage.getProjectsByUser(req.user!.id)
-        : [];
+      // Get system health data
+      const systemHealth = {
+        cpuUsage: runtimeHealth.getCpuUsage() || 0,
+        memoryUsage: runtimeHealth.getMemoryUsage() || '0%',
+        platform: process.platform,
+        arch: process.arch,
+        uptime: process.uptime(),
+        nodeVersion: process.version
+      };
       
-      // Get runtime status for each project
-      for (const project of projects) {
-        const status = getProjectStatus(project.id);
-        if (status.isRunning) {
-          activeProjects.push({
-            id: project.id,
-            name: project.name,
-            status: status
-          });
+      // Get runtime environments data
+      const runtimeEnvironments = {
+        docker: dependencies.docker || { available: false },
+        nix: dependencies.nix || { available: false },
+        languages: dependencies.languages || {}
+      };
+      
+      // Get recommendations
+      const recommendations = [
+        "Install Docker for better isolation and containerization",
+        "Keep Node.js up to date for security and performance",
+        "Install Python 3 for scientific computing support",
+        "Enable Nix for reproducible development environments"
+      ];
+      
+      // Get project information if authenticated
+      if (req.isAuthenticated()) {
+        // Get all projects user has access to
+        const projects = await storage.getProjectsByUser(req.user!.id);
+        
+        // Get runtime status for each project
+        for (const project of projects) {
+          const status = getProjectStatus(project.id);
+          if (status.isRunning) {
+            activeProjects.push({
+              id: project.id,
+              name: project.name,
+              status: status
+            });
+          }
+          projectStatuses[project.id.toString()] = status;
         }
-        projectStatuses[project.id.toString()] = status;
       }
       
       // System resource usage
