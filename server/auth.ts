@@ -52,11 +52,11 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'plot-secret-key-strong-enough-for-development',
     resave: false, // Changed to false as we're using a store that implements touch
-    saveUninitialized: false, // Changed to false to comply with GDPR
+    saveUninitialized: true, // Changed to true to allow all sessions for testing
     store: storage.sessionStore,
     name: 'plot.sid', // Custom name to avoid using the default
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // Only use secure in production
+      secure: false, // Set to false for development to work with HTTP
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
