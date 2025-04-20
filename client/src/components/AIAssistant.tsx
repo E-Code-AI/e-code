@@ -1,403 +1,635 @@
-import React, { useState } from 'react';
-import { File } from '@shared/schema';
-import { apiRequest } from '@/lib/queryClient';
-import { Loader2, Sparkles, RefreshCw, CopyIcon, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { 
+  Sparkles, 
+  Terminal,
+  Code, 
+  FileText, 
+  RefreshCw, 
+  ThumbsUp, 
+  ThumbsDown, 
+  CheckSquare, 
+  HelpCircle, 
+  MessageSquare, 
+  PanelRightClose, 
+  Lightbulb, 
+  X,
+  Zap
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { File } from "@shared/schema";
 
 interface AIAssistantProps {
   activeFile: File | undefined;
   onApplyCompletion: (content: string) => void;
 }
 
+enum AIMode {
+  Complete = "complete",
+  Explain = "explain",
+  Transform = "transform",
+  Document = "document",
+  Test = "test",
+  Chat = "chat",
+}
+
+interface AIRequest {
+  code: string;
+  language: string;
+  options?: Record<string, any>;
+}
+
+interface AIResponse {
+  content: string;
+  reasoning?: string;
+}
+
 export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps) {
-  const [prompt, setPrompt] = useState('');
+  const [mode, setMode] = useState<AIMode>(AIMode.Complete);
   const [isLoading, setIsLoading] = useState(false);
-  const [completionResult, setCompletionResult] = useState('');
-  const [explanationResult, setExplanationResult] = useState('');
-  const [testResult, setTestResult] = useState('');
-  const [documentationResult, setDocumentationResult] = useState('');
+  const [result, setResult] = useState<AIResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [targetLanguage, setTargetLanguage] = useState("javascript");
+  const [showExplanation, setShowExplanation] = useState(true);
+  const [prompt, setPrompt] = useState("");
+  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+  // Removed contentRef as ScrollArea in Shadcn doesn't support viewportRef
   const { toast } = useToast();
-
-  // Get language from file extension
-  const getLanguage = (fileName: string) => {
-    const extension = fileName.split('.').pop()?.toLowerCase();
-    const langMap: Record<string, string> = {
-      'js': 'javascript',
-      'jsx': 'javascript',
-      'ts': 'typescript',
-      'tsx': 'typescript',
-      'py': 'python',
-      'rb': 'ruby',
-      'java': 'java',
-      'c': 'c',
-      'cpp': 'c++',
-      'cs': 'csharp',
-      'go': 'go',
-      'php': 'php',
-      'rs': 'rust',
-      'swift': 'swift',
-      'kt': 'kotlin',
-      'scala': 'scala',
-      'html': 'html',
-      'css': 'css',
+  
+  const getLanguageFromFilename = (filename: string | undefined): string => {
+    if (!filename) return "text";
+    
+    const extension = filename.split('.').pop()?.toLowerCase() || "";
+    const extensionMap: Record<string, string> = {
+      js: "javascript",
+      ts: "typescript",
+      jsx: "jsx",
+      tsx: "tsx",
+      py: "python",
+      rb: "ruby",
+      java: "java",
+      php: "php",
+      html: "html",
+      css: "css",
+      json: "json",
+      md: "markdown",
+      go: "go",
+      rs: "rust",
+      c: "c",
+      cpp: "cpp",
+      cs: "csharp",
     };
-    return langMap[extension || ''] || 'plaintext';
+    
+    return extensionMap[extension] || "text";
   };
-
-  // Generate code completion
-  const generateCompletion = async () => {
-    if (!activeFile) return;
+  
+  const getFileContent = (): string => {
+    return activeFile?.content || "";
+  };
+  
+  useEffect(() => {
+    // Auto-scroll is now handled by the ScrollArea component
+  }, [result, chatHistory]);
+  
+  const processRequest = async () => {
+    if (!activeFile) {
+      toast({
+        title: "No file selected",
+        description: "Please select a file first.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsLoading(true);
-    setCompletionResult('');
+    setError(null);
+    
+    const fileContent = getFileContent();
+    const language = getLanguageFromFilename(activeFile.name);
     
     try {
-      const language = getLanguage(activeFile.name);
-      const response = await apiRequest('POST', '/api/ai/completion', {
-        code: activeFile.content,
+      const requestBody: AIRequest = {
+        code: fileContent,
         language,
-      });
+        options: {},
+      };
       
+      if (mode === AIMode.Transform) {
+        requestBody.options!.targetLanguage = targetLanguage;
+      }
+      
+      if (mode === AIMode.Chat) {
+        requestBody.options!.prompt = prompt;
+        requestBody.options!.history = chatHistory;
+      }
+      
+      let endpoint;
+      switch (mode) {
+        case AIMode.Complete:
+          endpoint = "/api/ai/completion";
+          break;
+        case AIMode.Explain:
+          endpoint = "/api/ai/explanation";
+          break;
+        case AIMode.Transform:
+          endpoint = "/api/ai/convert";
+          break;
+        case AIMode.Document:
+          endpoint = "/api/ai/document";
+          break;
+        case AIMode.Test:
+          endpoint = "/api/ai/tests";
+          break;
+        case AIMode.Chat:
+          endpoint = "/api/ai/chat";
+          break;
+      }
+      
+      const response = await apiRequest("POST", endpoint, requestBody);
       const data = await response.json();
-      setCompletionResult(data.completion);
-    } catch (error: any) {
+      
+      setResult(data);
+      
+      if (mode === AIMode.Chat && prompt.trim()) {
+        setChatHistory([
+          ...chatHistory, 
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: data.content }
+        ]);
+        setPrompt("");
+      }
+    } catch (err: any) {
+      console.error("AI processing error:", err);
+      setError(err.message || "An error occurred while processing your request.");
       toast({
-        title: 'Error generating completion',
-        description: error.message || 'Something went wrong',
-        variant: 'destructive',
+        title: "AI request failed",
+        description: err.message || "Could not process the AI request.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Generate code explanation
-  const generateExplanation = async () => {
-    if (!activeFile) return;
-    
-    setIsLoading(true);
-    setExplanationResult('');
-    
-    try {
-      const language = getLanguage(activeFile.name);
-      const response = await apiRequest('POST', '/api/ai/explanation', {
-        code: activeFile.content,
-        language,
-      });
-      
-      const data = await response.json();
-      setExplanationResult(data.explanation);
-    } catch (error: any) {
+  
+  const handleApply = () => {
+    if (result?.content) {
+      onApplyCompletion(result.content);
       toast({
-        title: 'Error generating explanation',
-        description: error.message || 'Something went wrong',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Generate tests
-  const generateTests = async () => {
-    if (!activeFile) return;
-    
-    setIsLoading(true);
-    setTestResult('');
-    
-    try {
-      const language = getLanguage(activeFile.name);
-      const response = await apiRequest('POST', '/api/ai/tests', {
-        code: activeFile.content,
-        language,
-        framework: getTestFramework(language),
-      });
-      
-      const data = await response.json();
-      setTestResult(data.testCode);
-    } catch (error: any) {
-      toast({
-        title: 'Error generating tests',
-        description: error.message || 'Something went wrong',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Generate documentation
-  const generateDocumentation = async () => {
-    if (!activeFile) return;
-    
-    setIsLoading(true);
-    setDocumentationResult('');
-    
-    try {
-      const language = getLanguage(activeFile.name);
-      const response = await apiRequest('POST', '/api/ai/document', {
-        code: activeFile.content,
-        language,
-        style: getDocStyle(language),
-      });
-      
-      const data = await response.json();
-      setDocumentationResult(data.documentedCode);
-    } catch (error: any) {
-      toast({
-        title: 'Error generating documentation',
-        description: error.message || 'Something went wrong',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Get default test framework based on language
-  const getTestFramework = (language: string) => {
-    const frameworkMap: Record<string, string> = {
-      'javascript': 'jest',
-      'typescript': 'jest',
-      'python': 'pytest',
-      'ruby': 'rspec',
-      'java': 'junit',
-      'csharp': 'nunit',
-      'go': 'go test',
-      'php': 'phpunit',
-      'rust': 'cargo test',
-    };
-    return frameworkMap[language] || '';
-  };
-
-  // Get default documentation style based on language
-  const getDocStyle = (language: string) => {
-    const styleMap: Record<string, string> = {
-      'javascript': 'jsdoc',
-      'typescript': 'jsdoc',
-      'python': 'numpy',
-      'java': 'javadoc',
-      'csharp': 'xml',
-      'go': 'godoc',
-      'php': 'phpdoc',
-      'rust': 'rustdoc',
-    };
-    return styleMap[language] || 'standard';
-  };
-
-  // Apply completion to the editor
-  const applyCompletion = () => {
-    if (completionResult) {
-      onApplyCompletion(completionResult);
-      toast({
-        title: 'Completion Applied',
-        description: 'The AI suggestion has been applied to your code',
+        title: "Changes applied",
+        description: "The AI-generated code has been applied to the file.",
       });
     }
   };
-
-  // Apply documentation to the editor
-  const applyDocumentation = () => {
-    if (documentationResult) {
-      onApplyCompletion(documentationResult);
-      toast({
-        title: 'Documentation Applied',
-        description: 'The documented code has been applied',
-      });
-    }
-  };
-
-  // Copy to clipboard
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  
+  const handleFeedback = (positive: boolean) => {
     toast({
-      title: 'Copied to clipboard',
-      description: 'Content has been copied to your clipboard',
+      title: positive ? "Positive feedback sent" : "Negative feedback sent",
+      description: "Thank you for your feedback on the AI response.",
     });
   };
-
+  
   return (
-    <div className="h-full flex flex-col p-4 bg-background border-l border-border">
-      <div className="flex items-center mb-4">
-        <Sparkles className="mr-2 h-5 w-5 text-primary" />
-        <h2 className="text-lg font-semibold">AI Assistant</h2>
-      </div>
-
-      <Tabs defaultValue="completion" className="flex-1 flex flex-col">
-        <TabsList className="mb-4">
-          <TabsTrigger value="completion">Completion</TabsTrigger>
-          <TabsTrigger value="explanation">Explain</TabsTrigger>
-          <TabsTrigger value="documentation">Document</TabsTrigger>
-          <TabsTrigger value="tests">Tests</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="completion" className="flex-1 flex flex-col">
-          <div className="mb-4">
-            <Button 
-              onClick={generateCompletion} 
-              disabled={!activeFile || isLoading} 
-              className="w-full"
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-4 w-4" />
-              )}
-              Generate Code Completion
+    <Card className="w-full h-full flex flex-col border-t-0 rounded-t-none shadow-none">
+      <CardHeader className="p-3 pb-0">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <CardTitle className="text-base">AI Assistant</CardTitle>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="explanation-mode"
+                checked={showExplanation}
+                onCheckedChange={setShowExplanation}
+                className="data-[state=checked]:bg-primary"
+              />
+              <Label htmlFor="explanation-mode" className="text-xs">Show explanations</Label>
+            </div>
+            <Button variant="ghost" size="icon" title="Close">
+              <X className="h-4 w-4" />
             </Button>
           </div>
-
-          {completionResult && (
-            <div className="flex-1 flex flex-col">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-medium">Suggestion</h3>
-                <div className="flex gap-1">
+        </div>
+        <Tabs
+          value={mode}
+          onValueChange={(value) => setMode(value as AIMode)}
+          className="w-full"
+        >
+          <TabsList className="grid grid-cols-6 w-full h-8 mt-2">
+            <TabsTrigger value={AIMode.Complete} className="text-xs" title="AI code completion">
+              <Code className="h-3.5 w-3.5 mr-2" />
+              <span className="hidden sm:inline">Complete</span>
+            </TabsTrigger>
+            <TabsTrigger value={AIMode.Explain} className="text-xs" title="Explain code">
+              <HelpCircle className="h-3.5 w-3.5 mr-2" />
+              <span className="hidden sm:inline">Explain</span>
+            </TabsTrigger>
+            <TabsTrigger value={AIMode.Transform} className="text-xs" title="Convert code to another language">
+              <RefreshCw className="h-3.5 w-3.5 mr-2" />
+              <span className="hidden sm:inline">Transform</span>
+            </TabsTrigger>
+            <TabsTrigger value={AIMode.Document} className="text-xs" title="Generate documentation">
+              <FileText className="h-3.5 w-3.5 mr-2" />
+              <span className="hidden sm:inline">Document</span>
+            </TabsTrigger>
+            <TabsTrigger value={AIMode.Test} className="text-xs" title="Generate tests">
+              <CheckSquare className="h-3.5 w-3.5 mr-2" />
+              <span className="hidden sm:inline">Test</span>
+            </TabsTrigger>
+            <TabsTrigger value={AIMode.Chat} className="text-xs" title="Chat with the AI">
+              <MessageSquare className="h-3.5 w-3.5 mr-2" />
+              <span className="hidden sm:inline">Chat</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </CardHeader>
+      
+      <CardContent className="p-3 flex-grow overflow-hidden flex flex-col">
+        <TabsContent value={AIMode.Complete} className="h-full flex flex-col mt-0">
+          <p className="text-xs text-muted-foreground mb-2">
+            Generate code based on the current file content.
+          </p>
+          {!result && !isLoading && (
+            <div className="flex-grow flex items-center justify-center border rounded-md border-dashed">
+              <div className="text-center p-4">
+                <Lightbulb className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Click "Generate" to create code based on your current file.
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {isLoading && (
+            <div className="flex-grow flex items-center justify-center">
+              <div className="text-center">
+                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
+                <p className="text-sm">Generating code...</p>
+              </div>
+            </div>
+          )}
+          
+          {result && !isLoading && (
+            <div className="flex-grow flex flex-col">
+              <ScrollArea className="flex-grow" viewportRef={contentRef}>
+                <div className="space-y-3">
+                  {showExplanation && result.reasoning && (
+                    <div className="bg-muted/50 p-3 rounded-md mb-2">
+                      <p className="text-xs font-medium mb-1">Reasoning:</p>
+                      <p className="text-xs whitespace-pre-wrap">{result.reasoning}</p>
+                    </div>
+                  )}
+                  
+                  <div className="bg-muted p-3 rounded-md font-mono text-xs whitespace-pre overflow-x-auto">
+                    {result.content}
+                  </div>
+                </div>
+              </ScrollArea>
+              
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center space-x-2">
                   <Button 
+                    variant="outline" 
                     size="sm" 
-                    variant="ghost" 
-                    onClick={() => copyToClipboard(completionResult)} 
-                    title="Copy to clipboard"
+                    onClick={() => handleFeedback(true)}
+                    className="h-7"
                   >
-                    <CopyIcon className="h-4 w-4" />
+                    <ThumbsUp className="h-3.5 w-3.5 mr-1" />
+                    Good
                   </Button>
                   <Button 
+                    variant="outline" 
                     size="sm" 
-                    variant="ghost" 
-                    onClick={applyCompletion} 
-                    title="Apply suggestion"
+                    onClick={() => handleFeedback(false)}
+                    className="h-7"
                   >
-                    <ThumbsUp className="h-4 w-4" />
+                    <ThumbsDown className="h-3.5 w-3.5 mr-1" />
+                    Bad
                   </Button>
                 </div>
-              </div>
-              <pre className="flex-1 p-3 bg-muted rounded-md text-sm overflow-auto font-mono">
-                {completionResult}
-              </pre>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="explanation" className="flex-1 flex flex-col">
-          <div className="mb-4">
-            <Button 
-              onClick={generateExplanation} 
-              disabled={!activeFile || isLoading} 
-              className="w-full"
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-4 w-4" />
-              )}
-              Explain This Code
-            </Button>
-          </div>
-
-          {explanationResult && (
-            <div className="flex-1 flex flex-col">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-medium">Explanation</h3>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  onClick={() => copyToClipboard(explanationResult)} 
-                  title="Copy to clipboard"
-                >
-                  <CopyIcon className="h-4 w-4" />
+                <Button size="sm" onClick={handleApply} className="h-7">
+                  <Zap className="h-3.5 w-3.5 mr-1" />
+                  Apply
                 </Button>
               </div>
-              <div className="flex-1 p-3 bg-muted rounded-md text-sm overflow-auto">
-                {explanationResult}
+            </div>
+          )}
+          
+          {error && (
+            <div className="mt-2 p-3 border border-destructive/50 bg-destructive/10 rounded-md">
+              <p className="text-xs text-destructive">{error}</p>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value={AIMode.Explain} className="h-full flex flex-col mt-0">
+          <p className="text-xs text-muted-foreground mb-2">
+            Get an explanation of what your code does and how it works.
+          </p>
+          
+          {isLoading ? (
+            <div className="flex-grow flex items-center justify-center">
+              <div className="text-center">
+                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
+                <p className="text-sm">Analyzing code...</p>
+              </div>
+            </div>
+          ) : result ? (
+            <ScrollArea className="flex-grow border rounded-md p-3" viewportRef={contentRef}>
+              <div className="whitespace-pre-wrap text-sm">
+                {result.content}
+              </div>
+            </ScrollArea>
+          ) : (
+            <div className="flex-grow flex items-center justify-center border rounded-md border-dashed">
+              <div className="text-center p-4">
+                <HelpCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Click "Generate" to explain the code in your current file.
+                </p>
               </div>
             </div>
           )}
         </TabsContent>
-
-        <TabsContent value="documentation" className="flex-1 flex flex-col">
-          <div className="mb-4">
-            <Button 
-              onClick={generateDocumentation} 
-              disabled={!activeFile || isLoading} 
-              className="w-full"
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-4 w-4" />
-              )}
-              Generate Documentation
-            </Button>
+        
+        <TabsContent value={AIMode.Transform} className="h-full flex flex-col mt-0">
+          <div className="flex items-end gap-2 mb-2">
+            <div className="flex-grow">
+              <Label htmlFor="target-language" className="text-xs mb-1">Target Language</Label>
+              <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+                <SelectTrigger id="target-language">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="javascript">JavaScript</SelectItem>
+                  <SelectItem value="typescript">TypeScript</SelectItem>
+                  <SelectItem value="python">Python</SelectItem>
+                  <SelectItem value="java">Java</SelectItem>
+                  <SelectItem value="csharp">C#</SelectItem>
+                  <SelectItem value="go">Go</SelectItem>
+                  <SelectItem value="rust">Rust</SelectItem>
+                  <SelectItem value="php">PHP</SelectItem>
+                  <SelectItem value="ruby">Ruby</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-
-          {documentationResult && (
-            <div className="flex-1 flex flex-col">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-medium">Documented Code</h3>
-                <div className="flex gap-1">
+          
+          {isLoading ? (
+            <div className="flex-grow flex items-center justify-center">
+              <div className="text-center">
+                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
+                <p className="text-sm">Converting code...</p>
+              </div>
+            </div>
+          ) : result ? (
+            <div className="flex-grow flex flex-col">
+              <ScrollArea className="flex-grow" viewportRef={contentRef}>
+                <div className="space-y-3">
+                  {showExplanation && result.reasoning && (
+                    <div className="bg-muted/50 p-3 rounded-md mb-2">
+                      <p className="text-xs font-medium mb-1">Transformation Notes:</p>
+                      <p className="text-xs whitespace-pre-wrap">{result.reasoning}</p>
+                    </div>
+                  )}
+                  
+                  <div className="bg-muted p-3 rounded-md font-mono text-xs whitespace-pre overflow-x-auto">
+                    {result.content}
+                  </div>
+                </div>
+              </ScrollArea>
+              
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center space-x-2">
                   <Button 
+                    variant="outline" 
                     size="sm" 
-                    variant="ghost" 
-                    onClick={() => copyToClipboard(documentationResult)} 
-                    title="Copy to clipboard"
+                    onClick={() => handleFeedback(true)}
+                    className="h-7"
                   >
-                    <CopyIcon className="h-4 w-4" />
+                    <ThumbsUp className="h-3.5 w-3.5 mr-1" />
+                    Good
                   </Button>
                   <Button 
+                    variant="outline" 
                     size="sm" 
-                    variant="ghost" 
-                    onClick={applyDocumentation} 
-                    title="Apply documentation"
+                    onClick={() => handleFeedback(false)}
+                    className="h-7"
                   >
-                    <ThumbsUp className="h-4 w-4" />
+                    <ThumbsDown className="h-3.5 w-3.5 mr-1" />
+                    Bad
                   </Button>
                 </div>
-              </div>
-              <pre className="flex-1 p-3 bg-muted rounded-md text-sm overflow-auto font-mono">
-                {documentationResult}
-              </pre>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="tests" className="flex-1 flex flex-col">
-          <div className="mb-4">
-            <Button 
-              onClick={generateTests} 
-              disabled={!activeFile || isLoading} 
-              className="w-full"
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-4 w-4" />
-              )}
-              Generate Tests
-            </Button>
-          </div>
-
-          {testResult && (
-            <div className="flex-1 flex flex-col">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-medium">Test Code</h3>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  onClick={() => copyToClipboard(testResult)} 
-                  title="Copy to clipboard"
-                >
-                  <CopyIcon className="h-4 w-4" />
+                <Button size="sm" onClick={handleApply} className="h-7">
+                  <Zap className="h-3.5 w-3.5 mr-1" />
+                  Apply
                 </Button>
               </div>
-              <pre className="flex-1 p-3 bg-muted rounded-md text-sm overflow-auto font-mono">
-                {testResult}
-              </pre>
+            </div>
+          ) : (
+            <div className="flex-grow flex items-center justify-center border rounded-md border-dashed">
+              <div className="text-center p-4">
+                <RefreshCw className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Click "Generate" to convert your code to {targetLanguage}.
+                </p>
+              </div>
             </div>
           )}
         </TabsContent>
-      </Tabs>
-    </div>
+        
+        <TabsContent value={AIMode.Document} className="h-full flex flex-col mt-0">
+          <p className="text-xs text-muted-foreground mb-2">
+            Generate documentation for your code (comments, JSDoc, etc.).
+          </p>
+          
+          {isLoading ? (
+            <div className="flex-grow flex items-center justify-center">
+              <div className="text-center">
+                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
+                <p className="text-sm">Generating documentation...</p>
+              </div>
+            </div>
+          ) : result ? (
+            <div className="flex-grow flex flex-col">
+              <ScrollArea className="flex-grow" viewportRef={contentRef}>
+                <div className="bg-muted p-3 rounded-md font-mono text-xs whitespace-pre overflow-x-auto">
+                  {result.content}
+                </div>
+              </ScrollArea>
+              
+              <div className="flex justify-end mt-3">
+                <Button size="sm" onClick={handleApply} className="h-7">
+                  <Zap className="h-3.5 w-3.5 mr-1" />
+                  Apply
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-grow flex items-center justify-center border rounded-md border-dashed">
+              <div className="text-center p-4">
+                <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Click "Generate" to create documentation for your code.
+                </p>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value={AIMode.Test} className="h-full flex flex-col mt-0">
+          <p className="text-xs text-muted-foreground mb-2">
+            Generate test cases for your code.
+          </p>
+          
+          {isLoading ? (
+            <div className="flex-grow flex items-center justify-center">
+              <div className="text-center">
+                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
+                <p className="text-sm">Generating tests...</p>
+              </div>
+            </div>
+          ) : result ? (
+            <div className="flex-grow flex flex-col">
+              <ScrollArea className="flex-grow" viewportRef={contentRef}>
+                <div className="bg-muted p-3 rounded-md font-mono text-xs whitespace-pre overflow-x-auto">
+                  {result.content}
+                </div>
+              </ScrollArea>
+              
+              <div className="flex justify-end mt-3">
+                <Button size="sm" onClick={handleApply} className="h-7">
+                  <Zap className="h-3.5 w-3.5 mr-1" />
+                  Apply
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-grow flex items-center justify-center border rounded-md border-dashed">
+              <div className="text-center p-4">
+                <CheckSquare className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Click "Generate" to create tests for your code.
+                </p>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value={AIMode.Chat} className="h-full flex flex-col mt-0">
+          <ScrollArea className="flex-grow mb-2" viewportRef={contentRef}>
+            {chatHistory.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-center p-4">
+                <div>
+                  <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Ask a question about your code or get help with a programming task.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 p-1">
+                {chatHistory.map((message, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "max-w-[80%] rounded-lg p-3",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground ml-auto"
+                        : "bg-muted"
+                    )}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="bg-muted max-w-[80%] rounded-lg p-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="h-2 w-2 bg-muted-foreground rounded-full animate-pulse"></div>
+                      <div className="h-2 w-2 bg-muted-foreground rounded-full animate-pulse delay-150"></div>
+                      <div className="h-2 w-2 bg-muted-foreground rounded-full animate-pulse delay-300"></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+          
+          <div className="flex items-center gap-2">
+            <Textarea
+              placeholder="Ask about your code or get programming help..."
+              className="resize-none min-h-[40px]"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  processRequest();
+                }
+              }}
+            />
+            <Button
+              variant="default"
+              size="icon"
+              onClick={processRequest}
+              disabled={isLoading || !prompt.trim()}
+            >
+              <Terminal className="h-4 w-4" />
+            </Button>
+          </div>
+        </TabsContent>
+      </CardContent>
+      
+      {mode !== AIMode.Chat && (
+        <CardFooter className="p-3 pt-0">
+          <Button
+            onClick={processRequest}
+            disabled={isLoading}
+            className="w-full"
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Generate
+              </>
+            )}
+          </Button>
+        </CardFooter>
+      )}
+    </Card>
   );
 }

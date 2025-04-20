@@ -1,11 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Terminal as XTerm } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import { WebLinksAddon } from 'xterm-addon-web-links';
-import 'xterm/css/xterm.css';
-import { Project } from '@shared/schema';
-import { Button } from '@/components/ui/button';
-import { Minimize2, Maximize2, X, Terminal as TerminalIcon, Play, Square } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Maximize2,
+  Minimize2,
+  X,
+  Terminal as TerminalIcon,
+  ArrowUpRight
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Terminal as XtermTerminal } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import { WebLinksAddon } from "xterm-addon-web-links";
+import { Project } from "@shared/schema";
+import "xterm/css/xterm.css";
 
 interface TerminalProps {
   project: Project | undefined;
@@ -17,253 +24,228 @@ interface TerminalProps {
 
 export function Terminal({ project, minimized, onMinimize, onMaximize, onClose }: TerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
-  const [terminal, setTerminal] = useState<XTerm | null>(null);
-  const [fitAddon, setFitAddon] = useState<FitAddon | null>(null);
-  const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
-  
-  // Initialize xterm.js terminal
+  const xtermRef = useRef<XtermTerminal | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [output, setOutput] = useState<string[]>([]);
+
+  // Terminal initialization
   useEffect(() => {
-    if (!terminalRef.current) return;
-    
-    // Clean up previous terminal if it exists
-    if (terminal) {
-      terminal.dispose();
+    if (!terminalRef.current || !project || minimized) return;
+
+    // Clear any existing terminal
+    if (xtermRef.current) {
+      xtermRef.current.dispose();
+      xtermRef.current = null;
     }
-    
-    // Create a new terminal
-    const term = new XTerm({
+
+    // Initialize XTerm
+    const term = new XtermTerminal({
       cursorBlink: true,
+      fontFamily: "Menlo, Monaco, 'Courier New', monospace",
       fontSize: 14,
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+      lineHeight: 1.2,
       theme: {
-        background: '#1a1b26',
-        foreground: '#c0caf5',
-        cursor: '#c0caf5',
-        black: '#15161e',
-        red: '#f7768e',
-        green: '#9ece6a',
-        yellow: '#e0af68',
-        blue: '#7aa2f7',
-        magenta: '#bb9af7',
-        cyan: '#7dcfff',
-        white: '#a9b1d6',
-        brightBlack: '#414868',
-        brightRed: '#f7768e',
-        brightGreen: '#9ece6a',
-        brightYellow: '#e0af68',
-        brightBlue: '#7aa2f7',
-        brightMagenta: '#bb9af7',
-        brightCyan: '#7dcfff',
-        brightWhite: '#c0caf5'
-      },
-      scrollback: 1000,
-      allowTransparency: true
+        background: '#1e1e1e',
+        foreground: '#d4d4d4',
+        cursor: '#aeafad',
+        selectionBackground: '#264f78',
+        black: '#1e1e1e',
+        brightBlack: '#666666',
+        red: '#e06c75',
+        brightRed: '#e06c75',
+        green: '#98c379',
+        brightGreen: '#98c379',
+        yellow: '#e5c07b',
+        brightYellow: '#e5c07b',
+        blue: '#61afef',
+        brightBlue: '#61afef',
+        magenta: '#c678dd',
+        brightMagenta: '#c678dd',
+        cyan: '#56b6c2',
+        brightCyan: '#56b6c2',
+        white: '#d4d4d4',
+        brightWhite: '#ffffff'
+      }
     });
+
+    // Create and attach addons
+    const fitAddon = new FitAddon();
+    const webLinksAddon = new WebLinksAddon();
+    term.loadAddon(fitAddon);
+    term.loadAddon(webLinksAddon);
     
-    // Create addons
-    const fit = new FitAddon();
-    const webLinks = new WebLinksAddon();
-    
-    // Load addons
-    term.loadAddon(fit);
-    term.loadAddon(webLinks);
-    
-    // Open terminal in the container
+    // Store refs for later use
+    xtermRef.current = term;
+    fitAddonRef.current = fitAddon;
+
+    // Render the terminal to the container
     term.open(terminalRef.current);
-    
-    // Fit terminal to container size
-    fit.fit();
-    
-    // Show welcome message
-    term.writeln('\x1b[1;34m★ PLOT Terminal ★\x1b[0m');
-    term.writeln('Type commands or click Run to execute your project.');
+    fitAddon.fit();
+
+    // Initial welcome message
+    term.writeln('\x1b[1;32m# Terminal initialized for project: ' + project.name + '\x1b[0m');
+    term.writeln('Type commands to interact with your application.');
     term.writeln('');
     
-    // Set up resize handler
-    const handleResize = () => fit.fit();
+    // Connect to WebSocket for terminal sessions
+    connectWebSocket(project.id);
+
+    // Resize handler
+    const handleResize = () => {
+      if (fitAddonRef.current) {
+        fitAddonRef.current.fit();
+      }
+    };
+
     window.addEventListener('resize', handleResize);
-    
-    // Save terminal and addon references
-    setTerminal(term);
-    setFitAddon(fit);
-    
-    // Clean up
     return () => {
       window.removeEventListener('resize', handleResize);
       term.dispose();
-    };
-  }, []);
-  
-  // Set up WebSocket connection for terminal
-  useEffect(() => {
-    if (!project || !terminal) return;
-    
-    // Close previous connection if exists
-    if (socket) {
-      socket.close();
-    }
-    
-    // Create protocol for WebSocket (ws or wss)
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const terminalSocket = new WebSocket(`${protocol}//${window.location.host}/terminal/${project.id}`);
-    
-    // Handle incoming data from WebSocket
-    terminalSocket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'output') {
-          terminal.write(data.content);
-        } else if (data.type === 'status') {
-          setIsRunning(data.running);
-        }
-      } catch (error) {
-        // If not JSON, treat as raw output
-        terminal.write(event.data);
+      if (socketRef.current) {
+        socketRef.current.close();
       }
     };
-    
-    // Handle socket connection open
-    terminalSocket.onopen = () => {
-      terminal.writeln('\r\n\x1b[1;32mTerminal connection established\x1b[0m\r\n');
-    };
-    
-    // Handle socket connection close
-    terminalSocket.onclose = () => {
-      terminal.writeln('\r\n\x1b[1;31mTerminal connection closed\x1b[0m\r\n');
-    };
-    
-    // Handle socket connection error
-    terminalSocket.onerror = (error) => {
-      terminal.writeln(`\r\n\x1b[1;31mWebSocket error: ${error}\x1b[0m\r\n`);
-    };
-    
-    // Handle user input
-    terminal.onData((data) => {
-      if (terminalSocket.readyState === WebSocket.OPEN) {
-        terminalSocket.send(JSON.stringify({ type: 'input', content: data }));
-      }
-    });
-    
-    // Save socket reference
-    setSocket(terminalSocket);
-    
-    // Clean up
-    return () => {
-      terminalSocket.close();
-    };
-  }, [project, terminal]);
-  
-  // Handle terminal resize
+  }, [project, minimized]);
+
+  // Handle terminal resize on maximized state change
   useEffect(() => {
-    if (fitAddon && !minimized) {
+    if (fitAddonRef.current) {
       setTimeout(() => {
-        fitAddon.fit();
+        fitAddonRef.current?.fit();
       }, 100);
     }
-  }, [minimized, fitAddon]);
-  
-  // Run the project
-  const runProject = () => {
-    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  }, [isMaximized]);
+
+  // Connect to terminal WebSocket
+  const connectWebSocket = (projectId: number) => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/terminal`;
     
-    // Send run command to server
-    socket.send(JSON.stringify({ type: 'command', action: 'run' }));
-    setIsRunning(true);
-  };
-  
-  // Stop the project
-  const stopProject = () => {
-    if (!socket || socket.readyState !== WebSocket.OPEN) return;
-    
-    // Send stop command to server
-    socket.send(JSON.stringify({ type: 'command', action: 'stop' }));
-    setIsRunning(false);
-  };
-  
-  // Clear the terminal
-  const clearTerminal = () => {
-    if (terminal) {
-      terminal.clear();
+    try {
+      const socket = new WebSocket(wsUrl);
+      socketRef.current = socket;
+      
+      socket.onopen = () => {
+        setIsConnected(true);
+        // Send initial connection message with project ID
+        socket.send(JSON.stringify({
+          type: 'connect',
+          projectId: projectId
+        }));
+        
+        if (xtermRef.current) {
+          xtermRef.current.writeln('\x1b[32mConnected to terminal server\x1b[0m');
+        }
+      };
+      
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'output' && xtermRef.current) {
+            xtermRef.current.write(data.content);
+            setOutput(prev => [...prev, data.content]);
+          }
+        } catch (err) {
+          if (xtermRef.current) {
+            xtermRef.current.write(event.data);
+          }
+        }
+      };
+      
+      socket.onclose = () => {
+        setIsConnected(false);
+        if (xtermRef.current) {
+          xtermRef.current.writeln('\x1b[31mDisconnected from terminal server\x1b[0m');
+        }
+      };
+      
+      socket.onerror = (error) => {
+        console.error('Terminal WebSocket error:', error);
+        if (xtermRef.current) {
+          xtermRef.current.writeln('\x1b[31mError connecting to terminal server\x1b[0m');
+        }
+      };
+      
+      // Handle user input
+      if (xtermRef.current) {
+        xtermRef.current.onData((data) => {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+              type: 'input',
+              content: data,
+              projectId: projectId
+            }));
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to create WebSocket connection:', error);
     }
   };
-  
+
+  // Toggle maximized state
+  const toggleMaximize = () => {
+    setIsMaximized(!isMaximized);
+    if (!isMaximized) {
+      onMaximize();
+    } else {
+      onMinimize();
+    }
+  };
+
   if (minimized) {
     return (
-      <div className="fixed bottom-4 right-4 bg-background border border-border rounded-md shadow-lg z-50">
-        <div className="p-2 flex items-center justify-between">
-          <div className="flex items-center">
-            <TerminalIcon className="h-4 w-4 mr-2" />
-            <span className="text-sm font-medium">Terminal</span>
-          </div>
-          <Button variant="ghost" size="sm" onClick={onMaximize} className="h-6 w-6 p-0">
-            <Maximize2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <Button 
+        variant="outline" 
+        className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full px-4"
+        onClick={onMinimize}
+      >
+        <TerminalIcon className="h-4 w-4" />
+        <span>Terminal</span>
+      </Button>
     );
   }
-  
+
   return (
-    <div className="flex flex-col h-full bg-background border-t border-border">
-      <div className="flex items-center justify-between px-2 py-1 bg-muted/50 border-b border-border">
-        <div className="flex items-center">
-          <TerminalIcon className="h-4 w-4 mr-2" />
-          <span className="text-sm font-medium">Terminal</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          {isRunning ? (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={stopProject} 
-              className="h-6 w-6 p-0"
-              title="Stop"
-            >
-              <Square className="h-3 w-3 text-destructive" />
-            </Button>
-          ) : (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={runProject} 
-              className="h-6 w-6 p-0"
-              title="Run"
-            >
-              <Play className="h-3 w-3 text-green-500" />
-            </Button>
+    <div 
+      className={cn(
+        "fixed bottom-0 right-0 z-50 bg-card border shadow-lg transition-all duration-200 overflow-hidden",
+        isMaximized 
+          ? "w-full h-full left-0 top-0 rounded-none" 
+          : "w-2/3 h-2/5 max-h-80 mx-4 mb-4 rounded-md"
+      )}
+    >
+      <div className="flex items-center justify-between bg-muted py-2 px-3 border-b">
+        <div className="flex items-center gap-2">
+          <TerminalIcon className="h-4 w-4" />
+          <span className="font-medium">{project?.name || 'Terminal'}</span>
+          {isConnected && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-green-500"></span>
+              Connected
+            </span>
           )}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={clearTerminal} 
-            className="h-6 w-6 p-0"
-            title="Clear"
-          >
-            <span className="text-xs font-bold">CLR</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={onMinimize} title="Minimize">
+            <Minimize2 className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onMinimize} 
-            className="h-6 w-6 p-0"
-            title="Minimize"
-          >
-            <Minimize2 className="h-3 w-3" />
+          <Button variant="ghost" size="icon" onClick={toggleMaximize} title="Maximize">
+            {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClose} 
-            className="h-6 w-6 p-0"
-            title="Close"
-          >
-            <X className="h-3 w-3" />
+          <Button variant="ghost" size="icon" onClick={onClose} title="Close">
+            <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
-      <div className="flex-1 overflow-hidden" ref={terminalRef} />
+
+      <div 
+        ref={terminalRef} 
+        className="h-full w-full overflow-hidden p-2"
+      />
     </div>
   );
 }
