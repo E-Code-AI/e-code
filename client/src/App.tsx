@@ -17,6 +17,7 @@ import RuntimeTest from "@/pages/RuntimeTest";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { MobileNavigation } from '@/components/MobileNavigation';
 
 // Debug component to show authentication status
 function AuthDebug() {
@@ -77,31 +78,34 @@ function AuthDebug() {
 function AppContent() {
   return (
     <TooltipProvider>
-      <Toaster />
-      <Switch>
-        <Route path="/auth" component={AuthPage} />
-        <Route path="/runtime-test" component={RuntimePublicPage} />
-        <Route path="/runtime-dependencies" component={RuntimeTest} />
-        <Route path="/runtime-diagnostics" component={RuntimeDiagnosticsPage} />
-        <Route path="/" component={() => {
-          const [, navigate] = useLocation();
-          
-          useEffect(() => {
-            if (window.location.pathname === '/') {
-              navigate('/projects');
-            }
-          }, [navigate]);
-          
-          return null;
-        }} />
-        <ProtectedRoute path="/home" component={Home} />
-        <ProtectedRoute path="/projects" component={ProjectsPage} />
-        <ProtectedRoute path="/project/:id" component={ProjectPage} />
-        <ProtectedRoute path="/editor/:id" component={Editor} />
-        <ProtectedRoute path="/runtimes" component={RuntimesPage} />
-        <Route component={NotFound} />
-      </Switch>
-      <AuthDebug />
+      <main className="min-h-screen bg-background pb-14 md:pb-0">
+        <Toaster />
+        <Switch>
+          <Route path="/auth" component={AuthPage} />
+          <Route path="/runtime-test" component={RuntimePublicPage} />
+          <Route path="/runtime-dependencies" component={RuntimeTest} />
+          <Route path="/runtime-diagnostics" component={RuntimeDiagnosticsPage} />
+          <Route path="/" component={() => {
+            const [, navigate] = useLocation();
+            
+            useEffect(() => {
+              if (window.location.pathname === '/') {
+                navigate('/projects');
+              }
+            }, [navigate]);
+            
+            return null;
+          }} />
+          <ProtectedRoute path="/home" component={Home} />
+          <ProtectedRoute path="/projects" component={ProjectsPage} />
+          <ProtectedRoute path="/project/:id" component={ProjectPage} />
+          <ProtectedRoute path="/editor/:id" component={Editor} />
+          <ProtectedRoute path="/runtimes" component={RuntimesPage} />
+          <Route component={NotFound} />
+        </Switch>
+        <MobileNavigation />
+        <AuthDebug />
+      </main>
     </TooltipProvider>
   );
 }
