@@ -61,6 +61,11 @@ export default function RuntimeTest() {
       setLoading(false);
     }
   };
+  
+  // Auto-fetch on component mount
+  useEffect(() => {
+    fetchDependencies();
+  }, []);
 
   return (
     <div className="container py-10">

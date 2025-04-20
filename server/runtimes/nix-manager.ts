@@ -129,6 +129,37 @@ export async function checkNixAvailability(): Promise<boolean> {
 }
 
 /**
+ * Get Nix version information
+ */
+export async function getNixVersion(): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    logger.info('Getting Nix version');
+    const nixProcess = spawn('nix', ['--version']);
+    
+    let versionOutput = '';
+    
+    nixProcess.stdout.on('data', (data) => {
+      versionOutput += data.toString().trim();
+    });
+    
+    nixProcess.on('close', (code) => {
+      if (code === 0 && versionOutput) {
+        logger.info(`Nix version: ${versionOutput}`);
+        resolve(versionOutput);
+      } else {
+        logger.error('Failed to get Nix version');
+        reject(new Error('Failed to get Nix version'));
+      }
+    });
+    
+    nixProcess.on('error', (error) => {
+      logger.error(`Error getting Nix version: ${error.message}`);
+      reject(error);
+    });
+  });
+}
+
+/**
  * Generate a language-specific Nix configuration
  */
 function generateLanguageNixConfig(language: Language, options: Partial<NixConfig> = {}): string {
