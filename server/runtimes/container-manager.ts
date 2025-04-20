@@ -568,7 +568,7 @@ export async function installDependencies(containerId: string, language: Languag
       return true; // No install command needed
     }
     
-    log(`Installing dependencies for container ${containerId} with language ${language}`, 'container');
+    logger.info(`Installing dependencies for container ${containerId} with language ${language}`);
     
     const execCommand = `docker exec ${containerId} sh -c "cd /app && ${languageConfig.installCommand}"`;
     
@@ -585,7 +585,7 @@ export async function installDependencies(containerId: string, language: Languag
           activeContainers.get(containerId)!.logs.push(logEntry);
         }
         
-        log(`[Container ${containerId}] ${logEntry}`, 'container');
+        logger.info(`[Container ${containerId}] ${logEntry}`);
       });
       
       installProcess.stderr.on('data', (data: Buffer) => {
@@ -596,20 +596,20 @@ export async function installDependencies(containerId: string, language: Languag
           activeContainers.get(containerId)!.logs.push(`ERROR: ${logEntry}`);
         }
         
-        log(`[Container ${containerId}] ERROR: ${logEntry}`, 'container', 'error');
+        logger.error(`[Container ${containerId}] ${logEntry}`);
       });
       
       installProcess.on('close', (code) => {
         const success = code === 0;
         
         if (!success) {
-          log(`Failed to install dependencies for container ${containerId}`, 'container', 'error');
+          logger.error(`Failed to install dependencies for container ${containerId}`);
           
           if (activeContainers.has(containerId)) {
             activeContainers.get(containerId)!.logs.push(`ERROR: Failed to install dependencies (exit code ${code})`);
           }
         } else {
-          log(`Successfully installed dependencies for container ${containerId}`, 'container');
+          logger.info(`Successfully installed dependencies for container ${containerId}`);
           
           if (activeContainers.has(containerId)) {
             activeContainers.get(containerId)!.logs.push('Successfully installed dependencies');
@@ -621,7 +621,7 @@ export async function installDependencies(containerId: string, language: Languag
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    log(`Error installing dependencies: ${errorMessage}`, 'container', 'error');
+    logger.error(`Error installing dependencies: ${errorMessage}`);
     
     if (activeContainers.has(containerId)) {
       activeContainers.get(containerId)!.logs.push(`ERROR: ${errorMessage}`);
@@ -639,7 +639,7 @@ export async function executeCommand(containerId: string, command: string): Prom
   output: string;
 }> {
   try {
-    log(`Executing command in container ${containerId}: ${command}`, 'container');
+    logger.info(`Executing command in container ${containerId}: ${command}`);
     
     const execCommand = `docker exec ${containerId} sh -c "cd /app && ${command}"`;
     
@@ -656,7 +656,7 @@ export async function executeCommand(containerId: string, command: string): Prom
           activeContainers.get(containerId)!.logs.push(logEntry);
         }
         
-        log(`[Container ${containerId}] ${logEntry}`, 'container');
+        logger.info(`[Container ${containerId}] ${logEntry}`);
       });
       
       execProcess.stderr.on('data', (data: Buffer) => {
@@ -667,16 +667,16 @@ export async function executeCommand(containerId: string, command: string): Prom
           activeContainers.get(containerId)!.logs.push(`ERROR: ${logEntry}`);
         }
         
-        log(`[Container ${containerId}] ERROR: ${logEntry}`, 'container', 'error');
+        logger.error(`[Container ${containerId}] ${logEntry}`);
       });
       
       execProcess.on('close', (code) => {
         const success = code === 0;
         
         if (!success) {
-          log(`Command execution failed in container ${containerId} with exit code ${code}`, 'container', 'error');
+          logger.error(`Command execution failed in container ${containerId} with exit code ${code}`);
         } else {
-          log(`Command execution succeeded in container ${containerId}`, 'container');
+          logger.info(`Command execution succeeded in container ${containerId}`);
         }
         
         resolve({ success, output });
@@ -684,7 +684,7 @@ export async function executeCommand(containerId: string, command: string): Prom
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    log(`Error executing command: ${errorMessage}`, 'container', 'error');
+    logger.error(`Error executing command: ${errorMessage}`);
     
     return {
       success: false,
