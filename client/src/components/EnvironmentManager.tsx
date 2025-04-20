@@ -186,12 +186,12 @@ export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentMana
           
           <div className="space-y-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-12 gap-4 items-end">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
                 <FormField
                   control={form.control}
                   name="key"
                   render={({ field }) => (
-                    <FormItem className="col-span-4">
+                    <FormItem className="sm:col-span-4">
                       <FormLabel>Key</FormLabel>
                       <FormControl>
                         <Input placeholder="DATABASE_URL" {...field} />
@@ -205,7 +205,7 @@ export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentMana
                   control={form.control}
                   name="value"
                   render={({ field }) => (
-                    <FormItem className="col-span-6">
+                    <FormItem className="sm:col-span-6">
                       <FormLabel>Value</FormLabel>
                       <FormControl>
                         <Input placeholder="postgres://user:pass@localhost:5432/db" {...field} />
@@ -215,35 +215,37 @@ export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentMana
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="isSecret"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-start space-x-2 col-span-1 pb-2">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className="!mt-0">Secret</FormLabel>
-                    </FormItem>
-                  )}
-                />
-                
-                <Button type="submit" className="col-span-1">
-                  <Plus className="h-4 w-4" />
-                </Button>
+                <div className="flex sm:col-span-2 gap-2 items-end">
+                  <FormField
+                    control={form.control}
+                    name="isSecret"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-start space-x-2 flex-1 pb-2">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className="!mt-0">Secret</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <Button type="submit" className="ml-auto">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </form>
             </Form>
             
-            <div className="border rounded-md">
+            <div className="border rounded-md overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Key</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
+                    <TableHead className="whitespace-nowrap">Key</TableHead>
+                    <TableHead className="whitespace-nowrap">Value</TableHead>
+                    <TableHead className="w-[100px] whitespace-nowrap">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -257,31 +259,36 @@ export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentMana
                     variables.map((variable) => (
                       <TableRow key={variable.id}>
                         <TableCell className="font-medium">
-                          {variable.key}
-                          {variable.isSecret && (
-                            <span className="ml-2 text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
-                              Secret
-                            </span>
-                          )}
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="break-all">{variable.key}</span>
+                            {variable.isSecret && (
+                              <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded whitespace-nowrap">
+                                Secret
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
-                          {variable.isSecret ? (
-                            showSecrets[variable.id] ? (
-                              <span className="font-mono text-sm">{variable.value}</span>
+                          <div className="max-w-[150px] sm:max-w-[200px] md:max-w-full overflow-hidden text-ellipsis">
+                            {variable.isSecret ? (
+                              showSecrets[variable.id] ? (
+                                <span className="font-mono text-sm break-all">{variable.value}</span>
+                              ) : (
+                                "••••••••••••••••••"
+                              )
                             ) : (
-                              "••••••••••••••••••"
-                            )
-                          ) : (
-                            <span className="font-mono text-sm">{variable.value}</span>
-                          )}
+                              <span className="font-mono text-sm break-all">{variable.value}</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex space-x-1">
+                          <div className="flex flex-wrap gap-1">
                             {variable.isSecret && (
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => toggleShowSecret(variable.id)}
+                                className="h-8 w-8"
                               >
                                 {showSecrets[variable.id] ? (
                                   <EyeOff className="h-4 w-4" />
@@ -294,6 +301,7 @@ export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentMana
                               variant="ghost"
                               size="icon"
                               onClick={() => handleCopyValue(variable.value)}
+                              className="h-8 w-8"
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
@@ -301,6 +309,7 @@ export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentMana
                               variant="ghost"
                               size="icon"
                               onClick={() => confirmDelete(variable.id)}
+                              className="h-8 w-8"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -351,7 +360,7 @@ export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentMana
       </AlertDialog>
       
       <Sheet open={infoSheetOpen} onOpenChange={setInfoSheetOpen}>
-        <SheetContent>
+        <SheetContent className="sm:max-w-md overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Environment Variables Guide</SheetTitle>
             <SheetDescription>
@@ -362,7 +371,7 @@ export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentMana
           <div className="space-y-6 mt-6">
             <div>
               <h3 className="text-lg font-medium">What are environment variables?</h3>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1 text-sm">
                 Environment variables are a set of key-value pairs that can be accessed by your application.
                 They're typically used to store configuration values like API keys, database credentials, and other settings.
               </p>
@@ -370,10 +379,10 @@ export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentMana
             
             <div>
               <h3 className="text-lg font-medium">Security</h3>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1 text-sm">
                 Mark sensitive information like API keys and passwords as "Secret". Secret variables are:
               </p>
-              <ul className="list-disc ml-6 mt-2 text-muted-foreground">
+              <ul className="list-disc ml-6 mt-2 text-muted-foreground text-sm">
                 <li>Never displayed in logs</li>
                 <li>Not exposed to the browser</li>
                 <li>Hidden from other users</li>
@@ -382,7 +391,7 @@ export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentMana
             
             <div>
               <h3 className="text-lg font-medium">Accessing Variables</h3>
-              <div className="bg-muted p-3 rounded-md mt-2 font-mono text-sm">
+              <div className="bg-muted p-3 rounded-md mt-2 font-mono text-xs sm:text-sm overflow-x-auto">
                 <p className="py-1">// Node.js</p>
                 <p className="py-1">const apiKey = process.env.API_KEY;</p>
                 <div className="border-t my-2"></div>
