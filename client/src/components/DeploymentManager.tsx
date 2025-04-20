@@ -224,7 +224,7 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
                       </div>
                       <div className="flex-1 overflow-hidden">
                         <Input
-                          value={currentDeployment.domain}
+                          value={currentDeployment.url || ''}
                           readOnly
                           className="rounded-l-none border-l-0 truncate"
                         />
@@ -233,7 +233,7 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
                         variant="outline"
                         size="icon"
                         className="ml-2"
-                        onClick={() => copyToClipboard(currentDeployment.domain)}
+                        onClick={() => copyToClipboard(currentDeployment.url || '')}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -241,19 +241,19 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
                         variant="outline"
                         size="icon"
                         className="ml-2"
-                        onClick={() => openInNewTab(currentDeployment.domain)}
+                        onClick={() => openInNewTab(currentDeployment.url || '')}
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                   
-                  {currentDeployment.logs && (
+                  {currentDeployment.buildLogs && (
                     <div className="space-y-2">
                       <div className="text-sm font-medium">Deployment Logs</div>
                       <div className="bg-muted p-3 rounded-md max-h-40 overflow-y-auto">
                         <pre className="text-xs whitespace-pre-wrap break-words text-muted-foreground">
-                          {currentDeployment.logs}
+                          {currentDeployment.buildLogs}
                         </pre>
                       </div>
                     </div>
@@ -338,8 +338,8 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
                         <Globe className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <Input
-                        id="deployDomain"
-                        value={deployDomain}
+                        id="deployUrl"
+                        value={deployUrl}
                         readOnly
                         className="rounded-l-none border-l-0 bg-muted/50"
                       />
@@ -413,7 +413,7 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
                             <div className="flex items-center justify-between">
                               <div className="flex items-center">
                                 <LinkIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                                <span className="text-sm font-medium">{deployment.domain}</span>
+                                <span className="text-sm font-medium">{deployment.url || ''}</span>
                               </div>
                               {formatDeploymentStatus(deployment.status)}
                             </div>
@@ -426,7 +426,7 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
-                              onClick={() => copyToClipboard(deployment.domain)}
+                              onClick={() => copyToClipboard(deployment.url || '')}
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
@@ -435,7 +435,7 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => openInNewTab(deployment.domain)}
+                                onClick={() => openInNewTab(deployment.url || '')}
                               >
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
