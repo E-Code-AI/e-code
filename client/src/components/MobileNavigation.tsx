@@ -24,7 +24,7 @@ export function MobileNavigation() {
       <div className="fixed bottom-0 left-0 right-0 h-1 bg-black md:hidden z-50"></div>
       
       {/* Navigation mobile principale */}
-      <div className="fixed bottom-[1px] left-0 right-0 bg-background border-t h-14 flex items-center justify-between px-6 md:hidden z-40">
+      <div className="fixed bottom-[1px] left-0 right-0 bg-green-400 border-t h-14 flex items-center justify-between px-6 md:hidden z-40">
         <div className="flex items-center justify-center flex-1">
           <Button
             variant="ghost"
