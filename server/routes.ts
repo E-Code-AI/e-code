@@ -87,6 +87,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
   
+  // Add debug middleware for all API routes
+  app.use('/api', (req, res, next) => {
+    console.log(`[Auth Debug] Request to ${req.path}, isAuthenticated: ${req.isAuthenticated()}`);
+    console.log(`[Auth Debug] Session ID: ${req.sessionID}, user ID: ${req.user?.id || 'not logged in'}`);
+    next();
+  });
+  
   // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
   
