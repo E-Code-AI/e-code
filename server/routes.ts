@@ -15,6 +15,7 @@ import {
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, attachToProjectLogs } from "./runtime";
 import { setupLogsWebsocket } from "./logs";
+import { deployProject, stopDeployment, getDeploymentStatus, getDeploymentLogs } from "./deployment";
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -672,6 +673,191 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
       console.error("Error getting project status:", error);
       res.status(500).json({ message: 'Failed to get project status' });
+    }
+  });
+  
+  // Deployment routes
+  
+  // Get all deployments for a project
+  app.get('/api/projects/:id/deployments', ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const deployments = await storage.getDeployments(projectId);
+      res.json(deployments);
+    } catch (error) {
+      console.error("Error fetching deployments:", error);
+      res.status(500).json({ message: 'Failed to fetch deployments' });
+    }
+  });
+  
+  // Deploy a project
+  app.post('/api/projects/:id/deploy', ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const result = await deployProject(projectId);
+      
+      if (!result.success) {
+        return res.status(500).json({ message: result.error || 'Failed to deploy project' });
+      }
+      
+      res.json({
+        deploymentId: result.deploymentId,
+        url: result.url,
+        status: 'deploying'
+      });
+    } catch (error) {
+      console.error("Error deploying project:", error);
+      res.status(500).json({ message: 'Failed to deploy project' });
+    }
+  });
+  
+  // Stop a deployment
+  app.post('/api/deployments/:id/stop', ensureAuthenticated, async (req, res) => {
+    try {
+      const deploymentId = parseInt(req.params.id);
+      if (isNaN(deploymentId)) {
+        return res.status(400).json({ message: 'Invalid deployment ID' });
+      }
+      
+      // Get the deployment to check access
+      const deployments = await storage.getDeployments(null);
+      const deployment = deployments.find(d => d.id === deploymentId);
+      
+      if (!deployment) {
+        return res.status(404).json({ message: 'Deployment not found' });
+      }
+      
+      // Check project access
+      const project = await storage.getProject(deployment.projectId);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Check if user is owner or collaborator
+      const userId = req.user!.id;
+      if (project.ownerId !== userId) {
+        const collaborators = await storage.getProjectCollaborators(project.id);
+        const isCollaborator = collaborators.some(c => c.userId === userId);
+        if (!isCollaborator) {
+          return res.status(403).json({ message: "You don't have access to this deployment" });
+        }
+      }
+      
+      const result = await stopDeployment(deploymentId);
+      
+      if (!result.success) {
+        return res.status(500).json({ message: result.error || 'Failed to stop deployment' });
+      }
+      
+      res.json({ status: 'stopped' });
+    } catch (error) {
+      console.error("Error stopping deployment:", error);
+      res.status(500).json({ message: 'Failed to stop deployment' });
+    }
+  });
+  
+  // Get deployment status
+  app.get('/api/deployments/:id/status', ensureAuthenticated, async (req, res) => {
+    try {
+      const deploymentId = parseInt(req.params.id);
+      if (isNaN(deploymentId)) {
+        return res.status(400).json({ message: 'Invalid deployment ID' });
+      }
+      
+      // Get the deployment to check access
+      const deployments = await storage.getDeployments(null);
+      const deployment = deployments.find(d => d.id === deploymentId);
+      
+      if (!deployment) {
+        return res.status(404).json({ message: 'Deployment not found' });
+      }
+      
+      // Check project access
+      const project = await storage.getProject(deployment.projectId);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Check if user is owner or collaborator
+      const userId = req.user!.id;
+      if (project.ownerId !== userId) {
+        const collaborators = await storage.getProjectCollaborators(project.id);
+        const isCollaborator = collaborators.some(c => c.userId === userId);
+        if (!isCollaborator) {
+          return res.status(403).json({ message: "You don't have access to this deployment" });
+        }
+      }
+      
+      const status = getDeploymentStatus(deploymentId);
+      
+      // If deployment is not active, return database status
+      if (!status.isActive) {
+        return res.json({
+          status: deployment.status,
+          url: deployment.url,
+          isActive: false
+        });
+      }
+      
+      // Return active deployment status
+      res.json({
+        status: status.status,
+        url: status.url,
+        port: status.port,
+        isActive: true
+      });
+    } catch (error) {
+      console.error("Error getting deployment status:", error);
+      res.status(500).json({ message: 'Failed to get deployment status' });
+    }
+  });
+  
+  // Get deployment logs
+  app.get('/api/deployments/:id/logs', ensureAuthenticated, async (req, res) => {
+    try {
+      const deploymentId = parseInt(req.params.id);
+      if (isNaN(deploymentId)) {
+        return res.status(400).json({ message: 'Invalid deployment ID' });
+      }
+      
+      // Get the deployment to check access
+      const deployments = await storage.getDeployments(null);
+      const deployment = deployments.find(d => d.id === deploymentId);
+      
+      if (!deployment) {
+        return res.status(404).json({ message: 'Deployment not found' });
+      }
+      
+      // Check project access
+      const project = await storage.getProject(deployment.projectId);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Check if user is owner or collaborator
+      const userId = req.user!.id;
+      if (project.ownerId !== userId) {
+        const collaborators = await storage.getProjectCollaborators(project.id);
+        const isCollaborator = collaborators.some(c => c.userId === userId);
+        if (!isCollaborator) {
+          return res.status(403).json({ message: "You don't have access to this deployment" });
+        }
+      }
+      
+      const logs = getDeploymentLogs(deploymentId);
+      
+      res.json({ logs });
+    } catch (error) {
+      console.error("Error getting deployment logs:", error);
+      res.status(500).json({ message: 'Failed to get deployment logs' });
     }
   });
 
