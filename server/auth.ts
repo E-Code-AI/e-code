@@ -7,10 +7,24 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User } from "@shared/schema";
 
+// Define a type that matches what Express.User needs to be
+type UserForAuth = {
+  id: number;
+  username: string;
+  password: string;
+  email: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 // Extend Express Request type to include User
 declare global {
   namespace Express {
-    interface User extends User {}
+    // Define Express.User as our User type
+    interface User extends UserForAuth {}
   }
 }
 
@@ -59,35 +73,48 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log(`Authentication attempt for user: ${username}`);
         const user = await storage.getUserByUsername(username);
         if (!user) {
+          console.log(`User not found: ${username}`);
           return done(null, false, { message: "Incorrect username" });
         }
         
         const isValidPassword = await comparePasswords(password, user.password);
         if (!isValidPassword) {
+          console.log(`Invalid password for user: ${username}`);
           return done(null, false, { message: "Incorrect password" });
         }
         
-        return done(null, user);
+        console.log(`Authentication successful for user: ${username}`);
+        // Use as any to get around TypeScript checking as the user object is compatible with Express.User
+        return done(null, user as any);
       } catch (err) {
+        console.error(`Authentication error for user ${username}:`, err);
         return done(err);
       }
     })
   );
 
   // Serialize user to the session
-  passport.serializeUser((user, done) => {
+  passport.serializeUser((user: Express.User, done) => {
+    console.log('Serializing user:', user.id);
     done(null, user.id);
   });
 
   // Deserialize user from the session
   passport.deserializeUser(async (id: number, done) => {
     try {
+      console.log('Deserializing user ID:', id);
       const user = await storage.getUser(id);
+      if (!user) {
+        console.log('User not found during deserialization:', id);
+        return done(null, false);
+      }
       done(null, user);
     } catch (err) {
-      done(err);
+      console.error('Error deserializing user:', err);
+      done(err, null);
     }
   });
 
@@ -107,14 +134,22 @@ export function setupAuth(app: Express) {
         password: hashedPassword,
       });
 
+      console.log("User registered successfully:", user.username);
+
       // Log in the newly registered user
-      req.login(user, (err) => {
-        if (err) return next(err);
+      req.login(user as Express.User, (err: any) => {
+        if (err) {
+          console.error("Error during login after register:", err);
+          return next(err);
+        }
+        
+        console.log(`User ${user.username} logged in after registration`);
         // Return user info without password
         const { password, ...userWithoutPassword } = user;
         res.status(201).json(userWithoutPassword);
       });
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Error during registration:", err.message);
       next(err);
     }
   });
@@ -125,14 +160,14 @@ export function setupAuth(app: Express) {
       return res.status(400).json({ message: "Username and password are required" });
     }
     
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: any, user: UserForAuth | false, info: { message: string }) => {
       if (err) return next(err);
       if (!user) {
         console.log(`Login failed for ${req.body.username}: ${info?.message || "Authentication failed"}`);
         return res.status(401).json({ message: info?.message || "Authentication failed" });
       }
       
-      req.login(user, (err) => {
+      req.login(user as Express.User, (err: any) => {
         if (err) {
           console.error("Login error:", err);
           return next(err);
@@ -157,11 +192,14 @@ export function setupAuth(app: Express) {
   // Get current user info
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
+      console.log("User not authenticated when accessing /api/user");
       return res.status(401).json({ message: "Not authenticated" });
     }
     
     // Return user info without password
-    const { password, ...userWithoutPassword } = req.user as User;
+    console.log(`User ${req.user?.username} retrieved their profile`);
+    // Using as any to get around type checking since the shapes are compatible but TypeScript doesn't know
+    const { password, ...userWithoutPassword } = req.user as any; 
     res.json(userWithoutPassword);
   });
 }
