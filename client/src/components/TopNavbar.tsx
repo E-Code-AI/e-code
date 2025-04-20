@@ -82,6 +82,15 @@ const TopNavbar = ({
               {activeFile?.name || "No file selected"}
             </span>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCommandPaletteOpen}
+            className="hidden sm:flex items-center h-8 gap-1 text-xs text-muted-foreground px-2"
+          >
+            <Command className="h-3.5 w-3.5" />
+            <span>Ctrl+K</span>
+          </Button>
         </div>
         
         {/* Center section - Actions */}
@@ -127,6 +136,8 @@ const TopNavbar = ({
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={onDatabaseOpen}
+                  disabled={!project}
                 >
                   <Database className="h-4 w-4" />
                 </Button>
@@ -143,12 +154,31 @@ const TopNavbar = ({
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={onNixConfigOpen}
+                  disabled={!project}
                 >
-                  <BookMarked className="h-4 w-4" />
+                  <Package className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Docs</p>
+                <p>Nix Config</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onKeyboardShortcutsOpen}
+                >
+                  <Keyboard className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Keyboard Shortcuts</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -180,6 +210,8 @@ const TopNavbar = ({
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={onCollaborationOpen}
+                  disabled={!project}
                 >
                   <Share2 className="h-4 w-4" />
                 </Button>
