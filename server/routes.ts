@@ -1,27 +1,96 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProjectSchema, insertFileSchema } from "@shared/schema";
+import { setupAuth } from "./auth";
+import { insertProjectSchema, insertFileSchema, insertProjectCollaboratorSchema, insertDeploymentSchema } from "@shared/schema";
 import * as z from "zod";
+import { WebSocketServer } from "ws";
+
+// Middleware to ensure a user is authenticated
+const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ message: "Unauthorized" });
+};
+
+// Middleware to ensure a user has access to a project
+const ensureProjectAccess = async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  
+  const userId = req.user!.id;
+  const projectId = parseInt(req.params.projectId || req.params.id);
+  
+  // Get the project
+  const project = await storage.getProject(projectId);
+  if (!project) {
+    return res.status(404).json({ message: "Project not found" });
+  }
+  
+  // Check if user is owner
+  if (project.ownerId === userId) {
+    return next();
+  }
+  
+  // Check if user is collaborator
+  const collaborators = await storage.getProjectCollaborators(projectId);
+  const isCollaborator = collaborators.some(c => c.userId === userId);
+  
+  if (isCollaborator) {
+    return next();
+  }
+  
+  res.status(403).json({ message: "You don't have access to this project" });
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication
+  setupAuth(app);
+  
+  // Create HTTP server and WebSocket server
+  const httpServer = createServer(app);
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Handle WebSocket connections for real-time collaboration
+  wss.on("connection", (ws) => {
+    // Handle incoming messages from clients
+    ws.on("message", (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // Broadcast to all clients except sender
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.readyState === ws.OPEN) {
+            client.send(JSON.stringify(data));
+          }
+        });
+      } catch (error) {
+        console.error("WebSocket message error:", error);
+      }
+    });
+  });
+  
   // prefix all routes with /api
   const apiRouter = app.use('/api', (req, res, next) => {
     next();
   });
 
-  // Get all projects
-  app.get('/api/projects', async (req, res) => {
+  // Get all projects for the authenticated user
+  app.get('/api/projects', ensureAuthenticated, async (req, res) => {
     try {
-      const projects = await storage.getAllProjects();
+      const userId = req.user!.id;
+      const projects = await storage.getProjectsByUser(userId);
       res.json(projects);
     } catch (error) {
+      console.error("Error fetching projects:", error);
       res.status(500).json({ message: 'Failed to fetch projects' });
     }
   });
 
   // Get a project by ID
-  app.get('/api/projects/:id', async (req, res) => {
+  app.get('/api/projects/:id', ensureProjectAccess, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -35,14 +104,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(project);
     } catch (error) {
+      console.error("Error fetching project:", error);
       res.status(500).json({ message: 'Failed to fetch project' });
     }
   });
 
   // Create a new project
-  app.post('/api/projects', async (req, res) => {
+  app.post('/api/projects', ensureAuthenticated, async (req, res) => {
     try {
-      const validation = insertProjectSchema.safeParse(req.body);
+      const userId = req.user!.id;
+      const validation = insertProjectSchema.safeParse({
+        ...req.body,
+        ownerId: userId
+      });
+      
       if (!validation.success) {
         return res.status(400).json({ message: 'Invalid project data', errors: validation.error.format() });
       }
@@ -139,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Get all files for a project
-  app.get('/api/projects/:id/files', async (req, res) => {
+  app.get('/api/projects/:id/files', ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
       if (isNaN(projectId)) {
@@ -149,12 +224,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const files = await storage.getFilesByProject(projectId);
       res.json(files);
     } catch (error) {
+      console.error("Error fetching files:", error);
       res.status(500).json({ message: 'Failed to fetch files' });
     }
   });
 
   // Create a new file or folder
-  app.post('/api/projects/:id/files', async (req, res) => {
+  app.post('/api/projects/:id/files', ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
       if (isNaN(projectId)) {
@@ -188,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Get a specific file
-  app.get('/api/files/:id', async (req, res) => {
+  app.get('/api/files/:id', ensureAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -200,14 +276,34 @@ document.addEventListener('DOMContentLoaded', function() {
         return res.status(404).json({ message: 'File not found' });
       }
 
+      // Check if user has access to this file's project
+      const userId = req.user!.id;
+      const project = await storage.getProject(file.projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Check if user is owner
+      if (project.ownerId !== userId) {
+        // Check if user is collaborator
+        const collaborators = await storage.getProjectCollaborators(file.projectId);
+        const isCollaborator = collaborators.some(c => c.userId === userId);
+        
+        if (!isCollaborator) {
+          return res.status(403).json({ message: "You don't have access to this file" });
+        }
+      }
+
       res.json(file);
     } catch (error) {
+      console.error("Error fetching file:", error);
       res.status(500).json({ message: 'Failed to fetch file' });
     }
   });
 
   // Update a file
-  app.patch('/api/files/:id', async (req, res) => {
+  app.patch('/api/files/:id', ensureAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -217,6 +313,25 @@ document.addEventListener('DOMContentLoaded', function() {
       const file = await storage.getFile(id);
       if (!file) {
         return res.status(404).json({ message: 'File not found' });
+      }
+      
+      // Check if user has access to this file's project
+      const userId = req.user!.id;
+      const project = await storage.getProject(file.projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Check if user is owner
+      if (project.ownerId !== userId) {
+        // Check if user is collaborator
+        const collaborators = await storage.getProjectCollaborators(file.projectId);
+        const isCollaborator = collaborators.some(c => c.userId === userId);
+        
+        if (!isCollaborator) {
+          return res.status(403).json({ message: "You don't have access to this file" });
+        }
       }
 
       // Simplified validation for update
@@ -233,12 +348,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const updatedFile = await storage.updateFile(id, validation.data);
       res.json(updatedFile);
     } catch (error) {
+      console.error("Error updating file:", error);
       res.status(500).json({ message: 'Failed to update file' });
     }
   });
 
   // Delete a file
-  app.delete('/api/files/:id', async (req, res) => {
+  app.delete('/api/files/:id', ensureAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -249,14 +365,33 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!file) {
         return res.status(404).json({ message: 'File not found' });
       }
+      
+      // Check if user has access to this file's project
+      const userId = req.user!.id;
+      const project = await storage.getProject(file.projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Check if user is owner
+      if (project.ownerId !== userId) {
+        // Check if user is collaborator
+        const collaborators = await storage.getProjectCollaborators(file.projectId);
+        const isCollaborator = collaborators.some(c => c.userId === userId);
+        
+        if (!isCollaborator) {
+          return res.status(403).json({ message: "You don't have access to this file" });
+        }
+      }
 
       await storage.deleteFile(id);
       res.json({ success: true });
     } catch (error) {
+      console.error("Error deleting file:", error);
       res.status(500).json({ message: 'Failed to delete file' });
     }
   });
 
-  const httpServer = createServer(app);
   return httpServer;
 }
