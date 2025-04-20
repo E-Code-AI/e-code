@@ -14,6 +14,7 @@ import Terminal from '@/components/Terminal';
 import DeploymentPanel from '@/components/DeploymentPanel';
 import Collaboration from '@/components/Collaboration';
 import GitPanel from '@/components/GitPanel';
+import AIPanel from '@/components/AIPanel';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -52,7 +53,8 @@ import {
   GitBranch,
   Layers,
   Users,
-  MessageSquare
+  MessageSquare,
+  Sparkles
 } from 'lucide-react';
 
 const ProjectPage = () => {
@@ -68,6 +70,7 @@ const ProjectPage = () => {
   const [projectRunning, setProjectRunning] = useState(false);
   const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'deployment' | 'git'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
+  const [aiPanelVisible, setAiPanelVisible] = useState(false);
   
   // Get current user for collaboration
   const { user } = useAuth();
@@ -346,6 +349,11 @@ const ProjectPage = () => {
   const toggleTerminal = () => {
     setTerminalVisible(prev => !prev);
   };
+  
+  // Toggle AI panel visibility
+  const toggleAiPanel = () => {
+    setAiPanelVisible(prev => !prev);
+  };
 
   // Start/stop project
   const toggleProjectRunning = () => {
@@ -549,6 +557,28 @@ const ProjectPage = () => {
             </Tooltip>
           </TooltipProvider>
           
+          {/* AI Assistant Toggle Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8",
+                    aiPanelVisible && "bg-secondary text-secondary-foreground"
+                  )}
+                  onClick={toggleAiPanel}
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{aiPanelVisible ? 'Hide' : 'Show'} AI assistant</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
           {/* Project Actions Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -665,8 +695,40 @@ const ProjectPage = () => {
           )}
         </div>
         
+        {/* Right Panel: AI Assistant */}
+        {aiPanelVisible && projectId && (
+          <div className="w-96 border-l border-border overflow-hidden">
+            <div className="h-8 bg-muted/30 border-b border-border flex items-center px-4 justify-between">
+              <div className="flex items-center">
+                <Sparkles className="h-4 w-4 mr-2 text-primary" />
+                <h3 className="text-sm font-medium">AI Assistant</h3>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-6 w-6"
+                onClick={toggleAiPanel}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="h-[calc(100%-32px)] overflow-hidden">
+              <AIPanel 
+                projectId={projectId!} 
+                currentFileContent={selectedFile?.content || ''}
+                currentLanguage={project?.language || 'javascript'}
+                onInsertCode={(code) => {
+                  if (selectedFile) {
+                    handleFileChange(code);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
+        
         {/* Right Panel: Collaboration */}
-        {rightPanelVisible && user && projectId && (
+        {rightPanelVisible && user && projectId && !aiPanelVisible && (
           <div className="w-80 flex flex-col">
             <Collaboration 
               projectId={projectId} 
@@ -678,13 +740,24 @@ const ProjectPage = () => {
         )}
         
         {/* Collapsed Collaboration Panel Toggle */}
-        {!rightPanelVisible && user && projectId && (
+        {!rightPanelVisible && user && projectId && !aiPanelVisible && (
           <Button
             variant="ghost" 
             className="fixed bottom-4 right-4 p-2 rounded-full shadow-md"
             onClick={() => setRightPanelVisible(true)}
           >
             <Users className="h-5 w-5" />
+          </Button>
+        )}
+        
+        {/* Collapsed AI Panel Toggle */}
+        {!aiPanelVisible && (
+          <Button
+            variant="ghost" 
+            className="fixed bottom-4 right-20 p-2 rounded-full shadow-md"
+            onClick={toggleAiPanel}
+          >
+            <Sparkles className="h-5 w-5 text-primary" />
           </Button>
         )}
       </div>
