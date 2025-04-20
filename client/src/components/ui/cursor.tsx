@@ -1,64 +1,80 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-interface CursorProps {
+interface RemoteCursorProps {
   position: {
     lineNumber: number;
     column: number;
   };
-  color: string;
   username: string;
+  color: string;
   editorElement: HTMLElement | null;
   lineHeight: number;
   charWidth: number;
 }
 
-export const RemoteCursor: React.FC<CursorProps> = ({
+export function RemoteCursor({
   position,
-  color,
   username,
+  color,
   editorElement,
   lineHeight,
   charWidth,
-}) => {
-  const cursorRef = useRef<HTMLDivElement | null>(null);
+}: RemoteCursorProps) {
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
   
+  // Calculate cursor position based on line and column
   useEffect(() => {
-    if (!editorElement || !cursorRef.current) return;
+    if (!editorElement || !cursorRef.current || !labelRef.current) return;
     
-    const cursor = cursorRef.current;
-    const { lineNumber, column } = position;
+    // Calculate position
+    const top = (position.lineNumber - 1) * lineHeight;
+    const left = (position.column - 1) * charWidth;
     
-    // Position the cursor based on line and column
-    const top = (lineNumber - 1) * lineHeight;
-    const left = (column - 1) * charWidth;
+    // Set cursor position
+    cursorRef.current.style.transform = `translate(${left}px, ${top}px)`;
+    labelRef.current.style.transform = `translate(${left}px, ${top - 22}px)`;
     
-    cursor.style.transform = `translate(${left}px, ${top}px)`;
+    // Start blinking animation
+    setIsVisible(true);
+    const interval = setInterval(() => {
+      setIsVisible((prev) => !prev);
+    }, 500);
+    
+    return () => clearInterval(interval);
   }, [position, editorElement, lineHeight, charWidth]);
   
+  if (!editorElement) return null;
+  
   return (
-    <div
-      ref={cursorRef}
-      className="absolute z-10 pointer-events-none"
-      style={{ 
-        top: 0,
-        left: 0,
-        transition: 'transform 0.1s ease-in-out'
-      }}
-    >
-      <div 
-        className="absolute w-[2px] h-[18px] animate-blink-slow"
-        style={{ backgroundColor: color }}
-      />
-      <div 
-        className="absolute px-1 py-0.5 text-[10px] rounded-sm whitespace-nowrap text-white"
-        style={{ 
+    <>
+      {/* Cursor */}
+      <div
+        ref={cursorRef}
+        className="absolute z-10 pointer-events-none"
+        style={{
+          width: '2px',
+          height: `${lineHeight}px`,
           backgroundColor: color,
-          top: '-18px',
-          left: '0',
+          opacity: isVisible ? 1 : 0.3,
+          transition: 'opacity 0.1s ease-in-out',
+        }}
+      />
+      
+      {/* Username label */}
+      <div
+        ref={labelRef}
+        className="absolute z-10 pointer-events-none px-1.5 py-0.5 rounded-sm text-xs font-medium text-white whitespace-nowrap"
+        style={{
+          backgroundColor: color,
+          maxWidth: '150px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         }}
       >
         {username}
       </div>
-    </div>
+    </>
   );
-};
+}
