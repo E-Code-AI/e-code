@@ -8,18 +8,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Maximize2, Minimize2, X, RefreshCw } from 'lucide-react';
 
 interface TerminalProps {
-  projectId: number;
+  project: {
+    id: number;
+    [key: string]: any;
+  };
   onClose?: () => void;
-  isMaximized?: boolean;
-  onToggleMaximize?: () => void;
+  minimized?: boolean;
+  onMinimize?: () => void;
+  onMaximize?: () => void;
 }
 
 const Terminal: React.FC<TerminalProps> = ({ 
-  projectId, 
+  project, 
   onClose, 
-  isMaximized = false,
-  onToggleMaximize
+  minimized = false,
+  onMinimize,
+  onMaximize
 }) => {
+  const projectId = project.id;
   const terminalRef = useRef<HTMLDivElement>(null);
   const [terminal, setTerminal] = useState<XTerm | null>(null);
   const [fitAddon, setFitAddon] = useState<FitAddon | null>(null);
@@ -192,7 +198,7 @@ const Terminal: React.FC<TerminalProps> = ({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [fitAddon, isMaximized]);
+  }, [fitAddon, minimized]);
 
   // Handle reconnect
   const handleReconnect = () => {
@@ -299,7 +305,7 @@ const Terminal: React.FC<TerminalProps> = ({
   
   return (
     <div className={`flex flex-col border rounded-md overflow-hidden shadow-md bg-[#1a1b26] ${
-      isMaximized ? 'fixed top-0 left-0 right-0 bottom-0 z-50' : 'h-72'
+      !minimized ? 'h-72' : 'fixed bottom-4 right-4 w-80 h-10 z-50'
     }`}>
       <div className="flex items-center justify-between bg-slate-900 p-2 border-b">
         <Tabs value={activeTerm} onValueChange={setActiveTerm} className="w-full">
@@ -321,15 +327,27 @@ const Terminal: React.FC<TerminalProps> = ({
                 </Button>
               )}
               
-              {onToggleMaximize && (
+              {minimized && onMaximize && (
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={onToggleMaximize}
+                  onClick={onMaximize}
                   className="h-6 w-6 hover:bg-slate-800"
-                  title={isMaximized ? "Minimize Terminal" : "Maximize Terminal"}
+                  title="Maximize Terminal"
                 >
-                  {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {!minimized && onMinimize && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={onMinimize}
+                  className="h-6 w-6 hover:bg-slate-800"
+                  title="Minimize Terminal"
+                >
+                  <Minimize2 className="h-4 w-4" />
                 </Button>
               )}
               
@@ -351,7 +369,7 @@ const Terminal: React.FC<TerminalProps> = ({
             <div 
               ref={terminalRef} 
               className={`terminal-container ${
-                isMaximized ? 'h-[calc(100vh-40px)]' : 'h-[calc(288px-40px)]'
+                minimized ? 'h-0' : 'h-[calc(288px-40px)]'
               }`} 
               style={{ padding: 0 }}
             />
