@@ -413,8 +413,15 @@ export async function checkRuntimeDependencies(): Promise<{
     version?: string;
     error?: string;
   };
+  languages: Record<string, {
+    available: boolean;
+    version?: string;
+    error?: string;
+  }>;
 }> {
   try {
+    logger.info('Checking runtime dependencies');
+    
     // Try to get Docker version info
     let dockerInfo = {
       available: false as boolean,
@@ -432,12 +439,14 @@ export async function checkRuntimeDependencies(): Promise<{
             version: dockerVersion,
             error: undefined
           };
+          logger.info(`Docker is available, version: ${dockerVersion}`);
         } catch (err) {
           dockerInfo = {
             available: true,
             version: undefined,
             error: err instanceof Error ? err.message : 'Failed to get Docker version'
           };
+          logger.warn(`Docker is available but couldn't get version: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
       } else {
         dockerInfo = {
@@ -445,6 +454,7 @@ export async function checkRuntimeDependencies(): Promise<{
           version: undefined,
           error: 'Docker is not available'
         };
+        logger.warn('Docker is not available on the system');
       }
     } catch (err) {
       dockerInfo = {
@@ -452,6 +462,7 @@ export async function checkRuntimeDependencies(): Promise<{
         version: undefined,
         error: err instanceof Error ? err.message : 'Error checking Docker availability'
       };
+      logger.error(`Error checking Docker: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
     
     // Try to get Nix version info
@@ -471,12 +482,14 @@ export async function checkRuntimeDependencies(): Promise<{
             version: nixVersion,
             error: undefined
           };
+          logger.info(`Nix is available, version: ${nixVersion}`);
         } catch (err) {
           nixInfo = {
             available: true,
             version: undefined,
             error: err instanceof Error ? err.message : 'Failed to get Nix version'
           };
+          logger.warn(`Nix is available but couldn't get version: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
       } else {
         nixInfo = {
@@ -484,6 +497,7 @@ export async function checkRuntimeDependencies(): Promise<{
           version: undefined,
           error: 'Nix is not available'
         };
+        logger.warn('Nix is not available on the system');
       }
     } catch (err) {
       nixInfo = {
@@ -491,14 +505,60 @@ export async function checkRuntimeDependencies(): Promise<{
         version: undefined,
         error: err instanceof Error ? err.message : 'Error checking Nix availability'
       };
+      logger.error(`Error checking Nix: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+    
+    // Check language availability
+    // For now, we'll just return a map of language configs and their assumed availability
+    // In a full implementation, we would actually check each language runtime
+    const languages: Record<string, {
+      available: boolean;
+      version?: string;
+      error?: string;
+    }> = {};
+    
+    // Gather language info based on docker and nix availability
+    if (dockerInfo.available || nixInfo.available) {
+      logger.info('Checking language availability');
+      
+      // Get all language codes
+      const languageCodes = Object.keys(languageConfigs);
+      
+      // For each language, check availability
+      for (const code of languageCodes) {
+        try {
+          const config = languageConfigs[code as Language];
+          if (!config) continue;
+          
+          // In a real implementation, we'd test each language runtime here
+          // For now, we'll just say they're available if Docker or Nix is available
+          languages[code] = {
+            available: true,
+            version: config.version || 'Unknown version',
+            error: undefined
+          };
+        } catch (err) {
+          languages[code] = {
+            available: false,
+            version: undefined,
+            error: err instanceof Error ? err.message : `Error checking ${code}`
+          };
+          logger.warn(`Error checking language ${code}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
+      }
+      
+      logger.info(`Detected ${Object.keys(languages).length} available languages`);
+    } else {
+      logger.warn('No container environments available, languages will not be available');
     }
     
     return { 
       docker: dockerInfo,
-      nix: nixInfo
+      nix: nixInfo,
+      languages
     };
   } catch (error) {
-    logger.error(`Error checking runtime dependencies: ${error}`);
+    logger.error(`Error checking runtime dependencies: ${error instanceof Error ? error.message : String(error)}`);
     return { 
       docker: { 
         available: false, 
@@ -507,7 +567,8 @@ export async function checkRuntimeDependencies(): Promise<{
       nix: { 
         available: false, 
         error: error instanceof Error ? error.message : 'Unknown error' 
-      }
+      },
+      languages: {}
     };
   }
 }

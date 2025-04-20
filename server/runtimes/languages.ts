@@ -41,6 +41,7 @@ export interface LanguageConfig {
   packageManager?: string;
   packageFile?: string;
   icon: string;
+  version?: string;  // Version of the language runtime
 }
 
 // Map of language configurations
@@ -55,7 +56,8 @@ export const languageConfigs: Record<Language, LanguageConfig> = {
     installCommand: 'npm install',
     packageManager: 'npm',
     packageFile: 'package.json',
-    icon: 'nodejs'
+    icon: 'nodejs',
+    version: '18.x'
   },
   python: {
     name: 'python',
@@ -67,7 +69,8 @@ export const languageConfigs: Record<Language, LanguageConfig> = {
     installCommand: 'pip install -r requirements.txt',
     packageManager: 'pip',
     packageFile: 'requirements.txt',
-    icon: 'python'
+    icon: 'python',
+    version: '3.11'
   },
   java: {
     name: 'java',
@@ -245,7 +248,8 @@ class Program {
     installCommand: 'npm install',
     packageManager: 'npm',
     packageFile: 'package.json',
-    icon: 'typescript'
+    icon: 'typescript',
+    version: '5.0'
   },
   bash: {
     name: 'bash',
