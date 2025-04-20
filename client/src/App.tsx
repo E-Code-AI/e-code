@@ -18,6 +18,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { MobileNavigation } from '@/components/MobileNavigation';
+import { MobileHeader } from '@/components/MobileHeader';
 
 // Debug component to show authentication status
 function AuthDebug() {
@@ -78,8 +79,9 @@ function AuthDebug() {
 function AppContent() {
   return (
     <TooltipProvider>
-      <main className="min-h-screen bg-background pb-14 md:pb-0">
+      <main className="min-h-screen bg-background pb-14 md:pb-0 pt-14 md:pt-0">
         <Toaster />
+        <MobileHeader /> {/* En-tête pour mobile */}
         <Switch>
           <Route path="/auth" component={AuthPage} />
           <Route path="/runtime-test" component={RuntimePublicPage} />
@@ -103,7 +105,7 @@ function AppContent() {
           <ProtectedRoute path="/runtimes" component={RuntimesPage} />
           <Route component={NotFound} />
         </Switch>
-        <MobileNavigation />
+        <MobileNavigation /> {/* Navigation en bas pour mobile */}
         <AuthDebug />
       </main>
     </TooltipProvider>
