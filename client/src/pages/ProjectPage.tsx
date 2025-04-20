@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import Terminal from '@/components/Terminal';
+import DeploymentPanel from '@/components/DeploymentPanel';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -60,6 +61,7 @@ const ProjectPage = () => {
   const [terminalVisible, setTerminalVisible] = useState(true);
   const [terminalHeight, setTerminalHeight] = useState(300);
   const [projectRunning, setProjectRunning] = useState(false);
+  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'deployment'>('terminal');
 
   // Query for fetching project details
   const { 
@@ -603,12 +605,31 @@ const ProjectPage = () => {
             )}
           </div>
           
-          {/* Terminal */}
+          {/* Bottom Panel (Terminal and Deployment) */}
           {terminalVisible && (
             <div className="border-t border-border h-[300px] flex flex-col">
               <div className="h-8 bg-muted/30 border-b border-border flex items-center px-4 justify-between">
-                <div className="flex items-center">
-                  <span className="text-sm font-medium">Terminal</span>
+                <div className="flex items-center space-x-4">
+                  <Tabs 
+                    value={bottomPanelTab} 
+                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'deployment')}
+                    className="w-[400px]"
+                  >
+                    <TabsList className="h-7 bg-transparent">
+                      <TabsTrigger 
+                        value="terminal" 
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'terminal' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        Terminal
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="deployment" 
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'deployment' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        Deployment
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
                 <Button 
                   variant="ghost" 
@@ -620,7 +641,8 @@ const ProjectPage = () => {
                 </Button>
               </div>
               <div className="flex-1 overflow-hidden">
-                {projectId && <Terminal projectId={projectId} />}
+                {bottomPanelTab === 'terminal' && projectId && <Terminal projectId={projectId} />}
+                {bottomPanelTab === 'deployment' && projectId && <DeploymentPanel projectId={projectId} />}
               </div>
             </div>
           )}
