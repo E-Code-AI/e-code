@@ -4,6 +4,7 @@
  */
 
 import * as http from 'http';
+import * as os from 'os';
 import { execSync } from 'child_process';
 import { createLogger } from '../utils/logger';
 import * as containerManager from './container-manager';
@@ -194,6 +195,33 @@ export async function checkSystemDependencies(): Promise<{
 /**
  * Get health status of all active containers
  */
+/**
+ * Get current CPU usage (1 minute load average)
+ */
+export function getCpuUsage(): number {
+  try {
+    return os.loadavg()[0]; // 1 minute load average
+  } catch (error) {
+    logger.error(`Error getting CPU usage: ${error}`);
+    return 0;
+  }
+}
+
+/**
+ * Get current memory usage as a percentage string (e.g., "65.42%")
+ */
+export function getMemoryUsage(): string {
+  try {
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
+    const memoryUsage = ((totalMemory - freeMemory) / totalMemory * 100).toFixed(2);
+    return `${memoryUsage}%`;
+  } catch (error) {
+    logger.error(`Error getting memory usage: ${error}`);
+    return "0%";
+  }
+}
+
 export async function getHealthStatus(activeContainers: Map<string, {
   port?: number;
   status: string;
