@@ -284,33 +284,53 @@ function broadcastLogsToClients(projectId: number, message: string): void {
  * Check if runtime dependencies are available
  */
 export async function checkRuntimeDependencies(): Promise<{
-  docker: boolean;
-  nix: boolean;
-  languages?: {
-    [language: string]: boolean;
+  docker: {
+    available: boolean;
+    version?: string;
+    error?: string;
   };
+  nix: {
+    available: boolean;
+    version?: string;
+    error?: string;
+  };
+  languages?: Record<string, {
+    available: boolean;
+    version?: string;
+    error?: string;
+  }>;
 }> {
   try {
-    // First check using the runtime manager
-    const runtimeDeps = await runtimeManager.checkRuntimeDependencies();
-    
-    // Then check more detailed system dependencies if available
+    // Use the more detailed system dependencies directly
     try {
       const runtimeHealth = await import('./runtimes/runtime-health');
       const systemDeps = await runtimeHealth.checkSystemDependencies();
       
       return {
-        docker: runtimeDeps.docker,
-        nix: runtimeDeps.nix,
+        docker: systemDeps.docker,
+        nix: systemDeps.nix,
         languages: systemDeps.languages
       };
     } catch (error) {
-      // If runtime-health module is not available, return just the basic check
-      return runtimeDeps;
+      // If runtime-health module is not available, fall back to basic check
+      // First check using the runtime manager
+      const runtimeDeps = await runtimeManager.checkRuntimeDependencies();
+      
+      return {
+        docker: {
+          available: runtimeDeps.docker
+        },
+        nix: {
+          available: runtimeDeps.nix
+        }
+      };
     }
   } catch (error) {
     log(`Error checking runtime dependencies: ${error}`, 'runtime', 'error');
-    return { docker: false, nix: false };
+    return { 
+      docker: { available: false, error: error instanceof Error ? error.message : 'Unknown error' },
+      nix: { available: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    };
   }
 }
 
