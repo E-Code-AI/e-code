@@ -659,6 +659,7 @@ const ProjectPage = () => {
               <div className="flex-1 overflow-hidden">
                 {bottomPanelTab === 'terminal' && projectId && <Terminal projectId={projectId} />}
                 {bottomPanelTab === 'deployment' && projectId && <DeploymentPanel projectId={projectId} />}
+                {bottomPanelTab === 'git' && projectId && <GitPanel projectId={projectId} />}
               </div>
             </div>
           )}
