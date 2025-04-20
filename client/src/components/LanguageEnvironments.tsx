@@ -9,7 +9,168 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Language, languageConfigs } from '@/lib/languages';
+// Define types locally to avoid circular dependencies
+export type Language = 
+  | 'nodejs'
+  | 'python'
+  | 'java'
+  | 'go'
+  | 'ruby'
+  | 'rust'
+  | 'php'
+  | 'c'
+  | 'cpp'
+  | 'csharp'
+  | 'swift'
+  | 'kotlin'
+  | 'dart'
+  | 'typescript'
+  | 'bash'
+  | 'html-css-js'
+  | 'nix'
+  | 'deno';
+
+export interface LanguageConfig {
+  name: string;
+  displayName: string;
+  fileExtensions: string[];
+  defaultFile: string;
+  runCommand: string;
+  installCommand?: string;
+}
+
+// Language configurations
+export const languageConfigs: Record<Language, LanguageConfig> = {
+  nodejs: {
+    name: 'nodejs',
+    displayName: 'Node.js',
+    fileExtensions: ['.js', '.jsx', '.json'],
+    defaultFile: 'index.js',
+    runCommand: 'node index.js',
+    installCommand: 'npm install'
+  },
+  typescript: {
+    name: 'typescript',
+    displayName: 'TypeScript',
+    fileExtensions: ['.ts', '.tsx'],
+    defaultFile: 'index.ts',
+    runCommand: 'ts-node index.ts',
+    installCommand: 'npm install'
+  },
+  python: {
+    name: 'python',
+    displayName: 'Python',
+    fileExtensions: ['.py'],
+    defaultFile: 'main.py',
+    runCommand: 'python main.py',
+    installCommand: 'pip install -r requirements.txt'
+  },
+  java: {
+    name: 'java',
+    displayName: 'Java',
+    fileExtensions: ['.java', '.class'],
+    defaultFile: 'Main.java',
+    runCommand: 'java Main'
+  },
+  go: {
+    name: 'go',
+    displayName: 'Go',
+    fileExtensions: ['.go'],
+    defaultFile: 'main.go',
+    runCommand: 'go run main.go'
+  },
+  ruby: {
+    name: 'ruby',
+    displayName: 'Ruby',
+    fileExtensions: ['.rb'],
+    defaultFile: 'main.rb',
+    runCommand: 'ruby main.rb'
+  },
+  rust: {
+    name: 'rust',
+    displayName: 'Rust',
+    fileExtensions: ['.rs'],
+    defaultFile: 'main.rs',
+    runCommand: './main'
+  },
+  php: {
+    name: 'php',
+    displayName: 'PHP',
+    fileExtensions: ['.php'],
+    defaultFile: 'index.php',
+    runCommand: 'php -S 0.0.0.0:8080'
+  },
+  c: {
+    name: 'c',
+    displayName: 'C',
+    fileExtensions: ['.c', '.h'],
+    defaultFile: 'main.c',
+    runCommand: './main'
+  },
+  cpp: {
+    name: 'cpp',
+    displayName: 'C++',
+    fileExtensions: ['.cpp', '.hpp'],
+    defaultFile: 'main.cpp',
+    runCommand: './main'
+  },
+  csharp: {
+    name: 'csharp',
+    displayName: 'C#',
+    fileExtensions: ['.cs'],
+    defaultFile: 'Program.cs',
+    runCommand: 'dotnet run'
+  },
+  swift: {
+    name: 'swift',
+    displayName: 'Swift',
+    fileExtensions: ['.swift'],
+    defaultFile: 'main.swift',
+    runCommand: 'swift main.swift'
+  },
+  kotlin: {
+    name: 'kotlin',
+    displayName: 'Kotlin',
+    fileExtensions: ['.kt'],
+    defaultFile: 'Main.kt',
+    runCommand: 'java -jar Main.jar'
+  },
+  dart: {
+    name: 'dart',
+    displayName: 'Dart',
+    fileExtensions: ['.dart'],
+    defaultFile: 'main.dart',
+    runCommand: 'dart main.dart'
+  },
+  bash: {
+    name: 'bash',
+    displayName: 'Bash',
+    fileExtensions: ['.sh', '.bash'],
+    defaultFile: 'script.sh',
+    runCommand: 'bash script.sh'
+  },
+  'html-css-js': {
+    name: 'html-css-js',
+    displayName: 'HTML/CSS/JS',
+    fileExtensions: ['.html', '.htm', '.css', '.js'],
+    defaultFile: 'index.html',
+    runCommand: 'npx serve'
+  },
+  nix: {
+    name: 'nix',
+    displayName: 'Nix',
+    fileExtensions: ['.nix'],
+    defaultFile: 'default.nix',
+    runCommand: 'nix-build'
+  },
+  deno: {
+    name: 'deno',
+    displayName: 'Deno',
+    fileExtensions: ['.ts', '.js'],
+    defaultFile: 'index.ts',
+    runCommand: 'deno run --allow-net index.ts'
+  }
+};
 import { Loader2 } from 'lucide-react';
 
 // Importing language icons
