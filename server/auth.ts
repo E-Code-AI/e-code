@@ -51,11 +51,11 @@ export function setupAuth(app: Express) {
   // Configure session middleware
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'plot-secret-key',
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Changed to true to ensure session is saved on every request
+    saveUninitialized: true, // Changed to true to create session for all requests
     store: storage.sessionStore,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Set to false for development
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week

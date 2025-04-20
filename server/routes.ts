@@ -16,9 +16,14 @@ import { setupTerminalWebsocket } from "./terminal";
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  console.log('ensureAuthenticated check, isAuthenticated:', req.isAuthenticated());
+  console.log('session user:', req.user?.username);
+  
   if (req.isAuthenticated()) {
     return next();
   }
+  
+  console.log('Authentication failed in ensureAuthenticated middleware');
   res.status(401).json({ message: "Unauthorized" });
 };
 
@@ -146,6 +151,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  // Debug middleware to trace session and auth info
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/') && req.path !== '/api/user') {
+      console.log(`[Auth Debug] Request to ${req.path}, isAuthenticated: ${req.isAuthenticated()}`);
+      console.log(`[Auth Debug] Session ID: ${req.sessionID}, user ID: ${req.user?.id || 'not logged in'}`);
+    }
+    next();
+  });
+
   // prefix all routes with /api
   const apiRouter = app.use('/api', (req, res, next) => {
     next();
