@@ -3,7 +3,7 @@ import { File, Project } from '@shared/schema';
 import CodeEditor from './CodeEditor';
 import FileExplorer from './FileExplorer';
 import { AIAssistant } from './AIAssistant';
-import { Terminal } from './Terminal';
+import Terminal from './Terminal';
 import { Ghostwriter } from './Ghostwriter';
 import { CollaborationPanel } from './CollaborationPanel';
 import { CommandPalette } from './CommandPalette';
@@ -65,7 +65,7 @@ export function EditorWorkspace({
 }: EditorWorkspaceProps) {
   const [activeFileId, setActiveFileId] = useState<number | null>(null);
   const [activeFile, setActiveFile] = useState<File | undefined>(undefined);
-  const [showTerminal, setShowTerminal] = useState(false);
+  const [showTerminal, setShowTerminal] = useState(true); // Show terminal by default
   const [terminalMinimized, setTerminalMinimized] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showFileExplorer, setShowFileExplorer] = useState(true);
