@@ -70,7 +70,8 @@ async function copyProjectFiles(projectId: number, deployDir: string): Promise<v
     }
     
     // Write file content
-    await Bun.write(filePath, file.content || '');
+    const fs = require('fs');
+    fs.writeFileSync(filePath, file.content || '');
   }
 }
 
@@ -150,7 +151,8 @@ async function startDeploymentServer(
     case 'nodejs':
       // Check for package.json to determine how to run
       if (existsSync(join(deployDir, 'package.json'))) {
-        const pkg = JSON.parse(await Bun.file(join(deployDir, 'package.json')).text());
+        const fs = require('fs');
+        const pkg = JSON.parse(fs.readFileSync(join(deployDir, 'package.json'), 'utf8'));
         
         // Install dependencies
         await new Promise<void>((resolve, reject) => {
@@ -367,9 +369,8 @@ export async function stopDeployment(deploymentId: number): Promise<{
     
     if (!deploymentInfo) {
       // Check if it exists in the database
-      const deployment = await storage.getDeployments(null).then(
-        deployments => deployments.find(d => d.id === deploymentId)
-      );
+      const deploymentsList = await storage.getDeployments(null);
+      const deployment = deploymentsList.find(d => d.id === deploymentId);
       
       if (!deployment) {
         throw new Error('Deployment not found');
