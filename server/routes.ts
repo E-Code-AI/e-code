@@ -642,7 +642,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Runtime API Routes
   
   // Get runtime dependencies status (Docker, Nix, etc.)
-  app.get('/api/runtime/dependencies', ensureAuthenticated, getRuntimeDependencies);
+  app.get('/api/runtime/dependencies', getRuntimeDependencies);
   
   // Project runtime routes
   
@@ -725,7 +725,8 @@ document.addEventListener('DOMContentLoaded', function() {
   app.get('/api/projects/:id/runtime/logs', ensureProjectAccess, getProjectRuntimeLogs);
   
   // Public endpoint to get runtime dependencies - no auth required
-  app.get('/api/runtime/dependencies', getRuntimeDependencies);
+  // This is commented out to avoid duplicate route registration
+  // app.get('/api/runtime/dependencies', getRuntimeDependencies);
   
   // Deployment routes
   
