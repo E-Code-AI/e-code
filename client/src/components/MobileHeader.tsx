@@ -100,7 +100,7 @@ export function MobileHeader() {
   };
   
   return (
-    <header className="fixed top-0 left-0 right-0 h-14 bg-background border-b z-50 md:hidden">
+    <header className="fixed top-0 left-0 right-0 h-14 bg-orange-400 border-b z-50 md:hidden">
       <div className="px-3 h-full flex items-center">
         {getHeaderContent()}
       </div>
