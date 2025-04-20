@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Project, File } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
-import { Bell, Settings, Share2, Play, Save, Database, BookMarked, Rocket } from "lucide-react";
+import { Bell, Settings, Share2, Play, Save, Database, BookMarked, Rocket, Package, Command, Users, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -19,9 +19,23 @@ interface TopNavbarProps {
   project: Project | undefined;
   activeFile: File | undefined;
   isLoading: boolean;
+  onNixConfigOpen?: () => void;
+  onCommandPaletteOpen?: () => void;
+  onKeyboardShortcutsOpen?: () => void;
+  onDatabaseOpen?: () => void;
+  onCollaborationOpen?: () => void;
 }
 
-const TopNavbar = ({ project, activeFile, isLoading }: TopNavbarProps) => {
+const TopNavbar = ({ 
+  project, 
+  activeFile, 
+  isLoading,
+  onNixConfigOpen,
+  onCommandPaletteOpen,
+  onKeyboardShortcutsOpen,
+  onDatabaseOpen,
+  onCollaborationOpen
+}: TopNavbarProps) => {
   const { user, logoutMutation } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
   const [isDeploymentOpen, setIsDeploymentOpen] = useState(false);

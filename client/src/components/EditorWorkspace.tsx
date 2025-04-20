@@ -4,6 +4,12 @@ import CodeEditor from './CodeEditor';
 import FileExplorer from './FileExplorer';
 import { AIAssistant } from './AIAssistant';
 import { Terminal } from './Terminal';
+import { Ghostwriter } from './Ghostwriter';
+import { CollaborationPanel } from './CollaborationPanel';
+import { CommandPalette } from './CommandPalette';
+import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { ReplitDB } from './ReplitDB';
+import { NixConfig } from './NixConfig';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -16,7 +22,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { 
   Maximize2, Minimize2, Play, Terminal as TerminalIcon, 
-  Code, Sparkles, PanelLeft, PanelLeftClose 
+  Code, Sparkles, PanelLeft, PanelLeftClose, Command,
+  Database, Package, Users, Keyboard
 } from 'lucide-react';
 
 interface EditorWorkspaceProps {
@@ -42,6 +49,11 @@ export function EditorWorkspace({
   const [terminalMinimized, setTerminalMinimized] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showFileExplorer, setShowFileExplorer] = useState(true);
+  const [showCollaboration, setShowCollaboration] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showReplitDB, setShowReplitDB] = useState(false);
+  const [showNixConfig, setShowNixConfig] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -111,6 +123,100 @@ export function EditorWorkspace({
   const toggleFileExplorer = () => {
     setShowFileExplorer(!showFileExplorer);
   };
+  
+  const toggleCollaboration = () => {
+    setShowCollaboration(!showCollaboration);
+  };
+  
+  const toggleCommandPalette = () => {
+    setShowCommandPalette(!showCommandPalette);
+  };
+  
+  const toggleKeyboardShortcuts = () => {
+    setShowKeyboardShortcuts(!showKeyboardShortcuts);
+  };
+  
+  const toggleReplitDB = () => {
+    setShowReplitDB(!showReplitDB);
+  };
+  
+  const toggleNixConfig = () => {
+    setShowNixConfig(!showNixConfig);
+  };
+  
+  // Handle command palette action selection
+  const handleCommandAction = (action: string) => {
+    switch (action) {
+      case 'terminal':
+        toggleTerminal();
+        break;
+      case 'settings':
+        // Open settings
+        toast({
+          title: "Settings",
+          description: "Opening settings panel",
+        });
+        break;
+      case 'git-pull':
+      case 'git-push':
+      case 'git-commit':
+        toast({
+          title: "Git Operation",
+          description: `Executing ${action}`,
+        });
+        break;
+      case 'share':
+        toggleCollaboration();
+        break;
+      case 'run':
+        toggleTerminal();
+        toast({
+          title: "Run",
+          description: "Running your application",
+        });
+        break;
+      case 'save-all':
+        toast({
+          title: "Save All",
+          description: "All files saved successfully",
+        });
+        break;
+      case 'deploy':
+        toast({
+          title: "Deploy",
+          description: "Preparing to deploy your application",
+        });
+        break;
+      default:
+        console.log(`Command not implemented: ${action}`);
+    }
+  };
+  
+  // Keyboard shortcut for command palette
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+K or Cmd+K for command palette
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        toggleCommandPalette();
+      }
+      
+      // Ctrl+` or Cmd+` for terminal
+      if ((e.ctrlKey || e.metaKey) && e.key === '`') {
+        e.preventDefault();
+        toggleTerminal();
+      }
+      
+      // Ctrl+/ or Cmd+/ for keyboard shortcuts
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        toggleKeyboardShortcuts();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -182,25 +288,53 @@ export function EditorWorkspace({
           <ResizablePanel defaultSize={showAIAssistant ? 70 : 100} minSize={40} className="h-full">
             {/* Desktop toolbar */}
             <div className="hidden md:flex items-center justify-between px-4 py-2 border-b border-border bg-background/80">
-              <h2 className="text-sm font-medium">Editor</h2>
               <div className="flex items-center space-x-2">
+                <h2 className="text-sm font-medium">Editor</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleCommandPalette}
+                  className="h-8 text-xs text-muted-foreground"
+                  title="Command Palette (Ctrl+K)"
+                >
+                  <Command className="h-3.5 w-3.5 mr-1" />
+                  Ctrl+K
+                </Button>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Ghostwriter
+                  activeFile={activeFile}
+                  onApplyCompletion={handleApplySuggestion}
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={toggleReplitDB}
+                  className="h-8"
+                  title="Database (Replit DB)"
+                >
+                  <Database className="h-4 w-4 mr-2" />
+                  <span className="hidden lg:inline">Database</span>
+                </Button>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={toggleTerminal}
                   className="h-8"
+                  title="Terminal (Ctrl+`)"
                 >
                   <TerminalIcon className="h-4 w-4 mr-2" />
-                  Terminal
+                  <span className="hidden lg:inline">Terminal</span>
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={toggleAIAssistant}
+                  onClick={toggleCollaboration}
                   className="h-8"
+                  title="Collaboration"
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  AI Assistant
+                  <Users className="h-4 w-4 mr-2" />
+                  <span className="hidden lg:inline">Multiplayer</span>
                 </Button>
               </div>
             </div>
@@ -279,6 +413,61 @@ export function EditorWorkspace({
           />
         </div>
       )}
+      
+      {/* Collaboration panel */}
+      {showCollaboration && activeFile && (
+        <div className="fixed top-0 right-0 h-full w-80 z-40">
+          <CollaborationPanel
+            projectId={project.id}
+            fileId={activeFile.id}
+            visible={showCollaboration}
+            onInviteClick={() => {
+              toast({
+                title: "Invite Users",
+                description: "Invitation link copied to clipboard.",
+              });
+            }}
+          />
+        </div>
+      )}
+      
+      {/* Command Palette */}
+      <CommandPalette
+        open={showCommandPalette}
+        onOpenChange={setShowCommandPalette}
+        project={project}
+        files={files}
+        onFileSelect={handleFileSelect}
+        onCreateFile={(isFolder) => {
+          const name = isFolder ? 'New Folder' : 'new_file.js';
+          onFileCreate(name, isFolder, null);
+          toast({
+            title: isFolder ? "Folder Created" : "File Created",
+            description: `${name} has been created.`,
+          });
+        }}
+        onActionSelect={handleCommandAction}
+      />
+      
+      {/* Keyboard Shortcuts */}
+      <KeyboardShortcuts
+        open={showKeyboardShortcuts}
+        onOpenChange={setShowKeyboardShortcuts}
+      />
+      
+      {/* ReplitDB */}
+      <ReplitDB
+        projectId={project.id}
+        open={showReplitDB}
+        onOpenChange={setShowReplitDB}
+      />
+      
+      {/* Nix Config */}
+      <NixConfig
+        projectId={project.id}
+        open={showNixConfig}
+        onOpenChange={setShowNixConfig}
+      />
     </div>
   );
 }
