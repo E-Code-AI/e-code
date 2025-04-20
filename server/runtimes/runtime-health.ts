@@ -87,22 +87,64 @@ export async function checkContainerHealth(containerId: string, port: number): P
  * Check system-wide dependencies for language runtimes
  */
 export async function checkSystemDependencies(): Promise<{
-  docker: boolean;
-  nix: boolean;
-  languages: {
-    [language: string]: boolean;
+  docker: {
+    available: boolean;
+    version?: string;
+    error?: string;
   };
+  nix: {
+    available: boolean;
+    version?: string;
+    error?: string;
+  };
+  languages: Record<string, {
+    available: boolean;
+    version?: string;
+    error?: string;
+  }>;
 }> {
   logger.info('Checking system dependencies for language runtimes');
   
-  // Check Docker and Nix availability
-  const [dockerAvailable, nixAvailable] = await Promise.all([
-    containerManager.checkDockerAvailability(),
-    nixManager.checkNixAvailability()
-  ]);
+  // Check Docker availability with version info
+  let dockerInfo = {
+    available: false,
+    version: undefined,
+    error: undefined
+  };
+  
+  try {
+    const dockerVersion = execSync('docker --version', { encoding: 'utf8' }).trim();
+    dockerInfo = {
+      available: true,
+      version: dockerVersion
+    };
+  } catch (error) {
+    dockerInfo.error = error instanceof Error ? error.message : 'Unknown error';
+  }
+  
+  // Check Nix availability with version info
+  let nixInfo = {
+    available: false,
+    version: undefined,
+    error: undefined
+  };
+  
+  try {
+    const nixVersion = execSync('nix --version', { encoding: 'utf8' }).trim();
+    nixInfo = {
+      available: true,
+      version: nixVersion
+    };
+  } catch (error) {
+    nixInfo.error = error instanceof Error ? error.message : 'Unknown error';
+  }
   
   // Check common language interpreters/compilers
-  const languages: {[language: string]: boolean} = {};
+  const languages: Record<string, {
+    available: boolean;
+    version?: string;
+    error?: string;
+  }> = {};
   
   const languageCommands = {
     nodejs: 'node --version',
@@ -126,16 +168,25 @@ export async function checkSystemDependencies(): Promise<{
   // Check each language
   for (const [language, command] of Object.entries(languageCommands)) {
     try {
-      execSync(command, { stdio: 'ignore' });
-      languages[language] = true;
+      // Use stderr for commands that output to stderr (like java -version)
+      const stdio = language === 'java' ? 'pipe' : 'pipe';
+      const version = execSync(command, { encoding: 'utf8', stdio }).trim();
+      
+      languages[language] = {
+        available: true,
+        version
+      };
     } catch (error) {
-      languages[language] = false;
+      languages[language] = {
+        available: false,
+        error: error instanceof Error ? error.message : 'Command failed'
+      };
     }
   }
   
   return {
-    docker: dockerAvailable,
-    nix: nixAvailable,
+    docker: dockerInfo,
+    nix: nixInfo,
     languages
   };
 }

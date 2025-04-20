@@ -403,15 +403,113 @@ export function streamProjectLogs(projectId: number, callback: (log: string) => 
  * Check if runtime dependencies are available
  */
 export async function checkRuntimeDependencies(): Promise<{
-  docker: boolean;
-  nix: boolean;
+  docker: {
+    available: boolean;
+    version?: string;
+    error?: string;
+  };
+  nix: {
+    available: boolean;
+    version?: string;
+    error?: string;
+  };
 }> {
-  const [docker, nix] = await Promise.all([
-    containerManager.checkDockerAvailability(),
-    nixManager.checkNixAvailability()
-  ]);
-  
-  return { docker, nix };
+  try {
+    // Try to get Docker version info
+    let dockerInfo = {
+      available: false as boolean,
+      version: undefined as string | undefined,
+      error: undefined as string | undefined
+    };
+    
+    try {
+      const dockerAvailable = await containerManager.checkDockerAvailability();
+      if (dockerAvailable) {
+        try {
+          const dockerVersion = await containerManager.getDockerVersion();
+          dockerInfo = {
+            available: true,
+            version: dockerVersion,
+            error: undefined
+          };
+        } catch (err) {
+          dockerInfo = {
+            available: true,
+            version: undefined,
+            error: err instanceof Error ? err.message : 'Failed to get Docker version'
+          };
+        }
+      } else {
+        dockerInfo = {
+          available: false,
+          version: undefined,
+          error: 'Docker is not available'
+        };
+      }
+    } catch (err) {
+      dockerInfo = {
+        available: false,
+        version: undefined,
+        error: err instanceof Error ? err.message : 'Error checking Docker availability'
+      };
+    }
+    
+    // Try to get Nix version info
+    let nixInfo = {
+      available: false as boolean,
+      version: undefined as string | undefined,
+      error: undefined as string | undefined
+    };
+    
+    try {
+      const nixAvailable = await nixManager.checkNixAvailability();
+      if (nixAvailable) {
+        try {
+          const nixVersion = await nixManager.getNixVersion();
+          nixInfo = {
+            available: true,
+            version: nixVersion,
+            error: undefined
+          };
+        } catch (err) {
+          nixInfo = {
+            available: true,
+            version: undefined,
+            error: err instanceof Error ? err.message : 'Failed to get Nix version'
+          };
+        }
+      } else {
+        nixInfo = {
+          available: false,
+          version: undefined,
+          error: 'Nix is not available'
+        };
+      }
+    } catch (err) {
+      nixInfo = {
+        available: false,
+        version: undefined,
+        error: err instanceof Error ? err.message : 'Error checking Nix availability'
+      };
+    }
+    
+    return { 
+      docker: dockerInfo,
+      nix: nixInfo
+    };
+  } catch (error) {
+    logger.error(`Error checking runtime dependencies: ${error}`);
+    return { 
+      docker: { 
+        available: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      },
+      nix: { 
+        available: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }
+    };
+  }
 }
 
 /**
