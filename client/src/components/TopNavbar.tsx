@@ -1,7 +1,18 @@
 import { useState } from "react";
-import { Project, File } from "@/lib/types";
+import { Project, File } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
+import { Bell, Settings, Share2, Play, Save, Database, BookMarked } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TopNavbarProps {
   project: Project | undefined;
@@ -10,58 +21,188 @@ interface TopNavbarProps {
 }
 
 const TopNavbar = ({ project, activeFile, isLoading }: TopNavbarProps) => {
+  const { user, logoutMutation } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
-
+  
   const handleRun = () => {
     setIsRunning(true);
-    // Simulate a run action (in a real app this would trigger a build/run)
-    setTimeout(() => setIsRunning(false), 1000);
+    
+    // Simulate a delay for running
+    setTimeout(() => {
+      setIsRunning(false);
+    }, 2000);
   };
-
+  
+  const handleSave = () => {
+    // Save functionality would be implemented here
+  };
+  
   return (
-    <div className="h-12 bg-dark border-b border-dark-600 flex items-center px-4 justify-between">
-      <div className="flex items-center">
-        {isLoading ? (
-          <Skeleton className="h-6 w-40 bg-dark-700" />
-        ) : (
-          <div className="mr-4 flex items-center">
-            <span className="font-semibold text-sm">{project?.name || 'Project'}</span>
-            {activeFile && (
-              <>
-                <span className="mx-2 text-dark-600">/</span>
-                <span className="text-sm text-gray-400">{activeFile.name}</span>
-              </>
-            )}
-          </div>
-        )}
-        
-        <div className="flex items-center space-x-3 text-sm">
-          <button className="flex items-center text-gray-400 hover:text-white">
-            <i className="ri-git-branch-line mr-1"></i>
-            <span>main</span>
-          </button>
-          
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="px-2 py-1 rounded hover:bg-dark-700 text-white border-dark-600"
-            onClick={handleRun}
-            disabled={isRunning}
-          >
-            <i className={`${isRunning ? 'ri-loader-2-line animate-spin' : 'ri-play-circle-line text-success'} mr-1`}></i>
-            <span>{isRunning ? 'Running...' : 'Run'}</span>
-          </Button>
+    <div className="h-14 border-b flex items-center justify-between px-4">
+      {/* Left section - Project/file info */}
+      <div className="flex items-center gap-4">
+        <div className="flex flex-col">
+          <h1 className="font-semibold text-sm">
+            {isLoading ? "Loading..." : project?.name || "Untitled Project"}
+          </h1>
+          <span className="text-xs text-muted-foreground">
+            {activeFile?.name || "No file selected"}
+          </span>
         </div>
       </div>
       
-      <div className="flex items-center space-x-3">
-        <button className="text-gray-400 hover:text-white">
-          <i className="ri-share-line"></i>
-        </button>
+      {/* Center section - Actions */}
+      <div className="flex items-center gap-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleRun}
+                disabled={isRunning}
+              >
+                <Play className={`h-4 w-4 ${isRunning ? "text-green-500" : ""}`} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Run</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
-        <Button size="sm" className="px-3 py-1">
-          Invite
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSave}
+              >
+                <Save className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Save</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+              >
+                <Database className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Database</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+              >
+                <BookMarked className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Docs</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      
+      {/* Right section - User */}
+      <div className="flex items-center gap-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Share</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+              >
+                <Bell className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Notifications</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Settings</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user?.avatarUrl || ""} alt={user?.username || ""} />
+                <AvatarFallback>
+                  {user?.username?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user?.username}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {user?.email}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>Profile</DropdownMenuItem>
+            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => logoutMutation.mutate()}
+              className="text-red-500"
+            >
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
