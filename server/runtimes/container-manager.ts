@@ -156,20 +156,20 @@ export async function createContainer(config: ContainerConfig): Promise<Containe
       const runCommand = languageConfig.runCommand;
       const execCommand = `docker exec -d ${containerId} sh -c "cd /app && ${runCommand}"`;
       
-      log(`Running command in container: ${runCommand}`, 'container');
+      logger.info(`Running command in container: ${runCommand}`);
       
       const execProcess = spawn('sh', ['-c', execCommand]);
       
       execProcess.stdout.on('data', (data: Buffer) => {
         const logEntry = data.toString().trim();
         logs.push(logEntry);
-        log(`[Container ${containerId}] ${logEntry}`, 'container');
+        logger.info(`[Container ${containerId}] ${logEntry}`);
       });
       
       execProcess.stderr.on('data', (data: Buffer) => {
         const logEntry = data.toString().trim();
         logs.push(`ERROR: ${logEntry}`);
-        log(`[Container ${containerId}] ERROR: ${logEntry}`, 'container', 'error');
+        logger.error(`[Container ${containerId}] ${logEntry}`);
       });
     }
     
@@ -182,7 +182,7 @@ export async function createContainer(config: ContainerConfig): Promise<Containe
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    log(`Error creating container: ${errorMessage}`, 'container', 'error');
+    logger.error(`Error creating container: ${errorMessage}`);
     
     return {
       containerId,
@@ -198,7 +198,7 @@ export async function createContainer(config: ContainerConfig): Promise<Containe
  */
 export async function stopContainer(containerId: string): Promise<boolean> {
   try {
-    log(`Stopping container ${containerId}`, 'container');
+    logger.info(`Stopping container ${containerId}`);
     
     // Check if container exists
     const containerExists = await new Promise<boolean>((resolve) => {
@@ -215,7 +215,7 @@ export async function stopContainer(containerId: string): Promise<boolean> {
     });
     
     if (!containerExists) {
-      log(`Container ${containerId} does not exist`, 'container', 'error');
+      logger.error(`Container ${containerId} does not exist`);
       return false;
     }
     
@@ -253,11 +253,11 @@ export async function stopContainer(containerId: string): Promise<boolean> {
       activeContainers.delete(containerId);
     }
     
-    log(`Container ${containerId} stopped and removed`, 'container');
+    logger.info(`Container ${containerId} stopped and removed`);
     return true;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    log(`Error stopping container: ${errorMessage}`, 'container', 'error');
+    logger.error(`Error stopping container: ${errorMessage}`);
     return false;
   }
 }
