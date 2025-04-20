@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Project } from '@shared/schema';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Table, 
   TableBody, 
@@ -13,8 +16,51 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from '@/components/ui/table';
-import { Loader2, Plus, Save, Trash2, Key, Eye, EyeOff, RefreshCw } from 'lucide-react';
+} from "@/components/ui/table";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { 
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { 
+  KeyRound, 
+  Plus, 
+  Eye, 
+  EyeOff, 
+  Copy, 
+  Trash2, 
+  Save, 
+  Info, 
+  Settings2 
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Project } from "@shared/schema";
 
 interface EnvVariable {
   id: number;
@@ -29,277 +75,324 @@ interface EnvironmentManagerProps {
   onClose: () => void;
 }
 
+const formSchema = z.object({
+  key: z.string().min(1, "Key is required").max(255),
+  value: z.string().max(5000),
+  isSecret: z.boolean().default(false),
+});
+
 export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentManagerProps) {
-  const [envVars, setEnvVars] = useState<EnvVariable[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [variables, setVariables] = useState<EnvVariable[]>([
+    { id: 1, key: "PORT", value: "3000", isSecret: false },
+    { id: 2, key: "NODE_ENV", value: "development", isSecret: false },
+    { id: 3, key: "API_KEY", value: "sk_test_123456789", isSecret: true },
+    { id: 4, key: "DATABASE_URL", value: "postgres://user:password@localhost:5432/db", isSecret: true },
+  ]);
+  
   const [showSecrets, setShowSecrets] = useState<Record<number, boolean>>({});
-  const [newVar, setNewVar] = useState({ key: '', value: '', isSecret: false });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [variableToDelete, setVariableToDelete] = useState<number | null>(null);
+  const [infoSheetOpen, setInfoSheetOpen] = useState(false);
+  
   const { toast } = useToast();
-
-  // Fetch environment variables
-  const fetchEnvVars = async () => {
-    setIsLoading(true);
-    try {
-      const res = await apiRequest('GET', `/api/projects/${project.id}/env`);
-      const data = await res.json();
-      setEnvVars(data);
-    } catch (error) {
-      toast({
-        title: 'Failed to load environment variables',
-        description: (error as Error).message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      key: "",
+      value: "",
+      isSecret: false,
+    },
+  });
+  
+  const toggleShowSecret = (id: number) => {
+    setShowSecrets(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
   };
-
-  // Load environment variables when component mounts
-  useEffect(() => {
-    if (isOpen) {
-      fetchEnvVars();
-    }
-  }, [isOpen, project.id]);
-
-  // Add a new environment variable
-  const addEnvVar = () => {
-    if (!newVar.key.trim()) {
-      toast({
-        title: 'Invalid variable',
-        description: 'Variable key cannot be empty',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Check for duplicate key
-    if (envVars.some(v => v.key === newVar.key.trim())) {
-      toast({
-        title: 'Duplicate key',
-        description: `Environment variable "${newVar.key}" already exists`,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Add new variable to the list (with temporary ID)
-    setEnvVars([
-      ...envVars,
-      { 
-        id: -Date.now(), // Temporary negative ID to distinguish unsaved vars
-        key: newVar.key.trim(),
-        value: newVar.value,
-        isSecret: newVar.isSecret
-      }
-    ]);
-    
-    // Reset the form
-    setNewVar({ key: '', value: '', isSecret: false });
-  };
-
-  // Remove an environment variable
-  const removeEnvVar = (id: number) => {
-    setEnvVars(envVars.filter(v => v.id !== id));
-  };
-
-  // Update an environment variable
-  const updateEnvVar = (id: number, field: keyof EnvVariable, value: string | boolean) => {
-    setEnvVars(envVars.map(v => 
-      v.id === id ? { ...v, [field]: value } : v
-    ));
-  };
-
-  // Toggle visibility of a secret value
-  const toggleSecretVisibility = (id: number) => {
-    setShowSecrets({
-      ...showSecrets,
-      [id]: !showSecrets[id]
+  
+  const handleCopyValue = (value: string) => {
+    navigator.clipboard.writeText(value);
+    toast({
+      title: "Copied to clipboard",
+      description: "The value has been copied to your clipboard.",
     });
   };
-
-  // Save all environment variables
-  const saveEnvVars = async () => {
-    setIsSaving(true);
-    try {
-      const res = await apiRequest('PUT', `/api/projects/${project.id}/env`, { variables: envVars });
-      const data = await res.json();
-      
+  
+  const confirmDelete = (id: number) => {
+    setVariableToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+  
+  const handleDelete = () => {
+    if (variableToDelete !== null) {
+      setVariables(variables.filter(v => v.id !== variableToDelete));
       toast({
-        title: 'Environment variables saved',
-        description: 'Your changes have been successfully saved',
+        title: "Variable deleted",
+        description: "The environment variable has been deleted.",
       });
-      
-      // Replace our local data with server data to get proper IDs
-      setEnvVars(data);
-    } catch (error) {
-      toast({
-        title: 'Failed to save environment variables',
-        description: (error as Error).message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
+      setDeleteDialogOpen(false);
+      setVariableToDelete(null);
     }
   };
-
+  
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    // Check if key already exists
+    if (variables.some(v => v.key === values.key)) {
+      toast({
+        title: "Duplicate key",
+        description: "An environment variable with this key already exists.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Add new variable
+    const newVariable: EnvVariable = {
+      id: variables.length > 0 ? Math.max(...variables.map(v => v.id)) + 1 : 1,
+      key: values.key,
+      value: values.value,
+      isSecret: values.isSecret,
+    };
+    
+    setVariables([...variables, newVariable]);
+    
+    toast({
+      title: "Variable added",
+      description: "The environment variable has been added.",
+    });
+    
+    // Reset form
+    form.reset();
+  };
+  
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <Key className="h-5 w-5 mr-2" />
-            Environment Variables
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-4 mt-2">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Environment variables for your project will be available at runtime
-            </p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={fetchEnvVars}
-              disabled={isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5" />
+              Environment Variables
+            </DialogTitle>
+            <DialogDescription className="flex items-center justify-between">
+              <span>Manage environment variables for your project.</span>
+              <Button variant="ghost" size="sm" onClick={() => setInfoSheetOpen(true)}>
+                <Info className="h-4 w-4 mr-1" /> Guide
+              </Button>
+            </DialogDescription>
+          </DialogHeader>
           
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <>
-              <ScrollArea className="h-80">
-                <Table>
-                  <TableHeader>
+          <div className="space-y-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-12 gap-4 items-end">
+                <FormField
+                  control={form.control}
+                  name="key"
+                  render={({ field }) => (
+                    <FormItem className="col-span-4">
+                      <FormLabel>Key</FormLabel>
+                      <FormControl>
+                        <Input placeholder="DATABASE_URL" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="value"
+                  render={({ field }) => (
+                    <FormItem className="col-span-6">
+                      <FormLabel>Value</FormLabel>
+                      <FormControl>
+                        <Input placeholder="postgres://user:pass@localhost:5432/db" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="isSecret"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-start space-x-2 col-span-1 pb-2">
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="!mt-0">Secret</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <Button type="submit" className="col-span-1">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </form>
+            </Form>
+            
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Key</TableHead>
+                    <TableHead>Value</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {variables.length === 0 ? (
                     <TableRow>
-                      <TableHead className="w-1/3">Key</TableHead>
-                      <TableHead className="w-1/2">Value</TableHead>
-                      <TableHead className="w-24 text-center">Secret</TableHead>
-                      <TableHead className="w-14"></TableHead>
+                      <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
+                        No environment variables yet. Add one above.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {envVars.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                          No environment variables yet
+                  ) : (
+                    variables.map((variable) => (
+                      <TableRow key={variable.id}>
+                        <TableCell className="font-medium">
+                          {variable.key}
+                          {variable.isSecret && (
+                            <span className="ml-2 text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                              Secret
+                            </span>
+                          )}
                         </TableCell>
-                      </TableRow>
-                    ) : (
-                      envVars.map(variable => (
-                        <TableRow key={variable.id}>
-                          <TableCell>
-                            <Input 
-                              value={variable.key} 
-                              onChange={(e) => updateEnvVar(variable.id, 'key', e.target.value)}
-                              className="h-8"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex">
-                              <Input 
-                                type={variable.isSecret && !showSecrets[variable.id] ? 'password' : 'text'}
-                                value={variable.value} 
-                                onChange={(e) => updateEnvVar(variable.id, 'value', e.target.value)}
-                                className="h-8"
-                              />
-                              {variable.isSecret && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => toggleSecretVisibility(variable.id)}
-                                  className="ml-1 h-8 w-8 p-0"
-                                >
-                                  {showSecrets[variable.id] ? (
-                                    <EyeOff className="h-4 w-4" />
-                                  ) : (
-                                    <Eye className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <input 
-                              type="checkbox" 
-                              checked={variable.isSecret}
-                              onChange={(e) => updateEnvVar(variable.id, 'isSecret', e.target.checked)}
-                              className="h-4 w-4"
-                            />
-                          </TableCell>
-                          <TableCell>
+                        <TableCell>
+                          {variable.isSecret ? (
+                            showSecrets[variable.id] ? (
+                              <span className="font-mono text-sm">{variable.value}</span>
+                            ) : (
+                              "••••••••••••••••••"
+                            )
+                          ) : (
+                            <span className="font-mono text-sm">{variable.value}</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-1">
+                            {variable.isSecret && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => toggleShowSecret(variable.id)}
+                              >
+                                {showSecrets[variable.id] ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
-                              size="sm" 
-                              onClick={() => removeEnvVar(variable.id)}
-                              className="h-8 w-8 p-0"
+                              size="icon"
+                              onClick={() => handleCopyValue(variable.value)}
                             >
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Copy className="h-4 w-4" />
                             </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-              
-              <div className="flex gap-2 pt-2">
-                <Input 
-                  placeholder="KEY"
-                  value={newVar.key}
-                  onChange={(e) => setNewVar({ ...newVar, key: e.target.value })}
-                  className="w-1/3"
-                />
-                <Input 
-                  placeholder="Value"
-                  type={newVar.isSecret ? 'password' : 'text'}
-                  value={newVar.value}
-                  onChange={(e) => setNewVar({ ...newVar, value: e.target.value })}
-                  className="flex-1"
-                />
-                <div className="flex items-center px-3">
-                  <input 
-                    type="checkbox" 
-                    id="isSecret" 
-                    checked={newVar.isSecret}
-                    onChange={(e) => setNewVar({ ...newVar, isSecret: e.target.checked })}
-                    className="h-4 w-4 mr-2"
-                  />
-                  <label htmlFor="isSecret" className="text-sm">Secret</label>
-                </div>
-                <Button onClick={addEnvVar} className="gap-1">
-                  <Plus className="h-4 w-4" />
-                  Add
-                </Button>
-              </div>
-              
-              <div className="flex justify-end pt-4">
-                <Button 
-                  variant="default" 
-                  onClick={saveEnvVars} 
-                  disabled={isSaving}
-                  className="gap-2"
-                >
-                  {isSaving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => confirmDelete(variable.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
-                  Save Changes
-                </Button>
+                </TableBody>
+              </Table>
+            </div>
+            
+            <div className="bg-muted p-4 rounded-md text-sm space-y-2">
+              <h4 className="font-medium flex items-center">
+                <Settings2 className="h-4 w-4 mr-2" /> Environment variables take effect on next deployment
+              </h4>
+              <p className="text-muted-foreground">
+                Changes to environment variables will be applied when you redeploy your application.
+                Secret variables are never exposed to the browser.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>Close</Button>
+            <Button>
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this environment variable.
+              Applications that rely on this variable might stop working.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <Sheet open={infoSheetOpen} onOpenChange={setInfoSheetOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Environment Variables Guide</SheetTitle>
+            <SheetDescription>
+              Learn how to use environment variables in your project.
+            </SheetDescription>
+          </SheetHeader>
+          
+          <div className="space-y-6 mt-6">
+            <div>
+              <h3 className="text-lg font-medium">What are environment variables?</h3>
+              <p className="text-muted-foreground mt-1">
+                Environment variables are a set of key-value pairs that can be accessed by your application.
+                They're typically used to store configuration values like API keys, database credentials, and other settings.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium">Security</h3>
+              <p className="text-muted-foreground mt-1">
+                Mark sensitive information like API keys and passwords as "Secret". Secret variables are:
+              </p>
+              <ul className="list-disc ml-6 mt-2 text-muted-foreground">
+                <li>Never displayed in logs</li>
+                <li>Not exposed to the browser</li>
+                <li>Hidden from other users</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium">Accessing Variables</h3>
+              <div className="bg-muted p-3 rounded-md mt-2 font-mono text-sm">
+                <p className="py-1">// Node.js</p>
+                <p className="py-1">const apiKey = process.env.API_KEY;</p>
+                <div className="border-t my-2"></div>
+                <p className="py-1">// Browser (only non-secret vars)</p>
+                <p className="py-1">const port = import.meta.env.VITE_PORT;</p>
               </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
