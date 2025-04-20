@@ -7,7 +7,9 @@ import { spawn, ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Language, languageConfigs } from './languages';
-import { log } from '../vite';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('container');
 
 // Map to track active containers and their processes
 const activeContainers: Map<string, {
@@ -61,7 +63,7 @@ export async function createContainer(config: ContainerConfig): Promise<Containe
     // Construct the Docker run command
     const dockerCommand = `docker run --name ${containerId} -d -p ${hostPort}:${containerPort} -v ${projectDir}:/app ${envArgs} ${dockerImage}`;
     
-    log(`Starting container for project ${projectId} with language ${language}`, 'container');
+    logger.info(`Starting container for project ${projectId} with language ${language}`);
     
     // Start the container
     const containerProcess = spawn('sh', ['-c', dockerCommand]);
@@ -70,13 +72,13 @@ export async function createContainer(config: ContainerConfig): Promise<Containe
     containerProcess.stdout.on('data', (data: Buffer) => {
       const logEntry = data.toString().trim();
       logs.push(logEntry);
-      log(`[Container ${containerId}] ${logEntry}`, 'container');
+      logger.info(`[Container ${containerId}] ${logEntry}`);
     });
     
     containerProcess.stderr.on('data', (data: Buffer) => {
       const logEntry = data.toString().trim();
       logs.push(`ERROR: ${logEntry}`);
-      log(`[Container ${containerId}] ERROR: ${logEntry}`, 'container', 'error');
+      logger.error(`[Container ${containerId}] ${logEntry}`);
     });
     
     // Handle container exit
@@ -84,7 +86,7 @@ export async function createContainer(config: ContainerConfig): Promise<Containe
       if (code !== 0) {
         const errorMsg = `Container exited with code ${code}`;
         logs.push(`ERROR: ${errorMsg}`);
-        log(`[Container ${containerId}] ${errorMsg}`, 'container', 'error');
+        logger.error(`[Container ${containerId}] ${errorMsg}`);
         
         if (activeContainers.has(containerId)) {
           const container = activeContainers.get(containerId)!;
@@ -92,7 +94,7 @@ export async function createContainer(config: ContainerConfig): Promise<Containe
           container.error = errorMsg;
         }
       } else {
-        log(`[Container ${containerId}] Container stopped`, 'container');
+        logger.info(`[Container ${containerId}] Container stopped`);
         
         if (activeContainers.has(containerId)) {
           const container = activeContainers.get(containerId)!;
