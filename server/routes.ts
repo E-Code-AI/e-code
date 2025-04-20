@@ -5,6 +5,13 @@ import { setupAuth } from "./auth";
 import { insertProjectSchema, insertFileSchema, insertProjectCollaboratorSchema, insertDeploymentSchema } from "@shared/schema";
 import * as z from "zod";
 import { WebSocketServer } from "ws";
+import { 
+  generateCompletion, 
+  generateExplanation, 
+  convertCode, 
+  generateDocumentation, 
+  generateTests 
+} from "./ai";
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -453,6 +460,23 @@ document.addEventListener('DOMContentLoaded', function() {
       res.status(500).json({ message: 'Failed to delete file' });
     }
   });
+  
+  // AI Routes
+  
+  // Generate code completion
+  app.post('/api/ai/completion', ensureAuthenticated, generateCompletion);
+  
+  // Generate code explanation
+  app.post('/api/ai/explanation', ensureAuthenticated, generateExplanation);
+  
+  // Convert code between languages
+  app.post('/api/ai/convert', ensureAuthenticated, convertCode);
+  
+  // Generate documentation
+  app.post('/api/ai/document', ensureAuthenticated, generateDocumentation);
+  
+  // Generate tests
+  app.post('/api/ai/tests', ensureAuthenticated, generateTests);
 
   return httpServer;
 }
