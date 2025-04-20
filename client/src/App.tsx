@@ -1,4 +1,5 @@
 import { Switch, Route, Link, useLocation } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -82,7 +83,18 @@ function AppContent() {
         <Route path="/runtime-test" component={RuntimePublicPage} />
         <Route path="/runtime-dependencies" component={RuntimeTest} />
         <Route path="/runtime-diagnostics" component={RuntimeDiagnosticsPage} />
-        <ProtectedRoute path="/" component={Home} />
+        <Route path="/" component={() => {
+          const [, navigate] = useLocation();
+          
+          useEffect(() => {
+            if (window.location.pathname === '/') {
+              navigate('/projects');
+            }
+          }, [navigate]);
+          
+          return null;
+        }} />
+        <ProtectedRoute path="/home" component={Home} />
         <ProtectedRoute path="/projects" component={ProjectsPage} />
         <ProtectedRoute path="/project/:id" component={ProjectPage} />
         <ProtectedRoute path="/editor/:id" component={Editor} />
