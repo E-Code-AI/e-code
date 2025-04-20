@@ -345,11 +345,13 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
   const handleSelectAllUntracked = () => {
     if (!gitStatus?.changes?.untracked) return;
     
+    const untracked = gitStatus.changes.untracked;
+    
     setSelectedFiles(prev => {
-      const remaining = prev.filter(path => !gitStatus.changes?.untracked.includes(path));
-      return gitStatus.changes?.untracked.every(path => prev.includes(path))
+      const remaining = prev.filter(path => !untracked.includes(path));
+      return untracked.every(path => prev.includes(path))
         ? remaining // If all are selected, unselect all
-        : [...remaining, ...gitStatus.changes?.untracked]; // Otherwise, select all
+        : [...remaining, ...untracked]; // Otherwise, select all
     });
   };
 
@@ -587,7 +589,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
         
         {/* Changes Tab */}
         <TabsContent value="changes" className="flex-1 flex flex-col space-y-4 p-4">
-          {(gitStatus?.changes?.staged.length === 0 && gitStatus?.changes?.unstaged.length === 0 && gitStatus?.changes?.untracked.length === 0) ? (
+          {((gitStatus?.changes?.staged?.length || 0) === 0 && (gitStatus?.changes?.unstaged?.length || 0) === 0 && (gitStatus?.changes?.untracked?.length || 0) === 0) ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center">
               <Check className="h-12 w-12 text-green-500 mb-2" />
               <h3 className="text-lg font-medium">No Changes</h3>
@@ -638,7 +640,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
                     <Badge variant="outline" className="text-xs">
                       {gitStatus?.changes?.unstaged.length || 0} files
                     </Badge>
-                    {gitStatus?.changes?.unstaged.length > 0 && (
+                    {(gitStatus?.changes?.unstaged?.length || 0) > 0 && (
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -696,7 +698,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
                     <Badge variant="outline" className="text-xs">
                       {gitStatus?.changes?.untracked.length || 0} files
                     </Badge>
-                    {gitStatus?.changes?.untracked.length > 0 && (
+                    {(gitStatus?.changes?.untracked?.length || 0) > 0 && (
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -710,7 +712,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
                     )}
                   </div>
                 </div>
-                {gitStatus?.changes?.untracked.length === 0 ? (
+                {(gitStatus?.changes?.untracked?.length || 0) === 0 ? (
                   <div className="text-xs text-muted-foreground italic p-2">
                     No untracked files
                   </div>
