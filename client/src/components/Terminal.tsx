@@ -122,7 +122,7 @@ export function Terminal({ project, minimized, onMinimize, onMaximize, onClose }
   // Connect to terminal WebSocket
   const connectWebSocket = (projectId: number) => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/terminal`;
+    const wsUrl = `${protocol}//${window.location.host}/terminal/${projectId}`;
     
     try {
       const socket = new WebSocket(wsUrl);
@@ -130,11 +130,6 @@ export function Terminal({ project, minimized, onMinimize, onMaximize, onClose }
       
       socket.onopen = () => {
         setIsConnected(true);
-        // Send initial connection message with project ID
-        socket.send(JSON.stringify({
-          type: 'connect',
-          projectId: projectId
-        }));
         
         if (xtermRef.current) {
           xtermRef.current.writeln('\x1b[32mConnected to terminal server\x1b[0m');

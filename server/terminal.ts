@@ -12,7 +12,7 @@ const terminalProcesses = new Map<number, {
 export function setupTerminalWebsocket(server: Server) {
   const wss = new WebSocketServer({ 
     server, 
-    path: '/terminal/:projectId'
+    path: '/terminal'
   });
   
   wss.on('connection', (ws, req) => {
