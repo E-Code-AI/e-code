@@ -1,30 +1,47 @@
 /**
- * Runtimes Page
- * Provides UI for viewing and managing language runtimes
+ * Runtime Public Page
+ * A public route to test and demonstrate runtime functionality without authentication requirements
  */
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { LanguageEnvironments, Language, languageConfigs } from '@/components/LanguageEnvironments';
-import { RuntimePanel } from '@/components/RuntimePanel';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { InfoIcon, AlertCircle } from 'lucide-react';
+import { TestAuth } from '@/components/TestAuth';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
+import { 
+  Alert, 
+  AlertTitle, 
+  AlertDescription 
+} from '@/components/ui/alert';
+import { 
+  InfoIcon, 
+  AlertCircle, 
+  Server, 
+  Terminal, 
+  Code, 
+  Monitor 
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export default function RuntimesPage() {
+export default function RuntimePublicPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('nodejs');
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   
-  const { data: dependencies, isLoading: isLoadingDependencies } = useQuery({
+  const { data: dependencies, isLoading: isLoadingDependencies, error } = useQuery({
     queryKey: ['/api/runtime/dependencies'],
     refetchInterval: false,
     refetchOnWindowFocus: false,
-  });
-
-  const { data: projects, isLoading: isLoadingProjects } = useQuery({
-    queryKey: ['/api/projects'],
-    refetchInterval: false,
   });
 
   // Check if Docker is available
@@ -34,9 +51,27 @@ export default function RuntimesPage() {
   // If neither Docker nor Nix is available, show a warning
   const showDependencyWarning = !isLoadingDependencies && !dockerAvailable && !nixAvailable;
 
+  // For viewing raw data
+  const rawDependenciesData = JSON.stringify(dependencies, null, 2);
+
   return (
     <div className="container py-6">
-      <h1 className="text-3xl font-bold mb-6">Language Runtimes</h1>
+      <h1 className="text-3xl font-bold mb-4">Language Runtime Support</h1>
+      <p className="text-lg text-muted-foreground mb-6">
+        Test and explore available runtime environments and configurations
+      </p>
+      
+      <TestAuth />
+      
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error Loading Runtime Data</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Failed to load runtime data'}
+          </AlertDescription>
+        </Alert>
+      )}
       
       {showDependencyWarning && (
         <Alert variant="destructive" className="mb-6">
@@ -80,13 +115,17 @@ export default function RuntimesPage() {
           <Tabs defaultValue="info" className="h-full">
             <TabsList>
               <TabsTrigger value="info">Language Info</TabsTrigger>
-              <TabsTrigger value="runtime">Runtime</TabsTrigger>
+              <TabsTrigger value="runtime">Runtime Details</TabsTrigger>
+              <TabsTrigger value="data">Raw Data</TabsTrigger>
             </TabsList>
             
             <TabsContent value="info" className="h-[calc(100%-2rem)]">
               <Card className="h-full">
                 <CardHeader>
-                  <CardTitle>{selectedLanguage ? `${selectedLanguage} Environment` : 'Language Environment'}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Code className="h-5 w-5" />
+                    <CardTitle>{selectedLanguage ? `${languageConfigs[selectedLanguage]?.displayName} Environment` : 'Language Environment'}</CardTitle>
+                  </div>
                   <CardDescription>
                     Setup and configuration details
                   </CardDescription>
@@ -158,23 +197,93 @@ export default function RuntimesPage() {
             </TabsContent>
             
             <TabsContent value="runtime" className="h-[calc(100%-2rem)]">
-              {selectedProjectId ? (
-                <RuntimePanel projectId={selectedProjectId} />
-              ) : (
-                <Card className="h-full">
-                  <CardHeader>
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Terminal className="h-5 w-5" />
                     <CardTitle>Runtime Environment</CardTitle>
-                    <CardDescription>
-                      Select a project to manage its runtime
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-                      No project selected
+                  </div>
+                  <CardDescription>
+                    Runtime execution details for {selectedLanguage}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="flex flex-col space-y-2">
+                      <span className="text-sm font-medium">Docker Status</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`h-3 w-3 rounded-full ${dockerAvailable ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                        <span className="text-sm text-muted-foreground">{dockerAvailable ? 'Available' : 'Not Available'}</span>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                    
+                    <div className="flex flex-col space-y-2">
+                      <span className="text-sm font-medium">Nix Status</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`h-3 w-3 rounded-full ${nixAvailable ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                        <span className="text-sm text-muted-foreground">{nixAvailable ? 'Available' : 'Not Available'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium">Runtime Support</span>
+                    <div className="rounded-md border p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Monitor className="h-5 w-5 text-muted-foreground" />
+                          <span>{languageConfigs[selectedLanguage]?.displayName} Runtime</span>
+                        </div>
+                        <div>
+                          {dependencies?.languages && dependencies.languages[selectedLanguage] ? (
+                            <div className="flex items-center gap-2">
+                              <span className="h-3 w-3 rounded-full bg-green-500"></span>
+                              <span className="text-sm text-green-600">Ready</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="h-3 w-3 rounded-full bg-amber-500"></span>
+                              <span className="text-sm text-amber-600">Not Initialized</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium">Actions</span>
+                    <div className="flex gap-2">
+                      <Button disabled={!dockerAvailable && !nixAvailable} size="sm">
+                        <Server className="h-4 w-4 mr-2" />
+                        Start Runtime
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Terminal className="h-4 w-4 mr-2" />
+                        Open Terminal
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="data" className="h-[calc(100%-2rem)]">
+              <Card className="h-full">
+                <CardHeader>
+                  <CardTitle>Raw Runtime Data</CardTitle>
+                  <CardDescription>
+                    Debug information for runtime dependencies
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-md bg-muted p-4">
+                    <pre className="text-xs overflow-auto max-h-[60vh]">
+                      {isLoadingDependencies ? 'Loading...' : rawDependenciesData || 'No data available'}
+                    </pre>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
