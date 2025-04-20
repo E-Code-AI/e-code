@@ -8,6 +8,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { File, Project } from '@shared/schema';
+import TopNavbar from '@/components/TopNavbar';
 
 export default function EditorPage() {
   const { projectId } = useParams();
@@ -162,14 +163,28 @@ export default function EditorPage() {
     );
   }
   
+  // Track active file for Navbar
+  const [activeFile, setActiveFile] = useState<File | undefined>(undefined);
+
+  // Update active file handler
+  const handleActiveFileChange = (file: File | undefined) => {
+    setActiveFile(file);
+  };
+  
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
+      <TopNavbar 
+        project={project} 
+        activeFile={activeFile}
+        isLoading={isLoadingProject || isLoadingFiles}
+      />
       <EditorWorkspace
         project={project}
         files={files}
         onFileUpdate={handleFileUpdate}
         onFileCreate={handleFileCreate}
         onFileDelete={handleFileDelete}
+        onActiveFileChange={handleActiveFileChange}
       />
     </div>
   );

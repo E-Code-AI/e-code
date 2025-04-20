@@ -25,6 +25,7 @@ interface EditorWorkspaceProps {
   onFileUpdate: (fileId: number, content: string) => Promise<void>;
   onFileCreate: (name: string, isFolder: boolean, parentId?: number | null) => Promise<void>;
   onFileDelete: (fileId: number) => Promise<void>;
+  onActiveFileChange?: (file: File | undefined) => void;
 }
 
 export function EditorWorkspace({ 
@@ -32,7 +33,8 @@ export function EditorWorkspace({
   files, 
   onFileUpdate, 
   onFileCreate, 
-  onFileDelete 
+  onFileDelete,
+  onActiveFileChange
 }: EditorWorkspaceProps) {
   const [activeFileId, setActiveFileId] = useState<number | null>(null);
   const [activeFile, setActiveFile] = useState<File | undefined>(undefined);
@@ -67,6 +69,13 @@ export function EditorWorkspace({
       setActiveFile(undefined);
     }
   }, [activeFileId, files]);
+  
+  // Notify parent component about active file changes
+  useEffect(() => {
+    if (onActiveFileChange) {
+      onActiveFileChange(activeFile);
+    }
+  }, [activeFile, onActiveFileChange]);
 
   // Handle file selection
   const handleFileSelect = (file: File) => {
@@ -104,9 +113,9 @@ export function EditorWorkspace({
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Top toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-background/80">
+    <div className="h-full flex flex-col overflow-hidden">
+      {/* Editor toolbar - only visible on smaller screens for responsive design */}
+      <div className="flex md:hidden items-center justify-between px-4 py-2 border-b border-border bg-background/80">
         <div className="flex items-center space-x-2">
           <Button 
             variant="ghost" 
@@ -117,7 +126,6 @@ export function EditorWorkspace({
           >
             {showFileExplorer ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
           </Button>
-          <h1 className="text-lg font-medium">{project.name}</h1>
         </div>
         <div className="flex items-center space-x-2">
           <Button 
@@ -127,7 +135,7 @@ export function EditorWorkspace({
             className="h-8"
           >
             <TerminalIcon className="h-4 w-4 mr-2" />
-            Terminal
+            <span className="hidden sm:inline">Terminal</span>
           </Button>
           <Button 
             variant="outline" 
@@ -136,16 +144,29 @@ export function EditorWorkspace({
             className="h-8"
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            AI Assistant
+            <span className="hidden sm:inline">AI Assistant</span>
           </Button>
         </div>
       </div>
 
       {/* Main workspace area */}
-      <div className="flex-grow flex overflow-hidden">
-        {/* File explorer (left sidebar) */}
+      <div className="flex-grow grid grid-cols-1 md:grid-cols-[auto,1fr] overflow-hidden">
+        {/* File explorer (left sidebar) - Responsive sidebar */}
         {showFileExplorer && (
-          <div className="w-64 border-r border-border bg-background overflow-y-auto">
+          <div className={`${showFileExplorer ? 'block' : 'hidden'} md:block w-full md:w-64 border-r border-border bg-background overflow-y-auto`}>
+            {/* Desktop toolbar visible only in sidebar */}
+            <div className="hidden md:flex items-center justify-between px-4 py-2 border-b border-border">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={toggleFileExplorer}
+                className="h-8 w-8 p-0"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium">Files</span>
+            </div>
+            
             <FileExplorer 
               files={files} 
               isLoading={false}
@@ -155,23 +176,50 @@ export function EditorWorkspace({
           </div>
         )}
 
-        {/* Editor and panels */}
-        <ResizablePanelGroup direction="horizontal" className="flex-grow">
+        {/* Right side content - Editor area */}
+        <ResizablePanelGroup direction="horizontal" className="w-full">
           {/* Editor area */}
-          <ResizablePanel defaultSize={showAIAssistant ? 70 : 100} minSize={40}>
-            {activeFile ? (
-              <CodeEditor file={activeFile} onChange={handleFileChange} />
-            ) : (
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center p-6">
-                  <Code className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-medium mb-2">No file selected</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Select a file from the explorer to start editing
-                  </p>
-                </div>
+          <ResizablePanel defaultSize={showAIAssistant ? 70 : 100} minSize={40} className="h-full">
+            {/* Desktop toolbar */}
+            <div className="hidden md:flex items-center justify-between px-4 py-2 border-b border-border bg-background/80">
+              <h2 className="text-sm font-medium">Editor</h2>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={toggleTerminal}
+                  className="h-8"
+                >
+                  <TerminalIcon className="h-4 w-4 mr-2" />
+                  Terminal
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={toggleAIAssistant}
+                  className="h-8"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Assistant
+                </Button>
               </div>
-            )}
+            </div>
+            
+            <div className="h-[calc(100%-40px)]">
+              {activeFile ? (
+                <CodeEditor file={activeFile} onChange={handleFileChange} />
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-center p-6">
+                    <Code className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-medium mb-2">No file selected</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Select a file from the explorer to start editing
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </ResizablePanel>
 
           {/* AI Assistant panel */}
@@ -179,10 +227,27 @@ export function EditorWorkspace({
             <>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={30} minSize={25}>
-                <AIAssistant 
-                  activeFile={activeFile} 
-                  onApplyCompletion={handleApplySuggestion} 
-                />
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+                    <span className="text-sm font-medium">AI Assistant</span>
+                    <Button
+                      variant="ghost" 
+                      size="sm"
+                      onClick={toggleAIAssistant}
+                      className="h-6 w-6 p-0"
+                    >
+                      <span className="sr-only">Close</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </Button>
+                  </div>
+                  
+                  <div className="flex-1 overflow-hidden">
+                    <AIAssistant 
+                      activeFile={activeFile} 
+                      onApplyCompletion={handleApplySuggestion} 
+                    />
+                  </div>
+                </div>
               </ResizablePanel>
             </>
           )}
