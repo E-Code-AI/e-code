@@ -305,7 +305,7 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="deployDomain">Domain Name</Label>
+                    <Label htmlFor="deployUrl">Domain Name</Label>
                     <div className="flex items-center">
                       <Checkbox 
                         id="useCustomDomain" 

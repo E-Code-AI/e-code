@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Project, File } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
-import { Bell, Settings, Share2, Play, Save, Database, BookMarked } from "lucide-react";
+import { Bell, Settings, Share2, Play, Save, Database, BookMarked, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DeploymentManager } from "@/components/DeploymentManager";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +24,7 @@ interface TopNavbarProps {
 const TopNavbar = ({ project, activeFile, isLoading }: TopNavbarProps) => {
   const { user, logoutMutation } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
+  const [isDeploymentOpen, setIsDeploymentOpen] = useState(false);
   
   const handleRun = () => {
     setIsRunning(true);
@@ -37,174 +39,210 @@ const TopNavbar = ({ project, activeFile, isLoading }: TopNavbarProps) => {
     // Save functionality would be implemented here
   };
   
+  const handleOpenDeployment = () => {
+    setIsDeploymentOpen(true);
+  };
+  
+  const handleCloseDeployment = () => {
+    setIsDeploymentOpen(false);
+  };
+  
   return (
-    <div className="h-14 border-b flex items-center justify-between px-4">
-      {/* Left section - Project/file info */}
-      <div className="flex items-center gap-4">
-        <div className="flex flex-col">
-          <h1 className="font-semibold text-sm">
-            {isLoading ? "Loading..." : project?.name || "Untitled Project"}
-          </h1>
-          <span className="text-xs text-muted-foreground">
-            {activeFile?.name || "No file selected"}
-          </span>
+    <>
+      {project && (
+        <DeploymentManager 
+          project={project} 
+          isOpen={isDeploymentOpen} 
+          onClose={handleCloseDeployment} 
+        />
+      )}
+      
+      <div className="h-14 border-b flex items-center justify-between px-4">
+        {/* Left section - Project/file info */}
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <h1 className="font-semibold text-sm">
+              {isLoading ? "Loading..." : project?.name || "Untitled Project"}
+            </h1>
+            <span className="text-xs text-muted-foreground">
+              {activeFile?.name || "No file selected"}
+            </span>
+          </div>
+        </div>
+        
+        {/* Center section - Actions */}
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRun}
+                  disabled={isRunning}
+                >
+                  <Play className={`h-4 w-4 ${isRunning ? "text-green-500" : ""}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Run</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSave}
+                >
+                  <Save className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Save</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                >
+                  <Database className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Database</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                >
+                  <BookMarked className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Docs</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        
+        {/* Right section - User */}
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleOpenDeployment}
+                  disabled={!project}
+                >
+                  <Rocket className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Deploy</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Share</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                >
+                  <Bell className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Notifications</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Settings</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user?.avatarUrl || ""} alt={user?.username || ""} />
+                  <AvatarFallback>
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user?.username}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Profile</DropdownMenuItem>
+              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => logoutMutation.mutate()}
+                className="text-red-500"
+              >
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-      
-      {/* Center section - Actions */}
-      <div className="flex items-center gap-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleRun}
-                disabled={isRunning}
-              >
-                <Play className={`h-4 w-4 ${isRunning ? "text-green-500" : ""}`} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Run</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleSave}
-              >
-                <Save className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Save</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-              >
-                <Database className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Database</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-              >
-                <BookMarked className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Docs</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-      
-      {/* Right section - User */}
-      <div className="flex items-center gap-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Share</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-              >
-                <Bell className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Notifications</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Settings</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.avatarUrl || ""} alt={user?.username || ""} />
-                <AvatarFallback>
-                  {user?.username?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user?.username}</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {user?.email}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => logoutMutation.mutate()}
-              className="text-red-500"
-            >
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </div>
+    </>
   );
 };
 
