@@ -1,8 +1,16 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { useState, useRef, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -12,76 +20,80 @@ interface CreateProjectModalProps {
 }
 
 export const CreateProjectModal = ({ isOpen, onClose, onSubmit, isLoading }: CreateProjectModalProps) => {
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-
+  const [projectName, setProjectName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!name.trim()) {
-      setError("Project name is required");
-      return;
+    if (projectName.trim()) {
+      onSubmit(projectName.trim());
     }
-    
-    if (name.length > 50) {
-      setError("Project name must be less than 50 characters");
-      return;
+  };
+  
+  // Focus the input when modal opens
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
-    
-    setError("");
-    onSubmit(name);
-  };
-
-  const handleClose = () => {
-    setName("");
-    setError("");
-    onClose();
-  };
+  }, [isOpen]);
+  
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setProjectName("");
+    }
+  }, [isOpen]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-dark-800 border-dark-600 text-white">
-        <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Give your project a name to get started.
-          </DialogDescription>
-        </DialogHeader>
-        
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
-          <div className="py-4">
-            <Label htmlFor="project-name">Project Name</Label>
-            <Input 
-              id="project-name"
-              className="mt-2 bg-dark border-dark-600"
-              placeholder="My Awesome Project"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (error) setError("");
-              }}
-              autoFocus
+          <DialogHeader>
+            <DialogTitle className="text-xl">Create a new project</DialogTitle>
+            <DialogDescription>
+              Give your project a name to get started.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-6">
+            <Label htmlFor="name" className="mb-2 block">
+              Project name
+            </Label>
+            <Input
+              ref={inputRef}
+              id="name"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              className="w-full"
+              placeholder="My awesome project"
+              disabled={isLoading}
+              required
             />
-            {error && <p className="text-error text-sm mt-1">{error}</p>}
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="sm:justify-end">
             <Button 
               type="button" 
               variant="outline" 
-              onClick={handleClose}
-              className="border-dark-600 text-white"
+              onClick={onClose}
               disabled={isLoading}
             >
               Cancel
             </Button>
             <Button 
-              type="submit"
-              disabled={isLoading}
-              className="flex items-center gap-2"
+              type="submit" 
+              disabled={!projectName.trim() || isLoading}
             >
-              {isLoading && <i className="ri-loader-2-line animate-spin"></i>}
-              Create Project
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create"
+              )}
             </Button>
           </DialogFooter>
         </form>
