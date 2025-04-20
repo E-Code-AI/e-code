@@ -174,10 +174,36 @@ export default function EditorPage() {
   
   // Track active file for Navbar
   const [activeFile, setActiveFile] = useState<File | undefined>(undefined);
+  const [showNixConfig, setShowNixConfig] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showReplitDB, setShowReplitDB] = useState(false);
+  const [showCollaboration, setShowCollaboration] = useState(false);
 
   // Update active file handler
   const handleActiveFileChange = (file: File | undefined) => {
     setActiveFile(file);
+  };
+  
+  // UI toggle handlers
+  const handleNixConfigOpen = () => {
+    setShowNixConfig(true);
+  };
+  
+  const handleCommandPaletteOpen = () => {
+    setShowCommandPalette(true);
+  };
+  
+  const handleKeyboardShortcutsOpen = () => {
+    setShowKeyboardShortcuts(true);
+  };
+  
+  const handleDatabaseOpen = () => {
+    setShowReplitDB(true);
+  };
+  
+  const handleCollaborationOpen = () => {
+    setShowCollaboration(true);
   };
   
   return (
@@ -186,6 +212,11 @@ export default function EditorPage() {
         project={project} 
         activeFile={activeFile}
         isLoading={isLoadingProject || isLoadingFiles}
+        onNixConfigOpen={handleNixConfigOpen}
+        onCommandPaletteOpen={handleCommandPaletteOpen}
+        onKeyboardShortcutsOpen={handleKeyboardShortcutsOpen}
+        onDatabaseOpen={handleDatabaseOpen}
+        onCollaborationOpen={handleCollaborationOpen}
       />
       <EditorWorkspace
         project={project}
@@ -194,6 +225,16 @@ export default function EditorPage() {
         onFileCreate={handleFileCreate}
         onFileDelete={handleFileDelete}
         onActiveFileChange={handleActiveFileChange}
+        initialShowNixConfig={showNixConfig}
+        initialShowCommandPalette={showCommandPalette}
+        initialShowKeyboardShortcuts={showKeyboardShortcuts}
+        initialShowReplitDB={showReplitDB}
+        initialShowCollaboration={showCollaboration}
+        onNixConfigChange={setShowNixConfig}
+        onCommandPaletteChange={setShowCommandPalette}
+        onKeyboardShortcutsChange={setShowKeyboardShortcuts}
+        onReplitDBChange={setShowReplitDB}
+        onCollaborationChange={setShowCollaboration}
       />
     </div>
   );

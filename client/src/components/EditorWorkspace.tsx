@@ -33,6 +33,16 @@ interface EditorWorkspaceProps {
   onFileCreate: (name: string, isFolder: boolean, parentId?: number | null) => Promise<void>;
   onFileDelete: (fileId: number) => Promise<void>;
   onActiveFileChange?: (file: File | undefined) => void;
+  initialShowNixConfig?: boolean;
+  initialShowCommandPalette?: boolean;
+  initialShowKeyboardShortcuts?: boolean;
+  initialShowReplitDB?: boolean;
+  initialShowCollaboration?: boolean;
+  onNixConfigChange?: (show: boolean) => void;
+  onCommandPaletteChange?: (show: boolean) => void;
+  onKeyboardShortcutsChange?: (show: boolean) => void;
+  onReplitDBChange?: (show: boolean) => void;
+  onCollaborationChange?: (show: boolean) => void;
 }
 
 export function EditorWorkspace({ 
@@ -41,7 +51,17 @@ export function EditorWorkspace({
   onFileUpdate, 
   onFileCreate, 
   onFileDelete,
-  onActiveFileChange
+  onActiveFileChange,
+  initialShowNixConfig,
+  initialShowCommandPalette,
+  initialShowKeyboardShortcuts,
+  initialShowReplitDB,
+  initialShowCollaboration,
+  onNixConfigChange,
+  onCommandPaletteChange,
+  onKeyboardShortcutsChange,
+  onReplitDBChange,
+  onCollaborationChange
 }: EditorWorkspaceProps) {
   const [activeFileId, setActiveFileId] = useState<number | null>(null);
   const [activeFile, setActiveFile] = useState<File | undefined>(undefined);
@@ -88,6 +108,42 @@ export function EditorWorkspace({
       onActiveFileChange(activeFile);
     }
   }, [activeFile, onActiveFileChange]);
+  
+  // Initialize states from props
+  useEffect(() => {
+    if (initialShowNixConfig) setShowNixConfig(true);
+    if (initialShowCommandPalette) setShowCommandPalette(true);
+    if (initialShowKeyboardShortcuts) setShowKeyboardShortcuts(true);
+    if (initialShowReplitDB) setShowReplitDB(true);
+    if (initialShowCollaboration) setShowCollaboration(true);
+  }, [
+    initialShowNixConfig,
+    initialShowCommandPalette,
+    initialShowKeyboardShortcuts,
+    initialShowReplitDB,
+    initialShowCollaboration
+  ]);
+  
+  // Update parent component state
+  useEffect(() => {
+    if (onNixConfigChange) onNixConfigChange(showNixConfig);
+  }, [showNixConfig, onNixConfigChange]);
+  
+  useEffect(() => {
+    if (onCommandPaletteChange) onCommandPaletteChange(showCommandPalette);
+  }, [showCommandPalette, onCommandPaletteChange]);
+  
+  useEffect(() => {
+    if (onKeyboardShortcutsChange) onKeyboardShortcutsChange(showKeyboardShortcuts);
+  }, [showKeyboardShortcuts, onKeyboardShortcutsChange]);
+  
+  useEffect(() => {
+    if (onReplitDBChange) onReplitDBChange(showReplitDB);
+  }, [showReplitDB, onReplitDBChange]);
+  
+  useEffect(() => {
+    if (onCollaborationChange) onCollaborationChange(showCollaboration);
+  }, [showCollaboration, onCollaborationChange]);
 
   // Handle file selection
   const handleFileSelect = (file: File) => {
