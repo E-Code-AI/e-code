@@ -8,8 +8,9 @@ export const visibilityEnum = pgEnum("visibility", ["public", "private", "unlist
 
 // Programming language enum
 export const languageEnum = pgEnum("language", [
-  "javascript", "python", "html", "css", "typescript", 
-  "java", "c", "cpp", "go", "ruby", "php", "rust"
+  "nodejs", "python", "java", "go", "ruby", "rust", "php", "c", "cpp", 
+  "csharp", "swift", "kotlin", "dart", "typescript", "bash", 
+  "html-css-js", "nix", "deno"
 ]);
 
 // Users table
@@ -40,7 +41,7 @@ export const projects = pgTable("projects", {
   name: text("name").notNull(),
   description: text("description"),
   visibility: visibilityEnum("visibility").default("private").notNull(),
-  language: languageEnum("language").default("javascript"),
+  language: languageEnum("language").default("nodejs"),
   ownerId: integer("owner_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
