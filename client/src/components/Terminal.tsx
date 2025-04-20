@@ -298,12 +298,14 @@ const Terminal: React.FC<TerminalProps> = ({
   };
   
   return (
-    <div className={`flex flex-col border rounded-md overflow-hidden shadow-md bg-[#1a1b26] ${isMaximized ? 'fixed top-0 left-0 right-0 bottom-0 z-50' : 'h-80'}`}>
+    <div className={`flex flex-col border rounded-md overflow-hidden shadow-md bg-[#1a1b26] ${
+      isMaximized ? 'fixed top-0 left-0 right-0 bottom-0 z-50' : 'h-72'
+    }`}>
       <div className="flex items-center justify-between bg-slate-900 p-2 border-b">
         <Tabs value={activeTerm} onValueChange={setActiveTerm} className="w-full">
           <div className="flex justify-between items-center">
-            <TabsList>
-              <TabsTrigger value="term1">Terminal</TabsTrigger>
+            <TabsList className="bg-slate-800">
+              <TabsTrigger value="term1" className="data-[state=active]:bg-slate-700">Terminal</TabsTrigger>
             </TabsList>
             
             <div className="flex items-center space-x-1">
@@ -312,7 +314,8 @@ const Terminal: React.FC<TerminalProps> = ({
                   variant="ghost" 
                   size="icon" 
                   onClick={handleReconnect}
-                  className="h-6 w-6 text-yellow-500"
+                  className="h-6 w-6 text-yellow-500 hover:text-yellow-400 hover:bg-slate-800"
+                  title="Reconnect Terminal"
                 >
                   <RefreshCw className="h-4 w-4" />
                 </Button>
@@ -323,7 +326,8 @@ const Terminal: React.FC<TerminalProps> = ({
                   variant="ghost" 
                   size="icon" 
                   onClick={onToggleMaximize}
-                  className="h-6 w-6"
+                  className="h-6 w-6 hover:bg-slate-800"
+                  title={isMaximized ? "Minimize Terminal" : "Maximize Terminal"}
                 >
                   {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </Button>
@@ -334,7 +338,8 @@ const Terminal: React.FC<TerminalProps> = ({
                   variant="ghost" 
                   size="icon" 
                   onClick={onClose}
-                  className="h-6 w-6"
+                  className="h-6 w-6 hover:bg-slate-800 hover:text-red-400"
+                  title="Close Terminal"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -345,7 +350,9 @@ const Terminal: React.FC<TerminalProps> = ({
           <TabsContent value="term1" className="m-0 p-0">
             <div 
               ref={terminalRef} 
-              className={`terminal-container ${isMaximized ? 'h-[calc(100vh-40px)]' : 'h-[calc(320px-40px)]'}`} 
+              className={`terminal-container ${
+                isMaximized ? 'h-[calc(100vh-40px)]' : 'h-[calc(288px-40px)]'
+              }`} 
               style={{ padding: 0 }}
             />
           </TabsContent>

@@ -220,28 +220,28 @@ export default function EditorPage() {
         onCollaborationOpen={handleCollaborationOpen}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <EditorWorkspace
-          project={project}
-          files={files}
-          onFileUpdate={handleFileUpdate}
-          onFileCreate={handleFileCreate}
-          onFileDelete={handleFileDelete}
-          onActiveFileChange={handleActiveFileChange}
-          initialShowNixConfig={showNixConfig}
-          initialShowCommandPalette={showCommandPalette}
-          initialShowKeyboardShortcuts={showKeyboardShortcuts}
-          initialShowReplitDB={showReplitDB}
-          initialShowCollaboration={showCollaboration}
-          onNixConfigChange={setShowNixConfig}
-          onCommandPaletteChange={setShowCommandPalette}
-          onKeyboardShortcutsChange={setShowKeyboardShortcuts}
-          onReplitDBChange={setShowReplitDB}
-          onCollaborationChange={setShowCollaboration}
-        />
-        {/* Terminal Panel */}
-        <div className="border-t">
-          <TerminalPanel projectId={projectIdNum} />
+        <div className="flex-1 overflow-hidden">
+          <EditorWorkspace
+            project={project}
+            files={files}
+            onFileUpdate={handleFileUpdate}
+            onFileCreate={handleFileCreate}
+            onFileDelete={handleFileDelete}
+            onActiveFileChange={handleActiveFileChange}
+            initialShowNixConfig={showNixConfig}
+            initialShowCommandPalette={showCommandPalette}
+            initialShowKeyboardShortcuts={showKeyboardShortcuts}
+            initialShowReplitDB={showReplitDB}
+            initialShowCollaboration={showCollaboration}
+            onNixConfigChange={setShowNixConfig}
+            onCommandPaletteChange={setShowCommandPalette}
+            onKeyboardShortcutsChange={setShowKeyboardShortcuts}
+            onReplitDBChange={setShowReplitDB}
+            onCollaborationChange={setShowCollaboration}
+          />
         </div>
+        {/* Terminal Panel */}
+        <TerminalPanel projectId={projectIdNum} showByDefault={true} />
       </div>
     </div>
   );
