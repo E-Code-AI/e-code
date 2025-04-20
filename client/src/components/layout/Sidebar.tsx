@@ -1,128 +1,118 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
-import {
-  Home,
-  Code,
-  FileCode,
+import { useLocation } from "wouter";
+import { 
+  Home, 
+  Code, 
   Settings,
-  LogOut,
-  Menu,
-  X,
+  Users,
+  HelpCircle,
   ChevronRight,
-  Plus
+  ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Sidebar() {
-  const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
+  const { user, logoutMutation } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  const handleLogout = () => {
-    logoutMutation.mutate();
-  };
-
+  
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
-
+  
   return (
-    <div
-      className={cn(
-        "h-screen border-r bg-background flex flex-col transition-all duration-300",
-        isCollapsed ? "w-16" : "w-64"
-      )}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b h-14">
+    <div className={cn(
+      "flex flex-col h-full bg-background border-r",
+      isCollapsed ? "w-14" : "w-52"
+    )}>
+      {/* Logo */}
+      <div className="flex items-center h-14 px-3 border-b">
         {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <div className="rounded-md bg-primary h-6 w-6 flex items-center justify-center text-primary-foreground font-bold">P</div>
-            <span className="font-bold">PLOT</span>
-          </div>
+          <h1 className="text-lg font-bold">PLOT</h1>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={toggleSidebar}
-          className={cn("h-8 w-8", isCollapsed && "mx-auto")}
-        >
-          {isCollapsed ? <ChevronRight /> : <Menu />}
-        </Button>
-      </div>
-
-      {/* Main navigation */}
-      <div className="flex-1 overflow-y-auto pt-2 px-2">
-        {/* Create new project button */}
-        <Button
-          onClick={() => setIsCreateModalOpen(true)}
           className={cn(
-            "mb-3 gap-2 w-full justify-start",
-            isCollapsed ? "p-2 justify-center" : "pl-3 pr-8"
+            "rounded-md p-1.5 hover:bg-accent ml-auto",
+            isCollapsed && "mx-auto"
           )}
         >
-          <Plus className="h-4 w-4" />
-          {!isCollapsed && <span>New Project</span>}
-        </Button>
-
-        <div className="space-y-1">
-          <NavigationItem
-            icon={<Home className="h-4 w-4" />}
-            href="/"
-            label="Home"
-            isActive={location === '/'}
-            isCollapsed={isCollapsed}
-          />
-          <NavigationItem
-            icon={<Code className="h-4 w-4" />}
-            href="/projects"
-            label="Projects"
-            isActive={location.startsWith('/project')}
-            isCollapsed={isCollapsed}
-          />
-          <NavigationItem
-            icon={<FileCode className="h-4 w-4" />}
-            href="/templates"
-            label="Templates"
-            isActive={location.startsWith('/templates')}
-            isCollapsed={isCollapsed}
-          />
-          <NavigationItem
-            icon={<Settings className="h-4 w-4" />}
-            href="/settings"
-            label="Settings"
-            isActive={location.startsWith('/settings')}
-            isCollapsed={isCollapsed}
-          />
-        </div>
+          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
       </div>
-
-      {/* User section */}
-      <div className="border-t p-3">
-        <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
-          {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                {user?.username.charAt(0).toUpperCase()}
+      
+      {/* Navigation items */}
+      <div className="flex-1 py-4 space-y-1 px-1.5">
+        <NavigationItem
+          icon={<Home size={20} />}
+          href="/"
+          label="Home"
+          isActive={location === "/"}
+          isCollapsed={isCollapsed}
+        />
+        <NavigationItem
+          icon={<Code size={20} />}
+          href="/projects"
+          label="Projects"
+          isActive={location.startsWith("/project")}
+          isCollapsed={isCollapsed}
+        />
+        <NavigationItem
+          icon={<Users size={20} />}
+          href="/teams"
+          label="Teams"
+          isActive={location.startsWith("/teams")}
+          isCollapsed={isCollapsed}
+        />
+        <NavigationItem
+          icon={<Settings size={20} />}
+          href="/settings"
+          label="Settings"
+          isActive={location.startsWith("/settings")}
+          isCollapsed={isCollapsed}
+        />
+        <NavigationItem
+          icon={<HelpCircle size={20} />}
+          href="/help"
+          label="Help & Support"
+          isActive={location.startsWith("/help")}
+          isCollapsed={isCollapsed}
+        />
+      </div>
+      
+      {/* User profile */}
+      <div className={cn(
+        "border-t p-3",
+        isCollapsed ? "flex justify-center" : "flex items-center space-x-3"
+      )}>
+        {isCollapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={`https://avatar.vercel.sh/${user?.username || 'user'}.png`} />
+                  <AvatarFallback>{user?.username?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
+                </Avatar>
               </div>
-              <div className="overflow-hidden">
-                <p className="text-sm font-medium truncate">{user?.username}</p>
-              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <div className="text-sm">{user?.username || 'User'}</div>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <>
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={`https://avatar.vercel.sh/${user?.username || 'user'}.png`} />
+              <AvatarFallback>{user?.username?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{user?.username || 'User'}</p>
             </div>
-          )}
-          <Button
-            variant="ghost"
-            size={isCollapsed ? "icon" : "sm"}
-            onClick={handleLogout}
-            className={cn(isCollapsed && "h-8 w-8")}
-          >
-            <LogOut className="h-4 w-4" />
-            {!isCollapsed && <span className="ml-2">Logout</span>}
-          </Button>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -137,20 +127,41 @@ interface NavigationItemProps {
 }
 
 function NavigationItem({ icon, href, label, isActive, isCollapsed }: NavigationItemProps) {
+  const [, navigate] = useLocation();
+  
   return (
-    <Link href={href}>
-      <a
-        className={cn(
-          "flex items-center py-2 px-3 rounded-md text-sm group",
-          isActive
-            ? "bg-accent text-accent-foreground"
-            : "hover:bg-accent/50 text-muted-foreground",
-          isCollapsed && "justify-center px-2"
-        )}
-      >
-        <span className="mr-3">{icon}</span>
-        {!isCollapsed && <span>{label}</span>}
-      </a>
-    </Link>
+    <div onClick={() => navigate(href)}>
+      {isCollapsed ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              className={cn(
+                "w-full p-2 flex justify-center rounded-md transition-colors",
+                isActive 
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              )}
+            >
+              {icon}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <div className="text-sm">{label}</div>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <button
+          className={cn(
+            "w-full p-2 flex items-center space-x-3 rounded-md transition-colors",
+            isActive 
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          )}
+        >
+          {icon}
+          <span className="text-sm">{label}</span>
+        </button>
+      )}
+    </div>
   );
 }
