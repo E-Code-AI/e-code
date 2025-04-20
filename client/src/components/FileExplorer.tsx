@@ -1,10 +1,8 @@
 import { useState } from "react";
+import { Folder, File as FileIcon, ChevronRight, ChevronDown, Loader2 } from "lucide-react";
 import { File } from "@shared/schema";
-import { File as FileIcon, Folder, ChevronRight, ChevronDown, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface FileExplorerProps {
   files: File[];
@@ -15,119 +13,132 @@ interface FileExplorerProps {
 
 const FileExplorer = ({ files, isLoading, onFileOpen, onContextMenu }: FileExplorerProps) => {
   const [expandedFolders, setExpandedFolders] = useState<Record<number, boolean>>({});
-
-  const toggleFolder = (folderId: number) => {
+  
+  const toggleFolder = (folderId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     setExpandedFolders(prev => ({
       ...prev,
       [folderId]: !prev[folderId]
     }));
   };
-
-  // Organize files into a tree structure
-  const getRootFiles = () => {
-    return files.filter(file => file.parentId === null);
+  
+  const getFileIcon = (file: File) => {
+    if (file.isFolder) {
+      return expandedFolders[file.id] ? <ChevronDown className="h-4 w-4 mr-1" /> : <ChevronRight className="h-4 w-4 mr-1" />;
+    } else {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      
+      // Return appropriate icon based on file extension
+      switch (ext) {
+        case 'js':
+        case 'jsx':
+        case 'ts':
+        case 'tsx':
+          return <FileIcon className="h-4 w-4 mr-1 text-yellow-400" />;
+        case 'css':
+        case 'scss':
+        case 'sass':
+          return <FileIcon className="h-4 w-4 mr-1 text-blue-400" />;
+        case 'html':
+          return <FileIcon className="h-4 w-4 mr-1 text-orange-400" />;
+        case 'json':
+          return <FileIcon className="h-4 w-4 mr-1 text-green-400" />;
+        case 'md':
+          return <FileIcon className="h-4 w-4 mr-1 text-gray-400" />;
+        default:
+          return <FileIcon className="h-4 w-4 mr-1" />;
+      }
+    }
   };
-
-  const getChildFiles = (parentId: number) => {
-    return files.filter(file => file.parentId === parentId);
-  };
-
-  const renderFile = (file: File) => {
-    const isFolder = file.isFolder;
-    const isExpanded = expandedFolders[file.id];
-    const children = isFolder ? getChildFiles(file.id) : [];
+  
+  const renderFile = (file: File, depth = 0) => {
+    const isExpanded = expandedFolders[file.id] || false;
     
     return (
-      <div key={file.id} className="select-none">
-        <div 
-          className="flex items-center py-1 px-2 rounded-md hover:bg-accent cursor-pointer group"
-          onClick={() => isFolder ? toggleFolder(file.id) : onFileOpen(file)}
+      <div key={file.id}>
+        <div
+          className={cn(
+            "flex items-center py-1 px-2 text-sm cursor-pointer hover:bg-accent rounded-md",
+            file.isFolder ? "font-medium" : "font-normal"
+          )}
+          style={{ paddingLeft: `${(depth * 12) + 8}px` }}
+          onClick={(e) => {
+            if (file.isFolder) {
+              toggleFolder(file.id, e);
+            } else {
+              onFileOpen(file);
+            }
+          }}
           onContextMenu={(e) => {
             e.preventDefault();
-            onContextMenu(e, isFolder ? 'folder' : 'file', file.id);
+            onContextMenu(e, file.isFolder ? 'folder' : 'file', file.id);
           }}
         >
-          <div className="flex items-center flex-1 gap-1 overflow-hidden">
-            {isFolder && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-4 w-4 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleFolder(file.id);
-                }}
-              >
-                {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-              </Button>
-            )}
-            {isFolder ? (
-              <Folder className="h-4 w-4 text-blue-500" />
+          <div className="flex items-center">
+            {file.isFolder ? (
+              <Folder className={cn("h-4 w-4 mr-1", isExpanded ? "text-blue-400" : "text-gray-400")} />
             ) : (
-              <FileIcon className="h-4 w-4 text-gray-500" />
+              getFileIcon(file)
             )}
-            <span className="ml-1 text-sm truncate">{file.name}</span>
+            <span className="truncate">{file.name}</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100"
-            onClick={(e) => {
-              e.stopPropagation();
-              onContextMenu(e, isFolder ? 'folder' : 'file', file.id);
-            }}
-          >
-            <MoreHorizontal className="h-3 w-3" />
-          </Button>
         </div>
-        {isFolder && isExpanded && children.length > 0 && (
-          <div className="pl-4 mt-1">
-            {children.map(child => renderFile(child))}
+        
+        {file.isFolder && isExpanded && (
+          <div>
+            {files
+              .filter(f => f.parentId === file.id)
+              .sort((a, b) => {
+                // Sort folders first, then by name
+                if (a.isFolder && !b.isFolder) return -1;
+                if (!a.isFolder && b.isFolder) return 1;
+                return a.name.localeCompare(b.name);
+              })
+              .map(childFile => renderFile(childFile, depth + 1))}
           </div>
         )}
       </div>
     );
   };
-
+  
+  if (isLoading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  
+  // Get root level files (no parent)
+  const rootFiles = files
+    .filter(file => !file.parentId)
+    .sort((a, b) => {
+      // Sort folders first, then by name
+      if (a.isFolder && !b.isFolder) return -1;
+      if (!a.isFolder && b.isFolder) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  
   return (
     <div className="h-full flex flex-col">
-      <div className="py-2 px-3 border-b">
-        <h2 className="text-sm font-semibold">Files</h2>
+      <div className="border-b p-2 flex items-center justify-between">
+        <h2 className="text-sm font-medium">Files</h2>
       </div>
+      
       <ScrollArea className="flex-1">
-        <div className="p-2">
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ))}
-            </div>
+        <div 
+          className="p-2"
+          onContextMenu={(e) => {
+            e.preventDefault();
+            onContextMenu(e, 'workspace');
+          }}
+        >
+          {rootFiles.length > 0 ? (
+            rootFiles.map(file => renderFile(file))
           ) : (
-            <>
-              <div
-                className="py-1 px-2 rounded-md hover:bg-accent cursor-pointer mb-1"
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  onContextMenu(e, 'workspace');
-                }}
-              >
-                <div className="flex items-center gap-1">
-                  <Folder className="h-4 w-4 text-blue-500" />
-                  <span className="ml-1 text-sm font-medium">Project</span>
-                </div>
-              </div>
-              <div className="pl-2">
-                {getRootFiles().map(file => renderFile(file))}
-                {getRootFiles().length === 0 && (
-                  <div className="text-sm text-muted-foreground py-2 px-2">
-                    No files found
-                  </div>
-                )}
-              </div>
-            </>
+            <div className="text-sm text-muted-foreground p-2">
+              No files yet. Right-click to create one.
+            </div>
           )}
         </div>
       </ScrollArea>
