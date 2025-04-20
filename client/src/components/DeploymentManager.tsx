@@ -38,7 +38,7 @@ interface DeploymentManagerProps {
 
 export function DeploymentManager({ project, isOpen, onClose }: DeploymentManagerProps) {
   const [tab, setTab] = useState<string>('current');
-  const [deployDomain, setDeployDomain] = useState<string>('');
+  const [deployUrl, setDeployUrl] = useState<string>('');
   const [useCustomDomain, setUseCustomDomain] = useState<boolean>(false);
   const [customDomain, setCustomDomain] = useState<string>('');
   const [envProduction, setEnvProduction] = useState<boolean>(true);
@@ -49,7 +49,7 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
   useEffect(() => {
     // Default domain pattern: project-name-username.replit.app
     const defaultDomain = `${project.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${project.ownerId}.replit.app`;
-    setDeployDomain(defaultDomain);
+    setDeployUrl(defaultDomain);
   }, [project]);
 
   // Fetch deployments
@@ -70,7 +70,10 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
   // Create deployment mutation
   const deployMutation = useMutation({
     mutationFn: async (data: { domain: string; envProduction: boolean }) => {
-      const res = await apiRequest('POST', `/api/projects/${project.id}/deployments`, data);
+      const res = await apiRequest('POST', `/api/projects/${project.id}/deployments`, {
+        url: data.domain,
+        config: { production: data.envProduction }
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -96,9 +99,9 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
 
   // Handle deploy button click
   const handleDeploy = async () => {
-    const domain = useCustomDomain && customDomain ? customDomain : deployDomain;
+    const url = useCustomDomain && customDomain ? customDomain : deployUrl;
     await deployMutation.mutateAsync({
-      domain,
+      domain: url,
       envProduction,
     });
   };
@@ -152,8 +155,7 @@ export function DeploymentManager({ project, isOpen, onClose }: DeploymentManage
   };
 
   // Format date for displaying
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+  const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       day: '2-digit',
       month: 'short',
