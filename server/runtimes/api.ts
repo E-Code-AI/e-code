@@ -18,18 +18,130 @@ export async function getRuntimeDependencies(req: Request, res: Response) {
   try {
     logger.info('Getting runtime dependencies');
     
+    // Get system dependencies
     const dependencies = await runtimeHealth.checkSystemDependencies();
     
-    res.json(dependencies);
+    // Enhance response with more detailed information
+    const availableLanguages = Object.entries(dependencies.languages)
+      .filter(([_, info]) => info.available)
+      .map(([language, info]) => ({
+        language,
+        version: info.version,
+        notes: getLanguageNotes(language)
+      }));
+      
+    const missingLanguages = Object.entries(dependencies.languages)
+      .filter(([_, info]) => !info.available)
+      .map(([language]) => language);
+    
+    // Add additional system information
+    const systemInfo = {
+      platform: process.platform,
+      architecture: process.arch,
+      nodeVersion: process.version,
+      memory: {
+        total: Math.round(require('os').totalmem() / 1024 / 1024) + ' MB',
+        free: Math.round(require('os').freemem() / 1024 / 1024) + ' MB',
+      },
+      cpus: require('os').cpus().length
+    };
+    
+    // Add recommended languages based on detected dependencies
+    const recommendations = getLanguageRecommendations(dependencies);
+    
+    // Return comprehensive diagnostic information
+    res.json({
+      status: 'success',
+      timestamp: new Date().toISOString(),
+      system: systemInfo,
+      dependencies,
+      summary: {
+        availableLanguages,
+        missingLanguages,
+        dockerAvailable: dependencies.docker.available,
+        nixAvailable: dependencies.nix.available,
+        recommendations
+      }
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error(`Error getting runtime dependencies: ${errorMessage}`);
     
     res.status(500).json({
+      status: 'error',
       message: 'Failed to get runtime dependencies',
-      error: errorMessage
+      error: errorMessage,
+      timestamp: new Date().toISOString()
     });
   }
+}
+
+/**
+ * Get language notes and details
+ */
+function getLanguageNotes(language: string): string {
+  const notes: Record<string, string> = {
+    nodejs: 'Runtime for JavaScript with package manager (npm).',
+    python: 'Python programming language (likely version 2.x).',
+    python3: 'Python 3 programming language with pip package manager.',
+    java: 'Java Development Kit (JDK) with javac compiler.',
+    go: 'Go programming language with package management.',
+    ruby: 'Ruby programming language with gem package manager.',
+    rust: 'Rust programming language with cargo package manager.',
+    php: 'PHP scripting language.',
+    gcc: 'GNU Compiler Collection for C/C++ development.',
+    dotnet: '.NET runtime and SDK.',
+    swift: 'Swift programming language.',
+    kotlin: 'Kotlin programming language.',
+    dart: 'Dart programming language, used for Flutter development.',
+    typescript: 'TypeScript language (requires Node.js).',
+    deno: 'Secure JavaScript/TypeScript runtime.',
+    bash: 'Bash shell environment.'
+  };
+  
+  return notes[language] || 'No additional information available.';
+}
+
+/**
+ * Generate language recommendations based on system dependencies
+ */
+export function getLanguageRecommendations(dependencies: any): string[] {
+  const recommendations: string[] = [];
+  
+  // Recommend based on available dependencies
+  if (dependencies.languages.nodejs?.available) {
+    recommendations.push('JavaScript/Node.js is fully supported and ready to use.');
+  }
+  
+  if (dependencies.languages.typescript?.available && dependencies.languages.nodejs?.available) {
+    recommendations.push('TypeScript is supported with your Node.js installation.');
+  }
+  
+  if (dependencies.languages.python3?.available) {
+    recommendations.push('Python 3 is fully supported and ready to use.');
+  } else if (dependencies.languages.python?.available) {
+    recommendations.push('Python is available, but consider upgrading to Python 3 for better support.');
+  }
+  
+  if (dependencies.languages.gcc?.available) {
+    recommendations.push('C/C++ development is supported with GCC.');
+  }
+  
+  if (dependencies.docker.available) {
+    recommendations.push('Docker is available for containerized applications.');
+  } else {
+    recommendations.push('Consider installing Docker for better isolation and deployment capabilities.');
+  }
+  
+  if (dependencies.nix.available) {
+    recommendations.push('Nix is available for reproducible environments.');
+  }
+  
+  if (recommendations.length === 0) {
+    recommendations.push('Consider installing Node.js or Python for the best development experience.');
+  }
+  
+  return recommendations;
 }
 
 /**

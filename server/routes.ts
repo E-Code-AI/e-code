@@ -6,6 +6,7 @@ import { insertProjectSchema, insertFileSchema, insertProjectCollaboratorSchema,
 import * as z from "zod";
 import { devAuthBypass, setupAuthBypass } from "./dev-auth-bypass";
 import { WebSocketServer, WebSocket } from "ws";
+import * as os from 'os';
 import { 
   generateCompletion, 
   generateExplanation, 
@@ -35,8 +36,10 @@ import {
   stopProjectRuntime,
   getProjectRuntimeStatus,
   executeProjectCommand,
-  getProjectRuntimeLogs
+  getProjectRuntimeLogs,
+  getLanguageRecommendations
 } from "./runtimes/api";
+import * as runtimeHealth from "./runtimes/runtime-health";
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -726,8 +729,69 @@ document.addEventListener('DOMContentLoaded', function() {
   app.get('/api/projects/:id/runtime/logs', ensureProjectAccess, getProjectRuntimeLogs);
   
   // Public endpoint to get runtime dependencies - no auth required
-  // This is commented out to avoid duplicate route registration
-  // app.get('/api/runtime/dependencies', getRuntimeDependencies);
+  app.get('/api/runtime/dependencies', getRuntimeDependencies);
+  
+  // Runtime dashboard route for health status and diagnostics
+  app.get('/api/runtime/dashboard', async (req, res) => {
+    try {
+      // Get system dependencies
+      const dependencies = await runtimeHealth.checkSystemDependencies();
+      
+      // Get active projects/containers
+      const activeProjects: Array<{id: number, name: string, status: any}> = [];
+      const projectStatuses: Record<string, any> = {};
+      
+      // Get all projects user has access to
+      const projects = req.isAuthenticated() 
+        ? await storage.getProjectsByUser(req.user!.id)
+        : [];
+      
+      // Get runtime status for each project
+      for (const project of projects) {
+        const status = getProjectStatus(project.id);
+        if (status.isRunning) {
+          activeProjects.push({
+            id: project.id,
+            name: project.name,
+            status: status
+          });
+        }
+        projectStatuses[project.id.toString()] = status;
+      }
+      
+      // System resource usage
+      const cpuUsage = os.loadavg()[0]; // 1 minute load average
+      const totalMemory = os.totalmem();
+      const freeMemory = os.freemem();
+      const memoryUsage = ((totalMemory - freeMemory) / totalMemory * 100).toFixed(2);
+      
+      res.json({
+        status: 'success',
+        timestamp: new Date().toISOString(),
+        systemHealth: {
+          cpuUsage,
+          memoryUsage: `${memoryUsage}%`,
+          uptime: os.uptime(),
+          platform: os.platform(),
+          arch: os.arch()
+        },
+        runtimeEnvironments: dependencies,
+        activeProjects,
+        projectStatuses,
+        recommendations: getLanguageRecommendations(dependencies)
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Error getting runtime dashboard: ${errorMessage}`);
+      
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to get runtime dashboard information',
+        error: errorMessage,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
   
   // Deployment routes
   
