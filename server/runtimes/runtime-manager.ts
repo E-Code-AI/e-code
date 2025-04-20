@@ -19,7 +19,7 @@ const activeRuntimes: Map<number, {
   language: Language;
   containerId?: string;
   port?: number;
-  status: 'starting' | 'running' | 'stopped' | 'error';
+  status: 'starting' | 'running' | 'error';
   logs: string[];
   error?: string;
 }> = new Map();
@@ -48,7 +48,7 @@ export async function startProject(
   success: boolean;
   port?: number;
   containerId?: string;
-  status: 'starting' | 'running' | 'stopped' | 'error';
+  status: 'starting' | 'running' | 'error';
   logs: string[];
   error?: string;
 }> {
@@ -85,7 +85,7 @@ export async function startProject(
     
     if (!language) {
       const error = 'Could not detect language for project';
-      log(error, 'runtime', 'error');
+      logger.error(error);
       
       return {
         success: false,
@@ -95,7 +95,7 @@ export async function startProject(
       };
     }
     
-    log(`Starting project ${projectId} with language ${language}`, 'runtime');
+    logger.info(`Starting project ${projectId} with language ${language}`);
     
     // Initialize runtime logs
     const logs: string[] = [`Starting ${languageConfigs[language].displayName} project...`];
@@ -121,7 +121,7 @@ export async function startProject(
       if (!nixResult) {
         const error = 'Failed to generate Nix configuration';
         logs.push(`ERROR: ${error}`);
-        log(error, 'runtime', 'error');
+        logger.error(error);
         
         activeRuntimes.set(projectId, {
           projectId,
@@ -146,7 +146,7 @@ export async function startProject(
       if (!applyResult.success) {
         const error = 'Failed to apply Nix environment';
         logs.push(`ERROR: ${error}`);
-        log(error, 'runtime', 'error');
+        logger.error(error);
         
         activeRuntimes.set(projectId, {
           projectId,
@@ -271,8 +271,8 @@ export async function stopProject(projectId: number): Promise<boolean> {
     const result = await containerManager.stopContainer(runtime.containerId);
     
     if (result) {
-      log(`Project ${projectId} stopped successfully`, 'runtime');
-      runtime.status = 'stopped';
+      logger.info(`Project ${projectId} stopped successfully`);
+      // Just delete the runtime - no need to set status to 'stopped' as we'll remove it
       activeRuntimes.delete(projectId);
       return true;
     } else {
@@ -296,7 +296,7 @@ export function getProjectStatus(projectId: number): {
   language?: Language;
   containerId?: string;
   port?: number;
-  status: 'starting' | 'running' | 'stopped' | 'error' | 'unknown';
+  status: 'starting' | 'running' | 'error' | 'unknown';
   logs: string[];
   error?: string;
 } {
