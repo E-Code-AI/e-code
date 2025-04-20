@@ -1,11 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import 'xterm/css/xterm.css';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Maximize2, Minimize2, X, RefreshCw } from 'lucide-react';
+import { 
+  Maximize2, Minimize2, X, RefreshCw, 
+  Sun, Moon, Copy, ChevronDown,
+  RotateCcw, RotateCw, ZoomIn, ZoomOut
+} from 'lucide-react';
+import { useTheme } from 'next-themes';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TerminalProps {
   project: {
@@ -17,6 +30,52 @@ interface TerminalProps {
   onMinimize?: () => void;
   onMaximize?: () => void;
 }
+
+// Define terminal themes
+const terminalThemes = {
+  dark: {
+    background: '#1a1b26',
+    foreground: '#c0caf5',
+    cursor: '#c0caf5',
+    black: '#414868',
+    red: '#f7768e',
+    green: '#9ece6a',
+    yellow: '#e0af68',
+    blue: '#7aa2f7',
+    magenta: '#bb9af7',
+    cyan: '#7dcfff',
+    white: '#a9b1d6',
+    brightBlack: '#414868',
+    brightRed: '#f7768e',
+    brightGreen: '#9ece6a',
+    brightYellow: '#e0af68',
+    brightBlue: '#7aa2f7',
+    brightMagenta: '#bb9af7',
+    brightCyan: '#7dcfff',
+    brightWhite: '#c0caf5'
+  },
+  light: {
+    background: '#f5f5f5',
+    foreground: '#2e3440',
+    cursor: '#3b4252',
+    black: '#3b4252',
+    red: '#bf616a',
+    green: '#a3be8c',
+    yellow: '#ebcb8b',
+    blue: '#5e81ac',
+    magenta: '#b48ead',
+    cyan: '#88c0d0',
+    white: '#e5e9f0',
+    brightBlack: '#4c566a',
+    brightRed: '#bf616a',
+    brightGreen: '#a3be8c',
+    brightYellow: '#ebcb8b',
+    brightBlue: '#5e81ac',
+    brightMagenta: '#b48ead',
+    brightCyan: '#8fbcbb',
+    brightWhite: '#eceff4'
+  }
+};
 
 const Terminal: React.FC<TerminalProps> = ({ 
   project, 
@@ -37,37 +96,55 @@ const Terminal: React.FC<TerminalProps> = ({
   const [currentInput, setCurrentInput] = useState('');
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [fontSize, setFontSize] = useState(14);
+  
+  // Get theme from the theme provider
+  const { theme, setTheme } = useTheme();
+  
+  // Helper to update terminal theme
+  const updateTerminalTheme = useCallback(() => {
+    if (terminal) {
+      const currentTheme = theme === 'dark' ? terminalThemes.dark : terminalThemes.light;
+      terminal.options.theme = currentTheme;
+      
+      // Apply the new theme
+      terminal.refresh(0, terminal.rows - 1);
+    }
+  }, [terminal, theme]);
+  
+  // Toggle theme function
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+  
+  // Font size adjustment
+  const changeFontSize = (delta: number) => {
+    const newSize = Math.max(10, Math.min(20, fontSize + delta)); // Limit between 10-20px
+    setFontSize(newSize);
+    
+    if (terminal) {
+      terminal.options.fontSize = newSize;
+      if (fitAddon) {
+        fitAddon.fit();
+      }
+    }
+  };
 
   // Create and set up terminal
   useEffect(() => {
     if (!terminalRef.current) return;
 
+    // Get theme colors based on current theme
+    const currentTheme = theme === 'dark' ? terminalThemes.dark : terminalThemes.light;
+
     // Create terminal
     const term = new XTerm({
       cursorBlink: true,
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-      fontSize: 14,
-      theme: {
-        background: '#1a1b26',
-        foreground: '#c0caf5',
-        cursor: '#c0caf5',
-        black: '#414868',
-        red: '#f7768e',
-        green: '#9ece6a',
-        yellow: '#e0af68',
-        blue: '#7aa2f7',
-        magenta: '#bb9af7',
-        cyan: '#7dcfff',
-        white: '#a9b1d6',
-        brightBlack: '#414868',
-        brightRed: '#f7768e',
-        brightGreen: '#9ece6a',
-        brightYellow: '#e0af68',
-        brightBlue: '#7aa2f7',
-        brightMagenta: '#bb9af7',
-        brightCyan: '#7dcfff',
-        brightWhite: '#c0caf5'
-      }
+      fontSize: fontSize,
+      theme: currentTheme,
+      scrollback: 5000, // Increased scrollback buffer
+      allowTransparency: true
     });
 
     // Add FitAddon for terminal resizing
@@ -93,6 +170,13 @@ const Terminal: React.FC<TerminalProps> = ({
     };
   }, []);
 
+  // Effect for updating theme
+  useEffect(() => {
+    if (terminal) {
+      updateTerminalTheme();
+    }
+  }, [terminal, theme, updateTerminalTheme]);
+  
   // Connect to WebSocket
   useEffect(() => {
     if (!terminal) return;
@@ -441,6 +525,69 @@ const Terminal: React.FC<TerminalProps> = ({
             </TabsList>
             
             <div className="flex items-center space-x-1">
+              {/* Terminal Options Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 hover:bg-slate-800"
+                    title="Terminal Options"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuLabel>Terminal Options</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  {/* Theme Toggle */}
+                  <DropdownMenuItem onClick={toggleTheme}>
+                    {theme === 'dark' ? (
+                      <><Sun className="mr-2 h-4 w-4" /> Light Theme</>
+                    ) : (
+                      <><Moon className="mr-2 h-4 w-4" /> Dark Theme</>
+                    )}
+                  </DropdownMenuItem>
+                  
+                  {/* Font Size Controls */}
+                  <DropdownMenuItem onClick={() => changeFontSize(1)}>
+                    <ZoomIn className="mr-2 h-4 w-4" /> Increase Font Size
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changeFontSize(-1)}>
+                    <ZoomOut className="mr-2 h-4 w-4" /> Decrease Font Size
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {/* Copy Terminal Content */}
+                  <DropdownMenuItem onClick={() => {
+                    if (terminal) {
+                      // Get visible content from terminal
+                      let content = '';
+                      for (let i = 0; i < terminal.buffer.active.length; i++) {
+                        const line = terminal.buffer.active.getLine(i);
+                        if (line) {
+                          content += line.translateToString() + '\n';
+                        }
+                      }
+                      navigator.clipboard.writeText(content);
+                    }
+                  }}>
+                    <Copy className="mr-2 h-4 w-4" /> Copy Output
+                  </DropdownMenuItem>
+                  
+                  {/* Clear Terminal */}
+                  <DropdownMenuItem onClick={() => {
+                    if (terminal) terminal.clear();
+                  }}>
+                    <RotateCcw className="mr-2 h-4 w-4" /> Clear Terminal
+                  </DropdownMenuItem>
+                  
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* Reconnect Button */}
               {error && (
                 <Button 
                   variant="ghost" 
@@ -453,6 +600,7 @@ const Terminal: React.FC<TerminalProps> = ({
                 </Button>
               )}
               
+              {/* Minimize/Maximize Buttons */}
               {minimized && onMaximize && (
                 <Button 
                   variant="ghost" 
@@ -477,6 +625,7 @@ const Terminal: React.FC<TerminalProps> = ({
                 </Button>
               )}
               
+              {/* Close Button */}
               {onClose && (
                 <Button 
                   variant="ghost" 
