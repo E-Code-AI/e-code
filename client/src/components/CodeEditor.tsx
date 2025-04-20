@@ -1,108 +1,127 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useEffect } from "react";
 import * as monaco from "monaco-editor";
-import { File } from "@/lib/types";
+import { File } from "@shared/schema";
+import { setupMonacoTheme } from "@/lib/monaco-setup";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CodeEditorProps {
   file: File;
   onChange: (content: string) => void;
 }
 
-// Helper to get language from file extension
-const getLanguage = (filename: string): string => {
-  const ext = filename.split('.').pop()?.toLowerCase() || '';
-  
-  const languageMap: Record<string, string> = {
-    'js': 'javascript',
-    'jsx': 'javascript',
-    'ts': 'typescript',
-    'tsx': 'typescript',
-    'html': 'html',
-    'css': 'css',
-    'scss': 'scss',
-    'json': 'json',
-    'md': 'markdown',
-    'py': 'python',
-    'java': 'java',
-    'c': 'c',
-    'cpp': 'cpp',
-    'go': 'go',
-    'rs': 'rust',
-    'php': 'php',
-    'rb': 'ruby',
-    'sh': 'shell',
-  };
-  
-  return languageMap[ext] || 'plaintext';
-};
-
-// Simple Monaco setup
-if (typeof window !== 'undefined') {
-  (window as any).MonacoEnvironment = {
-    getWorkerUrl: function() {
-      return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
-        self.MonacoEnvironment = {
-          baseUrl: 'https://unpkg.com/monaco-editor@0.36.1/min/'
-        };
-        importScripts('https://unpkg.com/monaco-editor@0.36.1/min/vs/base/worker/workerMain.js');
-      `)}`;
-    }
-  };
-}
-
 const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
-  const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const monacoEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  // Init editor
   useEffect(() => {
-    if (!editorRef.current) return;
-    
-    // Create editor
-    const editorInstance = monaco.editor.create(editorRef.current, {
-      value: file.content,
-      language: getLanguage(file.name),
-      automaticLayout: true,
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false,
-      fontSize: 14,
-      fontFamily: "'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace",
-      lineNumbers: 'on',
-      tabSize: 2,
-      theme: 'vs-dark',
-    });
-    
-    // Set up change event
-    editorInstance.onDidChangeModelContent(() => {
-      onChange(editorInstance.getValue());
-    });
-    
-    setEditor(editorInstance);
-    
-    // Cleanup
+    // Setup Monaco theme when component mounts
+    setupMonacoTheme();
+
+    // Dispose editor when component unmounts
     return () => {
-      editorInstance.dispose();
+      if (monacoEditorRef.current) {
+        monacoEditorRef.current.dispose();
+      }
     };
   }, []);
-  
-  // Update content when file changes
+
   useEffect(() => {
-    if (editor) {
-      // Only update if value is different
-      if (editor.getValue() !== file.content) {
-        editor.setValue(file.content);
-      }
+    if (!editorRef.current) return;
+
+    if (!monacoEditorRef.current) {
+      // Create Monaco editor
+      monacoEditorRef.current = monaco.editor.create(editorRef.current, {
+        value: file.content || "",
+        language: getLanguageFromFilename(file.name),
+        theme: "vs-dark",
+        automaticLayout: true,
+        minimap: {
+          enabled: true,
+          scale: 0.75,
+        },
+        scrollBeyondLastLine: false,
+        fontSize: 14,
+        tabSize: 2,
+        fontFamily: "'Fira Code', Menlo, Monaco, 'Courier New', monospace",
+        fontLigatures: true,
+      });
+
+      // Set up change handler
+      monacoEditorRef.current.onDidChangeModelContent(() => {
+        const value = monacoEditorRef.current?.getValue() || "";
+        onChange(value);
+      });
+    } else {
+      // Update editor model if file changes
+      const model = monacoEditorRef.current.getModel();
       
-      // Update language
-      monaco.editor.setModelLanguage(
-        editor.getModel()!,
-        getLanguage(file.name)
-      );
+      if (model) {
+        const currentContent = model.getValue();
+        
+        if (file.content !== currentContent) {
+          // Reuse existing model
+          model.setValue(file.content || "");
+          monaco.editor.setModelLanguage(model, getLanguageFromFilename(file.name));
+        }
+      } else {
+        // Create a new model if it doesn't exist
+        const newModel = monaco.editor.createModel(
+          file.content || "",
+          getLanguageFromFilename(file.name)
+        );
+        monacoEditorRef.current.setModel(newModel);
+      }
     }
-  }, [file, editor]);
-  
+  }, [file, onChange]);
+
+  const getLanguageFromFilename = (filename: string): string => {
+    const extension = filename.split(".").pop()?.toLowerCase() || "";
+    
+    // Map file extensions to Monaco language IDs
+    const languageMap: Record<string, string> = {
+      js: "javascript",
+      jsx: "javascript",
+      ts: "typescript",
+      tsx: "typescript",
+      html: "html",
+      css: "css",
+      json: "json",
+      md: "markdown",
+      py: "python",
+      rb: "ruby",
+      go: "go",
+      java: "java",
+      c: "c",
+      cpp: "cpp",
+      cs: "csharp",
+      php: "php",
+      swift: "swift",
+      rs: "rust",
+      sh: "shell",
+      sql: "sql",
+    };
+
+    return languageMap[extension] || "plaintext";
+  };
+
+  if (!file) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-background text-muted-foreground">
+        <p>No file selected</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 overflow-auto bg-dark">
-      <div ref={editorRef} className="h-full w-full" />
+    <div className="h-full w-full flex flex-col">
+      <div className="flex items-center px-2 py-1 border-b bg-muted/40">
+        <span className="text-sm">{file.name}</span>
+      </div>
+      {!editorRef.current ? (
+        <Skeleton className="h-full w-full" />
+      ) : (
+        <div ref={editorRef} className="flex-1 overflow-hidden" />
+      )}
     </div>
   );
 };
