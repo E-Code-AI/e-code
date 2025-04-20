@@ -106,12 +106,27 @@ export function setupTerminalWebsocket(server: Server) {
             // Send input to the terminal process
             terminalInfo.process.stdin?.write(data.data);
           } else if (data.type === 'resize') {
-            // Handle terminal resize
-            if (terminalInfo.process && terminalInfo.process.stdin) {
-              // Note: The actual resize handling would be implemented here
-              // For pty.js or node-pty, you would use something like:
-              // terminalInfo.process.resize(data.cols, data.rows);
-              // This requires a proper PTY implementation
+            // Store the terminal dimensions for future reference
+            const { cols, rows } = data;
+            if (cols && rows) {
+              logger.info(`Terminal resize: ${cols}x${rows} for project ${projectId}`);
+              
+              // Store dimensions in terminal info for potential reconnects
+              terminalInfo.columns = cols;
+              terminalInfo.rows = rows;
+              
+              // We can't directly resize a child_process terminal 
+              // (only possible with proper PTY implementation),
+              // but we can send terminal dimensions via STTY command
+              if (terminalInfo.process && terminalInfo.process.stdin) {
+                // Send STTY command to update the terminal size
+                try {
+                  const sttyCommand = `stty cols ${cols} rows ${rows}\n`;
+                  terminalInfo.process.stdin.write(sttyCommand);
+                } catch (err) {
+                  logger.error(`Failed to resize terminal: ${err}`);
+                }
+              }
             }
           } else if (data.type === 'history_up' || data.type === 'history_down') {
             // Send command history to the client
@@ -146,13 +161,13 @@ export function setupTerminalWebsocket(server: Server) {
             }
           }
         } catch (error) {
-          log(`Error handling terminal message: ${error}`, 'terminal');
+          logger.error(`Error handling terminal message: ${error}`);
         }
       });
       
       // Handle client disconnect
       ws.on('close', () => {
-        log(`Terminal client disconnected for project ${projectId}`, 'terminal');
+        logger.info(`Terminal client disconnected for project ${projectId}`);
         
         if (terminalInfo.clients) {
           terminalInfo.clients.delete(ws);
@@ -171,7 +186,7 @@ export function setupTerminalWebsocket(server: Server) {
       }));
       
     } catch (error) {
-      log(`Error setting up terminal WebSocket: ${error}`, 'terminal');
+      logger.error(`Error setting up terminal WebSocket: ${error}`);
       ws.close(1011, 'Internal error');
     }
   });
@@ -206,7 +221,7 @@ async function startProcess(projectId: number, terminalInfo: {
     // Create a temporary directory for the project
     const projectDir = await createProjectDir(project, files);
     
-    log(`Starting terminal process for project ${projectId} in ${projectDir}`, 'terminal');
+    logger.info(`Starting terminal process for project ${projectId} in ${projectDir}`);
     
     // Determine which shell to use based on OS
     const shell = os.platform() === 'win32' ? 'cmd.exe' : 'bash';
@@ -221,6 +236,16 @@ async function startProcess(projectId: number, terminalInfo: {
     
     // Store the process
     terminalInfo.process = termProcess;
+    
+    // Apply terminal dimensions if they were previously set
+    if (terminalInfo.columns && terminalInfo.rows && termProcess.stdin) {
+      try {
+        const sttyCommand = `stty cols ${terminalInfo.columns} rows ${terminalInfo.rows}\n`;
+        termProcess.stdin.write(sttyCommand);
+      } catch (err) {
+        logger.error(`Failed to apply terminal dimensions on start: ${err}`);
+      }
+    }
     
     // Handle process output
     termProcess.stdout.on('data', (data: Buffer) => {
@@ -239,7 +264,7 @@ async function startProcess(projectId: number, terminalInfo: {
     
     // Handle process exit
     termProcess.on('exit', (code: number | null) => {
-      log(`Terminal process exited with code ${code} for project ${projectId}`, 'terminal');
+      logger.info(`Terminal process exited with code ${code} for project ${projectId}`);
       
       broadcastToClients(terminalInfo.clients, {
         type: 'exit',
@@ -256,7 +281,7 @@ async function startProcess(projectId: number, terminalInfo: {
     });
     
   } catch (error) {
-    log(`Error starting terminal process: ${error}`, 'terminal');
+    logger.error(`Error starting terminal process: ${error}`);
     
     broadcastToClients(terminalInfo.clients, {
       type: 'error',
@@ -272,10 +297,12 @@ function stopProcess(projectId: number, terminalInfo: {
   process: ChildProcess | null, 
   clients: Set<WebSocket>,
   commandHistory: string[],
-  autocompleteSuggestions: string[]
+  autocompleteSuggestions: string[],
+  columns?: number,
+  rows?: number
 }) {
   if (terminalInfo.process) {
-    log(`Stopping terminal process for project ${projectId}`, 'terminal');
+    logger.info(`Stopping terminal process for project ${projectId}`);
     
     // Kill the process
     terminalInfo.process.kill();
@@ -330,7 +357,7 @@ async function createProjectDir(project: { id: number }, files: File[]): Promise
     
     return projectDir;
   } catch (error) {
-    log(`Error creating project directory: ${error}`, 'terminal');
+    logger.error(`Error creating project directory: ${error}`);
     throw error;
   }
 }
