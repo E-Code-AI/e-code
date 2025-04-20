@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { getFileIcon } from "@/lib/utils/file-icons";
-import { File } from "@/lib/types";
+import { File } from "@shared/schema";
+import { File as FileIcon, Folder, ChevronRight, ChevronDown, MoreHorizontal } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface FileExplorerProps {
@@ -20,82 +23,114 @@ const FileExplorer = ({ files, isLoading, onFileOpen, onContextMenu }: FileExplo
     }));
   };
 
-  // Get top-level files (no parent)
-  const rootFiles = files.filter(file => !file.parentId);
+  // Organize files into a tree structure
+  const getRootFiles = () => {
+    return files.filter(file => file.parentId === null);
+  };
 
-  // Group files by parentId for nested structure
   const getChildFiles = (parentId: number) => {
     return files.filter(file => file.parentId === parentId);
   };
 
-  // Render file or folder item with their children
-  const renderFileTree = (fileList: File[], level = 0) => {
-    return fileList.map(file => (
-      <div key={file.id}>
+  const renderFile = (file: File) => {
+    const isFolder = file.isFolder;
+    const isExpanded = expandedFolders[file.id];
+    const children = isFolder ? getChildFiles(file.id) : [];
+    
+    return (
+      <div key={file.id} className="select-none">
         <div 
-          className={`flex items-center px-4 py-1 hover:bg-dark-700 cursor-pointer ${level > 0 ? `pl-${4 + level * 4}` : ''}`}
-          onClick={() => file.isFolder ? toggleFolder(file.id) : onFileOpen(file)}
-          onContextMenu={(e) => onContextMenu(e, file.isFolder ? 'folder' : 'file', file.id)}
+          className="flex items-center py-1 px-2 rounded-md hover:bg-accent cursor-pointer group"
+          onClick={() => isFolder ? toggleFolder(file.id) : onFileOpen(file)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            onContextMenu(e, isFolder ? 'folder' : 'file', file.id);
+          }}
         >
-          <i className={`${getFileIcon(file)} mr-2`}></i>
-          <span>{file.name}</span>
+          <div className="flex items-center flex-1 gap-1 overflow-hidden">
+            {isFolder && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFolder(file.id);
+                }}
+              >
+                {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+              </Button>
+            )}
+            {isFolder ? (
+              <Folder className="h-4 w-4 text-blue-500" />
+            ) : (
+              <FileIcon className="h-4 w-4 text-gray-500" />
+            )}
+            <span className="ml-1 text-sm truncate">{file.name}</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              onContextMenu(e, isFolder ? 'folder' : 'file', file.id);
+            }}
+          >
+            <MoreHorizontal className="h-3 w-3" />
+          </Button>
         </div>
-        
-        {file.isFolder && expandedFolders[file.id] && (
-          <div className={`pl-${level === 0 ? 8 : 8 + level * 4}`}>
-            {renderFileTree(getChildFiles(file.id), level + 1)}
+        {isFolder && isExpanded && children.length > 0 && (
+          <div className="pl-4 mt-1">
+            {children.map(child => renderFile(child))}
           </div>
         )}
       </div>
-    ));
+    );
   };
 
   return (
-    <div className="w-56 h-full bg-dark-800 border-r border-dark-600 flex flex-col">
-      <div className="px-4 py-3 border-b border-dark-600 flex items-center justify-between">
-        <div className="text-sm font-medium">Files</div>
-        <div className="flex items-center">
-          <button 
-            className="text-white opacity-70 hover:opacity-100 w-6 h-6 flex items-center justify-center"
-            onClick={(e) => {
-              e.stopPropagation();
-              onContextMenu(e, 'workspace');
-            }}
-          >
-            <i className="ri-add-line"></i>
-          </button>
-          <button className="text-white opacity-70 hover:opacity-100 w-6 h-6 flex items-center justify-center ml-1">
-            <i className="ri-more-2-fill"></i>
-          </button>
-        </div>
+    <div className="h-full flex flex-col">
+      <div className="py-2 px-3 border-b">
+        <h2 className="text-sm font-semibold">Files</h2>
       </div>
-      
-      <div className="overflow-y-auto flex-grow">
-        {isLoading ? (
-          <div className="py-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="px-4 py-1">
-                <Skeleton className="h-6 bg-dark-700" />
+      <ScrollArea className="flex-1">
+        <div className="p-2">
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div
+                className="py-1 px-2 rounded-md hover:bg-accent cursor-pointer mb-1"
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  onContextMenu(e, 'workspace');
+                }}
+              >
+                <div className="flex items-center gap-1">
+                  <Folder className="h-4 w-4 text-blue-500" />
+                  <span className="ml-1 text-sm font-medium">Project</span>
+                </div>
               </div>
-            ))}
-          </div>
-        ) : files.length > 0 ? (
-          <div className="py-2 text-sm" onContextMenu={(e) => onContextMenu(e, 'workspace')}>
-            {renderFileTree(rootFiles)}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-sm text-gray-400">
-            <i className="ri-folder-open-line text-3xl mb-2"></i>
-            <p>No files yet</p>
-            <button 
-              className="mt-2 text-primary hover:underline"
-              onClick={(e) => onContextMenu(e, 'workspace')}
-            >
-              Create a file
-            </button>
-          </div>
-        )}
-      </div>
+              <div className="pl-2">
+                {getRootFiles().map(file => renderFile(file))}
+                {getRootFiles().length === 0 && (
+                  <div className="text-sm text-muted-foreground py-2 px-2">
+                    No files found
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 };
