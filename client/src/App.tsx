@@ -9,6 +9,7 @@ import Editor from "@/pages/Editor";
 import AuthPage from "@/pages/auth-page";
 import RuntimesPage from "@/pages/RuntimesPage";
 import RuntimePublicPage from "@/pages/RuntimePublicPage";
+import RuntimeTest from "@/pages/RuntimeTest";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,7 @@ function AppContent() {
       <Switch>
         <Route path="/auth" component={AuthPage} />
         <Route path="/runtime-test" component={RuntimePublicPage} />
+        <Route path="/runtime-dependencies" component={RuntimeTest} />
         <ProtectedRoute path="/" component={Home} />
         <ProtectedRoute path="/project/:id" component={Editor} />
         <ProtectedRoute path="/runtimes" component={RuntimesPage} />
