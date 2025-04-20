@@ -1,460 +1,308 @@
-import { spawn, ChildProcess } from 'child_process';
-import { log } from './vite';
+/**
+ * Runtime service for PLOT projects
+ * This module handles project runtime management, execution, and monitoring
+ */
+
+import { ChildProcess } from 'child_process';
+import * as path from 'path';
+import * as fs from 'fs';
 import { Project, File } from '@shared/schema';
 import { storage } from './storage';
-import path from 'path';
-import fs from 'fs';
-import os from 'os';
+import * as runtimeManager from './runtimes/runtime-manager';
+import { Language } from './runtimes/languages';
+import { log } from './vite';
+import { WebSocket } from 'ws';
 
-// Define runtime configurations for different languages
-interface RuntimeConfig {
-  name: string;
-  fileExtensions: string[];
-  mainFileNames: string[];
-  startCommand: (mainFile: string, projectDir: string) => { command: string; args: string[] };
-  packageFile?: string;
-  installCommand?: (projectDir: string) => { command: string; args: string[] };
-}
-
-const runtimeConfigs: RuntimeConfig[] = [
-  {
-    name: 'javascript',
-    fileExtensions: ['.js'],
-    mainFileNames: ['index.js', 'server.js', 'app.js', 'main.js'],
-    packageFile: 'package.json',
-    startCommand: (mainFile, projectDir) => ({ 
-      command: 'node', 
-      args: [mainFile] 
-    }),
-    installCommand: (projectDir) => ({ 
-      command: 'npm', 
-      args: ['install', '--prefix', projectDir] 
-    })
-  },
-  {
-    name: 'typescript',
-    fileExtensions: ['.ts'],
-    mainFileNames: ['index.ts', 'server.ts', 'app.ts', 'main.ts'],
-    packageFile: 'package.json',
-    startCommand: (mainFile, projectDir) => ({ 
-      command: 'npx', 
-      args: ['ts-node', mainFile] 
-    }),
-    installCommand: (projectDir) => ({ 
-      command: 'npm', 
-      args: ['install', '--prefix', projectDir] 
-    })
-  },
-  {
-    name: 'python',
-    fileExtensions: ['.py'],
-    mainFileNames: ['main.py', 'app.py', 'index.py'],
-    packageFile: 'requirements.txt',
-    startCommand: (mainFile, projectDir) => ({ 
-      command: 'python3', 
-      args: [mainFile] 
-    }),
-    installCommand: (projectDir) => ({ 
-      command: 'pip3', 
-      args: ['install', '-r', path.join(projectDir, 'requirements.txt')] 
-    })
-  },
-  {
-    name: 'html',
-    fileExtensions: ['.html', '.htm'],
-    mainFileNames: ['index.html', 'main.html'],
-    startCommand: (mainFile, projectDir) => ({ 
-      command: 'npx', 
-      args: ['serve', projectDir] 
-    })
-  },
-  {
-    name: 'nodejs',
-    fileExtensions: ['.js', '.ts'],
-    mainFileNames: ['index.js', 'server.js', 'app.js', 'main.js'],
-    packageFile: 'package.json',
-    startCommand: (mainFile, projectDir) => ({
-      command: 'npm',
-      args: ['start', '--prefix', projectDir]
-    }),
-    installCommand: (projectDir) => ({ 
-      command: 'npm', 
-      args: ['install', '--prefix', projectDir] 
-    })
-  },
-  {
-    name: 'react',
-    fileExtensions: ['.js', '.jsx', '.ts', '.tsx'],
-    mainFileNames: ['src/index.js', 'src/index.jsx', 'src/index.ts', 'src/index.tsx'],
-    packageFile: 'package.json',
-    startCommand: (mainFile, projectDir) => ({ 
-      command: 'npm', 
-      args: ['start', '--prefix', projectDir] 
-    }),
-    installCommand: (projectDir) => ({ 
-      command: 'npm', 
-      args: ['install', '--prefix', projectDir] 
-    })
-  },
-];
-
-// Map to store running processes by project ID
-const runningProcesses = new Map<number, {
+// Map of active project processes
+const activeProjects = new Map<number, {
   process: ChildProcess;
-  language: string;
+  logs: string[];
+  status: 'starting' | 'running' | 'stopped' | 'error';
+  url?: string;
   port?: number;
+  containerId?: string;
+  logClients: Set<WebSocket>;
 }>();
 
-// Create a temporary project directory
-async function createProjectDir(project: Project, files: File[]): Promise<string> {
-  const tmpDir = path.join(os.tmpdir(), `plot-project-${project.id}-${Date.now()}`);
-  
-  try {
-    // Create project directory
-    await fs.promises.mkdir(tmpDir, { recursive: true });
-    
-    // Write all files to the directory
-    for (const file of files) {
-      if (file.isFolder) {
-        await fs.promises.mkdir(path.join(tmpDir, file.name), { recursive: true });
-      } else {
-        await fs.promises.writeFile(
-          path.join(tmpDir, file.name), 
-          file.content || '',
-          'utf8'
-        );
-      }
-    }
-    
-    return tmpDir;
-  } catch (error) {
-    log(`Error creating project directory: ${error}`, 'runtime');
-    throw error;
-  }
-}
-
-// Detect the language and main file for a project
-async function detectProjectLanguage(project: Project, files: File[]): Promise<{
-  language: string;
-  mainFile: string;
-  config: RuntimeConfig;
-}> {
-  // Check if project has language explicitly set
-  if (project.language) {
-    const config = runtimeConfigs.find(config => config.name === project.language);
-    if (config) {
-      // Find main file based on config
-      for (const mainFileName of config.mainFileNames) {
-        const mainFile = files.find(f => f.name === mainFileName && !f.isFolder);
-        if (mainFile) {
-          return { language: project.language, mainFile: mainFile.name, config };
-        }
-      }
-      
-      // If no main file found, look for files with matching extension
-      const fileWithExt = files.find(f => 
-        !f.isFolder && 
-        config.fileExtensions.some(ext => f.name.endsWith(ext))
-      );
-      
-      if (fileWithExt) {
-        return { language: project.language, mainFile: fileWithExt.name, config };
-      }
-    }
-  }
-  
-  // If language not set or main file not found, detect based on files
-  // First, look for common package files
-  const packageJson = files.find(f => f.name === 'package.json' && !f.isFolder);
-  if (packageJson) {
-    try {
-      const content = JSON.parse(packageJson.content || '{}');
-      
-      // Check for React
-      if (
-        (content.dependencies && content.dependencies.react) ||
-        (content.devDependencies && content.devDependencies.react)
-      ) {
-        const config = runtimeConfigs.find(config => config.name === 'react');
-        if (config) {
-          // Look for main file
-          for (const mainFileName of config.mainFileNames) {
-            // Handle nested paths
-            const pathParts = mainFileName.split('/');
-            let currentFiles = files;
-            let found = false;
-            
-            for (let i = 0; i < pathParts.length; i++) {
-              const part = pathParts[i];
-              const isLast = i === pathParts.length - 1;
-              
-              if (isLast) {
-                const file = currentFiles.find(f => f.name === part && !f.isFolder);
-                if (file) {
-                  found = true;
-                  return { language: 'react', mainFile: mainFileName, config };
-                }
-              } else {
-                const folder = currentFiles.find(f => f.name === part && f.isFolder);
-                if (folder) {
-                  // Get files in this folder
-                  currentFiles = files.filter(f => f.parentId === folder.id);
-                } else {
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
-      
-      // Check if it's a Node.js project
-      if (content.main || content.scripts?.start) {
-        const config = runtimeConfigs.find(config => config.name === 'nodejs');
-        return { language: 'nodejs', mainFile: content.main || 'index.js', config: config! };
-      }
-    } catch (error) {
-      log(`Error parsing package.json: ${error}`, 'runtime');
-    }
-  }
-  
-  // Check for Python
-  const pythonConfig = runtimeConfigs.find(config => config.name === 'python');
-  if (pythonConfig) {
-    for (const mainFileName of pythonConfig.mainFileNames) {
-      const mainFile = files.find(f => f.name === mainFileName && !f.isFolder);
-      if (mainFile) {
-        return { language: 'python', mainFile: mainFile.name, config: pythonConfig };
-      }
-    }
-  }
-  
-  // Check for HTML
-  const htmlConfig = runtimeConfigs.find(config => config.name === 'html');
-  if (htmlConfig) {
-    for (const mainFileName of htmlConfig.mainFileNames) {
-      const mainFile = files.find(f => f.name === mainFileName && !f.isFolder);
-      if (mainFile) {
-        return { language: 'html', mainFile: mainFile.name, config: htmlConfig };
-      }
-    }
-  }
-  
-  // Default to JavaScript if we can't detect
-  const jsConfig = runtimeConfigs.find(config => config.name === 'javascript');
-  const mainFile = files.find(f => 
-    !f.isFolder && jsConfig!.fileExtensions.some(ext => f.name.endsWith(ext))
-  );
-  
-  return { 
-    language: 'javascript', 
-    mainFile: mainFile ? mainFile.name : 'index.js', 
-    config: jsConfig! 
-  };
-}
-
-// Start a project
+/**
+ * Start a project's runtime
+ */
 export async function startProject(projectId: number): Promise<{
   success: boolean;
-  language?: string;
-  port?: number;
+  url?: string;
   error?: string;
 }> {
   try {
-    // Check if project is already running
-    if (runningProcesses.has(projectId)) {
+    // Check if already running
+    if (activeProjects.has(projectId) && 
+        activeProjects.get(projectId)!.status === 'running') {
+      const project = activeProjects.get(projectId)!;
       return {
         success: true,
-        language: runningProcesses.get(projectId)!.language,
-        port: runningProcesses.get(projectId)!.port
+        url: project.url
       };
     }
     
-    // Get project and files
+    // Get project details
     const project = await storage.getProject(projectId);
     if (!project) {
-      return { success: false, error: 'Project not found' };
+      return {
+        success: false,
+        error: 'Project not found'
+      };
     }
     
+    // Get project files
     const files = await storage.getFilesByProject(projectId);
-    if (!files || files.length === 0) {
-      return { success: false, error: 'No files found in project' };
+    if (!files.length) {
+      return {
+        success: false,
+        error: 'No files found in project'
+      };
+    }
+
+    // Init logs if not existing
+    if (!activeProjects.has(projectId)) {
+      activeProjects.set(projectId, {
+        process: null as unknown as ChildProcess,
+        logs: [],
+        status: 'starting',
+        logClients: new Set()
+      });
     }
     
-    // Create a temporary project directory
-    const projectDir = await createProjectDir(project, files);
+    const projectData = activeProjects.get(projectId)!;
+    projectData.logs.push('Starting project...');
     
-    // Detect language and main file
-    const { language, mainFile, config } = await detectProjectLanguage(project, files);
-    
-    // Run install command if necessary
-    if (config.installCommand && config.packageFile) {
-      const packageFileExists = files.some(f => f.name === config.packageFile && !f.isFolder);
-      
-      if (packageFileExists) {
-        const { command, args } = config.installCommand(projectDir);
-        
-        log(`Installing dependencies for ${project.name} (${language})...`, 'runtime');
-        
-        try {
-          // Run synchronously to ensure dependencies are installed before starting
-          const { execSync } = require('child_process');
-          execSync(`${command} ${args.join(' ')}`, {
-            cwd: process.cwd(),
-            stdio: 'inherit'
-          });
-          
-          log(`Dependencies installed for ${project.name}`, 'runtime');
-        } catch (error) {
-          log(`Error installing dependencies: ${error}`, 'runtime');
-          // Continue anyway as the project might still run
-        }
-      }
-    }
-    
-    // Start the project
-    const { command, args } = config.startCommand(
-      path.join(projectDir, mainFile),
-      projectDir
-    );
-    
-    log(`Starting ${project.name} (${language}) with command: ${command} ${args.join(' ')}`, 'runtime');
-    
-    // Assign a port in the 3000-3999 range to avoid conflicts
-    const port = 3000 + (projectId % 1000);
-    
-    // Set environment variables
+    // Get environmental variables
     const env = {
-      ...process.env,
-      PORT: port.toString(),
-      PROJECT_DIR: projectDir,
-      NODE_ENV: 'development'
+      PORT: '8080',
+      NODE_ENV: 'development',
+      ...process.env
     };
     
-    // Spawn the process
-    const proc = spawn(command, args, {
-      cwd: projectDir,
-      env,
-      shell: true,
-      stdio: 'pipe'
+    // Start the project using runtime manager
+    const runtime = await runtimeManager.startProject(project, files, {
+      environmentVariables: env,
+      port: 8080,
+      useNix: false
     });
     
-    // Store the process
-    runningProcesses.set(projectId, {
-      process: proc,
-      language,
-      port
+    // Handle runtime errors
+    if (!runtime.success) {
+      projectData.status = 'error';
+      projectData.logs.push(`Error starting project: ${runtime.error}`);
+      broadcastLogsToClients(projectId, `Error starting project: ${runtime.error}`);
+      
+      return {
+        success: false,
+        error: runtime.error
+      };
+    }
+    
+    // Update active project info
+    projectData.status = 'running';
+    projectData.port = runtime.port;
+    projectData.containerId = runtime.containerId;
+    projectData.url = `http://localhost:${runtime.port}`;
+    projectData.logs.push(...runtime.logs);
+    projectData.logs.push(`Project started successfully on port ${runtime.port}`);
+    
+    // Broadcast logs to connected clients
+    broadcastLogsToClients(projectId, `Project started successfully on port ${runtime.port}`);
+    
+    // Set up log streaming
+    const stopLogging = runtimeManager.streamProjectLogs(projectId, (log) => {
+      projectData.logs.push(log);
+      broadcastLogsToClients(projectId, log);
     });
     
-    // Handle process exit
-    proc.on('exit', (code) => {
-      log(`Project ${project.name} (${language}) exited with code ${code}`, 'runtime');
-      runningProcesses.delete(projectId);
-    });
+    // Update project when the process exits
+    projectData.process = {
+      on: (event: string, callback: () => void) => {
+        if (event === 'exit') {
+          // Save the callback to be called when stopping
+          const originalStop = projectData.process.kill;
+          projectData.process.kill = () => {
+            callback();
+            originalStop();
+          };
+        }
+      },
+      kill: () => {
+        stopLogging();
+        runtimeManager.stopProject(projectId);
+      }
+    } as unknown as ChildProcess;
     
-    // Success
     return {
       success: true,
-      language,
-      port
+      url: projectData.url
     };
   } catch (error) {
-    log(`Error starting project: ${error}`, 'runtime');
-    return { success: false, error: String(error) };
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    log(`Error starting project: ${errorMessage}`, 'runtime', 'error');
+    
+    if (activeProjects.has(projectId)) {
+      const projectData = activeProjects.get(projectId)!;
+      projectData.status = 'error';
+      projectData.logs.push(`Error: ${errorMessage}`);
+      broadcastLogsToClients(projectId, `Error: ${errorMessage}`);
+    }
+    
+    return {
+      success: false,
+      error: errorMessage
+    };
   }
 }
 
-// Stop a running project
+/**
+ * Stop a project's runtime
+ */
 export async function stopProject(projectId: number): Promise<{
   success: boolean;
   error?: string;
 }> {
   try {
-    const runningProject = runningProcesses.get(projectId);
-    
-    if (!runningProject) {
-      return { success: false, error: 'Project is not running' };
+    if (!activeProjects.has(projectId)) {
+      return {
+        success: false,
+        error: 'Project not running'
+      };
     }
     
-    // Kill the process
-    if (process.platform === 'win32') {
-      runningProject.process.kill();
-    } else {
-      // On Unix-like systems, kill the entire process group
-      if (runningProject.process.pid) {
-        process.kill(-runningProject.process.pid, 'SIGTERM');
-      }
+    const projectData = activeProjects.get(projectId)!;
+    
+    // Kill the process if it exists
+    if (projectData.process) {
+      projectData.process.kill();
     }
     
-    // Remove from running processes
-    runningProcesses.delete(projectId);
+    projectData.status = 'stopped';
+    projectData.logs.push('Project stopped');
+    broadcastLogsToClients(projectId, 'Project stopped');
+    
+    // Stop the runtime
+    await runtimeManager.stopProject(projectId);
+    
+    // Remove from active projects
+    activeProjects.delete(projectId);
     
     return { success: true };
   } catch (error) {
-    log(`Error stopping project: ${error}`, 'runtime');
-    return { success: false, error: String(error) };
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    log(`Error stopping project: ${errorMessage}`, 'runtime', 'error');
+    
+    return {
+      success: false,
+      error: errorMessage
+    };
   }
 }
 
-// Get status of a running project
+/**
+ * Get the status of a project's runtime
+ */
 export function getProjectStatus(projectId: number): {
-  running: boolean;
-  language?: string;
-  port?: number;
+  isRunning: boolean;
+  status: 'starting' | 'running' | 'stopped' | 'error' | 'unknown';
+  logs: string[];
+  url?: string;
 } {
-  const runningProject = runningProcesses.get(projectId);
-  
-  if (!runningProject) {
-    return { running: false };
+  if (!activeProjects.has(projectId)) {
+    return {
+      isRunning: false,
+      status: 'unknown',
+      logs: []
+    };
   }
+  
+  const project = activeProjects.get(projectId)!;
   
   return {
-    running: true,
-    language: runningProject.language,
-    port: runningProject.port
+    isRunning: project.status === 'running',
+    status: project.status,
+    logs: project.logs,
+    url: project.url
   };
 }
 
-// Get logs from a running project
+/**
+ * Attach to project logs stream
+ */
 export function attachToProjectLogs(
   projectId: number,
-  onStdout: (data: string) => void,
-  onStderr: (data: string) => void
-): () => void {
-  const runningProject = runningProcesses.get(projectId);
-  
-  if (!runningProject) {
-    onStderr('Project is not running');
-    return () => {};
+  client: WebSocket,
+  sendMessage: (message: string) => void
+): void {
+  // Initialize project data if not exists
+  if (!activeProjects.has(projectId)) {
+    activeProjects.set(projectId, {
+      process: null as unknown as ChildProcess,
+      logs: [],
+      status: 'stopped',
+      logClients: new Set()
+    });
   }
   
-  const { process } = runningProject;
+  const projectData = activeProjects.get(projectId)!;
   
-  // Attach listeners
-  const stdoutListener = (data: Buffer) => {
-    onStdout(data.toString());
-  };
+  // Add client to the set
+  projectData.logClients.add(client);
   
-  const stderrListener = (data: Buffer) => {
-    onStderr(data.toString());
-  };
-  
-  if (process.stdout) {
-    process.stdout.on('data', stdoutListener);
+  // Send existing logs
+  for (const log of projectData.logs) {
+    sendMessage(log);
   }
   
-  if (process.stderr) {
-    process.stderr.on('data', stderrListener);
-  }
+  // Handle disconnect
+  client.on('close', () => {
+    projectData.logClients.delete(client);
+  });
+}
+
+/**
+ * Broadcast log messages to all connected clients
+ */
+function broadcastLogsToClients(projectId: number, message: string): void {
+  if (!activeProjects.has(projectId)) return;
   
-  // Return function to detach listeners
-  return () => {
-    if (process.stdout) {
-      process.stdout.removeListener('data', stdoutListener);
+  const projectData = activeProjects.get(projectId)!;
+  
+  for (const client of projectData.logClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({
+        type: 'log',
+        data: message
+      }));
     }
-    
-    if (process.stderr) {
-      process.stderr.removeListener('data', stderrListener);
-    }
-  };
+  }
+}
+
+/**
+ * Check if runtime dependencies are available
+ */
+export async function checkRuntimeDependencies(): Promise<{
+  docker: boolean;
+  nix: boolean;
+}> {
+  return runtimeManager.checkRuntimeDependencies();
+}
+
+/**
+ * Create default files for a new project
+ */
+export function getDefaultProjectFiles(language: Language): { name: string, content: string, isFolder: boolean }[] {
+  return runtimeManager.createDefaultProject(language);
+}
+
+/**
+ * Execute a command in a project runtime
+ */
+export async function executeProjectCommand(projectId: number, command: string): Promise<{
+  success: boolean;
+  output: string;
+}> {
+  return runtimeManager.executeCommand(projectId, command);
 }
