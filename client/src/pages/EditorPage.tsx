@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { File, Project } from '@shared/schema';
 import TopNavbar from '@/components/TopNavbar';
+import TerminalPanel from '@/components/TerminalPanel';
 
 export default function EditorPage() {
   const { projectId } = useParams();
@@ -218,24 +219,30 @@ export default function EditorPage() {
         onDatabaseOpen={handleDatabaseOpen}
         onCollaborationOpen={handleCollaborationOpen}
       />
-      <EditorWorkspace
-        project={project}
-        files={files}
-        onFileUpdate={handleFileUpdate}
-        onFileCreate={handleFileCreate}
-        onFileDelete={handleFileDelete}
-        onActiveFileChange={handleActiveFileChange}
-        initialShowNixConfig={showNixConfig}
-        initialShowCommandPalette={showCommandPalette}
-        initialShowKeyboardShortcuts={showKeyboardShortcuts}
-        initialShowReplitDB={showReplitDB}
-        initialShowCollaboration={showCollaboration}
-        onNixConfigChange={setShowNixConfig}
-        onCommandPaletteChange={setShowCommandPalette}
-        onKeyboardShortcutsChange={setShowKeyboardShortcuts}
-        onReplitDBChange={setShowReplitDB}
-        onCollaborationChange={setShowCollaboration}
-      />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <EditorWorkspace
+          project={project}
+          files={files}
+          onFileUpdate={handleFileUpdate}
+          onFileCreate={handleFileCreate}
+          onFileDelete={handleFileDelete}
+          onActiveFileChange={handleActiveFileChange}
+          initialShowNixConfig={showNixConfig}
+          initialShowCommandPalette={showCommandPalette}
+          initialShowKeyboardShortcuts={showKeyboardShortcuts}
+          initialShowReplitDB={showReplitDB}
+          initialShowCollaboration={showCollaboration}
+          onNixConfigChange={setShowNixConfig}
+          onCommandPaletteChange={setShowCommandPalette}
+          onKeyboardShortcutsChange={setShowKeyboardShortcuts}
+          onReplitDBChange={setShowReplitDB}
+          onCollaborationChange={setShowCollaboration}
+        />
+        {/* Terminal Panel */}
+        <div className="border-t">
+          <TerminalPanel projectId={projectIdNum} />
+        </div>
+      </div>
     </div>
   );
 }

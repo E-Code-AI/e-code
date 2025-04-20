@@ -136,24 +136,24 @@ async function startProcess(projectId: number, terminalInfo: { process: ChildPro
     const args = os.platform() === 'win32' ? ['/K', 'cd', projectDir] : [];
     
     // Spawn the process
-    const process = spawn(shell, args, {
+    const termProcess = spawn(shell, args, {
       cwd: projectDir,
       env: { ...process.env, TERM: 'xterm-256color' },
       stdio: ['pipe', 'pipe', 'pipe']
     });
     
     // Store the process
-    terminalInfo.process = process;
+    terminalInfo.process = termProcess;
     
     // Handle process output
-    process.stdout.on('data', (data) => {
+    termProcess.stdout.on('data', (data: Buffer) => {
       broadcastToClients(terminalInfo.clients, {
         type: 'output',
         data: data.toString()
       });
     });
     
-    process.stderr.on('data', (data) => {
+    termProcess.stderr.on('data', (data: Buffer) => {
       broadcastToClients(terminalInfo.clients, {
         type: 'output',
         data: data.toString()
@@ -161,7 +161,7 @@ async function startProcess(projectId: number, terminalInfo: { process: ChildPro
     });
     
     // Handle process exit
-    process.on('exit', (code) => {
+    termProcess.on('exit', (code: number | null) => {
       log(`Terminal process exited with code ${code} for project ${projectId}`, 'terminal');
       
       broadcastToClients(terminalInfo.clients, {
@@ -207,8 +207,14 @@ function stopProcess(projectId: number, terminalInfo: { process: ChildProcess | 
   }
 }
 
+// Message types
+interface TerminalMessage {
+  type: 'output' | 'connected' | 'error' | 'exit' | 'started' | 'stopped';
+  data: string;
+}
+
 // Broadcast a message to all connected clients
-function broadcastToClients(clients: Set<WebSocket>, message: any) {
+function broadcastToClients(clients: Set<WebSocket>, message: TerminalMessage): void {
   const messageStr = JSON.stringify(message);
   
   clients.forEach(client => {
@@ -219,7 +225,7 @@ function broadcastToClients(clients: Set<WebSocket>, message: any) {
 }
 
 // Create a temporary project directory with all project files
-async function createProjectDir(project: any, files: File[]): Promise<string> {
+async function createProjectDir(project: { id: number }, files: File[]): Promise<string> {
   const projectDir = path.join(os.tmpdir(), `plot-terminal-${project.id}`);
   
   try {
