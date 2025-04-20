@@ -88,6 +88,45 @@ export default function AuthPage() {
             <CardDescription>
               Sign in to your account or create a new one to get started.
             </CardDescription>
+            <div className="mt-2 p-3 bg-muted rounded-md text-sm">
+              <p className="mb-1"><strong>Demo accounts:</strong></p>
+              <div className="flex flex-col gap-2 mt-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span>Username: <code className="bg-slate-700 px-1 rounded">admin</code></span><br/>
+                    <span>Password: <code className="bg-slate-700 px-1 rounded">admin</code></span>
+                  </div>
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={() => {
+                      loginForm.setValue('username', 'admin');
+                      loginForm.setValue('password', 'admin');
+                      setActiveTab('login');
+                    }}
+                  >
+                    Use Admin
+                  </Button>
+                </div>
+                <div className="flex justify-between items-center mt-1">
+                  <div>
+                    <span>Username: <code className="bg-slate-700 px-1 rounded">demo</code></span><br/>
+                    <span>Password: <code className="bg-slate-700 px-1 rounded">password</code></span>
+                  </div>
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={() => {
+                      loginForm.setValue('username', 'demo');
+                      loginForm.setValue('password', 'password');
+                      setActiveTab('login');
+                    }}
+                  >
+                    Use Demo
+                  </Button>
+                </div>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "register")}>
@@ -125,20 +164,49 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      disabled={loginMutation.isPending}
-                    >
-                      {loginMutation.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Logging in...
-                        </>
-                      ) : (
-                        "Login"
-                      )}
-                    </Button>
+                    <div className="space-y-2">
+                      <Button 
+                        type="submit" 
+                        className="w-full" 
+                        disabled={loginMutation.isPending}
+                      >
+                        {loginMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Logging in...
+                          </>
+                        ) : (
+                          "Login"
+                        )}
+                      </Button>
+                      
+                      <div className="flex gap-2 w-full">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          className="flex-1"
+                          onClick={() => {
+                            loginForm.setValue('username', 'admin');
+                            loginForm.setValue('password', 'admin');
+                            loginForm.handleSubmit(onLoginSubmit)();
+                          }}
+                        >
+                          One-Click Admin Login
+                        </Button>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          className="flex-1"
+                          onClick={() => {
+                            loginForm.setValue('username', 'demo');
+                            loginForm.setValue('password', 'password');
+                            loginForm.handleSubmit(onLoginSubmit)();
+                          }}
+                        >
+                          One-Click Demo Login
+                        </Button>
+                      </div>
+                    </div>
                   </form>
                 </Form>
               </TabsContent>
