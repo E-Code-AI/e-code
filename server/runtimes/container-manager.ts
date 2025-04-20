@@ -15,7 +15,7 @@ const logger = createLogger('container');
 const activeContainers: Map<string, {
   process: ChildProcess,
   logs: string[],
-  status: 'starting' | 'running' | 'stopped' | 'error',
+  status: 'starting' | 'running' | 'error',
   error?: string,
   port?: number
 }> = new Map();
@@ -98,7 +98,7 @@ export async function createContainer(config: ContainerConfig): Promise<Containe
         
         if (activeContainers.has(containerId)) {
           const container = activeContainers.get(containerId)!;
-          container.status = 'stopped';
+          container.status = 'error';
         }
       }
     });
@@ -248,7 +248,7 @@ export async function stopContainer(containerId: string): Promise<boolean> {
     // Update active containers map
     if (activeContainers.has(containerId)) {
       const container = activeContainers.get(containerId)!;
-      container.status = 'stopped';
+      container.status = 'error';
       container.process.kill();
       activeContainers.delete(containerId);
     }
@@ -266,7 +266,7 @@ export async function stopContainer(containerId: string): Promise<boolean> {
  * Get the status of a container
  */
 export function getContainerStatus(containerId: string): {
-  status: 'starting' | 'running' | 'stopped' | 'error' | 'unknown';
+  status: 'starting' | 'running' | 'error' | 'unknown';
   error?: string;
   logs: string[];
   port?: number;
