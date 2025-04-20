@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Folder, File as FileIcon, ChevronRight, ChevronDown, Loader2 } from "lucide-react";
 import { File } from "@shared/schema";
+import { Folder, FolderOpen, FileText, ChevronRight, ChevronDown, Plus, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2 } from "lucide-react";
 
 interface FileExplorerProps {
   files: File[];
@@ -14,84 +15,70 @@ interface FileExplorerProps {
 const FileExplorer = ({ files, isLoading, onFileOpen, onContextMenu }: FileExplorerProps) => {
   const [expandedFolders, setExpandedFolders] = useState<Record<number, boolean>>({});
   
-  const toggleFolder = (folderId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Toggle folder expanded state
+  const toggleFolder = (id: number) => {
     setExpandedFolders(prev => ({
       ...prev,
-      [folderId]: !prev[folderId]
+      [id]: !prev[id]
     }));
   };
   
+  // Get file icon based on file type or extension
   const getFileIcon = (file: File) => {
     if (file.isFolder) {
-      return expandedFolders[file.id] ? <ChevronDown className="h-4 w-4 mr-1" /> : <ChevronRight className="h-4 w-4 mr-1" />;
-    } else {
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      
-      // Return appropriate icon based on file extension
-      switch (ext) {
-        case 'js':
-        case 'jsx':
-        case 'ts':
-        case 'tsx':
-          return <FileIcon className="h-4 w-4 mr-1 text-yellow-400" />;
-        case 'css':
-        case 'scss':
-        case 'sass':
-          return <FileIcon className="h-4 w-4 mr-1 text-blue-400" />;
-        case 'html':
-          return <FileIcon className="h-4 w-4 mr-1 text-orange-400" />;
-        case 'json':
-          return <FileIcon className="h-4 w-4 mr-1 text-green-400" />;
-        case 'md':
-          return <FileIcon className="h-4 w-4 mr-1 text-gray-400" />;
-        default:
-          return <FileIcon className="h-4 w-4 mr-1" />;
-      }
+      return expandedFolders[file.id] ? <FolderOpen className="h-4 w-4 shrink-0" /> : <Folder className="h-4 w-4 shrink-0" />;
     }
+    
+    return <FileText className="h-4 w-4 shrink-0" />;
   };
   
+  // Recursive function to render file tree
   const renderFile = (file: File, depth = 0) => {
-    const isExpanded = expandedFolders[file.id] || false;
+    const childFiles = files.filter(f => f.parentId === file.id);
+    const isExpanded = expandedFolders[file.id];
+    const hasChildren = childFiles.length > 0;
     
     return (
       <div key={file.id}>
         <div
           className={cn(
-            "flex items-center py-1 px-2 text-sm cursor-pointer hover:bg-accent rounded-md",
-            file.isFolder ? "font-medium" : "font-normal"
+            "flex items-center py-1 px-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground",
+            "group"
           )}
-          style={{ paddingLeft: `${(depth * 12) + 8}px` }}
-          onClick={(e) => {
-            if (file.isFolder) {
-              toggleFolder(file.id, e);
-            } else {
-              onFileOpen(file);
-            }
-          }}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            onContextMenu(e, file.isFolder ? 'folder' : 'file', file.id);
-          }}
+          style={{ paddingLeft: `${depth * 16 + 8}px` }}
+          onClick={() => file.isFolder ? toggleFolder(file.id) : onFileOpen(file)}
+          onContextMenu={(e) => onContextMenu(e, file.isFolder ? 'folder' : 'file', file.id)}
         >
-          <div className="flex items-center">
-            {file.isFolder ? (
-              <Folder className={cn("h-4 w-4 mr-1", isExpanded ? "text-blue-400" : "text-gray-400")} />
-            ) : (
-              getFileIcon(file)
+          <div className="flex items-center flex-1 min-w-0">
+            {file.isFolder && hasChildren && (
+              <button className="mr-1 h-4 w-4 flex items-center justify-center">
+                {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+              </button>
             )}
+            {file.isFolder && !hasChildren && <div className="mr-1 w-4" />}
+            <span className="mr-2">{getFileIcon(file)}</span>
             <span className="truncate">{file.name}</span>
           </div>
+          <button
+            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-background hover:text-foreground rounded-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onContextMenu(e, file.isFolder ? 'folder' : 'file', file.id);
+            }}
+          >
+            <MoreVertical className="h-3 w-3" />
+          </button>
         </div>
         
         {file.isFolder && isExpanded && (
           <div>
-            {files
-              .filter(f => f.parentId === file.id)
+            {childFiles
               .sort((a, b) => {
-                // Sort folders first, then by name
+                // Folders first, then files
                 if (a.isFolder && !b.isFolder) return -1;
                 if (!a.isFolder && b.isFolder) return 1;
+                
+                // Alphabetical by name
                 return a.name.localeCompare(b.name);
               })
               .map(childFile => renderFile(childFile, depth + 1))}
@@ -101,44 +88,44 @@ const FileExplorer = ({ files, isLoading, onFileOpen, onContextMenu }: FileExplo
     );
   };
   
-  if (isLoading) {
-    return (
-      <div className="h-full w-full flex items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-  
   // Get root level files (no parent)
-  const rootFiles = files
-    .filter(file => !file.parentId)
-    .sort((a, b) => {
-      // Sort folders first, then by name
-      if (a.isFolder && !b.isFolder) return -1;
-      if (!a.isFolder && b.isFolder) return 1;
-      return a.name.localeCompare(b.name);
-    });
+  const rootFiles = files.filter(f => f.parentId === null);
   
   return (
     <div className="h-full flex flex-col">
-      <div className="border-b p-2 flex items-center justify-between">
-        <h2 className="text-sm font-medium">Files</h2>
+      {/* Header */}
+      <div className="flex items-center justify-between p-2 border-b">
+        <h3 className="text-sm font-semibold">Files</h3>
+        <button
+          className="p-1 hover:bg-accent hover:text-accent-foreground rounded-sm"
+          onClick={(e) => onContextMenu(e, 'workspace')}
+        >
+          <Plus className="h-4 w-4" />
+        </button>
       </div>
       
+      {/* File Tree */}
       <ScrollArea className="flex-1">
-        <div 
-          className="p-2"
-          onContextMenu={(e) => {
-            e.preventDefault();
-            onContextMenu(e, 'workspace');
-          }}
-        >
-          {rootFiles.length > 0 ? (
-            rootFiles.map(file => renderFile(file))
-          ) : (
-            <div className="text-sm text-muted-foreground p-2">
-              No files yet. Right-click to create one.
+        <div className="p-2">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-20">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
+          ) : rootFiles.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center p-4">
+              No files yet. Add a file to get started.
+            </div>
+          ) : (
+            rootFiles
+              .sort((a, b) => {
+                // Folders first, then files
+                if (a.isFolder && !b.isFolder) return -1;
+                if (!a.isFolder && b.isFolder) return 1;
+                
+                // Alphabetical by name
+                return a.name.localeCompare(b.name);
+              })
+              .map(file => renderFile(file))
           )}
         </div>
       </ScrollArea>
