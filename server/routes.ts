@@ -17,7 +17,9 @@ import { setupTerminalWebsocket } from "./terminal";
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   console.log('ensureAuthenticated check, isAuthenticated:', req.isAuthenticated());
-  console.log('session user:', req.user?.username);
+  console.log('session user:', req.user);
+  console.log('session ID:', req.sessionID);
+  console.log('cookies:', req.headers.cookie);
   
   if (req.isAuthenticated()) {
     return next();

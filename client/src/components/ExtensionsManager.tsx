@@ -23,7 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { 
-  PuzzlePiece, 
+  Puzzle, 
   Search, 
   Download, 
   Star, 
@@ -176,7 +176,7 @@ export function ExtensionsManager({ isOpen, onClose }: ExtensionsManagerProps) {
       <DialogContent className="sm:max-w-[700px] h-[600px] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <PuzzlePiece className="h-5 w-5" />
+            <Puzzle className="h-5 w-5" />
             Extensions Manager
           </DialogTitle>
           <DialogDescription>
