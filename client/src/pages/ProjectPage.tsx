@@ -13,6 +13,7 @@ import CodeEditor from '@/components/CodeEditor';
 import Terminal from '@/components/Terminal';
 import DeploymentPanel from '@/components/DeploymentPanel';
 import Collaboration from '@/components/Collaboration';
+import GitPanel from '@/components/GitPanel';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -65,7 +66,7 @@ const ProjectPage = () => {
   const [terminalVisible, setTerminalVisible] = useState(true);
   const [terminalHeight, setTerminalHeight] = useState(300);
   const [projectRunning, setProjectRunning] = useState(false);
-  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'deployment'>('terminal');
+  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'deployment' | 'git'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   
   // Get current user for collaboration
@@ -620,8 +621,8 @@ const ProjectPage = () => {
                 <div className="flex items-center space-x-4">
                   <Tabs 
                     value={bottomPanelTab} 
-                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'deployment')}
-                    className="w-[400px]"
+                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'deployment' | 'git')}
+                    className="w-[500px]"
                   >
                     <TabsList className="h-7 bg-transparent">
                       <TabsTrigger 
@@ -635,6 +636,13 @@ const ProjectPage = () => {
                         className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'deployment' ? 'border-b-2 border-primary rounded-none' : ''}`}
                       >
                         Deployment
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="git" 
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'git' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        <GitBranch className="h-4 w-4 mr-1" />
+                        Git
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
