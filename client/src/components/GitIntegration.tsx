@@ -107,7 +107,7 @@ export function GitIntegration({ project, isOpen, onClose }: GitIntegrationProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Github className="h-5 w-5" />
@@ -120,9 +120,9 @@ export function GitIntegration({ project, isOpen, onClose }: GitIntegrationProps
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="commits">Commits</TabsTrigger>
-            <TabsTrigger value="branches">Branches</TabsTrigger>
+            <TabsTrigger value="overview" className="text-xs sm:text-sm px-1 sm:px-2">Overview</TabsTrigger>
+            <TabsTrigger value="commits" className="text-xs sm:text-sm px-1 sm:px-2">Commits</TabsTrigger>
+            <TabsTrigger value="branches" className="text-xs sm:text-sm px-1 sm:px-2">Branches</TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview" className="space-y-4 py-4">
@@ -154,8 +154,8 @@ export function GitIntegration({ project, isOpen, onClose }: GitIntegrationProps
                 <Alert>
                   <Github className="h-4 w-4" />
                   <AlertTitle>Connected to GitHub</AlertTitle>
-                  <AlertDescription>
-                    This project is linked to <strong>{repoState.repoUrl}</strong>
+                  <AlertDescription className="break-words">
+                    This project is linked to <strong className="break-all">{repoState.repoUrl}</strong>
                   </AlertDescription>
                 </Alert>
                 
@@ -168,11 +168,11 @@ export function GitIntegration({ project, isOpen, onClose }: GitIntegrationProps
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="px-3 py-1 text-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <Badge variant="outline" className="px-3 py-1 text-sm self-start">
                           {repoState.branch}
                         </Badge>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="self-end">
                           <GitFork className="h-4 w-4 mr-1" /> Switch
                         </Button>
                       </div>
@@ -187,14 +187,18 @@ export function GitIntegration({ project, isOpen, onClose }: GitIntegrationProps
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-sm text-muted-foreground">Modified:</span>{" "}
-                          <Badge>{repoState.changes}</Badge>
-                          <span className="text-sm text-muted-foreground ml-2">Untracked:</span>{" "}
-                          <Badge variant="outline">{repoState.untracked}</Badge>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <div className="flex items-center">
+                            <span className="text-sm text-muted-foreground">Modified:</span>{" "}
+                            <Badge className="ml-1">{repoState.changes}</Badge>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="text-sm text-muted-foreground">Untracked:</span>{" "}
+                            <Badge variant="outline" className="ml-1">{repoState.untracked}</Badge>
+                          </div>
                         </div>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="self-end sm:self-center">
                           <Plus className="h-4 w-4 mr-1" /> Commit
                         </Button>
                       </div>
@@ -202,11 +206,11 @@ export function GitIntegration({ project, isOpen, onClose }: GitIntegrationProps
                   </Card>
                 </div>
                 
-                <div className="flex justify-between mt-6">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between mt-6">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="outline" onClick={handlePull}>
+                        <Button variant="outline" onClick={handlePull} className="w-full sm:w-auto">
                           <DownloadCloud className="h-4 w-4 mr-2" /> Pull
                         </Button>
                       </TooltipTrigger>
@@ -219,7 +223,7 @@ export function GitIntegration({ project, isOpen, onClose }: GitIntegrationProps
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button onClick={handlePush}>
+                        <Button onClick={handlePush} className="w-full sm:w-auto">
                           <UploadCloud className="h-4 w-4 mr-2" /> Push
                         </Button>
                       </TooltipTrigger>
@@ -246,14 +250,14 @@ export function GitIntegration({ project, isOpen, onClose }: GitIntegrationProps
                 <h3 className="text-sm font-medium">Recent Commits</h3>
                 {repoState.commits.map((commit, index) => (
                   <div key={commit.hash} className="border rounded-md p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">{commit.message}</p>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium break-words">{commit.message}</p>
                         <p className="text-sm text-muted-foreground">
                           {commit.author} • {commit.date}
                         </p>
                       </div>
-                      <Badge variant="outline" className="font-mono">
+                      <Badge variant="outline" className="font-mono self-start sm:self-center shrink-0">
                         {commit.hash}
                       </Badge>
                     </div>
@@ -273,17 +277,17 @@ export function GitIntegration({ project, isOpen, onClose }: GitIntegrationProps
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 xs:gap-0">
                   <h3 className="text-sm font-medium">Branches</h3>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="self-end xs:self-auto">
                     <GitBranch className="h-4 w-4 mr-2" /> New Branch
                   </Button>
                 </div>
                 
                 <div className="border rounded-md p-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                     <div className="flex items-center">
-                      <Badge className="mr-2">Current</Badge>
+                      <Badge className="mr-2 shrink-0">Current</Badge>
                       <span className="font-medium">main</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
@@ -293,7 +297,7 @@ export function GitIntegration({ project, isOpen, onClose }: GitIntegrationProps
                 </div>
                 
                 <div className="border rounded-md p-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                     <div className="flex items-center">
                       <span className="font-medium">dev</span>
                     </div>
