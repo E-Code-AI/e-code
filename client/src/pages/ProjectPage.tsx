@@ -49,7 +49,9 @@ import {
   Upload, 
   Share2, 
   GitBranch,
-  Layers
+  Layers,
+  Users,
+  MessageSquare
 } from 'lucide-react';
 
 const ProjectPage = () => {
@@ -581,7 +583,7 @@ const ProjectPage = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* File Explorer */}
-        <div className="w-64 overflow-auto">
+        <div className="w-64 overflow-auto border-r">
           {files && (
             <FileExplorer
               files={files}
@@ -595,7 +597,7 @@ const ProjectPage = () => {
           )}
         </div>
         
-        {/* Editor and Terminal */}
+        {/* Middle Section: Editor and Terminal */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Code Editor */}
           <div className={`flex-1 ${terminalVisible ? 'overflow-hidden' : 'overflow-auto'}`}>
@@ -653,6 +655,29 @@ const ProjectPage = () => {
             </div>
           )}
         </div>
+        
+        {/* Right Panel: Collaboration */}
+        {rightPanelVisible && user && projectId && (
+          <div className="w-80 flex flex-col">
+            <Collaboration 
+              projectId={projectId} 
+              fileId={selectedFile?.id || null} 
+              currentUser={user}
+              onToggle={() => setRightPanelVisible(false)}
+            />
+          </div>
+        )}
+        
+        {/* Collapsed Collaboration Panel Toggle */}
+        {!rightPanelVisible && user && projectId && (
+          <Button
+            variant="ghost" 
+            className="fixed bottom-4 right-4 p-2 rounded-full shadow-md"
+            onClick={() => setRightPanelVisible(true)}
+          >
+            <Users className="h-5 w-5" />
+          </Button>
+        )}
       </div>
     </div>
   );
