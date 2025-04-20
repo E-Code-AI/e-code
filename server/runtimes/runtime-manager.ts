@@ -8,8 +8,10 @@ import * as path from 'path';
 import { Language, languageConfigs, getLanguageByExtension, getDefaultFiles } from './languages';
 import * as containerManager from './container-manager';
 import * as nixManager from './nix-manager';
-import { log } from '../vite';
+import { createLogger } from '../utils/logger';
 import { Project, File } from '@shared/schema';
+
+const logger = createLogger('runtime');
 
 // Map to track active project runtimes
 const activeRuntimes: Map<number, {

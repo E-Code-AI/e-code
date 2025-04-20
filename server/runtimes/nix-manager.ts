@@ -7,7 +7,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import { Language, languageConfigs } from './languages';
-import { log } from '../vite';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('nix');
 
 // Interface for Nix configuration options
 interface NixConfig {
@@ -26,7 +28,7 @@ export async function generateNixConfig(
   options: Partial<NixConfig> = {}
 ): Promise<boolean> {
   try {
-    log(`Generating Nix configuration for ${language}`, 'nix');
+    logger.info(`Generating Nix configuration for ${language}`);
     
     const nixConfig = generateLanguageNixConfig(language, options);
     const nixFilePath = path.join(projectDir, 'replit.nix');
@@ -39,11 +41,11 @@ export async function generateNixConfig(
     
     fs.writeFileSync(replitFilePath, replitConfig);
     
-    log(`Nix configuration generated successfully`, 'nix');
+    logger.info(`Nix configuration generated successfully`);
     return true;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    log(`Error generating Nix configuration: ${errorMessage}`, 'nix', 'error');
+    logger.error(`Error generating Nix configuration: ${errorMessage}`);
     return false;
   }
 }
@@ -56,7 +58,7 @@ export async function applyNixEnvironment(projectDir: string): Promise<{
   output: string;
 }> {
   try {
-    log(`Applying Nix environment to ${projectDir}`, 'nix');
+    logger.info(`Applying Nix environment to ${projectDir}`);
     
     const nixShellCommand = `cd ${projectDir} && nix-shell replit.nix --run "echo 'Nix environment applied successfully'"`;
     
@@ -68,22 +70,22 @@ export async function applyNixEnvironment(projectDir: string): Promise<{
       nixProcess.stdout.on('data', (data: Buffer) => {
         const logEntry = data.toString().trim();
         output += logEntry + '\n';
-        log(`[Nix] ${logEntry}`, 'nix');
+        logger.info(`[Nix] ${logEntry}`);
       });
       
       nixProcess.stderr.on('data', (data: Buffer) => {
         const logEntry = data.toString().trim();
         output += 'ERROR: ' + logEntry + '\n';
-        log(`[Nix] ERROR: ${logEntry}`, 'nix', 'error');
+        logger.error(`[Nix] ${logEntry}`);
       });
       
       nixProcess.on('close', (code) => {
         const success = code === 0;
         
         if (!success) {
-          log(`Failed to apply Nix environment with exit code ${code}`, 'nix', 'error');
+          logger.error(`Failed to apply Nix environment with exit code ${code}`);
         } else {
-          log(`Successfully applied Nix environment`, 'nix');
+          logger.info(`Successfully applied Nix environment`);
         }
         
         resolve({ success, output });
@@ -91,7 +93,7 @@ export async function applyNixEnvironment(projectDir: string): Promise<{
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    log(`Error applying Nix environment: ${errorMessage}`, 'nix', 'error');
+    logger.error(`Error applying Nix environment: ${errorMessage}`);
     
     return {
       success: false,
@@ -105,14 +107,23 @@ export async function applyNixEnvironment(projectDir: string): Promise<{
  */
 export async function checkNixAvailability(): Promise<boolean> {
   try {
+    logger.info('Checking Nix availability');
+    
     return new Promise<boolean>((resolve) => {
       const nixProcess = spawn('nix', ['--version']);
       
       nixProcess.on('close', (code) => {
-        resolve(code === 0);
+        const isAvailable = code === 0;
+        if (isAvailable) {
+          logger.info('Nix is available on the system');
+        } else {
+          logger.warn('Nix is not available on the system');
+        }
+        resolve(isAvailable);
       });
     });
   } catch (error) {
+    logger.error('Error checking Nix availability');
     return false;
   }
 }
