@@ -98,6 +98,65 @@ export default function Home() {
   return (
     <AppLayout>
       <div className="flex flex-col h-full">
+        {/* Hero Section with Chat Input - Replit Style */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-8 text-white">
+          <div className="max-w-5xl mx-auto">
+            <h1 className="text-4xl font-bold mb-4">Let's build something amazing</h1>
+            <p className="text-xl mb-6 text-blue-100">The collaborative, in-browser IDE that makes coding accessible</p>
+            
+            <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg border border-white/20 shadow-xl">
+              <div className="flex items-center gap-2 bg-white dark:bg-black rounded-md p-1">
+                <Input 
+                  placeholder="Describe your project idea..."
+                  className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-foreground"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Button 
+                  className="shrink-0 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                  onClick={() => setIsCreateModalOpen(true)}
+                >
+                  <span className="hidden sm:inline">Create Project</span>
+                  <Plus className="h-4 w-4 sm:ml-2" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 px-2 pt-3 text-sm text-white/80">
+                <span>Try:</span>
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-blue-100 hover:text-white"
+                  onClick={() => {
+                    setSearchQuery("Basic web app with HTML, CSS, and JavaScript");
+                    setIsCreateModalOpen(true);
+                  }}
+                >
+                  Basic web app
+                </Button>
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-blue-100 hover:text-white"
+                  onClick={() => {
+                    setSearchQuery("Flask API with Python backend");
+                    setIsCreateModalOpen(true);
+                  }}
+                >
+                  Flask API
+                </Button>
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-blue-100 hover:text-white"
+                  onClick={() => {
+                    setSearchQuery("React dashboard with UI components");
+                    setIsCreateModalOpen(true);
+                  }}
+                >
+                  React dashboard
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         {/* Header */}
         <div className="border-b p-4">
           <div className="flex justify-between items-center mb-4">
@@ -318,6 +377,7 @@ export default function Home() {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateProject}
         isLoading={createProjectMutation.isPending}
+        initialDescription={searchQuery}
       />
     </AppLayout>
   );
