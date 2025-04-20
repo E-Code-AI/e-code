@@ -1,80 +1,100 @@
-import { spawn, ChildProcess } from 'child_process';
-import { log } from './vite';
-import { Project, File, InsertDeployment } from '@shared/schema';
+/**
+ * Deployment service for PLOT projects
+ * This module handles project deployment, management, and monitoring
+ */
+import { mkdir, copyFile, readdir, stat } from 'fs/promises';
+import { join, basename } from 'path';
+import { existsSync } from 'fs';
+import { spawn, type ChildProcess } from 'child_process';
+import { InsertDeployment, Deployment, Project, File } from '@shared/schema';
 import { storage } from './storage';
-import path from 'path';
-import fs from 'fs';
-import os from 'os';
-import { startProject, stopProject } from './runtime';
 
-// Map to store active deployments
-const activeDeployments = new Map<number, {
+// Map to store deployment processes and their logs
+const deployments = new Map<number, {
   process: ChildProcess;
-  url: string;
-  port: number;
-  projectId: number;
-  deploymentId: number;
-  status: 'deploying' | 'running' | 'failed' | 'stopped';
   logs: string[];
+  url: string | null;
+  status: string;
+  port: number;
 }>();
 
-// Create a deployment directory
+/**
+ * Create deployment directory structure
+ */
 async function createDeploymentDir(projectId: number, deploymentId: number): Promise<string> {
-  const deployDir = path.join(os.tmpdir(), `plot-deployment-${projectId}-${deploymentId}`);
+  const deployDir = join(process.cwd(), 'deployments', `${projectId}_${deploymentId}`);
   
-  try {
-    // Create project directory
-    await fs.promises.mkdir(deployDir, { recursive: true });
-    return deployDir;
-  } catch (error) {
-    log(`Error creating deployment directory: ${error}`, 'deployment');
-    throw error;
+  // Create deployment directory if it doesn't exist
+  if (!existsSync(deployDir)) {
+    await mkdir(deployDir, { recursive: true });
   }
+  
+  return deployDir;
 }
 
-// Copy project files to deployment directory
+/**
+ * Copy project files to deployment directory
+ */
 async function copyProjectFiles(projectId: number, deployDir: string): Promise<void> {
-  try {
-    // Get all project files
-    const files = await storage.getFilesByProject(projectId);
+  // Get all project files
+  const files = await storage.getFilesByProject(projectId);
+  
+  // Create directory structure and copy files
+  for (const file of files) {
+    // Skip directories, they'll be created as needed
+    if (file.isFolder) continue;
     
-    // Create directory structure and write files
-    for (const file of files) {
-      const filePath = path.join(deployDir, file.name);
+    let filePath: string;
+    if (file.parentId) {
+      // Find parent path by traversing up
+      let parentPath = '';
+      let currentParentId = file.parentId;
       
-      if (file.isFolder) {
-        await fs.promises.mkdir(filePath, { recursive: true });
-      } else {
-        await fs.promises.writeFile(filePath, file.content || '', 'utf8');
+      while (currentParentId) {
+        const parentFile = files.find(f => f.id === currentParentId);
+        if (!parentFile) break;
+        
+        parentPath = join(parentFile.name, parentPath);
+        currentParentId = parentFile.parentId;
       }
+      
+      filePath = join(deployDir, parentPath, file.name);
+    } else {
+      filePath = join(deployDir, file.name);
     }
-  } catch (error) {
-    log(`Error copying project files: ${error}`, 'deployment');
-    throw error;
+    
+    // Create parent directories if they don't exist
+    const fileDir = filePath.substring(0, filePath.lastIndexOf('/'));
+    if (fileDir && !existsSync(fileDir)) {
+      await mkdir(fileDir, { recursive: true });
+    }
+    
+    // Write file content
+    await Bun.write(filePath, file.content || '');
   }
 }
 
-// Deploy a project
+/**
+ * Deploy a project
+ */
 export async function deployProject(projectId: number): Promise<{
+  deployment: Deployment;
   success: boolean;
-  deploymentId?: number;
-  url?: string;
-  error?: string;
+  message: string;
 }> {
   try {
     // Get project details
     const project = await storage.getProject(projectId);
     if (!project) {
-      return { success: false, error: 'Project not found' };
+      throw new Error('Project not found');
     }
     
-    // Create deployment record
+    // Create deployment record in database
     const deploymentData: InsertDeployment = {
       projectId,
+      version: `v${Date.now().toString().slice(-6)}`,
       status: 'deploying',
-      url: '',
-      logs: '',
-      version: `v${Date.now()}`,
+      url: null
     };
     
     const deployment = await storage.createDeployment(deploymentData);
@@ -82,344 +102,344 @@ export async function deployProject(projectId: number): Promise<{
     // Create deployment directory
     const deployDir = await createDeploymentDir(projectId, deployment.id);
     
-    // Copy project files
+    // Copy project files to deployment directory
     await copyProjectFiles(projectId, deployDir);
     
-    // Generate a random port in the 8000-8999 range
-    const port = 8000 + Math.floor(Math.random() * 1000);
-    
-    // Generate deployment URL (in a real system, this would be a real domain)
-    const url = `https://${project.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${projectId}.plot.replit.app`;
-    
-    // Try to stop any existing deployment
-    if (activeDeployments.has(projectId)) {
-      const existing = activeDeployments.get(projectId);
-      if (existing) {
-        existing.process.kill();
-        activeDeployments.delete(projectId);
-      }
-    }
-    
-    // Detect project type and start appropriate server
-    const startResult = await startDeploymentServer(project, deployDir, port);
-    
-    if (!startResult.success) {
-      // Update deployment status to failed
-      await storage.updateDeployment(deployment.id, {
-        status: 'failed',
-        logs: JSON.stringify([`Deployment failed: ${startResult.error}`]),
-      });
-      
-      return { success: false, error: startResult.error, deploymentId: deployment.id };
-    }
-    
-    // Store active deployment
-    activeDeployments.set(projectId, {
-      process: startResult.process!,
-      url,
-      port,
-      projectId,
-      deploymentId: deployment.id,
-      status: 'running',
-      logs: [`Deployment started successfully on port ${port}`],
-    });
-    
-    // Update deployment record
-    await storage.updateDeployment(deployment.id, {
-      status: 'running',
-      url,
-    });
-    
-    // Handle process exit
-    startResult.process!.on('exit', async (code) => {
-      if (activeDeployments.has(projectId)) {
-        const deployInfo = activeDeployments.get(projectId);
-        if (deployInfo && deployInfo.deploymentId === deployment.id) {
-          deployInfo.status = code === 0 ? 'stopped' : 'failed';
-          deployInfo.logs.push(`Process exited with code ${code}`);
-          
-          // Update deployment record
-          await storage.updateDeployment(deployment.id, {
-            status: code === 0 ? 'stopped' : 'failed',
-            logs: JSON.stringify(deployInfo.logs),
-          });
-          
-          // Remove from active deployments if failed or stopped
-          activeDeployments.delete(projectId);
-        }
-      }
-    });
+    // Start the deployment server
+    const deployResult = await startDeploymentServer(project, deployment, deployDir);
     
     return {
+      deployment,
       success: true,
-      deploymentId: deployment.id,
-      url,
+      message: 'Deployment started successfully'
     };
   } catch (error) {
-    log(`Error deploying project: ${error}`, 'deployment');
-    return { success: false, error: String(error) };
+    console.error('Deployment failed:', error);
+    return {
+      deployment: null as any,
+      success: false,
+      message: error.message || 'Deployment failed'
+    };
   }
 }
 
-// Start the appropriate server based on project type
+/**
+ * Start the deployment server process
+ */
 async function startDeploymentServer(
   project: Project,
-  deployDir: string,
-  port: number
+  deployment: Deployment,
+  deployDir: string
 ): Promise<{
   success: boolean;
+  url: string | null;
+  port: number;
   process?: ChildProcess;
-  error?: string;
 }> {
-  try {
-    // Detect project type based on files
-    const files = await fs.promises.readdir(deployDir);
-    
-    // Set up environment variables
-    const env = {
-      ...process.env,
-      PORT: port.toString(),
-      NODE_ENV: 'production',
-    };
-    
-    let command: string;
-    let args: string[];
-    
-    // Check for package.json to detect Node.js projects
-    if (files.includes('package.json')) {
-      try {
-        const packageJson = JSON.parse(
-          await fs.promises.readFile(path.join(deployDir, 'package.json'), 'utf8')
-        );
+  // Determine command to run based on project language
+  let command: string;
+  let args: string[] = [];
+  const port = 3000 + deployment.id; // Each deployment gets its own port
+  const env = {
+    ...process.env,
+    PORT: port.toString(),
+    NODE_ENV: 'production'
+  };
+  
+  switch (project.language) {
+    case 'nodejs':
+      // Check for package.json to determine how to run
+      if (existsSync(join(deployDir, 'package.json'))) {
+        const pkg = JSON.parse(await Bun.file(join(deployDir, 'package.json')).text());
         
         // Install dependencies
-        log(`Installing dependencies for project ${project.id}`, 'deployment');
-        const npmInstall = spawn('npm', ['install', '--production'], {
-          cwd: deployDir,
-          env,
-        });
-        
-        // Wait for npm install to complete
         await new Promise<void>((resolve, reject) => {
-          npmInstall.on('exit', (code) => {
+          const installProcess = spawn('npm', ['install', '--production'], {
+            cwd: deployDir,
+            env
+          });
+          
+          const logs: string[] = [];
+          installProcess.stdout.on('data', (data) => {
+            const log = data.toString();
+            logs.push(`[npm install] ${log}`);
+          });
+          
+          installProcess.stderr.on('data', (data) => {
+            const log = data.toString();
+            logs.push(`[npm install error] ${log}`);
+          });
+          
+          installProcess.on('close', (code) => {
             if (code === 0) {
               resolve();
             } else {
-              reject(new Error(`npm install failed with code ${code}`));
+              reject(new Error(`npm install failed with code ${code}. Logs: ${logs.join('\n')}`));
             }
           });
         });
         
-        // Check for build script
-        if (packageJson.scripts && packageJson.scripts.build) {
-          log(`Building project ${project.id}`, 'deployment');
-          const npmBuild = spawn('npm', ['run', 'build'], {
-            cwd: deployDir,
-            env,
-          });
-          
-          // Wait for npm build to complete
-          await new Promise<void>((resolve, reject) => {
-            npmBuild.on('exit', (code) => {
-              if (code === 0) {
-                resolve();
-              } else {
-                reject(new Error(`npm build failed with code ${code}`));
-              }
-            });
-          });
-        }
-        
-        // Start the server
-        if (packageJson.scripts && packageJson.scripts.start) {
+        if (pkg.scripts && pkg.scripts.start) {
           command = 'npm';
           args = ['run', 'start'];
-        } else if (files.includes('server.js')) {
-          command = 'node';
-          args = ['server.js'];
-        } else if (files.includes('index.js')) {
+        } else if (existsSync(join(deployDir, 'index.js'))) {
           command = 'node';
           args = ['index.js'];
         } else {
-          // If no start script or entry file, use a static file server for frontend projects
-          command = 'npx';
-          args = ['serve', '-s', '.'];
-        }
-      } catch (error) {
-        log(`Error processing package.json: ${error}`, 'deployment');
-        return { success: false, error: `Failed to process package.json: ${error}` };
-      }
-    } 
-    // Check for requirements.txt to detect Python projects
-    else if (files.includes('requirements.txt')) {
-      // Install dependencies
-      log(`Installing Python dependencies for project ${project.id}`, 'deployment');
-      const pipInstall = spawn('pip', ['install', '-r', 'requirements.txt'], {
-        cwd: deployDir,
-        env,
-      });
-      
-      // Wait for pip install to complete
-      await new Promise<void>((resolve, reject) => {
-        pipInstall.on('exit', (code) => {
-          if (code === 0) {
-            resolve();
+          // Look for a main file
+          const files = await readdir(deployDir);
+          const mainFile = files.find(file => 
+            file.endsWith('.js') && 
+            !file.startsWith('_') && 
+            !file.startsWith('.')
+          );
+          
+          if (mainFile) {
+            command = 'node';
+            args = [mainFile];
           } else {
-            reject(new Error(`pip install failed with code ${code}`));
+            throw new Error('Could not determine how to start Node.js project');
           }
-        });
-      });
+        }
+        break;
+      } else {
+        // No package.json, look for a main file
+        const files = await readdir(deployDir);
+        const mainFile = files.find(file => 
+          file.endsWith('.js') && 
+          !file.startsWith('_') && 
+          !file.startsWith('.')
+        );
+        
+        if (mainFile) {
+          command = 'node';
+          args = [mainFile];
+        } else {
+          throw new Error('Could not determine how to start Node.js project');
+        }
+      }
+      break;
       
-      // Check for common Python entry points
-      if (files.includes('app.py')) {
+    case 'python':
+      // Check for requirements.txt
+      if (existsSync(join(deployDir, 'requirements.txt'))) {
+        // Install dependencies
+        await new Promise<void>((resolve, reject) => {
+          const installProcess = spawn('pip', ['install', '-r', 'requirements.txt'], {
+            cwd: deployDir,
+            env
+          });
+          
+          const logs: string[] = [];
+          installProcess.stdout.on('data', (data) => {
+            const log = data.toString();
+            logs.push(`[pip install] ${log}`);
+          });
+          
+          installProcess.stderr.on('data', (data) => {
+            const log = data.toString();
+            logs.push(`[pip install error] ${log}`);
+          });
+          
+          installProcess.on('close', (code) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new Error(`pip install failed with code ${code}. Logs: ${logs.join('\n')}`));
+            }
+          });
+        });
+      }
+      
+      // Look for app.py or main.py or similar
+      if (existsSync(join(deployDir, 'app.py'))) {
         command = 'python';
         args = ['app.py'];
-      } else if (files.includes('main.py')) {
+      } else if (existsSync(join(deployDir, 'main.py'))) {
         command = 'python';
         args = ['main.py'];
-      } else if (files.includes('wsgi.py')) {
-        command = 'gunicorn';
-        args = ['wsgi:app'];
       } else {
-        return { success: false, error: 'Could not determine Python entry point' };
-      }
-    }
-    // Default to static file serving for HTML/CSS/JS projects
-    else if (files.includes('index.html')) {
-      command = 'npx';
-      args = ['serve', '.'];
-    } 
-    // Fallback option
-    else {
-      return { success: false, error: 'Could not determine project type' };
-    }
-    
-    // Start the server
-    log(`Starting deployment server for project ${project.id} with command: ${command} ${args.join(' ')}`, 'deployment');
-    
-    const proc = spawn(command, args, {
-      cwd: deployDir,
-      env,
-      stdio: 'pipe',
-    });
-    
-    // Capture output for logs
-    proc.stdout.on('data', (data) => {
-      const logMsg = data.toString();
-      log(`[Deployment ${project.id}] ${logMsg}`, 'deployment');
-      
-      // Add to deployment logs
-      if (activeDeployments.has(project.id)) {
-        const deployInfo = activeDeployments.get(project.id);
-        if (deployInfo) {
-          deployInfo.logs.push(logMsg);
+        // Look for any Python file
+        const files = await readdir(deployDir);
+        const mainFile = files.find(file => 
+          file.endsWith('.py') && 
+          !file.startsWith('_') && 
+          !file.startsWith('.')
+        );
+        
+        if (mainFile) {
+          command = 'python';
+          args = [mainFile];
+        } else {
+          throw new Error('Could not determine how to start Python project');
         }
       }
-    });
-    
-    proc.stderr.on('data', (data) => {
-      const logMsg = data.toString();
-      log(`[Deployment ${project.id}] ERROR: ${logMsg}`, 'deployment');
+      break;
       
-      // Add to deployment logs
-      if (activeDeployments.has(project.id)) {
-        const deployInfo = activeDeployments.get(project.id);
-        if (deployInfo) {
-          deployInfo.logs.push(`ERROR: ${logMsg}`);
-        }
+    // Add support for other languages as needed
+    
+    default:
+      throw new Error(`Deployment for ${project.language} is not yet supported`);
+  }
+  
+  // Start the server process
+  const serverProcess = spawn(command, args, {
+    cwd: deployDir,
+    env
+  });
+  
+  // Create logs array for this deployment
+  const logs: string[] = [];
+  
+  // Setup event listeners for process output
+  serverProcess.stdout.on('data', (data) => {
+    const log = data.toString();
+    logs.push(log);
+    
+    // Store only the last 1000 logs
+    if (logs.length > 1000) {
+      logs.shift();
+    }
+  });
+  
+  serverProcess.stderr.on('data', (data) => {
+    const log = data.toString();
+    logs.push(`[ERROR] ${log}`);
+    
+    // Store only the last 1000 logs
+    if (logs.length > 1000) {
+      logs.shift();
+    }
+  });
+  
+  // Handle process exit
+  serverProcess.on('exit', async (code) => {
+    // Update deployment status
+    if (code === 0 || code === null) {
+      await storage.updateDeployment(deployment.id, { status: 'stopped' });
+    } else {
+      await storage.updateDeployment(deployment.id, { status: 'failed' });
+    }
+    
+    logs.push(`[SYSTEM] Process exited with code ${code}`);
+    
+    // Remove from active deployments
+    deployments.delete(deployment.id);
+  });
+  
+  // Generate public URL (in a real implementation, this would involve 
+  // DNS configuration, proxy setup, etc.)
+  const url = `https://${project.name.replace(/\s+/g, '-').toLowerCase()}-${deployment.id}.plot.app`;
+  
+  // Update deployment record with URL and running status
+  await storage.updateDeployment(deployment.id, {
+    status: 'running',
+    url
+  });
+  
+  // Store process and logs in memory
+  deployments.set(deployment.id, {
+    process: serverProcess,
+    logs,
+    url,
+    status: 'running',
+    port
+  });
+  
+  return {
+    success: true,
+    url,
+    port,
+    process: serverProcess
+  };
+}
+
+/**
+ * Stop a running deployment
+ */
+export async function stopDeployment(deploymentId: number): Promise<{
+  success: boolean;
+  message: string;
+}> {
+  try {
+    // Get deployment data
+    const deploymentInfo = deployments.get(deploymentId);
+    
+    if (!deploymentInfo) {
+      // Check if it exists in the database
+      const deployment = await storage.getDeployments(null).then(
+        deployments => deployments.find(d => d.id === deploymentId)
+      );
+      
+      if (!deployment) {
+        throw new Error('Deployment not found');
       }
-    });
+      
+      // If it exists but is not running, just update status
+      await storage.updateDeployment(deploymentId, { status: 'stopped' });
+      
+      return {
+        success: true,
+        message: 'Deployment was already stopped'
+      };
+    }
+    
+    // Kill the process
+    deploymentInfo.process.kill();
+    
+    // Update deployment record in database
+    await storage.updateDeployment(deploymentId, { status: 'stopped' });
+    
+    // Add a log entry
+    deploymentInfo.logs.push('[SYSTEM] Deployment stopped by user');
     
     return {
       success: true,
-      process: proc,
+      message: 'Deployment stopped successfully'
     };
   } catch (error) {
-    log(`Error starting deployment server: ${error}`, 'deployment');
-    return { success: false, error: String(error) };
+    console.error('Failed to stop deployment:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to stop deployment'
+    };
   }
 }
 
-// Stop a deployment
-export async function stopDeployment(deploymentId: number): Promise<{
-  success: boolean;
-  error?: string;
-}> {
-  try {
-    // Get deployment details
-    const deployment = await storage.getDeployment(deploymentId);
-    if (!deployment) {
-      return { success: false, error: 'Deployment not found' };
-    }
-    
-    // Check if deployment is active
-    const projectId = deployment.projectId;
-    if (!activeDeployments.has(projectId)) {
-      // Update deployment status to stopped
-      await storage.updateDeployment(deploymentId, {
-        status: 'stopped',
-      });
-      
-      return { success: true };
-    }
-    
-    // Get active deployment info
-    const deployInfo = activeDeployments.get(projectId);
-    if (deployInfo && deployInfo.deploymentId === deploymentId) {
-      // Kill the process
-      deployInfo.process.kill();
-      
-      // Update deployment status
-      await storage.updateDeployment(deploymentId, {
-        status: 'stopped',
-        logs: JSON.stringify([...deployInfo.logs, 'Deployment stopped by user']),
-      });
-      
-      // Remove from active deployments
-      activeDeployments.delete(projectId);
-      
-      return { success: true };
-    } else {
-      return { success: false, error: 'Deployment is not active' };
-    }
-  } catch (error) {
-    log(`Error stopping deployment: ${error}`, 'deployment');
-    return { success: false, error: String(error) };
-  }
-}
-
-// Get deployment status
+/**
+ * Get the status of a deployment
+ */
 export function getDeploymentStatus(deploymentId: number): {
-  isActive: boolean;
-  status?: 'deploying' | 'running' | 'failed' | 'stopped';
-  url?: string;
-  port?: number;
-  logs?: string[];
+  status: string;
+  url: string | null;
+  running: boolean;
 } {
-  // Find the deployment in active deployments
-  for (const [, deployInfo] of activeDeployments.entries()) {
-    if (deployInfo.deploymentId === deploymentId) {
-      return {
-        isActive: true,
-        status: deployInfo.status,
-        url: deployInfo.url,
-        port: deployInfo.port,
-        logs: deployInfo.logs,
-      };
-    }
+  const deploymentInfo = deployments.get(deploymentId);
+  
+  if (!deploymentInfo) {
+    return {
+      status: 'stopped',
+      url: null,
+      running: false
+    };
   }
   
-  return { isActive: false };
+  return {
+    status: deploymentInfo.status,
+    url: deploymentInfo.url,
+    running: deploymentInfo.status === 'running'
+  };
 }
 
-// Get deployment logs
+/**
+ * Get the logs for a deployment
+ */
 export function getDeploymentLogs(deploymentId: number): string[] {
-  // Find the deployment in active deployments
-  for (const [, deployInfo] of activeDeployments.entries()) {
-    if (deployInfo.deploymentId === deploymentId) {
-      return deployInfo.logs;
-    }
+  const deploymentInfo = deployments.get(deploymentId);
+  
+  if (!deploymentInfo) {
+    return ['No logs available'];
   }
   
-  return ['Deployment is not active, logs not available'];
+  return deploymentInfo.logs;
 }
