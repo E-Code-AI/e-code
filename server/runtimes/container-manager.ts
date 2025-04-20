@@ -698,14 +698,53 @@ export async function executeCommand(containerId: string, command: string): Prom
  */
 export async function checkDockerAvailability(): Promise<boolean> {
   try {
+    logger.info('Checking Docker availability');
     return new Promise<boolean>((resolve) => {
       const dockerProcess = spawn('docker', ['info']);
       
       dockerProcess.on('close', (code) => {
-        resolve(code === 0);
+        const isAvailable = code === 0;
+        if (isAvailable) {
+          logger.info('Docker is available on the system');
+        } else {
+          logger.warn('Docker is not available on the system');
+        }
+        resolve(isAvailable);
       });
     });
   } catch (error) {
+    logger.error('Error checking Docker availability');
     return false;
   }
+}
+
+/**
+ * Get Docker version information
+ */
+export async function getDockerVersion(): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    logger.info('Getting Docker version');
+    const dockerProcess = spawn('docker', ['version', '--format', '{{.Server.Version}}']);
+    
+    let versionOutput = '';
+    
+    dockerProcess.stdout.on('data', (data) => {
+      versionOutput += data.toString().trim();
+    });
+    
+    dockerProcess.on('close', (code) => {
+      if (code === 0 && versionOutput) {
+        logger.info(`Docker version: ${versionOutput}`);
+        resolve(versionOutput);
+      } else {
+        logger.error('Failed to get Docker version');
+        reject(new Error('Failed to get Docker version'));
+      }
+    });
+    
+    dockerProcess.on('error', (error) => {
+      logger.error(`Error getting Docker version: ${error.message}`);
+      reject(error);
+    });
+  });
 }
