@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
+import { useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { Project, File } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useParams } from "wouter";
-import Sidebar from "@/components/Sidebar";
+import EditorLayout from "@/components/layout/EditorLayout";
 import FileExplorer from "@/components/FileExplorer";
-import TopNavbar from "@/components/TopNavbar";
 import EditorContainer from "@/components/EditorContainer";
+import Preview from "@/components/Preview";
 import BottomPanel from "@/components/BottomPanel";
-import { Project, File } from "@/lib/types";
+import TopNavbar from "@/components/TopNavbar";
 import { ContextMenu } from "@/components/ContextMenu";
 
 export default function Editor() {
@@ -17,13 +18,13 @@ export default function Editor() {
   const [openFiles, setOpenFiles] = useState<File[]>([]);
   const [activeFileId, setActiveFileId] = useState<number | null>(null);
   const [contextMenu, setContextMenu] = useState<{
-    show: boolean;
+    visible: boolean;
     x: number;
     y: number;
     type: 'file' | 'folder' | 'workspace';
-    targetId?: number;
+    id?: number;
   }>({
-    show: false,
+    visible: false,
     x: 0,
     y: 0,
     type: 'workspace'
@@ -35,7 +36,7 @@ export default function Editor() {
   });
 
   // Get project files
-  const { data: files, isLoading: isFilesLoading } = useQuery<File[]>({
+  const { data: files = [], isLoading: isFilesLoading } = useQuery<File[]>({
     queryKey: [`/api/projects/${id}/files`],
   });
 
@@ -43,7 +44,7 @@ export default function Editor() {
   const saveFileMutation = useMutation({
     mutationFn: async ({ fileId, content }: { fileId: number, content: string }) => {
       const res = await apiRequest('PATCH', `/api/files/${fileId}`, { content });
-      return res.json();
+      return await res.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/files`] });
@@ -63,46 +64,30 @@ export default function Editor() {
 
   // Create file mutation
   const createFileMutation = useMutation({
-    mutationFn: async ({ name, content, parentId }: { name: string, content: string, parentId?: number }) => {
+    mutationFn: async ({ name, content, parentId, isFolder }: { 
+      name: string, 
+      content?: string, 
+      parentId?: number,
+      isFolder: boolean
+    }) => {
       const res = await apiRequest('POST', `/api/projects/${id}/files`, { 
-        name, content, parentId, isFolder: false 
+        name, 
+        content: content || '', 
+        parentId, 
+        isFolder 
       });
-      return res.json();
+      return await res.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/files`] });
       toast({
-        title: "File created",
+        title: data.isFolder ? "Folder created" : "File created",
         description: `${data.name} has been created.`,
       });
     },
     onError: (error) => {
       toast({
-        title: "Failed to create file",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Create folder mutation
-  const createFolderMutation = useMutation({
-    mutationFn: async ({ name, parentId }: { name: string, parentId?: number }) => {
-      const res = await apiRequest('POST', `/api/projects/${id}/files`, { 
-        name, content: '', parentId, isFolder: true 
-      });
-      return res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/files`] });
-      toast({
-        title: "Folder created",
-        description: `${data.name} has been created.`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to create folder",
+        title: "Failed to create",
         description: error.message,
         variant: "destructive",
       });
@@ -112,8 +97,7 @@ export default function Editor() {
   // Delete file/folder mutation
   const deleteFileMutation = useMutation({
     mutationFn: async (fileId: number) => {
-      const res = await apiRequest('DELETE', `/api/files/${fileId}`, {});
-      return res.json();
+      await apiRequest('DELETE', `/api/files/${fileId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/files`] });
@@ -131,107 +115,101 @@ export default function Editor() {
     }
   });
 
-  // Handle file open
+  // Handler functions
   const handleFileOpen = (file: File) => {
+    // Don't open folders
     if (file.isFolder) return;
     
     // Check if file is already open
-    if (!openFiles.find(f => f.id === file.id)) {
-      setOpenFiles([...openFiles, file]);
+    if (!openFiles.some(f => f.id === file.id)) {
+      setOpenFiles(prev => [...prev, file]);
     }
     
     setActiveFileId(file.id);
   };
-
-  // Handle file close
+  
   const handleFileClose = (fileId: number) => {
-    const newOpenFiles = openFiles.filter(f => f.id !== fileId);
-    setOpenFiles(newOpenFiles);
+    setOpenFiles(prev => prev.filter(file => file.id !== fileId));
     
-    // If we closed the active file, set another one as active or null
-    if (fileId === activeFileId) {
-      setActiveFileId(newOpenFiles.length > 0 ? newOpenFiles[newOpenFiles.length - 1].id : null);
+    // If we're closing the active file, select another one
+    if (activeFileId === fileId) {
+      const remainingFiles = openFiles.filter(file => file.id !== fileId);
+      setActiveFileId(remainingFiles.length > 0 ? remainingFiles[0].id : null);
     }
   };
-
-  // Handle file content change
+  
+  const handleFileSelect = (fileId: number) => {
+    setActiveFileId(fileId);
+  };
+  
   const handleFileChange = (fileId: number, content: string) => {
-    // Update the content in the openFiles array
-    const newOpenFiles = openFiles.map(f => 
-      f.id === fileId ? { ...f, content } : f
+    setOpenFiles(prev => 
+      prev.map(file => 
+        file.id === fileId 
+          ? { ...file, content } 
+          : file
+      )
     );
-    setOpenFiles(newOpenFiles);
   };
-
-  // Handle file save
+  
   const handleFileSave = (fileId: number) => {
-    const file = openFiles.find(f => f.id === fileId);
-    if (file) {
-      saveFileMutation.mutate({ fileId, content: file.content });
+    const fileToSave = openFiles.find(file => file.id === fileId);
+    if (fileToSave) {
+      saveFileMutation.mutate({ fileId, content: fileToSave.content || '' });
     }
   };
-
-  // Handle context menu
+  
   const handleContextMenu = (e: React.MouseEvent, type: 'file' | 'folder' | 'workspace', id?: number) => {
     e.preventDefault();
     setContextMenu({
-      show: true,
+      visible: true,
       x: e.clientX,
       y: e.clientY,
       type,
-      targetId: id
+      id,
     });
   };
-
-  // Handle create file/folder from context menu
-  const handleCreate = (type: 'file' | 'folder', name: string) => {
-    const parentId = contextMenu.type === 'workspace' ? undefined : contextMenu.targetId;
-    
-    if (type === 'file') {
-      createFileMutation.mutate({ 
-        name, 
-        content: '', 
-        parentId 
-      });
-    } else {
-      createFolderMutation.mutate({ 
-        name, 
-        parentId 
-      });
-    }
-    
-    setContextMenu({ ...contextMenu, show: false });
+  
+  const handleCreateFile = (name: string) => {
+    createFileMutation.mutate({ 
+      name, 
+      isFolder: false,
+      parentId: contextMenu.type === 'workspace' ? undefined : contextMenu.id,
+    });
+    setContextMenu(prev => ({ ...prev, visible: false }));
   };
-
-  // Handle delete file/folder from context menu
-  const handleDelete = () => {
-    if (contextMenu.targetId) {
-      deleteFileMutation.mutate(contextMenu.targetId);
+  
+  const handleCreateFolder = (name: string) => {
+    createFileMutation.mutate({ 
+      name, 
+      isFolder: true,
+      parentId: contextMenu.type === 'workspace' ? undefined : contextMenu.id,
+    });
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  };
+  
+  const handleDeleteFile = () => {
+    if (contextMenu.id) {
+      deleteFileMutation.mutate(contextMenu.id);
       
       // If the file is open, close it
-      if (openFiles.find(f => f.id === contextMenu.targetId)) {
-        handleFileClose(contextMenu.targetId);
+      if (openFiles.some(file => file.id === contextMenu.id)) {
+        handleFileClose(contextMenu.id);
       }
-      
-      setContextMenu({ ...contextMenu, show: false });
     }
+    setContextMenu(prev => ({ ...prev, visible: false }));
   };
-
-  // Close context menu when clicking elsewhere
+  
+  // Close context menu when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
-      if (contextMenu.show) {
-        setContextMenu({ ...contextMenu, show: false });
-      }
+      setContextMenu(prev => ({ ...prev, visible: false }));
     };
     
     document.addEventListener('click', handleClickOutside);
-    
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [contextMenu]);
-
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+  
   // Open a file automatically when files are loaded and none are open
   useEffect(() => {
     if (files && files.length > 0 && openFiles.length === 0) {
@@ -242,45 +220,58 @@ export default function Editor() {
       }
     }
   }, [files, openFiles]);
-
+  
+  const activeFile = openFiles.find(file => file.id === activeFileId);
+  
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-dark text-white">
-      <Sidebar />
-      <FileExplorer 
-        files={files || []} 
-        isLoading={isFilesLoading} 
-        onFileOpen={handleFileOpen}
-        onContextMenu={handleContextMenu}
+    <div className="h-screen w-screen flex flex-col overflow-hidden">
+      <TopNavbar 
+        project={project} 
+        activeFile={activeFile} 
+        isLoading={isProjectLoading} 
       />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNavbar 
-          project={project} 
-          activeFile={openFiles.find(f => f.id === activeFileId)}
-          isLoading={isProjectLoading}
-        />
-        
-        <EditorContainer 
-          openFiles={openFiles}
-          activeFileId={activeFileId}
-          onFileClose={handleFileClose}
-          onFileSelect={setActiveFileId}
-          onFileChange={handleFileChange}
-          onFileSave={handleFileSave}
-        />
-        
-        <BottomPanel activeFile={openFiles.find(f => f.id === activeFileId)} />
-      </div>
+      <EditorLayout
+        fileExplorer={
+          <FileExplorer
+            files={files}
+            isLoading={isFilesLoading}
+            onFileOpen={handleFileOpen}
+            onContextMenu={handleContextMenu}
+          />
+        }
+        editor={
+          <EditorContainer
+            openFiles={openFiles}
+            activeFileId={activeFileId}
+            onFileClose={handleFileClose}
+            onFileSelect={handleFileSelect}
+            onFileChange={handleFileChange}
+            onFileSave={handleFileSave}
+          />
+        }
+        preview={
+          <Preview
+            openFiles={openFiles}
+            projectId={project?.id}
+          />
+        }
+        bottomPanel={
+          <BottomPanel
+            activeFile={activeFile}
+          />
+        }
+      />
       
-      {contextMenu.show && (
+      {contextMenu.visible && (
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
           type={contextMenu.type}
-          onCreateFile={(name) => handleCreate('file', name)}
-          onCreateFolder={(name) => handleCreate('folder', name)}
-          onDelete={handleDelete}
-          onClose={() => setContextMenu({ ...contextMenu, show: false })}
+          onCreateFile={handleCreateFile}
+          onCreateFolder={handleCreateFolder}
+          onDelete={handleDeleteFile}
+          onClose={() => setContextMenu(prev => ({ ...prev, visible: false }))}
         />
       )}
     </div>
