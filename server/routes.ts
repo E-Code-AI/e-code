@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertProjectSchema, insertFileSchema, insertProjectCollaboratorSchema, insertDeploymentSchema } from "@shared/schema";
 import * as z from "zod";
+import { devAuthBypass, setupAuthBypass } from "./dev-auth-bypass";
 import { WebSocketServer, WebSocket } from "ws";
 import { 
   generateCompletion, 
