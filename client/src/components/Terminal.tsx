@@ -33,6 +33,10 @@ const Terminal: React.FC<TerminalProps> = ({
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTerm, setActiveTerm] = useState('term1');
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [currentInput, setCurrentInput] = useState('');
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Create and set up terminal
   useEffect(() => {
@@ -152,6 +156,33 @@ const Terminal: React.FC<TerminalProps> = ({
             case 'stopped':
               terminal.writeln(`\x1b[33m${data.data}\x1b[0m`);
               break;
+            case 'history':
+              // Received a command from history
+              if (data.data) {
+                // Clear current line
+                terminal.write('\r\x1b[K');
+                // Write the command from history
+                terminal.write(data.data);
+                setCurrentInput(data.data);
+              }
+              break;
+            case 'autocomplete_suggestions':
+              // Received autocomplete suggestions
+              if (Array.isArray(data.data) && data.data.length > 0) {
+                setAutocompleteSuggestions(data.data);
+                setShowSuggestions(true);
+                
+                // Display suggestions in terminal
+                terminal.writeln('');
+                terminal.writeln('\x1b[36mSuggestions:\x1b[0m');
+                (data.data as string[]).forEach((suggestion: string, index: number) => {
+                  terminal.writeln(` \x1b[33m${index + 1}.\x1b[0m ${suggestion}`);
+                });
+                
+                // Re-display the prompt and current input
+                terminal.write('\r\n$ ' + currentInput);
+              }
+              break;
             default:
               terminal.writeln(`\x1b[90mReceived: ${JSON.stringify(data)}\x1b[0m`);
           }
@@ -164,6 +195,40 @@ const Terminal: React.FC<TerminalProps> = ({
       terminal.onData((data) => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'input', data }));
+          
+          // Track the current input for command history and autocompletion
+          if (data === '\r') {
+            // Enter key was pressed, reset current input and history index
+            setCurrentInput('');
+            setHistoryIndex(-1);
+            setShowSuggestions(false);
+          } else if (data === '\u001b[A') {
+            // Up arrow key - navigate command history
+            setHistoryIndex(prev => prev + 1);
+            ws.send(JSON.stringify({ type: 'history_up', index: historyIndex + 1 }));
+          } else if (data === '\u001b[B') {
+            // Down arrow key - navigate command history
+            if (historyIndex > 0) {
+              setHistoryIndex(prev => prev - 1);
+              ws.send(JSON.stringify({ type: 'history_down', index: historyIndex - 1 }));
+            } else {
+              // At the bottom of history, clear the line
+              setHistoryIndex(-1);
+              setCurrentInput('');
+              terminal.write('\r\x1b[K');
+            }
+          } else if (data === '\t') {
+            // Tab key - request autocomplete suggestions
+            ws.send(JSON.stringify({ type: 'autocomplete', text: currentInput }));
+          } else if (data === '\u007f') {
+            // Backspace key - update current input
+            setCurrentInput(prev => prev.slice(0, -1));
+            setShowSuggestions(false);
+          } else if (data.length === 1 && data.charCodeAt(0) >= 32) {
+            // Printable character - update current input
+            setCurrentInput(prev => prev + data);
+            setShowSuggestions(false);
+          }
         }
       });
 
@@ -276,6 +341,33 @@ const Terminal: React.FC<TerminalProps> = ({
               case 'stopped':
                 terminal.writeln(`\x1b[33m${data.data}\x1b[0m`);
                 break;
+              case 'history':
+                // Received a command from history
+                if (data.data) {
+                  // Clear current line
+                  terminal.write('\r\x1b[K');
+                  // Write the command from history
+                  terminal.write(data.data);
+                  setCurrentInput(data.data);
+                }
+                break;
+              case 'autocomplete_suggestions':
+                // Received autocomplete suggestions
+                if (Array.isArray(data.data) && data.data.length > 0) {
+                  setAutocompleteSuggestions(data.data);
+                  setShowSuggestions(true);
+                  
+                  // Display suggestions in terminal
+                  terminal.writeln('');
+                  terminal.writeln('\x1b[36mSuggestions:\x1b[0m');
+                  (data.data as string[]).forEach((suggestion: string, index: number) => {
+                    terminal.writeln(` \x1b[33m${index + 1}.\x1b[0m ${suggestion}`);
+                  });
+                  
+                  // Re-display the prompt and current input
+                  terminal.write('\r\n$ ' + currentInput);
+                }
+                break;
               default:
                 terminal.writeln(`\x1b[90mReceived: ${JSON.stringify(data)}\x1b[0m`);
             }
@@ -290,6 +382,40 @@ const Terminal: React.FC<TerminalProps> = ({
         terminal.onData((data) => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'input', data }));
+            
+            // Track the current input for command history and autocompletion
+            if (data === '\r') {
+              // Enter key was pressed, reset current input and history index
+              setCurrentInput('');
+              setHistoryIndex(-1);
+              setShowSuggestions(false);
+            } else if (data === '\u001b[A') {
+              // Up arrow key - navigate command history
+              setHistoryIndex(prev => prev + 1);
+              ws.send(JSON.stringify({ type: 'history_up', index: historyIndex + 1 }));
+            } else if (data === '\u001b[B') {
+              // Down arrow key - navigate command history
+              if (historyIndex > 0) {
+                setHistoryIndex(prev => prev - 1);
+                ws.send(JSON.stringify({ type: 'history_down', index: historyIndex - 1 }));
+              } else {
+                // At the bottom of history, clear the line
+                setHistoryIndex(-1);
+                setCurrentInput('');
+                terminal.write('\r\x1b[K');
+              }
+            } else if (data === '\t') {
+              // Tab key - request autocomplete suggestions
+              ws.send(JSON.stringify({ type: 'autocomplete', text: currentInput }));
+            } else if (data === '\u007f') {
+              // Backspace key - update current input
+              setCurrentInput(prev => prev.slice(0, -1));
+              setShowSuggestions(false);
+            } else if (data.length === 1 && data.charCodeAt(0) >= 32) {
+              // Printable character - update current input
+              setCurrentInput(prev => prev + data);
+              setShowSuggestions(false);
+            }
           }
         });
         
