@@ -54,20 +54,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
   // Handle WebSocket connections for real-time collaboration
+  const clients = new Map(); // Map to store clients and their project/file info
+  
   wss.on("connection", (ws) => {
+    let clientInfo = {
+      userId: null,
+      username: null,
+      projectId: null,
+      fileId: null
+    };
+    
     // Handle incoming messages from clients
     ws.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
         
-        // Broadcast to all clients except sender
+        // Update client info for the first message
+        if (data.userId && !clientInfo.userId) {
+          clientInfo = {
+            userId: data.userId,
+            username: data.username,
+            projectId: data.projectId,
+            fileId: data.fileId
+          };
+          
+          // Store client info for broadcasting to specific rooms
+          clients.set(ws, clientInfo);
+        }
+        
+        // Broadcast to all clients in the same project except sender
         wss.clients.forEach((client) => {
-          if (client !== ws && client.readyState === ws.OPEN) {
-            client.send(JSON.stringify(data));
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            const info = clients.get(client);
+            // Only send to clients in the same project
+            if (info && info.projectId === data.projectId) {
+              client.send(JSON.stringify(data));
+            }
           }
         });
+        
+        // Log collaboration events (excluding cursor movements to reduce noise)
+        if (data.type !== 'cursor_move') {
+          console.log(`Collaboration event: ${data.type} in project ${data.projectId} from ${data.username}`);
+        }
       } catch (error) {
         console.error("WebSocket message error:", error);
+      }
+    });
+    
+    // Handle disconnection
+    ws.on("close", () => {
+      if (clientInfo.userId) {
+        // Broadcast user left message to others in the same project
+        const leaveMessage = {
+          type: 'user_left',
+          userId: clientInfo.userId,
+          username: clientInfo.username,
+          projectId: clientInfo.projectId,
+          fileId: clientInfo.fileId,
+          timestamp: Date.now(),
+          data: {}
+        };
+        
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            const info = clients.get(client);
+            // Only send to clients in the same project
+            if (info && info.projectId === clientInfo.projectId) {
+              client.send(JSON.stringify(leaveMessage));
+            }
+          }
+        });
+        
+        // Remove from clients map
+        clients.delete(ws);
+        console.log(`User ${clientInfo.username} disconnected from project ${clientInfo.projectId}`);
       }
     });
   });
