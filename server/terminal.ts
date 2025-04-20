@@ -1,13 +1,16 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { spawn, ChildProcess } from 'child_process';
-import { log } from './vite';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
 import { storage } from './storage';
 import { File } from '@shared/schema';
 import readline from 'readline';
+import { createLogger } from './utils/logger';
+
+// Create a logger for the terminal module
+const logger = createLogger('terminal');
 
 // Map to store terminal processes by projectId
 const terminalProcesses = new Map<number, {
@@ -15,6 +18,8 @@ const terminalProcesses = new Map<number, {
   clients: Set<WebSocket>;
   commandHistory: string[];
   autocompleteSuggestions: string[];
+  columns?: number;
+  rows?: number;
 }>();
 
 // Setup the terminal WebSocket server
@@ -24,7 +29,7 @@ export function setupTerminalWebsocket(server: Server) {
     path: '/terminal'
   });
   
-  log('Setting up terminal WebSocket server', 'terminal');
+  logger.info('Setting up terminal WebSocket server');
   
   wss.on('connection', async (ws, req) => {
     try {
@@ -37,7 +42,7 @@ export function setupTerminalWebsocket(server: Server) {
         return;
       }
       
-      log(`Terminal connection established for project ${projectId}`, 'terminal');
+      logger.info(`Terminal connection established for project ${projectId}`);
       
       // Create terminal info entry if it doesn't exist
       if (!terminalProcesses.has(projectId)) {
@@ -179,7 +184,9 @@ async function startProcess(projectId: number, terminalInfo: {
   process: ChildProcess | null, 
   clients: Set<WebSocket>,
   commandHistory: string[],
-  autocompleteSuggestions: string[]
+  autocompleteSuggestions: string[],
+  columns?: number,
+  rows?: number
 }) {
   try {
     // Get project details

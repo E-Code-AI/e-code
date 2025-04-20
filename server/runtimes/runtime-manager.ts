@@ -181,7 +181,7 @@ export async function startProject(
     if (containerResult.status === 'error') {
       const error = containerResult.error || 'Failed to start container';
       logs.push(...containerResult.logs);
-      log(error, 'runtime', 'error');
+      logger.error(error);
       
       activeRuntimes.set(projectId, {
         projectId,
@@ -212,7 +212,7 @@ export async function startProject(
     
     if (!installResult) {
       logs.push('WARNING: Dependency installation may not have completed successfully');
-      log('Dependency installation may not have completed successfully', 'runtime', 'warn');
+      logger.warn('Dependency installation may not have completed successfully');
     } else {
       logs.push('Dependencies installed successfully');
     }
@@ -236,7 +236,7 @@ export async function startProject(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    log(`Error starting project: ${errorMessage}`, 'runtime', 'error');
+    logger.error(`Error starting project: ${errorMessage}`);
     
     return {
       success: false,
@@ -252,17 +252,17 @@ export async function startProject(
  */
 export async function stopProject(projectId: number): Promise<boolean> {
   try {
-    log(`Stopping project ${projectId}`, 'runtime');
+    logger.info(`Stopping project ${projectId}`);
     
     if (!activeRuntimes.has(projectId)) {
-      log(`Project ${projectId} is not running`, 'runtime', 'warn');
+      logger.warn(`Project ${projectId} is not running`);
       return false;
     }
     
     const runtime = activeRuntimes.get(projectId)!;
     
     if (!runtime.containerId) {
-      log(`Project ${projectId} does not have a container ID`, 'runtime', 'warn');
+      logger.warn(`Project ${projectId} does not have a container ID`);
       activeRuntimes.delete(projectId);
       return false;
     }
@@ -276,14 +276,14 @@ export async function stopProject(projectId: number): Promise<boolean> {
       activeRuntimes.delete(projectId);
       return true;
     } else {
-      log(`Failed to stop project ${projectId}`, 'runtime', 'error');
+      logger.error(`Failed to stop project ${projectId}`);
       runtime.status = 'error';
       runtime.error = 'Failed to stop container';
       return false;
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    log(`Error stopping project: ${errorMessage}`, 'runtime', 'error');
+    logger.error(`Error stopping project: ${errorMessage}`);
     return false;
   }
 }
@@ -329,11 +329,11 @@ export async function executeCommand(projectId: number, command: string): Promis
   output: string;
 }> {
   try {
-    log(`Executing command in project ${projectId}: ${command}`, 'runtime');
+    logger.info(`Executing command in project ${projectId}: ${command}`);
     
     if (!activeRuntimes.has(projectId)) {
       const errorMessage = `Project ${projectId} is not running`;
-      log(errorMessage, 'runtime', 'error');
+      logger.error(errorMessage);
       
       return {
         success: false,
@@ -345,7 +345,7 @@ export async function executeCommand(projectId: number, command: string): Promis
     
     if (!runtime.containerId) {
       const errorMessage = `Project ${projectId} does not have a container ID`;
-      log(errorMessage, 'runtime', 'error');
+      logger.error(errorMessage);
       
       return {
         success: false,
@@ -362,7 +362,7 @@ export async function executeCommand(projectId: number, command: string): Promis
     return result;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    log(`Error executing command: ${errorMessage}`, 'runtime', 'error');
+    logger.error(`Error executing command: ${errorMessage}`);
     
     return {
       success: false,
@@ -376,7 +376,9 @@ export async function executeCommand(projectId: number, command: string): Promis
  */
 export function streamProjectLogs(projectId: number, callback: (log: string) => void): () => void {
   if (!activeRuntimes.has(projectId)) {
-    callback(`ERROR: Project ${projectId} is not running`);
+    const errorMessage = `Project ${projectId} is not running`;
+    logger.warn(errorMessage);
+    callback(`ERROR: ${errorMessage}`);
     return () => {};
   }
   
@@ -386,10 +388,13 @@ export function streamProjectLogs(projectId: number, callback: (log: string) => 
   runtime.logs.forEach(log => callback(log));
   
   if (!runtime.containerId) {
-    callback(`ERROR: Project ${projectId} does not have a container ID`);
+    const errorMessage = `Project ${projectId} does not have a container ID`;
+    logger.warn(errorMessage);
+    callback(`ERROR: ${errorMessage}`);
     return () => {};
   }
   
+  logger.info(`Streaming logs for project ${projectId}`);
   // Stream container logs
   return containerManager.streamContainerLogs(runtime.containerId, callback);
 }
@@ -415,12 +420,16 @@ export async function checkRuntimeDependencies(): Promise<{
 async function createProjectDir(project: Project, files: File[]): Promise<string> {
   const projectDir = path.join(process.cwd(), 'projects', `project-${project.id}`);
   
+  logger.info(`Creating project directory for project ${project.id}`);
+  
   // Create project directory if it doesn't exist
   if (!fs.existsSync(projectDir)) {
     fs.mkdirSync(projectDir, { recursive: true });
+    logger.info(`Created new project directory: ${projectDir}`);
   }
   
   // Write all files to the project directory
+  let fileCount = 0;
   for (const file of files) {
     // Skip folders - we'll create them when writing files
     if (file.isFolder) continue;
@@ -435,8 +444,10 @@ async function createProjectDir(project: Project, files: File[]): Promise<string
     
     // Write file content
     fs.writeFileSync(filePath, file.content || '');
+    fileCount++;
   }
   
+  logger.info(`Wrote ${fileCount} files to project directory`);
   return projectDir;
 }
 
@@ -444,11 +455,16 @@ async function createProjectDir(project: Project, files: File[]): Promise<string
  * Detect the primary language of a project
  */
 function detectProjectLanguage(files: File[]): Language | undefined {
+  logger.info(`Detecting project language from ${files.length} files`);
+  
   // Filter out folder entries
   const nonFolderFiles = files.filter(file => !file.isFolder);
   
   // If no files, return undefined
-  if (nonFolderFiles.length === 0) return undefined;
+  if (nonFolderFiles.length === 0) {
+    logger.warn('No files found for language detection');
+    return undefined;
+  }
   
   // Check for common main files
   const mainFileChecks: [string, Language][] = [
@@ -470,6 +486,7 @@ function detectProjectLanguage(files: File[]): Language | undefined {
     ['replit.nix', 'nix']
   ];
   
+  // First try to detect by main file
   for (const [pattern, language] of mainFileChecks) {
     // Handle glob patterns
     if (pattern.includes('*')) {
@@ -477,6 +494,7 @@ function detectProjectLanguage(files: File[]): Language | undefined {
       
       for (const file of nonFolderFiles) {
         if (regex.test(file.name)) {
+          logger.info(`Language detected as ${language} by main file pattern: ${pattern}`);
           return language;
         }
       }
@@ -484,6 +502,7 @@ function detectProjectLanguage(files: File[]): Language | undefined {
       // Direct match
       for (const file of nonFolderFiles) {
         if (file.name === pattern) {
+          logger.info(`Language detected as ${language} by main file: ${pattern}`);
           return language;
         }
       }
@@ -512,6 +531,12 @@ function detectProjectLanguage(files: File[]): Language | undefined {
     }
   }
   
+  if (detectedLanguage) {
+    logger.info(`Language detected as ${detectedLanguage} by file extension frequency`);
+  } else {
+    logger.warn('Could not detect language by file extensions');
+  }
+  
   return detectedLanguage;
 }
 
@@ -519,5 +544,8 @@ function detectProjectLanguage(files: File[]): Language | undefined {
  * Create a new project with default files for a language
  */
 export function createDefaultProject(language: Language): { name: string, content: string, isFolder: boolean }[] {
-  return getDefaultFiles(language);
+  logger.info(`Creating default project files for ${language}`);
+  const files = getDefaultFiles(language);
+  logger.info(`Generated ${files.length} default files for ${language}`);
+  return files;
 }
