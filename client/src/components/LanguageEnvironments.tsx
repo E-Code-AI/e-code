@@ -230,8 +230,17 @@ export function LanguageEnvironments({ onSelectLanguage, selectedLanguage }: Lan
     refetchOnWindowFocus: false,
   });
 
-  const dockerAvailable = dependencies?.docker || false;
-  const nixAvailable = dependencies?.nix || false;
+  // Add interfaces to fix type issues
+  interface RuntimeDependencies {
+    docker: boolean;
+    nix: boolean;
+    languages?: Record<string, boolean>;
+  }
+
+  // Cast dependencies to the correct type with defaults
+  const deps = (dependencies || {}) as RuntimeDependencies;
+  const dockerAvailable = deps.docker || false;
+  const nixAvailable = deps.nix || false;
 
   // Filter and sort languages
   const sortedLanguages = Object.entries(languageConfigs)

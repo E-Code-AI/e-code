@@ -717,6 +717,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Get project runtime logs
   app.get('/api/projects/:id/runtime/logs', ensureProjectAccess, getProjectRuntimeLogs);
   
+  // Public endpoint to get runtime dependencies - no auth required
+  app.get('/api/runtime/dependencies', getRuntimeDependencies);
+  
   // Deployment routes
   
   // Get all deployments for a project
