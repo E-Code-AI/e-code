@@ -400,7 +400,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/deployments/:id/stop', ensureAuthenticated, async (req, res) => {
     try {
       const deploymentId = parseInt(req.params.id);
-      const deployment = await storage.getDeployment(deploymentId);
+      const deployments = await storage.getDeployments(null);
+      const deployment = deployments.find(d => d.id === deploymentId);
       
       if (!deployment) {
         return res.status(404).json({ error: 'Deployment not found' });
@@ -408,9 +409,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Ensure user has access to the project this deployment belongs to
       const project = await storage.getProject(deployment.projectId);
-      if (!project || project.userId !== req.user.id) {
+      if (!project || project.ownerId !== req.user?.id) {
         const collaborators = await storage.getProjectCollaborators(deployment.projectId);
-        const isCollaborator = collaborators.some(c => c.userId === req.user.id);
+        const isCollaborator = collaborators.some(c => c.userId === req.user?.id);
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
         }
@@ -421,6 +422,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error stopping deployment:', error);
       res.status(500).json({ error: 'Failed to stop deployment' });
+    }
+  });
+  
+  // Get deployment logs
+  app.get('/api/deployments/:id/logs', ensureAuthenticated, async (req, res) => {
+    try {
+      const deploymentId = parseInt(req.params.id);
+      const deployments = await storage.getDeployments(null);
+      const deployment = deployments.find(d => d.id === deploymentId);
+      
+      if (!deployment) {
+        return res.status(404).json({ error: 'Deployment not found' });
+      }
+      
+      // Ensure user has access to the project this deployment belongs to
+      const project = await storage.getProject(deployment.projectId);
+      if (!project || project.ownerId !== req.user?.id) {
+        const collaborators = await storage.getProjectCollaborators(deployment.projectId);
+        const isCollaborator = collaborators.some(c => c.userId === req.user?.id);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      const logs = getDeploymentLogs(deploymentId);
+      res.json({ logs });
+    } catch (error) {
+      console.error('Error fetching deployment logs:', error);
+      res.status(500).json({ error: 'Failed to fetch deployment logs' });
     }
   });
   
