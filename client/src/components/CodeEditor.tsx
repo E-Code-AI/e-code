@@ -1,10 +1,7 @@
-import { useRef, useEffect } from "react";
-import * as monaco from "monaco-editor";
-import { File } from "@shared/schema";
+import { useEffect, useRef } from "react";
+import * as monaco from 'monaco-editor';
 import { setupMonacoTheme } from "@/lib/monaco-setup";
-
-// Initialize Monaco theme
-setupMonacoTheme();
+import { File } from "@shared/schema";
 
 interface CodeEditorProps {
   file: File;
@@ -12,53 +9,18 @@ interface CodeEditorProps {
 }
 
 const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const monacoEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   
-  // Initialize editor
   useEffect(() => {
-    if (containerRef.current) {
-      // Get language from file extension
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      let language = 'plaintext';
-      
-      // Map extensions to languages
-      switch (ext) {
-        case 'js':
-          language = 'javascript';
-          break;
-        case 'jsx':
-          language = 'javascript';
-          break;
-        case 'ts':
-          language = 'typescript';
-          break;
-        case 'tsx':
-          language = 'typescript';
-          break;
-        case 'html':
-          language = 'html';
-          break;
-        case 'css':
-          language = 'css';
-          break;
-        case 'json':
-          language = 'json';
-          break;
-        case 'md':
-          language = 'markdown';
-          break;
-        case 'py':
-          language = 'python';
-          break;
-        default:
-          language = 'plaintext';
-      }
-      
-      // Create editor
-      const editor = monaco.editor.create(containerRef.current, {
+    // Setup Monaco themes
+    setupMonacoTheme();
+    
+    // Initialize Monaco editor
+    if (editorRef.current && !monacoEditorRef.current) {
+      monacoEditorRef.current = monaco.editor.create(editorRef.current, {
         value: file.content || '',
-        language,
+        language: getLanguageFromFilename(file.name),
         theme: 'replitDark',
         automaticLayout: true,
         minimap: {
@@ -66,43 +28,90 @@ const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
         },
         scrollBeyondLastLine: false,
         fontSize: 14,
-        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+        lineHeight: 21,
         tabSize: 2,
+        insertSpaces: true,
         wordWrap: 'on',
+        padding: {
+          top: 10,
+          bottom: 10,
+        },
       });
       
-      // Set up change event
-      const changeDisposable = editor.onDidChangeModelContent(() => {
-        const value = editor.getValue();
-        onChange(value);
+      // Add event listener for content changes
+      monacoEditorRef.current.onDidChangeModelContent(() => {
+        const newValue = monacoEditorRef.current?.getValue() || '';
+        onChange(newValue);
       });
-      
-      editorRef.current = editor;
-      
-      // Cleanup
-      return () => {
-        changeDisposable.dispose();
-        editor.dispose();
-      };
     }
-  }, [file.id]); // Only recreate the editor when the file changes
+    
+    // Cleanup
+    return () => {
+      if (monacoEditorRef.current) {
+        monacoEditorRef.current.dispose();
+        monacoEditorRef.current = null;
+      }
+    };
+  }, []); // Initialize once
   
-  // Update editor content when file content changes
+  // Update content when file changes
   useEffect(() => {
-    if (editorRef.current && containerRef.current) {
-      const currentValue = editorRef.current.getValue();
-      const newValue = file.content || '';
+    if (monacoEditorRef.current) {
+      const currentValue = monacoEditorRef.current.getValue();
       
-      // Only update if the values are different to avoid cursor jumping
-      if (currentValue !== newValue) {
-        editorRef.current.setValue(newValue);
+      // Only update if content actually changed to avoid cursor position reset
+      if (currentValue !== file.content && file.content !== undefined) {
+        monacoEditorRef.current.setValue(file.content || '');
+      }
+      
+      // Update language if file extension changed
+      const model = monacoEditorRef.current.getModel();
+      if (model) {
+        monaco.editor.setModelLanguage(model, getLanguageFromFilename(file.name));
       }
     }
-  }, [file.content]);
+  }, [file.name, file.content]);
   
   return (
-    <div ref={containerRef} className="w-full h-full" />
+    <div className="h-full w-full">
+      <div 
+        ref={editorRef} 
+        className="h-full w-full"
+      />
+    </div>
   );
 };
+
+function getLanguageFromFilename(filename: string): string {
+  const extension = filename.split('.').pop()?.toLowerCase() || '';
+  
+  // Map extensions to Monaco editor language identifiers
+  const languageMap: Record<string, string> = {
+    'js': 'javascript',
+    'jsx': 'javascript',
+    'ts': 'typescript',
+    'tsx': 'typescript',
+    'html': 'html',
+    'css': 'css',
+    'json': 'json',
+    'md': 'markdown',
+    'py': 'python',
+    'rb': 'ruby',
+    'java': 'java',
+    'c': 'c',
+    'cpp': 'cpp',
+    'go': 'go',
+    'php': 'php',
+    'rs': 'rust',
+    'sql': 'sql',
+    'sh': 'shell',
+    'yaml': 'yaml',
+    'yml': 'yaml',
+    'toml': 'ini',
+    'ini': 'ini',
+  };
+  
+  return languageMap[extension] || 'plaintext';
+}
 
 export default CodeEditor;
