@@ -86,10 +86,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
   // WebSocket for terminal connections
-  setupTerminalWebsocket(httpServer);
+  const terminalWss = setupTerminalWebsocket(httpServer);
   
   // WebSocket for project logs
-  setupLogsWebsocket(httpServer);
+  const logsWss = setupLogsWebsocket(httpServer);
   
   // Define WebSocket client interface for collaboration
   interface CollaborationClient extends WebSocket {
