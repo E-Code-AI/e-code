@@ -7,11 +7,14 @@ import path from 'path';
 import fs from 'fs';
 import { storage } from './storage';
 import { File } from '@shared/schema';
+import readline from 'readline';
 
 // Map to store terminal processes by projectId
 const terminalProcesses = new Map<number, {
   process: ChildProcess | null;
   clients: Set<WebSocket>;
+  commandHistory: string[];
+  autocompleteSuggestions: string[];
 }>();
 
 // Setup the terminal WebSocket server
@@ -40,7 +43,13 @@ export function setupTerminalWebsocket(server: Server) {
       if (!terminalProcesses.has(projectId)) {
         terminalProcesses.set(projectId, {
           process: null,
-          clients: new Set()
+          clients: new Set(),
+          commandHistory: [],
+          autocompleteSuggestions: [
+            'ls', 'cd', 'mkdir', 'touch', 'cat', 'grep', 'find', 'echo',
+            'npm', 'node', 'python', 'python3', 'git', 'curl', 'wget',
+            'yarn', 'clear', 'exit', 'kill', 'ps', 'cp', 'mv', 'rm'
+          ]
         });
       }
       
@@ -64,6 +73,31 @@ export function setupTerminalWebsocket(server: Server) {
           const data = JSON.parse(message.toString());
           
           if (data.type === 'input') {
+            // For Enter key presses (usually ending with \r), add to command history
+            if (data.data.endsWith('\r')) {
+              const command = data.data.trim().replace('\r', '');
+              // Only store non-empty commands
+              if (command && command.length > 0) {
+                // Add to history if it's not a repeat of the last command
+                if (terminalInfo.commandHistory.length === 0 || 
+                    terminalInfo.commandHistory[terminalInfo.commandHistory.length - 1] !== command) {
+                  terminalInfo.commandHistory.push(command);
+                  // Limit history to last 100 commands
+                  if (terminalInfo.commandHistory.length > 100) {
+                    terminalInfo.commandHistory.shift();
+                  }
+                }
+                
+                // Update autocompleteSuggestions with new command if not already present
+                if (!terminalInfo.autocompleteSuggestions.includes(command.split(' ')[0])) {
+                  const baseCommand = command.split(' ')[0];
+                  if (baseCommand && baseCommand.length > 1) {
+                    terminalInfo.autocompleteSuggestions.push(baseCommand);
+                  }
+                }
+              }
+            }
+            
             // Send input to the terminal process
             terminalInfo.process.stdin?.write(data.data);
           } else if (data.type === 'resize') {
@@ -73,6 +107,37 @@ export function setupTerminalWebsocket(server: Server) {
               // For pty.js or node-pty, you would use something like:
               // terminalInfo.process.resize(data.cols, data.rows);
               // This requires a proper PTY implementation
+            }
+          } else if (data.type === 'history_up' || data.type === 'history_down') {
+            // Send command history to the client
+            const index = data.index || 0;
+            let historyCommand = '';
+            
+            if (data.type === 'history_up' && index < terminalInfo.commandHistory.length) {
+              historyCommand = terminalInfo.commandHistory[terminalInfo.commandHistory.length - 1 - index];
+            } else if (data.type === 'history_down' && index > 0) {
+              historyCommand = terminalInfo.commandHistory[terminalInfo.commandHistory.length - index];
+            }
+            
+            if (historyCommand) {
+              ws.send(JSON.stringify({
+                type: 'history',
+                data: historyCommand,
+                index: index
+              }));
+            }
+          } else if (data.type === 'autocomplete') {
+            // Handle tab completion
+            const currentInput = data.text || '';
+            const suggestions = terminalInfo.autocompleteSuggestions
+              .filter(suggestion => suggestion.startsWith(currentInput))
+              .slice(0, 10); // Limit to 10 suggestions
+            
+            if (suggestions.length > 0) {
+              ws.send(JSON.stringify({
+                type: 'autocomplete_suggestions',
+                data: suggestions
+              }));
             }
           }
         } catch (error) {
@@ -110,7 +175,12 @@ export function setupTerminalWebsocket(server: Server) {
 }
 
 // Start a terminal process for a project
-async function startProcess(projectId: number, terminalInfo: { process: ChildProcess | null, clients: Set<WebSocket> }) {
+async function startProcess(projectId: number, terminalInfo: { 
+  process: ChildProcess | null, 
+  clients: Set<WebSocket>,
+  commandHistory: string[],
+  autocompleteSuggestions: string[]
+}) {
   try {
     // Get project details
     const project = await storage.getProject(projectId);
@@ -191,7 +261,12 @@ async function startProcess(projectId: number, terminalInfo: { process: ChildPro
 }
 
 // Stop a terminal process
-function stopProcess(projectId: number, terminalInfo: { process: ChildProcess | null, clients: Set<WebSocket> }) {
+function stopProcess(projectId: number, terminalInfo: { 
+  process: ChildProcess | null, 
+  clients: Set<WebSocket>,
+  commandHistory: string[],
+  autocompleteSuggestions: string[]
+}) {
   if (terminalInfo.process) {
     log(`Stopping terminal process for project ${projectId}`, 'terminal');
     
@@ -209,8 +284,9 @@ function stopProcess(projectId: number, terminalInfo: { process: ChildProcess | 
 
 // Message types
 interface TerminalMessage {
-  type: 'output' | 'connected' | 'error' | 'exit' | 'started' | 'stopped';
-  data: string;
+  type: 'output' | 'connected' | 'error' | 'exit' | 'started' | 'stopped' | 'history' | 'autocomplete_suggestions';
+  data: string | string[];
+  index?: number;
 }
 
 // Broadcast a message to all connected clients
