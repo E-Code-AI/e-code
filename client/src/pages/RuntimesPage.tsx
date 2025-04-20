@@ -27,9 +27,17 @@ export default function RuntimesPage() {
     refetchInterval: false,
   });
 
-  // Check if Docker is available
-  const dockerAvailable = dependencies?.docker || false;
-  const nixAvailable = dependencies?.nix || false;
+  // Add interfaces to fix type issues
+  interface RuntimeDependencies {
+    docker: boolean;
+    nix: boolean;
+    languages?: Record<string, boolean>;
+  }
+
+  // Cast dependencies to the correct type with defaults
+  const deps = (dependencies || {}) as RuntimeDependencies;
+  const dockerAvailable = deps.docker || false;
+  const nixAvailable = deps.nix || false;
 
   // If neither Docker nor Nix is available, show a warning
   const showDependencyWarning = !isLoadingDependencies && !dockerAvailable && !nixAvailable;
