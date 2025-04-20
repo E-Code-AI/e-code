@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { X, Save } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
 import { File } from "@shared/schema";
 import CodeEditor from "./CodeEditor";
+import { Save, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface EditorContainerProps {
   openFiles: File[];
@@ -20,53 +19,48 @@ const EditorContainer = ({
   onFileClose,
   onFileSelect,
   onFileChange,
-  onFileSave
+  onFileSave,
 }: EditorContainerProps) => {
   const [unsavedFiles, setUnsavedFiles] = useState<Record<number, boolean>>({});
   
+  // Handle content changes
   const handleContentChange = (fileId: number, content: string) => {
-    onFileChange(fileId, content);
-    
     // Mark file as unsaved
     setUnsavedFiles(prev => ({
       ...prev,
       [fileId]: true
     }));
-  };
-  
-  const handleSave = (fileId: number) => {
-    onFileSave(fileId);
     
-    // Mark file as saved
-    setUnsavedFiles(prev => ({
-      ...prev,
-      [fileId]: false
-    }));
+    // Notify parent component
+    onFileChange(fileId, content);
   };
   
-  // Setup keyboard shortcut for saving
+  // Handle file saving
+  const handleSave = (fileId: number) => {
+    // Mark file as saved
+    setUnsavedFiles(prev => {
+      const newState = { ...prev };
+      delete newState[fileId];
+      return newState;
+    });
+    
+    // Notify parent
+    onFileSave(fileId);
+  };
+  
+  // Setup keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+S / Cmd+S
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      // Save with Ctrl+S or Cmd+S
+      if ((e.ctrlKey || e.metaKey) && e.key === 's' && activeFileId) {
         e.preventDefault();
-        if (activeFileId) {
-          handleSave(activeFileId);
-        }
+        handleSave(activeFileId);
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeFileId]);
-  
-  if (openFiles.length === 0) {
-    return (
-      <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-        No files open
-      </div>
-    );
-  }
   
   return (
     <div className="h-full flex flex-col">
