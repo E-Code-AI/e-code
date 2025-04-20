@@ -4,7 +4,8 @@ import {
   User, InsertUser,
   ProjectCollaborator, InsertProjectCollaborator,
   Deployment, InsertDeployment,
-  projects, files, users, projectCollaborators, deployments
+  EnvironmentVariable, InsertEnvironmentVariable,
+  projects, files, users, projectCollaborators, deployments, environmentVariables
 } from "@shared/schema";
 import { eq, and, desc, isNull } from "drizzle-orm";
 import { db } from "./db";
@@ -42,6 +43,13 @@ export interface IStorage {
   getDeployments(projectId: number): Promise<Deployment[]>;
   createDeployment(deployment: InsertDeployment): Promise<Deployment>;
   updateDeployment(id: number, update: Partial<Deployment>): Promise<Deployment>;
+  
+  // Environment variable methods
+  getEnvironmentVariables(projectId: number): Promise<EnvironmentVariable[]>;
+  getEnvironmentVariable(id: number): Promise<EnvironmentVariable | undefined>;
+  createEnvironmentVariable(variable: InsertEnvironmentVariable): Promise<EnvironmentVariable>;
+  updateEnvironmentVariable(id: number, update: Partial<EnvironmentVariable>): Promise<EnvironmentVariable>;
+  deleteEnvironmentVariable(id: number): Promise<void>;
   
   // Session store for authentication
   sessionStore: session.SessionStore;
@@ -297,6 +305,79 @@ export class DatabaseStorage implements IStorage {
     
     return updatedDeployment;
   }
+
+  // Environment variable methods
+  async getEnvironmentVariables(projectId: number): Promise<EnvironmentVariable[]> {
+    return await db.select()
+      .from(environmentVariables)
+      .where(eq(environmentVariables.projectId, projectId));
+  }
+
+  async getEnvironmentVariable(id: number): Promise<EnvironmentVariable | undefined> {
+    const [variable] = await db.select()
+      .from(environmentVariables)
+      .where(eq(environmentVariables.id, id));
+    
+    return variable;
+  }
+
+  async createEnvironmentVariable(variableData: InsertEnvironmentVariable): Promise<EnvironmentVariable> {
+    const [variable] = await db
+      .insert(environmentVariables)
+      .values(variableData)
+      .returning();
+    
+    // Update project updatedAt
+    await db
+      .update(projects)
+      .set({ updatedAt: new Date() })
+      .where(eq(projects.id, variableData.projectId));
+    
+    return variable;
+  }
+
+  async updateEnvironmentVariable(id: number, update: Partial<EnvironmentVariable>): Promise<EnvironmentVariable> {
+    const [variable] = await db.select()
+      .from(environmentVariables)
+      .where(eq(environmentVariables.id, id));
+    
+    if (!variable) {
+      throw new Error('Environment variable not found');
+    }
+    
+    const [updatedVariable] = await db
+      .update(environmentVariables)
+      .set({...update, updatedAt: new Date()})
+      .where(eq(environmentVariables.id, id))
+      .returning();
+    
+    // Update project updatedAt
+    await db
+      .update(projects)
+      .set({ updatedAt: new Date() })
+      .where(eq(projects.id, variable.projectId));
+    
+    return updatedVariable;
+  }
+
+  async deleteEnvironmentVariable(id: number): Promise<void> {
+    const [variable] = await db.select()
+      .from(environmentVariables)
+      .where(eq(environmentVariables.id, id));
+    
+    if (!variable) {
+      throw new Error('Environment variable not found');
+    }
+    
+    await db.delete(environmentVariables)
+      .where(eq(environmentVariables.id, id));
+    
+    // Update project updatedAt
+    await db
+      .update(projects)
+      .set({ updatedAt: new Date() })
+      .where(eq(projects.id, variable.projectId));
+  }
 }
 
 // In-memory storage implementation (kept for backwards compatibility)
@@ -306,11 +387,13 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private collaborators: Map<number, ProjectCollaborator>;
   private deployments: Map<number, Deployment>;
+  private environmentVariables: Map<number, EnvironmentVariable>;
   private projectIdCounter: number;
   private fileIdCounter: number;
   private userIdCounter: number;
   private collaboratorIdCounter: number;
   private deploymentIdCounter: number;
+  private environmentVariableIdCounter: number;
   sessionStore: session.SessionStore;
 
   constructor() {
@@ -319,11 +402,13 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.collaborators = new Map();
     this.deployments = new Map();
+    this.environmentVariables = new Map();
     this.projectIdCounter = 1;
     this.fileIdCounter = 1;
     this.userIdCounter = 1;
     this.collaboratorIdCounter = 1;
     this.deploymentIdCounter = 1;
+    this.environmentVariableIdCounter = 1;
     
     const MemoryStore = require('memorystore')(session);
     this.sessionStore = new MemoryStore({
@@ -606,6 +691,84 @@ export class MemStorage implements IStorage {
     
     this.deployments.set(id, updatedDeployment);
     return updatedDeployment;
+  }
+
+  // Environment variable methods
+  async getEnvironmentVariables(projectId: number): Promise<EnvironmentVariable[]> {
+    return Array.from(this.environmentVariables.values())
+      .filter(variable => variable.projectId === projectId);
+  }
+
+  async getEnvironmentVariable(id: number): Promise<EnvironmentVariable | undefined> {
+    return this.environmentVariables.get(id);
+  }
+
+  async createEnvironmentVariable(variableData: InsertEnvironmentVariable): Promise<EnvironmentVariable> {
+    const now = new Date().toISOString();
+    const variable: EnvironmentVariable = {
+      id: this.environmentVariableIdCounter++,
+      ...variableData,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    this.environmentVariables.set(variable.id, variable);
+
+    // Update the project's updatedAt
+    const project = await this.getProject(variable.projectId);
+    if (project) {
+      this.projects.set(project.id, {
+        ...project,
+        updatedAt: now
+      });
+    }
+
+    return variable;
+  }
+
+  async updateEnvironmentVariable(id: number, update: Partial<EnvironmentVariable>): Promise<EnvironmentVariable> {
+    const variable = this.environmentVariables.get(id);
+    if (!variable) {
+      throw new Error('Environment variable not found');
+    }
+
+    const now = new Date().toISOString();
+    const updatedVariable: EnvironmentVariable = {
+      ...variable,
+      ...update,
+      updatedAt: now
+    };
+
+    this.environmentVariables.set(id, updatedVariable);
+
+    // Update the project's updatedAt
+    const project = await this.getProject(variable.projectId);
+    if (project) {
+      this.projects.set(project.id, {
+        ...project,
+        updatedAt: now
+      });
+    }
+
+    return updatedVariable;
+  }
+
+  async deleteEnvironmentVariable(id: number): Promise<void> {
+    const variable = this.environmentVariables.get(id);
+    if (!variable) {
+      throw new Error('Environment variable not found');
+    }
+
+    this.environmentVariables.delete(id);
+
+    // Update the project's updatedAt
+    const project = await this.getProject(variable.projectId);
+    if (project) {
+      this.projects.set(project.id, {
+        ...project,
+        updatedAt: new Date().toISOString()
+      });
+    }
   }
 }
 

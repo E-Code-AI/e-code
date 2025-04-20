@@ -999,6 +999,164 @@ document.addEventListener('DOMContentLoaded', function() {
   // Generate tests
   app.post('/api/ai/tests', ensureAuthenticated, generateTests);
   
+  // Environment variables routes
+  
+  // Get all environment variables for a project
+  app.get('/api/projects/:projectId/environment', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const variables = await storage.getEnvironmentVariables(projectId);
+      
+      // Mask secret values in response
+      const sanitizedVariables = variables.map(variable => ({
+        ...variable,
+        value: variable.isSecret ? null : variable.value
+      }));
+      
+      res.json(sanitizedVariables);
+    } catch (error) {
+      console.error('Error fetching environment variables:', error);
+      res.status(500).json({ message: 'Failed to fetch environment variables' });
+    }
+  });
+  
+  // Get a specific environment variable by ID
+  app.get('/api/projects/:projectId/environment/:id', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid variable ID' });
+      }
+      
+      const variable = await storage.getEnvironmentVariable(id);
+      if (!variable) {
+        return res.status(404).json({ message: 'Environment variable not found' });
+      }
+      
+      // Mask secret value in response
+      const sanitizedVariable = {
+        ...variable,
+        value: variable.isSecret ? null : variable.value
+      };
+      
+      res.json(sanitizedVariable);
+    } catch (error) {
+      console.error('Error fetching environment variable:', error);
+      res.status(500).json({ message: 'Failed to fetch environment variable' });
+    }
+  });
+  
+  // Create a new environment variable
+  app.post('/api/projects/:projectId/environment', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      // Validate input
+      const { key, value, isSecret } = req.body;
+      if (!key || value === undefined) {
+        return res.status(400).json({ message: 'Key and value are required' });
+      }
+      
+      // Check if key already exists for this project
+      const existingVariables = await storage.getEnvironmentVariables(projectId);
+      const keyExists = existingVariables.some(v => v.key === key);
+      if (keyExists) {
+        return res.status(409).json({ message: 'A variable with this key already exists' });
+      }
+      
+      const variable = await storage.createEnvironmentVariable({
+        projectId,
+        key,
+        value,
+        isSecret: !!isSecret
+      });
+      
+      // Mask secret value in response
+      const sanitizedVariable = {
+        ...variable,
+        value: variable.isSecret ? null : variable.value
+      };
+      
+      res.status(201).json(sanitizedVariable);
+    } catch (error) {
+      console.error('Error creating environment variable:', error);
+      res.status(500).json({ message: 'Failed to create environment variable' });
+    }
+  });
+  
+  // Update an environment variable
+  app.patch('/api/projects/:projectId/environment/:id', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid variable ID' });
+      }
+      
+      const variable = await storage.getEnvironmentVariable(id);
+      if (!variable) {
+        return res.status(404).json({ message: 'Environment variable not found' });
+      }
+      
+      // Validate input
+      const { key, value, isSecret } = req.body;
+      const update: Partial<EnvironmentVariable> = {};
+      
+      if (key !== undefined) update.key = key;
+      if (value !== undefined) update.value = value;
+      if (isSecret !== undefined) update.isSecret = isSecret;
+      
+      // Check for key uniqueness if key is being updated
+      if (key && key !== variable.key) {
+        const existingVariables = await storage.getEnvironmentVariables(variable.projectId);
+        const keyExists = existingVariables.some(v => v.key === key && v.id !== id);
+        if (keyExists) {
+          return res.status(409).json({ message: 'A variable with this key already exists' });
+        }
+      }
+      
+      const updatedVariable = await storage.updateEnvironmentVariable(id, update);
+      
+      // Mask secret value in response
+      const sanitizedVariable = {
+        ...updatedVariable,
+        value: updatedVariable.isSecret ? null : updatedVariable.value
+      };
+      
+      res.json(sanitizedVariable);
+    } catch (error) {
+      console.error('Error updating environment variable:', error);
+      res.status(500).json({ message: 'Failed to update environment variable' });
+    }
+  });
+  
+  // Delete an environment variable
+  app.delete('/api/projects/:projectId/environment/:id', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid variable ID' });
+      }
+      
+      const variable = await storage.getEnvironmentVariable(id);
+      if (!variable) {
+        return res.status(404).json({ message: 'Environment variable not found' });
+      }
+      
+      await storage.deleteEnvironmentVariable(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting environment variable:', error);
+      res.status(500).json({ message: 'Failed to delete environment variable' });
+    }
+  });
+  
   // Runtime API Routes
   
   // Get runtime dependencies status (Docker, Nix, etc.)
