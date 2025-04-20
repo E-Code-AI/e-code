@@ -55,7 +55,10 @@ export default function EditorPage() {
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', parseInt(projectId), 'files'] });
+      if (projectId) {
+        const projectIdNum = parseInt(projectId);
+        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectIdNum, 'files'] });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -78,7 +81,10 @@ export default function EditorPage() {
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', parseInt(projectId), 'files'] });
+      if (projectId) {
+        const projectIdNum = parseInt(projectId);
+        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectIdNum, 'files'] });
+      }
       toast({
         title: 'File created',
         description: `Created ${data.name} successfully`,
@@ -100,7 +106,10 @@ export default function EditorPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', parseInt(projectId), 'files'] });
+      if (projectId) {
+        const projectIdNum = parseInt(projectId);
+        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectIdNum, 'files'] });
+      }
       toast({
         title: 'File deleted',
         description: 'File was deleted successfully',
