@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Project, File, InsertFile } from '@shared/schema';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
 // UI Components
@@ -11,6 +12,7 @@ import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import Terminal from '@/components/Terminal';
 import DeploymentPanel from '@/components/DeploymentPanel';
+import Collaboration from '@/components/Collaboration';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -62,6 +64,10 @@ const ProjectPage = () => {
   const [terminalHeight, setTerminalHeight] = useState(300);
   const [projectRunning, setProjectRunning] = useState(false);
   const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'deployment'>('terminal');
+  const [rightPanelVisible, setRightPanelVisible] = useState(true);
+  
+  // Get current user for collaboration
+  const { user } = useAuth();
 
   // Query for fetching project details
   const { 
