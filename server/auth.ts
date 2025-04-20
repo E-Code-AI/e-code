@@ -42,7 +42,10 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      path: '/'
     }
   };
 
@@ -118,14 +121,24 @@ export function setupAuth(app: Express) {
 
   // Login route
   app.post("/api/login", (req, res, next) => {
+    if (!req.body.username || !req.body.password) {
+      return res.status(400).json({ message: "Username and password are required" });
+    }
+    
     passport.authenticate("local", (err, user, info) => {
       if (err) return next(err);
       if (!user) {
+        console.log(`Login failed for ${req.body.username}: ${info?.message || "Authentication failed"}`);
         return res.status(401).json({ message: info?.message || "Authentication failed" });
       }
       
       req.login(user, (err) => {
-        if (err) return next(err);
+        if (err) {
+          console.error("Login error:", err);
+          return next(err);
+        }
+        
+        console.log(`User ${user.username} logged in successfully`);
         // Return user info without password
         const { password, ...userWithoutPassword } = user;
         res.json(userWithoutPassword);
