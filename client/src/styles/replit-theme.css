@@ -1,0 +1,220 @@
+/* Thème exact de Replit - Variables CSS personnalisées */
+:root {
+  /* Couleurs de base Replit */
+  --replit-background: #0e1117;
+  --replit-surface: #161b22;
+  --replit-surface-secondary: #21262d;
+  --replit-border: #30363d;
+  --replit-text: #e6edf3;
+  --replit-text-secondary: #7d8590;
+  --replit-accent: #238636;
+  --replit-accent-hover: #2ea043;
+  --replit-danger: #da3633;
+  --replit-warning: #d29922;
+  --replit-info: #0969da;
+  
+  /* Couleurs spécifiques Replit */
+  --replit-green: #56f39a;
+  --replit-blue: #58a6ff;
+  --replit-purple: #a5a5ff;
+  --replit-orange: #ffab40;
+  --replit-red: #ff6b6b;
+  
+  /* Navigation et sidebar */
+  --replit-sidebar-bg: #161b22;
+  --replit-sidebar-hover: #21262d;
+  --replit-sidebar-active: #238636;
+  
+  /* Éditeur */
+  --replit-editor-bg: #0d1117;
+  --replit-editor-gutter: #161b22;
+  --replit-editor-selection: #264f78;
+  --replit-editor-line-highlight: #2f3349;
+  
+  /* Terminal */
+  --replit-terminal-bg: #0d1117;
+  --replit-terminal-text: #e6edf3;
+  --replit-terminal-cursor: #56f39a;
+  
+  /* Boutons et contrôles */
+  --replit-button-primary: #238636;
+  --replit-button-primary-hover: #2ea043;
+  --replit-button-secondary: #21262d;
+  --replit-button-secondary-hover: #30363d;
+  
+  /* Shadows et elevations */
+  --replit-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --replit-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.15);
+  --replit-shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.2);
+  
+  /* Spacing système Replit */
+  --replit-space-1: 4px;
+  --replit-space-2: 8px;
+  --replit-space-3: 12px;
+  --replit-space-4: 16px;
+  --replit-space-5: 20px;
+  --replit-space-6: 24px;
+  --replit-space-8: 32px;
+  --replit-space-10: 40px;
+  --replit-space-12: 48px;
+  
+  /* Typography Replit */
+  --replit-font-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  --replit-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Border radius */
+  --replit-radius-sm: 4px;
+  --replit-radius-md: 8px;
+  --replit-radius-lg: 12px;
+  
+  /* Z-index layers */
+  --replit-z-dropdown: 1000;
+  --replit-z-modal: 1100;
+  --replit-z-tooltip: 1200;
+  --replit-z-notification: 1300;
+}
+
+/* Mode clair Replit */
+[data-theme="light"] {
+  --replit-background: #ffffff;
+  --replit-surface: #f6f8fa;
+  --replit-surface-secondary: #f1f3f4;
+  --replit-border: #d0d7de;
+  --replit-text: #24292f;
+  --replit-text-secondary: #656d76;
+  --replit-accent: #1f883d;
+  --replit-accent-hover: #1a7f37;
+  
+  --replit-sidebar-bg: #f6f8fa;
+  --replit-sidebar-hover: #eef1f3;
+  --replit-sidebar-active: #1f883d;
+  
+  --replit-editor-bg: #ffffff;
+  --replit-editor-gutter: #f6f8fa;
+  --replit-editor-selection: #b6d7ff;
+  --replit-editor-line-highlight: #f6f8fa;
+  
+  --replit-terminal-bg: #ffffff;
+  --replit-terminal-text: #24292f;
+  --replit-terminal-cursor: #1f883d;
+  
+  --replit-button-primary: #1f883d;
+  --replit-button-primary-hover: #1a7f37;
+  --replit-button-secondary: #f6f8fa;
+  --replit-button-secondary-hover: #eef1f3;
+}
+
+/* Animations et transitions Replit */
+.replit-transition {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.replit-transition-fast {
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.replit-transition-slow {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover effects Replit style */
+.replit-hover:hover {
+  background-color: var(--replit-sidebar-hover);
+  transform: translateY(-1px);
+}
+
+.replit-hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Focus states Replit */
+.replit-focus:focus {
+  outline: 2px solid var(--replit-accent);
+  outline-offset: 2px;
+}
+
+.replit-focus-ring:focus-visible {
+  box-shadow: 0 0 0 2px var(--replit-accent);
+}
+
+/* Scrollbars Replit style */
+.replit-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.replit-scrollbar::-webkit-scrollbar-track {
+  background: var(--replit-surface);
+}
+
+.replit-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--replit-border);
+  border-radius: 4px;
+}
+
+.replit-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--replit-text-secondary);
+}
+
+/* Layout helpers */
+.replit-layout-main {
+  background-color: var(--replit-background);
+  color: var(--replit-text);
+  font-family: var(--replit-font-sans);
+}
+
+.replit-surface {
+  background-color: var(--replit-surface);
+  border: 1px solid var(--replit-border);
+  border-radius: var(--replit-radius-md);
+}
+
+.replit-card {
+  background-color: var(--replit-surface);
+  border: 1px solid var(--replit-border);
+  border-radius: var(--replit-radius-lg);
+  box-shadow: var(--replit-shadow-sm);
+  padding: var(--replit-space-4);
+}
+
+.replit-button-primary {
+  background-color: var(--replit-button-primary);
+  color: white;
+  border: none;
+  border-radius: var(--replit-radius-sm);
+  padding: var(--replit-space-2) var(--replit-space-4);
+  font-family: var(--replit-font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.replit-button-primary:hover {
+  background-color: var(--replit-button-primary-hover);
+}
+
+.replit-button-secondary {
+  background-color: var(--replit-button-secondary);
+  color: var(--replit-text);
+  border: 1px solid var(--replit-border);
+  border-radius: var(--replit-radius-sm);
+  padding: var(--replit-space-2) var(--replit-space-4);
+  font-family: var(--replit-font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.replit-button-secondary:hover {
+  background-color: var(--replit-button-secondary-hover);
+  border-color: var(--replit-text-secondary);
+}
+
+/* Mobile responsive helpers */
+@media (max-width: 768px) {
+  :root {
+    --replit-space-4: 12px;
+    --replit-space-6: 20px;
+    --replit-space-8: 28px;
+  }
+}

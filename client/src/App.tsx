@@ -1,4 +1,4 @@
-import { Switch, Route, Link, useLocation } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -17,8 +17,7 @@ import RuntimeTest from "@/pages/RuntimeTest";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { MobileNavigation } from '@/components/MobileNavigation';
-import { MobileHeader } from '@/components/MobileHeader';
+import { ReplitLayout } from "@/components/layout/ReplitLayout";
 
 // Debug component to show authentication status
 function AuthDebug() {
@@ -79,14 +78,12 @@ function AuthDebug() {
 function AppContent() {
   return (
     <TooltipProvider>
-      <main className="min-h-screen bg-background pb-14 md:pb-0 pt-14 md:pt-0">
+      <div className="min-h-screen replit-layout-main">
         <Toaster />
-        <MobileHeader /> {/* En-tête pour mobile */}
         <Switch>
           <Route path="/auth" component={AuthPage} />
           <Route path="/runtime-test" component={RuntimePublicPage} />
           <Route path="/runtime-dependencies" component={RuntimeTest} />
-          <Route path="/runtime-diagnostics" component={RuntimeDiagnosticsPage} />
           <Route path="/" component={() => {
             const [, navigate] = useLocation();
             
@@ -98,16 +95,40 @@ function AppContent() {
             
             return null;
           }} />
-          <ProtectedRoute path="/home" component={Home} />
-          <ProtectedRoute path="/projects" component={ProjectsPage} />
-          <ProtectedRoute path="/project/:id" component={ProjectPage} />
-          <ProtectedRoute path="/editor/:id" component={Editor} />
-          <ProtectedRoute path="/runtimes" component={RuntimesPage} />
+          <ProtectedRoute path="/home" component={() => (
+            <ReplitLayout>
+              <Home />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/projects" component={() => (
+            <ReplitLayout>
+              <ProjectsPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/project/:id" component={() => (
+            <ReplitLayout showSidebar={true}>
+              <ProjectPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/editor/:id" component={() => (
+            <ReplitLayout showSidebar={true}>
+              <Editor />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/runtimes" component={() => (
+            <ReplitLayout>
+              <RuntimesPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/runtime-diagnostics" component={() => (
+            <ReplitLayout>
+              <RuntimeDiagnosticsPage />
+            </ReplitLayout>
+          )} />
           <Route component={NotFound} />
         </Switch>
-        <MobileNavigation /> {/* Navigation en bas pour mobile */}
         <AuthDebug />
-      </main>
+      </div>
     </TooltipProvider>
   );
 }
