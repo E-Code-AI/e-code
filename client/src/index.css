@@ -1,3 +1,6 @@
+/* Import Replit theme */
+@import './styles/replit-theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
