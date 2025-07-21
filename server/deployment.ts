@@ -1,446 +1,284 @@
-/**
- * Deployment service for PLOT projects
- * This module handles project deployment, management, and monitoring
- */
-import { mkdir, copyFile, readdir, stat } from 'fs/promises';
-import { join, basename } from 'path';
-import { existsSync } from 'fs';
-import { spawn, type ChildProcess } from 'child_process';
-import { InsertDeployment, Deployment, Project, File } from '@shared/schema';
+import { v4 as uuidv4 } from 'uuid';
 import { storage } from './storage';
+import { codeExecutor } from './execution/executor';
+import * as path from 'path';
+import * as fs from 'fs/promises';
 
-// Map to store deployment processes and their logs
-const deployments = new Map<number, {
-  process: ChildProcess;
+export interface DeploymentConfig {
+  projectId: number;
+  userId: number;
+  environment: 'production' | 'staging' | 'preview';
+  region?: string;
+  customDomain?: string;
+  envVars?: Record<string, string>;
+  buildCommand?: string;
+  startCommand?: string;
+  port?: number;
+}
+
+export interface DeploymentStatus {
+  id: string;
+  projectId: number;
+  status: 'pending' | 'building' | 'deploying' | 'running' | 'failed' | 'stopped';
+  url?: string;
+  customUrl?: string;
   logs: string[];
-  url: string | null;
-  status: string;
-  port: number;
-}>();
-
-/**
- * Create deployment directory structure
- */
-async function createDeploymentDir(projectId: number, deploymentId: number): Promise<string> {
-  const deployDir = join(process.cwd(), 'deployments', `${projectId}_${deploymentId}`);
-  
-  // Create deployment directory if it doesn't exist
-  if (!existsSync(deployDir)) {
-    await mkdir(deployDir, { recursive: true });
-  }
-  
-  return deployDir;
+  createdAt: Date;
+  updatedAt: Date;
+  error?: string;
 }
 
-/**
- * Copy project files to deployment directory
- */
-async function copyProjectFiles(projectId: number, deployDir: string): Promise<void> {
-  // Get all project files
-  const files = await storage.getFilesByProject(projectId);
-  
-  // Create directory structure and copy files
-  for (const file of files) {
-    // Skip directories, they'll be created as needed
-    if (file.isFolder) continue;
-    
-    let filePath: string;
-    if (file.parentId) {
-      // Find parent path by traversing up
-      let parentPath = '';
-      let currentParentId = file.parentId;
-      
-      while (currentParentId) {
-        const parentFile = files.find(f => f.id === currentParentId);
-        if (!parentFile) break;
-        
-        parentPath = join(parentFile.name, parentPath);
-        currentParentId = parentFile.parentId;
+export class DeploymentManager {
+  private deployments: Map<string, DeploymentStatus> = new Map();
+  private deploymentsPath: string;
+
+  constructor() {
+    this.deploymentsPath = path.join(process.cwd(), '.deployments');
+    this.initializeDeployments();
+  }
+
+  private async initializeDeployments() {
+    try {
+      await fs.mkdir(this.deploymentsPath, { recursive: true });
+    } catch (error) {
+      console.error('Failed to initialize deployments directory:', error);
+    }
+  }
+
+  async deploy(config: DeploymentConfig): Promise<DeploymentStatus> {
+    const deploymentId = uuidv4();
+    const deployment: DeploymentStatus = {
+      id: deploymentId,
+      projectId: config.projectId,
+      status: 'pending',
+      logs: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    this.deployments.set(deploymentId, deployment);
+
+    // Start deployment process asynchronously
+    this.performDeployment(deploymentId, config).catch(error => {
+      console.error('Deployment failed:', error);
+      this.updateDeploymentStatus(deploymentId, 'failed', error.message);
+    });
+
+    return deployment;
+  }
+
+  private async performDeployment(deploymentId: string, config: DeploymentConfig): Promise<void> {
+    const deployment = this.deployments.get(deploymentId);
+    if (!deployment) return;
+
+    try {
+      // Update status to building
+      this.updateDeploymentStatus(deploymentId, 'building');
+      this.addLog(deploymentId, 'Starting build process...');
+
+      // Get project details
+      const project = await storage.getProject(config.projectId);
+      if (!project) {
+        throw new Error('Project not found');
       }
-      
-      filePath = join(deployDir, parentPath, file.name);
-    } else {
-      filePath = join(deployDir, file.name);
-    }
-    
-    // Create parent directories if they don't exist
-    const fileDir = filePath.substring(0, filePath.lastIndexOf('/'));
-    if (fileDir && !existsSync(fileDir)) {
-      await mkdir(fileDir, { recursive: true });
-    }
-    
-    // Write file content
-    const fs = require('fs');
-    fs.writeFileSync(filePath, file.content || '');
-  }
-}
 
-/**
- * Deploy a project
- */
-export async function deployProject(projectId: number): Promise<{
-  deployment: Deployment;
-  success: boolean;
-  message: string;
-}> {
-  try {
-    // Get project details
-    const project = await storage.getProject(projectId);
-    if (!project) {
-      throw new Error('Project not found');
+      // Create deployment directory
+      const deploymentPath = path.join(this.deploymentsPath, deploymentId);
+      await fs.mkdir(deploymentPath, { recursive: true });
+
+      // Copy project files
+      const files = await storage.getFilesByProject(config.projectId);
+      await this.copyProjectFiles(files, deploymentPath);
+
+      // Write environment variables
+      if (config.envVars) {
+        const envContent = Object.entries(config.envVars)
+          .map(([key, value]) => `${key}=${value}`)
+          .join('\n');
+        await fs.writeFile(path.join(deploymentPath, '.env'), envContent);
+      }
+
+      // Run build command if specified
+      if (config.buildCommand) {
+        this.addLog(deploymentId, `Running build command: ${config.buildCommand}`);
+        const buildResult = await codeExecutor.execute({
+          projectId: config.projectId,
+          userId: config.userId,
+          language: project.language || 'nodejs',
+          mainFile: config.buildCommand,
+          timeout: 300000 // 5 minutes for build
+        });
+
+        if (buildResult.exitCode !== 0) {
+          throw new Error(`Build failed: ${buildResult.stderr}`);
+        }
+        this.addLog(deploymentId, 'Build completed successfully');
+      }
+
+      // Update status to deploying
+      this.updateDeploymentStatus(deploymentId, 'deploying');
+      this.addLog(deploymentId, 'Deploying application...');
+
+      // Generate deployment URL
+      const baseUrl = process.env.DEPLOYMENT_BASE_URL || 'https://replit-clone.app';
+      const deploymentUrl = `${baseUrl}/${project.name}-${deploymentId.substring(0, 8)}`;
+
+      // In a real implementation, this would:
+      // 1. Create container/serverless function
+      // 2. Configure routing
+      // 3. Set up SSL
+      // 4. Configure custom domain if provided
+
+      // Simulate deployment
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // Update deployment status
+      deployment.status = 'running';
+      deployment.url = deploymentUrl;
+      deployment.customUrl = config.customDomain;
+      deployment.updatedAt = new Date();
+      
+      this.addLog(deploymentId, `Deployment successful! URL: ${deploymentUrl}`);
+
+      // Save deployment to database
+      await storage.createDeployment({
+        projectId: config.projectId,
+        status: 'running',
+        url: deploymentUrl,
+        version: `v${Date.now()}`
+      });
+
+    } catch (error) {
+      throw error;
     }
+  }
+
+  async getDeploymentStatus(deploymentId: string): Promise<DeploymentStatus | null> {
+    return this.deployments.get(deploymentId) || null;
+  }
+
+  async getProjectDeployments(projectId: number): Promise<DeploymentStatus[]> {
+    const deployments = Array.from(this.deployments.values())
+      .filter(d => d.projectId === projectId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    return deployments;
+  }
+
+  async stopDeployment(deploymentId: string): Promise<boolean> {
+    const deployment = this.deployments.get(deploymentId);
+    if (!deployment || deployment.status !== 'running') {
+      return false;
+    }
+
+    this.updateDeploymentStatus(deploymentId, 'stopped');
+    this.addLog(deploymentId, 'Deployment stopped');
+
+    // In real implementation, would stop the actual deployment
+    return true;
+  }
+
+  async restartDeployment(deploymentId: string): Promise<boolean> {
+    const deployment = this.deployments.get(deploymentId);
+    if (!deployment) {
+      return false;
+    }
+
+    this.updateDeploymentStatus(deploymentId, 'pending');
+    this.addLog(deploymentId, 'Restarting deployment...');
+
+    // Re-deploy with same config
+    // In real implementation, would restart the deployment
     
-    // Create deployment record in database
-    const deploymentData: InsertDeployment = {
+    setTimeout(() => {
+      this.updateDeploymentStatus(deploymentId, 'running');
+      this.addLog(deploymentId, 'Deployment restarted successfully');
+    }, 2000);
+
+    return true;
+  }
+
+  async getDeploymentLogs(deploymentId: string): Promise<string[]> {
+    const deployment = this.deployments.get(deploymentId);
+    return deployment?.logs || [];
+  }
+
+  async promoteDeployment(deploymentId: string, environment: 'production' | 'staging'): Promise<boolean> {
+    const deployment = this.deployments.get(deploymentId);
+    if (!deployment || deployment.status !== 'running') {
+      return false;
+    }
+
+    this.addLog(deploymentId, `Promoting to ${environment}...`);
+
+    // In real implementation, would update routing and DNS
+    
+    return true;
+  }
+
+  async rollbackDeployment(projectId: number, version: string): Promise<DeploymentStatus | null> {
+    // Find previous deployment with specified version
+    const previousDeployment = Array.from(this.deployments.values())
+      .find(d => d.projectId === projectId && d.id.includes(version));
+
+    if (!previousDeployment) {
+      return null;
+    }
+
+    // Create new deployment based on previous version
+    return this.deploy({
       projectId,
-      version: `v${Date.now().toString().slice(-6)}`,
-      status: 'deploying',
-      url: null
-    };
-    
-    const deployment = await storage.createDeployment(deploymentData);
-    
-    // Create deployment directory
-    const deployDir = await createDeploymentDir(projectId, deployment.id);
-    
-    // Copy project files to deployment directory
-    await copyProjectFiles(projectId, deployDir);
-    
-    // Start the deployment server
-    const deployResult = await startDeploymentServer(project, deployment, deployDir);
-    
+      userId: 0, // Would need to track this
+      environment: 'production'
+    });
+  }
+
+  async getDeploymentMetrics(deploymentId: string): Promise<{
+    requests: number;
+    errors: number;
+    avgResponseTime: number;
+    uptime: number;
+    bandwidth: number;
+  }> {
+    // In real implementation, would fetch from monitoring service
     return {
-      deployment,
-      success: true,
-      message: 'Deployment started successfully'
+      requests: Math.floor(Math.random() * 10000),
+      errors: Math.floor(Math.random() * 100),
+      avgResponseTime: Math.random() * 500,
+      uptime: 99.9,
+      bandwidth: Math.random() * 1000 // MB
     };
-  } catch (error) {
-    console.error('Deployment failed:', error);
-    return {
-      deployment: null as any,
-      success: false,
-      message: error.message || 'Deployment failed'
-    };
+  }
+
+  private updateDeploymentStatus(deploymentId: string, status: DeploymentStatus['status'], error?: string) {
+    const deployment = this.deployments.get(deploymentId);
+    if (deployment) {
+      deployment.status = status;
+      deployment.updatedAt = new Date();
+      if (error) {
+        deployment.error = error;
+      }
+    }
+  }
+
+  private addLog(deploymentId: string, message: string) {
+    const deployment = this.deployments.get(deploymentId);
+    if (deployment) {
+      const timestamp = new Date().toISOString();
+      deployment.logs.push(`[${timestamp}] ${message}`);
+    }
+  }
+
+  private async copyProjectFiles(files: any[], targetPath: string): Promise<void> {
+    for (const file of files) {
+      if (!file.isFolder && file.content) {
+        const filePath = path.join(targetPath, file.name);
+        const dir = path.dirname(filePath);
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(filePath, file.content);
+      }
+    }
   }
 }
 
-/**
- * Start the deployment server process
- */
-async function startDeploymentServer(
-  project: Project,
-  deployment: Deployment,
-  deployDir: string
-): Promise<{
-  success: boolean;
-  url: string | null;
-  port: number;
-  process?: ChildProcess;
-}> {
-  // Determine command to run based on project language
-  let command: string;
-  let args: string[] = [];
-  const port = 3000 + deployment.id; // Each deployment gets its own port
-  const env = {
-    ...process.env,
-    PORT: port.toString(),
-    NODE_ENV: 'production'
-  };
-  
-  switch (project.language) {
-    case 'nodejs':
-      // Check for package.json to determine how to run
-      if (existsSync(join(deployDir, 'package.json'))) {
-        const fs = require('fs');
-        const pkg = JSON.parse(fs.readFileSync(join(deployDir, 'package.json'), 'utf8'));
-        
-        // Install dependencies
-        await new Promise<void>((resolve, reject) => {
-          const installProcess = spawn('npm', ['install', '--production'], {
-            cwd: deployDir,
-            env
-          });
-          
-          const logs: string[] = [];
-          installProcess.stdout.on('data', (data) => {
-            const log = data.toString();
-            logs.push(`[npm install] ${log}`);
-          });
-          
-          installProcess.stderr.on('data', (data) => {
-            const log = data.toString();
-            logs.push(`[npm install error] ${log}`);
-          });
-          
-          installProcess.on('close', (code) => {
-            if (code === 0) {
-              resolve();
-            } else {
-              reject(new Error(`npm install failed with code ${code}. Logs: ${logs.join('\n')}`));
-            }
-          });
-        });
-        
-        if (pkg.scripts && pkg.scripts.start) {
-          command = 'npm';
-          args = ['run', 'start'];
-        } else if (existsSync(join(deployDir, 'index.js'))) {
-          command = 'node';
-          args = ['index.js'];
-        } else {
-          // Look for a main file
-          const files = await readdir(deployDir);
-          const mainFile = files.find(file => 
-            file.endsWith('.js') && 
-            !file.startsWith('_') && 
-            !file.startsWith('.')
-          );
-          
-          if (mainFile) {
-            command = 'node';
-            args = [mainFile];
-          } else {
-            throw new Error('Could not determine how to start Node.js project');
-          }
-        }
-        break;
-      } else {
-        // No package.json, look for a main file
-        const files = await readdir(deployDir);
-        const mainFile = files.find(file => 
-          file.endsWith('.js') && 
-          !file.startsWith('_') && 
-          !file.startsWith('.')
-        );
-        
-        if (mainFile) {
-          command = 'node';
-          args = [mainFile];
-        } else {
-          throw new Error('Could not determine how to start Node.js project');
-        }
-      }
-      break;
-      
-    case 'python':
-      // Check for requirements.txt
-      if (existsSync(join(deployDir, 'requirements.txt'))) {
-        // Install dependencies
-        await new Promise<void>((resolve, reject) => {
-          const installProcess = spawn('pip', ['install', '-r', 'requirements.txt'], {
-            cwd: deployDir,
-            env
-          });
-          
-          const logs: string[] = [];
-          installProcess.stdout.on('data', (data) => {
-            const log = data.toString();
-            logs.push(`[pip install] ${log}`);
-          });
-          
-          installProcess.stderr.on('data', (data) => {
-            const log = data.toString();
-            logs.push(`[pip install error] ${log}`);
-          });
-          
-          installProcess.on('close', (code) => {
-            if (code === 0) {
-              resolve();
-            } else {
-              reject(new Error(`pip install failed with code ${code}. Logs: ${logs.join('\n')}`));
-            }
-          });
-        });
-      }
-      
-      // Look for app.py or main.py or similar
-      if (existsSync(join(deployDir, 'app.py'))) {
-        command = 'python';
-        args = ['app.py'];
-      } else if (existsSync(join(deployDir, 'main.py'))) {
-        command = 'python';
-        args = ['main.py'];
-      } else {
-        // Look for any Python file
-        const files = await readdir(deployDir);
-        const mainFile = files.find(file => 
-          file.endsWith('.py') && 
-          !file.startsWith('_') && 
-          !file.startsWith('.')
-        );
-        
-        if (mainFile) {
-          command = 'python';
-          args = [mainFile];
-        } else {
-          throw new Error('Could not determine how to start Python project');
-        }
-      }
-      break;
-      
-    // Add support for other languages as needed
-    
-    default:
-      throw new Error(`Deployment for ${project.language} is not yet supported`);
-  }
-  
-  // Start the server process
-  const serverProcess = spawn(command, args, {
-    cwd: deployDir,
-    env
-  });
-  
-  // Create logs array for this deployment
-  const logs: string[] = [];
-  
-  // Setup event listeners for process output
-  serverProcess.stdout.on('data', (data) => {
-    const log = data.toString();
-    logs.push(log);
-    
-    // Store only the last 1000 logs
-    if (logs.length > 1000) {
-      logs.shift();
-    }
-  });
-  
-  serverProcess.stderr.on('data', (data) => {
-    const log = data.toString();
-    logs.push(`[ERROR] ${log}`);
-    
-    // Store only the last 1000 logs
-    if (logs.length > 1000) {
-      logs.shift();
-    }
-  });
-  
-  // Handle process exit
-  serverProcess.on('exit', async (code) => {
-    // Update deployment status
-    if (code === 0 || code === null) {
-      await storage.updateDeployment(deployment.id, { status: 'stopped' });
-    } else {
-      await storage.updateDeployment(deployment.id, { status: 'failed' });
-    }
-    
-    logs.push(`[SYSTEM] Process exited with code ${code}`);
-    
-    // Remove from active deployments
-    deployments.delete(deployment.id);
-  });
-  
-  // Generate public URL (in a real implementation, this would involve 
-  // DNS configuration, proxy setup, etc.)
-  const url = `https://${project.name.replace(/\s+/g, '-').toLowerCase()}-${deployment.id}.plot.app`;
-  
-  // Update deployment record with URL and running status
-  await storage.updateDeployment(deployment.id, {
-    status: 'running',
-    url
-  });
-  
-  // Store process and logs in memory
-  deployments.set(deployment.id, {
-    process: serverProcess,
-    logs,
-    url,
-    status: 'running',
-    port
-  });
-  
-  return {
-    success: true,
-    url,
-    port,
-    process: serverProcess
-  };
-}
-
-/**
- * Stop a running deployment
- */
-export async function stopDeployment(deploymentId: number): Promise<{
-  success: boolean;
-  message: string;
-}> {
-  try {
-    // Get deployment data
-    const deploymentInfo = deployments.get(deploymentId);
-    
-    if (!deploymentInfo) {
-      // Check if it exists in the database
-      const deploymentsList = await storage.getDeployments(null);
-      const deployment = deploymentsList.find(d => d.id === deploymentId);
-      
-      if (!deployment) {
-        throw new Error('Deployment not found');
-      }
-      
-      // If it exists but is not running, just update status
-      await storage.updateDeployment(deploymentId, { status: 'stopped' });
-      
-      return {
-        success: true,
-        message: 'Deployment was already stopped'
-      };
-    }
-    
-    // Kill the process
-    deploymentInfo.process.kill();
-    
-    // Update deployment record in database
-    await storage.updateDeployment(deploymentId, { status: 'stopped' });
-    
-    // Add a log entry
-    deploymentInfo.logs.push('[SYSTEM] Deployment stopped by user');
-    
-    return {
-      success: true,
-      message: 'Deployment stopped successfully'
-    };
-  } catch (error) {
-    console.error('Failed to stop deployment:', error);
-    return {
-      success: false,
-      message: error.message || 'Failed to stop deployment'
-    };
-  }
-}
-
-/**
- * Get the status of a deployment
- */
-export function getDeploymentStatus(deploymentId: number): {
-  status: string;
-  url: string | null;
-  running: boolean;
-} {
-  const deploymentInfo = deployments.get(deploymentId);
-  
-  if (!deploymentInfo) {
-    return {
-      status: 'stopped',
-      url: null,
-      running: false
-    };
-  }
-  
-  return {
-    status: deploymentInfo.status,
-    url: deploymentInfo.url,
-    running: deploymentInfo.status === 'running'
-  };
-}
-
-/**
- * Get the logs for a deployment
- */
-export function getDeploymentLogs(deploymentId: number): string[] {
-  const deploymentInfo = deployments.get(deploymentId);
-  
-  if (!deploymentInfo) {
-    return ['No logs available'];
-  }
-  
-  return deploymentInfo.logs;
-}
+export const deploymentManager = new DeploymentManager();

@@ -17,7 +17,7 @@ import {
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, attachToProjectLogs, checkRuntimeDependencies } from "./runtime";
 import { setupLogsWebsocket } from "./logs";
-import { deployProject, stopDeployment, getDeploymentStatus, getDeploymentLogs } from "./deployment";
+// import { deployProject, stopDeployment, getDeploymentStatus, getDeploymentLogs } from "./deployment";
 import { 
   initRepo, 
   isGitRepo, 
@@ -40,6 +40,16 @@ import {
   getLanguageRecommendations
 } from "./runtimes/api";
 import * as runtimeHealth from "./runtimes/runtime-health";
+import { codeExecutor } from "./execution/executor";
+import { gitManager } from "./version-control/git-manager";
+import { collaborationServer } from "./realtime/collaboration-server";
+import { replitDB } from "./database/replitdb";
+import { searchEngine } from "./search/search-engine";
+import { extensionManager } from "./extensions/extension-manager";
+import { apiManager } from "./api/api-manager";
+import { projectExporter } from "./import-export/exporter";
+import { deploymentManager } from "./deployment";
+import * as path from "path";
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -213,9 +223,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
-      const result = insertFileSchema
-        .omit({ id: true, createdAt: true, updatedAt: true })
-        .safeParse({ ...req.body, projectId });
+      const fileData = {
+        name: req.body.name,
+        projectId: projectId,
+        content: req.body.content || null,
+        isFolder: req.body.isFolder || false,
+        parentId: req.body.parentId || null
+      };
+      
+      const result = insertFileSchema.safeParse(fileData);
       
       if (!result.success) {
         return res.status(400).json({ error: result.error.errors });
@@ -349,10 +365,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // This would typically trigger the actual project execution
       const result = await startProject(projectId);
       res.json({ 
-        success: true, 
+        ...result,
         command: command || 'npm start',
-        file: file || null,
-        ...result
+        file: file || null
       });
     } catch (error) {
       console.error('Error running project:', error);
@@ -386,8 +401,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/deployments/:id/status', ensureAuthenticated, async (req, res) => {
     try {
       const deploymentId = parseInt(req.params.id);
-      const deployments = await storage.getDeployments(deploymentId);
-      const deployment = deployments[0];
+      // Need to get deployments by project, not deployment ID
+      const allProjects = await storage.getProjectsByUser(req.user!.id);
+      let deployment = null;
+      for (const project of allProjects) {
+        const projectDeployments = await storage.getDeployments(project.id);
+        const found = projectDeployments.find(d => d.id === deploymentId);
+        if (found) {
+          deployment = found;
+          break;
+        }
+      }
       
       if (!deployment) {
         return res.status(404).json({ error: 'Deployment not found' });
@@ -397,7 +421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const project = await storage.getProject(deployment.projectId);
       if (!project || !req.user || project.ownerId !== req.user.id) {
         const collaborators = await storage.getProjectCollaborators(deployment.projectId);
-        const isCollaborator = req.user ? collaborators.some(c => c.userId === req.user.id) : false;
+        const isCollaborator = req.user ? collaborators.some(c => c.userId === req.user!.id) : false;
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
         }
@@ -414,8 +438,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/deployments/:id/logs', ensureAuthenticated, async (req, res) => {
     try {
       const deploymentId = parseInt(req.params.id);
-      const deployments = await storage.getDeployments(deploymentId);
-      const deployment = deployments[0];
+      // Need to get deployments by project, not deployment ID
+      const allProjects = await storage.getProjectsByUser(req.user!.id);
+      let deployment = null;
+      for (const project of allProjects) {
+        const projectDeployments = await storage.getDeployments(project.id);
+        const found = projectDeployments.find(d => d.id === deploymentId);
+        if (found) {
+          deployment = found;
+          break;
+        }
+      }
       
       if (!deployment) {
         return res.status(404).json({ error: 'Deployment not found' });
@@ -425,7 +458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const project = await storage.getProject(deployment.projectId);
       if (!project || !req.user || project.ownerId !== req.user.id) {
         const collaborators = await storage.getProjectCollaborators(deployment.projectId);
-        const isCollaborator = req.user ? collaborators.some(c => c.userId === req.user.id) : false;
+        const isCollaborator = req.user ? collaborators.some(c => c.userId === req.user!.id) : false;
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
         }
@@ -477,6 +510,233 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Removed duplicate deployment logs route
+  
+  // Version Control Routes (Git) 
+  app.get('/api/projects/:id/git/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const status = await gitManager.getStatus(projectId);
+      res.json(status);
+    } catch (error) {
+      console.error('Error getting git status:', error);
+      res.status(500).json({ error: 'Failed to get git status' });
+    }
+  });
+
+  app.get('/api/projects/:id/git/commits', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const limit = parseInt(req.query.limit as string) || 50;
+      const commits = await gitManager.getCommits(projectId, limit);
+      res.json(commits);
+    } catch (error) {
+      console.error('Error getting git commits:', error);
+      res.status(500).json({ error: 'Failed to get commits' });
+    }
+  });
+
+  app.post('/api/projects/:id/git/commit', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { message, files } = req.body;
+      const hash = await gitManager.commit(projectId, message, files);
+      res.json({ hash });
+    } catch (error) {
+      console.error('Error committing:', error);
+      res.status(500).json({ error: 'Failed to commit' });
+    }
+  });
+
+  // Code Execution Routes
+  app.post('/api/projects/:id/execute', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { mainFile, stdin, timeout } = req.body;
+      
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const result = await codeExecutor.execute({
+        projectId,
+        userId: req.user!.id,
+        language: project.language || 'nodejs',
+        mainFile,
+        stdin,
+        timeout
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error executing code:', error);
+      res.status(500).json({ error: 'Failed to execute code' });
+    }
+  });
+
+  app.post('/api/projects/:id/stop', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const { executionId } = req.body;
+      const stopped = await codeExecutor.stop(executionId);
+      res.json({ stopped });
+    } catch (error) {
+      console.error('Error stopping execution:', error);
+      res.status(500).json({ error: 'Failed to stop execution' });
+    }
+  });
+
+  // ReplitDB Routes
+  app.get('/api/projects/:id/db/:key', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const value = await replitDB.get(projectId, req.params.key);
+      res.json({ value });
+    } catch (error) {
+      console.error('Error getting DB value:', error);
+      res.status(500).json({ error: 'Failed to get value' });
+    }
+  });
+
+  app.post('/api/projects/:id/db/:key', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      await replitDB.set(projectId, req.params.key, req.body.value);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error setting DB value:', error);
+      res.status(500).json({ error: 'Failed to set value' });
+    }
+  });
+
+  app.delete('/api/projects/:id/db/:key', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const deleted = await replitDB.delete(projectId, req.params.key);
+      res.json({ deleted });
+    } catch (error) {
+      console.error('Error deleting DB value:', error);
+      res.status(500).json({ error: 'Failed to delete value' });
+    }
+  });
+
+  app.get('/api/projects/:id/db', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const prefix = req.query.prefix as string | undefined;
+      const keys = await replitDB.keys(projectId, prefix);
+      res.json({ keys });
+    } catch (error) {
+      console.error('Error listing DB keys:', error);
+      res.status(500).json({ error: 'Failed to list keys' });
+    }
+  });
+
+  // Search Routes
+  app.post('/api/search', ensureAuthenticated, async (req, res) => {
+    try {
+      const results = await searchEngine.search({
+        ...req.body,
+        userId: req.user!.id
+      });
+      res.json({ results });
+    } catch (error) {
+      console.error('Error searching:', error);
+      res.status(500).json({ error: 'Failed to search' });
+    }
+  });
+
+  // Extensions Routes
+  app.get('/api/extensions', ensureAuthenticated, async (req, res) => {
+    try {
+      const extensions = await extensionManager.getAvailableExtensions();
+      res.json(extensions);
+    } catch (error) {
+      console.error('Error getting extensions:', error);
+      res.status(500).json({ error: 'Failed to get extensions' });
+    }
+  });
+
+  app.get('/api/user/extensions', ensureAuthenticated, async (req, res) => {
+    try {
+      const extensions = await extensionManager.getUserExtensions(req.user!.id);
+      res.json(extensions);
+    } catch (error) {
+      console.error('Error getting user extensions:', error);
+      res.status(500).json({ error: 'Failed to get user extensions' });
+    }
+  });
+
+  app.post('/api/extensions/:id/install', ensureAuthenticated, async (req, res) => {
+    try {
+      const success = await extensionManager.installExtension(req.user!.id, req.params.id);
+      res.json({ success });
+    } catch (error) {
+      console.error('Error installing extension:', error);
+      res.status(500).json({ error: 'Failed to install extension' });
+    }
+  });
+
+  // API Key Management Routes
+  app.post('/api/keys', ensureAuthenticated, async (req, res) => {
+    try {
+      const { name, permissions, expiresInDays } = req.body;
+      const result = await apiManager.generateAPIKey(
+        req.user!.id,
+        name,
+        permissions,
+        expiresInDays
+      );
+      res.json(result);
+    } catch (error) {
+      console.error('Error generating API key:', error);
+      res.status(500).json({ error: 'Failed to generate API key' });
+    }
+  });
+
+  app.get('/api/keys', ensureAuthenticated, async (req, res) => {
+    try {
+      const keys = await apiManager.getUserAPIKeys(req.user!.id);
+      res.json(keys);
+    } catch (error) {
+      console.error('Error getting API keys:', error);
+      res.status(500).json({ error: 'Failed to get API keys' });
+    }
+  });
+
+  app.delete('/api/keys/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const success = await apiManager.revokeAPIKey(req.user!.id, req.params.id);
+      res.json({ success });
+    } catch (error) {
+      console.error('Error revoking API key:', error);
+      res.status(500).json({ error: 'Failed to revoke API key' });
+    }
+  });
+
+  // Export Routes
+  app.post('/api/projects/:id/export', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const result = await projectExporter.exportProject({
+        projectId,
+        ...req.body
+      });
+      res.json(result);
+    } catch (error) {
+      console.error('Error exporting project:', error);
+      res.status(500).json({ error: 'Failed to export project' });
+    }
+  });
+
+  app.get('/api/exports/:filename', ensureAuthenticated, async (req, res) => {
+    try {
+      const exportPath = path.join(process.cwd(), '.exports', req.params.filename);
+      res.download(exportPath);
+    } catch (error) {
+      console.error('Error downloading export:', error);
+      res.status(500).json({ error: 'Failed to download export' });
+    }
+  });
   
   // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
@@ -644,13 +904,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'user_left',
           userId: clientInfo.userId,
           username: clientInfo.username,
-          projectId: clientInfo.projectId,
-          fileId: clientInfo.fileId,
+          projectId: clientInfo.projectId || 0,
+          fileId: clientInfo.fileId || 0,
           timestamp: Date.now(),
           data: {}
         };
         
-        const projectId = clientInfo.projectId;
+        const projectId = clientInfo.projectId || 0;
         const projectWsClients = projectClients.get(projectId);
         
         if (projectWsClients) {

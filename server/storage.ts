@@ -407,7 +407,7 @@ export class MemStorage implements IStorage {
   private collaboratorIdCounter: number;
   private deploymentIdCounter: number;
   private environmentVariableIdCounter: number;
-  sessionStore: session.SessionStore;
+  sessionStore: Store;
 
   constructor() {
     this.projects = new Map();
@@ -440,7 +440,7 @@ export class MemStorage implements IStorage {
   }
   
   async createUser(userData: InsertUser): Promise<User> {
-    const now = new Date().toISOString();
+    const now = new Date();
     const user: User = {
       id: this.userIdCounter++,
       ...userData,
@@ -484,7 +484,7 @@ export class MemStorage implements IStorage {
   }
 
   async createProject(projectData: InsertProject): Promise<Project> {
-    const now = new Date().toISOString();
+    const now = new Date();
     const project: Project = {
       id: this.projectIdCounter++,
       ...projectData,
@@ -502,7 +502,7 @@ export class MemStorage implements IStorage {
       throw new Error('Project not found');
     }
     
-    const now = new Date().toISOString();
+    const now = new Date();
     const updatedProject: Project = {
       ...project,
       ...update,
@@ -565,7 +565,7 @@ export class MemStorage implements IStorage {
   }
 
   async createFile(fileData: InsertFile): Promise<File> {
-    const now = new Date().toISOString();
+    const now = new Date();
     const file: File = {
       id: this.fileIdCounter++,
       ...fileData,
@@ -594,7 +594,7 @@ export class MemStorage implements IStorage {
       throw new Error('File not found');
     }
     
-    const now = new Date().toISOString();
+    const now = new Date();
     const updatedFile: File = {
       ...file,
       ...update,
@@ -638,7 +638,7 @@ export class MemStorage implements IStorage {
     if (project) {
       this.projects.set(project.id, {
         ...project,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date()
       });
     }
   }
@@ -650,7 +650,7 @@ export class MemStorage implements IStorage {
   }
   
   async addCollaborator(collaboratorData: InsertProjectCollaborator): Promise<ProjectCollaborator> {
-    const now = new Date().toISOString();
+    const now = new Date();
     const collaborator: ProjectCollaborator = {
       id: this.collaboratorIdCounter++,
       ...collaboratorData,
@@ -677,7 +677,7 @@ export class MemStorage implements IStorage {
   }
   
   async createDeployment(deploymentData: InsertDeployment): Promise<Deployment> {
-    const now = new Date().toISOString();
+    const now = new Date();
     const deployment: Deployment = {
       id: this.deploymentIdCounter++,
       ...deploymentData,
@@ -695,7 +695,7 @@ export class MemStorage implements IStorage {
       throw new Error('Deployment not found');
     }
     
-    const now = new Date().toISOString();
+    const now = new Date();
     const updatedDeployment: Deployment = {
       ...deployment,
       ...update,
@@ -717,7 +717,7 @@ export class MemStorage implements IStorage {
   }
 
   async createEnvironmentVariable(variableData: InsertEnvironmentVariable): Promise<EnvironmentVariable> {
-    const now = new Date().toISOString();
+    const now = new Date();
     const variable: EnvironmentVariable = {
       id: this.environmentVariableIdCounter++,
       ...variableData,
@@ -745,7 +745,7 @@ export class MemStorage implements IStorage {
       throw new Error('Environment variable not found');
     }
 
-    const now = new Date().toISOString();
+    const now = new Date();
     const updatedVariable: EnvironmentVariable = {
       ...variable,
       ...update,
@@ -779,9 +779,14 @@ export class MemStorage implements IStorage {
     if (project) {
       this.projects.set(project.id, {
         ...project,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date()
       });
     }
+  }
+  
+  async isProjectCollaborator(projectId: number, userId: number): Promise<boolean> {
+    return Array.from(this.collaborators.values())
+      .some(collab => collab.projectId === projectId && collab.userId === userId);
   }
 }
 
