@@ -80,7 +80,7 @@ export const files = pgTable("files", {
   name: text("name").notNull(),
   content: text("content").default(""),
   isFolder: boolean("is_folder").default(false).notNull(),
-  parentId: integer("parent_id").references(() => files.id),
+  parentId: integer("parent_id"),
   projectId: integer("project_id").notNull().references(() => projects.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
