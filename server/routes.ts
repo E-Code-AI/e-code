@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertProjectSchema, insertFileSchema, insertProjectCollaboratorSchema, insertDeploymentSchema } from "@shared/schema";
+import { insertProjectSchema, insertFileSchema, insertProjectCollaboratorSchema, insertDeploymentSchema, type EnvironmentVariable } from "@shared/schema";
 import * as z from "zod";
 import { devAuthBypass, setupAuthBypass } from "./dev-auth-bypass";
 import { WebSocketServer, WebSocket } from "ws";
@@ -386,7 +386,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/deployments/:id/status', ensureAuthenticated, async (req, res) => {
     try {
       const deploymentId = parseInt(req.params.id);
-      const deployment = await storage.getDeployment(deploymentId);
+      const deployments = await storage.getDeployments(deploymentId);
+      const deployment = deployments[0];
       
       if (!deployment) {
         return res.status(404).json({ error: 'Deployment not found' });
@@ -394,9 +395,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Ensure user has access to the project this deployment belongs to
       const project = await storage.getProject(deployment.projectId);
-      if (!project || project.userId !== req.user.id) {
+      if (!project || !req.user || project.ownerId !== req.user.id) {
         const collaborators = await storage.getProjectCollaborators(deployment.projectId);
-        const isCollaborator = collaborators.some(c => c.userId === req.user.id);
+        const isCollaborator = req.user ? collaborators.some(c => c.userId === req.user.id) : false;
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
         }
@@ -413,7 +414,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/deployments/:id/logs', ensureAuthenticated, async (req, res) => {
     try {
       const deploymentId = parseInt(req.params.id);
-      const deployment = await storage.getDeployment(deploymentId);
+      const deployments = await storage.getDeployments(deploymentId);
+      const deployment = deployments[0];
       
       if (!deployment) {
         return res.status(404).json({ error: 'Deployment not found' });
@@ -421,9 +423,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Ensure user has access to the project this deployment belongs to
       const project = await storage.getProject(deployment.projectId);
-      if (!project || project.userId !== req.user.id) {
+      if (!project || !req.user || project.ownerId !== req.user.id) {
         const collaborators = await storage.getProjectCollaborators(deployment.projectId);
-        const isCollaborator = collaborators.some(c => c.userId === req.user.id);
+        const isCollaborator = req.user ? collaborators.some(c => c.userId === req.user.id) : false;
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
         }
@@ -440,8 +442,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/deployments/:id/stop', ensureAuthenticated, async (req, res) => {
     try {
       const deploymentId = parseInt(req.params.id);
-      const deployments = await storage.getDeployments(null);
-      const deployment = deployments.find(d => d.id === deploymentId);
+      // Get all deployments and find the specific one
+      const allProjects = await storage.getProjectsByUser(req.user!.id);
+      let deployment = null;
+      for (const project of allProjects) {
+        const projectDeployments = await storage.getDeployments(project.id);
+        const found = projectDeployments.find(d => d.id === deploymentId);
+        if (found) {
+          deployment = found;
+          break;
+        }
+      }
       
       if (!deployment) {
         return res.status(404).json({ error: 'Deployment not found' });
@@ -465,34 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get deployment logs
-  app.get('/api/deployments/:id/logs', ensureAuthenticated, async (req, res) => {
-    try {
-      const deploymentId = parseInt(req.params.id);
-      const deployments = await storage.getDeployments(null);
-      const deployment = deployments.find(d => d.id === deploymentId);
-      
-      if (!deployment) {
-        return res.status(404).json({ error: 'Deployment not found' });
-      }
-      
-      // Ensure user has access to the project this deployment belongs to
-      const project = await storage.getProject(deployment.projectId);
-      if (!project || project.ownerId !== req.user?.id) {
-        const collaborators = await storage.getProjectCollaborators(deployment.projectId);
-        const isCollaborator = collaborators.some(c => c.userId === req.user?.id);
-        if (!isCollaborator) {
-          return res.status(403).json({ error: 'Access denied' });
-        }
-      }
-      
-      const logs = getDeploymentLogs(deploymentId);
-      res.json({ logs });
-    } catch (error) {
-      console.error('Error fetching deployment logs:', error);
-      res.status(500).json({ error: 'Failed to fetch deployment logs' });
-    }
-  });
+  // Removed duplicate deployment logs route
   
   // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
@@ -597,7 +581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Send current collaborators to new user
             const currentCollaborators = [];
             
-            for (const [client, info] of clients.entries()) {
+            for (const [client, info] of Array.from(clients.entries())) {
               if (client !== collaborationWs && info.projectId === data.projectId) {
                 currentCollaborators.push({
                   userId: info.userId,
@@ -1402,13 +1386,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const result = await deployProject(projectId);
       
       if (!result.success) {
-        return res.status(500).json({ message: result.error || 'Failed to deploy project' });
+        return res.status(500).json({ message: result.message || 'Failed to deploy project' });
       }
       
       res.json({
-        deploymentId: result.deploymentId,
-        url: result.url,
-        status: 'deploying'
+        deploymentId: result.deployment.id,
+        url: result.deployment.url,
+        status: result.deployment.status
       });
     } catch (error) {
       console.error("Error deploying project:", error);
@@ -1425,8 +1409,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       // Get the deployment to check access
-      const deployments = await storage.getDeployments(null);
-      const deployment = deployments.find(d => d.id === deploymentId);
+      const allProjects = await storage.getProjectsByUser(req.user!.id);
+      let deployment = null;
+      for (const project of allProjects) {
+        const projectDeployments = await storage.getDeployments(project.id);
+        const found = projectDeployments.find(d => d.id === deploymentId);
+        if (found) {
+          deployment = found;
+          break;
+        }
+      }
       
       if (!deployment) {
         return res.status(404).json({ message: 'Deployment not found' });
@@ -1451,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const result = await stopDeployment(deploymentId);
       
       if (!result.success) {
-        return res.status(500).json({ message: result.error || 'Failed to stop deployment' });
+        return res.status(500).json({ message: result.message || 'Failed to stop deployment' });
       }
       
       res.json({ status: 'stopped' });
@@ -1470,8 +1462,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       // Get the deployment to check access
-      const deployments = await storage.getDeployments(null);
-      const deployment = deployments.find(d => d.id === deploymentId);
+      const allProjects = await storage.getProjectsByUser(req.user!.id);
+      let deployment = null;
+      for (const project of allProjects) {
+        const projectDeployments = await storage.getDeployments(project.id);
+        const found = projectDeployments.find(d => d.id === deploymentId);
+        if (found) {
+          deployment = found;
+          break;
+        }
+      }
       
       if (!deployment) {
         return res.status(404).json({ message: 'Deployment not found' });
@@ -1495,8 +1495,8 @@ document.addEventListener('DOMContentLoaded', function() {
       
       const status = getDeploymentStatus(deploymentId);
       
-      // If deployment is not active, return database status
-      if (!status.isActive) {
+      // If deployment is not running, return database status
+      if (!status.running) {
         return res.json({
           status: deployment.status,
           url: deployment.url,
@@ -1508,8 +1508,7 @@ document.addEventListener('DOMContentLoaded', function() {
       res.json({
         status: status.status,
         url: status.url,
-        port: status.port,
-        isActive: true
+        isActive: status.running
       });
     } catch (error) {
       console.error("Error getting deployment status:", error);
@@ -1526,8 +1525,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       // Get the deployment to check access
-      const deployments = await storage.getDeployments(null);
-      const deployment = deployments.find(d => d.id === deploymentId);
+      const allProjects = await storage.getProjectsByUser(req.user!.id);
+      let deployment = null;
+      for (const project of allProjects) {
+        const projectDeployments = await storage.getDeployments(project.id);
+        const found = projectDeployments.find(d => d.id === deploymentId);
+        if (found) {
+          deployment = found;
+          break;
+        }
+      }
       
       if (!deployment) {
         return res.status(404).json({ message: 'Deployment not found' });

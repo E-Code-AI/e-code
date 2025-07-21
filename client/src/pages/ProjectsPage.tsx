@@ -169,7 +169,7 @@ const ProjectsPage = () => {
   };
 
   // Function to get language icon
-  const getLanguageIcon = (language: string) => {
+  const getLanguageIcon = (language: string | null) => {
     switch (language) {
       case 'typescript':
       case 'javascript':
