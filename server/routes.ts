@@ -65,6 +65,11 @@ const ensureProjectAccess = async (req: Request, res: Response, next: NextFuncti
   const userId = req.user!.id;
   const projectId = parseInt(req.params.projectId || req.params.id);
   
+  // Check if projectId is valid
+  if (isNaN(projectId)) {
+    return res.status(400).json({ message: "Invalid project ID" });
+  }
+  
   // Get the project
   const project = await storage.getProject(projectId);
   if (!project) {
@@ -101,11 +106,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API Routes for Projects
   app.get('/api/projects', ensureAuthenticated, async (req, res) => {
     try {
-      const projects = await storage.getProjectsByUser(req.user.id);
+      const projects = await storage.getProjectsByUser(req.user!.id);
       res.json(projects);
     } catch (error) {
       console.error('Error fetching projects:', error);
       res.status(500).json({ error: 'Failed to fetch projects' });
+    }
+  });
+
+  // Get recent projects (same as all projects for now)
+  app.get('/api/projects/recent', ensureAuthenticated, async (req, res) => {
+    try {
+      const projects = await storage.getProjectsByUser(req.user!.id);
+      // Sort by updatedAt to show most recent first
+      const recentProjects = projects.sort((a, b) => 
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+      res.json(recentProjects);
+    } catch (error) {
+      console.error('Error fetching recent projects:', error);
+      res.status(500).json({ error: 'Failed to fetch recent projects' });
     }
   });
 
@@ -135,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const newProject = await storage.createProject({
         ...result.data,
-        userId: req.user.id,
+        ownerId: req.user!.id,
       });
       
       // Create default files for the project
@@ -220,8 +240,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Ensure user has access to the project this file belongs to
       const project = await storage.getProject(file.projectId);
-      if (!project || project.userId !== req.user.id) {
-        const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user.id);
+      if (!project || project.ownerId !== req.user!.id) {
+        const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user!.id);
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
         }
@@ -245,8 +265,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Ensure user has access to the project this file belongs to
       const project = await storage.getProject(file.projectId);
-      if (!project || project.userId !== req.user.id) {
-        const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user.id);
+      if (!project || project.ownerId !== req.user!.id) {
+        const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user!.id);
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
         }
@@ -271,8 +291,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Ensure user has access to the project this file belongs to
       const project = await storage.getProject(file.projectId);
-      if (!project || project.userId !== req.user.id) {
-        const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user.id);
+      if (!project || project.ownerId !== req.user!.id) {
+        const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user!.id);
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
         }

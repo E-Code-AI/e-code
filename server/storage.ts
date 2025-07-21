@@ -10,6 +10,7 @@ import {
 import { eq, and, desc, isNull } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
+import { Store } from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
@@ -38,6 +39,7 @@ export interface IStorage {
   // Collaborator methods
   getProjectCollaborators(projectId: number): Promise<ProjectCollaborator[]>;
   addCollaborator(collaborator: InsertProjectCollaborator): Promise<ProjectCollaborator>;
+  isProjectCollaborator(projectId: number, userId: number): Promise<boolean>;
   
   // Deployment methods
   getDeployments(projectId: number): Promise<Deployment[]>;
@@ -52,12 +54,12 @@ export interface IStorage {
   deleteEnvironmentVariable(id: number): Promise<void>;
   
   // Session store for authentication
-  sessionStore: session.SessionStore;
+  sessionStore: Store;
 }
 
 // Database storage implementation
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: Store;
   
   constructor() {
     const PostgresSessionStore = connectPg(session);
@@ -273,6 +275,17 @@ export class DatabaseStorage implements IStorage {
       .returning();
       
     return collaborator;
+  }
+  
+  async isProjectCollaborator(projectId: number, userId: number): Promise<boolean> {
+    const [collaborator] = await db.select()
+      .from(projectCollaborators)
+      .where(and(
+        eq(projectCollaborators.projectId, projectId),
+        eq(projectCollaborators.userId, userId)
+      ));
+    
+    return !!collaborator;
   }
   
   // Deployment methods
