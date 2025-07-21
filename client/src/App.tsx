@@ -16,6 +16,9 @@ import RuntimePublicPage from "@/pages/RuntimePublicPage";
 import RuntimeTest from "@/pages/RuntimeTest";
 import Dashboard from "@/pages/Dashboard";
 import Explore from "@/pages/Explore";
+import Teams from "@/pages/Teams";
+import Settings from "@/pages/Settings";
+import Profile from "@/pages/Profile";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -109,6 +112,21 @@ function AppContent() {
           <ProtectedRoute path="/explore" component={() => (
             <ReplitLayout>
               <Explore />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/teams" component={() => (
+            <ReplitLayout>
+              <Teams />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/settings" component={() => (
+            <ReplitLayout>
+              <Settings />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/profile/:username?" component={() => (
+            <ReplitLayout>
+              <Profile />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/home" component={() => (

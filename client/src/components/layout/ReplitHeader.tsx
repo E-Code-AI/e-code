@@ -32,7 +32,7 @@ import { SpotlightSearch } from "@/components/SpotlightSearch";
 
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [spotlightOpen, setSpotlightOpen] = useState(false);
 
@@ -124,6 +124,20 @@ export function ReplitHeader() {
               Community
             </Button>
           </Link>
+          
+          <Link href="/teams">
+            <Button
+              variant={isActive("/teams") ? "default" : "ghost"}
+              size="sm"
+              className={`replit-transition ${
+                isActive("/teams")
+                  ? "bg-[var(--replit-accent)] text-white"
+                  : "text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+              }`}
+            >
+              Teams
+            </Button>
+          </Link>
         </nav>
       </div>
 
@@ -180,7 +194,9 @@ export function ReplitHeader() {
             </div>
             <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
             
-            <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+            <DropdownMenuItem 
+              onClick={() => navigate(`/profile/${user?.username}`)}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
@@ -190,7 +206,9 @@ export function ReplitHeader() {
               Account
             </DropdownMenuItem>
             
-            <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+            <DropdownMenuItem 
+              onClick={() => navigate('/settings')}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
