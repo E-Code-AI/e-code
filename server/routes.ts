@@ -1269,6 +1269,131 @@ document.addEventListener('DOMContentLoaded', function() {
   // Public endpoint to get runtime dependencies - no auth required
   app.get('/api/runtime/dependencies', getRuntimeDependencies);
   
+  // Environment Variables API
+  app.get('/api/projects/:id/env', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      // TODO: Implement actual environment variable storage
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching environment variables:', error);
+      res.status(500).json({ error: 'Failed to fetch environment variables' });
+    }
+  });
+  
+  app.post('/api/projects/:id/env', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { key, value } = req.body;
+      
+      if (!key || !value) {
+        return res.status(400).json({ error: 'Key and value are required' });
+      }
+      
+      // TODO: Implement actual environment variable storage
+      res.json({ key, value });
+    } catch (error) {
+      console.error('Error adding environment variable:', error);
+      res.status(500).json({ error: 'Failed to add environment variable' });
+    }
+  });
+  
+  app.put('/api/projects/:id/env/:key', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const key = req.params.key;
+      const { value } = req.body;
+      
+      if (!value) {
+        return res.status(400).json({ error: 'Value is required' });
+      }
+      
+      // TODO: Implement actual environment variable update
+      res.json({ key, value });
+    } catch (error) {
+      console.error('Error updating environment variable:', error);
+      res.status(500).json({ error: 'Failed to update environment variable' });
+    }
+  });
+  
+  app.delete('/api/projects/:id/env/:key', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const key = req.params.key;
+      
+      // TODO: Implement actual environment variable deletion
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting environment variable:', error);
+      res.status(500).json({ error: 'Failed to delete environment variable' });
+    }
+  });
+  
+  // Package Management API
+  app.get('/api/projects/:id/packages', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      // TODO: Implement actual package listing based on package.json or requirements.txt
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+      res.status(500).json({ error: 'Failed to fetch packages' });
+    }
+  });
+  
+  app.post('/api/projects/:id/packages', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { name, language } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ error: 'Package name is required' });
+      }
+      
+      // TODO: Implement actual package installation
+      res.json({
+        name,
+        version: 'latest',
+        success: true
+      });
+    } catch (error) {
+      console.error('Error installing package:', error);
+      res.status(500).json({ error: 'Failed to install package' });
+    }
+  });
+  
+  app.delete('/api/projects/:id/packages/:packageName', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const packageName = req.params.packageName;
+      
+      // TODO: Implement actual package uninstallation
+      res.json({
+        name: packageName,
+        success: true
+      });
+    } catch (error) {
+      console.error('Error uninstalling package:', error);
+      res.status(500).json({ error: 'Failed to uninstall package' });
+    }
+  });
+  
+  app.get('/api/packages/search', ensureAuthenticated, async (req, res) => {
+    try {
+      const { q, language } = req.query;
+      
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+      
+      // TODO: Implement actual package search from npm, pypi, etc.
+      res.json([]);
+    } catch (error) {
+      console.error('Error searching packages:', error);
+      res.status(500).json({ error: 'Failed to search packages' });
+    }
+  });
+  
   // Runtime dashboard route for health status and diagnostics (public)
   app.get('/api/runtime/dashboard', async (req, res) => {
     try {
