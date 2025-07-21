@@ -63,9 +63,9 @@
   --replit-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   
   /* Border radius */
-  --replit-radius-sm: 4px;
-  --replit-radius-md: 8px;
-  --replit-radius-lg: 12px;
+  --replit-radius-sm: 0px;
+  --replit-radius-md: 0px;
+  --replit-radius-lg: 0px;
   
   /* Z-index layers */
   --replit-z-dropdown: 1000;
@@ -149,7 +149,7 @@
 
 .replit-scrollbar::-webkit-scrollbar-thumb {
   background: var(--replit-border);
-  border-radius: 4px;
+  border-radius: 0px;
 }
 
 .replit-scrollbar::-webkit-scrollbar-thumb:hover {
