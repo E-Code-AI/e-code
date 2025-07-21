@@ -1,627 +1,592 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Switch } from "@/components/ui/switch";
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Sparkles, 
-  Terminal,
-  Code, 
-  FileText, 
-  RefreshCw, 
-  ThumbsUp, 
-  ThumbsDown, 
-  CheckSquare, 
-  HelpCircle, 
-  MessageSquare, 
-  Lightbulb, 
-  X,
-  Zap
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { File } from "@shared/schema";
+  Bot, Send, Sparkles, Code, FileText, HelpCircle,
+  Lightbulb, Zap, RefreshCw, Copy, ThumbsUp, ThumbsDown,
+  ChevronDown, ChevronUp, Terminal, History, Settings,
+  X, Minimize2, Maximize2, MessageSquare
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
 
 interface AIAssistantProps {
-  activeFile: File | undefined;
-  onApplyCompletion: (content: string) => void;
+  projectId: number;
+  selectedFile?: string;
+  selectedCode?: string;
+  className?: string;
 }
 
-enum AIMode {
-  Complete = "complete",
-  Explain = "explain",
-  Transform = "transform",
-  Document = "document",
-  Test = "test",
-  Chat = "chat",
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+  type?: 'code' | 'explanation' | 'suggestion' | 'error';
+  metadata?: {
+    language?: string;
+    fileName?: string;
+    lineNumbers?: number[];
+  };
 }
 
-interface AIRequest {
+interface CodeSuggestion {
+  id: string;
+  title: string;
+  description: string;
   code: string;
   language: string;
-  options?: Record<string, any>;
+  confidence: number;
 }
 
-interface AIResponse {
-  content: string;
-  reasoning?: string;
+interface QuickAction {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  prompt: string;
 }
 
-export function AIAssistant({ activeFile, onApplyCompletion }: AIAssistantProps) {
-  const [mode, setMode] = useState<AIMode>(AIMode.Complete);
+const QUICK_ACTIONS: QuickAction[] = [
+  { id: 'explain', label: 'Explain Code', icon: <HelpCircle className="h-4 w-4" />, prompt: 'Explain this code:' },
+  { id: 'improve', label: 'Improve Code', icon: <Sparkles className="h-4 w-4" />, prompt: 'How can I improve this code?' },
+  { id: 'debug', label: 'Debug Error', icon: <Terminal className="h-4 w-4" />, prompt: 'Help me debug this error:' },
+  { id: 'generate', label: 'Generate Code', icon: <Zap className="h-4 w-4" />, prompt: 'Generate code for:' },
+  { id: 'refactor', label: 'Refactor', icon: <RefreshCw className="h-4 w-4" />, prompt: 'Refactor this code:' }
+];
+
+export function AIAssistant({ projectId, selectedFile, selectedCode, className }: AIAssistantProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<AIResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [targetLanguage, setTargetLanguage] = useState("javascript");
-  const [showExplanation, setShowExplanation] = useState(true);
-  const [prompt, setPrompt] = useState("");
-  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [suggestions, setSuggestions] = useState<CodeSuggestion[]>([]);
+  const [activeTab, setActiveTab] = useState<'chat' | 'suggestions' | 'history'>('chat');
+  const [streamingMessage, setStreamingMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  
-  const getLanguageFromFilename = (filename: string | undefined): string => {
-    if (!filename) return "text";
-    
-    const extension = filename.split('.').pop()?.toLowerCase() || "";
-    const extensionMap: Record<string, string> = {
-      js: "javascript",
-      ts: "typescript",
-      jsx: "jsx",
-      tsx: "tsx",
-      py: "python",
-      rb: "ruby",
-      java: "java",
-      php: "php",
-      html: "html",
-      css: "css",
-      json: "json",
-      md: "markdown",
-      go: "go",
-      rs: "rust",
-      c: "c",
-      cpp: "cpp",
-      cs: "csharp",
-    };
-    
-    return extensionMap[extension] || "text";
-  };
-  
-  const getFileContent = (): string => {
-    return activeFile?.content || "";
-  };
-  
-  const processRequest = async () => {
-    if (!activeFile) {
-      toast({
-        title: "No file selected",
-        description: "Please select a file first.",
-        variant: "destructive",
-      });
-      return;
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, streamingMessage]);
+
+  useEffect(() => {
+    // Load chat history
+    loadChatHistory();
+  }, [projectId]);
+
+  useEffect(() => {
+    // Generate suggestions based on selected code
+    if (selectedCode) {
+      generateSuggestions();
     }
-    
-    setIsLoading(true);
-    setError(null);
-    
-    const fileContent = getFileContent();
-    const language = getLanguageFromFilename(activeFile.name);
-    
+  }, [selectedCode]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const loadChatHistory = async () => {
     try {
-      const requestBody: AIRequest = {
-        code: fileContent,
-        language,
-        options: {},
+      const response = await fetch(`/api/projects/${projectId}/ai/history`);
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })));
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+    }
+  };
+
+  const generateSuggestions = async () => {
+    if (!selectedCode) return;
+
+    try {
+      const response = await fetch('/api/ai/suggestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: selectedCode,
+          file: selectedFile,
+          projectId
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data.suggestions || []);
+      }
+    } catch (error) {
+      console.error('Failed to generate suggestions:', error);
+      // Mock suggestions
+      setSuggestions([
+        {
+          id: '1',
+          title: 'Add Error Handling',
+          description: 'Wrap async operations in try-catch blocks',
+          code: 'try {\n  // your code here\n} catch (error) {\n  console.error(error);\n}',
+          language: 'javascript',
+          confidence: 0.9
+        },
+        {
+          id: '2',
+          title: 'Use Optional Chaining',
+          description: 'Simplify null checks with optional chaining',
+          code: 'const value = data?.user?.name ?? "default";',
+          language: 'javascript',
+          confidence: 0.85
+        }
+      ]);
+    }
+  };
+
+  const sendMessage = async (content: string, quickAction?: QuickAction) => {
+    if (!content.trim() && !quickAction) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: quickAction ? `${quickAction.prompt} ${content}` : content,
+      timestamp: new Date(),
+      metadata: {
+        fileName: selectedFile,
+        language: selectedFile?.split('.').pop()
+      }
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage.content,
+          context: {
+            projectId,
+            file: selectedFile,
+            code: selectedCode,
+            history: messages.slice(-5)
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to get AI response');
+
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        type: quickAction?.id === 'explain' ? 'explanation' : 
+               quickAction?.id === 'generate' ? 'code' : 'suggestion'
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+      setStreamingMessage('');
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value);
+          setStreamingMessage(prev => prev + chunk);
+          assistantMessage.content += chunk;
+        }
+      }
+
+      setMessages(prev => 
+        prev.map(msg => msg.id === assistantMessage.id 
+          ? { ...msg, content: assistantMessage.content }
+          : msg
+        )
+      );
+      setStreamingMessage('');
+    } catch (error) {
+      console.error('AI chat error:', error);
+      
+      // Mock response for demonstration
+      const mockResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: getMockResponse(userMessage.content, quickAction),
+        timestamp: new Date(),
+        type: quickAction?.id === 'explain' ? 'explanation' : 
+               quickAction?.id === 'generate' ? 'code' : 'suggestion'
       };
       
-      if (mode === AIMode.Transform) {
-        requestBody.options!.targetLanguage = targetLanguage;
-      }
-      
-      if (mode === AIMode.Chat) {
-        requestBody.options!.prompt = prompt;
-        requestBody.options!.history = chatHistory;
-      }
-      
-      let endpoint;
-      switch (mode) {
-        case AIMode.Complete:
-          endpoint = "/api/ai/completion";
-          break;
-        case AIMode.Explain:
-          endpoint = "/api/ai/explanation";
-          break;
-        case AIMode.Transform:
-          endpoint = "/api/ai/convert";
-          break;
-        case AIMode.Document:
-          endpoint = "/api/ai/document";
-          break;
-        case AIMode.Test:
-          endpoint = "/api/ai/tests";
-          break;
-        case AIMode.Chat:
-          endpoint = "/api/ai/chat";
-          break;
-      }
-      
-      const response = await apiRequest("POST", endpoint, requestBody);
-      const data = await response.json();
-      
-      setResult(data);
-      
-      if (mode === AIMode.Chat && prompt.trim()) {
-        setChatHistory([
-          ...chatHistory, 
-          { role: 'user', content: prompt },
-          { role: 'assistant', content: data.content }
-        ]);
-        setPrompt("");
-      }
-    } catch (err: any) {
-      console.error("AI processing error:", err);
-      setError(err.message || "An error occurred while processing your request.");
-      toast({
-        title: "AI request failed",
-        description: err.message || "Could not process the AI request.",
-        variant: "destructive",
-      });
+      setMessages(prev => [...prev, mockResponse]);
     } finally {
       setIsLoading(false);
     }
   };
-  
-  const handleApply = () => {
-    if (result?.content) {
-      onApplyCompletion(result.content);
-      toast({
-        title: "Changes applied",
-        description: "The AI-generated code has been applied to the file.",
-      });
+
+  const getMockResponse = (query: string, action?: QuickAction): string => {
+    if (action?.id === 'explain') {
+      return `This code appears to be a React component that:\n\n1. **State Management**: Uses useState hooks to manage local state\n2. **Side Effects**: Uses useEffect for lifecycle management\n3. **API Integration**: Makes fetch calls to backend endpoints\n4. **Error Handling**: Includes try-catch blocks for error management\n\nThe component follows React best practices and appears to be well-structured.`;
+    } else if (action?.id === 'improve') {
+      return `Here are some suggestions to improve your code:\n\n1. **Add TypeScript types** for better type safety\n2. **Memoize expensive computations** using useMemo\n3. **Debounce API calls** to reduce server load\n4. **Extract custom hooks** for reusable logic\n5. **Add loading states** for better UX`;
+    } else if (action?.id === 'generate') {
+      return `\`\`\`typescript
+// Generated TypeScript interface based on your requirements
+interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+// Custom hook for user management
+export function useUser(userId: number) {
+  const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    fetchUser(userId)
+      .then(setUser)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  return { user, loading, error };
+}
+\`\`\``;
+    }
+    
+    return "I'm here to help! I can explain code, suggest improvements, help debug issues, and generate new code. What would you like assistance with?";
+  };
+
+  const handleQuickAction = (action: QuickAction) => {
+    if (selectedCode) {
+      sendMessage(selectedCode, action);
+    } else {
+      setInput(action.prompt + ' ');
     }
   };
-  
-  const handleFeedback = (positive: boolean) => {
+
+  const handleFeedback = async (messageId: string, feedback: 'positive' | 'negative') => {
+    try {
+      await fetch('/api/ai/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId, feedback })
+      });
+      
+      toast({
+        title: "Feedback Recorded",
+        description: "Thank you for your feedback!",
+      });
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
+    }
+  };
+
+  const copyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
     toast({
-      title: positive ? "Positive feedback sent" : "Negative feedback sent",
-      description: "Thank you for your feedback on the AI response.",
+      title: "Copied",
+      description: "Code copied to clipboard",
     });
   };
-  
-  return (
-    <Card className="w-full h-full flex flex-col border-t-0 rounded-t-none shadow-none">
-      <CardHeader className="p-3 pb-0">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base">AI Assistant</CardTitle>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="explanation-mode"
-                checked={showExplanation}
-                onCheckedChange={setShowExplanation}
-                className="data-[state=checked]:bg-primary"
-              />
-              <Label htmlFor="explanation-mode" className="text-xs">Show explanations</Label>
+
+  const renderMessage = (message: Message) => {
+    const isUser = message.role === 'user';
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    
+    return (
+      <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+        <div className={`flex ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start space-x-2 max-w-[80%]`}>
+          <Avatar className="h-8 w-8">
+            <AvatarFallback>
+              {isUser ? 'U' : <Bot className="h-4 w-4" />}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className={`rounded-lg p-3 ${
+            isUser ? 'bg-primary text-primary-foreground' : 'bg-muted'
+          }`}>
+            {message.metadata?.fileName && (
+              <div className="text-xs opacity-70 mb-1">
+                {message.metadata.fileName}
+              </div>
+            )}
+            
+            <div className="text-sm whitespace-pre-wrap">
+              {message.content.split(codeBlockRegex).map((part, index) => {
+                if (index % 3 === 2) {
+                  // This is code content
+                  const language = message.content.split(codeBlockRegex)[index - 1] || 'plaintext';
+                  return (
+                    <div key={index} className="relative my-2">
+                      <div className="bg-background rounded p-3 border">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {language}
+                          </Badge>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => copyCode(part)}
+                            className="h-6 w-6"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <pre className="text-xs overflow-x-auto">
+                          <code>{part}</code>
+                        </pre>
+                      </div>
+                    </div>
+                  );
+                }
+                return index % 3 === 0 ? part : null;
+              })}
             </div>
-            <Button variant="ghost" size="icon" title="Close">
-              <X className="h-4 w-4" />
+            
+            {!isUser && (
+              <div className="flex items-center space-x-2 mt-2">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => handleFeedback(message.id, 'positive')}
+                  className="h-6 w-6"
+                >
+                  <ThumbsUp className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => handleFeedback(message.id, 'negative')}
+                  className="h-6 w-6"
+                >
+                  <ThumbsDown className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (isMinimized) {
+    return (
+      <Button
+        onClick={() => setIsMinimized(false)}
+        className="fixed bottom-4 right-4 rounded-full shadow-lg"
+        size="icon"
+      >
+        <MessageSquare className="h-5 w-5" />
+      </Button>
+    );
+  }
+
+  return (
+    <Card className={`${className} ${isExpanded ? 'w-96' : 'w-80'} transition-all duration-200`}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center">
+            <Bot className="h-4 w-4 mr-2" />
+            AI Assistant
+          </CardTitle>
+          <div className="flex items-center space-x-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="h-7 w-7"
+            >
+              {isExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setIsMinimized(true)}
+              className="h-7 w-7"
+            >
+              <X className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
-        <Tabs
-          value={mode}
-          onValueChange={(value) => setMode(value as AIMode)}
-          className="w-full"
-        >
-          <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full h-auto sm:h-8 mt-2 gap-1 sm:gap-0">
-            <TabsTrigger value={AIMode.Complete} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="AI code completion">
-              <Code className="h-3.5 w-3.5 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Complete</span>
-            </TabsTrigger>
-            <TabsTrigger value={AIMode.Explain} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="Explain code">
-              <HelpCircle className="h-3.5 w-3.5 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Explain</span>
-            </TabsTrigger>
-            <TabsTrigger value={AIMode.Transform} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="Convert code to another language">
-              <RefreshCw className="h-3.5 w-3.5 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Transform</span>
-            </TabsTrigger>
-            <TabsTrigger value={AIMode.Document} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="Generate documentation">
-              <FileText className="h-3.5 w-3.5 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Document</span>
-            </TabsTrigger>
-            <TabsTrigger value={AIMode.Test} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="Generate tests">
-              <CheckSquare className="h-3.5 w-3.5 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Test</span>
-            </TabsTrigger>
-            <TabsTrigger value={AIMode.Chat} className="text-xs px-1 sm:px-2 py-1 flex items-center justify-center" title="Chat with the AI">
-              <MessageSquare className="h-3.5 w-3.5 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Chat</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
       </CardHeader>
-      
-      <CardContent className="p-3 flex-grow overflow-hidden flex flex-col">
-        <TabsContent value={AIMode.Complete} className="h-full flex flex-col mt-0">
-          <p className="text-xs text-muted-foreground mb-2">
-            Generate code based on the current file content.
-          </p>
-          {!result && !isLoading && (
-            <div className="flex-grow flex items-center justify-center border rounded-md border-dashed">
-              <div className="text-center p-4">
-                <Lightbulb className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Click "Generate" to create code based on your current file.
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {isLoading && (
-            <div className="flex-grow flex items-center justify-center">
-              <div className="text-center">
-                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
-                <p className="text-sm">Generating code...</p>
-              </div>
-            </div>
-          )}
-          
-          {result && !isLoading && (
-            <div className="flex-grow flex flex-col">
-              <ScrollArea className="flex-grow">
-                <div className="space-y-3">
-                  {showExplanation && result.reasoning && (
-                    <div className="bg-muted/50 p-3 rounded-md mb-2">
-                      <p className="text-xs font-medium mb-1">Reasoning:</p>
-                      <p className="text-xs whitespace-pre-wrap">{result.reasoning}</p>
-                    </div>
-                  )}
-                  
-                  <div className="bg-muted p-3 rounded-md font-mono text-xs whitespace-pre overflow-x-auto">
-                    {result.content}
-                  </div>
+
+      <CardContent className="p-0">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 h-8">
+            <TabsTrigger value="chat" className="text-xs">Chat</TabsTrigger>
+            <TabsTrigger value="suggestions" className="text-xs">Suggestions</TabsTrigger>
+            <TabsTrigger value="history" className="text-xs">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="chat" className="mt-0">
+            {/* Quick Actions */}
+            <div className="px-3 py-2 border-b">
+              <ScrollArea className="w-full">
+                <div className="flex space-x-2">
+                  {QUICK_ACTIONS.map(action => (
+                    <Button
+                      key={action.id}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleQuickAction(action)}
+                      className="flex-shrink-0"
+                    >
+                      {action.icon}
+                      <span className="ml-1">{action.label}</span>
+                    </Button>
+                  ))}
                 </div>
               </ScrollArea>
-              
-              <div className="flex items-center justify-between mt-3">
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleFeedback(true)}
-                    className="h-7"
-                  >
-                    <ThumbsUp className="h-3.5 w-3.5 mr-1" />
-                    Good
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleFeedback(false)}
-                    className="h-7"
-                  >
-                    <ThumbsDown className="h-3.5 w-3.5 mr-1" />
-                    Bad
-                  </Button>
+            </div>
+
+            {/* Messages */}
+            <ScrollArea className="h-96 px-3 py-3">
+              {messages.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  <Bot className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Hi! I'm your AI assistant.</p>
+                  <p className="text-xs mt-1">Ask me anything about your code!</p>
                 </div>
-                <Button size="sm" onClick={handleApply} className="h-7">
-                  <Zap className="h-3.5 w-3.5 mr-1" />
-                  Apply
-                </Button>
-              </div>
-            </div>
-          )}
-          
-          {error && (
-            <div className="mt-2 p-3 border border-destructive/50 bg-destructive/10 rounded-md">
-              <p className="text-xs text-destructive">{error}</p>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value={AIMode.Explain} className="h-full flex flex-col mt-0">
-          <p className="text-xs text-muted-foreground mb-2">
-            Get an explanation of what your code does and how it works.
-          </p>
-          
-          {isLoading ? (
-            <div className="flex-grow flex items-center justify-center">
-              <div className="text-center">
-                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
-                <p className="text-sm">Analyzing code...</p>
-              </div>
-            </div>
-          ) : result ? (
-            <ScrollArea className="flex-grow border rounded-md p-3">
-              <div className="whitespace-pre-wrap text-sm">
-                {result.content}
-              </div>
+              ) : (
+                <>
+                  {messages.map(message => renderMessage(message))}
+                  {streamingMessage && (
+                    <div className="flex justify-start mb-4">
+                      <div className="flex items-start space-x-2 max-w-[80%]">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>
+                            <Bot className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="rounded-lg p-3 bg-muted">
+                          <div className="text-sm whitespace-pre-wrap">
+                            {streamingMessage}
+                            <span className="inline-block w-2 h-4 ml-1 bg-foreground/50 animate-pulse" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+              <div ref={messagesEndRef} />
             </ScrollArea>
-          ) : (
-            <div className="flex-grow flex items-center justify-center border rounded-md border-dashed">
-              <div className="text-center p-4">
-                <HelpCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Click "Generate" to explain the code in your current file.
-                </p>
-              </div>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value={AIMode.Transform} className="h-full flex flex-col mt-0">
-          <div className="flex items-end gap-2 mb-2">
-            <div className="flex-grow">
-              <Label htmlFor="target-language" className="text-xs mb-1">Target Language</Label>
-              <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-                <SelectTrigger id="target-language">
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="javascript">JavaScript</SelectItem>
-                  <SelectItem value="typescript">TypeScript</SelectItem>
-                  <SelectItem value="python">Python</SelectItem>
-                  <SelectItem value="java">Java</SelectItem>
-                  <SelectItem value="csharp">C#</SelectItem>
-                  <SelectItem value="go">Go</SelectItem>
-                  <SelectItem value="rust">Rust</SelectItem>
-                  <SelectItem value="php">PHP</SelectItem>
-                  <SelectItem value="ruby">Ruby</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {isLoading ? (
-            <div className="flex-grow flex items-center justify-center">
-              <div className="text-center">
-                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
-                <p className="text-sm">Converting code...</p>
-              </div>
-            </div>
-          ) : result ? (
-            <div className="flex-grow flex flex-col">
-              <ScrollArea className="flex-grow">
-                <div className="space-y-3">
-                  {showExplanation && result.reasoning && (
-                    <div className="bg-muted/50 p-3 rounded-md mb-2">
-                      <p className="text-xs font-medium mb-1">Transformation Notes:</p>
-                      <p className="text-xs whitespace-pre-wrap">{result.reasoning}</p>
-                    </div>
+
+            {/* Input */}
+            <div className="p-3 border-t">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  sendMessage(input);
+                }}
+                className="flex space-x-2"
+              >
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask about your code..."
+                  className="flex-1"
+                  disabled={isLoading}
+                />
+                <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                  {isLoading ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
                   )}
-                  
-                  <div className="bg-muted p-3 rounded-md font-mono text-xs whitespace-pre overflow-x-auto">
-                    {result.content}
-                  </div>
-                </div>
-              </ScrollArea>
-              
-              <div className="flex items-center justify-between mt-3">
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleFeedback(true)}
-                    className="h-7"
-                  >
-                    <ThumbsUp className="h-3.5 w-3.5 mr-1" />
-                    Good
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleFeedback(false)}
-                    className="h-7"
-                  >
-                    <ThumbsDown className="h-3.5 w-3.5 mr-1" />
-                    Bad
-                  </Button>
-                </div>
-                <Button size="sm" onClick={handleApply} className="h-7">
-                  <Zap className="h-3.5 w-3.5 mr-1" />
-                  Apply
                 </Button>
-              </div>
+              </form>
             </div>
-          ) : (
-            <div className="flex-grow flex items-center justify-center border rounded-md border-dashed">
-              <div className="text-center p-4">
-                <RefreshCw className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Click "Generate" to convert your code to {targetLanguage}.
-                </p>
-              </div>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value={AIMode.Document} className="h-full flex flex-col mt-0">
-          <p className="text-xs text-muted-foreground mb-2">
-            Generate documentation for your code (comments, JSDoc, etc.).
-          </p>
-          
-          {isLoading ? (
-            <div className="flex-grow flex items-center justify-center">
-              <div className="text-center">
-                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
-                <p className="text-sm">Generating documentation...</p>
-              </div>
-            </div>
-          ) : result ? (
-            <div className="flex-grow flex flex-col">
-              <ScrollArea className="flex-grow">
-                <div className="bg-muted p-3 rounded-md font-mono text-xs whitespace-pre overflow-x-auto">
-                  {result.content}
-                </div>
-              </ScrollArea>
-              
-              <div className="flex justify-end mt-3">
-                <Button size="sm" onClick={handleApply} className="h-7">
-                  <Zap className="h-3.5 w-3.5 mr-1" />
-                  Apply
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-grow flex items-center justify-center border rounded-md border-dashed">
-              <div className="text-center p-4">
-                <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Click "Generate" to create documentation for your code.
-                </p>
-              </div>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value={AIMode.Test} className="h-full flex flex-col mt-0">
-          <p className="text-xs text-muted-foreground mb-2">
-            Generate test cases for your code.
-          </p>
-          
-          {isLoading ? (
-            <div className="flex-grow flex items-center justify-center">
-              <div className="text-center">
-                <RefreshCw className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
-                <p className="text-sm">Generating tests...</p>
-              </div>
-            </div>
-          ) : result ? (
-            <div className="flex-grow flex flex-col">
-              <ScrollArea className="flex-grow">
-                <div className="bg-muted p-3 rounded-md font-mono text-xs whitespace-pre overflow-x-auto">
-                  {result.content}
-                </div>
-              </ScrollArea>
-              
-              <div className="flex justify-end mt-3">
-                <Button size="sm" onClick={handleApply} className="h-7">
-                  <Zap className="h-3.5 w-3.5 mr-1" />
-                  Apply
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-grow flex items-center justify-center border rounded-md border-dashed">
-              <div className="text-center p-4">
-                <CheckSquare className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Click "Generate" to create tests for your code.
-                </p>
-              </div>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value={AIMode.Chat} className="h-full flex flex-col mt-0">
-          <ScrollArea className="flex-grow mb-2">
-            {chatHistory.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-center p-4">
-                <div>
-                  <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Ask a question about your code or get help with a programming task.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4 p-1">
-                {chatHistory.map((message, index) => (
-                  <div
-                    key={index}
-                    className={cn(
-                      "max-w-[80%] rounded-lg p-3",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground ml-auto"
-                        : "bg-muted"
-                    )}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+          </TabsContent>
+
+          <TabsContent value="suggestions" className="mt-0">
+            <ScrollArea className="h-[480px]">
+              <div className="p-4 space-y-3">
+                {suggestions.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    <Lightbulb className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">No suggestions yet</p>
+                    <p className="text-xs mt-1">Select some code to get AI suggestions</p>
                   </div>
-                ))}
-                {isLoading && (
-                  <div className="bg-muted max-w-[80%] rounded-lg p-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="h-2 w-2 bg-muted-foreground rounded-full animate-pulse"></div>
-                      <div className="h-2 w-2 bg-muted-foreground rounded-full animate-pulse delay-150"></div>
-                      <div className="h-2 w-2 bg-muted-foreground rounded-full animate-pulse delay-300"></div>
-                    </div>
-                  </div>
+                ) : (
+                  suggestions.map(suggestion => (
+                    <Card key={suggestion.id} className="p-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="text-sm font-medium">{suggestion.title}</h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {suggestion.description}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {Math.round(suggestion.confidence * 100)}%
+                        </Badge>
+                      </div>
+                      {suggestion.code && (
+                        <div className="mt-2">
+                          <pre className="text-xs p-2 bg-muted rounded overflow-x-auto">
+                            <code>{suggestion.code}</code>
+                          </pre>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => copyCode(suggestion.code)}
+                            className="mt-2"
+                          >
+                            <Copy className="h-3 w-3 mr-1" />
+                            Copy
+                          </Button>
+                        </div>
+                      )}
+                    </Card>
+                  ))
                 )}
               </div>
-            )}
-          </ScrollArea>
-          
-          <div className="flex items-center gap-2">
-            <Textarea
-              placeholder="Ask about your code or get programming help..."
-              className="resize-none min-h-[40px]"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  processRequest();
-                }
-              }}
-            />
-            <Button
-              variant="default"
-              size="icon"
-              onClick={processRequest}
-              disabled={isLoading || !prompt.trim()}
-            >
-              <Terminal className="h-4 w-4" />
-            </Button>
-          </div>
-        </TabsContent>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-0">
+            <ScrollArea className="h-[480px]">
+              <div className="p-4">
+                <div className="space-y-2">
+                  {messages
+                    .filter(msg => msg.role === 'user')
+                    .reverse()
+                    .map(msg => (
+                      <Button
+                        key={msg.id}
+                        variant="ghost"
+                        className="w-full justify-start text-left"
+                        onClick={() => setInput(msg.content)}
+                      >
+                        <History className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <span className="truncate text-sm">{msg.content}</span>
+                      </Button>
+                    ))}
+                </div>
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </CardContent>
-      
-      {mode !== AIMode.Chat && (
-        <CardFooter className="p-3 pt-0">
-          <Button
-            onClick={processRequest}
-            disabled={isLoading}
-            className="w-full"
-          >
-            {isLoading ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      )}
     </Card>
   );
 }

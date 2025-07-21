@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, Settings, Package, Key, FileCode, Terminal as TerminalIcon } from 'lucide-react';
+import { Loader2, ArrowLeft, Settings, Package, Key, FileCode, Terminal as TerminalIcon, GitBranch, Database, Rocket, Bot, Search } from 'lucide-react';
 import { File, Project } from '@shared/schema';
 import TopNavbar from '@/components/TopNavbar';
 import TerminalPanel from '@/components/TerminalPanel';
@@ -15,6 +15,11 @@ import { EnvironmentVariables } from '@/components/EnvironmentVariables';
 import { PackageManager } from '@/components/PackageManager';
 import { WebPreview } from '@/components/WebPreview';
 import { Shell } from '@/components/Shell';
+import { GlobalSearch } from '@/components/GlobalSearch';
+import { GitIntegration } from '@/components/GitIntegration';
+import { ReplitDB } from '@/components/ReplitDB';
+import { DeploymentManager } from '@/components/DeploymentManager';
+import { AIAssistant } from '@/components/AIAssistant';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 
@@ -190,6 +195,9 @@ export default function EditorPage() {
   const [isProjectRunning, setIsProjectRunning] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState('preview');
   const [bottomPanelTab, setBottomPanelTab] = useState('terminal');
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [selectedCode, setSelectedCode] = useState<string | undefined>(undefined);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
 
   // Update active file handler
   const handleActiveFileChange = (file: File | undefined) => {
@@ -216,6 +224,31 @@ export default function EditorPage() {
   const handleCollaborationOpen = () => {
     setShowCollaboration(true);
   };
+
+  // Keyboard shortcut handlers
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Global search: Ctrl/Cmd + Shift + F
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        setShowGlobalSearch(true);
+      }
+      // AI Assistant: Ctrl/Cmd + I
+      if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+        e.preventDefault();
+        setShowAIAssistant(!showAIAssistant);
+        setRightPanelTab('ai');
+      }
+      // Command Palette: Ctrl/Cmd + K
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAIAssistant]);
   
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -313,7 +346,7 @@ export default function EditorPage() {
         {/* Right Panel - Preview/Settings */}
         <ResizablePanel defaultSize={30} minSize={20}>
           <Tabs value={rightPanelTab} onValueChange={setRightPanelTab} className="h-full">
-            <TabsList className="h-10 w-full justify-start rounded-none border-b">
+            <TabsList className="h-10 w-full justify-start rounded-none border-b overflow-x-auto">
               <TabsTrigger value="preview" className="gap-1">
                 <FileCode className="h-3 w-3" />
                 Preview
@@ -325,6 +358,22 @@ export default function EditorPage() {
               <TabsTrigger value="env" className="gap-1">
                 <Key className="h-3 w-3" />
                 Env
+              </TabsTrigger>
+              <TabsTrigger value="git" className="gap-1">
+                <GitBranch className="h-3 w-3" />
+                Git
+              </TabsTrigger>
+              <TabsTrigger value="database" className="gap-1">
+                <Database className="h-3 w-3" />
+                Database
+              </TabsTrigger>
+              <TabsTrigger value="deploy" className="gap-1">
+                <Rocket className="h-3 w-3" />
+                Deploy
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="gap-1">
+                <Bot className="h-3 w-3" />
+                AI
               </TabsTrigger>
               <TabsTrigger value="settings" className="gap-1">
                 <Settings className="h-3 w-3" />
@@ -347,6 +396,22 @@ export default function EditorPage() {
             <TabsContent value="env" className="h-[calc(100%-40px)] m-0">
               <EnvironmentVariables projectId={projectIdNum} />
             </TabsContent>
+            <TabsContent value="git" className="h-[calc(100%-40px)] m-0">
+              <GitIntegration projectId={projectIdNum} />
+            </TabsContent>
+            <TabsContent value="database" className="h-[calc(100%-40px)] m-0">
+              <ReplitDB projectId={projectIdNum} />
+            </TabsContent>
+            <TabsContent value="deploy" className="h-[calc(100%-40px)] m-0">
+              <DeploymentManager projectId={projectIdNum} />
+            </TabsContent>
+            <TabsContent value="ai" className="h-[calc(100%-40px)] m-0">
+              <AIAssistant 
+                projectId={projectIdNum}
+                selectedFile={activeFile?.name}
+                selectedCode={selectedCode}
+              />
+            </TabsContent>
             <TabsContent value="settings" className="h-[calc(100%-40px)] m-0 p-4">
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Project Settings</h3>
@@ -363,6 +428,15 @@ export default function EditorPage() {
           </Tabs>
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      {/* Global Search Dialog */}
+      {showGlobalSearch && (
+        <GlobalSearch
+          projectId={projectIdNum}
+          isOpen={showGlobalSearch}
+          onClose={() => setShowGlobalSearch(false)}
+        />
+      )}
     </div>
   );
 }

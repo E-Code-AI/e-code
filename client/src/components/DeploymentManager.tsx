@@ -1,495 +1,742 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useState, useEffect } from 'react';
 import { 
-  Switch 
-} from "@/components/ui/switch";
-import { 
-  Rocket, 
-  CloudOff, 
-  RefreshCw, 
-  Edit3, 
-  Globe, 
-  Clock, 
-  Check, 
-  ExternalLink, 
-  ChevronRight, 
-  BarChart2, 
-  Zap, 
-  Settings,
-  AlertCircle,
-  Server,
-  Database
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Project } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+  Rocket, Globe, Server, Activity, Clock, AlertCircle,
+  CheckCircle, XCircle, RefreshCw, Settings, ExternalLink,
+  Shield, Zap, Cpu, HardDrive, Network, BarChart,
+  GitBranch, Copy, Terminal, Play, Pause, RotateCcw,
+  ArrowUpRight, Info, Loader2
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface DeploymentManagerProps {
-  project: Project;
-  isOpen: boolean;
-  onClose: () => void;
+  projectId: number;
+  className?: string;
 }
 
-type DeploymentStatus = "running" | "stopped" | "deploying" | "failed";
-
-interface DeploymentDetails {
+interface Deployment {
   id: string;
-  status: DeploymentStatus;
+  name: string;
+  status: 'deploying' | 'active' | 'error' | 'paused' | 'building';
   url: string;
+  branch: string;
+  commit: string;
   createdAt: string;
   updatedAt: string;
-  version: string;
-  commit?: string;
-  logs?: string[];
-  error?: string;
+  region: string;
+  environment: 'production' | 'staging' | 'development';
 }
 
-export function DeploymentManager({ project, isOpen, onClose }: DeploymentManagerProps) {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [customDomain, setCustomDomain] = useState("");
-  const [isAddingDomain, setIsAddingDomain] = useState(false);
-  const [isAutoDeploy, setIsAutoDeploy] = useState(false);
+interface DeploymentStats {
+  totalDeployments: number;
+  activeDeployments: number;
+  totalRequests: number;
+  averageResponseTime: number;
+  errorRate: number;
+  bandwidth: string;
+  uptime: number;
+}
+
+interface BuildLog {
+  timestamp: string;
+  message: string;
+  level: 'info' | 'warning' | 'error';
+}
+
+interface EnvironmentVariable {
+  key: string;
+  value: string;
+  isSecret: boolean;
+}
+
+const REGIONS = [
+  { value: 'us-east-1', label: 'US East (Virginia)' },
+  { value: 'us-west-1', label: 'US West (California)' },
+  { value: 'eu-west-1', label: 'Europe (Ireland)' },
+  { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' }
+];
+
+export function DeploymentManager({ projectId, className }: DeploymentManagerProps) {
+  const [deployments, setDeployments] = useState<Deployment[]>([]);
+  const [selectedDeployment, setSelectedDeployment] = useState<Deployment | null>(null);
+  const [stats, setStats] = useState<DeploymentStats | null>(null);
+  const [buildLogs, setBuildLogs] = useState<BuildLog[]>([]);
+  const [envVars, setEnvVars] = useState<EnvironmentVariable[]>([]);
+  const [showDeployDialog, setShowDeployDialog] = useState(false);
+  const [showEnvDialog, setShowEnvDialog] = useState(false);
+  const [deploymentName, setDeploymentName] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState('main');
+  const [selectedRegion, setSelectedRegion] = useState('us-east-1');
+  const [selectedEnvironment, setSelectedEnvironment] = useState<Deployment['environment']>('production');
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [autoScaling, setAutoScaling] = useState(true);
+  const [customDomain, setCustomDomain] = useState('');
+  const [newEnvKey, setNewEnvKey] = useState('');
+  const [newEnvValue, setNewEnvValue] = useState('');
+  const [newEnvSecret, setNewEnvSecret] = useState(false);
   const { toast } = useToast();
-  
-  // Mock deployment data
-  const [deployment, setDeployment] = useState<DeploymentDetails>({
-    id: "depl_123456",
-    status: "running",
-    url: `${project.name.toLowerCase().replace(/\s+/g, "-")}.replit.app`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    version: "1.0.0",
-  });
-  
-  // Mock domains
-  const [domains, setDomains] = useState<string[]>([]);
-  
-  // Mock logs
-  const [logs, setLogs] = useState<string[]>([
-    "[2024-04-20 12:00:01] Starting deployment...",
-    "[2024-04-20 12:00:03] Installing dependencies...",
-    "[2024-04-20 12:00:15] Build completed successfully",
-    "[2024-04-20 12:00:20] Deployment successful!",
-    "[2024-04-20 12:00:21] Application is now running"
-  ]);
-  
-  const deployMutation = useMutation({
-    mutationFn: async () => {
-      // Mock deployment
-      setDeployment({
-        ...deployment,
-        status: "deploying"
-      });
-      
-      // Simulate deployment process
-      return new Promise<DeploymentDetails>((resolve) => {
-        setTimeout(() => {
-          const newDeployment = {
-            ...deployment,
-            status: "running" as DeploymentStatus,
-            updatedAt: new Date().toISOString()
-          };
-          resolve(newDeployment);
-        }, 2000);
-      });
-    },
-    onSuccess: (newDeployment) => {
-      setDeployment(newDeployment);
-      toast({
-        title: "Deployment successful",
-        description: "Your application has been deployed.",
-      });
-    },
-    onError: (error: Error) => {
-      setDeployment({
-        ...deployment,
-        status: "failed",
-        error: error.message
-      });
-      toast({
-        title: "Deployment failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-  
-  const addDomainMutation = useMutation({
-    mutationFn: async (domain: string) => {
-      // Mock domain addition
-      if (!domain.match(/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/)) {
-        throw new Error("Invalid domain format");
+
+  useEffect(() => {
+    loadDeployments();
+    loadStats();
+  }, [projectId]);
+
+  useEffect(() => {
+    if (selectedDeployment) {
+      loadBuildLogs(selectedDeployment.id);
+      loadEnvVars(selectedDeployment.id);
+    }
+  }, [selectedDeployment]);
+
+  const loadDeployments = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/deployments`);
+      if (response.ok) {
+        const data = await response.json();
+        setDeployments(data);
+        if (data.length > 0 && !selectedDeployment) {
+          setSelectedDeployment(data[0]);
+        }
       }
-      
-      // Check if domain already exists
-      if (domains.includes(domain)) {
-        throw new Error("Domain already exists");
-      }
-      
-      // Simulate API call
-      return new Promise<string>((resolve) => {
-        setTimeout(() => {
-          resolve(domain);
-        }, 1000);
-      });
-    },
-    onSuccess: (domain) => {
-      setDomains([...domains, domain]);
-      setCustomDomain("");
-      setIsAddingDomain(false);
-      toast({
-        title: "Domain added",
-        description: `${domain} has been added to your project.`,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to add domain",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-  
-  const handleDeploy = () => {
-    deployMutation.mutate();
-  };
-  
-  const handleAddDomain = () => {
-    if (customDomain.trim()) {
-      addDomainMutation.mutate(customDomain);
+    } catch (error) {
+      console.error('Failed to load deployments:', error);
+      // Mock data
+      const mockDeployments: Deployment[] = [
+        {
+          id: '1',
+          name: 'Production',
+          status: 'active',
+          url: 'https://myapp.replit.app',
+          branch: 'main',
+          commit: 'abc123',
+          createdAt: '2024-01-20T10:00:00Z',
+          updatedAt: '2024-01-20T10:05:00Z',
+          region: 'us-east-1',
+          environment: 'production'
+        },
+        {
+          id: '2',
+          name: 'Staging',
+          status: 'deploying',
+          url: 'https://myapp-staging.replit.app',
+          branch: 'develop',
+          commit: 'def456',
+          createdAt: '2024-01-19T15:00:00Z',
+          updatedAt: '2024-01-20T09:00:00Z',
+          region: 'us-west-1',
+          environment: 'staging'
+        }
+      ];
+      setDeployments(mockDeployments);
+      setSelectedDeployment(mockDeployments[0]);
     }
   };
-  
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleString();
+
+  const loadStats = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/deployments/stats`);
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+      // Mock stats
+      setStats({
+        totalDeployments: 15,
+        activeDeployments: 2,
+        totalRequests: 125000,
+        averageResponseTime: 145,
+        errorRate: 0.02,
+        bandwidth: '12.5 GB',
+        uptime: 99.95
+      });
+    }
   };
-  
-  const getStatusColor = (status: DeploymentStatus) => {
+
+  const loadBuildLogs = async (deploymentId: string) => {
+    try {
+      const response = await fetch(`/api/deployments/${deploymentId}/logs`);
+      if (response.ok) {
+        const data = await response.json();
+        setBuildLogs(data);
+      }
+    } catch (error) {
+      console.error('Failed to load build logs:', error);
+      // Mock logs
+      setBuildLogs([
+        { timestamp: '10:00:00', message: 'Starting deployment...', level: 'info' },
+        { timestamp: '10:00:05', message: 'Installing dependencies...', level: 'info' },
+        { timestamp: '10:00:45', message: 'Building application...', level: 'info' },
+        { timestamp: '10:01:30', message: 'Optimizing assets...', level: 'info' },
+        { timestamp: '10:02:00', message: 'Warning: Large bundle size detected', level: 'warning' },
+        { timestamp: '10:02:30', message: 'Deployment successful!', level: 'info' }
+      ]);
+    }
+  };
+
+  const loadEnvVars = async (deploymentId: string) => {
+    try {
+      const response = await fetch(`/api/deployments/${deploymentId}/env`);
+      if (response.ok) {
+        const data = await response.json();
+        setEnvVars(data);
+      }
+    } catch (error) {
+      console.error('Failed to load env vars:', error);
+      // Mock env vars
+      setEnvVars([
+        { key: 'DATABASE_URL', value: '****', isSecret: true },
+        { key: 'API_KEY', value: '****', isSecret: true },
+        { key: 'NODE_ENV', value: 'production', isSecret: false },
+        { key: 'PORT', value: '3000', isSecret: false }
+      ]);
+    }
+  };
+
+  const handleDeploy = async () => {
+    if (!deploymentName.trim()) return;
+    
+    setIsDeploying(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/deploy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: deploymentName,
+          branch: selectedBranch,
+          region: selectedRegion,
+          environment: selectedEnvironment,
+          autoScaling,
+          customDomain
+        })
+      });
+
+      if (response.ok) {
+        await loadDeployments();
+        setShowDeployDialog(false);
+        setDeploymentName('');
+        setCustomDomain('');
+        toast({
+          title: "Deployment Started",
+          description: "Your application is being deployed",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Deployment Failed",
+        description: "Failed to start deployment",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
+  const handleRedeploy = async (deployment: Deployment) => {
+    try {
+      const response = await fetch(`/api/deployments/${deployment.id}/redeploy`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        await loadDeployments();
+        toast({
+          title: "Redeployment Started",
+          description: `Redeploying ${deployment.name}`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Redeployment Failed",
+        description: "Failed to redeploy",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleStop = async (deployment: Deployment) => {
+    try {
+      const response = await fetch(`/api/deployments/${deployment.id}/stop`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        await loadDeployments();
+        toast({
+          title: "Deployment Stopped",
+          description: `${deployment.name} has been stopped`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Stop Failed",
+        description: "Failed to stop deployment",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAddEnvVar = async () => {
+    if (!newEnvKey.trim() || !selectedDeployment) return;
+
+    try {
+      const response = await fetch(`/api/deployments/${selectedDeployment.id}/env`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: newEnvKey,
+          value: newEnvValue,
+          isSecret: newEnvSecret
+        })
+      });
+
+      if (response.ok) {
+        await loadEnvVars(selectedDeployment.id);
+        setNewEnvKey('');
+        setNewEnvValue('');
+        setNewEnvSecret(false);
+        toast({
+          title: "Environment Variable Added",
+          description: `${newEnvKey} has been added`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to Add Variable",
+        description: "Could not add environment variable",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getStatusIcon = (status: Deployment['status']) => {
     switch (status) {
-      case "running":
-        return "bg-green-500";
-      case "stopped":
-        return "bg-yellow-500";
-      case "deploying":
-        return "bg-blue-500";
-      case "failed":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
+      case 'active': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'deploying': return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+      case 'building': return <Loader2 className="h-4 w-4 animate-spin text-yellow-500" />;
+      case 'error': return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'paused': return <Pause className="h-4 w-4 text-gray-500" />;
     }
   };
-  
+
+  const getStatusColor = (status: Deployment['status']) => {
+    switch (status) {
+      case 'active': return 'bg-green-500';
+      case 'deploying': return 'bg-blue-500';
+      case 'building': return 'bg-yellow-500';
+      case 'error': return 'bg-red-500';
+      case 'paused': return 'bg-gray-500';
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Rocket className="h-5 w-5" />
-            Deployment Manager
-          </DialogTitle>
-          <DialogDescription>
-            Deploy, manage, and monitor your application.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="domains">Domains</TabsTrigger>
-            <TabsTrigger value="logs">Logs</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="space-y-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <h3 className="font-medium text-lg">{project.name}</h3>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <div className={cn("h-2 w-2 rounded-full", getStatusColor(deployment.status))}></div>
-                  <span className="text-sm text-muted-foreground capitalize">{deployment.status}</span>
-                </div>
-              </div>
-              
-              <Button 
-                onClick={handleDeploy} 
-                disabled={deployMutation.isPending || deployment.status === "deploying"}
-              >
-                {deployMutation.isPending || deployment.status === "deploying" ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Deploying...
-                  </>
-                ) : (
-                  <>
-                    <Rocket className="h-4 w-4 mr-2" />
-                    Deploy
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            <Separator />
-            
-            {deployment.status === "failed" && deployment.error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Deployment Failed</AlertTitle>
-                <AlertDescription>
-                  {deployment.error}
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {deployment.status === "running" && (
-              <div className="flex justify-between items-center bg-muted p-3 rounded-md">
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-primary" />
-                  <a 
-                    href={`https://${deployment.url}`}
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-sm font-medium text-primary underline"
-                  >
-                    {deployment.url}
-                  </a>
-                </div>
-                <Button variant="outline" size="sm" className="h-7">
-                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                  Visit
-                </Button>
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-1.5">
-                    <Server className="h-4 w-4" />
-                    Server
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pb-2">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Status</span>
-                      <span className="font-medium capitalize">{deployment.status}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Version</span>
-                      <span className="font-medium">{deployment.version}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Last updated</span>
-                      <span className="font-medium">{formatDate(deployment.updatedAt)}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-1.5">
-                    <Database className="h-4 w-4" />
-                    Database
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pb-2">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Type</span>
-                      <span className="font-medium">PostgreSQL</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Status</span>
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                        <span className="font-medium">Connected</span>
+    <>
+      <Card className={className}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center">
+              <Rocket className="h-4 w-4 mr-2" />
+              Deployments
+            </CardTitle>
+            <Button
+              size="sm"
+              onClick={() => setShowDeployDialog(true)}
+            >
+              <Rocket className="h-3.5 w-3.5 mr-1" />
+              Deploy
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 h-8">
+              <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
+              <TabsTrigger value="logs" className="text-xs">Logs</TabsTrigger>
+              <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
+              <TabsTrigger value="metrics" className="text-xs">Metrics</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="mt-0">
+              {/* Deployment List */}
+              <div className="p-4 border-b">
+                <Label className="text-xs mb-2">Active Deployments</Label>
+                <div className="space-y-2">
+                  {deployments.map((deployment) => (
+                    <div
+                      key={deployment.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedDeployment?.id === deployment.id 
+                          ? 'bg-accent border-accent' 
+                          : 'hover:bg-accent/50'
+                      }`}
+                      onClick={() => setSelectedDeployment(deployment)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            {getStatusIcon(deployment.status)}
+                            <span className="font-medium text-sm">{deployment.name}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {deployment.environment}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center space-x-4 mt-1 text-xs text-muted-foreground">
+                            <span className="flex items-center">
+                              <Globe className="h-3 w-3 mr-1" />
+                              {deployment.region}
+                            </span>
+                            <span className="flex items-center">
+                              <GitBranch className="h-3 w-3 mr-1" />
+                              {deployment.branch}
+                            </span>
+                            <span className="flex items-center">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Updated {new Date(deployment.updatedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(deployment.url, '_blank');
+                            }}
+                            className="h-7 w-7"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRedeploy(deployment);
+                            }}
+                            className="h-7 w-7"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Size</span>
-                      <span className="font-medium">10MB</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-1.5">
-                  <BarChart2 className="h-4 w-4" />
-                  Usage Statistics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[120px] flex items-center justify-center border rounded-md border-dashed">
-                  <span className="text-sm text-muted-foreground">
-                    Statistics will appear here after deployment
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="auto-deploy"
-                  checked={isAutoDeploy}
-                  onCheckedChange={setIsAutoDeploy}
-                />
-                <Label htmlFor="auto-deploy">Auto-deploy on git push</Label>
-              </div>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-1" />
-                Advanced Settings
-              </Button>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="domains" className="space-y-4 py-4">
-            <div className="bg-muted p-3 rounded-md mb-4">
-              <h3 className="text-sm font-medium mb-1">Default domain</h3>
-              <div className="flex items-center gap-2">
-                <Badge>Default</Badge>
-                <span className="text-sm">{deployment.url}</span>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <h3 className="text-sm font-medium">Custom domains</h3>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setIsAddingDomain(true)}
-                  className={cn(isAddingDomain && "hidden")}
-                >
-                  Add Domain
-                </Button>
-              </div>
-              
-              {isAddingDomain ? (
-                <div className="flex gap-2 items-end">
-                  <div className="flex-grow">
-                    <Label htmlFor="custom-domain" className="text-xs">Domain Name</Label>
-                    <Input 
-                      id="custom-domain" 
-                      placeholder="example.com" 
-                      value={customDomain}
-                      onChange={(e) => setCustomDomain(e.target.value)}
-                    />
-                  </div>
-                  <Button 
-                    size="sm" 
-                    disabled={!customDomain.trim() || addDomainMutation.isPending} 
-                    onClick={handleAddDomain}
-                  >
-                    {addDomainMutation.isPending ? (
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Add"
-                    )}
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setIsAddingDomain(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              ) : domains.length > 0 ? (
-                <div className="space-y-2">
-                  {domains.map((domain, index) => (
-                    <Card key={index}>
-                      <CardContent className="p-3 flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <Globe className="h-4 w-4 text-muted-foreground" />
-                          <span>{domain}</span>
-                        </div>
-                        <Badge variant="outline" className="bg-green-500/10 text-green-500">
-                          <Check className="h-3 w-3 mr-1" />
-                          Verified
-                        </Badge>
-                      </CardContent>
-                    </Card>
                   ))}
                 </div>
-              ) : (
-                <div className="border rounded-md border-dashed p-8 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    No custom domains added yet.
-                  </p>
+              </div>
+
+              {/* Deployment Details */}
+              {selectedDeployment && (
+                <div className="p-4 space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Deployment URL</h4>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        value={selectedDeployment.url}
+                        readOnly
+                        className="font-mono text-xs"
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedDeployment.url);
+                          toast({
+                            title: "Copied",
+                            description: "URL copied to clipboard",
+                          });
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Deployment Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Status</Label>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <div className={`w-2 h-2 rounded-full ${getStatusColor(selectedDeployment.status)}`} />
+                        <span className="text-sm capitalize">{selectedDeployment.status}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Uptime</Label>
+                      <p className="text-sm font-medium mt-1">{stats?.uptime}%</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Response Time</Label>
+                      <p className="text-sm font-medium mt-1">{stats?.averageResponseTime}ms</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Error Rate</Label>
+                      <p className="text-sm font-medium mt-1">{stats?.errorRate}%</p>
+                    </div>
+                  </div>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="logs" className="mt-0">
+              <ScrollArea className="h-[400px]">
+                <div className="p-4 space-y-1">
+                  {buildLogs.map((log, index) => (
+                    <div key={index} className="flex items-start space-x-2 font-mono text-xs">
+                      <span className="text-muted-foreground">{log.timestamp}</span>
+                      <span className={
+                        log.level === 'error' ? 'text-red-500' :
+                        log.level === 'warning' ? 'text-yellow-500' :
+                        'text-foreground'
+                      }>
+                        {log.message}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="settings" className="mt-0">
+              <div className="p-4 space-y-4">
+                {/* Environment Variables */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label>Environment Variables</Label>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowEnvDialog(true)}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {envVars.map((envVar, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 border rounded">
+                        <div className="flex items-center space-x-2">
+                          {envVar.isSecret ? <Shield className="h-3.5 w-3.5" /> : <Key className="h-3.5 w-3.5" />}
+                          <code className="text-xs">{envVar.key}</code>
+                        </div>
+                        <code className="text-xs text-muted-foreground">
+                          {envVar.isSecret ? '••••••••' : envVar.value}
+                        </code>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Auto Scaling */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Auto Scaling</Label>
+                    <p className="text-xs text-muted-foreground">Automatically scale based on traffic</p>
+                  </div>
+                  <Switch checked={autoScaling} onCheckedChange={setAutoScaling} />
+                </div>
+
+                {/* Custom Domain */}
+                <div>
+                  <Label>Custom Domain</Label>
+                  <Input
+                    value={customDomain}
+                    onChange={(e) => setCustomDomain(e.target.value)}
+                    placeholder="myapp.com"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="metrics" className="mt-0">
+              <div className="p-4 space-y-4">
+                {stats && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Total Requests</p>
+                            <p className="text-2xl font-bold">{stats.totalRequests.toLocaleString()}</p>
+                          </div>
+                          <BarChart className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Bandwidth Used</p>
+                            <p className="text-2xl font-bold">{stats.bandwidth}</p>
+                          </div>
+                          <Network className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+                
+                <Alert>
+                  <Activity className="h-4 w-4" />
+                  <AlertTitle>Performance Insights</AlertTitle>
+                  <AlertDescription>
+                    Your application is performing well. Average response time is below 200ms.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Deploy Dialog */}
+      <Dialog open={showDeployDialog} onOpenChange={setShowDeployDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Deploy Application</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="deployment-name">Deployment Name</Label>
+              <Input
+                id="deployment-name"
+                value={deploymentName}
+                onChange={(e) => setDeploymentName(e.target.value)}
+                placeholder="Production"
+              />
             </div>
-            
-            <div className="bg-muted/50 p-3 rounded-md text-sm space-y-2">
-              <h4 className="font-medium">How to set up a custom domain</h4>
-              <ol className="list-decimal ml-5 text-muted-foreground space-y-1">
-                <li>Add your domain name above</li>
-                <li>Configure your DNS settings with your domain provider</li>
-                <li>Add a CNAME record pointing to <code className="bg-muted px-1 py-0.5 rounded">{deployment.url}</code></li>
-                <li>Wait for DNS propagation (may take up to 24 hours)</li>
-              </ol>
+            <div>
+              <Label htmlFor="branch">Branch</Label>
+              <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                <SelectTrigger id="branch">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="main">main</SelectItem>
+                  <SelectItem value="develop">develop</SelectItem>
+                  <SelectItem value="staging">staging</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="logs" className="space-y-4 py-4">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-sm font-medium">Deployment Logs</h3>
-              <Button variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-1" />
-                Refresh
-              </Button>
+            <div>
+              <Label htmlFor="region">Region</Label>
+              <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                <SelectTrigger id="region">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {REGIONS.map(region => (
+                    <SelectItem key={region.value} value={region.value}>
+                      {region.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            
-            <div className="bg-black text-white p-3 rounded-md font-mono text-xs h-60 overflow-y-auto">
-              {logs.map((log, index) => (
-                <div key={index} className="py-0.5">{log}</div>
-              ))}
+            <div>
+              <Label htmlFor="environment">Environment</Label>
+              <Select value={selectedEnvironment} onValueChange={(v) => setSelectedEnvironment(v as Deployment['environment'])}>
+                <SelectTrigger id="environment">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="production">Production</SelectItem>
+                  <SelectItem value="staging">Staging</SelectItem>
+                  <SelectItem value="development">Development</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-muted-foreground">
-                Showing logs for deployment on {formatDate(deployment.updatedAt)}
-              </span>
-              <Button variant="outline" size="sm">
-                Download Logs
-              </Button>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Auto Scaling</Label>
+                <p className="text-xs text-muted-foreground">Enable automatic scaling</p>
+              </div>
+              <Switch checked={autoScaling} onCheckedChange={setAutoScaling} />
             </div>
-          </TabsContent>
-        </Tabs>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Close</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <div>
+              <Label htmlFor="custom-domain">Custom Domain (Optional)</Label>
+              <Input
+                id="custom-domain"
+                value={customDomain}
+                onChange={(e) => setCustomDomain(e.target.value)}
+                placeholder="myapp.com"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeployDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleDeploy} disabled={!deploymentName.trim() || isDeploying}>
+              {isDeploying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Deploy
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Environment Variables Dialog */}
+      <Dialog open={showEnvDialog} onOpenChange={setShowEnvDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Environment Variable</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="env-key">Key</Label>
+              <Input
+                id="env-key"
+                value={newEnvKey}
+                onChange={(e) => setNewEnvKey(e.target.value)}
+                placeholder="API_KEY"
+              />
+            </div>
+            <div>
+              <Label htmlFor="env-value">Value</Label>
+              <Textarea
+                id="env-value"
+                value={newEnvValue}
+                onChange={(e) => setNewEnvValue(e.target.value)}
+                placeholder="Enter value..."
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="env-secret"
+                checked={newEnvSecret}
+                onCheckedChange={setNewEnvSecret}
+              />
+              <Label htmlFor="env-secret">Mark as secret</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEnvDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddEnvVar} disabled={!newEnvKey.trim()}>
+              Add Variable
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
