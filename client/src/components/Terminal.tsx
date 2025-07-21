@@ -213,7 +213,8 @@ const Terminal: React.FC<TerminalProps> = ({
         }
       };
 
-      ws.onerror = () => {
+      ws.onerror = (event) => {
+        console.error('WebSocket error:', event);
         setError('Connection error');
         terminal.writeln('\x1b[31mError connecting to terminal. Please try again later.\x1b[0m');
       };
