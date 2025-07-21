@@ -320,6 +320,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Additional editor routes for Monaco integration
+  app.post('/api/projects/:id/run', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { command, file } = req.body;
+      
+      // This would typically trigger the actual project execution
+      const result = await startProject(projectId);
+      res.json({ 
+        success: true, 
+        command: command || 'npm start',
+        file: file || null,
+        ...result
+      });
+    } catch (error) {
+      console.error('Error running project:', error);
+      res.status(500).json({ error: 'Failed to run project' });
+    }
+  });
+
   // API Routes for Deployments
   app.get('/api/projects/:id/deployments', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
