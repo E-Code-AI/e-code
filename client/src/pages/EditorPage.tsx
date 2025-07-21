@@ -6,10 +6,17 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Settings, Package, Key, FileCode, Terminal as TerminalIcon } from 'lucide-react';
 import { File, Project } from '@shared/schema';
 import TopNavbar from '@/components/TopNavbar';
 import TerminalPanel from '@/components/TerminalPanel';
+import { RunButton } from '@/components/RunButton';
+import { EnvironmentVariables } from '@/components/EnvironmentVariables';
+import { PackageManager } from '@/components/PackageManager';
+import { WebPreview } from '@/components/WebPreview';
+import { Shell } from '@/components/Shell';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 
 export default function EditorPage() {
   const { projectId } = useParams();
@@ -180,6 +187,9 @@ export default function EditorPage() {
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showReplitDB, setShowReplitDB] = useState(false);
   const [showCollaboration, setShowCollaboration] = useState(false);
+  const [isProjectRunning, setIsProjectRunning] = useState(false);
+  const [rightPanelTab, setRightPanelTab] = useState('preview');
+  const [bottomPanelTab, setBottomPanelTab] = useState('terminal');
 
   // Update active file handler
   const handleActiveFileChange = (file: File | undefined) => {
@@ -209,40 +219,150 @@ export default function EditorPage() {
   
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <TopNavbar 
-        project={project} 
-        activeFile={activeFile}
-        isLoading={isLoadingProject || isLoadingFiles}
-        onNixConfigOpen={handleNixConfigOpen}
-        onCommandPaletteOpen={handleCommandPaletteOpen}
-        onKeyboardShortcutsOpen={handleKeyboardShortcutsOpen}
-        onDatabaseOpen={handleDatabaseOpen}
-        onCollaborationOpen={handleCollaborationOpen}
-      />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-hidden">
-          <EditorWorkspace
-            project={project}
-            files={files}
-            onFileUpdate={handleFileUpdate}
-            onFileCreate={handleFileCreate}
-            onFileDelete={handleFileDelete}
-            onActiveFileChange={handleActiveFileChange}
-            initialShowNixConfig={showNixConfig}
-            initialShowCommandPalette={showCommandPalette}
-            initialShowKeyboardShortcuts={showKeyboardShortcuts}
-            initialShowReplitDB={showReplitDB}
-            initialShowCollaboration={showCollaboration}
-            onNixConfigChange={setShowNixConfig}
-            onCommandPaletteChange={setShowCommandPalette}
-            onKeyboardShortcutsChange={setShowKeyboardShortcuts}
-            onReplitDBChange={setShowReplitDB}
-            onCollaborationChange={setShowCollaboration}
-          />
-        </div>
-        {/* Terminal Panel */}
-        <TerminalPanel projectId={projectIdNum} showByDefault={true} />
+      {/* Header with Run Button */}
+      <div className="flex items-center justify-between border-b bg-background px-4 py-2">
+        <TopNavbar 
+          project={project} 
+          activeFile={activeFile}
+          isLoading={isLoadingProject || isLoadingFiles}
+          onNixConfigOpen={handleNixConfigOpen}
+          onCommandPaletteOpen={handleCommandPaletteOpen}
+          onKeyboardShortcutsOpen={handleKeyboardShortcutsOpen}
+          onDatabaseOpen={handleDatabaseOpen}
+          onCollaborationOpen={handleCollaborationOpen}
+        />
+        <RunButton 
+          projectId={projectIdNum} 
+          language={project?.language || 'javascript'}
+          onRunning={setIsProjectRunning}
+        />
       </div>
+      
+      {/* Main Content Area */}
+      <ResizablePanelGroup direction="horizontal" className="flex-1">
+        {/* Left Panel - File Explorer */}
+        <ResizablePanel defaultSize={20} minSize={15}>
+          <div className="h-full border-r">
+            <EditorWorkspace
+              project={project}
+              files={files}
+              onFileUpdate={handleFileUpdate}
+              onFileCreate={handleFileCreate}
+              onFileDelete={handleFileDelete}
+              onActiveFileChange={handleActiveFileChange}
+              initialShowNixConfig={showNixConfig}
+              initialShowCommandPalette={showCommandPalette}
+              initialShowKeyboardShortcuts={showKeyboardShortcuts}
+              initialShowReplitDB={showReplitDB}
+              initialShowCollaboration={showCollaboration}
+              onNixConfigChange={setShowNixConfig}
+              onCommandPaletteChange={setShowCommandPalette}
+              onKeyboardShortcutsChange={setShowKeyboardShortcuts}
+              onReplitDBChange={setShowReplitDB}
+              onCollaborationChange={setShowCollaboration}
+              sidebarOnly={true}
+            />
+          </div>
+        </ResizablePanel>
+        
+        <ResizableHandle />
+        
+        {/* Center Panel - Code Editor */}
+        <ResizablePanel defaultSize={50}>
+          <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={70}>
+              <EditorWorkspace
+                project={project}
+                files={files}
+                onFileUpdate={handleFileUpdate}
+                onFileCreate={handleFileCreate}
+                onFileDelete={handleFileDelete}
+                onActiveFileChange={handleActiveFileChange}
+                editorOnly={true}
+              />
+            </ResizablePanel>
+            
+            <ResizableHandle />
+            
+            {/* Bottom Panel - Terminal/Shell */}
+            <ResizablePanel defaultSize={30} minSize={20}>
+              <Tabs value={bottomPanelTab} onValueChange={setBottomPanelTab} className="h-full">
+                <TabsList className="h-10 w-full justify-start rounded-none border-b">
+                  <TabsTrigger value="terminal" className="gap-1">
+                    <TerminalIcon className="h-3 w-3" />
+                    Terminal
+                  </TabsTrigger>
+                  <TabsTrigger value="shell" className="gap-1">
+                    <TerminalIcon className="h-3 w-3" />
+                    Shell
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="terminal" className="h-[calc(100%-40px)] m-0">
+                  <TerminalPanel projectId={projectIdNum} />
+                </TabsContent>
+                <TabsContent value="shell" className="h-[calc(100%-40px)] m-0">
+                  <Shell projectId={projectIdNum} isRunning={isProjectRunning} />
+                </TabsContent>
+              </Tabs>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </ResizablePanel>
+        
+        <ResizableHandle />
+        
+        {/* Right Panel - Preview/Settings */}
+        <ResizablePanel defaultSize={30} minSize={20}>
+          <Tabs value={rightPanelTab} onValueChange={setRightPanelTab} className="h-full">
+            <TabsList className="h-10 w-full justify-start rounded-none border-b">
+              <TabsTrigger value="preview" className="gap-1">
+                <FileCode className="h-3 w-3" />
+                Preview
+              </TabsTrigger>
+              <TabsTrigger value="packages" className="gap-1">
+                <Package className="h-3 w-3" />
+                Packages
+              </TabsTrigger>
+              <TabsTrigger value="env" className="gap-1">
+                <Key className="h-3 w-3" />
+                Env
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="gap-1">
+                <Settings className="h-3 w-3" />
+                Settings
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="preview" className="h-[calc(100%-40px)] m-0">
+              <WebPreview 
+                projectId={projectIdNum} 
+                port={3000} 
+                isRunning={isProjectRunning} 
+              />
+            </TabsContent>
+            <TabsContent value="packages" className="h-[calc(100%-40px)] m-0">
+              <PackageManager 
+                projectId={projectIdNum} 
+                language={project?.language || 'javascript'} 
+              />
+            </TabsContent>
+            <TabsContent value="env" className="h-[calc(100%-40px)] m-0">
+              <EnvironmentVariables projectId={projectIdNum} />
+            </TabsContent>
+            <TabsContent value="settings" className="h-[calc(100%-40px)] m-0 p-4">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Project Settings</h3>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Language: {project?.language || 'Not set'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Created: {project?.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'Unknown'}
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }

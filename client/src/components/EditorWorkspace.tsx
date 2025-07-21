@@ -44,6 +44,8 @@ interface EditorWorkspaceProps {
   onKeyboardShortcutsChange?: (show: boolean) => void;
   onReplitDBChange?: (show: boolean) => void;
   onCollaborationChange?: (show: boolean) => void;
+  sidebarOnly?: boolean;
+  editorOnly?: boolean;
 }
 
 export function EditorWorkspace({ 
@@ -62,7 +64,9 @@ export function EditorWorkspace({
   onCommandPaletteChange,
   onKeyboardShortcutsChange,
   onReplitDBChange,
-  onCollaborationChange
+  onCollaborationChange,
+  sidebarOnly = false,
+  editorOnly = false
 }: EditorWorkspaceProps) {
   const [activeFileId, setActiveFileId] = useState<number | null>(null);
   const [activeFile, setActiveFile] = useState<File | undefined>(undefined);
@@ -275,6 +279,50 @@ export function EditorWorkspace({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // If sidebarOnly, just show the file explorer
+  if (sidebarOnly) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <ReplitFileExplorer 
+          projectId={project.id}
+          onFileSelect={(file) => handleFileSelect({
+            id: file.id,
+            name: file.name,
+            content: file.content || '',
+            projectId: project.id,
+            parentId: file.parentId,
+            isFolder: file.type === 'folder',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })}
+          selectedFileId={activeFileId || undefined}
+        />
+      </div>
+    );
+  }
+
+  // If editorOnly, just show the code editor
+  if (editorOnly) {
+    return (
+      <div className="h-full">
+        {activeFile && !activeFile.isFolder ? (
+          <CodeEditor
+            file={activeFile}
+            onChange={(content) => handleFileUpdate(activeFile.id, content)}
+            onFilesUpdate={async () => {}}
+            theme="dark"
+            projectId={project.id}
+          />
+        ) : (
+          <div className="h-full flex items-center justify-center text-muted-foreground">
+            Select a file to edit
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Otherwise, show the full workspace
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Editor toolbar - only visible on smaller screens for responsive design */}
@@ -338,7 +386,6 @@ export function EditorWorkspace({
                 content: file.content || '',
                 projectId: project.id,
                 parentId: file.parentId,
-                path: file.path,
                 isFolder: file.type === 'folder',
                 createdAt: new Date(),
                 updatedAt: new Date()
