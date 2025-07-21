@@ -1,5 +1,5 @@
 import { Switch, Route, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,10 +14,13 @@ import RuntimesPage from "@/pages/RuntimesPage";
 import RuntimeDiagnosticsPage from "@/pages/RuntimeDiagnosticsPage";
 import RuntimePublicPage from "@/pages/RuntimePublicPage";
 import RuntimeTest from "@/pages/RuntimeTest";
+import Dashboard from "@/pages/Dashboard";
+import Explore from "@/pages/Explore";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
+import { SpotlightSearch } from "@/components/SpotlightSearch";
 
 // Debug component to show authentication status
 function AuthDebug() {
@@ -76,10 +79,13 @@ function AuthDebug() {
 }
 
 function AppContent() {
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+
   return (
     <TooltipProvider>
       <div className="min-h-screen replit-layout-main">
         <Toaster />
+        <SpotlightSearch open={spotlightOpen} onOpenChange={setSpotlightOpen} />
         <Switch>
           <Route path="/auth" component={AuthPage} />
           <Route path="/runtime-test" component={RuntimePublicPage} />
@@ -89,12 +95,22 @@ function AppContent() {
             
             useEffect(() => {
               if (window.location.pathname === '/') {
-                navigate('/projects');
+                navigate('/dashboard');
               }
             }, [navigate]);
             
             return null;
           }} />
+          <ProtectedRoute path="/dashboard" component={() => (
+            <ReplitLayout>
+              <Dashboard />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/explore" component={() => (
+            <ReplitLayout>
+              <Explore />
+            </ReplitLayout>
+          )} />
           <ProtectedRoute path="/home" component={() => (
             <ReplitLayout>
               <Home />
