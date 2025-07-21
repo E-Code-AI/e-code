@@ -49,7 +49,7 @@ export async function initializeDatabase() {
       name: "My First Project",
       description: "A sample project to get started with PLOT",
       visibility: "private",
-      language: "javascript",
+      language: "nodejs",
       ownerId: demo.id
     }).returning();
     
