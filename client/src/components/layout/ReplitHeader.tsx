@@ -27,11 +27,14 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
+import { NotificationCenter } from "@/components/NotificationCenter";
+import { SpotlightSearch } from "@/components/SpotlightSearch";
 
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -40,6 +43,7 @@ export function ReplitHeader() {
   const isActive = (path: string) => location === path;
 
   return (
+    <>
     <header className="h-14 bg-[var(--replit-surface)] border-b border-[var(--replit-border)] flex items-center justify-between px-4 replit-transition">
       {/* Logo et navigation principale */}
       <div className="flex items-center space-x-6">
@@ -125,16 +129,17 @@ export function ReplitHeader() {
 
       {/* Barre de recherche */}
       <div className="flex-1 max-w-md mx-6 hidden lg:block">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--replit-text-secondary)]" />
-          <Input
-            type="text"
-            placeholder="Search for anything..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-[var(--replit-surface-secondary)] border-[var(--replit-border)] text-[var(--replit-text)] placeholder:text-[var(--replit-text-secondary)] replit-focus"
-          />
-        </div>
+        <Button
+          variant="outline"
+          className="w-full justify-start text-left font-normal bg-[var(--replit-surface-secondary)] border-[var(--replit-border)] text-[var(--replit-text-secondary)] hover:bg-[var(--replit-sidebar-hover)]"
+          onClick={() => setSpotlightOpen(true)}
+        >
+          <Search className="mr-2 h-4 w-4" />
+          <span>Search or run a command...</span>
+          <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            <span className="text-xs">⌘</span>K
+          </kbd>
+        </Button>
       </div>
 
       {/* Actions utilisateur */}
@@ -150,14 +155,7 @@ export function ReplitHeader() {
         </Button>
 
         {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)] replit-transition"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 h-3 w-3 bg-[var(--replit-danger)] rounded-full"></span>
-        </Button>
+        <NotificationCenter />
 
         {/* Menu utilisateur */}
         <DropdownMenu>
@@ -222,5 +220,7 @@ export function ReplitHeader() {
         </DropdownMenu>
       </div>
     </header>
+    <SpotlightSearch open={spotlightOpen} onOpenChange={setSpotlightOpen} />
+    </>
   );
 }
