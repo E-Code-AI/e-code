@@ -34,6 +34,12 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
 - **ReplitTerminal**: Full-featured terminal with multiple sessions
 
 ## Recent Changes
+- 2025-01-21: Fixed critical database "NaN" error and missing `/api/projects/recent` endpoint
+- 2025-01-21: Enhanced ReplitFileExplorer with drag & drop, search, context menus, file upload
+- 2025-01-21: Created AdvancedTerminal with multiple sessions, search, history, themes
+- 2025-01-21: Implemented RuntimeEnvironments supporting 20+ languages with debugging/profiling
+- 2025-01-21: Fixed Monaco Editor worker configuration for proper syntax highlighting
+- 2025-01-21: Resolved authentication and project access validation issues
 - 2025-01-21: Implemented advanced Monaco editor with Replit-exact theming and features
 - 2025-01-21: Created comprehensive file explorer with search, context menus, drag/drop
 - 2025-01-21: Developed full-featured terminal component with WebSocket integration
@@ -43,9 +49,12 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
 ## Development Status
 - ✅ Phase 1: Core UI foundation with exact Replit layout and theming
 - ✅ Advanced editor components (Monaco, File Explorer, Terminal)
+- ✅ Multi-language runtime support (20+ languages with debugging/profiling)
+- ✅ Enhanced terminal with multiple sessions, search, and history
+- ✅ Advanced file explorer with drag & drop and context menus
 - 🔄 Integration testing and refinement
-- ⏳ Phase 2: Runtime environments and execution systems
 - ⏳ Phase 3: Collaboration and real-time features
+- ⏳ Phase 4: AI enhancements and code generation
 
 ## Technical Decisions
 - **Theme System**: Custom CSS variables matching Replit's exact color scheme

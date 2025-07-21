@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { File, Project } from '@shared/schema';
 import CodeEditor from './CodeEditor';
 import FileExplorer from './FileExplorer';
+import { ReplitFileExplorer } from './editor/ReplitFileExplorer';
 import { AIAssistant } from './AIAssistant';
 import Terminal from './Terminal';
 import { Ghostwriter } from './Ghostwriter';
@@ -329,11 +330,20 @@ export function EditorWorkspace({
               <span className="text-sm font-medium">Files</span>
             </div>
             
-            <FileExplorer 
-              files={files} 
-              isLoading={false}
-              onFileOpen={handleFileSelect}
-              onContextMenu={() => {}}
+            <ReplitFileExplorer 
+              projectId={project.id}
+              onFileSelect={(file) => handleFileSelect({
+                id: file.id,
+                name: file.name,
+                content: file.content || '',
+                projectId: project.id,
+                parentId: file.parentId,
+                path: file.path,
+                isFolder: file.type === 'folder',
+                createdAt: new Date(),
+                updatedAt: new Date()
+              })}
+              selectedFileId={activeFileId || undefined}
             />
           </div>
         )}
