@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import Terminal from '@/components/Terminal';
+import { ExecutionConsole } from '@/components/ExecutionConsole';
 import DeploymentPanel from '@/components/DeploymentPanel';
 import Collaboration from '@/components/Collaboration';
 import GitPanel from '@/components/GitPanel';
@@ -71,7 +72,8 @@ const ProjectPage = () => {
   const [terminalVisible, setTerminalVisible] = useState(true);
   const [terminalHeight, setTerminalHeight] = useState(300);
   const [projectRunning, setProjectRunning] = useState(false);
-  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'deployment' | 'git' | 'env'>('terminal');
+  const [executionId, setExecutionId] = useState<string | undefined>();
+  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'console' | 'deployment' | 'git' | 'env'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [aiPanelVisible, setAiPanelVisible] = useState(false);
   
@@ -654,8 +656,8 @@ const ProjectPage = () => {
                 <div className="flex items-center space-x-4">
                   <Tabs 
                     value={bottomPanelTab} 
-                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'deployment' | 'git' | 'env')}
-                    className="w-[500px]"
+                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'console' | 'deployment' | 'git' | 'env')}
+                    className="w-[600px]"
                   >
                     <TabsList className="h-7 bg-transparent">
                       <TabsTrigger 
@@ -663,6 +665,12 @@ const ProjectPage = () => {
                         className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'terminal' ? 'border-b-2 border-primary rounded-none' : ''}`}
                       >
                         Terminal
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="console" 
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'console' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        Console
                       </TabsTrigger>
                       <TabsTrigger 
                         value="deployment" 
@@ -698,6 +706,13 @@ const ProjectPage = () => {
               </div>
               <div className="flex-1 overflow-hidden">
                 {bottomPanelTab === 'terminal' && projectId && <Terminal projectId={projectId} />}
+                {bottomPanelTab === 'console' && projectId && (
+                  <ExecutionConsole 
+                    projectId={projectId} 
+                    executionId={executionId}
+                    isRunning={projectRunning}
+                  />
+                )}
                 {bottomPanelTab === 'deployment' && projectId && <DeploymentPanel projectId={projectId} />}
                 {bottomPanelTab === 'git' && projectId && <GitPanel projectId={projectId} />}
                 {bottomPanelTab === 'env' && projectId && (

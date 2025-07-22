@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 interface RunButtonProps {
   projectId: number;
   language?: string;
-  onRunning?: (running: boolean) => void;
+  onRunning?: (running: boolean, executionId?: string) => void;
 }
 
 export function RunButton({ projectId, language, onRunning }: RunButtonProps) {
@@ -18,20 +18,27 @@ export function RunButton({ projectId, language, onRunning }: RunButtonProps) {
   // Start project execution
   const runProjectMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/run`);
+      const res = await apiRequest('POST', `/api/projects/${projectId}/execute`, {
+        mainFile: undefined, // Will use auto-detection
+        timeout: 30000 // 30 seconds timeout
+      });
       return res.json();
     },
     onSuccess: (data) => {
       setIsRunning(true);
-      onRunning?.(true);
+      onRunning?.(true, data.executionId);
+      
+      // Store execution ID for stopping later
+      (window as any).__currentExecutionId = data.executionId;
+      
       toast({
-        title: 'Project started',
-        description: 'Your project is now running',
+        title: 'Code executing',
+        description: 'Your code is now running',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to run project',
+        title: 'Failed to execute code',
         description: error.message,
         variant: 'destructive',
       });
@@ -41,20 +48,27 @@ export function RunButton({ projectId, language, onRunning }: RunButtonProps) {
   // Stop project execution
   const stopProjectMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/stop`);
+      const executionId = (window as any).__currentExecutionId;
+      const res = await apiRequest('POST', `/api/projects/${projectId}/stop`, {
+        executionId
+      });
       return res.json();
     },
     onSuccess: () => {
       setIsRunning(false);
       onRunning?.(false);
+      
+      // Clear execution ID
+      delete (window as any).__currentExecutionId;
+      
       toast({
-        title: 'Project stopped',
-        description: 'Your project has been stopped',
+        title: 'Execution stopped',
+        description: 'Code execution has been stopped',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to stop project',
+        title: 'Failed to stop execution',
         description: error.message,
         variant: 'destructive',
       });
