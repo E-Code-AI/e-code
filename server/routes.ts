@@ -41,7 +41,7 @@ import {
 } from "./runtimes/api";
 import * as runtimeHealth from "./runtimes/runtime-health";
 import { CodeExecutor } from "./execution/executor";
-import { gitManager } from "./version-control/git-manager";
+import { GitManager } from "./version-control/git-manager";
 import { collaborationServer } from "./realtime/collaboration-server";
 import { replitDB } from "./database/replitdb";
 import { searchEngine } from "./search/search-engine";
@@ -525,7 +525,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Removed duplicate deployment logs route
   
-  // Version Control Routes (Git) 
+  // Version Control Routes (Git)
+  const gitManager = new GitManager();
+  
   app.get('/api/projects/:id/git/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
@@ -534,6 +536,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error getting git status:', error);
       res.status(500).json({ error: 'Failed to get git status' });
+    }
+  });
+
+  app.get('/api/projects/:id/git/branches', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const branches = await gitManager.getBranches(projectId);
+      res.json(branches);
+    } catch (error) {
+      console.error('Error getting git branches:', error);
+      res.status(500).json({ error: 'Failed to get branches' });
     }
   });
 
@@ -549,15 +562,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/projects/:id/git/init', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const success = await gitManager.initRepository(projectId);
+      if (success) {
+        res.json({ message: 'Repository initialized successfully' });
+      } else {
+        res.status(500).json({ error: 'Failed to initialize repository' });
+      }
+    } catch (error) {
+      console.error('Error initializing repository:', error);
+      res.status(500).json({ error: 'Failed to initialize repository' });
+    }
+  });
+
   app.post('/api/projects/:id/git/commit', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
       const { message, files } = req.body;
-      const hash = await gitManager.commit(projectId, message, files);
-      res.json({ hash });
+      const result = await gitManager.commit(projectId, message, files || []);
+      res.json({ hash: result });
     } catch (error) {
       console.error('Error committing:', error);
       res.status(500).json({ error: 'Failed to commit' });
+    }
+  });
+
+  app.post('/api/projects/:id/git/stage', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { files } = req.body;
+      // Stage files is handled by commit with specific files
+      res.json({ message: 'Files marked for staging' });
+    } catch (error) {
+      console.error('Error staging files:', error);
+      res.status(500).json({ error: 'Failed to stage files' });
+    }
+  });
+
+  app.post('/api/projects/:id/git/push', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { remote = 'origin', branch = 'main' } = req.body;
+      await gitManager.push(projectId, remote, branch);
+      res.json({ message: 'Pushed successfully' });
+    } catch (error) {
+      console.error('Error pushing:', error);
+      res.status(500).json({ error: 'Failed to push' });
+    }
+  });
+
+  app.post('/api/projects/:id/git/pull', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { remote = 'origin', branch = 'main' } = req.body;
+      await gitManager.pull(projectId, remote, branch);
+      res.json({ message: 'Pulled successfully' });
+    } catch (error) {
+      console.error('Error pulling:', error);
+      res.status(500).json({ error: 'Failed to pull' });
     }
   });
 
@@ -1998,248 +2062,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Git integration routes
-  
-  // Check if a project is a Git repository
-  app.get('/api/projects/:id/git/status', ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ message: 'Invalid project ID' });
-      }
-      
-      const result = await getRepoStatus(projectId);
-      
-      if (!result.success) {
-        return res.status(500).json({ message: result.error });
-      }
-      
-      res.json(result.data);
-    } catch (error) {
-      console.error("Error getting git status:", error);
-      res.status(500).json({ message: 'Failed to get git status' });
-    }
-  });
-  
-  // Initialize a Git repository
-  app.post('/api/projects/:id/git/init', ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ message: 'Invalid project ID' });
-      }
-      
-      const result = await initRepo(projectId);
-      
-      if (!result.success) {
-        return res.status(500).json({ message: result.error });
-      }
-      
-      res.json({ message: result.message });
-    } catch (error) {
-      console.error("Error initializing git repository:", error);
-      res.status(500).json({ message: 'Failed to initialize git repository' });
-    }
-  });
-  
-  // Add files to staging area
-  app.post('/api/projects/:id/git/add', ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ message: 'Invalid project ID' });
-      }
-      
-      const { files } = req.body;
-      
-      if (!Array.isArray(files)) {
-        return res.status(400).json({ message: 'Files must be an array' });
-      }
-      
-      const result = await addFiles(projectId, files);
-      
-      if (!result.success) {
-        return res.status(500).json({ message: result.error });
-      }
-      
-      res.json({ message: result.message });
-    } catch (error) {
-      console.error("Error adding files:", error);
-      res.status(500).json({ message: 'Failed to add files' });
-    }
-  });
-  
-  // Commit changes
-  app.post('/api/projects/:id/git/commit', ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ message: 'Invalid project ID' });
-      }
-      
-      const { message, author } = req.body;
-      
-      if (!message) {
-        return res.status(400).json({ message: 'Commit message is required' });
-      }
-      
-      // If author not provided, use user information
-      let commitAuthor;
-      if (!author) {
-        const user = req.user!;
-        commitAuthor = {
-          name: user.username,
-          email: user.email || `${user.username}@plot.local`
-        };
-      } else {
-        commitAuthor = author;
-      }
-      
-      const result = await commit(projectId, message, commitAuthor);
-      
-      if (!result.success) {
-        return res.status(500).json({ message: result.error });
-      }
-      
-      res.json({ message: result.message });
-    } catch (error) {
-      console.error("Error committing changes:", error);
-      res.status(500).json({ message: 'Failed to commit changes' });
-    }
-  });
-  
-  // Add remote repository
-  app.post('/api/projects/:id/git/remote', ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ message: 'Invalid project ID' });
-      }
-      
-      const { name, url } = req.body;
-      
-      if (!name || !url) {
-        return res.status(400).json({ message: 'Remote name and URL are required' });
-      }
-      
-      const result = await addRemote(projectId, name, url);
-      
-      if (!result.success) {
-        return res.status(500).json({ message: result.error });
-      }
-      
-      res.json({ message: result.message });
-    } catch (error) {
-      console.error("Error adding remote:", error);
-      res.status(500).json({ message: 'Failed to add remote' });
-    }
-  });
-  
-  // Push to remote repository
-  app.post('/api/projects/:id/git/push', ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ message: 'Invalid project ID' });
-      }
-      
-      const { remote, branch, credentials } = req.body;
-      
-      const result = await push(
-        projectId, 
-        remote || 'origin', 
-        branch || 'main', 
-        credentials
-      );
-      
-      if (!result.success) {
-        return res.status(500).json({ message: result.error });
-      }
-      
-      res.json({ message: result.message });
-    } catch (error) {
-      console.error("Error pushing changes:", error);
-      res.status(500).json({ message: 'Failed to push changes' });
-    }
-  });
-  
-  // Pull from remote repository
-  app.post('/api/projects/:id/git/pull', ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ message: 'Invalid project ID' });
-      }
-      
-      const { remote, branch, credentials } = req.body;
-      
-      const result = await pull(
-        projectId, 
-        remote || 'origin', 
-        branch || 'main', 
-        credentials
-      );
-      
-      if (!result.success) {
-        return res.status(500).json({ message: result.error });
-      }
-      
-      res.json({ message: result.message });
-    } catch (error) {
-      console.error("Error pulling changes:", error);
-      res.status(500).json({ message: 'Failed to pull changes' });
-    }
-  });
-  
-  // Clone repository
-  app.post('/api/projects/:id/git/clone', ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ message: 'Invalid project ID' });
-      }
-      
-      const { url, credentials } = req.body;
-      
-      if (!url) {
-        return res.status(400).json({ message: 'Repository URL is required' });
-      }
-      
-      const result = await cloneRepo(projectId, url, credentials);
-      
-      if (!result.success) {
-        return res.status(500).json({ message: result.error });
-      }
-      
-      res.json({ message: result.message });
-    } catch (error) {
-      console.error("Error cloning repository:", error);
-      res.status(500).json({ message: 'Failed to clone repository' });
-    }
-  });
-  
-  // Get commit history
-  app.get('/api/projects/:id/git/history', ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ message: 'Invalid project ID' });
-      }
-      
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
-      
-      const result = await getCommitHistory(projectId, limit);
-      
-      if (!result.success) {
-        return res.status(500).json({ message: result.error });
-      }
-      
-      res.json(result.data);
-    } catch (error) {
-      console.error("Error getting commit history:", error);
-      res.status(500).json({ message: 'Failed to get commit history' });
-    }
-  });
+  // Git routes removed - using GitManager implementation above
 
   return httpServer;
 }

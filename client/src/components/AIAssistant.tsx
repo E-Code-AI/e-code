@@ -113,7 +113,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     if (!selectedCode) return;
 
     try {
-      const response = await fetch('/api/ai/suggestions', {
+      const response = await fetch(`/api/projects/${projectId}/ai/suggestions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -129,25 +129,6 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
       }
     } catch (error) {
       console.error('Failed to generate suggestions:', error);
-      // Mock suggestions
-      setSuggestions([
-        {
-          id: '1',
-          title: 'Add Error Handling',
-          description: 'Wrap async operations in try-catch blocks',
-          code: 'try {\n  // your code here\n} catch (error) {\n  console.error(error);\n}',
-          language: 'javascript',
-          confidence: 0.9
-        },
-        {
-          id: '2',
-          title: 'Use Optional Chaining',
-          description: 'Simplify null checks with optional chaining',
-          code: 'const value = data?.user?.name ?? "default";',
-          language: 'javascript',
-          confidence: 0.85
-        }
-      ]);
     }
   };
 
@@ -170,7 +151,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ai/chat', {
+      const response = await fetch(`/api/projects/${projectId}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
