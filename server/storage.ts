@@ -38,6 +38,7 @@ export interface IStorage {
   
   // Collaborator methods
   getProjectCollaborators(projectId: number): Promise<ProjectCollaborator[]>;
+  getUserCollaborations(userId: number): Promise<Project[]>;
   addCollaborator(collaborator: InsertProjectCollaborator): Promise<ProjectCollaborator>;
   isProjectCollaborator(projectId: number, userId: number): Promise<boolean>;
   
@@ -268,6 +269,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(projectCollaborators.projectId, projectId));
   }
   
+  async getUserCollaborations(userId: number): Promise<Project[]> {
+    // Get all projects where user is a collaborator
+    const collaborations = await db.select({
+      project: projects
+    })
+    .from(projectCollaborators)
+    .innerJoin(projects, eq(projectCollaborators.projectId, projects.id))
+    .where(eq(projectCollaborators.userId, userId));
+    
+    return collaborations.map(c => c.project);
+  }
+  
   async addCollaborator(collaboratorData: InsertProjectCollaborator): Promise<ProjectCollaborator> {
     const [collaborator] = await db
       .insert(projectCollaborators)
@@ -321,9 +334,17 @@ export class DatabaseStorage implements IStorage {
 
   // Environment variable methods
   async getEnvironmentVariables(projectId: number): Promise<EnvironmentVariable[]> {
-    return await db.select()
-      .from(environmentVariables)
-      .where(eq(environmentVariables.projectId, projectId));
+    try {
+      return await db.select()
+        .from(environmentVariables)
+        .where(eq(environmentVariables.projectId, projectId));
+    } catch (error: any) {
+      if (error.message?.includes('relation "environment_variables" does not exist')) {
+        console.log('Environment variables table does not exist yet');
+        return [];
+      }
+      throw error;
+    }
   }
 
   async getEnvironmentVariable(id: number): Promise<EnvironmentVariable | undefined> {
@@ -782,6 +803,16 @@ export class MemStorage implements IStorage {
         updatedAt: new Date()
       });
     }
+  }
+  
+  async getUserCollaborations(userId: number): Promise<Project[]> {
+    // Get all projects where user is a collaborator
+    const collaborations = Array.from(this.collaborators.values())
+      .filter(collab => collab.userId === userId)
+      .map(collab => this.projects.get(collab.projectId))
+      .filter(Boolean) as Project[];
+    
+    return collaborations;
   }
   
   async isProjectCollaborator(projectId: number, userId: number): Promise<boolean> {

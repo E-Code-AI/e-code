@@ -1379,6 +1379,53 @@ document.addEventListener('DOMContentLoaded', function() {
   // Generate tests
   app.post('/api/ai/tests', ensureAuthenticated, generateTests);
   
+  // AI Assistant endpoint for project chat
+  app.post('/api/projects/:projectId/ai/chat', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { messages } = req.body;
+      
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Messages array is required' });
+      }
+      
+      // Get project context
+      const project = await storage.getProject(parseInt(projectId));
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      
+      // Get recent file content for context
+      const files = await storage.getFilesByProject(parseInt(projectId));
+      const codeContext = files
+        .filter(f => !f.isFolder)
+        .slice(0, 5)
+        .map(f => `File: ${f.name}\n\`\`\`\n${f.content}\n\`\`\``)
+        .join('\n\n');
+      
+      // For now, return a mock response since we need OpenAI API key
+      const mockResponse = {
+        id: `msg_${Date.now()}`,
+        role: 'assistant',
+        content: `I understand you're working on "${project.name}". To provide actual AI assistance, please configure your OpenAI API key in the environment variables. 
+
+Based on your project context, I can see you have ${files.length} files. Once the API key is configured, I'll be able to help with:
+- Code suggestions and completions
+- Bug fixes and optimizations
+- Explanations and documentation
+- Refactoring recommendations
+
+Would you like me to help you set up the OpenAI API integration?`,
+        timestamp: Date.now()
+      };
+      
+      res.json(mockResponse);
+    } catch (error) {
+      console.error('AI chat error:', error);
+      res.status(500).json({ error: 'Failed to process AI request' });
+    }
+  });
+  
   // Environment variables routes
   
   // Get all environment variables for a project
