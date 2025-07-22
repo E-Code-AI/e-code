@@ -577,7 +577,7 @@ async function syncWorkspaceToProject(projectId: number, workspaceDir: string): 
     // Read all files from workspace recursively
     const allPaths: string[] = [];
     
-    async function readDirRecursive(dir: string, baseDir: string = '') {
+    const readDirRecursive = async (dir: string, baseDir: string = '') => {
       const entries = await fs.promises.readdir(dir, { withFileTypes: true });
       
       for (const entry of entries) {
@@ -602,7 +602,7 @@ async function syncWorkspaceToProject(projectId: number, workspaceDir: string): 
           allPaths.push(relativePath);
         }
       }
-    }
+    };
     
     await readDirRecursive(workspaceDir);
     

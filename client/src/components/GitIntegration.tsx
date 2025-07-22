@@ -88,30 +88,23 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
       const response = await fetch(`/api/projects/${projectId}/git/status`);
       if (response.ok) {
         const data = await response.json();
-        setGitStatus(data);
+        // Transform data to match GitStatus interface
+        setGitStatus({
+          branch: data.branch || 'main',
+          remote: data.remote,
+          ahead: data.ahead || 0,
+          behind: data.behind || 0,
+          staged: data.added?.map((file: string) => ({ path: file, status: 'added' as const })) || [],
+          unstaged: data.modified?.map((file: string) => ({ path: file, status: 'modified' as const })) || [],
+          untracked: data.untracked || []
+        });
         setIsInitialized(true);
       } else if (response.status === 404) {
         setIsInitialized(false);
       }
     } catch (error) {
       console.error('Failed to check git status:', error);
-      // Mock data for development
-      setGitStatus({
-        branch: 'main',
-        remote: 'origin/main',
-        ahead: 2,
-        behind: 1,
-        staged: [
-          { path: 'src/App.tsx', status: 'modified' },
-          { path: 'README.md', status: 'modified' }
-        ],
-        unstaged: [
-          { path: 'src/components/Header.tsx', status: 'modified' },
-          { path: 'package.json', status: 'modified' }
-        ],
-        untracked: ['src/new-file.ts', '.env.local']
-      });
-      setIsInitialized(true);
+      setIsInitialized(false);
     }
   };
 
@@ -120,16 +113,15 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
       const response = await fetch(`/api/projects/${projectId}/git/branches`);
       if (response.ok) {
         const data = await response.json();
-        setBranches(data);
+        const currentBranch = gitStatus?.branch || 'main';
+        setBranches(data.map((name: string) => ({
+          name,
+          current: name === currentBranch,
+          remote: `origin/${name}`
+        })));
       }
     } catch (error) {
       console.error('Failed to load branches:', error);
-      // Mock data
-      setBranches([
-        { name: 'main', current: true, remote: 'origin/main', ahead: 2, behind: 1 },
-        { name: 'feature/new-ui', current: false, remote: 'origin/feature/new-ui' },
-        { name: 'bugfix/auth-issue', current: false }
-      ]);
     }
   };
 
@@ -138,43 +130,13 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
       const response = await fetch(`/api/projects/${projectId}/git/commits`);
       if (response.ok) {
         const data = await response.json();
-        setCommits(data);
+        setCommits(data.map((commit: any) => ({
+          ...commit,
+          date: commit.date instanceof Date ? commit.date.toISOString() : commit.date
+        })));
       }
     } catch (error) {
       console.error('Failed to load commits:', error);
-      // Mock data
-      setCommits([
-        {
-          hash: 'a1b2c3d',
-          message: 'Update README with installation instructions',
-          author: 'John Doe',
-          email: 'john@example.com',
-          date: '2 hours ago',
-          files: 1,
-          additions: 25,
-          deletions: 5
-        },
-        {
-          hash: 'e4f5g6h',
-          message: 'Fix authentication bug in login component',
-          author: 'Jane Smith',
-          email: 'jane@example.com',
-          date: '5 hours ago',
-          files: 3,
-          additions: 45,
-          deletions: 20
-        },
-        {
-          hash: 'i7j8k9l',
-          message: 'Add new dashboard features',
-          author: 'John Doe',
-          email: 'john@example.com',
-          date: '1 day ago',
-          files: 8,
-          additions: 320,
-          deletions: 50
-        }
-      ]);
     }
   };
 

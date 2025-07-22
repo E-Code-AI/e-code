@@ -4,7 +4,7 @@ import {
   CheckCircle, XCircle, RefreshCw, Settings, ExternalLink,
   Shield, Zap, Cpu, HardDrive, Network, BarChart,
   GitBranch, Copy, Terminal, Play, Pause, RotateCcw,
-  ArrowUpRight, Info, Loader2
+  ArrowUpRight, Info, Loader2, Plus, Key
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

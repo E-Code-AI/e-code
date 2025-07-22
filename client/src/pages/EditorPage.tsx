@@ -435,6 +435,10 @@ export default function EditorPage() {
           projectId={projectIdNum}
           isOpen={showGlobalSearch}
           onClose={() => setShowGlobalSearch(false)}
+          onFileSelect={(file) => {
+            setActiveFile(file);
+            setShowGlobalSearch(false);
+          }}
         />
       )}
     </div>

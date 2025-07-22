@@ -78,20 +78,33 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
       const response = await fetch(`/api/projects/${projectId}/db`);
       if (response.ok) {
         const data = await response.json();
-        setEntries(data);
+          // Get all keys and their values
+        const keys = data.keys || [];
+        const entries: DBEntry[] = [];
+        
+        for (const key of keys) {
+          const valueResponse = await fetch(`/api/projects/${projectId}/db/${key}`);
+          if (valueResponse.ok) {
+            const { value } = await valueResponse.json();
+            entries.push({
+              key,
+              value,
+              type: getValueType(value),
+              size: JSON.stringify(value).length,
+              lastModified: new Date().toISOString()
+            });
+          }
+        }
+        
+        setEntries(entries);
       }
     } catch (error) {
       console.error('Failed to load DB entries:', error);
-      // Mock data for demonstration
-      setEntries([
-        { key: 'user:1234', value: { id: 1234, name: 'John Doe', email: 'john@example.com' }, type: 'object', size: 128 },
-        { key: 'config:theme', value: 'dark', type: 'string', size: 16 },
-        { key: 'stats:views', value: 42069, type: 'number', size: 8 },
-        { key: 'feature:beta', value: true, type: 'boolean', size: 4 },
-        { key: 'todos', value: ['Buy milk', 'Write code', 'Deploy app'], type: 'array', size: 64 },
-        { key: 'session:abc123', value: { userId: 1234, expires: '2024-12-31' }, type: 'object', size: 96 },
-        { key: 'cache:results', value: null, type: 'null', size: 4 }
-      ]);
+      toast({
+        title: "Failed to load entries",
+        description: "Could not load database entries",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -106,14 +119,6 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
       }
     } catch (error) {
       console.error('Failed to load DB stats:', error);
-      // Mock stats
-      setStats({
-        totalKeys: 7,
-        totalSize: '1.2 KB',
-        largestKey: 'user:1234',
-        oldestKey: 'config:theme',
-        newestKey: 'cache:results'
-      });
     }
   };
 
@@ -304,6 +309,15 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
     if (type === 'string') return <span className="text-sm truncate max-w-[200px] inline-block">{value}</span>;
     if (type === 'array') return <span className="text-sm text-muted-foreground">[{value.length} items]</span>;
     if (type === 'object') return <span className="text-sm text-muted-foreground">{Object.keys(value).length} properties</span>;
+  };
+
+  const getValueType = (value: any): DBEntry['type'] => {
+    if (value === null) return 'null';
+    if (Array.isArray(value)) return 'array';
+    if (typeof value === 'object') return 'object';
+    if (typeof value === 'number') return 'number';
+    if (typeof value === 'boolean') return 'boolean';
+    return 'string';
   };
 
   const getTypeIcon = (type: DBEntry['type']) => {

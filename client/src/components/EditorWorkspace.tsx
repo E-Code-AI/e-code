@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { 
   Maximize2, Minimize2, Play, Terminal as TerminalIcon, 
   Code, Sparkles, PanelLeft, PanelLeftClose, Command,
@@ -308,10 +309,7 @@ export function EditorWorkspace({
         {activeFile && !activeFile.isFolder ? (
           <CodeEditor
             file={activeFile}
-            onChange={(content) => handleFileUpdate(activeFile.id, content)}
-            onFilesUpdate={async () => {}}
-            theme="dark"
-            projectId={project.id}
+            onChange={(content) => onFileUpdate(activeFile.id, content)}
           />
         ) : (
           <div className="h-full flex items-center justify-center text-muted-foreground">
@@ -490,8 +488,9 @@ export function EditorWorkspace({
                   
                   <div className="flex-1 overflow-hidden">
                     <AIAssistant 
-                      activeFile={activeFile} 
-                      onApplyCompletion={handleApplySuggestion} 
+                      projectId={project.id}
+                      selectedFile={activeFile?.name}
+                      selectedCode=""
                     />
                   </div>
                 </div>
@@ -569,11 +568,16 @@ export function EditorWorkspace({
       />
       
       {/* ReplitDB */}
-      <ReplitDB
-        projectId={project.id}
-        open={showReplitDB}
-        onOpenChange={setShowReplitDB}
-      />
+      {showReplitDB && (
+        <Dialog open={showReplitDB} onOpenChange={setShowReplitDB}>
+          <DialogContent className="max-w-6xl h-[80vh]">
+            <ReplitDB 
+              projectId={project.id}
+              className="h-full"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
       
       {/* Nix Config */}
       <NixConfig

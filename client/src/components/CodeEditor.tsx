@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as monaco from 'monaco-editor';
 import { setupMonacoTheme, getMonacoEditorOptions } from "@/lib/monaco-setup";
 import { File } from "@shared/schema";
-import { useCollaboration } from "@/lib/collaboration";
+import { useCollaboration } from "@/hooks/useCollaboration";
 import { RemoteCursor } from "@/components/ui/cursor";
 import { Search, XCircle, Maximize2, Minimize2, Code, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
