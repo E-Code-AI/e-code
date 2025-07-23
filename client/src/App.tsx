@@ -25,6 +25,8 @@ const Profile = lazy(() => import("@/pages/Profile"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
 const UserSettings = lazy(() => import("@/pages/UserSettings"));
 const TemplatesPage = lazy(() => import("@/pages/TemplatesPage"));
+const Community = lazy(() => import("@/pages/Community"));
+const SearchPage = lazy(() => import("@/pages/SearchPage"));
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -188,6 +190,16 @@ function AppContent() {
           <ProtectedRoute path="/templates" component={() => (
             <ReplitLayout>
               <TemplatesPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/community" component={() => (
+            <ReplitLayout>
+              <Community />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/search" component={() => (
+            <ReplitLayout>
+              <SearchPage />
             </ReplitLayout>
           )} />
           <Route component={NotFound} />
