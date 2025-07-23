@@ -139,6 +139,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Templates API
+  app.get('/api/templates', async (req, res) => {
+    try {
+      // For now, return mock data - this would connect to a templates database
+      const templates = [
+        {
+          id: 'nextjs-blog',
+          name: 'Next.js Blog Starter',
+          description: 'A modern blog with MDX support, dark mode, and SEO optimization',
+          category: 'web',
+          tags: ['nextjs', 'react', 'blog', 'mdx'],
+          author: { name: 'Replit Team', verified: true },
+          stats: { uses: 15420, stars: 892, forks: 234 },
+          language: 'TypeScript',
+          framework: 'Next.js',
+          difficulty: 'beginner',
+          estimatedTime: '5 mins',
+          features: ['MDX blog posts', 'Dark mode', 'SEO optimized', 'RSS feed'],
+          isFeatured: true,
+          isOfficial: true,
+          createdAt: '2024-01-15'
+        },
+        {
+          id: 'express-api',
+          name: 'Express REST API',
+          description: 'Production-ready REST API with authentication and PostgreSQL',
+          category: 'api',
+          tags: ['express', 'nodejs', 'api', 'postgresql'],
+          author: { name: 'Replit Team', verified: true },
+          stats: { uses: 23100, stars: 1243, forks: 567 },
+          language: 'JavaScript',
+          framework: 'Express.js',
+          difficulty: 'intermediate',
+          estimatedTime: '10 mins',
+          features: ['JWT auth', 'PostgreSQL', 'API docs', 'Rate limiting'],
+          isFeatured: true,
+          isOfficial: true,
+          createdAt: '2024-01-10'
+        }
+      ];
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      res.status(500).json({ error: 'Failed to fetch templates' });
+    }
+  });
+
+  app.post('/api/projects/from-template', ensureAuthenticated, async (req, res) => {
+    try {
+      const { templateId, name } = req.body;
+      const userId = req.user!.id;
+      
+      if (!templateId || !name) {
+        return res.status(400).json({ error: 'Template ID and name are required' });
+      }
+
+      // Create project from template
+      // In a real implementation, this would copy files and configuration from the template
+      const project = await storage.createProject({
+        name,
+        description: `Created from template: ${templateId}`,
+        language: 'nodejs', // This would come from the template
+        visibility: 'private',
+        ownerId: userId
+      });
+
+      res.json(project);
+    } catch (error) {
+      console.error('Error creating project from template:', error);
+      res.status(500).json({ error: 'Failed to create project from template' });
+    }
+  });
+
   app.get('/api/projects/:id', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
