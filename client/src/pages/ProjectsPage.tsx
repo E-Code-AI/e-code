@@ -245,13 +245,19 @@ const ProjectsPage = () => {
           <h1 className="text-3xl font-bold">My Projects</h1>
           <p className="text-muted-foreground mt-1">Manage your coding projects</p>
         </div>
-        <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Project
+        <div className="flex gap-2">
+          <Link href="/templates">
+            <Button variant="outline">
+              Browse Templates
             </Button>
-          </DialogTrigger>
+          </Link>
+          <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Project
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Project</DialogTitle>
@@ -382,7 +388,8 @@ const ProjectsPage = () => {
               </form>
             </Form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {/* Project Grid */}

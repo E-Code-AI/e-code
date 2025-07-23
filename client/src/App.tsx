@@ -1,24 +1,30 @@
 import { Switch, Route, useLocation } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
-import Home from "@/pages/Home";
-import Editor from "@/pages/Editor";
-import AuthPage from "@/pages/auth-page";
-import ProjectsPage from "@/pages/ProjectsPage";
-import ProjectPage from "@/pages/ProjectPage";
-import RuntimesPage from "@/pages/RuntimesPage";
-import RuntimeDiagnosticsPage from "@/pages/RuntimeDiagnosticsPage";
-import RuntimePublicPage from "@/pages/RuntimePublicPage";
-import RuntimeTest from "@/pages/RuntimeTest";
-import Dashboard from "@/pages/Dashboard";
-import Explore from "@/pages/Explore";
-import Teams from "@/pages/Teams";
-import Settings from "@/pages/Settings";
-import Profile from "@/pages/Profile";
+import { Spinner } from "@/components/ui/spinner";
+
+// Lazy load all pages for better performance
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Home = lazy(() => import("@/pages/Home"));
+const Editor = lazy(() => import("@/pages/Editor"));
+const AuthPage = lazy(() => import("@/pages/auth-page"));
+const ProjectsPage = lazy(() => import("@/pages/ProjectsPage"));
+const ProjectPage = lazy(() => import("@/pages/ProjectPage"));
+const RuntimesPage = lazy(() => import("@/pages/RuntimesPage"));
+const RuntimeDiagnosticsPage = lazy(() => import("@/pages/RuntimeDiagnosticsPage"));
+const RuntimePublicPage = lazy(() => import("@/pages/RuntimePublicPage"));
+const RuntimeTest = lazy(() => import("@/pages/RuntimeTest"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Explore = lazy(() => import("@/pages/Explore"));
+const Teams = lazy(() => import("@/pages/Teams"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const UserProfile = lazy(() => import("@/pages/UserProfile"));
+const UserSettings = lazy(() => import("@/pages/UserSettings"));
+const TemplatesPage = lazy(() => import("@/pages/TemplatesPage"));
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -81,6 +87,15 @@ function AuthDebug() {
   );
 }
 
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Spinner size="lg" />
+    </div>
+  );
+}
+
 function AppContent() {
   const [spotlightOpen, setSpotlightOpen] = useState(false);
 
@@ -89,7 +104,8 @@ function AppContent() {
       <div className="min-h-screen replit-layout-main">
         <Toaster />
         <SpotlightSearch open={spotlightOpen} onOpenChange={setSpotlightOpen} />
-        <Switch>
+        <Suspense fallback={<PageLoader />}>
+          <Switch>
           <Route path="/auth" component={AuthPage} />
           <Route path="/runtime-test" component={RuntimePublicPage} />
           <Route path="/runtime-dependencies" component={RuntimeTest} />
@@ -159,8 +175,24 @@ function AppContent() {
               <RuntimeDiagnosticsPage />
             </ReplitLayout>
           )} />
+          <ProtectedRoute path="/user/:username" component={() => (
+            <ReplitLayout>
+              <UserProfile />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/user/settings" component={() => (
+            <ReplitLayout>
+              <UserSettings />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/templates" component={() => (
+            <ReplitLayout>
+              <TemplatesPage />
+            </ReplitLayout>
+          )} />
           <Route component={NotFound} />
-        </Switch>
+          </Switch>
+        </Suspense>
         <AuthDebug />
       </div>
     </TooltipProvider>
