@@ -28,16 +28,14 @@ interface DeploymentManagerProps {
 }
 
 interface Deployment {
-  id: string;
-  name: string;
-  status: 'deploying' | 'active' | 'error' | 'paused' | 'building';
-  url: string;
-  branch: string;
-  commit: string;
+  id: number;
+  projectId: number;
+  status: string; // 'deploying' | 'running' | 'stopped' | 'failed'
+  url: string | null;
+  logs: string | null;
+  version: string;
   createdAt: string;
   updatedAt: string;
-  region: string;
-  environment: 'production' | 'staging' | 'development';
 }
 
 interface DeploymentStats {
@@ -80,7 +78,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   const [deploymentName, setDeploymentName] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('main');
   const [selectedRegion, setSelectedRegion] = useState('us-east-1');
-  const [selectedEnvironment, setSelectedEnvironment] = useState<Deployment['environment']>('production');
+  const [selectedEnvironment, setSelectedEnvironment] = useState('production');
   const [isDeploying, setIsDeploying] = useState(false);
   const [autoScaling, setAutoScaling] = useState(true);
   const [customDomain, setCustomDomain] = useState('');
@@ -103,45 +101,27 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
 
   const loadDeployments = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/deployments`);
+      const response = await fetch(`/api/projects/${projectId}/deployments`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setDeployments(data);
         if (data.length > 0 && !selectedDeployment) {
           setSelectedDeployment(data[0]);
         }
+      } else {
+        console.error('Failed to load deployments:', response.status);
+        setDeployments([]);
       }
     } catch (error) {
       console.error('Failed to load deployments:', error);
-      // Mock data
-      const mockDeployments: Deployment[] = [
-        {
-          id: '1',
-          name: 'Production',
-          status: 'active',
-          url: 'https://myapp.replit.app',
-          branch: 'main',
-          commit: 'abc123',
-          createdAt: '2024-01-20T10:00:00Z',
-          updatedAt: '2024-01-20T10:05:00Z',
-          region: 'us-east-1',
-          environment: 'production'
-        },
-        {
-          id: '2',
-          name: 'Staging',
-          status: 'deploying',
-          url: 'https://myapp-staging.replit.app',
-          branch: 'develop',
-          commit: 'def456',
-          createdAt: '2024-01-19T15:00:00Z',
-          updatedAt: '2024-01-20T09:00:00Z',
-          region: 'us-west-1',
-          environment: 'staging'
-        }
-      ];
-      setDeployments(mockDeployments);
-      setSelectedDeployment(mockDeployments[0]);
+      setDeployments([]);
+      toast({
+        title: "Error",
+        description: "Failed to load deployments",
+        variant: "destructive"
+      });
     }
   };
 
@@ -167,72 +147,79 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
     }
   };
 
-  const loadBuildLogs = async (deploymentId: string) => {
+  const loadBuildLogs = async (deploymentId: number) => {
     try {
-      const response = await fetch(`/api/deployments/${deploymentId}/logs`);
+      const response = await fetch(`/api/deployments/${deploymentId}/logs`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
-        setBuildLogs(data);
+        // Convert logs array to BuildLog format
+        const formattedLogs: BuildLog[] = data.logs.map((log: string, index: number) => ({
+          timestamp: new Date().toLocaleTimeString(),
+          message: log,
+          level: 'info' as const
+        }));
+        setBuildLogs(formattedLogs);
+      } else {
+        setBuildLogs([]);
       }
     } catch (error) {
       console.error('Failed to load build logs:', error);
-      // Mock logs
-      setBuildLogs([
-        { timestamp: '10:00:00', message: 'Starting deployment...', level: 'info' },
-        { timestamp: '10:00:05', message: 'Installing dependencies...', level: 'info' },
-        { timestamp: '10:00:45', message: 'Building application...', level: 'info' },
-        { timestamp: '10:01:30', message: 'Optimizing assets...', level: 'info' },
-        { timestamp: '10:02:00', message: 'Warning: Large bundle size detected', level: 'warning' },
-        { timestamp: '10:02:30', message: 'Deployment successful!', level: 'info' }
-      ]);
+      setBuildLogs([]);
     }
   };
 
-  const loadEnvVars = async (deploymentId: string) => {
+  const loadEnvVars = async (deploymentId: number) => {
     try {
-      const response = await fetch(`/api/deployments/${deploymentId}/env`);
+      // Load environment variables from project, not deployment
+      const response = await fetch(`/api/projects/${projectId}/environment`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
-        setEnvVars(data);
+        // Map to our format
+        const vars: EnvironmentVariable[] = data.map((v: any) => ({
+          key: v.key,
+          value: v.isSecret ? '****' : v.value,
+          isSecret: v.isSecret
+        }));
+        setEnvVars(vars);
+      } else {
+        setEnvVars([]);
       }
     } catch (error) {
       console.error('Failed to load env vars:', error);
-      // Mock env vars
-      setEnvVars([
-        { key: 'DATABASE_URL', value: '****', isSecret: true },
-        { key: 'API_KEY', value: '****', isSecret: true },
-        { key: 'NODE_ENV', value: 'production', isSecret: false },
-        { key: 'PORT', value: '3000', isSecret: false }
-      ]);
+      setEnvVars([]);
     }
   };
 
   const handleDeploy = async () => {
-    if (!deploymentName.trim()) return;
-    
     setIsDeploying(true);
     try {
       const response = await fetch(`/api/projects/${projectId}/deploy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: deploymentName,
-          branch: selectedBranch,
-          region: selectedRegion,
-          environment: selectedEnvironment,
-          autoScaling,
-          customDomain
-        })
+        credentials: 'include',
+        body: JSON.stringify({})
       });
 
       if (response.ok) {
+        const result = await response.json();
         await loadDeployments();
         setShowDeployDialog(false);
         setDeploymentName('');
         setCustomDomain('');
         toast({
           title: "Deployment Started",
-          description: "Your application is being deployed",
+          description: `Your application is being deployed. Deployment ID: ${result.deploymentId}`,
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Deployment Failed",
+          description: error.message || "Failed to start deployment",
+          variant: "destructive"
         });
       }
     } catch (error) {
@@ -248,15 +235,19 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
 
   const handleRedeploy = async (deployment: Deployment) => {
     try {
-      const response = await fetch(`/api/deployments/${deployment.id}/redeploy`, {
-        method: 'POST'
+      // Redeploy by calling the deploy endpoint again
+      const response = await fetch(`/api/projects/${projectId}/deploy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({})
       });
 
       if (response.ok) {
         await loadDeployments();
         toast({
           title: "Redeployment Started",
-          description: `Redeploying ${deployment.name}`,
+          description: `Redeploying version ${deployment.version}`,
         });
       }
     } catch (error) {
@@ -271,14 +262,15 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   const handleStop = async (deployment: Deployment) => {
     try {
       const response = await fetch(`/api/deployments/${deployment.id}/stop`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
       });
 
       if (response.ok) {
         await loadDeployments();
         toast({
           title: "Deployment Stopped",
-          description: `${deployment.name} has been stopped`,
+          description: `Deployment ${deployment.version} has been stopped`,
         });
       }
     } catch (error) {
@@ -291,12 +283,13 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   };
 
   const handleAddEnvVar = async () => {
-    if (!newEnvKey.trim() || !selectedDeployment) return;
+    if (!newEnvKey.trim()) return;
 
     try {
-      const response = await fetch(`/api/deployments/${selectedDeployment.id}/env`, {
+      const response = await fetch(`/api/projects/${projectId}/environment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           key: newEnvKey,
           value: newEnvValue,
@@ -305,7 +298,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
       });
 
       if (response.ok) {
-        await loadEnvVars(selectedDeployment.id);
+        await loadEnvVars(selectedDeployment?.id || 0);
         setNewEnvKey('');
         setNewEnvValue('');
         setNewEnvSecret(false);
@@ -323,23 +316,23 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
     }
   };
 
-  const getStatusIcon = (status: Deployment['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'running': return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'deploying': return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
-      case 'building': return <Loader2 className="h-4 w-4 animate-spin text-yellow-500" />;
-      case 'error': return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'paused': return <Pause className="h-4 w-4 text-gray-500" />;
+      case 'stopped': return <Pause className="h-4 w-4 text-gray-500" />;
+      case 'failed': return <XCircle className="h-4 w-4 text-red-500" />;
+      default: return <AlertCircle className="h-4 w-4 text-yellow-500" />;
     }
   };
 
-  const getStatusColor = (status: Deployment['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-500';
+      case 'running': return 'bg-green-500';
       case 'deploying': return 'bg-blue-500';
-      case 'building': return 'bg-yellow-500';
-      case 'error': return 'bg-red-500';
-      case 'paused': return 'bg-gray-500';
+      case 'stopped': return 'bg-gray-500';
+      case 'failed': return 'bg-red-500';
+      default: return 'bg-yellow-500';
     }
   };
 
@@ -390,19 +383,15 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
                             {getStatusIcon(deployment.status)}
-                            <span className="font-medium text-sm">{deployment.name}</span>
+                            <span className="font-medium text-sm">Deployment #{deployment.id}</span>
                             <Badge variant="outline" className="text-xs">
-                              {deployment.environment}
+                              v{deployment.version}
                             </Badge>
                           </div>
                           <div className="flex items-center space-x-4 mt-1 text-xs text-muted-foreground">
                             <span className="flex items-center">
-                              <Globe className="h-3 w-3 mr-1" />
-                              {deployment.region}
-                            </span>
-                            <span className="flex items-center">
-                              <GitBranch className="h-3 w-3 mr-1" />
-                              {deployment.branch}
+                              <Server className="h-3 w-3 mr-1" />
+                              {deployment.status}
                             </span>
                             <span className="flex items-center">
                               <Clock className="h-3 w-3 mr-1" />
@@ -411,17 +400,19 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
                           </div>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(deployment.url, '_blank');
-                            }}
-                            className="h-7 w-7"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </Button>
+                          {deployment.url && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(deployment.url, '_blank');
+                              }}
+                              className="h-7 w-7"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                           <Button
                             size="icon"
                             variant="ghost"
@@ -447,23 +438,25 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
                     <h4 className="text-sm font-medium mb-2">Deployment URL</h4>
                     <div className="flex items-center space-x-2">
                       <Input
-                        value={selectedDeployment.url}
+                        value={selectedDeployment.url || 'Not yet available'}
                         readOnly
                         className="font-mono text-xs"
                       />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          navigator.clipboard.writeText(selectedDeployment.url);
-                          toast({
-                            title: "Copied",
-                            description: "URL copied to clipboard",
-                          });
-                        }}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
+                      {selectedDeployment.url && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedDeployment.url || '');
+                            toast({
+                              title: "Copied",
+                              description: "URL copied to clipboard",
+                            });
+                          }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
 
@@ -650,19 +643,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="environment">Environment</Label>
-              <Select value={selectedEnvironment} onValueChange={(v) => setSelectedEnvironment(v as Deployment['environment'])}>
-                <SelectTrigger id="environment">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="production">Production</SelectItem>
-                  <SelectItem value="staging">Staging</SelectItem>
-                  <SelectItem value="development">Development</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
             <div className="flex items-center justify-between">
               <div>
                 <Label>Auto Scaling</Label>
@@ -684,7 +665,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
             <Button variant="outline" onClick={() => setShowDeployDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleDeploy} disabled={!deploymentName.trim() || isDeploying}>
+            <Button onClick={handleDeploy} disabled={isDeploying}>
               {isDeploying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Deploy
             </Button>

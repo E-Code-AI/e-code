@@ -20,7 +20,7 @@ interface GlobalSearchProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: number;
-  onFileSelect: (fileId: number) => void;
+  onFileSelect: (file: { id: number; name: string; content?: string | null; isFolder: boolean; parentId: number | null; projectId: number; createdAt: Date; updatedAt: Date }) => void;
 }
 
 interface SearchResult {
@@ -249,9 +249,25 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
     }
   };
 
-  const handleResultClick = (result: SearchResult) => {
-    onFileSelect(result.id);
-    onClose();
+  const handleResultClick = async (result: SearchResult) => {
+    try {
+      // Fetch full file details
+      const response = await fetch(`/api/files/${result.id}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const file = await response.json();
+        onFileSelect(file);
+        onClose();
+      }
+    } catch (error) {
+      toast({
+        title: 'Failed to open file',
+        description: 'Could not load file details',
+        variant: 'destructive'
+      });
+    }
   };
 
   const toggleResultExpanded = (resultId: number) => {

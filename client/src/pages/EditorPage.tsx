@@ -19,7 +19,10 @@ import { GlobalSearch } from '@/components/GlobalSearch';
 import { GitIntegration } from '@/components/GitIntegration';
 import { ReplitDB } from '@/components/ReplitDB';
 import { DeploymentManager } from '@/components/DeploymentManager';
+import { ImportExport } from '@/components/ImportExport';
 import { AIAssistant } from '@/components/AIAssistant';
+import { BillingSystem } from '@/components/BillingSystem';
+import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 
@@ -412,7 +415,7 @@ export default function EditorPage() {
                 selectedCode={selectedCode}
               />
             </TabsContent>
-            <TabsContent value="settings" className="h-[calc(100%-40px)] m-0 p-4">
+            <TabsContent value="settings" className="h-[calc(100%-40px)] m-0 p-4 overflow-y-auto">
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Project Settings</h3>
                 <div className="space-y-2">
@@ -422,6 +425,12 @@ export default function EditorPage() {
                   <p className="text-sm text-muted-foreground">
                     Created: {project?.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'Unknown'}
                   </p>
+                </div>
+                
+                <div className="pt-4 space-y-4">
+                  <ImportExport projectId={projectIdNum} />
+                  <BillingSystem userId={user?.id || 0} />
+                  <ExtensionsMarketplace projectId={projectIdNum} />
                 </div>
               </div>
             </TabsContent>
