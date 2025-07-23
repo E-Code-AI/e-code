@@ -1,245 +1,276 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
+import { useLocation } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
+import { useQuery } from '@tanstack/react-query';
 import { 
-  CommandDialog, 
-  CommandEmpty, 
-  CommandGroup, 
-  CommandInput, 
-  CommandItem, 
-  CommandList, 
-  CommandSeparator
-} from '@/components/ui/command';
-import { File, Project } from '@shared/schema';
-import { 
-  ArrowRight, 
-  File as FileIcon, 
-  FolderOpen, 
-  Terminal, 
-  Settings, 
-  Play, 
-  PlusCircle, 
-  FileCode, 
-  Search,
-  User,
-  GitBranch,
-  Upload,
-  Download,
-  Trash,
-  Clipboard,
-  Save
+  FileIcon, FolderIcon, Settings, User, LogOut, Home, Code, 
+  Terminal, Package, GitBranch, Rocket, Search, Zap, Users,
+  Book, MessageCircle, BarChart, Shield, Plus, Play, Save,
+  Copy, Clipboard, Trash2, Upload, Download, Eye, EyeOff
 } from 'lucide-react';
 
-interface CommandPaletteProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  project: Project | undefined;
-  files: File[];
-  onFileSelect: (file: File) => void;
-  onCreateFile: (isFolder: boolean) => void;
-  onActionSelect: (action: string) => void;
+interface CommandItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  shortcut?: string;
+  action: () => void;
+  group: string;
 }
 
-export function CommandPalette({ 
-  open, 
-  onOpenChange, 
-  project, 
-  files,
-  onFileSelect,
-  onCreateFile,
-  onActionSelect
-}: CommandPaletteProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+export function CommandPalette() {
+  const [open, setOpen] = useState(false);
+  const [, navigate] = useLocation();
+  const { user, logoutMutation } = useAuth();
   
-  // Reset search when dialog opens
+  // Fetch recent projects and files
+  const { data: recentProjects } = useQuery({
+    queryKey: ['/api/projects/recent'],
+    enabled: !!user
+  });
+
+  // Keyboard shortcut to open command palette
   useEffect(() => {
-    if (open) {
-      setSearchQuery('');
-    }
-  }, [open]);
-  
-  // Keyboard shortcut to open command palette (Ctrl+K or Cmd+K)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    const down = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        onOpenChange(true);
+        setOpen((open) => !open);
       }
     };
     
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onOpenChange]);
-  
-  const runActions = [
-    { name: 'Run', icon: <Play className="h-4 w-4 mr-2" />, value: 'run' },
-    { name: 'Deploy', icon: <Upload className="h-4 w-4 mr-2" />, value: 'deploy' },
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    logoutMutation.mutate();
+    setOpen(false);
+  }, [logoutMutation]);
+
+  const commands: CommandItem[] = [
+    // Navigation
+    {
+      id: 'nav-home',
+      label: 'Go to Home',
+      icon: <Home className="h-4 w-4" />,
+      shortcut: '⌘H',
+      action: () => { navigate('/'); setOpen(false); },
+      group: 'Navigation'
+    },
+    {
+      id: 'nav-dashboard',
+      label: 'Go to Dashboard',
+      icon: <BarChart className="h-4 w-4" />,
+      shortcut: '⌘D',
+      action: () => { navigate('/dashboard'); setOpen(false); },
+      group: 'Navigation'
+    },
+    {
+      id: 'nav-projects',
+      label: 'Go to Projects',
+      icon: <FolderIcon className="h-4 w-4" />,
+      shortcut: '⌘P',
+      action: () => { navigate('/projects'); setOpen(false); },
+      group: 'Navigation'
+    },
+    {
+      id: 'nav-templates',
+      label: 'Browse Templates',
+      icon: <Book className="h-4 w-4" />,
+      action: () => { navigate('/templates'); setOpen(false); },
+      group: 'Navigation'
+    },
+    {
+      id: 'nav-community',
+      label: 'Go to Community',
+      icon: <Users className="h-4 w-4" />,
+      action: () => { navigate('/community'); setOpen(false); },
+      group: 'Navigation'
+    },
+    
+    // Actions
+    {
+      id: 'action-new-project',
+      label: 'Create New Project',
+      icon: <Plus className="h-4 w-4" />,
+      shortcut: '⌘N',
+      action: () => { 
+        window.dispatchEvent(new CustomEvent('create-project'));
+        setOpen(false); 
+      },
+      group: 'Actions'
+    },
+    {
+      id: 'action-run',
+      label: 'Run Project',
+      icon: <Play className="h-4 w-4" />,
+      shortcut: '⌘⏎',
+      action: () => {
+        window.dispatchEvent(new CustomEvent('run-project'));
+        setOpen(false);
+      },
+      group: 'Actions'
+    },
+    {
+      id: 'action-save',
+      label: 'Save File',
+      icon: <Save className="h-4 w-4" />,
+      shortcut: '⌘S',
+      action: () => {
+        window.dispatchEvent(new CustomEvent('save-file'));
+        setOpen(false);
+      },
+      group: 'Actions'
+    },
+    {
+      id: 'action-search',
+      label: 'Global Search',
+      icon: <Search className="h-4 w-4" />,
+      shortcut: '⌘⇧F',
+      action: () => {
+        window.dispatchEvent(new CustomEvent('global-search'));
+        setOpen(false);
+      },
+      group: 'Actions'
+    },
+    
+    // Tools
+    {
+      id: 'tool-terminal',
+      label: 'Open Terminal',
+      icon: <Terminal className="h-4 w-4" />,
+      shortcut: '⌘`',
+      action: () => {
+        window.dispatchEvent(new CustomEvent('toggle-terminal'));
+        setOpen(false);
+      },
+      group: 'Tools'
+    },
+    {
+      id: 'tool-packages',
+      label: 'Manage Packages',
+      icon: <Package className="h-4 w-4" />,
+      action: () => {
+        window.dispatchEvent(new CustomEvent('open-packages'));
+        setOpen(false);
+      },
+      group: 'Tools'
+    },
+    {
+      id: 'tool-git',
+      label: 'Git Panel',
+      icon: <GitBranch className="h-4 w-4" />,
+      shortcut: '⌘⇧G',
+      action: () => {
+        window.dispatchEvent(new CustomEvent('open-git'));
+        setOpen(false);
+      },
+      group: 'Tools'
+    },
+    {
+      id: 'tool-deploy',
+      label: 'Deploy Project',
+      icon: <Rocket className="h-4 w-4" />,
+      action: () => {
+        window.dispatchEvent(new CustomEvent('deploy-project'));
+        setOpen(false);
+      },
+      group: 'Tools'
+    },
+    
+    // User
+    {
+      id: 'user-profile',
+      label: 'View Profile',
+      icon: <User className="h-4 w-4" />,
+      action: () => { 
+        if (user) navigate(`/user/${user.username}`); 
+        setOpen(false); 
+      },
+      group: 'User'
+    },
+    {
+      id: 'user-settings',
+      label: 'Settings',
+      icon: <Settings className="h-4 w-4" />,
+      shortcut: '⌘,',
+      action: () => { navigate('/user/settings'); setOpen(false); },
+      group: 'User'
+    },
+    {
+      id: 'user-logout',
+      label: 'Log Out',
+      icon: <LogOut className="h-4 w-4" />,
+      action: handleLogout,
+      group: 'User'
+    }
   ];
-  
-  const fileActions = [
-    { name: 'New File', icon: <FileIcon className="h-4 w-4 mr-2" />, value: 'new-file' },
-    { name: 'New Folder', icon: <FolderOpen className="h-4 w-4 mr-2" />, value: 'new-folder' },
-    { name: 'Save All', icon: <Save className="h-4 w-4 mr-2" />, value: 'save-all' },
-  ];
-  
-  const gitActions = [
-    { name: 'Git Pull', icon: <Download className="h-4 w-4 mr-2" />, value: 'git-pull' },
-    { name: 'Git Push', icon: <Upload className="h-4 w-4 mr-2" />, value: 'git-push' },
-    { name: 'Git Commit', icon: <GitBranch className="h-4 w-4 mr-2" />, value: 'git-commit' },
-  ];
-  
-  const miscActions = [
-    { name: 'Settings', icon: <Settings className="h-4 w-4 mr-2" />, value: 'settings' },
-    { name: 'Terminal', icon: <Terminal className="h-4 w-4 mr-2" />, value: 'terminal' },
-    { name: 'Share', icon: <User className="h-4 w-4 mr-2" />, value: 'share' },
-  ];
-  
-  // Filter files based on search query
-  const filteredFiles = searchQuery.length > 0
-    ? files.filter(file => file.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : [];
-  
-  // Filter actions based on search query
-  const searchActions = [...runActions, ...fileActions, ...gitActions, ...miscActions];
-  const filteredActions = searchQuery.length > 0
-    ? searchActions.filter(action => action.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : searchActions;
-  
+
+  // Add admin command if user is admin
+  if (user?.username === 'admin') {
+    commands.push({
+      id: 'admin-dashboard',
+      label: 'Admin Dashboard',
+      icon: <Shield className="h-4 w-4" />,
+      action: () => { navigate('/admin'); setOpen(false); },
+      group: 'Admin'
+    });
+  }
+
+  // Group commands
+  const groupedCommands = commands.reduce((acc, command) => {
+    if (!acc[command.group]) acc[command.group] = [];
+    acc[command.group].push(command);
+    return acc;
+  }, {} as Record<string, CommandItem[]>);
+
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput 
-        placeholder="Type a command or search..." 
-        value={searchQuery}
-        onValueChange={setSearchQuery}
-      />
+    <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandInput placeholder="Type a command or search..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         
-        {searchQuery.length === 0 && (
+        {/* Recent Projects */}
+        {recentProjects && recentProjects.length > 0 && (
           <>
-            <CommandGroup heading="Run">
-              {runActions.map((action) => (
+            <CommandGroup heading="Recent Projects">
+              {recentProjects.slice(0, 5).map((project: any) => (
                 <CommandItem
-                  key={action.value}
+                  key={project.id}
                   onSelect={() => {
-                    onActionSelect(action.value);
-                    onOpenChange(false);
+                    navigate(`/editor/${project.id}`);
+                    setOpen(false);
                   }}
                 >
-                  {action.icon}
-                  <span>{action.name}</span>
+                  <Code className="mr-2 h-4 w-4" />
+                  <span>{project.name}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
-            
             <CommandSeparator />
-            
-            <CommandGroup heading="File">
-              {fileActions.map((action) => (
-                <CommandItem
-                  key={action.value}
-                  onSelect={() => {
-                    if (action.value === 'new-file') {
-                      onCreateFile(false);
-                    } else if (action.value === 'new-folder') {
-                      onCreateFile(true);
-                    } else {
-                      onActionSelect(action.value);
-                    }
-                    onOpenChange(false);
-                  }}
-                >
-                  {action.icon}
-                  <span>{action.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-            
-            {project && (
-              <>
-                <CommandSeparator />
-                
-                <CommandGroup heading="Git">
-                  {gitActions.map((action) => (
-                    <CommandItem
-                      key={action.value}
-                      onSelect={() => {
-                        onActionSelect(action.value);
-                        onOpenChange(false);
-                      }}
-                    >
-                      {action.icon}
-                      <span>{action.name}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </>
-            )}
-            
-            <CommandSeparator />
-            
-            <CommandGroup heading="Tools">
-              {miscActions.map((action) => (
-                <CommandItem
-                  key={action.value}
-                  onSelect={() => {
-                    onActionSelect(action.value);
-                    onOpenChange(false);
-                  }}
-                >
-                  {action.icon}
-                  <span>{action.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
           </>
         )}
         
-        {searchQuery.length > 0 && filteredActions.length > 0 && (
-          <CommandGroup heading="Actions">
-            {filteredActions.map((action) => (
+        {/* Command Groups */}
+        {Object.entries(groupedCommands).map(([group, items]) => (
+          <CommandGroup key={group} heading={group}>
+            {items.map((item) => (
               <CommandItem
-                key={action.value}
-                onSelect={() => {
-                  if (action.value === 'new-file') {
-                    onCreateFile(false);
-                  } else if (action.value === 'new-folder') {
-                    onCreateFile(true);
-                  } else {
-                    onActionSelect(action.value);
-                  }
-                  onOpenChange(false);
-                }}
+                key={item.id}
+                onSelect={item.action}
               >
-                {action.icon}
-                <span>{action.name}</span>
+                {item.icon}
+                <span className="ml-2">{item.label}</span>
+                {item.shortcut && (
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {item.shortcut}
+                  </span>
+                )}
               </CommandItem>
             ))}
           </CommandGroup>
-        )}
-        
-        {searchQuery.length > 0 && filteredFiles.length > 0 && (
-          <>
-            {filteredActions.length > 0 && <CommandSeparator />}
-            
-            <CommandGroup heading="Files">
-              {filteredFiles.map((file) => (
-                <CommandItem
-                  key={file.id}
-                  onSelect={() => {
-                    onFileSelect(file);
-                    onOpenChange(false);
-                  }}
-                >
-                  {file.isFolder ? (
-                    <FolderOpen className="h-4 w-4 mr-2" />
-                  ) : (
-                    <FileCode className="h-4 w-4 mr-2" />
-                  )}
-                  <span>{file.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </>
-        )}
+        ))}
       </CommandList>
     </CommandDialog>
   );

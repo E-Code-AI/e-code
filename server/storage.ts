@@ -462,7 +462,12 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const user: User = {
       id: this.userIdCounter++,
-      ...userData,
+      username: userData.username,
+      password: userData.password,
+      email: userData.email ?? null,
+      displayName: userData.displayName ?? null,
+      avatarUrl: userData.avatarUrl ?? null,
+      bio: userData.bio ?? null,
       createdAt: now,
       updatedAt: now
     };
@@ -506,7 +511,11 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const project: Project = {
       id: this.projectIdCounter++,
-      ...projectData,
+      name: projectData.name,
+      ownerId: projectData.ownerId,
+      description: projectData.description ?? null,
+      visibility: projectData.visibility ?? 'private',
+      language: projectData.language ?? null,
       createdAt: now,
       updatedAt: now
     };
@@ -587,8 +596,11 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const file: File = {
       id: this.fileIdCounter++,
-      ...fileData,
-      content: fileData.content || '',
+      name: fileData.name,
+      projectId: fileData.projectId,
+      content: fileData.content ?? null,
+      isFolder: fileData.isFolder ?? false,
+      parentId: fileData.parentId ?? null,
       createdAt: now,
       updatedAt: now
     };
@@ -672,7 +684,9 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const collaborator: ProjectCollaborator = {
       id: this.collaboratorIdCounter++,
-      ...collaboratorData,
+      projectId: collaboratorData.projectId,
+      userId: collaboratorData.userId,
+      role: collaboratorData.role ?? 'member',
       createdAt: now
     };
     
@@ -699,7 +713,11 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const deployment: Deployment = {
       id: this.deploymentIdCounter++,
-      ...deploymentData,
+      projectId: deploymentData.projectId,
+      version: deploymentData.version,
+      status: deploymentData.status ?? 'pending',
+      url: deploymentData.url ?? null,
+      logs: deploymentData.logs ?? null,
       createdAt: now,
       updatedAt: now
     };
@@ -739,7 +757,10 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const variable: EnvironmentVariable = {
       id: this.environmentVariableIdCounter++,
-      ...variableData,
+      projectId: variableData.projectId,
+      key: variableData.key,
+      value: variableData.value,
+      isSecret: variableData.isSecret ?? false,
       createdAt: now,
       updatedAt: now
     };

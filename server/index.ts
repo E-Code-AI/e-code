@@ -3,10 +3,15 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db-init";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { performanceMonitor } from "./monitoring/performance";
+import monitoringRoutes from "./monitoring/routes";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add performance monitoring middleware
+app.use(performanceMonitor.middleware());
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -48,6 +53,9 @@ app.use((req, res, next) => {
   }
   
   const server = await registerRoutes(app);
+
+  // Add monitoring routes
+  app.use('/api/monitoring', monitoringRoutes);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

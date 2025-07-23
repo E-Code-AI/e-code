@@ -27,11 +27,14 @@ const UserSettings = lazy(() => import("@/pages/UserSettings"));
 const TemplatesPage = lazy(() => import("@/pages/TemplatesPage"));
 const Community = lazy(() => import("@/pages/Community"));
 const SearchPage = lazy(() => import("@/pages/SearchPage"));
+const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import { SpotlightSearch } from "@/components/SpotlightSearch";
+import { CommandPalette } from "@/components/CommandPalette";
+import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 
 // Debug component to show authentication status
 function AuthDebug() {
@@ -106,6 +109,8 @@ function AppContent() {
       <div className="min-h-screen replit-layout-main">
         <Toaster />
         <SpotlightSearch open={spotlightOpen} onOpenChange={setSpotlightOpen} />
+        <CommandPalette />
+        <KeyboardShortcuts />
         <Suspense fallback={<PageLoader />}>
           <Switch>
           <Route path="/auth" component={AuthPage} />
@@ -200,6 +205,11 @@ function AppContent() {
           <ProtectedRoute path="/search" component={() => (
             <ReplitLayout>
               <SearchPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/admin" component={() => (
+            <ReplitLayout>
+              <AdminDashboard />
             </ReplitLayout>
           )} />
           <Route component={NotFound} />

@@ -1,344 +1,233 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useCollaboration } from '@/lib/collaboration';
-import { useAuth } from '@/hooks/use-auth';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { 
-  MessageSquare, 
-  Users, 
-  Send, 
-  AlertCircle,
-  Info,
-  User,
-  UserPlus
-} from 'lucide-react';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { formatDistanceToNow } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Users, UserPlus, MessageSquare, Video, Phone, Share2, Eye, Edit3, MousePointer } from 'lucide-react';
+import { useCollaboration } from '@/hooks/use-collaboration';
+import { useAuth } from '@/hooks/use-auth';
 
-interface CollaborationPanelProps {
-  projectId: number;
-  fileId: number;
-  visible: boolean;
-  onInviteClick: () => void;
-}
-
-interface ChatMessage {
+interface Collaborator {
   id: string;
-  userId: number;
   username: string;
-  text: string;
-  timestamp: number;
+  avatarUrl?: string;
+  color: string;
+  cursor?: { x: number; y: number; file?: string };
+  status: 'online' | 'idle' | 'offline';
+  lastSeen?: Date;
 }
 
-export function CollaborationPanel({ projectId, fileId, visible, onInviteClick }: CollaborationPanelProps) {
+export function CollaborationPanel({ projectId }: { projectId: number }) {
   const { user } = useAuth();
-  const { collaborators, cursors } = useCollaboration(projectId, fileId);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [messageText, setMessageText] = useState('');
-  const [activeTab, setActiveTab] = useState('chat');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { 
+    collaborators, 
+    activeUsers, 
+    sendMessage, 
+    awareness,
+    isConnected 
+  } = useCollaboration(projectId);
   
+  const [message, setMessage] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [showInvite, setShowInvite] = useState(false);
+
   const handleSendMessage = () => {
-    if (!messageText.trim() || !user) return;
-    
-    // Create a new message
-    const newMessage: ChatMessage = {
-      id: `msg_${Date.now()}`,
-      userId: user.id,
-      username: user.username,
-      text: messageText.trim(),
-      timestamp: Date.now()
-    };
-    
-    // Update local state
-    setChatMessages(prev => [...prev, newMessage]);
-    
-    // Send message to WebSocket
-    const socket = (window as any).collaborationSocket;
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      const message = {
-        type: 'chat_message',
-        data: {
-          text: messageText.trim(),
-          timestamp: Date.now()
-        },
-        userId: user.id,
-        username: user.username,
-        projectId,
-        fileId,
-        timestamp: Date.now()
-      };
-      
-      socket.send(JSON.stringify(message));
-    }
-    
-    setMessageText('');
-    inputRef.current?.focus();
-  };
-  
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+    if (message.trim()) {
+      sendMessage(message);
+      setMessage('');
     }
   };
-  
-  // Auto-scroll to bottom when new messages come in
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
-  
-  // Initialize WebSocket connection for chat
-  useEffect(() => {
-    // This would be handled through the useCollaboration hook in a real implementation
-    // We'd add a listener for 'chat_message' events
-    
-    // For demo purposes, let's add a welcome message when the component mounts
-    if (chatMessages.length === 0) {
-      setChatMessages([
-        {
-          id: 'welcome',
-          userId: 0,
-          username: 'PLOT',
-          text: 'Welcome to the project chat! Collaborate with your team in real-time.',
-          timestamp: Date.now()
-        }
-      ]);
-    }
-    
-    // Listen for incoming chat messages from the WebSocket connection
-    const handleWebSocketMessage = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'chat_message' && data.projectId === projectId) {
-          // Add message to chat
-          setChatMessages(prev => [
-            ...prev,
-            {
-              id: `msg_${data.timestamp}`,
-              userId: data.userId,
-              username: data.username,
-              text: data.data.text,
-              timestamp: data.data.timestamp
-            }
-          ]);
-        }
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    };
-    
-    // Access the WebSocket instance from the collaboration hook
-    // This would typically be provided by the hook, but we're simulating it here
-    if ((window as any).collaborationSocket) {
-      (window as any).collaborationSocket.addEventListener('message', handleWebSocketMessage);
-    }
-    
-    return () => {
-      if ((window as any).collaborationSocket) {
-        (window as any).collaborationSocket.removeEventListener('message', handleWebSocketMessage);
-      }
-    };
-  }, [projectId, chatMessages.length]);
-  
-  if (!visible) return null;
-  
-  const formatTimestamp = (timestamp: number) => {
-    return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+
+  const handleInvite = () => {
+    // TODO: Implement invite functionality
+    console.log('Inviting:', inviteEmail);
+    setInviteEmail('');
+    setShowInvite(false);
   };
-  
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+
+  const getInitials = (username: string) => {
+    return username.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
-  
-  // Generate a consistent color based on username
-  const getColorForUser = (username: string) => {
-    const colors = [
-      'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
-      'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'
-    ];
-    
-    // Simple hash function
-    let hash = 0;
-    for (let i = 0; i < username.length; i++) {
-      hash = username.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    
-    return colors[Math.abs(hash) % colors.length];
+
+  const formatLastSeen = (date?: Date) => {
+    if (!date) return 'Never';
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
   };
-  
+
   return (
-    <div className="flex flex-col h-full border-l border-border bg-background">
-      <div className="p-3 border-b border-border flex items-center justify-between">
-        <h2 className="text-sm font-medium">Multiplayer</h2>
-        
-        <div className="flex items-center space-x-1">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 w-8 p-0" 
-                  onClick={onInviteClick}
-                >
-                  <UserPlus className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Invite collaborators</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
-      
-      <Tabs defaultValue="chat" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <div className="px-1 pt-2">
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="chat" className="text-xs">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Chat
-            </TabsTrigger>
-            <TabsTrigger value="users" className="text-xs">
-              <Users className="h-4 w-4 mr-2" />
-              Users {collaborators.length > 0 && `(${collaborators.length + 1})`}
-            </TabsTrigger>
-          </TabsList>
-        </div>
-        
-        <TabsContent value="chat" className="flex-1 flex flex-col p-0 m-0">
-          <ScrollArea className="flex-1 p-3">
-            {chatMessages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4">
-                <Info className="h-8 w-8 mb-2" />
-                <p className="text-sm">No messages yet. Start the conversation!</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {chatMessages.map((message) => (
-                  <div key={message.id} className="flex items-start gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className={getColorForUser(message.username)}>
-                        {getInitials(message.username)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center mb-1">
-                        <span className="text-xs font-medium">{message.username}</span>
-                        <span className="text-xs text-muted-foreground ml-2">
-                          {formatTimestamp(message.timestamp)}
-                        </span>
-                      </div>
-                      <p className="text-sm">{message.text}</p>
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </ScrollArea>
-          
-          <div className="p-3 border-t border-border mt-auto">
-            <div className="flex items-center space-x-2">
-              <Input
-                ref={inputRef}
-                placeholder="Type a message..."
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleSendMessage}
-                size="sm"
-                disabled={!messageText.trim()}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+    <div className="h-full flex flex-col">
+      <Card className="flex-1 border-0">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Collaboration</CardTitle>
+              <CardDescription>
+                {isConnected ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+                    {activeUsers.length} active
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 bg-gray-400 rounded-full" />
+                    Offline
+                  </span>
+                )}
+              </CardDescription>
             </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowInvite(!showInvite)}
+            >
+              <UserPlus className="h-4 w-4 mr-1" />
+              Invite
+            </Button>
           </div>
-        </TabsContent>
+        </CardHeader>
         
-        <TabsContent value="users" className="flex-1 p-3 m-0">
-          {collaborators.length === 0 && !user ? (
-            <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
-              <AlertCircle className="h-8 w-8 mb-2" />
-              <p className="text-sm">No users connected</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {/* Current user */}
-              {user && (
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-8 w-8">
-                    {user.avatarUrl ? (
-                      <AvatarImage src={user.avatarUrl} alt={user.username} />
-                    ) : (
-                      <AvatarFallback className={getColorForUser(user.username)}>
-                        {getInitials(user.username)}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">{user.username} (you)</p>
-                    <p className="text-xs text-muted-foreground">Active now</p>
-                  </div>
-                </div>
-              )}
-              
-              {/* Other collaborators */}
-              {collaborators.length > 0 && (
-                <>
-                  <Separator />
-                  {collaborators.map((collab) => (
-                    <div key={collab.userId} className="flex items-center space-x-3">
+        <CardContent className="flex-1 p-0">
+          <Tabs defaultValue="active" className="h-full">
+            <TabsList className="w-full justify-start rounded-none border-b">
+              <TabsTrigger value="active">Active Now</TabsTrigger>
+              <TabsTrigger value="all">All Members</TabsTrigger>
+              <TabsTrigger value="chat">Chat</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="active" className="p-4">
+              <div className="space-y-3">
+                {activeUsers.map((collab) => (
+                  <div key={collab.id} className="flex items-center gap-3">
+                    <div className="relative">
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback className={getColorForUser(collab.username)}>
+                        <AvatarImage src={collab.avatarUrl} />
+                        <AvatarFallback style={{ backgroundColor: collab.color }}>
                           {getInitials(collab.username)}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
+                      <span className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-background" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{collab.username}</p>
+                      {collab.cursor?.file && (
+                        <p className="text-xs text-muted-foreground">
+                          Editing: {collab.cursor.file}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7">
+                        <MousePointer className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7">
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                
+                {activeUsers.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No one else is currently active
+                  </p>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="all" className="p-4">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-3">
+                  {collaborators.map((collab) => (
+                    <div key={collab.id} className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={collab.avatarUrl} />
+                        <AvatarFallback style={{ backgroundColor: collab.color }}>
+                          {getInitials(collab.username)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
                         <p className="text-sm font-medium">{collab.username}</p>
-                        <p className="text-xs text-muted-foreground">Active now</p>
+                        <p className="text-xs text-muted-foreground">
+                          {collab.status === 'online' ? 'Online' : `Last seen ${formatLastSeen(collab.lastSeen)}`}
+                        </p>
                       </div>
+                      <Badge variant={collab.status === 'online' ? 'default' : 'secondary'}>
+                        {collab.status}
+                      </Badge>
                     </div>
                   ))}
-                </>
-              )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="chat" className="flex flex-col h-full p-0">
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  <div className="text-center text-sm text-muted-foreground">
+                    Chat feature coming soon
+                  </div>
+                </div>
+              </ScrollArea>
               
-              {/* Invite button for empty state */}
-              {collaborators.length === 0 && (
-                <div className="mt-6">
-                  <Button 
-                    onClick={onInviteClick} 
-                    variant="outline" 
-                    className="w-full"
-                  >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Invite collaborators
+              <div className="p-4 border-t">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Type a message..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    disabled
+                  />
+                  <Button size="icon" onClick={handleSendMessage} disabled>
+                    <MessageSquare className="h-4 w-4" />
                   </Button>
                 </div>
-              )}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      {/* Invite Dialog */}
+      {showInvite && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Invite Collaborator</CardTitle>
+              <CardDescription>
+                Send an invitation to collaborate on this project
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Input
+                placeholder="Email address"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setShowInvite(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleInvite}>
+                  Send Invite
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
