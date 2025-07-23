@@ -24,17 +24,24 @@ import {
   Code,
   Database,
   Globe,
+  Menu,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { SpotlightSearch } from "@/components/SpotlightSearch";
+import { useIsMobile } from "@/hooks/use-media-query";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();
   const [location, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -46,12 +53,65 @@ export function ReplitHeader() {
     <>
     <header className="h-14 bg-[var(--replit-surface)] border-b border-[var(--replit-border)] flex items-center justify-between px-4 replit-transition">
       {/* Logo et navigation principale */}
-      <div className="flex items-center space-x-6">
+      <div className="flex items-center space-x-2 md:space-x-6">
+        {/* Mobile menu button */}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[250px] bg-[var(--replit-surface)] border-[var(--replit-border)]">
+            <nav className="flex flex-col space-y-4 mt-6">
+              <Link href="/projects" onClick={() => setMobileMenuOpen(false)}>
+                <Button
+                  variant={isActive("/projects") ? "default" : "ghost"}
+                  className="w-full justify-start"
+                >
+                  My Repls
+                </Button>
+              </Link>
+              <Link href="/explore" onClick={() => setMobileMenuOpen(false)}>
+                <Button
+                  variant={isActive("/explore") ? "default" : "ghost"}
+                  className="w-full justify-start"
+                >
+                  Explore
+                </Button>
+              </Link>
+              <Link href="/community" onClick={() => setMobileMenuOpen(false)}>
+                <Button
+                  variant={isActive("/community") ? "default" : "ghost"}
+                  className="w-full justify-start"
+                >
+                  Community
+                </Button>
+              </Link>
+              <Link href="/teams" onClick={() => setMobileMenuOpen(false)}>
+                <Button
+                  variant={isActive("/teams") ? "default" : "ghost"}
+                  className="w-full justify-start"
+                >
+                  Teams
+                </Button>
+              </Link>
+              <Link href="/templates" onClick={() => setMobileMenuOpen(false)}>
+                <Button
+                  variant={isActive("/templates") ? "default" : "ghost"}
+                  className="w-full justify-start"
+                >
+                  Templates
+                </Button>
+              </Link>
+            </nav>
+          </SheetContent>
+        </Sheet>
+
         <Link href="/" className="flex items-center space-x-2 replit-hover rounded-lg px-2 py-1">
           <div className="w-8 h-8 bg-[var(--replit-green)] rounded-lg flex items-center justify-center">
             <Code className="h-5 w-5 text-black" />
           </div>
-          <span className="font-bold text-lg text-[var(--replit-text)]">PLOT</span>
+          <span className={cn("font-bold text-lg text-[var(--replit-text)]", isMobile && "hidden sm:block")}>PLOT</span>
         </Link>
 
         <nav className="hidden md:flex items-center space-x-1">
@@ -157,7 +217,7 @@ export function ReplitHeader() {
       </div>
 
       {/* Actions utilisateur */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2 md:space-x-3">
         {/* Bouton Plan Pro */}
         <Button
           variant="outline"
