@@ -50,6 +50,7 @@ import { apiManager } from "./api/api-manager";
 import { projectExporter } from "./import-export/exporter";
 import { deploymentManager } from "./deployment";
 import * as path from "path";
+import adminRoutes from "./admin/routes";
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -2183,6 +2184,9 @@ Would you like me to help you set up the OpenAI API integration?`,
   });
   
   // Git routes removed - using GitManager implementation above
+
+  // Admin routes
+  app.use("/api/admin", adminRoutes);
 
   return httpServer;
 }

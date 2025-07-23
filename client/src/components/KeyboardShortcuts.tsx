@@ -1,148 +1,158 @@
-import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Keyboard } from 'lucide-react';
 
-interface KeyboardShortcutsProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface Shortcut {
+  keys: string[];
+  description: string;
+  category: string;
 }
 
-interface ShortcutGroup {
-  name: string;
-  shortcuts: {
-    description: string;
-    keys: string[];
-  }[];
-}
-
-export function KeyboardShortcuts({ open, onOpenChange }: KeyboardShortcutsProps) {
-  // Match Replit's actual keyboard shortcuts
-  const shortcutGroups: ShortcutGroup[] = [
-    {
-      name: 'General',
-      shortcuts: [
-        { description: 'Command palette', keys: ['Ctrl', 'K'] },
-        { description: 'Toggle sidebar', keys: ['Ctrl', 'B'] },
-        { description: 'Save file', keys: ['Ctrl', 'S'] },
-        { description: 'Save all files', keys: ['Ctrl', 'Shift', 'S'] },
-        { description: 'Toggle Terminal', keys: ['Ctrl', '`'] },
-        { description: 'New file', keys: ['Alt', 'N'] },
-        { description: 'Close tab', keys: ['Ctrl', 'W'] },
-      ]
-    },
-    {
-      name: 'Editing',
-      shortcuts: [
-        { description: 'Cut', keys: ['Ctrl', 'X'] },
-        { description: 'Copy', keys: ['Ctrl', 'C'] },
-        { description: 'Paste', keys: ['Ctrl', 'V'] },
-        { description: 'Undo', keys: ['Ctrl', 'Z'] },
-        { description: 'Redo', keys: ['Ctrl', 'Y'] },
-        { description: 'Find', keys: ['Ctrl', 'F'] },
-        { description: 'Find & Replace', keys: ['Ctrl', 'H'] },
-        { description: 'Select all', keys: ['Ctrl', 'A'] },
-        { description: 'Duplicate line', keys: ['Shift', 'Alt', 'Down'] },
-        { description: 'Delete line', keys: ['Ctrl', 'Shift', 'K'] },
-        { description: 'Move line up', keys: ['Alt', 'Up'] },
-        { description: 'Move line down', keys: ['Alt', 'Down'] },
-        { description: 'Indent', keys: ['Tab'] },
-        { description: 'Outdent', keys: ['Shift', 'Tab'] },
-        { description: 'Comment line', keys: ['Ctrl', '/'] },
-      ]
-    },
-    {
-      name: 'Navigation',
-      shortcuts: [
-        { description: 'Go to line', keys: ['Ctrl', 'G'] },
-        { description: 'Go to file', keys: ['Ctrl', 'P'] },
-        { description: 'Next tab', keys: ['Ctrl', 'Tab'] },
-        { description: 'Previous tab', keys: ['Ctrl', 'Shift', 'Tab'] },
-        { description: 'Go to definition', keys: ['F12'] },
-        { description: 'Go back', keys: ['Alt', 'Left'] },
-        { description: 'Go forward', keys: ['Alt', 'Right'] },
-      ]
-    },
-    {
-      name: 'Run & Debug',
-      shortcuts: [
-        { description: 'Run', keys: ['Ctrl', 'Enter'] },
-        { description: 'Stop', keys: ['Ctrl', 'F2'] },
-        { description: 'Debug', keys: ['F5'] },
-        { description: 'Toggle breakpoint', keys: ['F9'] },
-        { description: 'Step over', keys: ['F10'] },
-        { description: 'Step into', keys: ['F11'] },
-        { description: 'Step out', keys: ['Shift', 'F11'] },
-      ]
-    },
-    {
-      name: 'Multiplayer',
-      shortcuts: [
-        { description: 'Focus chat', keys: ['Ctrl', 'Shift', 'C'] },
-        { description: 'Toggle users panel', keys: ['Ctrl', 'Shift', 'U'] },
-        { description: 'Invite others', keys: ['Ctrl', 'Shift', 'I'] },
-      ]
-    }
-  ];
+const shortcuts: Shortcut[] = [
+  // General
+  { keys: ['⌘', 'K'], description: 'Open command palette', category: 'General' },
+  { keys: ['⌘', ','], description: 'Open settings', category: 'General' },
+  { keys: ['⌘', 'P'], description: 'Quick open file', category: 'General' },
+  { keys: ['⌘', '⇧', 'P'], description: 'Show all commands', category: 'General' },
   
-  // Helper to render a keyboard key with appropriate styling
-  const KeyCap = ({ children }: { children: React.ReactNode }) => (
-    <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600">
-      {children}
-    </kbd>
+  // Navigation
+  { keys: ['⌘', 'H'], description: 'Go to home', category: 'Navigation' },
+  { keys: ['⌘', 'D'], description: 'Go to dashboard', category: 'Navigation' },
+  { keys: ['⌘', '1'], description: 'Focus editor', category: 'Navigation' },
+  { keys: ['⌘', '2'], description: 'Focus file explorer', category: 'Navigation' },
+  { keys: ['⌘', '3'], description: 'Focus terminal', category: 'Navigation' },
+  
+  // Editor
+  { keys: ['⌘', 'S'], description: 'Save file', category: 'Editor' },
+  { keys: ['⌘', '⇧', 'S'], description: 'Save all files', category: 'Editor' },
+  { keys: ['⌘', 'W'], description: 'Close file', category: 'Editor' },
+  { keys: ['⌘', '⇧', 'W'], description: 'Close all files', category: 'Editor' },
+  { keys: ['⌘', 'F'], description: 'Find in file', category: 'Editor' },
+  { keys: ['⌘', '⇧', 'F'], description: 'Find in project', category: 'Editor' },
+  { keys: ['⌘', 'G'], description: 'Go to line', category: 'Editor' },
+  { keys: ['⌘', '/'], description: 'Toggle comment', category: 'Editor' },
+  { keys: ['⌘', '['], description: 'Outdent line', category: 'Editor' },
+  { keys: ['⌘', ']'], description: 'Indent line', category: 'Editor' },
+  { keys: ['⌘', 'D'], description: 'Select next occurrence', category: 'Editor' },
+  { keys: ['⌘', '⇧', 'L'], description: 'Select all occurrences', category: 'Editor' },
+  { keys: ['⌥', '↑'], description: 'Move line up', category: 'Editor' },
+  { keys: ['⌥', '↓'], description: 'Move line down', category: 'Editor' },
+  { keys: ['⌥', '⇧', '↑'], description: 'Copy line up', category: 'Editor' },
+  { keys: ['⌥', '⇧', '↓'], description: 'Copy line down', category: 'Editor' },
+  
+  // Terminal
+  { keys: ['⌘', '`'], description: 'Toggle terminal', category: 'Terminal' },
+  { keys: ['⌘', '⇧', '`'], description: 'Create new terminal', category: 'Terminal' },
+  { keys: ['⌘', '⇧', '['], description: 'Previous terminal', category: 'Terminal' },
+  { keys: ['⌘', '⇧', ']'], description: 'Next terminal', category: 'Terminal' },
+  { keys: ['⌘', 'K'], description: 'Clear terminal', category: 'Terminal' },
+  
+  // Project
+  { keys: ['⌘', 'N'], description: 'New project', category: 'Project' },
+  { keys: ['⌘', '⇧', 'N'], description: 'New file', category: 'Project' },
+  { keys: ['⌘', '⏎'], description: 'Run project', category: 'Project' },
+  { keys: ['⌘', '⇧', '⏎'], description: 'Stop project', category: 'Project' },
+  { keys: ['⌘', 'B'], description: 'Toggle sidebar', category: 'Project' },
+  
+  // Git
+  { keys: ['⌘', '⇧', 'G'], description: 'Open Git panel', category: 'Git' },
+  { keys: ['⌘', '⇧', 'C'], description: 'Commit changes', category: 'Git' },
+  { keys: ['⌘', '⇧', 'U'], description: 'Push changes', category: 'Git' },
+  { keys: ['⌘', '⇧', 'D'], description: 'Pull changes', category: 'Git' },
+];
+
+export function KeyboardShortcuts() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === '?') {
+        e.preventDefault();
+        setOpen(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Listen for the custom event to open shortcuts
+  useEffect(() => {
+    const handleOpen = () => setOpen(true);
+    window.addEventListener('show-shortcuts', handleOpen);
+    return () => window.removeEventListener('show-shortcuts', handleOpen);
+  }, []);
+
+  // Group shortcuts by category
+  const categories = [...new Set(shortcuts.map(s => s.category))];
+  const groupedShortcuts = categories.reduce((acc, category) => {
+    acc[category] = shortcuts.filter(s => s.category === category);
+    return acc;
+  }, {} as Record<string, Shortcut[]>);
+
+  const ShortcutsList = ({ shortcuts }: { shortcuts: Shortcut[] }) => (
+    <div className="space-y-2">
+      {shortcuts.map((shortcut, index) => (
+        <div
+          key={index}
+          className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors"
+        >
+          <span className="text-sm">{shortcut.description}</span>
+          <div className="flex items-center gap-1">
+            {shortcut.keys.map((key, i) => (
+              <Badge
+                key={i}
+                variant="secondary"
+                className="font-mono text-xs px-2 py-0.5"
+              >
+                {key}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
-  
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-3xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>Keyboard Shortcuts</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Keyboard className="h-5 w-5" />
+            Keyboard Shortcuts
+          </DialogTitle>
           <DialogDescription>
-            Boost your productivity with these keyboard shortcuts.
+            Quick reference for all keyboard shortcuts. Press ⌘⇧? to open this anytime.
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="h-[450px] pr-4">
-          <div className="space-y-6">
-            {shortcutGroups.map((group, groupIndex) => (
-              <div key={group.name}>
-                {groupIndex > 0 && <Separator className="my-4" />}
-                <h3 className="text-sm font-semibold mb-3">{group.name}</h3>
-                <div className="grid grid-cols-2 gap-y-3 gap-x-6">
-                  {group.shortcuts.map((shortcut) => (
-                    <div key={shortcut.description} className="flex justify-between items-center">
-                      <span className="text-sm">{shortcut.description}</span>
-                      <div className="flex space-x-1">
-                        {shortcut.keys.map((key, keyIndex) => (
-                          <React.Fragment key={key}>
-                            <KeyCap>{key}</KeyCap>
-                            {keyIndex < shortcut.keys.length - 1 && (
-                              <span className="text-gray-500 mx-0.5">+</span>
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        <Tabs defaultValue={categories[0]} className="mt-4">
+          <TabsList className="grid grid-cols-5 w-full">
+            {categories.map(category => (
+              <TabsTrigger key={category} value={category}>
+                {category}
+              </TabsTrigger>
             ))}
-          </div>
-        </ScrollArea>
+          </TabsList>
+          
+          <ScrollArea className="h-[400px] mt-4">
+            {categories.map(category => (
+              <TabsContent key={category} value={category}>
+                <ShortcutsList shortcuts={groupedShortcuts[category]} />
+              </TabsContent>
+            ))}
+          </ScrollArea>
+        </Tabs>
         
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-        </DialogFooter>
+        <div className="mt-4 pt-4 border-t">
+          <p className="text-xs text-muted-foreground text-center">
+            Note: Use Ctrl instead of ⌘ on Windows/Linux
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );

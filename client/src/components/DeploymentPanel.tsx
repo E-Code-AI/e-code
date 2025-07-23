@@ -1,334 +1,359 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { Deployment } from '@shared/schema';
-import { formatDistanceToNow } from 'date-fns';
-
-// UI Components
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Rocket,
-  ExternalLink,
-  RefreshCw,
-  XCircle,
-  Clock,
-  Terminal,
-  CheckCircle2,
-  AlertCircle,
-  Globe,
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  Rocket, Globe, Activity, Clock, AlertCircle, CheckCircle, 
+  XCircle, RefreshCw, ExternalLink, Copy, Terminal, BarChart3,
+  Zap, Shield, Settings, Trash2
 } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import { formatDistanceToNow } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
-interface DeploymentPanelProps {
+interface Deployment {
+  id: number;
   projectId: number;
+  status: 'building' | 'deploying' | 'deployed' | 'failed';
+  url?: string;
+  version: string;
+  createdAt: string;
+  updatedAt: string;
+  buildLogs?: string[];
+  metrics?: {
+    requests: number;
+    errors: number;
+    avgResponseTime: number;
+    uptime: number;
+  };
 }
 
-const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) => {
+export function DeploymentPanel({ projectId }: { projectId: number }) {
   const { toast } = useToast();
-  const [expandedDeployment, setExpandedDeployment] = useState<number | null>(null);
-  const [deploymentLogs, setDeploymentLogs] = useState<Record<number, string[]>>({});
+  const [selectedDeployment, setSelectedDeployment] = useState<number | null>(null);
 
-  // Query for fetching deployments
-  const {
-    data: deployments,
-    isLoading: deploymentsLoading,
-    error: deploymentsError,
-  } = useQuery<Deployment[]>({
-    queryKey: ['/api/projects', projectId, 'deployments'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', `/api/projects/${projectId}/deployments`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch deployments');
-      }
-      return res.json();
-    },
-    refetchInterval: 10000, // Refetch every 10 seconds
+  // Fetch deployments
+  const { data: deployments, isLoading } = useQuery({
+    queryKey: [`/api/projects/${projectId}/deployments`]
   });
 
-  // Mutation for deploying project
+  // Fetch deployment status
+  const { data: deploymentStatus } = useQuery({
+    queryKey: [`/api/deployments/${selectedDeployment}/status`],
+    enabled: !!selectedDeployment,
+    refetchInterval: 5000 // Refetch every 5 seconds
+  });
+
+  // Deploy mutation
   const deployMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/deploy`);
-      if (!res.ok) {
-        throw new Error('Failed to deploy project');
-      }
-      return res.json();
-    },
+    mutationFn: () => apiRequest(`/api/projects/${projectId}/deploy`, { method: 'POST' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'deployments'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/deployments`] });
       toast({
-        title: "Deployment started",
-        description: "Your project is being deployed...",
+        title: 'Deployment started',
+        description: 'Your project is being deployed. This may take a few minutes.'
       });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
-        title: "Deployment failed",
-        description: error.message,
-        variant: "destructive",
+        title: 'Deployment failed',
+        description: 'Failed to start deployment. Please try again.',
+        variant: 'destructive'
       });
     }
   });
 
-  // Mutation for stopping a deployment
+  // Stop deployment mutation
   const stopDeploymentMutation = useMutation({
-    mutationFn: async (deploymentId: number) => {
-      const res = await apiRequest('POST', `/api/deployments/${deploymentId}/stop`);
-      if (!res.ok) {
-        throw new Error('Failed to stop deployment');
-      }
-      return res.json();
-    },
+    mutationFn: (deploymentId: number) => 
+      apiRequest(`/api/deployments/${deploymentId}/stop`, { method: 'POST' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'deployments'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/deployments`] });
       toast({
-        title: "Deployment stopped",
-        description: "Your deployment has been stopped.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to stop deployment",
-        description: error.message,
-        variant: "destructive",
+        title: 'Deployment stopped',
+        description: 'The deployment has been stopped successfully.'
       });
     }
   });
 
-  // Fetch deployment logs when a deployment is expanded
-  useEffect(() => {
-    if (!expandedDeployment) return;
-
-    const fetchLogs = async () => {
-      try {
-        const res = await apiRequest('GET', `/api/deployments/${expandedDeployment}/logs`);
-        if (!res.ok) {
-          throw new Error('Failed to fetch deployment logs');
-        }
-        const data = await res.json();
-        setDeploymentLogs(prevLogs => ({
-          ...prevLogs,
-          [expandedDeployment]: data.logs
-        }));
-      } catch (error) {
-        console.error('Error fetching deployment logs:', error);
-      }
-    };
-
-    fetchLogs();
-    
-    // Set up an interval to refresh logs
-    const interval = setInterval(fetchLogs, 5000);
-    
-    return () => clearInterval(interval);
-  }, [expandedDeployment]);
-
-  // Helper function to render deployment status badge
-  const renderStatusBadge = (status: string) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'deployed':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'building':
       case 'deploying':
-        return <Badge className="bg-blue-500"><RefreshCw className="h-3 w-3 mr-1 animate-spin" />Deploying</Badge>;
-      case 'running':
-        return <Badge className="bg-green-500"><CheckCircle2 className="h-3 w-3 mr-1" />Running</Badge>;
+        return <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />;
       case 'failed':
-        return <Badge variant="destructive"><AlertCircle className="h-3 w-3 mr-1" />Failed</Badge>;
-      case 'stopped':
-        return <Badge variant="secondary"><XCircle className="h-3 w-3 mr-1" />Stopped</Badge>;
+        return <XCircle className="h-4 w-4 text-red-600" />;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <AlertCircle className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return formatDistanceToNow(new Date(date), { addSuffix: true });
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'deployed':
+        return 'default';
+      case 'building':
+      case 'deploying':
+        return 'secondary';
+      case 'failed':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
   };
 
-  // Helper function to open deployment URL
-  const openDeploymentUrl = (url: string) => {
-    window.open(url, '_blank');
+  const copyUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+    toast({
+      title: 'URL copied',
+      description: 'Deployment URL copied to clipboard'
+    });
   };
 
-  // Render loading state
-  if (deploymentsLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-10">
-        <Spinner size="lg" />
-        <p className="mt-4 text-muted-foreground">Loading deployments...</p>
-      </div>
-    );
-  }
-
-  // Render error state
-  if (deploymentsError) {
-    return (
-      <div className="p-6">
-        <div className="bg-destructive/10 p-4 rounded-lg text-destructive">
-          <p>Error loading deployments: {deploymentsError.message}</p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'deployments'] })}
-          >
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Render empty state
-  if (!deployments || deployments.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center p-10">
-        <div className="mb-4 bg-muted/30 p-4 rounded-full">
-          <Rocket className="h-10 w-10 text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold mb-2">No deployments yet</h3>
-        <p className="text-muted-foreground text-center mb-6 max-w-md">
-          Deploy your project to make it available online. Each deployment creates a new version.
-        </p>
-        <Button 
-          className="gap-2" 
-          onClick={() => deployMutation.mutate()}
-          disabled={deployMutation.isPending}
-        >
-          {deployMutation.isPending ? (
-            <Spinner size="sm" className="mr-2" />
-          ) : (
-            <Rocket className="h-4 w-4 mr-2" />
-          )}
-          Deploy Project
-        </Button>
-      </div>
-    );
-  }
+  const latestDeployment = deployments?.[0];
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Deployments</h2>
-        <Button 
-          onClick={() => deployMutation.mutate()}
-          disabled={deployMutation.isPending}
-          className="gap-2"
-        >
-          {deployMutation.isPending ? (
-            <Spinner size="sm" className="mr-2" />
-          ) : (
-            <Rocket className="h-4 w-4" />
-          )}
-          New Deployment
-        </Button>
-      </div>
-
-      <div className="space-y-4">
-        {deployments.map((deployment) => (
-          <Card key={deployment.id} className="overflow-hidden">
-            <CardHeader className="pb-3 border-b">
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-base flex items-center">
-                    {deployment.version}
-                    <span className="ml-3">
-                      {renderStatusBadge(deployment.status)}
-                    </span>
-                  </CardTitle>
-                  <CardDescription className="mt-1">
-                    Deployed {formatDate(deployment.createdAt)}
-                  </CardDescription>
-                </div>
-                {deployment.url && deployment.status === 'running' && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="gap-1"
-                    onClick={() => openDeploymentUrl(deployment.url)}
-                  >
-                    <Globe className="h-4 w-4" />
-                    Visit
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <Accordion
-              type="single"
-              collapsible
-              value={expandedDeployment === deployment.id ? 'logs' : undefined}
-              onValueChange={(value) => setExpandedDeployment(value === 'logs' ? deployment.id : null)}
-            >
-              <AccordionItem value="logs" className="border-0">
-                <AccordionTrigger className="py-3 px-4 text-sm font-medium">
-                  <Terminal className="h-4 w-4 mr-2" />
-                  Deployment Logs
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="bg-black text-white p-2 rounded-md">
-                    <ScrollArea className="h-[200px] w-full">
-                      <pre className="text-xs font-mono p-2">
-                        {deploymentLogs[deployment.id] ? (
-                          deploymentLogs[deployment.id].map((log, idx) => (
-                            <div key={idx} className="py-0.5">
-                              {log}
-                            </div>
-                          ))
-                        ) : (
-                          <div className="flex justify-center items-center h-full">
-                            <Spinner size="sm" className="mr-2" />
-                            <span>Loading logs...</span>
-                          </div>
-                        )}
-                      </pre>
-                    </ScrollArea>
+    <div className="space-y-6">
+      {/* Quick Deploy Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Quick Deploy</CardTitle>
+              <CardDescription>
+                Deploy your project to production with one click
+              </CardDescription>
+            </div>
+            <Rocket className="h-5 w-5 text-muted-foreground" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {latestDeployment && latestDeployment.status === 'deployed' ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Globe className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium">Live at</p>
+                    <p className="text-sm text-muted-foreground">{latestDeployment.url}</p>
                   </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-            <CardFooter className="bg-muted/50 py-2">
-              <div className="flex justify-between items-center w-full">
-                <div className="text-xs text-muted-foreground flex items-center">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {formatDate(deployment.updatedAt)}
                 </div>
-                {deployment.status === 'running' && (
-                  <Button 
-                    variant="destructive" 
+                <div className="flex gap-2">
+                  <Button
                     size="sm"
-                    onClick={() => stopDeploymentMutation.mutate(deployment.id)}
-                    disabled={stopDeploymentMutation.isPending}
+                    variant="outline"
+                    onClick={() => copyUrl(latestDeployment.url!)}
                   >
-                    {stopDeploymentMutation.isPending ? (
-                      <Spinner size="sm" className="mr-2" />
-                    ) : (
-                      <XCircle className="h-4 w-4 mr-1" />
-                    )}
-                    Stop Deployment
+                    <Copy className="h-4 w-4" />
                   </Button>
-                )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(latestDeployment.url, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+              <Button 
+                className="w-full" 
+                onClick={() => deployMutation.mutate()}
+                disabled={deployMutation.isPending}
+              >
+                {deployMutation.isPending ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Deploying...
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="mr-2 h-4 w-4" />
+                    Deploy New Version
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              className="w-full" 
+              size="lg"
+              onClick={() => deployMutation.mutate()}
+              disabled={deployMutation.isPending}
+            >
+              {deployMutation.isPending ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Deploying...
+                </>
+              ) : (
+                <>
+                  <Rocket className="mr-2 h-4 w-4" />
+                  Deploy to Production
+                </>
+              )}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Deployment History */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Deployment History</CardTitle>
+          <CardDescription>
+            View and manage your project deployments
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="deployments">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="deployments">Deployments</TabsTrigger>
+              <TabsTrigger value="metrics">Metrics</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="deployments" className="space-y-4">
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mt-2">Loading deployments...</p>
+                </div>
+              ) : deployments && deployments.length > 0 ? (
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-3">
+                    {deployments.map((deployment: Deployment) => (
+                      <div
+                        key={deployment.id}
+                        className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                        onClick={() => setSelectedDeployment(deployment.id)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              {getStatusIcon(deployment.status)}
+                              <span className="font-medium">v{deployment.version}</span>
+                              <Badge variant={getStatusColor(deployment.status)}>
+                                {deployment.status}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {formatDistanceToNow(new Date(deployment.createdAt), { addSuffix: true })}
+                            </p>
+                            {deployment.url && (
+                              <p className="text-xs text-blue-600 hover:underline">
+                                {deployment.url}
+                              </p>
+                            )}
+                          </div>
+                          {deployment.status === 'deployed' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                stopDeploymentMutation.mutate(deployment.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <div className="text-center py-12">
+                  <Rocket className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No deployments yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Deploy your project to see it here
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="metrics" className="space-y-4">
+              {latestDeployment && latestDeployment.status === 'deployed' ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Total Requests</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold">
+                          {latestDeployment.metrics?.requests || 0}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Error Rate</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold">
+                          {latestDeployment.metrics?.errors || 0}%
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Avg Response Time</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold">
+                          {latestDeployment.metrics?.avgResponseTime || 0}ms
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Uptime</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold">
+                          {latestDeployment.metrics?.uptime || 100}%
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <Alert>
+                    <BarChart3 className="h-4 w-4" />
+                    <AlertDescription>
+                      Real-time metrics for your deployed application
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No metrics available</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Deploy your project to see metrics
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="settings" className="space-y-4">
+              <Alert>
+                <Settings className="h-4 w-4" />
+                <AlertDescription>
+                  Deployment settings and configuration options coming soon
+                </AlertDescription>
+              </Alert>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
-};
-
-export default DeploymentPanel;
+}
