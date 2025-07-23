@@ -12,7 +12,7 @@ import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";
 import connectPg from "connect-pg-simple";
-import { pool } from "./db";
+import { client } from "./db";
 
 // Storage interface definition
 export interface IStorage {
@@ -65,38 +65,36 @@ export class DatabaseStorage implements IStorage {
   constructor() {
     const PostgresSessionStore = connectPg(session);
     this.sessionStore = new PostgresSessionStore({ 
-      pool,
+      conString: process.env.DATABASE_URL,
       createTableIfMissing: true,
-      tableName: 'session', // Nom de table explicite
-      pruneSessionInterval: 60, // Nettoyer les sessions expirées toutes les 60 secondes
+      tableName: 'session',
+      pruneSessionInterval: 60,
     });
     
-    // Vérifier et créer la table des sessions
     this.initializeSessionStore();
   }
   
   private async initializeSessionStore() {
     try {
-      // Vérifier si la table de session existe déjà
-      const result = await pool.query(`
+      // Check if the session table exists already
+      const result = await client`
         SELECT EXISTS (
           SELECT FROM pg_tables
           WHERE schemaname = 'public'
           AND tablename = 'session'
         );
-      `);
+      `;
       
-      const tableExists = result.rows[0].exists;
+      const tableExists = result[0].exists;
       console.log(`Session table exists: ${tableExists}`);
       
-      // Si la table n'existe pas, la création sera gérée par createTableIfMissing,
-      // mais nous pouvons ajouter un log pour le suivi
+      // If the table doesn't exist, it will be handled by createTableIfMissing
       if (!tableExists) {
         console.log('Session table will be created automatically');
       }
     } catch (error) {
       console.error('Error checking session table:', error);
-      // Ne pas bloquer le démarrage de l'application en cas d'erreur
+      // Don't block the application startup on error
     }
   }
   
