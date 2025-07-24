@@ -12,7 +12,7 @@ import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import Terminal from '@/components/Terminal';
 import { ExecutionConsole } from '@/components/ExecutionConsole';
-import DeploymentPanel from '@/components/DeploymentPanel';
+import { DeploymentPanel } from '@/components/DeploymentPanel';
 import Collaboration from '@/components/Collaboration';
 import GitPanel from '@/components/GitPanel';
 import AIPanel from '@/components/AIPanel';
