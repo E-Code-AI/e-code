@@ -200,8 +200,30 @@ export function setupAuth(app: Express) {
   });
 
   // Get current user info
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
+  app.get("/api/user", async (req, res) => {
+    console.log('User auth check:', {
+      isAuthenticated: req.isAuthenticated(),
+      hasSession: !!req.session,
+      hasUser: !!req.user,
+      sessionId: req.sessionID,
+      passportUser: (req.session as any)?.passport?.user
+    });
+    
+    // In development, try to recover session if passport user exists but req.user doesn't
+    if (!req.user && process.env.NODE_ENV === 'development' && (req.session as any)?.passport?.user) {
+      const userId = (req.session as any).passport.user;
+      try {
+        const user = await storage.getUser(userId);
+        if (user) {
+          req.user = user as Express.User;
+          console.log('Recovered user from session:', user.username);
+        }
+      } catch (error) {
+        console.error('Failed to recover user from session:', error);
+      }
+    }
+    
+    if (!req.isAuthenticated() || !req.user) {
       console.log("User not authenticated when accessing /api/user");
       return res.status(401).json({ message: "Not authenticated" });
     }

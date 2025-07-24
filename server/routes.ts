@@ -713,22 +713,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get project files
       const files = await storage.getFilesByProject(projectId);
       
-      // Create a new executor instance
-      const executor = new CodeExecutor();
+      // Check if this is a web project (HTML/CSS/JS)
+      const hasHtmlFile = files.some(f => f.name.endsWith('.html'));
+      const isWebProject = hasHtmlFile || (mainFile && mainFile.endsWith('.html'));
       
-      const result = await executor.execute({
-        projectId: projectId,
-        userId: req.user!.id,
-        language: project.language || 'nodejs',
-        mainFile,
-        stdin,
-        timeout: timeout || 30000
-      });
+      if (isWebProject) {
+        // For web projects, return a preview URL without starting Docker
+        const previewPath = `/preview/${projectId}`;
+        const previewUrl = `http://localhost:5000${previewPath}`;
+        
+        res.json({
+          stdout: `Web preview available at ${previewUrl}`,
+          stderr: '',
+          exitCode: 0,
+          executionTime: 0,
+          timedOut: false,
+          executionId: `${projectId}-${req.user!.id}-${Date.now()}`,
+          previewUrl: previewUrl
+        });
+      } else {
+        // For non-web projects, execute the code
+        const executor = new CodeExecutor();
+        
+        const result = await executor.execute({
+          projectId: projectId,
+          userId: req.user!.id,
+          language: project.language || 'nodejs',
+          mainFile,
+          stdin,
+          timeout: timeout || 30000
+        });
 
-      res.json({
-        ...result,
-        executionId: `${projectId}-${req.user!.id}-${Date.now()}`
-      });
+        res.json({
+          ...result,
+          executionId: `${projectId}-${req.user!.id}-${Date.now()}`
+        });
+      }
     } catch (error) {
       console.error('Error executing code:', error);
       res.status(500).json({ error: 'Failed to execute code' });
@@ -744,6 +764,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error stopping execution:', error);
       res.status(500).json({ error: 'Failed to stop execution' });
+    }
+  });
+
+  // Search Route
+  app.get('/api/projects/:id/search', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { q } = req.query;
+      
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+      
+      // Get all files in the project
+      const files = await storage.getFilesByProject(projectId);
+      
+      // Search through files
+      const results = [];
+      for (const file of files) {
+        if (!file.isFolder && file.content) {
+          // Search in file name
+          if (file.name.toLowerCase().includes(q.toLowerCase())) {
+            results.push({
+              file: file.name,
+              line: 0,
+              content: `File name matches: ${file.name}`,
+              type: 'filename'
+            });
+          }
+          
+          // Search in file content
+          const lines = file.content.split('\n');
+          lines.forEach((line, index) => {
+            if (line.toLowerCase().includes(q.toLowerCase())) {
+              results.push({
+                file: file.name,
+                line: index + 1,
+                content: line.trim(),
+                type: 'content'
+              });
+            }
+          });
+        }
+      }
+      
+      res.json(results.slice(0, 50)); // Limit to 50 results
+    } catch (error) {
+      console.error('Error searching project:', error);
+      res.status(500).json({ error: 'Failed to search project' });
     }
   });
 
@@ -1425,6 +1494,38 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
       console.error("Error deleting file:", error);
       res.status(500).json({ message: 'Failed to delete file' });
+    }
+  });
+  
+  // Terminal Routes
+  app.get('/api/terminal/sessions', ensureAuthenticated, async (req, res) => {
+    try {
+      const sessions = terminalManager.getSessions(req.user!.id);
+      res.json(sessions);
+    } catch (error) {
+      console.error('Error getting terminal sessions:', error);
+      res.status(500).json({ error: 'Failed to get terminal sessions' });
+    }
+  });
+
+  app.post('/api/terminal/create', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.body;
+      const sessionId = await terminalManager.createSession(req.user!.id, projectId);
+      res.json({ sessionId });
+    } catch (error) {
+      console.error('Error creating terminal session:', error);
+      res.status(500).json({ error: 'Failed to create terminal session' });
+    }
+  });
+
+  app.delete('/api/terminal/:sessionId', ensureAuthenticated, async (req, res) => {
+    try {
+      await terminalManager.closeSession(req.params.sessionId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error closing terminal session:', error);
+      res.status(500).json({ error: 'Failed to close terminal session' });
     }
   });
   
