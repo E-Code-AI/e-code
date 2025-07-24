@@ -359,7 +359,7 @@ export function EditorWorkspace({
       </div>
 
       {/* Main workspace area */}
-      <div className="flex-grow grid grid-cols-1 md:grid-cols-[auto,1fr] overflow-hidden">
+      <div className="flex-grow grid grid-cols-1 md:grid-cols-[auto,1fr] overflow-hidden mb-14 md:mb-0">
         {/* File explorer (left sidebar) - Responsive sidebar */}
         {showFileExplorer && (
           <div className={`${showFileExplorer ? 'block' : 'hidden'} md:block w-full md:w-64 border-r border-border bg-background overflow-y-auto`}>

@@ -256,7 +256,7 @@ export default function EditorPage() {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header with Run Button */}
-      <div className="flex items-center justify-between border-b bg-background px-4 py-2">
+      <div className="flex items-center justify-between border-b bg-background px-responsive py-2">
         <TopNavbar 
           project={project} 
           activeFile={activeFile}

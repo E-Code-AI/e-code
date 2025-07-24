@@ -132,15 +132,15 @@ export default function Pricing() {
     <div className="min-h-screen">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
+        <div className="container-responsive">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             <div className="flex items-center gap-8">
               <div 
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={() => navigate('/')}
               >
-                <Code className="h-6 w-6" />
-                <span className="font-bold text-xl">Replit</span>
+                <Code className="h-5 w-5 sm:h-6 sm:w-6" />
+                <span className="font-bold text-lg sm:text-xl">Replit</span>
               </div>
               <div className="hidden md:flex items-center gap-6">
                 <Button variant="ghost" size="sm" onClick={() => navigate('/features')}>
@@ -170,17 +170,17 @@ export default function Pricing() {
       </nav>
 
       {/* Pricing Header */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
+      <section className="py-responsive">
+        <div className="container-responsive max-w-6xl">
           <div className="text-center space-y-4 mb-12">
             <Badge variant="secondary" className="mb-2">
               <Sparkles className="h-3 w-3 mr-1" />
               Simple, transparent pricing
             </Badge>
-            <h1 className="text-4xl md:text-5xl font-bold">
+            <h1 className="text-responsive-xl font-bold">
               Choose your plan
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-responsive-lg text-muted-foreground max-w-2xl mx-auto">
               Start free and scale as you grow. No hidden fees, no surprises.
             </p>
 

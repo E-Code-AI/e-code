@@ -213,9 +213,9 @@ const ProjectsPage = () => {
   // Render loading state
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="container-responsive py-10 flex flex-col items-center justify-center min-h-[60vh]">
         <Spinner size="lg" />
-        <p className="mt-4 text-muted-foreground">Loading projects...</p>
+        <p className="mt-4 text-muted-foreground text-responsive-sm">Loading projects...</p>
       </div>
     );
   }
@@ -223,9 +223,9 @@ const ProjectsPage = () => {
   // Render error state
   if (error) {
     return (
-      <div className="container mx-auto py-10 flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="bg-destructive/10 p-4 rounded-lg text-destructive">
-          <p>Error loading projects: {error.message}</p>
+      <div className="container-responsive py-10 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="bg-destructive/10 p-4 sm:p-6 text-destructive max-w-md mx-auto w-full text-center">
+          <p className="text-responsive-sm">Error loading projects: {error.message}</p>
           <Button 
             variant="outline" 
             className="mt-4"
@@ -239,21 +239,21 @@ const ProjectsPage = () => {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-8">
+    <div className="container-responsive py-responsive">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold">My Projects</h1>
-          <p className="text-muted-foreground mt-1">Manage your coding projects</p>
+          <h1 className="text-responsive-xl font-bold">My Projects</h1>
+          <p className="text-muted-foreground mt-1 text-responsive-sm">Manage your coding projects</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Link href="/templates">
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               Browse Templates
             </Button>
           </Link>
           <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2 w-full sm:w-auto">
                 <Plus className="h-4 w-4" />
                 New Project
               </Button>
@@ -394,17 +394,17 @@ const ProjectsPage = () => {
 
       {/* Project Grid */}
       {projects && projects.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {projects.map((project) => (
             <Card key={project.id} className="overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="flex items-center">
+                    <CardTitle className="flex items-center text-responsive-sm">
                       {getLanguageIcon(project.language)}
-                      <span className="ml-2">{project.name}</span>
+                      <span className="ml-2 truncate">{project.name}</span>
                     </CardTitle>
-                    <CardDescription className="mt-1.5">
+                    <CardDescription className="mt-1.5 text-xs sm:text-sm line-clamp-2">
                       {project.description || "No description provided"}
                     </CardDescription>
                   </div>

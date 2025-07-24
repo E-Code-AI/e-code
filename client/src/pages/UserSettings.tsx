@@ -180,23 +180,23 @@ export default function UserSettings() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold">Replit Clone</Link>
-          <div className="flex items-center gap-4">
-            <Link href="/projects" className="text-sm">Projects</Link>
-            <Link href={`/user/${user.username}`} className="text-sm">Profile</Link>
+        <div className="container-responsive py-4 flex items-center justify-between">
+          <Link href="/" className="text-responsive-lg font-bold">Replit Clone</Link>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Link href="/projects" className="text-responsive-xs">Projects</Link>
+            <Link href={`/user/${user.username}`} className="text-responsive-xs">Profile</Link>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Settings</h1>
-          <p className="text-muted-foreground">Manage your account settings and preferences</p>
+      <div className="container-responsive py-responsive max-w-4xl mb-16 md:mb-0">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-responsive-xl font-bold mb-1 sm:mb-2">Settings</h1>
+          <p className="text-muted-foreground text-responsive-sm">Manage your account settings and preferences</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>

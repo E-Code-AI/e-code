@@ -143,28 +143,31 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="container-responsive py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <h1 className="text-responsive-lg font-bold">Dashboard</h1>
               <Badge variant="secondary" className="gap-1">
                 <Zap className="h-3 w-3" />
-                Pro
+                <span className="hidden sm:inline">Pro</span>
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64 pl-10"
+                  className="w-full sm:w-64 pl-10"
                 />
               </div>
-              <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
+              <Button 
+                onClick={() => setIsCreateModalOpen(true)} 
+                className="gap-2 w-full sm:w-auto"
+              >
                 <Plus className="h-4 w-4" />
-                Create Repl
+                <span className="sm:inline">Create Repl</span>
               </Button>
             </div>
           </div>
@@ -172,8 +175,8 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="container-responsive py-responsive">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
             {/* Recent Projects */}
@@ -222,7 +225,7 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 ) : (
-                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-3'}>
+                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4' : 'space-y-3'}>
                     {recentProjects.map((project: any) => (
                       <Card 
                         key={project.id} 
@@ -272,22 +275,22 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {trendingRepls.map((repl) => (
                     <div key={repl.id} className="flex items-start gap-3 p-3 hover:bg-accent/50 cursor-pointer">
-                      <Avatar className="h-10 w-10">
+                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                         <AvatarImage src={repl.avatar || undefined} />
                         <AvatarFallback>{repl.author[0].toUpperCase()}</AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="font-semibold">{repl.name}</h4>
-                            <p className="text-sm text-muted-foreground">by {repl.author}</p>
-                            <p className="text-sm mt-1">{repl.description}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-semibold text-responsive-sm truncate">{repl.name}</h4>
+                            <p className="text-xs sm:text-sm text-muted-foreground">by {repl.author}</p>
+                            <p className="text-xs sm:text-sm mt-1 line-clamp-2">{repl.description}</p>
                           </div>
-                          <Badge variant="secondary" className={getLanguageColor(repl.language)}>
+                          <Badge variant="secondary" className={`${getLanguageColor(repl.language)} flex-shrink-0 text-xs`}>
                             {repl.language}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Star className="h-3 w-3" />
                             {repl.stars}
@@ -296,7 +299,7 @@ export default function Dashboard() {
                             <GitFork className="h-3 w-3" />
                             {repl.forks}
                           </span>
-                          <span>{repl.lastUpdated}</span>
+                          <span className="hidden sm:inline">{repl.lastUpdated}</span>
                         </div>
                       </div>
                     </div>
@@ -307,7 +310,7 @@ export default function Dashboard() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Quick Stats */}
             <Card>
               <CardHeader>
