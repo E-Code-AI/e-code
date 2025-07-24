@@ -173,20 +173,20 @@ export default function UserProfile() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold">Replit Clone</Link>
-          <div className="flex items-center gap-4">
-            <Link href="/projects" className="text-sm">Projects</Link>
-            <Link href="/settings" className="text-sm">Settings</Link>
+        <div className="container-responsive py-4 flex items-center justify-between">
+          <Link href="/" className="text-responsive-lg font-bold">Replit Clone</Link>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Link href="/projects" className="text-responsive-xs">Projects</Link>
+            <Link href="/settings" className="text-responsive-xs">Settings</Link>
           </div>
         </div>
       </header>
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container-responsive py-responsive max-w-7xl mb-16 md:mb-0">
         {/* Profile Header */}
-        <Card className="mb-6">
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-              <div className="flex items-start space-x-6 mb-4 md:mb-0">
+        <Card className="mb-4 sm:mb-6">
+          <CardContent className="p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row items-start sm:space-x-6 mb-4 md:mb-0">
                 <Avatar className="h-32 w-32">
                   <AvatarImage src={profile.avatarUrl} alt={profile.displayName} />
                   <AvatarFallback className="text-3xl">

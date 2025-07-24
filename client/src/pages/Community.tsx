@@ -294,16 +294,16 @@ export default function Community() {
 
   return (
     <ReplitLayout>
-      <div className="container max-w-7xl mx-auto p-6 space-y-6">
+      <div className="container-responsive py-responsive space-y-4 sm:space-y-6 mb-16 md:mb-0">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Community</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-responsive-xl font-bold">Community</h1>
+            <p className="text-muted-foreground mt-1 text-responsive-sm">
               Share your projects, get help, and connect with other developers
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
             <Input
               placeholder="Search community..."
               value={searchQuery}
@@ -311,21 +311,21 @@ export default function Community() {
               className="w-full md:w-[300px]"
             />
             <Link href="/community/new">
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
-                New Post
+                <span className="sm:inline">New Post</span>
               </Button>
             </Link>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Posts Section */}
           <div className="lg:col-span-2 space-y-6">
             {/* Category Tabs */}
             <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-              <TabsList className="grid grid-cols-3 md:grid-cols-6 h-auto">
+              <TabsList className="grid grid-cols-3 md:grid-cols-6 h-auto gap-1">
                 {CATEGORIES.map(category => (
                   <TabsTrigger 
                     key={category.id} 
