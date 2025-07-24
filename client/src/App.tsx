@@ -37,6 +37,15 @@ const Careers = lazy(() => import("@/pages/Careers"));
 const Blog = lazy(() => import("@/pages/Blog"));
 const Docs = lazy(() => import("@/pages/Docs"));
 const ContactSales = lazy(() => import("@/pages/ContactSales"));
+// User area pages
+const Account = lazy(() => import("@/pages/Account"));
+const Cycles = lazy(() => import("@/pages/Cycles"));
+const Bounties = lazy(() => import("@/pages/Bounties"));
+const Deployments = lazy(() => import("@/pages/Deployments"));
+const Learn = lazy(() => import("@/pages/Learn"));
+const Support = lazy(() => import("@/pages/Support"));
+const Themes = lazy(() => import("@/pages/Themes"));
+const Referrals = lazy(() => import("@/pages/Referrals"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -218,6 +227,51 @@ function AppContent() {
           <ProtectedRoute path="/admin" component={() => (
             <ReplitLayout>
               <AdminDashboard />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/account" component={() => (
+            <ReplitLayout>
+              <Account />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/cycles" component={() => (
+            <ReplitLayout>
+              <Cycles />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/bounties" component={() => (
+            <ReplitLayout>
+              <Bounties />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/deployments" component={() => (
+            <ReplitLayout>
+              <Deployments />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/learn" component={() => (
+            <ReplitLayout>
+              <Learn />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/support" component={() => (
+            <ReplitLayout>
+              <Support />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/themes" component={() => (
+            <ReplitLayout>
+              <Themes />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/referrals" component={() => (
+            <ReplitLayout>
+              <Referrals />
+            </ReplitLayout>
+          )} />
+          <Route path="/@:username" component={(params) => (
+            <ReplitLayout>
+              <UserProfile />
             </ReplitLayout>
           )} />
           <Route component={NotFound} />

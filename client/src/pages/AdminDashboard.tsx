@@ -42,7 +42,7 @@ interface ProjectStats {
   totalStorage: string;
 }
 
-export function AdminDashboard() {
+export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState('overview');
 
   // Fetch system status
