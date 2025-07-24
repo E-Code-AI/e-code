@@ -54,6 +54,35 @@ export function ReplitHeader() {
     <header className="h-14 bg-[var(--replit-surface)] border-b border-[var(--replit-border)] flex items-center justify-between px-4 replit-transition">
       {/* Logo et navigation principale */}
       <div className="flex items-center space-x-2 md:space-x-6">
+        {/* Replit Logo */}
+        <Link href="/">
+          <div className="flex items-center space-x-2 cursor-pointer group">
+            <svg
+              className="h-6 w-6 group-hover:opacity-80 transition-opacity"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 2L2 7L2 17L12 22L22 17V7L12 2Z"
+                fill="#F26207"
+              />
+              <path
+                d="M12 2L22 7V17L12 12V2Z"
+                fill="#F99D25"
+              />
+              <path
+                d="M12 12L22 17L12 22V12Z"
+                fill="#F26207"
+              />
+              <circle cx="12" cy="12" r="3" fill="white" />
+            </svg>
+            <span className="font-bold text-xl hidden md:inline-block group-hover:opacity-80 transition-opacity">
+              Replit
+            </span>
+          </div>
+        </Link>
+        
         {/* Mobile menu button */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
@@ -255,34 +284,86 @@ export function ReplitHeader() {
             <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
             
             <DropdownMenuItem 
-              onClick={() => navigate(`/profile/${user?.username}`)}
+              onClick={() => navigate(`/@${user?.username}`)}
               className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
               <User className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
-            
-            <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
-              <Zap className="mr-2 h-4 w-4" />
-              Account
+              View Profile
             </DropdownMenuItem>
             
             <DropdownMenuItem 
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/account')}
               className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
               <Settings className="mr-2 h-4 w-4" />
-              Settings
+              Account
             </DropdownMenuItem>
             
             <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
             
-            <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+            <DropdownMenuItem 
+              onClick={() => navigate('/cycles')}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <Zap className="mr-2 h-4 w-4" />
+              Cycles & Power Ups
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/deployments')}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <Globe className="mr-2 h-4 w-4" />
+              Deployments
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/bounties')}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <Database className="mr-2 h-4 w-4" />
+              Bounties
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/teams')}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <Users className="mr-2 h-4 w-4" />
+              Teams & Orgs
+            </DropdownMenuItem>
+            
+            <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/learn')}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <Book className="mr-2 h-4 w-4" />
+              Learn
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/docs')}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
               <Book className="mr-2 h-4 w-4" />
               Documentation
             </DropdownMenuItem>
             
-            <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+            <DropdownMenuItem 
+              onClick={() => navigate('/support')}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
               <HelpCircle className="mr-2 h-4 w-4" />
-              Help & Support
+              Support
+            </DropdownMenuItem>
+            
+            <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/themes')}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <Settings className="mr-2 h-4 w-4" />
+              Themes
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/referrals')}
+              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <Users className="mr-2 h-4 w-4" />
+              Refer a Friend
             </DropdownMenuItem>
             
             <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
