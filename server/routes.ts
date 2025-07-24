@@ -711,18 +711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get project files
-      const projectObj = await storage.getProject(projectId);
-      const allFiles = await storage.getProjectsByUser(req.user!.id);
-      const files: any[] = [];
-      
-      // Get files for this project
-      const fileMap: Record<string, string> = {};
-      
-      for (const file of files) {
-        if (file.content && file.path) {
-          fileMap[file.path] = file.content;
-        }
-      }
+      const files = await storage.getFilesByProject(projectId);
       
       // Create a new executor instance
       const executor = new CodeExecutor();
@@ -736,7 +725,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeout: timeout || 30000
       });
 
-      res.json(result);
+      res.json({
+        ...result,
+        executionId: `${projectId}-${req.user!.id}-${Date.now()}`
+      });
     } catch (error) {
       console.error('Error executing code:', error);
       res.status(500).json({ error: 'Failed to execute code' });
@@ -1807,11 +1799,14 @@ Would you like me to help you set up the OpenAI API integration?`,
   });
   
   // Package Management API
+  const packageInstallerModule = await import('./package-installer');
+  const packageInstaller = packageInstallerModule.packageInstaller;
+  
   app.get('/api/projects/:id/packages', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
-      // TODO: Implement actual package listing based on package.json or requirements.txt
-      res.json([]);
+      const packages = await packageInstaller.listPackages(projectId);
+      res.json(packages);
     } catch (error) {
       console.error('Error fetching packages:', error);
       res.status(500).json({ error: 'Failed to fetch packages' });
@@ -1827,12 +1822,13 @@ Would you like me to help you set up the OpenAI API integration?`,
         return res.status(400).json({ error: 'Package name is required' });
       }
       
-      // TODO: Implement actual package installation
-      res.json({
-        name,
-        version: 'latest',
-        success: true
+      const result = await packageInstaller.installPackages({
+        projectId,
+        packages: [name],
+        dev: false
       });
+      
+      res.json(result);
     } catch (error) {
       console.error('Error installing package:', error);
       res.status(500).json({ error: 'Failed to install package' });
@@ -1844,11 +1840,8 @@ Would you like me to help you set up the OpenAI API integration?`,
       const projectId = parseInt(req.params.id);
       const packageName = req.params.packageName;
       
-      // TODO: Implement actual package uninstallation
-      res.json({
-        name: packageName,
-        success: true
-      });
+      const result = await packageInstaller.uninstallPackages(projectId, [packageName]);
+      res.json(result);
     } catch (error) {
       console.error('Error uninstalling package:', error);
       res.status(500).json({ error: 'Failed to uninstall package' });
@@ -2187,6 +2180,14 @@ Would you like me to help you set up the OpenAI API integration?`,
 
   // Admin routes
   app.use("/api/admin", adminRoutes);
+  
+  // Preview routes
+  const previewRoutesModule = await import('./routes/preview');
+  app.use(previewRoutesModule.default);
+  
+  // File upload routes
+  const fileUploadRoutesModule = await import('./routes/file-upload');
+  app.use(fileUploadRoutesModule.default);
 
   return httpServer;
 }
