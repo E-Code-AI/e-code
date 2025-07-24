@@ -140,6 +140,13 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
   * Updated Replit logo to exact match with official branding (orange geometric design)
   * All user area pages fully integrated with routes in App.tsx
   * Complete feature parity achieved - "without missing even a virgule" as requested
+- 2025-01-25: **Theme Switching Functionality Added**:
+  * Created ThemeProvider component using next-themes package
+  * Built ThemeSwitcher component with dropdown menu for light/dark/system modes
+  * Integrated theme provider into App.tsx wrapper
+  * Added theme switcher to ReplitHeader between Upgrade button and notifications
+  * Implemented proper theme persistence and system theme detection
+  * Theme switching now works exactly like Replit with light, dark, and system modes
 - 2025-01-25: **All API Endpoints Fixed and Working**:
   * Fixed code execution for HTML projects - returns preview URL instead of Node.js errors
   * Added missing project search endpoint `/api/projects/:id/search` with full-text search
