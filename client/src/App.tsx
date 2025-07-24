@@ -28,6 +28,16 @@ const TemplatesPage = lazy(() => import("@/pages/TemplatesPage"));
 const Community = lazy(() => import("@/pages/Community"));
 const SearchPage = lazy(() => import("@/pages/SearchPage"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
+// Public pages
+const Landing = lazy(() => import("@/pages/Landing"));
+const Pricing = lazy(() => import("@/pages/Pricing"));
+const Features = lazy(() => import("@/pages/Features"));
+const About = lazy(() => import("@/pages/About"));
+const Careers = lazy(() => import("@/pages/Careers"));
+const Blog = lazy(() => import("@/pages/Blog"));
+const Docs = lazy(() => import("@/pages/Docs"));
+const ContactSales = lazy(() => import("@/pages/ContactSales"));
+
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -116,17 +126,15 @@ function AppContent() {
           <Route path="/auth" component={AuthPage} />
           <Route path="/runtime-test" component={RuntimePublicPage} />
           <Route path="/runtime-dependencies" component={RuntimeTest} />
-          <Route path="/" component={() => {
-            const [, navigate] = useLocation();
-            
-            useEffect(() => {
-              if (window.location.pathname === '/') {
-                navigate('/dashboard');
-              }
-            }, [navigate]);
-            
-            return null;
-          }} />
+          {/* Public Routes */}
+          <Route path="/" component={Landing} />
+          <Route path="/pricing" component={Pricing} />
+          <Route path="/features" component={Features} />
+          <Route path="/about" component={About} />
+          <Route path="/careers" component={Careers} />
+          <Route path="/blog" component={Blog} />
+          <Route path="/docs" component={Docs} />
+          <Route path="/contact-sales" component={ContactSales} />
           <ProtectedRoute path="/dashboard" component={() => (
             <ReplitLayout>
               <Dashboard />
