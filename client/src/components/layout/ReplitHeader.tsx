@@ -34,6 +34,7 @@ import { SpotlightSearch } from "@/components/SpotlightSearch";
 import { useIsMobile } from "@/hooks/use-media-query";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();
@@ -256,6 +257,9 @@ export function ReplitHeader() {
           <Crown className="h-4 w-4" />
           <span>Upgrade</span>
         </Button>
+
+        {/* Theme Switcher */}
+        <ThemeSwitcher />
 
         {/* Notifications */}
         <NotificationCenter />
