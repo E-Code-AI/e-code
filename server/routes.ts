@@ -107,6 +107,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
   
+  // Set up auth bypass for development
+  setupAuthBypass(app);
+  
+  // Apply auth bypass middleware to all API routes in development
+  if (process.env.NODE_ENV === 'development') {
+    app.use('/api', devAuthBypass);
+  }
+  
   // Add debug middleware for all API routes
   app.use('/api', (req, res, next) => {
     console.log(`[Auth Debug] Request to ${req.path}, isAuthenticated: ${req.isAuthenticated()}`);

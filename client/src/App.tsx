@@ -38,6 +38,16 @@ const Careers = lazy(() => import("@/pages/Careers"));
 const Blog = lazy(() => import("@/pages/Blog"));
 const Docs = lazy(() => import("@/pages/Docs"));
 const ContactSales = lazy(() => import("@/pages/ContactSales"));
+const Terms = lazy(() => import("@/pages/Terms"));
+const Privacy = lazy(() => import("@/pages/Privacy"));
+const Status = lazy(() => import("@/pages/Status"));
+const Mobile = lazy(() => import("@/pages/Mobile"));
+const AI = lazy(() => import("@/pages/AI"));
+const Press = lazy(() => import("@/pages/Press"));
+const Partners = lazy(() => import("@/pages/Partners"));
+const Security = lazy(() => import("@/pages/Security"));
+const Desktop = lazy(() => import("@/pages/Desktop"));
+const Forum = lazy(() => import("@/pages/Forum"));
 // User area pages
 const Account = lazy(() => import("@/pages/Account"));
 const Cycles = lazy(() => import("@/pages/Cycles"));
@@ -145,6 +155,16 @@ function AppContent() {
           <Route path="/blog" component={Blog} />
           <Route path="/docs" component={Docs} />
           <Route path="/contact-sales" component={ContactSales} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/privacy" component={Privacy} />
+          <Route path="/status" component={Status} />
+          <Route path="/mobile" component={Mobile} />
+          <Route path="/ai" component={AI} />
+          <Route path="/press" component={Press} />
+          <Route path="/partners" component={Partners} />
+          <Route path="/security" component={Security} />
+          <Route path="/desktop" component={Desktop} />
+          <Route path="/forum" component={Forum} />
           <ProtectedRoute path="/dashboard" component={() => (
             <ReplitLayout>
               <Dashboard />
