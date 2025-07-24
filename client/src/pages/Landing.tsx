@@ -9,6 +9,8 @@ import {
   ChevronRight, ArrowRight, CheckCircle, PlayCircle
 } from 'lucide-react';
 import { useState } from 'react';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { PublicFooter } from '@/components/layout/PublicFooter';
 
 export default function Landing() {
   const [, navigate] = useLocation();
@@ -84,42 +86,8 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-        <div className="container-responsive">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center gap-8">
-              <div className="flex items-center gap-2">
-                <Code className="h-5 w-5 sm:h-6 sm:w-6" />
-                <span className="font-bold text-lg sm:text-xl">Replit</span>
-              </div>
-              <div className="hidden md:flex items-center gap-6">
-                <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">
-                  Features
-                </a>
-                <a href="#pricing" className="text-sm font-medium hover:text-primary transition-colors">
-                  Pricing
-                </a>
-                <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">
-                  Testimonials
-                </a>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/templates')}>
-                  Templates
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => navigate('/auth')}>
-                Log in
-              </Button>
-              <Button onClick={handleGetStarted}>
-                Start coding
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen flex flex-col">
+      <PublicNavbar />
 
       {/* Hero Section */}
       <section className="py-responsive">
@@ -358,64 +326,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t py-12 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-5 gap-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <Code className="h-6 w-6" />
-                <span className="font-bold text-xl">Replit</span>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                The collaborative browser-based IDE
-              </p>
-              <div className="flex gap-4">
-                <Button variant="ghost" size="icon">
-                  <GitBranch className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <Globe className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/features" className="hover:text-foreground">Features</a></li>
-                <li><a href="/pricing" className="hover:text-foreground">Pricing</a></li>
-                <li><a href="/templates" className="hover:text-foreground">Templates</a></li>
-                <li><a href="/deployments" className="hover:text-foreground">Deployments</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">Resources</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/docs" className="hover:text-foreground">Documentation</a></li>
-                <li><a href="/blog" className="hover:text-foreground">Blog</a></li>
-                <li><a href="/community" className="hover:text-foreground">Community</a></li>
-                <li><a href="/support" className="hover:text-foreground">Support</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/about" className="hover:text-foreground">About</a></li>
-                <li><a href="/careers" className="hover:text-foreground">Careers</a></li>
-                <li><a href="/privacy" className="hover:text-foreground">Privacy</a></li>
-                <li><a href="/terms" className="hover:text-foreground">Terms</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 Replit Clone. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
