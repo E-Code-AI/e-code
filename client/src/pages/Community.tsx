@@ -306,48 +306,48 @@ export default function Community() {
 
   return (
     <div className="min-h-screen bg-background overflow-auto">
-      <div className="container mx-auto px-4 py-6 space-y-6 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
         {/* Header */}
-        <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center justify-between">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Community</h1>
-            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+        <div className="flex flex-col space-y-3 sm:space-y-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Community</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
               Share your projects, get help, and connect with other creators
             </p>
           </div>
-          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:gap-3">
             <Input
               placeholder="Search community..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-[280px] md:w-[320px]"
+              className="w-full sm:w-[240px] md:w-[280px] lg:w-[320px]"
             />
             <Link href="/community/new">
               <Button className="w-full sm:w-auto whitespace-nowrap">
                 <Plus className="h-4 w-4 mr-2" />
-                New Post
+                <span className="sm:inline">New Post</span>
               </Button>
             </Link>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
           {/* Posts Section */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="xl:col-span-3 space-y-4 sm:space-y-6">
             {/* Category Tabs */}
             <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-              <ScrollArea className="w-full">
+              <ScrollArea className="w-full -mx-3 sm:-mx-0 px-3 sm:px-0">
                 <TabsList className="inline-flex h-auto p-1 bg-muted rounded-lg">
                   <div className="flex space-x-1">
                     {CATEGORIES.map(category => (
                       <TabsTrigger 
                         key={category.id} 
                         value={category.id}
-                        className="flex items-center gap-2 px-3 py-2 rounded-md whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                        className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-md whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-xs sm:text-sm"
                       >
-                        <category.icon className="h-4 w-4" />
-                        <span className="text-sm">{category.name}</span>
+                        <category.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        <span>{category.name}</span>
                       </TabsTrigger>
                     ))}
                   </div>
@@ -372,24 +372,24 @@ export default function Community() {
                 ) : (
                   posts.map((post: CommunityPost) => (
                     <Card key={post.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
+                      <CardContent className="p-4 sm:p-6">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-3">
-                              <Avatar className="h-10 w-10">
+                            <div className="flex items-center gap-2 sm:gap-3 mb-3">
+                              <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                                 <AvatarImage src={post.author.avatarUrl} />
-                                <AvatarFallback>
+                                <AvatarFallback className="text-xs sm:text-sm">
                                   {post.author.displayName.slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
-                              <div>
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <Link href={`/user/${post.author.username}`}>
-                                    <span className="font-semibold hover:underline">
+                                    <span className="font-semibold hover:underline text-sm sm:text-base truncate block">
                                       {post.author.displayName}
                                     </span>
                                   </Link>
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge variant="secondary" className="text-xs shrink-0">
                                     {post.author.reputation} rep
                                   </Badge>
                                 </div>
@@ -400,17 +400,17 @@ export default function Community() {
                             </div>
 
                             <Link href={`/community/post/${post.id}`}>
-                              <h3 className="text-xl font-semibold mb-2 hover:text-primary">
+                              <h3 className="text-base sm:text-lg lg:text-xl font-semibold mb-2 hover:text-primary line-clamp-2">
                                 {post.title}
                               </h3>
                             </Link>
 
-                            <p className="text-muted-foreground mb-4 line-clamp-2">
+                            <p className="text-muted-foreground mb-3 sm:mb-4 line-clamp-2 text-sm sm:text-base">
                               {post.content}
                             </p>
 
                             {post.imageUrl && (
-                              <div className="mb-4 rounded-lg overflow-hidden bg-muted aspect-video">
+                              <div className="mb-3 sm:mb-4 rounded-lg overflow-hidden bg-muted aspect-video">
                                 <img 
                                   src={post.imageUrl} 
                                   alt={post.title}
@@ -419,60 +419,60 @@ export default function Community() {
                               </div>
                             )}
 
-                            <div className="flex items-center gap-4 mb-3">
+                            <div className="flex items-center gap-1.5 sm:gap-2 mb-3 flex-wrap">
                               {post.tags.map((tag: string) => (
-                                <Badge key={tag} variant="outline" className="text-xs">
+                                <Badge key={tag} variant="outline" className="text-xs px-2 py-0.5">
                                   {tag}
                                 </Badge>
                               ))}
                             </div>
 
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                              <div className="flex items-center gap-0.5 sm:gap-1 -ml-2">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className={cn(
-                                    "gap-2",
+                                    "gap-1 sm:gap-1.5 px-2 sm:px-3 h-8 sm:h-9",
                                     post.isLiked && "text-red-500"
                                   )}
                                   onClick={() => likePostMutation.mutate(post.id)}
                                 >
                                   <Heart className={cn(
-                                    "h-4 w-4",
+                                    "h-3.5 w-3.5 sm:h-4 sm:w-4",
                                     post.isLiked && "fill-current"
                                   )} />
-                                  {post.likes}
+                                  <span className="text-xs sm:text-sm">{post.likes}</span>
                                 </Button>
-                                <Button variant="ghost" size="sm" className="gap-2">
-                                  <MessageSquare className="h-4 w-4" />
-                                  {post.comments}
+                                <Button variant="ghost" size="sm" className="gap-1 sm:gap-1.5 px-2 sm:px-3 h-8 sm:h-9">
+                                  <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                  <span className="text-xs sm:text-sm">{post.comments}</span>
                                 </Button>
-                                <Button variant="ghost" size="sm" className="gap-2">
-                                  <Share2 className="h-4 w-4" />
+                                <Button variant="ghost" size="sm" className="px-2 sm:px-3 h-8 sm:h-9">
+                                  <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className={cn(
-                                    "gap-2",
+                                    "px-2 sm:px-3 h-8 sm:h-9",
                                     post.isBookmarked && "text-blue-500"
                                   )}
                                   onClick={() => bookmarkPostMutation.mutate(post.id)}
                                 >
                                   <Bookmark className={cn(
-                                    "h-4 w-4",
+                                    "h-3.5 w-3.5 sm:h-4 sm:w-4",
                                     post.isBookmarked && "fill-current"
                                   )} />
                                 </Button>
                               </div>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
                                 <span>{post.views} views</span>
                                 {post.projectUrl && (
                                   <>
                                     <span>•</span>
                                     <Link href={post.projectUrl}>
-                                      <Button variant="link" size="sm" className="h-auto p-0">
+                                      <Button variant="link" size="sm" className="h-auto p-0 text-xs sm:text-sm">
                                         View Project
                                         <ChevronRight className="h-3 w-3 ml-1" />
                                       </Button>
@@ -492,30 +492,30 @@ export default function Community() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 lg:space-y-6">
             {/* Active Challenges */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5" />
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Trophy className="h-4 w-4 sm:h-5 sm:w-5" />
                   Active Challenges
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
                 {challenges.filter((c: Challenge) => c.status === 'active').slice(0, 3).map((challenge: Challenge) => (
-                  <div key={challenge.id} className="space-y-2">
+                  <div key={challenge.id} className="space-y-1.5 sm:space-y-2">
                     <Link href={`/community/challenge/${challenge.id}`}>
-                      <h4 className="font-semibold hover:text-primary">
+                      <h4 className="font-semibold hover:text-primary text-sm sm:text-base line-clamp-2">
                         {challenge.title}
                       </h4>
                     </Link>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                       {challenge.description}
                     </p>
                     <div className="flex items-center justify-between">
                       <Badge 
                         variant="outline" 
-                        className={cn("text-xs", getDifficultyColor(challenge.difficulty))}
+                        className={cn("text-xs px-2 py-0.5", getDifficultyColor(challenge.difficulty))}
                       >
                         {challenge.difficulty}
                       </Badge>
@@ -543,17 +543,17 @@ export default function Community() {
 
             {/* Leaderboard */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
                   Top Contributors
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
                 {leaderboard.map((user: LeaderboardUser, index: number) => (
-                  <div key={user.id} className="flex items-center gap-3">
+                  <div key={user.id} className="flex items-center gap-2 sm:gap-3">
                     <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                      "w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold shrink-0",
                       index === 0 && "bg-yellow-500/20 text-yellow-500",
                       index === 1 && "bg-gray-500/20 text-gray-500",
                       index === 2 && "bg-orange-500/20 text-orange-500",
@@ -561,35 +561,35 @@ export default function Community() {
                     )}>
                       {user.rank}
                     </div>
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-6 w-6 sm:h-8 sm:w-8 shrink-0">
                       <AvatarImage src={user.avatarUrl} />
-                      <AvatarFallback>
+                      <AvatarFallback className="text-xs sm:text-sm">
                         {user.displayName.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <Link href={`/user/${user.username}`}>
-                        <p className="font-medium text-sm hover:underline">
+                        <p className="font-medium text-xs sm:text-sm hover:underline truncate">
                           {user.displayName}
                         </p>
                       </Link>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                         <span className="text-xs text-muted-foreground">
-                          {user.score.toLocaleString()} points
+                          {user.score.toLocaleString()} pts
                         </span>
                         {user.streakDays > 0 && (
-                          <Badge variant="secondary" className="text-xs h-5">
-                            <Target className="h-3 w-3 mr-1" />
-                            {user.streakDays} day streak
+                          <Badge variant="secondary" className="text-xs h-4 sm:h-5 px-1.5 sm:px-2">
+                            <Target className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                            {user.streakDays}d
                           </Badge>
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-0.5 sm:gap-1 shrink-0">
                       {user.badges.slice(0, 2).map((badge: string) => (
                         <div
                           key={badge}
-                          className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center"
+                          className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center"
                           title={badge}
                         >
                           {getBadgeIcon(badge)}
@@ -610,26 +610,26 @@ export default function Community() {
 
             {/* Community Stats */}
             <Card>
-              <CardHeader>
-                <CardTitle>Community Stats</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Community Stats</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+              <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold">12.5K</p>
-                    <p className="text-sm text-muted-foreground">Members</p>
+                    <p className="text-xl sm:text-2xl font-bold">12.5K</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Members</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold">3.2K</p>
-                    <p className="text-sm text-muted-foreground">Posts</p>
+                    <p className="text-xl sm:text-2xl font-bold">3.2K</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Posts</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold">892</p>
-                    <p className="text-sm text-muted-foreground">Active Now</p>
+                    <p className="text-xl sm:text-2xl font-bold">892</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Active Now</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold">45</p>
-                    <p className="text-sm text-muted-foreground">Challenges</p>
+                    <p className="text-xl sm:text-2xl font-bold">45</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Challenges</p>
                   </div>
                 </div>
               </CardContent>
