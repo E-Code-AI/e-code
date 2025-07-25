@@ -72,14 +72,14 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
     setIsFullscreen(!isFullscreen);
   };
   
-  if (!isRunning && !previewData?.previewUrl) {
+  if (!previewData?.previewUrl) {
     return (
       <Card className={`flex items-center justify-center h-full ${className}`}>
         <div className="text-center space-y-4 p-8">
           <Monitor className="w-16 h-16 mx-auto text-muted-foreground" />
           <h3 className="text-lg font-semibold">Preview Unavailable</h3>
           <p className="text-sm text-muted-foreground">
-            Run your project to see the preview or ensure you have HTML files in your project.
+            Add an HTML file to your project to see the preview.
           </p>
         </div>
       </Card>

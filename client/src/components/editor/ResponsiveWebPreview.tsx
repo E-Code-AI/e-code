@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { useQuery } from '@tanstack/react-query';
 
 interface ResponsiveWebPreviewProps {
   projectId: number;
@@ -45,12 +46,18 @@ export function ResponsiveWebPreview({
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
+  // Get preview URL from the backend
+  const { data: previewData } = useQuery<{ previewUrl: string }>({
+    queryKey: [`/api/projects/${projectId}/preview-url`],
+    enabled: !!projectId
+  });
+
   useEffect(() => {
-    // Set preview URL based on project
-    const baseUrl = window.location.origin;
-    const url = `${baseUrl}/preview/${projectId}/`;
-    setPreviewUrl(url);
-  }, [projectId]);
+    // Use the preview URL from the backend
+    if (previewData?.previewUrl) {
+      setPreviewUrl(previewData.previewUrl);
+    }
+  }, [previewData]);
 
   const handleRefresh = () => {
     if (iframeRef.current) {
@@ -124,7 +131,7 @@ export function ResponsiveWebPreview({
             size="icon" 
             className="h-7 w-7"
             onClick={handleRefresh}
-            disabled={!isRunning}
+            disabled={!previewUrl}
           >
             <RefreshCw className={cn("h-3 w-3", isLoading && "animate-spin")} />
           </Button>
@@ -133,7 +140,7 @@ export function ResponsiveWebPreview({
             size="icon" 
             className="h-7 w-7"
             onClick={handleExternalOpen}
-            disabled={!isRunning}
+            disabled={!previewUrl}
           >
             <ExternalLink className="h-3 w-3" />
           </Button>
@@ -152,13 +159,13 @@ export function ResponsiveWebPreview({
 
       {/* Preview Content */}
       <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
-        {!isRunning ? (
+        {!previewUrl ? (
           <div className="text-center">
             <p className="text-[var(--ecode-text-muted)] mb-2">
-              Click "Run" to preview your project
+              Add an HTML file to preview your project
             </p>
             <p className="text-sm text-[var(--ecode-text-muted)]">
-              The preview will appear here
+              The preview will appear automatically
             </p>
           </div>
         ) : (

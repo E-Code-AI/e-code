@@ -727,17 +727,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (isWebProject) {
         // For web projects, return a preview URL without starting Docker
-        const previewPath = `/preview/${projectId}`;
-        const previewUrl = `http://localhost:5000${previewPath}`;
+        const previewPath = `/api/projects/${projectId}/preview/`;
         
         res.json({
-          stdout: `Web preview available at ${previewUrl}`,
+          stdout: 'Web preview is ready!',
           stderr: '',
           exitCode: 0,
           executionTime: 0,
           timedOut: false,
           executionId: `${projectId}-${req.user!.id}-${Date.now()}`,
-          previewUrl: previewUrl
+          previewUrl: previewPath
         });
       } else {
         // For non-web projects, execute the code
