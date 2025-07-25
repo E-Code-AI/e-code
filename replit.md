@@ -41,7 +41,7 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
 - Emphasize that no prior coding experience is needed
 
 ## Recent Changes
-- 2025-01-30: **Fixed Legal Pages Errors**:
+- 2025-01-30: **Fixed Missing Public Pages**:
   * **Subprocessors Page**: Created comprehensive page listing all third-party data processors
     - Added route for /subprocessors in App.tsx to fix 404 error
     - Includes categorized service providers (Infrastructure, Developer Tools, Security, Communication)
@@ -51,6 +51,12 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
     - FERPA compliant page with educational institution commitments
     - Includes state-specific compliance information and security measures
     - Features download button for PDF agreement and contact sales integration
+  * **Languages Page**: Created comprehensive programming languages showcase page
+    - Added route for /languages in App.tsx 
+    - Displays 20+ supported languages with icons, descriptions, and features
+    - Includes search functionality and category filtering (web, backend, mobile, data, systems, etc.)
+    - Shows version information, template counts, and popularity indicators
+    - Features section explaining package managers, instant setup, terminal access, and AI assistance
 - 2025-01-21: Fixed critical database "NaN" error and missing `/api/projects/recent` endpoint
 - 2025-01-21: Enhanced ReplitFileExplorer with drag & drop, search, context menus, file upload
 - 2025-01-21: Created AdvancedTerminal with multiple sessions, search, history, themes
