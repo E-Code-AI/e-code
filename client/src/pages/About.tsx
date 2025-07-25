@@ -5,7 +5,7 @@ import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { 
   Code, Users, Globe, Target, Lightbulb, Heart, Rocket,
-  ChevronRight, ArrowRight, Building2, GraduationCap
+  ChevronRight, ArrowRight, Building2, GraduationCap, Sparkles
 } from 'lucide-react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
@@ -42,7 +42,8 @@ export default function About() {
     { year: '2018', event: 'Introduced real-time collaboration for learning together' },
     { year: '2020', event: 'Reached 10 million learners and creators worldwide' },
     { year: '2022', event: 'Added AI helpers to guide beginners' },
-    { year: '2024', event: '20 million people discovering the joy of coding' }
+    { year: '2024', event: 'Launched revolutionary AI Agent - build complete apps in seconds' },
+    { year: '2025', event: '20 million people discovering the joy of coding' }
   ];
 
   const team = [
@@ -146,6 +147,89 @@ export default function About() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Agent Innovation Section */}
+      <section className="py-20 px-4 bg-gradient-to-b from-transparent via-violet-50/10 to-transparent dark:via-violet-950/20">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <Badge variant="default" className="mb-4 text-sm px-4 py-1">
+              <Sparkles className="h-4 w-4 mr-1" />
+              Revolutionary Innovation
+            </Badge>
+            <h2 className="text-4xl font-bold mb-6">
+              AI Agent: The future of software creation
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Our groundbreaking AI Agent represents the biggest leap forward in making coding accessible. 
+              Now anyone can build complete, professional applications just by describing what they want.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            <Card className="border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50/50 to-transparent dark:from-violet-950/20">
+              <CardHeader>
+                <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg w-fit mb-3">
+                  <Sparkles className="h-6 w-6 text-white" />
+                </div>
+                <CardTitle>Zero to App in Seconds</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Watch as complete applications materialize from simple descriptions. No coding knowledge required.
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50/50 to-transparent dark:from-violet-950/20">
+              <CardHeader>
+                <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg w-fit mb-3">
+                  <Code className="h-6 w-6 text-white" />
+                </div>
+                <CardTitle>Professional Quality</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Generates clean, maintainable code following industry best practices and modern patterns.
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50/50 to-transparent dark:from-violet-950/20">
+              <CardHeader>
+                <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg w-fit mb-3">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                <CardTitle>Democratizing Development</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Empowering entrepreneurs, students, and dreamers to build without technical barriers.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="text-center">
+            <div className="inline-flex flex-col sm:flex-row gap-4">
+              <Button 
+                size="lg"
+                onClick={() => navigate('/ai-agent')}
+                className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Explore AI Agent
+              </Button>
+              <Button 
+                size="lg"
+                variant="outline"
+                onClick={() => user ? navigate('/dashboard') : window.location.href = '/api/login'}
+              >
+                Try It Now
+              </Button>
             </div>
           </div>
         </div>

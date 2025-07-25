@@ -26,6 +26,21 @@ export default function Features() {
   const { user } = useAuth();
 
   const features: Feature[] = [
+    // AI Agent
+    {
+      icon: <Zap className="h-6 w-6" />,
+      title: 'AI Agent - Your Personal Developer',
+      description: 'Build complete apps just by describing what you want in plain English',
+      details: [
+        'Build entire apps from scratch automatically',
+        'No coding knowledge required at all',
+        'Creates all files and folders for you',
+        'Installs needed tools automatically',
+        'Works like having an expert helper',
+        'Updates code based on your feedback'
+      ],
+      category: 'AI-Powered'
+    },
     // Development Environment
     {
       icon: <Code className="h-6 w-6" />,
