@@ -6,7 +6,9 @@ import {
   Deployment, InsertDeployment,
   EnvironmentVariable, InsertEnvironmentVariable,
   NewsletterSubscriber, InsertNewsletterSubscriber,
-  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers
+  Bounty, InsertBounty,
+  BountySubmission, InsertBountySubmission,
+  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions
 } from "@shared/schema";
 import { eq, and, desc, isNull } from "drizzle-orm";
 import { db } from "./db";
@@ -61,6 +63,20 @@ export interface IStorage {
   subscribeToNewsletter(subscriber: InsertNewsletterSubscriber): Promise<NewsletterSubscriber>;
   unsubscribeFromNewsletter(email: string): Promise<void>;
   confirmNewsletterSubscription(email: string, token: string): Promise<boolean>;
+  
+  // Bounty methods
+  getAllBounties(): Promise<Bounty[]>;
+  getBounty(id: number): Promise<Bounty | undefined>;
+  getBountiesByUser(userId: number): Promise<Bounty[]>;
+  createBounty(bounty: InsertBounty): Promise<Bounty>;
+  updateBounty(id: number, update: Partial<Bounty>): Promise<Bounty>;
+  deleteBounty(id: number): Promise<void>;
+  
+  // Bounty submission methods
+  getBountySubmissions(bountyId: number): Promise<BountySubmission[]>;
+  getUserBountySubmissions(userId: number): Promise<BountySubmission[]>;
+  createBountySubmission(submission: InsertBountySubmission): Promise<BountySubmission>;
+  updateBountySubmission(id: number, update: Partial<BountySubmission>): Promise<BountySubmission>;
   
   // Session store for authentication
   sessionStore: Store;
@@ -511,6 +527,157 @@ export class DatabaseStorage implements IStorage {
       .where(eq(newsletterSubscribers.email, email));
     
     return true;
+  }
+
+  // Bounty methods
+  async getAllBounties(): Promise<Bounty[]> {
+    try {
+      return await db.select()
+        .from(bounties)
+        .orderBy(desc(bounties.createdAt));
+    } catch (error: any) {
+      if (error.message?.includes('relation "bounties" does not exist')) {
+        console.log('Bounties table does not exist yet');
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async getBounty(id: number): Promise<Bounty | undefined> {
+    try {
+      const [bounty] = await db.select()
+        .from(bounties)
+        .where(eq(bounties.id, id));
+      return bounty;
+    } catch (error: any) {
+      if (error.message?.includes('relation "bounties" does not exist')) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+
+  async getBountiesByUser(userId: number): Promise<Bounty[]> {
+    try {
+      return await db.select()
+        .from(bounties)
+        .where(eq(bounties.authorId, userId))
+        .orderBy(desc(bounties.createdAt));
+    } catch (error: any) {
+      if (error.message?.includes('relation "bounties" does not exist')) {
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async createBounty(bountyData: InsertBounty): Promise<Bounty> {
+    const [bounty] = await db
+      .insert(bounties)
+      .values(bountyData)
+      .returning();
+    
+    return bounty;
+  }
+
+  async updateBounty(id: number, update: Partial<Bounty>): Promise<Bounty> {
+    const [updatedBounty] = await db
+      .update(bounties)
+      .set({...update, updatedAt: new Date()})
+      .where(eq(bounties.id, id))
+      .returning();
+    
+    if (!updatedBounty) {
+      throw new Error('Bounty not found');
+    }
+    
+    return updatedBounty;
+  }
+
+  async deleteBounty(id: number): Promise<void> {
+    // Delete all submissions first
+    await db.delete(bountySubmissions).where(eq(bountySubmissions.bountyId, id));
+    
+    // Delete the bounty
+    await db.delete(bounties).where(eq(bounties.id, id));
+  }
+
+  // Bounty submission methods
+  async getBountySubmissions(bountyId: number): Promise<BountySubmission[]> {
+    try {
+      return await db.select()
+        .from(bountySubmissions)
+        .where(eq(bountySubmissions.bountyId, bountyId))
+        .orderBy(desc(bountySubmissions.submittedAt));
+    } catch (error: any) {
+      if (error.message?.includes('relation "bounty_submissions" does not exist')) {
+        console.log('Bounty submissions table does not exist yet');
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async getUserBountySubmissions(userId: number): Promise<BountySubmission[]> {
+    try {
+      return await db.select()
+        .from(bountySubmissions)
+        .where(eq(bountySubmissions.userId, userId))
+        .orderBy(desc(bountySubmissions.submittedAt));
+    } catch (error: any) {
+      if (error.message?.includes('relation "bounty_submissions" does not exist')) {
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async createBountySubmission(submissionData: InsertBountySubmission): Promise<BountySubmission> {
+    const [submission] = await db
+      .insert(bountySubmissions)
+      .values(submissionData)
+      .returning();
+    
+    // Update bounty status if needed
+    const bountySubmissionsCount = await db.select()
+      .from(bountySubmissions)
+      .where(eq(bountySubmissions.bountyId, submissionData.bountyId));
+    
+    if (bountySubmissionsCount.length === 1) {
+      await db
+        .update(bounties)
+        .set({ status: 'in-progress', updatedAt: new Date() })
+        .where(eq(bounties.id, submissionData.bountyId));
+    }
+    
+    return submission;
+  }
+
+  async updateBountySubmission(id: number, update: Partial<BountySubmission>): Promise<BountySubmission> {
+    const [updatedSubmission] = await db
+      .update(bountySubmissions)
+      .set({...update, reviewedAt: update.status === 'accepted' || update.status === 'rejected' ? new Date() : undefined})
+      .where(eq(bountySubmissions.id, id))
+      .returning();
+    
+    if (!updatedSubmission) {
+      throw new Error('Bounty submission not found');
+    }
+    
+    // If submission is accepted, update bounty status and winner
+    if (update.status === 'accepted') {
+      await db
+        .update(bounties)
+        .set({ 
+          status: 'completed', 
+          winnerId: updatedSubmission.userId,
+          updatedAt: new Date() 
+        })
+        .where(eq(bounties.id, updatedSubmission.bountyId));
+    }
+    
+    return updatedSubmission;
   }
 }
 

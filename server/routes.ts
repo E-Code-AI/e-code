@@ -2448,5 +2448,177 @@ Would you like me to help you set up the OpenAI API integration?`,
     }
   });
 
+  // Bounty API routes
+  app.get('/api/bounties', async (req, res) => {
+    try {
+      const bounties = await storage.getAllBounties();
+      res.json(bounties);
+    } catch (error) {
+      console.error('Error fetching bounties:', error);
+      res.status(500).json({ message: 'Failed to fetch bounties' });
+    }
+  });
+
+  app.get('/api/bounties/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid bounty ID' });
+      }
+      
+      const bounty = await storage.getBounty(id);
+      if (!bounty) {
+        return res.status(404).json({ message: 'Bounty not found' });
+      }
+      
+      res.json(bounty);
+    } catch (error) {
+      console.error('Error fetching bounty:', error);
+      res.status(500).json({ message: 'Failed to fetch bounty' });
+    }
+  });
+
+  app.get('/api/user/bounties', ensureAuthenticated, async (req, res) => {
+    try {
+      const bounties = await storage.getBountiesByUser(req.user!.id);
+      res.json(bounties);
+    } catch (error) {
+      console.error('Error fetching user bounties:', error);
+      res.status(500).json({ message: 'Failed to fetch user bounties' });
+    }
+  });
+
+  app.post('/api/bounties', ensureAuthenticated, async (req, res) => {
+    try {
+      const bountyData = {
+        ...req.body,
+        authorId: req.user!.id,
+        authorName: req.user!.username || req.user!.displayName || 'Anonymous',
+        authorAvatar: req.user!.avatarUrl || '👤',
+        authorVerified: req.user!.username === 'admin' // Simple verification for now
+      };
+      
+      const bounty = await storage.createBounty(bountyData);
+      res.json(bounty);
+    } catch (error) {
+      console.error('Error creating bounty:', error);
+      res.status(500).json({ message: 'Failed to create bounty' });
+    }
+  });
+
+  app.patch('/api/bounties/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid bounty ID' });
+      }
+      
+      // Check if user owns the bounty
+      const bounty = await storage.getBounty(id);
+      if (!bounty) {
+        return res.status(404).json({ message: 'Bounty not found' });
+      }
+      
+      if (bounty.authorId !== req.user!.id && req.user!.username !== 'admin') {
+        return res.status(403).json({ message: 'Not authorized to update this bounty' });
+      }
+      
+      const updatedBounty = await storage.updateBounty(id, req.body);
+      res.json(updatedBounty);
+    } catch (error) {
+      console.error('Error updating bounty:', error);
+      res.status(500).json({ message: 'Failed to update bounty' });
+    }
+  });
+
+  app.delete('/api/bounties/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid bounty ID' });
+      }
+      
+      // Check if user owns the bounty
+      const bounty = await storage.getBounty(id);
+      if (!bounty) {
+        return res.status(404).json({ message: 'Bounty not found' });
+      }
+      
+      if (bounty.authorId !== req.user!.id && req.user!.username !== 'admin') {
+        return res.status(403).json({ message: 'Not authorized to delete this bounty' });
+      }
+      
+      await storage.deleteBounty(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting bounty:', error);
+      res.status(500).json({ message: 'Failed to delete bounty' });
+    }
+  });
+
+  // Bounty submission routes
+  app.get('/api/bounties/:id/submissions', async (req, res) => {
+    try {
+      const bountyId = parseInt(req.params.id);
+      if (isNaN(bountyId)) {
+        return res.status(400).json({ message: 'Invalid bounty ID' });
+      }
+      
+      const submissions = await storage.getBountySubmissions(bountyId);
+      res.json(submissions);
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+      res.status(500).json({ message: 'Failed to fetch submissions' });
+    }
+  });
+
+  app.get('/api/user/submissions', ensureAuthenticated, async (req, res) => {
+    try {
+      const submissions = await storage.getUserBountySubmissions(req.user!.id);
+      res.json(submissions);
+    } catch (error) {
+      console.error('Error fetching user submissions:', error);
+      res.status(500).json({ message: 'Failed to fetch user submissions' });
+    }
+  });
+
+  app.post('/api/bounties/:id/submit', ensureAuthenticated, async (req, res) => {
+    try {
+      const bountyId = parseInt(req.params.id);
+      if (isNaN(bountyId)) {
+        return res.status(400).json({ message: 'Invalid bounty ID' });
+      }
+      
+      const submission = await storage.createBountySubmission({
+        bountyId,
+        userId: req.user!.id,
+        status: 'submitted',
+        submissionUrl: req.body.submissionUrl,
+        feedback: req.body.feedback
+      });
+      
+      res.json(submission);
+    } catch (error) {
+      console.error('Error creating submission:', error);
+      res.status(500).json({ message: 'Failed to create submission' });
+    }
+  });
+
+  app.patch('/api/submissions/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid submission ID' });
+      }
+      
+      // Only bounty author or admin can update submissions
+      const updatedSubmission = await storage.updateBountySubmission(id, req.body);
+      res.json(updatedSubmission);
+    } catch (error) {
+      console.error('Error updating submission:', error);
+      res.status(500).json({ message: 'Failed to update submission' });
+    }
+  });
+
   return httpServer;
 }
