@@ -1,349 +1,252 @@
 import { Request, Response, NextFunction } from 'express';
-import { performance } from 'perf_hooks';
+import { EventEmitter } from 'events';
 
-// Performance metrics storage
 interface PerformanceMetric {
   endpoint: string;
   method: string;
-  responseTime: number;
   statusCode: number;
+  responseTime: number;
   timestamp: Date;
-  memoryUsage: NodeJS.MemoryUsage;
-  cpuUsage: NodeJS.CpuUsage;
   userAgent?: string;
   ip?: string;
+  error?: string;
 }
 
-class PerformanceMonitor {
+interface PerformanceStats {
+  endpoint: string;
+  method: string;
+  count: number;
+  avgResponseTime: number;
+  minResponseTime: number;
+  maxResponseTime: number;
+  errorCount: number;
+  successRate: number;
+  p50: number;
+  p95: number;
+  p99: number;
+}
+
+class PerformanceMonitor extends EventEmitter {
   private metrics: PerformanceMetric[] = [];
-  private maxMetrics = 10000; // Keep last 10k metrics in memory
-  private metricsBuffer: Map<string, PerformanceMetric[]> = new Map();
-  private flushInterval = 60000; // Flush every minute
+  private readonly maxMetrics = 10000; // Keep last 10k metrics in memory
+  private readonly metricsWindow = 5 * 60 * 1000; // 5 minutes window
 
   constructor() {
-    // Start the flush interval
-    setInterval(() => this.flushMetrics(), this.flushInterval);
+    super();
+    // Clean up old metrics every minute
+    setInterval(() => this.cleanupOldMetrics(), 60 * 1000);
   }
 
-  // Middleware to track performance
-  middleware() {
-    return (req: Request, res: Response, next: NextFunction) => {
-      const start = performance.now();
-      const startCpu = process.cpuUsage();
-      const startMem = process.memoryUsage();
-
-      // Store original end function
-      const originalEnd = res.end;
-      
-      // Override end function to capture metrics
-      (res as any).end = function(chunk?: any, encoding?: any, callback?: any) {
-        // Calculate metrics
-        const duration = performance.now() - start;
-        const endCpu = process.cpuUsage(startCpu);
-        const endMem = process.memoryUsage();
-
-        // Create metric object
-        const metric: PerformanceMetric = {
-          endpoint: req.path,
-          method: req.method,
-          responseTime: duration,
-          statusCode: res.statusCode,
-          timestamp: new Date(),
-          memoryUsage: endMem,
-          cpuUsage: endCpu,
-          userAgent: req.get('user-agent'),
-          ip: req.ip
-        };
-
-        // Store metric
-        performanceMonitor.recordMetric(metric);
-
-        // Call original end with proper arguments
-        if (callback) {
-          return originalEnd.call(res, chunk, encoding, callback);
-        } else if (encoding && typeof encoding !== 'function') {
-          return originalEnd.call(res, chunk, encoding);
-        } else if (encoding && typeof encoding === 'function') {
-          return originalEnd.call(res, chunk, encoding);
-        } else if (chunk) {
-          return originalEnd.call(res, chunk);
-        } else {
-          return originalEnd.call(res);
-        }
-      };
-
-      next();
-    };
+  private cleanupOldMetrics() {
+    const cutoff = Date.now() - this.metricsWindow;
+    this.metrics = this.metrics.filter(m => m.timestamp.getTime() > cutoff);
   }
 
-  // Record a performance metric
   recordMetric(metric: PerformanceMetric) {
-    // Add to in-memory storage
     this.metrics.push(metric);
-
-    // Keep only last N metrics
+    
+    // Keep only the latest metrics if we exceed the limit
     if (this.metrics.length > this.maxMetrics) {
       this.metrics = this.metrics.slice(-this.maxMetrics);
     }
 
-    // Add to buffer for batch processing
-    const key = `${metric.method}:${metric.endpoint}`;
-    if (!this.metricsBuffer.has(key)) {
-      this.metricsBuffer.set(key, []);
+    // Emit event for real-time monitoring
+    this.emit('metric', metric);
+
+    // Check for performance issues
+    if (metric.responseTime > 3000) {
+      this.emit('slow-response', metric);
     }
-    this.metricsBuffer.get(key)!.push(metric);
+
+    if (metric.statusCode >= 500) {
+      this.emit('server-error', metric);
+    }
   }
 
-  // Get performance statistics
-  getStats(endpoint?: string, timeRange?: { start: Date; end: Date }) {
-    let filteredMetrics = this.metrics;
+  getStats(timeWindow?: number): Record<string, PerformanceStats> {
+    const window = timeWindow || this.metricsWindow;
+    const cutoff = Date.now() - window;
+    const recentMetrics = this.metrics.filter(m => m.timestamp.getTime() > cutoff);
 
-    // Filter by endpoint if provided
-    if (endpoint) {
-      filteredMetrics = filteredMetrics.filter(m => m.endpoint === endpoint);
-    }
-
-    // Filter by time range if provided
-    if (timeRange) {
-      filteredMetrics = filteredMetrics.filter(m => 
-        m.timestamp >= timeRange.start && m.timestamp <= timeRange.end
-      );
-    }
-
-    if (filteredMetrics.length === 0) {
-      return null;
-    }
-
-    // Calculate statistics
-    const responseTimes = filteredMetrics.map(m => m.responseTime);
-    const sortedTimes = responseTimes.sort((a, b) => a - b);
-
-    return {
-      count: filteredMetrics.length,
-      avgResponseTime: responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length,
-      minResponseTime: Math.min(...responseTimes),
-      maxResponseTime: Math.max(...responseTimes),
-      p50: sortedTimes[Math.floor(sortedTimes.length * 0.5)],
-      p90: sortedTimes[Math.floor(sortedTimes.length * 0.9)],
-      p95: sortedTimes[Math.floor(sortedTimes.length * 0.95)],
-      p99: sortedTimes[Math.floor(sortedTimes.length * 0.99)],
-      statusCodes: this.getStatusCodeDistribution(filteredMetrics),
-      errorRate: filteredMetrics.filter(m => m.statusCode >= 400).length / filteredMetrics.length,
-      avgMemoryUsage: this.getAvgMemoryUsage(filteredMetrics),
-      avgCpuUsage: this.getAvgCpuUsage(filteredMetrics)
-    };
-  }
-
-  // Get endpoint performance ranking
-  getEndpointRanking() {
-    const endpointStats = new Map<string, any>();
-
-    // Group metrics by endpoint
-    this.metrics.forEach(metric => {
+    const groupedMetrics: Record<string, PerformanceMetric[]> = {};
+    
+    // Group metrics by endpoint and method
+    recentMetrics.forEach(metric => {
       const key = `${metric.method} ${metric.endpoint}`;
-      if (!endpointStats.has(key)) {
-        endpointStats.set(key, []);
+      if (!groupedMetrics[key]) {
+        groupedMetrics[key] = [];
       }
-      endpointStats.get(key).push(metric);
+      groupedMetrics[key].push(metric);
     });
 
+    const stats: Record<string, PerformanceStats> = {};
+
     // Calculate stats for each endpoint
-    const rankings = Array.from(endpointStats.entries()).map(([endpoint, metrics]) => {
-      const responseTimes = metrics.map((m: PerformanceMetric) => m.responseTime);
-      return {
+    Object.entries(groupedMetrics).forEach(([key, metrics]) => {
+      const [method, endpoint] = key.split(' ');
+      const responseTimes = metrics.map(m => m.responseTime).sort((a, b) => a - b);
+      const errorCount = metrics.filter(m => m.statusCode >= 400).length;
+
+      stats[key] = {
         endpoint,
-        avgResponseTime: responseTimes.reduce((a: number, b: number) => a + b, 0) / responseTimes.length,
-        callCount: metrics.length,
-        errorCount: metrics.filter((m: PerformanceMetric) => m.statusCode >= 400).length
+        method,
+        count: metrics.length,
+        avgResponseTime: responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length,
+        minResponseTime: responseTimes[0] || 0,
+        maxResponseTime: responseTimes[responseTimes.length - 1] || 0,
+        errorCount,
+        successRate: ((metrics.length - errorCount) / metrics.length) * 100,
+        p50: this.percentile(responseTimes, 50),
+        p95: this.percentile(responseTimes, 95),
+        p99: this.percentile(responseTimes, 99),
       };
     });
 
-    // Sort by average response time (slowest first)
-    return rankings.sort((a, b) => b.avgResponseTime - a.avgResponseTime);
+    return stats;
   }
 
-  // Get real-time metrics
-  getRealTimeMetrics() {
-    const now = new Date();
-    const oneMinuteAgo = new Date(now.getTime() - 60000);
-    
-    const recentMetrics = this.metrics.filter(m => m.timestamp >= oneMinuteAgo);
-    
-    return {
-      requestsPerMinute: recentMetrics.length,
-      avgResponseTime: recentMetrics.length > 0 
-        ? recentMetrics.reduce((sum, m) => sum + m.responseTime, 0) / recentMetrics.length 
-        : 0,
-      errorRate: recentMetrics.length > 0
-        ? recentMetrics.filter(m => m.statusCode >= 400).length / recentMetrics.length
-        : 0,
-      currentMemoryUsage: process.memoryUsage(),
-      uptime: process.uptime()
-    };
+  private percentile(arr: number[], p: number): number {
+    if (arr.length === 0) return 0;
+    const index = Math.ceil((p / 100) * arr.length) - 1;
+    return arr[index];
   }
 
-  // Identify performance bottlenecks
-  identifyBottlenecks() {
-    const endpointStats = this.getEndpointRanking();
-    const bottlenecks = [];
+  getHealthStatus(): {
+    status: 'healthy' | 'degraded' | 'unhealthy';
+    issues: string[];
+    stats: any;
+  } {
+    const stats = this.getStats();
+    const issues: string[] = [];
+    let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 
-    // Find slow endpoints (avg response time > 1000ms)
-    const slowEndpoints = endpointStats.filter(e => e.avgResponseTime > 1000);
-    if (slowEndpoints.length > 0) {
-      bottlenecks.push({
-        type: 'slow_endpoints',
-        severity: 'high',
-        endpoints: slowEndpoints.slice(0, 5), // Top 5 slowest
-        recommendation: 'Consider optimizing database queries, adding caching, or improving algorithm efficiency'
-      });
-    }
-
-    // Find high-traffic endpoints
-    const highTrafficEndpoints = endpointStats.filter(e => e.callCount > 1000);
-    if (highTrafficEndpoints.length > 0) {
-      bottlenecks.push({
-        type: 'high_traffic',
-        severity: 'medium',
-        endpoints: highTrafficEndpoints.slice(0, 5),
-        recommendation: 'Consider implementing rate limiting, caching, or horizontal scaling'
-      });
-    }
-
-    // Find error-prone endpoints
-    const errorProneEndpoints = endpointStats.filter(e => e.errorCount > 10);
-    if (errorProneEndpoints.length > 0) {
-      bottlenecks.push({
-        type: 'high_error_rate',
-        severity: 'high',
-        endpoints: errorProneEndpoints.slice(0, 5),
-        recommendation: 'Review error logs and implement better error handling'
-      });
-    }
-
-    // Check memory usage
-    const memUsage = process.memoryUsage();
-    const heapUsedPercent = (memUsage.heapUsed / memUsage.heapTotal) * 100;
-    if (heapUsedPercent > 80) {
-      bottlenecks.push({
-        type: 'high_memory_usage',
-        severity: 'critical',
-        usage: memUsage,
-        percentage: heapUsedPercent,
-        recommendation: 'Memory usage is critically high. Check for memory leaks or increase available memory'
-      });
-    }
-
-    return bottlenecks;
-  }
-
-  // Export metrics for external monitoring systems
-  exportMetrics(format: 'prometheus' | 'json' = 'json') {
-    if (format === 'prometheus') {
-      return this.exportPrometheusMetrics();
-    }
-    
-    return {
-      timestamp: new Date(),
-      metrics: this.getStats(),
-      endpoints: this.getEndpointRanking(),
-      realtime: this.getRealTimeMetrics(),
-      bottlenecks: this.identifyBottlenecks()
-    };
-  }
-
-  // Private helper methods
-  private getStatusCodeDistribution(metrics: PerformanceMetric[]) {
-    const distribution: { [key: string]: number } = {};
-    metrics.forEach(m => {
-      const category = `${Math.floor(m.statusCode / 100)}xx`;
-      distribution[category] = (distribution[category] || 0) + 1;
-    });
-    return distribution;
-  }
-
-  private getAvgMemoryUsage(metrics: PerformanceMetric[]) {
-    if (metrics.length === 0) return 0;
-    const totalHeap = metrics.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0);
-    return totalHeap / metrics.length;
-  }
-
-  private getAvgCpuUsage(metrics: PerformanceMetric[]) {
-    if (metrics.length === 0) return 0;
-    const totalCpu = metrics.reduce((sum, m) => sum + (m.cpuUsage.user + m.cpuUsage.system), 0);
-    return totalCpu / metrics.length;
-  }
-
-  private exportPrometheusMetrics() {
-    const lines: string[] = [];
-    
-    // Request duration histogram
-    lines.push('# HELP http_request_duration_seconds HTTP request duration in seconds');
-    lines.push('# TYPE http_request_duration_seconds histogram');
-    
-    // Group metrics by endpoint
-    const grouped = new Map<string, PerformanceMetric[]>();
-    this.metrics.forEach(m => {
-      const key = `${m.method}_${m.endpoint.replace(/[^a-zA-Z0-9]/g, '_')}`;
-      if (!grouped.has(key)) {
-        grouped.set(key, []);
+    Object.values(stats).forEach(stat => {
+      // Check for slow endpoints
+      if (stat.p95 > 2000) {
+        issues.push(`Slow endpoint: ${stat.method} ${stat.endpoint} (p95: ${stat.p95}ms)`);
+        status = 'degraded';
       }
-      grouped.get(key)!.push(m);
+
+      // Check for high error rates
+      if (stat.errorCount > 0 && stat.successRate < 95) {
+        issues.push(`High error rate: ${stat.method} ${stat.endpoint} (${stat.successRate.toFixed(1)}% success)`);
+        if (stat.successRate < 90) {
+          status = 'unhealthy';
+        } else if (status !== 'unhealthy') {
+          status = 'degraded';
+        }
+      }
     });
 
-    // Generate histogram data
-    grouped.forEach((metrics, key) => {
-      const durations = metrics.map(m => m.responseTime / 1000); // Convert to seconds
-      const sorted = durations.sort((a, b) => a - b);
-      
-      lines.push(`http_request_duration_seconds_count{endpoint="${key}"} ${metrics.length}`);
-      lines.push(`http_request_duration_seconds_sum{endpoint="${key}"} ${durations.reduce((a, b) => a + b, 0)}`);
-      
-      // Buckets
-      const buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
-      buckets.forEach(bucket => {
-        const count = sorted.filter(d => d <= bucket).length;
-        lines.push(`http_request_duration_seconds_bucket{endpoint="${key}",le="${bucket}"} ${count}`);
-      });
-      lines.push(`http_request_duration_seconds_bucket{endpoint="${key}",le="+Inf"} ${metrics.length}`);
-    });
+    // Check overall metrics
+    const totalRequests = Object.values(stats).reduce((sum, stat) => sum + stat.count, 0);
+    const totalErrors = Object.values(stats).reduce((sum, stat) => sum + stat.errorCount, 0);
+    const overallSuccessRate = ((totalRequests - totalErrors) / totalRequests) * 100;
 
-    // Memory usage gauge
-    const memUsage = process.memoryUsage();
-    lines.push('# HELP nodejs_heap_size_used_bytes Process heap size used in bytes');
-    lines.push('# TYPE nodejs_heap_size_used_bytes gauge');
-    lines.push(`nodejs_heap_size_used_bytes ${memUsage.heapUsed}`);
+    if (overallSuccessRate < 95) {
+      issues.push(`Overall success rate low: ${overallSuccessRate.toFixed(1)}%`);
+      if (overallSuccessRate < 90) {
+        status = 'unhealthy';
+      } else if (status !== 'unhealthy') {
+        status = 'degraded';
+      }
+    }
 
-    return lines.join('\n');
+    return {
+      status,
+      issues,
+      stats: {
+        totalRequests,
+        totalErrors,
+        overallSuccessRate,
+        endpointStats: stats,
+      },
+    };
   }
 
-  private flushMetrics() {
-    // Here you would typically send metrics to an external monitoring service
-    // For now, we'll just clear the buffer
-    if (this.metricsBuffer.size > 0) {
-      console.log(`Flushing ${this.metricsBuffer.size} endpoint metrics`);
-      this.metricsBuffer.clear();
+  // Get metrics for real-time dashboard
+  getRealtimeMetrics(limit = 100): PerformanceMetric[] {
+    return this.metrics.slice(-limit);
+  }
+
+  // Get aggregated metrics for charts
+  getTimeSeriesData(interval = 60000): any[] { // 1 minute intervals
+    const now = Date.now();
+    const data: any[] = [];
+    
+    for (let i = 0; i < 10; i++) { // Last 10 intervals
+      const end = now - (i * interval);
+      const start = end - interval;
+      
+      const intervalMetrics = this.metrics.filter(m => {
+        const time = m.timestamp.getTime();
+        return time >= start && time < end;
+      });
+
+      if (intervalMetrics.length > 0) {
+        const avgResponseTime = intervalMetrics.reduce((sum, m) => sum + m.responseTime, 0) / intervalMetrics.length;
+        const errorCount = intervalMetrics.filter(m => m.statusCode >= 400).length;
+        
+        data.unshift({
+          timestamp: new Date(end),
+          requests: intervalMetrics.length,
+          avgResponseTime,
+          errorCount,
+          errorRate: (errorCount / intervalMetrics.length) * 100,
+        });
+      }
     }
+
+    return data;
   }
 }
 
 // Create singleton instance
 export const performanceMonitor = new PerformanceMonitor();
 
-// Health check endpoint data
-export function getHealthCheck() {
-  const metrics = performanceMonitor.getRealTimeMetrics();
-  const bottlenecks = performanceMonitor.identifyBottlenecks();
-  
-  return {
-    status: bottlenecks.some(b => b.severity === 'critical') ? 'unhealthy' : 'healthy',
-    timestamp: new Date(),
-    uptime: metrics.uptime,
-    memory: metrics.currentMemoryUsage,
-    performance: {
-      requestsPerMinute: metrics.requestsPerMinute,
-      avgResponseTime: metrics.avgResponseTime,
-      errorRate: metrics.errorRate
-    },
-    issues: bottlenecks
+// Express middleware
+export function performanceMiddleware(req: Request, res: Response, next: NextFunction) {
+  const start = Date.now();
+  const originalSend = res.send;
+  const originalJson = res.json;
+
+  // Override response methods to capture timing
+  res.send = function(data: any) {
+    res.send = originalSend;
+    recordMetric();
+    return res.send(data);
   };
+
+  res.json = function(data: any) {
+    res.json = originalJson;
+    recordMetric();
+    return res.json(data);
+  };
+
+  function recordMetric() {
+    const responseTime = Date.now() - start;
+    const metric: PerformanceMetric = {
+      endpoint: req.route ? req.route.path : req.path,
+      method: req.method,
+      statusCode: res.statusCode,
+      responseTime,
+      timestamp: new Date(),
+      userAgent: req.headers['user-agent'],
+      ip: req.ip,
+    };
+
+    // Add error message if status code indicates error
+    if (res.statusCode >= 400 && res.locals.error) {
+      metric.error = res.locals.error;
+    }
+
+    performanceMonitor.recordMetric(metric);
+  }
+
+  next();
+}
+
+// Helper to mark errors in response locals
+export function markError(res: Response, error: string) {
+  res.locals.error = error;
 }

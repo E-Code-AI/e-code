@@ -12,7 +12,7 @@ import {
   FileText, Cpu, GitBranch, Package, Globe,
   Lock, BarChart3, CheckCircle, XCircle
 } from 'lucide-react';
-import { PerformanceDashboard } from '@/components/monitoring/PerformanceDashboard';
+import PerformanceMonitor from '@/pages/admin/PerformanceMonitor';
 import { formatDistanceToNow } from 'date-fns';
 import NewsletterSubscribers from '@/components/admin/NewsletterSubscribers';
 
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="performance">
-          <PerformanceDashboard />
+          <PerformanceMonitor />
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">
