@@ -57,6 +57,9 @@ const Learn = lazy(() => import("@/pages/Learn"));
 const Support = lazy(() => import("@/pages/Support"));
 const Themes = lazy(() => import("@/pages/Themes"));
 const Referrals = lazy(() => import("@/pages/Referrals"));
+// Newsletter pages
+const NewsletterConfirm = lazy(() => import("@/pages/NewsletterConfirm"));
+const NewsletterUnsubscribe = lazy(() => import("@/pages/NewsletterUnsubscribe"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -108,6 +111,9 @@ function AppContent() {
           <Route path="/security" component={Security} />
           <Route path="/desktop" component={Desktop} />
           <Route path="/forum" component={Forum} />
+          {/* Newsletter pages */}
+          <Route path="/newsletter/confirm" component={NewsletterConfirm} />
+          <Route path="/newsletter/unsubscribe" component={NewsletterUnsubscribe} />
           <ProtectedRoute path="/dashboard" component={() => (
             <ReplitLayout>
               <Dashboard />

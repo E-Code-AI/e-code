@@ -208,6 +208,11 @@ export function PublicFooter() {
             <span className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} E-Code Inc. All rights reserved.
             </span>
+            <Link href="/newsletter/unsubscribe">
+              <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Unsubscribe
+              </a>
+            </Link>
           </div>
 
           {/* Social Links */}

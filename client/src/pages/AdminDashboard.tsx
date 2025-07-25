@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { PerformanceDashboard } from '@/components/monitoring/PerformanceDashboard';
 import { formatDistanceToNow } from 'date-fns';
+import NewsletterSubscribers from '@/components/admin/NewsletterSubscribers';
 
 interface SystemStatus {
   database: { status: string; connections: number };
@@ -95,10 +96,11 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid grid-cols-6 w-full">
+        <TabsList className="grid grid-cols-7 w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
@@ -250,6 +252,10 @@ export default function AdminDashboard() {
               </Alert>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="newsletter">
+          <NewsletterSubscribers />
         </TabsContent>
 
         <TabsContent value="performance">
