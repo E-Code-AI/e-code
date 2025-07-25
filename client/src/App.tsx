@@ -188,7 +188,11 @@ function AppContent() {
               <TemplatesPage />
             </ReplitLayout>
           )} />
-          <ProtectedRoute path="/community" component={() => <Community />} />
+          <ProtectedRoute path="/community" component={() => (
+            <ReplitLayout>
+              <Community />
+            </ReplitLayout>
+          )} />
           <ProtectedRoute path="/search" component={() => (
             <ReplitLayout>
               <SearchPage />
