@@ -51,6 +51,7 @@ import { projectExporter } from "./import-export/exporter";
 import { deploymentManager } from "./deployment";
 import * as path from "path";
 import adminRoutes from "./admin/routes";
+import OpenAI from 'openai';
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -1689,10 +1690,10 @@ document.addEventListener('DOMContentLoaded', function() {
   app.post('/api/projects/:projectId/ai/chat', ensureAuthenticated, async (req, res) => {
     try {
       const { projectId } = req.params;
-      const { messages } = req.body;
+      const { message, context } = req.body;
       
-      if (!messages || !Array.isArray(messages)) {
-        return res.status(400).json({ error: 'Messages array is required' });
+      if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
       }
       
       // Get project context
@@ -1704,30 +1705,70 @@ document.addEventListener('DOMContentLoaded', function() {
       // Get recent file content for context
       const files = await storage.getFilesByProject(parseInt(projectId));
       const codeContext = files
-        .filter(f => !f.isFolder)
-        .slice(0, 5)
-        .map(f => `File: ${f.name}\n\`\`\`\n${f.content}\n\`\`\``)
+        .filter(f => !f.isFolder && context?.file === f.name)
+        .slice(0, 3)
+        .map(f => `File: ${f.name}\n\`\`\`${f.name.split('.').pop() || 'txt'}\n${f.content}\n\`\`\``)
         .join('\n\n');
       
-      // For now, return a mock response since we need OpenAI API key
-      const mockResponse = {
+      // Create OpenAI client
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+      
+      // Build conversation history
+      const conversationHistory = context?.history || [];
+      
+      const systemMessage = {
+        role: 'system' as const,
+        content: `You are E-Code AI Assistant, an expert coding assistant similar to Replit's Ghostwriter. You help users with their ${project.name} project.
+        
+Current project context:
+- Language: ${project.language || 'Not specified'}
+- Project: ${project.name}
+${codeContext ? `\nCurrent file context:\n${codeContext}` : ''}
+
+Provide helpful, concise responses. When suggesting code, use proper markdown formatting with language hints. Be friendly and encouraging.`
+      };
+      
+      const messages = [
+        systemMessage,
+        ...conversationHistory.map((msg: any) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        })),
+        { role: 'user' as const, content: message }
+      ];
+      
+      // Create OpenAI completion
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages,
+        temperature: 0.7,
+        max_tokens: 1000,
+        stream: false,
+      });
+      
+      const assistantMessage = {
         id: `msg_${Date.now()}`,
         role: 'assistant',
-        content: `I understand you're working on "${project.name}". To provide actual AI assistance, please configure your OpenAI API key in the environment variables. 
-
-Based on your project context, I can see you have ${files.length} files. Once the API key is configured, I'll be able to help with:
-- Code suggestions and completions
-- Bug fixes and optimizations
-- Explanations and documentation
-- Refactoring recommendations
-
-Would you like me to help you set up the OpenAI API integration?`,
+        content: completion.choices[0].message.content || 'I apologize, but I was unable to generate a response.',
         timestamp: Date.now()
       };
       
-      res.json(mockResponse);
-    } catch (error) {
+      res.json(assistantMessage);
+    } catch (error: any) {
       console.error('AI chat error:', error);
+      
+      // If OpenAI API key is missing or invalid
+      if (error.status === 401 || error.message?.includes('API key')) {
+        return res.json({
+          id: `msg_${Date.now()}`,
+          role: 'assistant',
+          content: 'It looks like the OpenAI API key is not configured correctly. Please ensure you have set up your OPENAI_API_KEY in the environment variables.',
+          timestamp: Date.now()
+        });
+      }
+      
       res.status(500).json({ error: 'Failed to process AI request' });
     }
   });
