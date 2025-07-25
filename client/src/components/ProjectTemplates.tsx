@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
@@ -296,7 +296,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
             </div>
           </div>
 
-          {/* Search and Filters */}
+          {/* Search and Filters - Mobile optimized */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -304,11 +304,11 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                 placeholder="Search templates..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-9 h-10"
               />
             </div>
             <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px] h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -319,62 +319,72 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
             </Select>
           </div>
 
-          {/* Categories */}
-          <ScrollArea className="w-full whitespace-nowrap pb-4">
-            <div className="flex gap-2">
-              {TEMPLATE_CATEGORIES.map(category => (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.id ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category.id)}
-                  className="flex items-center gap-2"
-                >
-                  <category.icon className="h-4 w-4" />
-                  {category.name}
-                </Button>
-              ))}
-            </div>
-          </ScrollArea>
+          {/* Categories - Mobile optimized horizontal scroll */}
+          <div className="w-full -mx-3 sm:mx-0 px-3 sm:px-0">
+            <ScrollArea className="w-full">
+              <div className="flex gap-2 pb-2">
+                {TEMPLATE_CATEGORIES.map(category => (
+                  <Button
+                    key={category.id}
+                    variant={selectedCategory === category.id ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category.id)}
+                    className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap h-8 sm:h-9 px-3 text-xs sm:text-sm"
+                  >
+                    <category.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">{category.name}</span>
+                    <span className="sm:hidden">
+                      {category.name.split(' ')[0]}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </div>
         </div>
 
-        {/* Templates Grid/List */}
+        {/* Templates Grid/List - Enhanced responsive layout */}
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {filteredTemplates.map(template => (
               <Card 
                 key={template.id}
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+                className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden group hover:border-[var(--ecode-accent)]"
                 onClick={() => handleTemplateClick(template)}
               >
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="p-3 rounded-lg bg-primary/10">
-                      {template.icon}
+                <CardHeader className="p-4 sm:p-6">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="p-2 sm:p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      {React.cloneElement(template.icon as React.ReactElement, { 
+                        className: 'h-6 w-6 sm:h-8 sm:w-8' 
+                      })}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       {template.isFeatured && (
-                        <Badge variant="secondary">
-                          <Star className="h-3 w-3 mr-1" />
-                          Featured
+                        <Badge variant="secondary" className="text-[10px] sm:text-xs">
+                          <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                          <span className="hidden sm:inline">Featured</span>
+                          <span className="sm:hidden">★</span>
                         </Badge>
                       )}
                       {template.isOfficial && (
-                        <Badge variant="secondary">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Official
+                        <Badge variant="secondary" className="text-[10px] sm:text-xs">
+                          <Shield className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                          <span className="hidden sm:inline">Official</span>
+                          <span className="sm:hidden">✓</span>
                         </Badge>
                       )}
                     </div>
                   </div>
-                  <CardTitle className="text-lg">{template.name}</CardTitle>
-                  <CardDescription className="line-clamp-2">
+                  <CardTitle className="text-base sm:text-lg line-clamp-1">{template.name}</CardTitle>
+                  <CardDescription className="line-clamp-2 text-xs sm:text-sm mt-1">
                     {template.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6 -mt-2">
                   <div className="space-y-3">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <span className="flex items-center">
                         <Code className="h-3 w-3 mr-1" />
                         {template.language}
@@ -393,12 +403,12 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                     
                     <div className="flex flex-wrap gap-1">
                       {template.tags.slice(0, 3).map(tag => (
-                        <Badge key={tag} variant="outline" className="text-xs">
+                        <Badge key={tag} variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 sm:py-0.5">
                           {tag}
                         </Badge>
                       ))}
                       {template.tags.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 sm:py-0.5">
                           +{template.tags.length - 3}
                         </Badge>
                       )}
@@ -407,10 +417,10 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                     <Separator />
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                         <span className="flex items-center">
                           <Users className="h-3 w-3 mr-1" />
-                          {template.stats.uses.toLocaleString()}
+                          {template.stats.uses > 999 ? `${(template.stats.uses/1000).toFixed(1)}k` : template.stats.uses}
                         </span>
                         <span className="flex items-center">
                           <Star className="h-3 w-3 mr-1" />
@@ -418,26 +428,26 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Avatar className="h-6 w-6">
+                        <Avatar className="h-5 w-5 sm:h-6 sm:w-6">
                           <AvatarImage src={template.author.avatar} />
-                          <AvatarFallback>
+                          <AvatarFallback className="text-[8px] sm:text-[10px]">
                             {template.author.name.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">
                           {template.author.name}
                         </span>
                         {template.author.verified && (
-                          <Shield className="h-3 w-3 text-primary" />
+                          <Shield className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary" />
                         )}
                       </div>
                     </div>
                   </div>
                 </CardContent>
                 {showCreateButton && (
-                  <CardFooter>
+                  <CardFooter className="p-4 sm:p-6 pt-0 sm:pt-0">
                     <Button 
-                      className="w-full"
+                      className="w-full h-8 sm:h-9 text-xs sm:text-sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         createProjectMutation.mutate(template);
