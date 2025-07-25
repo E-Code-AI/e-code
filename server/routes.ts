@@ -56,6 +56,8 @@ import adminRoutes from "./admin/routes";
 import OpenAI from 'openai';
 import { performanceMiddleware } from './monitoring/performance';
 import { monitoringRouter } from './monitoring/routes';
+import { nixPackageManager } from './package-management/nix-package-manager';
+import { nixEnvironmentBuilder } from './package-management/nix-environment-builder';
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -2351,14 +2353,11 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
     }
   });
   
-  // Package Management API
-  const packageInstallerModule = await import('./package-installer');
-  const packageInstaller = packageInstallerModule.packageInstaller;
-  
+  // Package Management API using Nix
   app.get('/api/projects/:id/packages', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.id);
-      const packages = await packageInstaller.listPackages(projectId);
+      const projectId = req.params.id;
+      const packages = await nixPackageManager.getInstalledPackages(projectId);
       res.json(packages);
     } catch (error) {
       console.error('Error fetching packages:', error);
@@ -2368,20 +2367,17 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
   
   app.post('/api/projects/:id/packages', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.id);
+      const projectId = req.params.id;
       const { name, language } = req.body;
       
       if (!name) {
         return res.status(400).json({ error: 'Package name is required' });
       }
       
-      const result = await packageInstaller.installPackages({
-        projectId,
-        packages: [name],
-        dev: false
-      });
+      // Install package using Nix
+      await nixPackageManager.installPackage(projectId, name);
       
-      res.json(result);
+      res.json({ name, status: 'installed' });
     } catch (error) {
       console.error('Error installing package:', error);
       res.status(500).json({ error: 'Failed to install package' });
@@ -2390,11 +2386,11 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
   
   app.delete('/api/projects/:id/packages/:packageName', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.id);
+      const projectId = req.params.id;
       const packageName = req.params.packageName;
       
-      const result = await packageInstaller.uninstallPackages(projectId, [packageName]);
-      res.json(result);
+      await nixPackageManager.removePackage(projectId, packageName);
+      res.json({ name: packageName, status: 'removed' });
     } catch (error) {
       console.error('Error uninstalling package:', error);
       res.status(500).json({ error: 'Failed to uninstall package' });
@@ -2409,11 +2405,46 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
         return res.status(400).json({ error: 'Search query is required' });
       }
       
-      // TODO: Implement actual package search from npm, pypi, etc.
-      res.json([]);
+      // Search packages using Nix
+      const results = await nixPackageManager.searchPackages(q, language as string);
+      res.json(results);
     } catch (error) {
       console.error('Error searching packages:', error);
       res.status(500).json({ error: 'Failed to search packages' });
+    }
+  });
+  
+  // Additional Nix-specific endpoints
+  app.post('/api/projects/:id/packages/update', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      await nixPackageManager.updatePackages(projectId);
+      res.json({ status: 'updated' });
+    } catch (error) {
+      console.error('Error updating packages:', error);
+      res.status(500).json({ error: 'Failed to update packages' });
+    }
+  });
+  
+  app.post('/api/projects/:id/packages/rollback', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      await nixPackageManager.rollback(projectId);
+      res.json({ status: 'rolled back' });
+    } catch (error) {
+      console.error('Error rolling back packages:', error);
+      res.status(500).json({ error: 'Failed to rollback packages' });
+    }
+  });
+  
+  app.get('/api/projects/:id/packages/environment', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const shellNix = await nixPackageManager.exportEnvironment(projectId);
+      res.json({ shellNix });
+    } catch (error) {
+      console.error('Error exporting environment:', error);
+      res.status(500).json({ error: 'Failed to export environment' });
     }
   });
   
