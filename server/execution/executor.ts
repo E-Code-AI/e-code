@@ -3,6 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { EventEmitter } from 'events';
 import { storage } from '../storage';
+import { sandboxExecutor } from '../sandbox/sandbox-executor';
 // import { RuntimeManager } from '../runtimes/runtime-manager';
 
 export interface ExecutionOptions {
@@ -47,18 +48,15 @@ export class CodeExecutor extends EventEmitter {
     const startTime = Date.now();
 
     try {
+      // Initialize sandbox executor if not already done
+      await sandboxExecutor.initialize();
+
       // Get project files
       const files = await storage.getFilesByProject(projectId);
       
-      // Create temp directory for execution
-      const tempDir = await this.createTempDirectory(executionId);
-      
-      // Write files to temp directory
-      await this.writeFilesToDirectory(files, tempDir);
-      
       // Get environment variables for the project
       const projectEnvVars = await storage.getEnvironmentVariables(projectId);
-      const envVars = { ...process.env, ...env };
+      const envVars = { ...env };
       
       // Add project environment variables
       for (const envVar of projectEnvVars) {
@@ -70,54 +68,46 @@ export class CodeExecutor extends EventEmitter {
       // Determine the main file to execute
       const entryFile = mainFile || this.getEntryFile(files, language);
       
-      // Build command based on language
-      let command: string;
-      switch (language) {
-        case 'nodejs':
-        case 'javascript':
-          command = `node ${entryFile}`;
-          break;
-        case 'python':
-          command = `python ${entryFile}`;
-          break;
-        case 'java':
-          command = `java ${entryFile}`;
-          break;
-        case 'cpp':
-          command = `./${entryFile}`;
-          break;
-        case 'go':
-          command = `go run ${entryFile}`;
-          break;
-        case 'rust':
-          command = `cargo run`;
-          break;
-        case 'ruby':
-          command = `ruby ${entryFile}`;
-          break;
-        case 'php':
-          command = `php ${entryFile}`;
-          break;
-        default:
-          throw new Error(`Unsupported language: ${language}`);
+      // Find the main file content
+      const mainFileRecord = files.find(f => f.name === entryFile);
+      if (!mainFileRecord || mainFileRecord.content === null) {
+        throw new Error(`Main file ${entryFile} not found or has no content`);
       }
       
-      // Execute the command
-      const result = await this.runCommand(
-        command,
-        tempDir,
-        envVars,
-        stdin,
-        timeout,
-        executionId,
-        projectId,
-        userId
-      );
+      // Convert files to sandbox format
+      const sandboxFiles: { [path: string]: string } = {};
+      for (const file of files) {
+        if (file.name !== entryFile && !file.isFolder && file.content !== null) {
+          sandboxFiles[file.name] = file.content;
+        }
+      }
       
-      // Clean up temp directory
-      await this.cleanupTempDirectory(tempDir);
+      // Normalize language names for sandbox
+      let sandboxLanguage = language;
+      if (language === 'nodejs') {
+        sandboxLanguage = 'javascript';
+      }
       
-      return result;
+      // Execute in sandbox
+      const sandboxResult = await sandboxExecutor.execute({
+        language: sandboxLanguage,
+        code: mainFileRecord.content,
+        files: sandboxFiles,
+        stdin: stdin,
+        env: envVars,
+        timeout: Math.floor(timeout / 1000), // Convert to seconds
+        securityPolicy: 'standard' // Use standard policy by default
+      });
+      
+      // Convert sandbox result to execution result
+      return {
+        stdout: sandboxResult.stdout,
+        stderr: sandboxResult.stderr,
+        exitCode: sandboxResult.exitCode,
+        executionTime: sandboxResult.executionTime * 1000, // Convert to milliseconds
+        error: sandboxResult.error,
+        timedOut: sandboxResult.executionTime >= (timeout / 1000)
+      };
     } catch (error) {
       return {
         stdout: '',
