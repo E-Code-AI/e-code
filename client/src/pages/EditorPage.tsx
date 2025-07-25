@@ -32,7 +32,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { ReplitEditorLayout } from '@/components/editor/ReplitEditorLayout';
 import { ReplitFileSidebar } from '@/components/editor/ReplitFileSidebar';
 import { ReplitCodeEditor } from '@/components/editor/ReplitCodeEditor';
-import { Globe, MoreVertical } from 'lucide-react';
+import { Globe, MoreVertical, Beaker, Package as PackageIcon, Bug } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import {
   DropdownMenu,
@@ -41,6 +41,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { CollaborationPresence } from '@/components/editor/CollaborationPresence';
+import { DatabaseBrowser } from '@/components/DatabaseBrowser';
+import { PackageViewer } from '@/components/PackageViewer';
+import { DebuggerPanel } from '@/components/DebuggerPanel';
+import { TestRunner } from '@/components/TestRunner';
 
 export default function EditorPage() {
   const { projectId } = useParams();
@@ -417,6 +421,30 @@ export default function EditorPage() {
               title: 'Webview',
               icon: <Globe className="h-3 w-3" />,
               content: <ResponsiveWebPreview projectId={projectIdNum} isRunning={isProjectRunning} />
+            },
+            {
+              id: 'database',
+              title: 'Database',
+              icon: <Database className="h-3 w-3" />,
+              content: <DatabaseBrowser projectId={projectIdNum.toString()} />
+            },
+            {
+              id: 'packages',
+              title: 'Packages',
+              icon: <PackageIcon className="h-3 w-3" />,
+              content: <PackageViewer projectId={projectIdNum.toString()} />
+            },
+            {
+              id: 'debugger',
+              title: 'Debugger',
+              icon: <Bug className="h-3 w-3" />,
+              content: <DebuggerPanel projectId={projectIdNum.toString()} />
+            },
+            {
+              id: 'tests',
+              title: 'Tests',
+              icon: <Beaker className="h-3 w-3" />,
+              content: <TestRunner projectId={projectIdNum.toString()} />
             }
           ]}
           defaultRightPanel="console"

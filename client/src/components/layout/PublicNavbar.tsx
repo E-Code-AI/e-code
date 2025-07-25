@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X, ChevronDown, Code } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import { ECodeLogo } from '@/components/ECodeLogo';
 
 export function PublicNavbar() {
   const [location, navigate] = useLocation();
@@ -51,28 +52,8 @@ export function PublicNavbar() {
           {/* Logo */}
           <div className="flex items-center gap-6">
             <Link href="/">
-              <div className="flex items-center gap-2 cursor-pointer">
-                <svg
-                  className="h-6 w-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12 2L2 7L2 17L12 22L22 17V7L12 2Z"
-                    fill="#F26207"
-                  />
-                  <path
-                    d="M12 2L22 7V17L12 12V2Z"
-                    fill="#F99D25"
-                  />
-                  <path
-                    d="M12 12L22 17L12 22V12Z"
-                    fill="#F26207"
-                  />
-                  <circle cx="12" cy="12" r="3" fill="white" />
-                </svg>
-                <span className="font-bold text-xl hidden sm:inline-block">E-Code</span>
+              <div className="cursor-pointer">
+                <ECodeLogo size="sm" />
               </div>
             </Link>
 
@@ -86,14 +67,12 @@ export function PublicNavbar() {
                       <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                         {productItems.map((item) => (
                           <li key={item.title}>
-                            <NavigationMenuLink asChild>
-                              <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                                <div className="text-sm font-medium leading-none">{item.title}</div>
-                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                  {item.description}
-                                </p>
-                              </Link>
-                            </NavigationMenuLink>
+                            <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                              <div className="text-sm font-medium leading-none">{item.title}</div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                {item.description}
+                              </p>
+                            </Link>
                           </li>
                         ))}
                       </ul>
@@ -106,14 +85,12 @@ export function PublicNavbar() {
                       <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                         {resourcesItems.map((item) => (
                           <li key={item.title}>
-                            <NavigationMenuLink asChild>
-                              <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                                <div className="text-sm font-medium leading-none">{item.title}</div>
-                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                  {item.description}
-                                </p>
-                              </Link>
-                            </NavigationMenuLink>
+                            <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                              <div className="text-sm font-medium leading-none">{item.title}</div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                {item.description}
+                              </p>
+                            </Link>
                           </li>
                         ))}
                       </ul>
@@ -126,14 +103,12 @@ export function PublicNavbar() {
                       <ul className="grid w-[400px] gap-3 p-4">
                         {companyItems.map((item) => (
                           <li key={item.title}>
-                            <NavigationMenuLink asChild>
-                              <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                                <div className="text-sm font-medium leading-none">{item.title}</div>
-                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                  {item.description}
-                                </p>
-                              </Link>
-                            </NavigationMenuLink>
+                            <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                              <div className="text-sm font-medium leading-none">{item.title}</div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                {item.description}
+                              </p>
+                            </Link>
                           </li>
                         ))}
                       </ul>
