@@ -66,6 +66,11 @@ const Languages = lazy(() => import("@/pages/Languages"));
 const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
 const Shell = lazy(() => import("@/pages/Shell"));
 const Secrets = lazy(() => import("@/pages/Secrets"));
+const Workflows = lazy(() => import("@/pages/Workflows"));
+const SSH = lazy(() => import("@/pages/SSH"));
+const SecurityScanner = lazy(() => import("@/pages/SecurityScanner"));
+const Dependencies = lazy(() => import("@/pages/Dependencies"));
+const ObjectStorage = lazy(() => import("@/pages/ObjectStorage"));
 // Newsletter pages
 const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
 
@@ -216,6 +221,31 @@ function AppContent() {
           <ProtectedRoute path="/secrets" component={() => (
             <ReplitLayout>
               <Secrets />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/workflows" component={() => (
+            <ReplitLayout>
+              <Workflows />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/ssh" component={() => (
+            <ReplitLayout>
+              <SSH />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/security-scanner" component={() => (
+            <ReplitLayout>
+              <SecurityScanner />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/dependencies" component={() => (
+            <ReplitLayout>
+              <Dependencies />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/object-storage" component={() => (
+            <ReplitLayout>
+              <ObjectStorage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin" component={() => (

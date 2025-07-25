@@ -29,6 +29,12 @@ import {
   Lock,
   Terminal,
   Palette,
+  Workflow,
+  Shield,
+  HardDrive,
+  Key,
+  Package,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
@@ -185,6 +191,52 @@ export function ReplitHeader() {
               Secrets
             </Button>
           </Link>
+          
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] replit-transition"
+              >
+                Tools
+                <ChevronDown className="ml-1 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+              <Link href="/workflows">
+                <DropdownMenuItem className={`cursor-pointer ${isActive("/workflows") ? "bg-[var(--ecode-accent)]/10" : ""} text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]`}>
+                  <Workflow className="mr-2 h-4 w-4" />
+                  Workflows
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/ssh">
+                <DropdownMenuItem className={`cursor-pointer ${isActive("/ssh") ? "bg-[var(--ecode-accent)]/10" : ""} text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]`}>
+                  <Terminal className="mr-2 h-4 w-4" />
+                  SSH
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/security-scanner">
+                <DropdownMenuItem className={`cursor-pointer ${isActive("/security-scanner") ? "bg-[var(--ecode-accent)]/10" : ""} text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]`}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Security Scanner
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/dependencies">
+                <DropdownMenuItem className={`cursor-pointer ${isActive("/dependencies") ? "bg-[var(--ecode-accent)]/10" : ""} text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]`}>
+                  <Package className="mr-2 h-4 w-4" />
+                  Dependencies
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/object-storage">
+                <DropdownMenuItem className={`cursor-pointer ${isActive("/object-storage") ? "bg-[var(--ecode-accent)]/10" : ""} text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]`}>
+                  <HardDrive className="mr-2 h-4 w-4" />
+                  Object Storage
+                </DropdownMenuItem>
+              </Link>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
       </div>
 

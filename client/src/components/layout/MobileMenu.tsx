@@ -9,7 +9,7 @@ import {
   Menu, X, Home, Code, Zap, Globe, Users, Database, Book, 
   Settings, User, HelpCircle, Crown, Plus, Search, FileCode,
   Terminal, GitBranch, Sparkles, Package, Shield, LogOut,
-  ChevronRight, Heart, Star, Briefcase, GraduationCap
+  ChevronRight, Heart, Star, Briefcase, GraduationCap, Workflow, HardDrive
 } from 'lucide-react';
 
 interface MobileMenuProps {
@@ -67,10 +67,12 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
 
   const toolsLinks = [
     { icon: Terminal, label: 'Shell', path: '/shell' },
-    { icon: GitBranch, label: 'Version Control', path: '/git' },
-    { icon: Database, label: 'Database', path: '/database' },
-    { icon: Package, label: 'Packages', path: '/packages' },
     { icon: Shield, label: 'Secrets', path: '/secrets' },
+    { icon: Workflow, label: 'Workflows', path: '/workflows' },
+    { icon: Terminal, label: 'SSH', path: '/ssh' },
+    { icon: Shield, label: 'Security Scanner', path: '/security-scanner' },
+    { icon: Package, label: 'Dependencies', path: '/dependencies' },
+    { icon: HardDrive, label: 'Object Storage', path: '/object-storage' },
   ];
 
   const accountLinks = [
