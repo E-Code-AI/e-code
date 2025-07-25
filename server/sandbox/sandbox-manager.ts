@@ -4,6 +4,10 @@ import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
 import { EventEmitter } from 'events';
+import { createLogger } from '../utils/logger';
+import { networkSecurityManager, NetworkSecurityConfig } from './network-security';
+
+const logger = createLogger('sandbox-manager');
 
 export interface SandboxConfig {
   // Resource limits
@@ -172,6 +176,7 @@ class Sandbox {
   private resourceMonitor?: NodeJS.Timeout;
   private networkMonitor?: NetworkMonitor;
   private securityMonitor?: SecurityMonitor;
+  private networkNamespace?: string;
   
   constructor(id: string, config: SandboxConfig) {
     this.id = id;
@@ -259,14 +264,31 @@ class Sandbox {
   }
 
   private async setupNetworkIsolation(): Promise<void> {
-    // Create network namespace
-    const netnsName = `ecode-${this.id}`;
-    await this.runCommand('ip', ['netns', 'add', netnsName]);
+    // Initialize network security manager if not already done
+    await networkSecurityManager.initialize();
     
-    // Configure firewall rules if needed
-    if (this.config.allowedHosts && this.config.allowedHosts.length > 0) {
-      await this.setupFirewallRules();
-    }
+    // Convert sandbox config to network security config
+    const networkConfig: NetworkSecurityConfig = {
+      enableNetworkIsolation: !this.config.networkEnabled,
+      allowLoopback: true,
+      allowDNS: this.config.networkEnabled,
+      allowedPorts: this.config.blockedPorts 
+        ? Array.from({length: 65535}, (_, i) => i + 1).filter(p => !this.config.blockedPorts?.includes(p))
+        : [],
+      allowedHosts: this.config.allowedHosts || [],
+      bandwidthLimit: 10, // 10 Mbps default
+      packetRateLimit: 10000, // 10k packets/sec
+      connectionLimit: 100 // 100 concurrent connections
+    };
+    
+    // Create network namespace with security policies
+    const namespace = await networkSecurityManager.createNetworkNamespace(this.id, networkConfig);
+    this.networkNamespace = namespace.name;
+    
+    // Create host-level firewall rules for additional isolation
+    await networkSecurityManager.createHostFirewallRules(this.id);
+    
+    logger.info(`Network isolation established for sandbox ${this.id} with namespace ${namespace.name}`);
   }
 
   private async setupFirewallRules(): Promise<void> {
@@ -390,9 +412,10 @@ class Sandbox {
       '--cgroup',
     ];
 
-    // Add network namespace if network is disabled
-    if (!this.config.networkEnabled) {
-      sandboxCmd.push('--net');
+    // Use our pre-created network namespace if network is disabled
+    if (!this.config.networkEnabled && this.networkNamespace) {
+      // Instead of creating a new network namespace, use the existing one
+      sandboxCmd.unshift('ip', 'netns', 'exec', this.networkNamespace);
     }
 
     // Add resource limits
@@ -589,12 +612,12 @@ class Sandbox {
       this.process.kill('SIGKILL');
     }
     
-    // Cleanup network namespace
-    if (!this.config.networkEnabled) {
+    // Cleanup network namespace using network security manager
+    if (!this.config.networkEnabled && this.networkNamespace) {
       try {
-        await this.runCommand('ip', ['netns', 'del', `ecode-${this.id}`]);
-      } catch {
-        // Ignore errors
+        await networkSecurityManager.destroyNetworkNamespace(this.id);
+      } catch (error) {
+        logger.warn(`Failed to destroy network namespace for sandbox ${this.id}: ${String(error)}`);
       }
     }
     
