@@ -34,6 +34,18 @@ export class GitManager {
     this.projectsPath = path.join(process.cwd(), 'projects');
   }
 
+  async isGitInitialized(projectId: number): Promise<boolean> {
+    const projectPath = await this.getProjectPath(projectId);
+    
+    try {
+      // Check if .git directory exists
+      await fs.access(path.join(projectPath, '.git'));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async initRepository(projectId: number): Promise<boolean> {
     const projectPath = await this.getProjectPath(projectId);
     

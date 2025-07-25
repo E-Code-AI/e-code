@@ -872,6 +872,129 @@ API will be available at http://localhost:3000
   // Version Control Routes (Git)
   const gitManager = new GitManager();
   
+  // Git Repository Management Routes
+  app.get('/api/git/repositories', ensureAuthenticated, async (req, res) => {
+    try {
+      // Get all user's projects that have Git initialized
+      const projects = await storage.getProjectsByUser(req.user!.id);
+      const repositories = [];
+      
+      for (const project of projects) {
+        // Check if project has Git initialized
+        const hasGit = await gitManager.isGitInitialized(project.id);
+        if (hasGit) {
+          const status = await gitManager.getStatus(project.id);
+          repositories.push({
+            id: project.id,
+            name: project.name,
+            description: project.description || '',
+            visibility: project.visibility || 'private',
+            language: project.primaryLanguage || 'JavaScript',
+            stars: 0, // Could be implemented with a likes system
+            forks: 0, // Could be implemented with a forking system
+            lastUpdated: project.updatedAt?.toISOString() || new Date().toISOString(),
+            defaultBranch: status.branch || 'main',
+            url: `https://e-code.app/${req.user!.username}/${project.name}`
+          });
+        }
+      }
+      
+      res.json(repositories);
+    } catch (error) {
+      console.error('Error getting repositories:', error);
+      res.status(500).json({ error: 'Failed to get repositories' });
+    }
+  });
+
+  app.get('/api/git/repositories/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const project = await storage.getProject(projectId);
+      
+      if (!project || project.ownerId !== req.user!.id) {
+        return res.status(404).json({ error: 'Repository not found' });
+      }
+      
+      const branches = await gitManager.getBranches(projectId);
+      const commits = await gitManager.getCommits(projectId, 10);
+      
+      res.json({
+        branches,
+        commits: commits.map(commit => ({
+          id: commit.hash?.substring(0, 7),
+          message: commit.message,
+          author: commit.author || req.user!.username,
+          date: commit.date,
+          changes: { additions: 0, deletions: 0 } // Could be calculated from diff
+        })),
+        pullRequests: [] // Could be implemented with a PR system
+      });
+    } catch (error) {
+      console.error('Error getting repository details:', error);
+      res.status(500).json({ error: 'Failed to get repository details' });
+    }
+  });
+
+  app.post('/api/git/clone', ensureAuthenticated, async (req, res) => {
+    try {
+      const { url, name } = req.body;
+      
+      // Create a new project from the cloned repository
+      const projectName = name || url.split('/').pop()?.replace('.git', '') || 'cloned-repo';
+      const project = await storage.createProject({
+        name: projectName,
+        description: `Cloned from ${url}`,
+        ownerId: req.user!.id,
+        primaryLanguage: 'JavaScript', // Could be detected
+        visibility: 'private'
+      });
+      
+      // Initialize Git and set remote
+      await gitManager.initRepository(project.id);
+      await gitManager.addRemote(project.id, 'origin', url);
+      
+      res.json({
+        success: true,
+        projectId: project.id,
+        message: 'Repository cloned successfully'
+      });
+    } catch (error) {
+      console.error('Error cloning repository:', error);
+      res.status(500).json({ error: 'Failed to clone repository' });
+    }
+  });
+
+  app.post('/api/git/create', ensureAuthenticated, async (req, res) => {
+    try {
+      const { name, description, private: isPrivate } = req.body;
+      
+      // Create a new project with Git initialized
+      const project = await storage.createProject({
+        name,
+        description,
+        ownerId: req.user!.id,
+        primaryLanguage: 'JavaScript',
+        visibility: isPrivate ? 'private' : 'public'
+      });
+      
+      // Initialize Git repository
+      await gitManager.initRepository(project.id);
+      
+      // Create initial commit with README
+      await storage.createFile(project.id, 'README.md', `# ${name}\n\n${description || 'A new E-Code project'}`);
+      await gitManager.commit(project.id, 'Initial commit', ['README.md']);
+      
+      res.json({
+        success: true,
+        projectId: project.id,
+        message: 'Repository created successfully'
+      });
+    } catch (error) {
+      console.error('Error creating repository:', error);
+      res.status(500).json({ error: 'Failed to create repository' });
+    }
+  });
+  
   app.get('/api/projects/:id/git/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
