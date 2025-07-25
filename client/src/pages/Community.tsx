@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { ECodeLoading } from '@/components/ECodeLoading';
 
 interface CommunityPost {
   id: string;
@@ -355,18 +356,8 @@ export default function Community() {
               
               <TabsContent value={activeCategory} className="mt-6 space-y-4">
                 {postsLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map(i => (
-                      <Card key={i}>
-                        <CardContent className="p-6">
-                          <div className="animate-pulse space-y-4">
-                            <div className="h-6 bg-muted rounded w-3/4" />
-                            <div className="h-4 bg-muted rounded w-full" />
-                            <div className="h-4 bg-muted rounded w-2/3" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                  <div className="flex items-center justify-center py-12">
+                    <ECodeLoading size="lg" text="Loading community posts..." />
                   </div>
                 ) : posts.length === 0 ? (
                   <Card>
@@ -379,7 +370,7 @@ export default function Community() {
                     </CardContent>
                   </Card>
                 ) : (
-                  posts.map(post => (
+                  posts.map((post: CommunityPost) => (
                     <Card key={post.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between">
@@ -429,7 +420,7 @@ export default function Community() {
                             )}
 
                             <div className="flex items-center gap-4 mb-3">
-                              {post.tags.map(tag => (
+                              {post.tags.map((tag: string) => (
                                 <Badge key={tag} variant="outline" className="text-xs">
                                   {tag}
                                 </Badge>

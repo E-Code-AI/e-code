@@ -45,7 +45,7 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Spinner } from '@/components/ui/spinner';
+import { ECodeSpinner } from '@/components/ECodeLoading';
 
 interface FileExplorerProps {
   files: File[];
@@ -421,7 +421,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       <div className="flex-1 overflow-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
-            <Spinner size="md" />
+            <ECodeSpinner size={24} />
           </div>
         ) : filteredFiles.length === 0 ? (
           <div className="px-2 py-4 text-sm text-muted-foreground text-center">

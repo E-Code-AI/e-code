@@ -33,6 +33,7 @@ import {
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
 import { CreateProjectModal } from '@/components/CreateProjectModal';
+import { ECodeLoading } from '@/components/ECodeLoading';
 
 export default function Dashboard() {
   const [, navigate] = useLocation();
@@ -233,7 +234,7 @@ export default function Dashboard() {
               <div className="p-6">
                 {loadingRecent ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin h-8 w-8 border-2 border-[var(--ecode-accent)] border-t-transparent rounded-full" />
+                    <ECodeLoading size="md" text="Loading recent projects..." />
                   </div>
                 ) : recentProjects.length === 0 ? (
                   <div className="text-center py-12">

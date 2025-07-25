@@ -15,6 +15,7 @@ import {
   Smartphone, Monitor, Lock, Link, Github, Twitter,
   Chrome, Apple, Zap, Crown, Database, Server
 } from 'lucide-react';
+import { ECodeSpinner } from '@/components/ECodeLoading';
 
 export default function Account() {
   const { user } = useAuth();
@@ -176,7 +177,8 @@ export default function Account() {
                 </div>
 
                 <Button onClick={handleSaveProfile} disabled={isLoading}>
-                  {isLoading ? "Saving..." : "Save Changes"}
+                  {isLoading && <ECodeSpinner className="mr-2" size={16} />}
+                  {isLoading ? "Saving" : "Save Changes"}
                 </Button>
               </div>
             </CardContent>

@@ -15,6 +15,7 @@ import {
   ChevronRight, Filter, Search, Star, TrendingUp,
   Calendar, AlertCircle, CheckCircle, XCircle
 } from 'lucide-react';
+import { ECodeLoading } from '@/components/ECodeLoading';
 
 export default function Bounties() {
   const { toast } = useToast();
@@ -49,13 +50,13 @@ export default function Bounties() {
   });
   
   // Count submissions for each bounty
-  const bountiesWithCounts = bounties.map(bounty => {
-    const submissionsCount = userSubmissions.filter(sub => sub.bountyId === bounty.id).length;
+  const bountiesWithCounts = (bounties as any[]).map((bounty: any) => {
+    const submissionsCount = (userSubmissions as any[]).filter((sub: any) => sub.bountyId === bounty.id).length;
     return { ...bounty, submissions: submissionsCount };
   });
   
   // Filter and sort bounties
-  const filteredBounties = bountiesWithCounts.filter(bounty => {
+  const filteredBounties = bountiesWithCounts.filter((bounty: any) => {
     if (filter !== 'all' && bounty.status !== filter) return false;
     if (searchQuery && !bounty.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
@@ -79,10 +80,7 @@ export default function Bounties() {
   // Create bounty mutation
   const createBountyMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('/api/bounties', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('POST', '/api/bounties', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bounties'] });
@@ -286,7 +284,9 @@ export default function Bounties() {
           {/* Bounty List */}
           <div className="space-y-4">
             {loadingBounties ? (
-              <p className="text-center text-muted-foreground">Loading bounties...</p>
+              <div className="flex items-center justify-center py-12">
+                <ECodeLoading size="lg" text="Loading bounties..." />
+              </div>
             ) : sortedBounties.length === 0 ? (
               <p className="text-center text-muted-foreground">No bounties found</p>
             ) : (
@@ -308,7 +308,7 @@ export default function Bounties() {
                       </p>
                       
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {bounty.tags && Array.isArray(bounty.tags) && bounty.tags.map((tag) => (
+                        {bounty.tags && Array.isArray(bounty.tags) && bounty.tags.map((tag: string) => (
                           <Badge key={tag} variant="secondary">
                             {tag}
                           </Badge>
@@ -376,10 +376,10 @@ export default function Bounties() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {userBounties.length === 0 ? (
+              {(userBounties as any[]).length === 0 ? (
                 <p className="text-center text-muted-foreground">You haven't created any bounties yet</p>
               ) : (
-                userBounties.map((bounty) => (
+                (userBounties as any[]).map((bounty: any) => (
                 <Card key={bounty.id}>
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
@@ -421,10 +421,10 @@ export default function Bounties() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {userSubmissions.length === 0 ? (
+              {(userSubmissions as any[]).length === 0 ? (
                 <p className="text-center text-muted-foreground">You haven't submitted to any bounties yet</p>
               ) : (
-                userSubmissions.map((submission) => (
+                (userSubmissions as any[]).map((submission: any) => (
                 <Card key={submission.id}>
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">

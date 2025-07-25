@@ -41,6 +41,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { ECodeLoading } from '@/components/ECodeLoading';
 
 export default function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -213,14 +214,8 @@ export default function Home() {
         <ScrollArea className="flex-1">
           <div className="p-4">
             {isLoading ? (
-              <div className={`${displayMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "space-y-2"}`}>
-                {[1, 2, 3, 4].map((i) => (
-                  <Card key={i} className="bg-card border border-border">
-                    <CardHeader className="animate-pulse h-14 bg-muted"></CardHeader>
-                    <CardContent className="animate-pulse h-20 bg-muted mt-2"></CardContent>
-                    <CardFooter className="animate-pulse h-10 bg-muted mt-2"></CardFooter>
-                  </Card>
-                ))}
+              <div className="flex items-center justify-center py-20">
+                <ECodeLoading size="lg" text="Loading projects..." />
               </div>
             ) : sortedProjects && sortedProjects.length > 0 ? (
               displayMode === "grid" ? (

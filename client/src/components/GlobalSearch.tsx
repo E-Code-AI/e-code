@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
+import { ECodeSpinner } from '@/components/ECodeLoading';
 
 interface GlobalSearchProps {
   isOpen: boolean;
@@ -470,7 +471,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
             {isSearching && (
               <div className="flex items-center justify-center py-8">
                 <div className="text-center">
-                  <Search className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+                  <ECodeSpinner size={32} className="mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">Searching...</p>
                 </div>
               </div>

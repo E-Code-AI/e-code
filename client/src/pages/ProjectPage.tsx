@@ -20,7 +20,7 @@ import EnvironmentPanel from '@/components/EnvironmentPanel';
 import { EnvironmentProvider } from '@/hooks/useEnvironment';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Spinner } from '@/components/ui/spinner';
+import { ECodeLoading } from '@/components/ECodeLoading';
 import { 
   ResizableHandle, 
   ResizablePanel, 
@@ -426,8 +426,7 @@ const ProjectPage = () => {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="flex flex-col items-center">
-          <Spinner size="lg" />
-          <p className="mt-4 text-muted-foreground">Loading project...</p>
+          <ECodeLoading size="lg" text="Loading project..." />
         </div>
       </div>
     );
