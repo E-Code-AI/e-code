@@ -59,68 +59,11 @@ const Themes = lazy(() => import("@/pages/Themes"));
 const Referrals = lazy(() => import("@/pages/Referrals"));
 
 import { ProtectedRoute } from "./lib/protected-route";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
+import { AuthProvider } from "@/hooks/use-auth";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import { SpotlightSearch } from "@/components/SpotlightSearch";
 import { CommandPalette } from "@/components/CommandPalette";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
-
-// Debug component to show authentication status
-function AuthDebug() {
-  const { user, isLoading, error, loginMutation, logoutMutation } = useAuth();
-  const [location, navigate] = useLocation();
-
-  const testLogin = () => {
-    loginMutation.mutate({ username: "demo", password: "password" });
-  };
-
-  const testLogout = () => {
-    logoutMutation.mutate();
-  };
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-black/80 text-white p-2 text-xs z-50">
-      <div className="flex flex-wrap items-center justify-between">
-        <div>
-          <strong>Auth Status:</strong>{" "}
-          {isLoading ? "Loading..." : user ? `Logged in as ${user.username}` : "Not logged in"}
-        </div>
-        <div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-xs mr-2" 
-            onClick={testLogin}
-            disabled={loginMutation.isPending}
-          >
-            Test Login
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-xs mr-2" 
-            onClick={testLogout}
-            disabled={logoutMutation.isPending}
-          >
-            Test Logout
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-xs" 
-            onClick={() => navigate("/auth")}
-          >
-            Go to Auth Page
-          </Button>
-        </div>
-      </div>
-      {error && (
-        <div className="text-red-400 mt-1">Error: {error.message}</div>
-      )}
-    </div>
-  );
-}
 
 // Loading fallback component
 function PageLoader() {
@@ -298,7 +241,6 @@ function AppContent() {
           <Route component={NotFound} />
           </Switch>
         </Suspense>
-        <AuthDebug />
       </div>
     </TooltipProvider>
   );
