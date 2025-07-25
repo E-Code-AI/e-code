@@ -98,7 +98,7 @@ export function ReplitHeader() {
                   variant={isActive("/projects") ? "default" : "ghost"}
                   className="w-full justify-start"
                 >
-                  My Repls
+                  My Projects
                 </Button>
               </Link>
               <Link href="/explore" onClick={() => setMobileMenuOpen(false)}>
@@ -155,7 +155,7 @@ export function ReplitHeader() {
                   : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
-              My Repls
+              My Projects
             </Button>
           </Link>
           
@@ -173,11 +173,11 @@ export function ReplitHeader() {
             <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
               <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                 <Code className="mr-2 h-4 w-4" />
-                New Code
+                Start from scratch
               </DropdownMenuItem>
               <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                 <Database className="mr-2 h-4 w-4" />
-                Import from GitHub
+                Import existing work
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
               <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">

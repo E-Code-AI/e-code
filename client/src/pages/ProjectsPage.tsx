@@ -114,15 +114,15 @@ const ProjectsPage = () => {
       form.reset();
       setNewProjectOpen(false);
       toast({
-        title: "Project created",
-        description: `Project "${project.name}" has been created successfully.`,
+        title: "Great! Your project is ready",
+        description: `"${project.name}" is all set up. Let's start creating!`,
       });
       // Navigate to the new project
       setLocation(`/project/${project.id}`);
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to create project",
+        title: "Oops! Something went wrong",
         description: error.message,
         variant: "destructive",
       });
@@ -200,11 +200,11 @@ const ProjectsPage = () => {
   const getVisibilityBadge = (visibility: string) => {
     switch (visibility) {
       case 'public':
-        return <Badge variant="default" className="bg-green-600"><Eye className="h-3 w-3 mr-1" />Public</Badge>;
+        return <Badge variant="default" className="bg-green-600"><Eye className="h-3 w-3 mr-1" />Everyone can see</Badge>;
       case 'private':
-        return <Badge variant="secondary"><EyeOff className="h-3 w-3 mr-1" />Private</Badge>;
+        return <Badge variant="secondary"><EyeOff className="h-3 w-3 mr-1" />Just for you</Badge>;
       case 'unlisted':
-        return <Badge variant="outline"><Eye className="h-3 w-3 mr-1" />Unlisted</Badge>;
+        return <Badge variant="outline"><Eye className="h-3 w-3 mr-1" />Link sharing only</Badge>;
       default:
         return null;
     }
@@ -243,7 +243,7 @@ const ProjectsPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
         <div>
           <h1 className="text-responsive-xl font-bold">My Projects</h1>
-          <p className="text-muted-foreground mt-1 text-responsive-sm">Manage your coding projects</p>
+          <p className="text-muted-foreground mt-1 text-responsive-sm">All your creative work in one place</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Link href="/templates">
@@ -262,7 +262,7 @@ const ProjectsPage = () => {
             <DialogHeader>
               <DialogTitle>Create New Project</DialogTitle>
               <DialogDescription>
-                Fill out the form below to create a new coding project.
+                Let's start something new! Give your project a name and choose your starting point.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -298,26 +298,26 @@ const ProjectsPage = () => {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Primary Language</FormLabel>
+                      <FormLabel>What would you like to create?</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a language" />
+                            <SelectValue placeholder="Choose your starting point" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="typescript">TypeScript</SelectItem>
-                          <SelectItem value="javascript">JavaScript</SelectItem>
-                          <SelectItem value="python">Python</SelectItem>
-                          <SelectItem value="html">HTML/CSS</SelectItem>
-                          <SelectItem value="go">Go</SelectItem>
-                          <SelectItem value="rust">Rust</SelectItem>
-                          <SelectItem value="java">Java</SelectItem>
-                          <SelectItem value="csharp">C#</SelectItem>
-                          <SelectItem value="cpp">C/C++</SelectItem>
+                          <SelectItem value="html">Website (HTML)</SelectItem>
+                          <SelectItem value="javascript">Interactive App (JavaScript)</SelectItem>
+                          <SelectItem value="python">Automation Script (Python)</SelectItem>
+                          <SelectItem value="typescript">Advanced Web App (TypeScript)</SelectItem>
+                          <SelectItem value="go">Server Application (Go)</SelectItem>
+                          <SelectItem value="rust">System Tool (Rust)</SelectItem>
+                          <SelectItem value="java">Desktop App (Java)</SelectItem>
+                          <SelectItem value="csharp">Windows App (C#)</SelectItem>
+                          <SelectItem value="cpp">Performance Tool (C++)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -329,39 +329,39 @@ const ProjectsPage = () => {
                   name="visibility"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Visibility</FormLabel>
+                      <FormLabel>Who can see this?</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select visibility" />
+                            <SelectValue placeholder="Choose privacy setting" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="private">
                             <div className="flex items-center">
                               <EyeOff className="h-4 w-4 mr-2" />
-                              Private (Only you can see)
+                              Just for me
                             </div>
                           </SelectItem>
                           <SelectItem value="public">
                             <div className="flex items-center">
                               <Eye className="h-4 w-4 mr-2" />
-                              Public (Everyone can see)
+                              Share with everyone
                             </div>
                           </SelectItem>
                           <SelectItem value="unlisted">
                             <div className="flex items-center">
                               <ExternalLink className="h-4 w-4 mr-2" />
-                              Unlisted (Only with link)
+                              Only people with the link
                             </div>
                           </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        Control who can see your project
+                        You can change this anytime
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
