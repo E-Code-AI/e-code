@@ -1929,6 +1929,79 @@ ${codeContext ? `\nCurrent file context:\n${codeContext}` : ''}
 Provide helpful, concise responses. When suggesting code, use proper markdown formatting with language hints. Be friendly and encouraging.`
       };
       
+      // Check if this is an agent mode request that wants to build something
+      if (context?.mode === 'agent') {
+        const lowerMessage = message.toLowerCase();
+        
+        // Detect building intent
+        if (lowerMessage.includes('build') || lowerMessage.includes('create') || lowerMessage.includes('make')) {
+          const actions = [];
+          let responseContent = '';
+
+          // Different patterns for different app types
+          if (lowerMessage.includes('todo') || lowerMessage.includes('task')) {
+            // Building a todo app
+            actions.push(
+              { type: 'create_folder', path: 'src' },
+              { type: 'create_folder', path: 'src/components' },
+              { type: 'create_file', path: 'index.html', content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>Todo App</title>\n  <link rel="stylesheet" href="src/style.css">\n</head>\n<body>\n  <div id="app"></div>\n  <script src="src/app.js"></script>\n</body>\n</html>' },
+              { type: 'create_file', path: 'src/style.css', content: 'body { font-family: Arial; margin: 0; padding: 20px; background: #f0f0f0; }\n.todo-item { background: white; padding: 10px; margin: 5px 0; border-radius: 5px; }' },
+              { type: 'create_file', path: 'src/app.js', content: 'const app = document.getElementById("app");\napp.innerHTML = "<h1>My Todo App</h1><input id=\'newTodo\' placeholder=\'Add todo...\'><button onclick=\'addTodo()\'>Add</button><div id=\'todos\'></div>";\n\nlet todos = [];\n\nfunction addTodo() {\n  const input = document.getElementById("newTodo");\n  todos.push(input.value);\n  input.value = "";\n  renderTodos();\n}\n\nfunction renderTodos() {\n  document.getElementById("todos").innerHTML = todos.map(t => `<div class="todo-item">${t}</div>`).join("");\n}' }
+            );
+            responseContent = "I'm building a Todo app for you! I'll create the HTML structure, styling, and JavaScript functionality. The app will let you add and display todo items.";
+          } else if (lowerMessage.includes('api') || lowerMessage.includes('rest')) {
+            // Building a REST API
+            actions.push(
+              { type: 'create_file', path: 'server.js', content: 'const express = require("express");\nconst app = express();\n\napp.use(express.json());\n\nlet items = [];\n\napp.get("/api/items", (req, res) => {\n  res.json(items);\n});\n\napp.post("/api/items", (req, res) => {\n  const item = { id: Date.now(), ...req.body };\n  items.push(item);\n  res.json(item);\n});\n\napp.listen(3000, () => console.log("API running on port 3000"));' },
+              { type: 'create_file', path: 'package.json', content: '{\n  "name": "rest-api",\n  "version": "1.0.0",\n  "main": "server.js",\n  "scripts": {\n    "start": "node server.js"\n  },\n  "dependencies": {\n    "express": "^4.18.0"\n  }\n}' },
+              { type: 'install_package', package: 'express' }
+            );
+            responseContent = "I'm creating a REST API with Express! It will have endpoints for GET and POST operations. The API will handle JSON data and include basic CRUD functionality.";
+          } else if (lowerMessage.includes('website') || lowerMessage.includes('portfolio')) {
+            // Building a website
+            actions.push(
+              { type: 'create_file', path: 'index.html', content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>My Portfolio</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <header>\n    <h1>Welcome to My Portfolio</h1>\n    <nav>\n      <a href="#about">About</a>\n      <a href="#projects">Projects</a>\n      <a href="#contact">Contact</a>\n    </nav>\n  </header>\n  <main>\n    <section id="about">\n      <h2>About Me</h2>\n      <p>I am a creative developer passionate about building amazing things.</p>\n    </section>\n    <section id="projects">\n      <h2>My Projects</h2>\n      <div class="project-grid">\n        <div class="project">Project 1</div>\n        <div class="project">Project 2</div>\n      </div>\n    </section>\n  </main>\n</body>\n</html>' },
+              { type: 'create_file', path: 'style.css', content: 'body { margin: 0; font-family: -apple-system, sans-serif; }\nheader { background: #333; color: white; padding: 2rem; }\nnav a { color: white; margin: 0 1rem; text-decoration: none; }\n.project-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 2rem; }\n.project { background: #f0f0f0; padding: 2rem; border-radius: 8px; }' }
+            );
+            responseContent = "I'm building a portfolio website for you! It will have a modern design with sections for About, Projects, and Contact. The layout will be responsive and professional.";
+          } else {
+            // Default to using OpenAI for more complex requests
+            const systemMessageAgent = {
+              role: 'system' as const,
+              content: `You are E-Code AI Agent, an autonomous coding assistant that can build entire applications. You can create files, install packages, and set up complete projects. When a user asks you to build something, respond with specific actions and code.`
+            };
+            
+            const agentMessages = [
+              systemMessageAgent,
+              ...conversationHistory.map((msg: any) => ({
+                role: msg.role as 'user' | 'assistant',
+                content: msg.content
+              })),
+              { role: 'user' as const, content: message }
+            ];
+            
+            const completion = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: agentMessages,
+              temperature: 0.7,
+              max_tokens: 1500,
+              stream: false,
+            });
+            
+            responseContent = completion.choices[0].message.content || "I'll help you build that! Let me create the necessary files and structure for your application.";
+          }
+
+          res.json({
+            id: `msg_${Date.now()}`,
+            role: 'assistant',
+            content: responseContent,
+            timestamp: Date.now(),
+            actions: actions
+          });
+          return;
+        }
+      }
+      
       const messages = [
         systemMessage,
         ...conversationHistory.map((msg: any) => ({
