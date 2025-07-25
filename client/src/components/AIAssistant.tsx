@@ -66,12 +66,10 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [suggestions, setSuggestions] = useState<CodeSuggestion[]>([]);
-  const [activeTab, setActiveTab] = useState<'chat' | 'suggestions' | 'history'>('chat');
+  const [isTyping, setIsTyping] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -84,11 +82,11 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
   }, [projectId]);
 
   useEffect(() => {
-    // Generate suggestions based on selected code
-    if (selectedCode) {
-      generateSuggestions();
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
     }
-  }, [selectedCode]);
+  }, [input]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

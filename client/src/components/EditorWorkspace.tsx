@@ -3,7 +3,7 @@ import { File, Project } from '@shared/schema';
 import CodeEditor from './CodeEditor';
 import FileExplorer from './FileExplorer';
 import { ReplitFileExplorer } from './editor/ReplitFileExplorer';
-import { AIAssistant } from './AIAssistant';
+import { ReplitAgent } from './ReplitAgent';
 import Terminal from './Terminal';
 import { Ghostwriter } from './Ghostwriter';
 import { CollaborationPanel } from './CollaborationPanel';
@@ -474,7 +474,7 @@ export function EditorWorkspace({
               <ResizablePanel defaultSize={30} minSize={25}>
                 <div className="flex flex-col h-full">
                   <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-                    <span className="text-sm font-medium">AI Assistant</span>
+                    <span className="text-sm font-medium">AI Agent</span>
                     <Button
                       variant="ghost" 
                       size="sm"
@@ -487,7 +487,7 @@ export function EditorWorkspace({
                   </div>
                   
                   <div className="flex-1 overflow-hidden">
-                    <AIAssistant 
+                    <ReplitAgent 
                       projectId={project.id}
                       selectedFile={activeFile?.name}
                       selectedCode=""
