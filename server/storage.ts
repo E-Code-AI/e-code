@@ -11,7 +11,8 @@ import {
   LoginHistory, InsertLoginHistory,
   ApiToken, InsertApiToken,
   BlogPost, InsertBlogPost,
-  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts
+  Secret, InsertSecret,
+  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts, secrets
 } from "@shared/schema";
 import { eq, and, desc, isNull, sql } from "drizzle-orm";
 import { db } from "./db";
@@ -105,6 +106,13 @@ export interface IStorage {
   createBlogPost(data: InsertBlogPost): Promise<BlogPost>;
   updateBlogPost(id: number, data: Partial<InsertBlogPost>): Promise<BlogPost | undefined>;
   incrementBlogPostViews(slug: string): Promise<void>;
+  
+  // Secrets methods
+  getSecretsByUser(userId: number): Promise<Secret[]>;
+  getSecret(id: number): Promise<Secret | undefined>;
+  createSecret(data: InsertSecret): Promise<Secret>;
+  updateSecret(id: number, data: Partial<InsertSecret>): Promise<Secret>;
+  deleteSecret(id: number): Promise<void>;
   
   // Session store for authentication
   sessionStore: Store;
@@ -946,6 +954,56 @@ export class DatabaseStorage implements IStorage {
     await db.update(blogPosts)
       .set({ views: sql`${blogPosts.views} + 1` })
       .where(eq(blogPosts.slug, slug));
+  }
+  
+  // Secrets methods
+  async getSecretsByUser(userId: number): Promise<Secret[]> {
+    return await db.select()
+      .from(secrets)
+      .where(eq(secrets.userId, userId))
+      .orderBy(desc(secrets.createdAt));
+  }
+  
+  async getSecret(id: number): Promise<Secret | undefined> {
+    const [secret] = await db.select()
+      .from(secrets)
+      .where(eq(secrets.id, id));
+    return secret;
+  }
+  
+  async createSecret(data: InsertSecret): Promise<Secret> {
+    const [secret] = await db.insert(secrets)
+      .values({
+        userId: data.userId,
+        key: data.key,
+        value: data.value,
+        description: data.description,
+        projectId: data.projectId
+      })
+      .returning();
+    return secret;
+  }
+  
+  async updateSecret(id: number, data: Partial<InsertSecret>): Promise<Secret> {
+    const updateData: any = { updatedAt: new Date() };
+    
+    if (data.value !== undefined) updateData.value = data.value;
+    if (data.description !== undefined) updateData.description = data.description;
+    
+    const [secret] = await db.update(secrets)
+      .set(updateData)
+      .where(eq(secrets.id, id))
+      .returning();
+      
+    if (!secret) {
+      throw new Error('Secret not found');
+    }
+    return secret;
+  }
+  
+  async deleteSecret(id: number): Promise<void> {
+    await db.delete(secrets)
+      .where(eq(secrets.id, id));
   }
 }
 
