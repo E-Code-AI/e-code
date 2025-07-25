@@ -289,6 +289,7 @@ export default function Teams() {
                                         <span>Active {member.lastActive}</span>
                                       </div>
                                     </div>
+                                  </div>
                                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                       <Badge variant="outline" className="text-xs">

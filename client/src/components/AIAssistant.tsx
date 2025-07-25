@@ -167,39 +167,18 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
 
       if (!response.ok) throw new Error('Failed to get AI response');
 
-      // Handle streaming response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+      // Handle JSON response
+      const data = await response.json();
+      const assistantMessage: Message = {
+        id: data.id || (Date.now() + 1).toString(),
         role: 'assistant',
-        content: '',
-        timestamp: new Date(),
+        content: data.content || '',
+        timestamp: new Date(data.timestamp || Date.now()),
         type: quickAction?.id === 'explain' ? 'explanation' : 
                quickAction?.id === 'generate' ? 'code' : 'suggestion'
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-      setStreamingMessage('');
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value);
-          setStreamingMessage(prev => prev + chunk);
-          assistantMessage.content += chunk;
-        }
-      }
-
-      setMessages(prev => 
-        prev.map(msg => msg.id === assistantMessage.id 
-          ? { ...msg, content: assistantMessage.content }
-          : msg
-        )
-      );
-      setStreamingMessage('');
     } catch (error) {
       console.error('AI chat error:', error);
       
