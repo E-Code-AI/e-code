@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
@@ -318,7 +318,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                     <Crown className="h-4 w-4 mr-2 text-yellow-500" />
                     Current Plan
                   </h3>
-                  {subscription?.plan !== 'free' && (
+                  {subscription?.plan !== 'free' && subscription && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -540,6 +540,9 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Choose Your Plan</DialogTitle>
+            <DialogDescription>
+              Select a plan that best fits your development needs. You can change or cancel anytime.
+            </DialogDescription>
           </DialogHeader>
           
           <ScrollArea className="max-h-[500px] pr-4">

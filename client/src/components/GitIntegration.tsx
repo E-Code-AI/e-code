@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -674,6 +674,9 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Clone Repository</DialogTitle>
+            <DialogDescription>
+              Clone an existing Git repository to start working with version control.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -702,6 +705,9 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Branch</DialogTitle>
+            <DialogDescription>
+              Create a new branch to work on features or fixes separately from your main branch.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
