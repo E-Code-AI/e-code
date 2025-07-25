@@ -98,7 +98,7 @@ export default function Terms() {
                 </p>
                 <div className="mt-4 p-4 bg-muted rounded-lg">
                   <p>E-Code Inc.</p>
-                  <p>Email: legal@replit.com</p>
+                  <p>Email: legal@e-code.com</p>
                   <p>Address: 548 Market St #16093, San Francisco, CA 94104</p>
                 </div>
               </section>

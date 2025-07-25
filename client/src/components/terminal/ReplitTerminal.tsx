@@ -186,7 +186,7 @@ export function ReplitTerminal({
       ws.onopen = () => {
         setIsConnected(true);
         terminal.writeln("\x1b[1;32m✓ Connected to terminal server\x1b[0m");
-        terminal.write("\x1b[1;36muser@replit\x1b[0m:\x1b[1;34m/workspace\x1b[0m$ ");
+        terminal.write("\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m/workspace\x1b[0m$ ");
         
         if (defaultCommand) {
           terminal.writeln(defaultCommand);
@@ -251,7 +251,7 @@ export function ReplitTerminal({
           const command = commandHistory[commandHistory.length - 1 - historyIndex - 1];
           if (command) {
             // Effacer la ligne actuelle et afficher la commande de l'historique
-            terminal.write("\x1b[2K\r\x1b[1;36muser@replit\x1b[0m:\x1b[1;34m/workspace\x1b[0m$ " + command);
+            terminal.write("\x1b[2K\r\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m/workspace\x1b[0m$ " + command);
             setCurrentInput(command);
           }
         }
@@ -262,7 +262,7 @@ export function ReplitTerminal({
         if (historyIndex >= 0) {
           setHistoryIndex(historyIndex - 1);
           const command = historyIndex > 0 ? commandHistory[commandHistory.length - historyIndex] : "";
-          terminal.write("\x1b[2K\r\x1b[1;36muser@replit\x1b[0m:\x1b[1;34m/workspace\x1b[0m$ " + command);
+          terminal.write("\x1b[2K\r\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m/workspace\x1b[0m$ " + command);
           setCurrentInput(command);
         }
         return;

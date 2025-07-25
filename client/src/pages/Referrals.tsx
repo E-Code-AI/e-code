@@ -101,7 +101,7 @@ export default function Referrals() {
   ];
 
   const handleShare = (action: string) => {
-    const referralUrl = `https://replit.com/signup?ref=${referralCode}`;
+    const referralUrl = `https://e-code.com/signup?ref=${referralCode}`;
     
     switch (action) {
       case 'copy':

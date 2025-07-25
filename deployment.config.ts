@@ -33,7 +33,7 @@ export const deploymentConfig = {
     // Security configuration
     security: {
       cors: {
-        origin: process.env.ALLOWED_ORIGINS?.split(',') || ['https://plot.replit.app'],
+        origin: process.env.ALLOWED_ORIGINS?.split(',') || ['https://plot.e-code.app'],
         credentials: true,
         maxAge: 86400
       },
@@ -87,7 +87,7 @@ export const deploymentConfig = {
         port: 9090,
         path: '/metrics',
         defaultLabels: {
-          app: 'replit-clone',
+          app: 'e-code-platform',
           environment: 'production'
         }
       }
@@ -108,7 +108,7 @@ export const deploymentConfig = {
       },
       cdn: {
         enabled: true,
-        url: process.env.CDN_URL || 'https://cdn.plot.replit.app'
+        url: process.env.CDN_URL || 'https://cdn.plot.e-code.app'
       },
       compression: {
         level: 6,
@@ -142,7 +142,7 @@ export const deploymentConfig = {
       email: {
         provider: 'sendgrid',
         apiKey: process.env.SENDGRID_API_KEY,
-        from: 'noreply@plot.replit.app'
+        from: 'noreply@plot.e-code.app'
       },
       storage: {
         provider: 's3',
