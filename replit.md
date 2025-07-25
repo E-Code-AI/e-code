@@ -216,6 +216,13 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
   * Added proper error handling and user feedback with toast notifications
   * Admin users can view newsletter subscribers via protected endpoint
   * Achieved 100% functional completion - all buttons, forms, and features now fully operational
+- 2025-01-25: **Preview System Fixed to Work Like Replit**:
+  * Fixed preview URL generation to use relative paths instead of localhost URLs
+  * Updated ResponsiveWebPreview to fetch preview URL from backend API
+  * Changed preview display logic to show based on previewUrl availability, not isRunning status
+  * HTML projects now show preview automatically without needing to click "Run"
+  * Updated WebPreview and ResponsiveWebPreview components for consistent behavior
+  * Preview now works exactly like Replit - instant preview for web projects
 
 ## Development Status
 - ✅ Phase 1: Core UI foundation with exact Replit layout and theming
