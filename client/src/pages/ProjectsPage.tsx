@@ -185,6 +185,24 @@ const ProjectsPage = () => {
     }
   };
 
+  // Function to get language color
+  const getLanguageColor = (language: string) => {
+    const colors: Record<string, string> = {
+      'javascript': 'bg-yellow-500',
+      'typescript': 'bg-blue-500',
+      'python': 'bg-green-500',
+      'java': 'bg-orange-500',
+      'go': 'bg-cyan-500',
+      'rust': 'bg-red-500',
+      'cpp': 'bg-purple-500',
+      'csharp': 'bg-pink-500',
+      'ruby': 'bg-red-400',
+      'html': 'bg-orange-400',
+      'css': 'bg-blue-400',
+    };
+    return colors[language.toLowerCase()] || 'bg-gray-500';
+  };
+
   // Function to format date
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString(undefined, {
@@ -239,25 +257,30 @@ const ProjectsPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Your creative work</h1>
-          <p className="text-muted-foreground mt-1 text-responsive-sm">All your creative work in one place</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Link href="/templates">
-            <Button variant="outline" className="w-full sm:w-auto">
-              Browse Templates
-            </Button>
-          </Link>
-          <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 w-full sm:w-auto">
-                <Plus className="h-4 w-4" />
-                New Project
-              </Button>
-            </DialogTrigger>
+    <div className="min-h-screen bg-[var(--ecode-background)]">
+      {/* Replit-style Projects Header */}
+      <div className="border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--ecode-text)]">My Repls</h1>
+              <p className="text-sm text-[var(--ecode-muted)] mt-1">
+                All your projects in one place
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/templates">
+                <Button variant="outline" className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar)]">
+                  Browse Templates
+                </Button>
+              </Link>
+              <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2 bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white">
+                    <Plus className="h-4 w-4" />
+                    Create Repl
+                  </Button>
+                </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Project</DialogTitle>
@@ -389,84 +412,93 @@ const ProjectsPage = () => {
             </Form>
           </DialogContent>
           </Dialog>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Project Grid */}
-      {projects && projects.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-          {projects.map((project) => (
-            <Card key={project.id} className="overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="flex items-center text-responsive-sm">
-                      {getLanguageIcon(project.language)}
-                      <span className="ml-2 truncate">{project.name}</span>
-                    </CardTitle>
-                    <CardDescription className="mt-1.5 text-xs sm:text-sm line-clamp-2">
-                      {project.description || "No description provided"}
-                    </CardDescription>
+      {/* Projects Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Project Grid */}
+        {projects && projects.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {projects.map((project) => (
+              <div 
+                key={project.id} 
+                className="group bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-lg transition-all cursor-pointer overflow-hidden"
+                onClick={() => setLocation(`/project/${project.id}`)}
+              >
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-medium text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors truncate flex-1">
+                      {project.name}
+                    </h3>
+                    <div className={`h-2 w-2 rounded-full ml-2 mt-1.5 flex-shrink-0 ${getLanguageColor(project.language || 'javascript')}`} />
                   </div>
-                  <div>
-                    {getVisibilityBadge(project.visibility)}
+                  <p className="text-sm text-[var(--ecode-muted)] line-clamp-2 mb-3">
+                    {project.description || "No description"}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-[var(--ecode-muted)]">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {new Date(project.updatedAt).toLocaleDateString()}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      {project.visibility === 'private' ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                      {project.visibility}
+                    </span>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground flex items-center">
-                  <Clock className="h-4 w-4 mr-1" />
-                  Updated {formatDate(project.updatedAt)}
+                <div className="border-t border-[var(--ecode-border)] bg-[var(--ecode-sidebar)] px-4 py-2 flex items-center justify-between">
+                  <span className="text-xs text-[var(--ecode-muted)]">
+                    {project.language || 'HTML'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs hover:bg-[var(--ecode-sidebar-hover)]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteProjectId(project.id);
+                        setConfirmDeleteOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs hover:bg-[var(--ecode-sidebar-hover)]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Settings functionality
+                      }}
+                    >
+                      <Settings className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
-              </CardContent>
-              <CardFooter className="bg-muted/50 flex justify-between">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => {
-                    setDeleteProjectId(project.id);
-                    setConfirmDeleteOpen(true);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </Button>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="gap-1"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </Button>
-                  <Button asChild size="sm" className="gap-1">
-                    <Link to={`/project/${project.id}`}>
-                      <Edit className="h-4 w-4" />
-                      Open
-                    </Link>
-                  </Button>
-                </div>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 bg-muted/20 rounded-lg border border-dashed">
-          <div className="bg-primary/10 p-3 rounded-full mb-4">
-            <Code className="h-8 w-8 text-primary" />
+              </div>
+            ))}
           </div>
-          <h3 className="text-xl font-medium mb-1">No projects yet</h3>
-          <p className="text-muted-foreground mb-6 text-center max-w-md">
-            Create your first project to start coding, collaborating, and building amazing applications.
-          </p>
-          <Button onClick={() => setNewProjectOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create your first project
-          </Button>
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] border-dashed">
+            <Code className="h-16 w-16 text-[var(--ecode-muted)] mb-4" />
+            <h3 className="text-xl font-medium text-[var(--ecode-text)] mb-2">No Repls yet</h3>
+            <p className="text-[var(--ecode-muted)] mb-6 text-center max-w-md">
+              Create your first Repl to start building amazing things
+            </p>
+            <Button 
+              onClick={() => setNewProjectOpen(true)}
+              className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create your first Repl
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Delete confirmation dialog */}
       <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
