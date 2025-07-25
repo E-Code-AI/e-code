@@ -57,6 +57,7 @@ const Learn = lazy(() => import("@/pages/Learn"));
 const Support = lazy(() => import("@/pages/Support"));
 const Themes = lazy(() => import("@/pages/Themes"));
 const Referrals = lazy(() => import("@/pages/Referrals"));
+const Subprocessors = lazy(() => import("@/pages/Subprocessors"));
 // Newsletter pages
 const NewsletterConfirm = lazy(() => import("@/pages/NewsletterConfirm"));
 const NewsletterUnsubscribe = lazy(() => import("@/pages/NewsletterUnsubscribe"));
@@ -111,6 +112,7 @@ function AppContent() {
           <Route path="/security" component={Security} />
           <Route path="/desktop" component={Desktop} />
           <Route path="/forum" component={Forum} />
+          <Route path="/subprocessors" component={Subprocessors} />
           {/* Newsletter pages */}
           <Route path="/newsletter/confirm" component={NewsletterConfirm} />
           <Route path="/newsletter/unsubscribe" component={NewsletterUnsubscribe} />
