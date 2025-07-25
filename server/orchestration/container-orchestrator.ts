@@ -11,6 +11,8 @@ import {
 } from './container-runtime';
 import { sandboxManager } from '../sandbox/sandbox-manager';
 import { networkSecurityManager } from '../sandbox/network-security';
+import { clusterManager } from '../distributed/cluster-manager';
+import { taskScheduler, DistributedTaskScheduler } from '../distributed/task-scheduler';
 
 const logger = createLogger('container-orchestrator');
 
@@ -271,15 +273,10 @@ export class ContainerOrchestrator extends EventEmitter {
   }
   
   /**
-   * Schedule the next pending task
+   * Schedule the next pending task using distributed cluster
    */
   private async scheduleNextTask(): Promise<void> {
     if (this.pendingTasks.length === 0) {
-      return;
-    }
-    
-    // Check resource availability
-    if (!this.hasResourcesAvailable()) {
       return;
     }
     
@@ -292,17 +289,35 @@ export class ContainerOrchestrator extends EventEmitter {
     try {
       task.status = 'scheduled';
       
-      // Select node for execution
-      const node = this.selectNode(task);
-      if (!node) {
-        // No suitable node, put task back in queue
-        this.pendingTasks.unshift(task);
-        task.status = 'pending';
-        return;
-      }
+      // Use distributed cluster manager for horizontal scaling
+      const distributedTaskId = await clusterManager.submitTask({
+        type: 'code-execution',
+        payload: {
+          projectId: task.projectId,
+          userId: task.userId,
+          language: task.language,
+          code: task.code,
+          files: Object.fromEntries(task.files),
+          command: task.command,
+          env: task.env,
+          timeout: task.timeout,
+          memoryLimit: task.memoryLimit,
+          cpuLimit: task.cpuLimit,
+          networkEnabled: task.networkEnabled
+        },
+        priority: this.calculateTaskPriority(task),
+        requiredCapabilities: this.getRequiredCapabilities(task)
+      });
       
-      // Execute task on selected node
-      await this.executeTask(task, node);
+      // Store distributed task ID for tracking
+      task.containerId = distributedTaskId;
+      this.runningTasks.set(task.id, task);
+      
+      // Monitor distributed task execution
+      this.monitorDistributedTask(task.id, distributedTaskId);
+      
+      logger.info(`Task ${task.id} scheduled to distributed cluster as ${distributedTaskId}`);
+      this.emit('task:scheduled', { taskId: task.id, distributedTaskId });
       
     } catch (error) {
       logger.error(`Failed to schedule task ${task.id}:`, String(error));
@@ -326,6 +341,137 @@ export class ContainerOrchestrator extends EventEmitter {
   private hasResourcesAvailable(): boolean {
     const totalRunning = this.runningTasks.size;
     return totalRunning < (this.config.maxContainers || 100);
+  }
+  
+  /**
+   * Calculate task priority for distributed scheduling
+   */
+  private calculateTaskPriority(task: Task): number {
+    let priority = 5; // Base priority
+    
+    // Higher priority for interactive tasks
+    if (task.timeout < 10) priority += 3;
+    if (task.memoryLimit < 256) priority += 2;
+    
+    // Language-specific priorities
+    if (['javascript', 'typescript', 'python'].includes(task.language)) {
+      priority += 1;
+    }
+    
+    return Math.min(priority, 10); // Max priority is 10
+  }
+  
+  /**
+   * Get required capabilities for task execution
+   */
+  private getRequiredCapabilities(task: Task): string[] {
+    const capabilities: string[] = ['code-execution'];
+    
+    // GPU requirements
+    if (task.language === 'cuda' || task.language.includes('gpu')) {
+      capabilities.push('gpu');
+    }
+    
+    // High memory requirements
+    if (task.memoryLimit > 2048) {
+      capabilities.push('high-memory');
+    }
+    
+    // Network access
+    if (task.networkEnabled) {
+      capabilities.push('network-access');
+    }
+    
+    // Language-specific capabilities
+    const languageCapabilities: Record<string, string> = {
+      'rust': 'rust-toolchain',
+      'go': 'go-toolchain',
+      'java': 'jvm',
+      'csharp': 'dotnet',
+      'cpp': 'cpp-toolchain',
+      'cuda': 'cuda-toolkit'
+    };
+    
+    if (languageCapabilities[task.language]) {
+      capabilities.push(languageCapabilities[task.language]);
+    }
+    
+    return capabilities;
+  }
+  
+  /**
+   * Monitor distributed task execution
+   */
+  private monitorDistributedTask(localTaskId: string, distributedTaskId: string): void {
+    // Set up event listeners for task updates
+    const handleTaskUpdate = (update: any) => {
+      if (update.taskId === distributedTaskId) {
+        const localTask = this.tasks.get(localTaskId);
+        if (!localTask) return;
+        
+        // Update local task status based on distributed task status
+        switch (update.status) {
+          case 'running':
+            localTask.status = 'running';
+            this.emit('task:started', { taskId: localTaskId });
+            break;
+            
+          case 'completed':
+            localTask.status = 'completed';
+            localTask.result = {
+              exitCode: update.result?.exitCode || 0,
+              stdout: update.result?.stdout || '',
+              stderr: update.result?.stderr || '',
+              executionTime: update.result?.executionTime || 0,
+              memoryUsed: update.result?.memoryUsed || 0,
+              cpuUsed: update.result?.cpuUsed || 0,
+              filesCreated: update.result?.filesCreated || []
+            };
+            this.runningTasks.delete(localTaskId);
+            this.emit('task:completed', { taskId: localTaskId, task: localTask });
+            clusterManager.removeListener('taskUpdate', handleTaskUpdate);
+            break;
+            
+          case 'failed':
+            localTask.status = 'failed';
+            localTask.result = {
+              exitCode: update.error?.exitCode || -1,
+              stdout: '',
+              stderr: update.error?.message || 'Task execution failed',
+              executionTime: 0,
+              memoryUsed: 0,
+              cpuUsed: 0,
+              filesCreated: []
+            };
+            this.runningTasks.delete(localTaskId);
+            this.emit('task:failed', { taskId: localTaskId, error: update.error });
+            clusterManager.removeListener('taskUpdate', handleTaskUpdate);
+            break;
+        }
+      }
+    };
+    
+    clusterManager.on('taskUpdate', handleTaskUpdate);
+    
+    // Set timeout for task monitoring
+    setTimeout(() => {
+      const task = this.tasks.get(localTaskId);
+      if (task && (task.status === 'scheduled' || task.status === 'running')) {
+        task.status = 'failed';
+        task.result = {
+          exitCode: -1,
+          stdout: '',
+          stderr: 'Task execution timeout',
+          executionTime: task.timeout || 30,
+          memoryUsed: 0,
+          cpuUsed: 0,
+          filesCreated: []
+        };
+        this.runningTasks.delete(localTaskId);
+        this.emit('task:failed', { taskId: localTaskId, error: new Error('Timeout') });
+        clusterManager.removeListener('taskUpdate', handleTaskUpdate);
+      }
+    }, (task.timeout || 30) * 1000);
   }
   
   /**

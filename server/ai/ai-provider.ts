@@ -1,10 +1,16 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import { codeAnalyzer } from './code-analyzer';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('ai-provider');
 
 export interface AIProvider {
   name: string;
   generateCompletion(prompt: string, systemPrompt: string, maxTokens?: number, temperature?: number): Promise<string>;
   generateChat(messages: ChatMessage[], maxTokens?: number, temperature?: number): Promise<string>;
+  generateCodeWithUnderstanding(code: string, language: string, instruction: string): Promise<string>;
+  analyzeCode(code: string, language: string): Promise<any>;
   isAvailable(): boolean;
 }
 
@@ -51,6 +57,47 @@ export class OpenAIProvider implements AIProvider {
 
   isAvailable(): boolean {
     return !!process.env.OPENAI_API_KEY;
+  }
+  
+  async generateCodeWithUnderstanding(code: string, language: string, instruction: string): Promise<string> {
+    // Analyze the code using our sophisticated code analyzer
+    const context = await codeAnalyzer.analyzeCode(code, language);
+    
+    // Build a comprehensive prompt with code understanding
+    const systemPrompt = `You are an expert ${language} developer with deep code understanding capabilities.
+You have analyzed the following code structure:
+- Functions: ${context.functions.map(f => `${f.name}(${f.params.map(p => p.name).join(', ')})`).join(', ')}
+- Classes: ${context.classes.map(c => c.name).join(', ')}
+- Imports: ${context.imports.map(i => i.module).join(', ')}
+- Code complexity: ${context.complexity}
+- Patterns detected: ${context.patterns.map(p => p.type).join(', ')}
+
+Generate code that follows the existing patterns and conventions.`;
+
+    const prompt = `Given this ${language} code:
+\`\`\`${language}
+${code}
+\`\`\`
+
+Code Analysis:
+${JSON.stringify(context.suggestions, null, 2)}
+
+User instruction: ${instruction}
+
+Generate the requested code following the existing code style and patterns.`;
+
+    return this.generateCompletion(prompt, systemPrompt, 2048, 0.3);
+  }
+  
+  async analyzeCode(code: string, language: string): Promise<any> {
+    const context = await codeAnalyzer.analyzeCode(code, language);
+    const semanticAnalysis = await codeAnalyzer.analyzeSemantics(code, language);
+    
+    return {
+      context,
+      semanticAnalysis,
+      suggestions: await codeAnalyzer.generateSuggestions(context, { line: 0, column: 0 })
+    };
   }
 }
 
@@ -102,6 +149,47 @@ export class AnthropicProvider implements AIProvider {
 
   isAvailable(): boolean {
     return !!process.env.ANTHROPIC_API_KEY;
+  }
+  
+  async generateCodeWithUnderstanding(code: string, language: string, instruction: string): Promise<string> {
+    // Analyze code using sophisticated analyzer
+    const context = await codeAnalyzer.analyzeCode(code, language);
+    
+    const systemPrompt = `You are Claude, an expert ${language} developer with sophisticated code understanding.
+    
+Code Structure Analysis:
+- Functions: ${context.functions.map(f => `${f.name}(${f.params.map(p => p.name).join(', ')})`).join(', ')}
+- Classes: ${context.classes.map(c => c.name).join(', ')}
+- Dependencies: ${context.imports.map(i => i.module).join(', ')}
+- Complexity score: ${context.complexity}
+- Design patterns: ${context.patterns.map(p => p.type).join(', ')}
+
+Generate code that seamlessly integrates with the existing codebase, maintaining consistency in style, patterns, and architecture.`;
+
+    const prompt = `Analyze this ${language} code:
+\`\`\`${language}
+${code}
+\`\`\`
+
+Semantic Analysis:
+${JSON.stringify(context.suggestions, null, 2)}
+
+Task: ${instruction}
+
+Generate the requested code following established conventions and patterns.`;
+
+    return this.generateCompletion(prompt, systemPrompt, 2048, 0.3);
+  }
+  
+  async analyzeCode(code: string, language: string): Promise<any> {
+    const context = await codeAnalyzer.analyzeCode(code, language);
+    const semanticAnalysis = await codeAnalyzer.analyzeSemantics(code, language);
+    
+    return {
+      context,
+      semanticAnalysis,
+      suggestions: await codeAnalyzer.generateSuggestions(context, { line: 0, column: 0 })
+    };
   }
 }
 
@@ -156,6 +244,83 @@ export class ECodeModelProvider implements AIProvider {
 
   isAvailable(): boolean {
     return this.baseProvider.isAvailable();
+  }
+  
+  async generateCodeWithUnderstanding(code: string, language: string, instruction: string): Promise<string> {
+    // E-Code models have native sophisticated code understanding
+    const context = await codeAnalyzer.analyzeCode(code, language);
+    const semanticAnalysis = await codeAnalyzer.analyzeSemantics(code, language);
+    
+    // Special handling for E-Code Agent model - autonomous building capabilities
+    if (this.name === 'E-Code Agent') {
+      // Detect if this is a build request
+      const buildKeywords = ['build', 'create', 'implement', 'develop'];
+      const isBuildRequest = buildKeywords.some(keyword => 
+        instruction.toLowerCase().includes(keyword)
+      );
+      
+      if (isBuildRequest) {
+        const systemPrompt = `You are E-Code Agent, an autonomous AI developer with sophisticated code understanding.
+You have analyzed the existing codebase with AST parsing and semantic analysis:
+${JSON.stringify(context, null, 2)}
+
+Create a complete implementation that integrates seamlessly with the existing architecture.`;
+
+        const prompt = `Context code:
+\`\`\`${language}
+${code}
+\`\`\`
+
+Semantic understanding:
+${JSON.stringify(semanticAnalysis, null, 2)}
+
+Task: ${instruction}
+
+Generate a complete, production-ready implementation.`;
+
+        return this.baseProvider.generateCompletion(prompt, systemPrompt, 4096, 0.3);
+      }
+    }
+    
+    // For code completion and other models
+    const systemPrompt = `You are ${this.name}, with advanced code understanding using AST and semantic analysis.
+    
+Code Intelligence:
+- AST Structure: ${JSON.stringify(context.ast?.type || 'parsed', null, 2)}
+- Variable scope: ${context.variables.map(v => `${v.name}: ${v.type}`).join(', ')}
+- Function signatures: ${context.functions.map(f => `${f.name}(${f.params.map(p => p.name).join(', ')})`).join(', ')}
+- Code patterns: ${context.patterns.map(p => `${p.type} (confidence: ${p.confidence})`).join(', ')}
+
+Generate code with deep understanding of the existing structure.`;
+
+    const prompt = `Code context:
+\`\`\`${language}
+${code}
+\`\`\`
+
+Instruction: ${instruction}`;
+
+    return this.baseProvider.generateCompletion(prompt, systemPrompt, 2048, 0.2);
+  }
+  
+  async analyzeCode(code: string, language: string): Promise<any> {
+    const context = await codeAnalyzer.analyzeCode(code, language);
+    const semanticAnalysis = await codeAnalyzer.analyzeSemantics(code, language);
+    const patterns = await codeAnalyzer.detectPatterns(code, language);
+    
+    return {
+      context,
+      semanticAnalysis,
+      patterns,
+      modelCapabilities: {
+        name: this.name,
+        specialization: this.model,
+        codeUnderstanding: 'advanced',
+        astParsing: true,
+        semanticAnalysis: true,
+        patternDetection: true
+      }
+    };
   }
 }
 

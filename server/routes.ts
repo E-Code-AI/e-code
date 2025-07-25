@@ -16,6 +16,8 @@ import {
   generateTests 
 } from "./ai";
 import { aiProviderManager, type ChatMessage } from "./ai/ai-provider";
+import { CodeAnalyzer } from "./ai/code-analyzer";
+import { createLogger } from "./utils/logger";
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, attachToProjectLogs, checkRuntimeDependencies } from "./runtime";
 import { setupLogsWebsocket } from "./logs";
@@ -60,6 +62,8 @@ import { performanceMiddleware } from './monitoring/performance';
 import { monitoringRouter } from './monitoring/routes';
 import { nixPackageManager } from './package-management/nix-package-manager';
 import { nixEnvironmentBuilder } from './package-management/nix-environment-builder';
+
+const logger = createLogger('routes');
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -1940,6 +1944,21 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
       if (context?.mode === 'agent') {
         const lowerMessage = message.toLowerCase();
         
+        // Create code analyzer instance
+        const codeAnalyzer = new CodeAnalyzer();
+        
+        // Analyze existing project code for context
+        let codeAnalysis = null;
+        if (codeContext && project.language) {
+          codeAnalysis = await codeAnalyzer.analyzeCode(codeContext, project.language);
+          logger.info('Code analysis for agent mode:', {
+            language: project.language,
+            functions: codeAnalysis.functions.length,
+            classes: codeAnalysis.classes.length,
+            patterns: codeAnalysis.patterns.length
+          });
+        }
+        
         // Detect building intent
         if (lowerMessage.includes('build') || lowerMessage.includes('create') || lowerMessage.includes('make')) {
           const actions = [];
@@ -1972,7 +1991,7 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
             );
             responseContent = "I'm building a portfolio website for you! It will have a modern design with sections for About, Projects, and Contact. The layout will be responsive and professional.";
           } else {
-            // Default to using OpenAI for more complex requests
+            // Use sophisticated code understanding for complex requests
             const systemMessageAgent = {
               role: 'system' as const,
               content: `You are E-Code AI Agent, an autonomous coding assistant that can build entire applications. You can create files, install packages, and set up complete projects. When a user asks you to build something, respond with specific actions and code.`
@@ -1987,7 +2006,23 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
               { role: 'user' as const, content: message }
             ];
             
-            const agentResponse = await provider.generateChat(agentMessages, 1500, 0.7);
+            // Use generateCodeWithUnderstanding if code analysis is available
+            let agentResponse;
+            if (codeAnalysis && provider.generateCodeWithUnderstanding) {
+              agentResponse = await provider.generateCodeWithUnderstanding(
+                message,
+                codeAnalysis,
+                {
+                  language: project.language || 'javascript',
+                  systemPrompt: systemMessageAgent.content,
+                  maxTokens: 2000,
+                  temperature: 0.7
+                }
+              );
+            } else {
+              // Fallback to regular generateChat if no code analysis
+              agentResponse = await provider.generateChat(agentMessages, 1500, 0.7);
+            }
             
             responseContent = agentResponse || "I'll help you build that! Let me create the necessary files and structure for your application.";
           }
@@ -2027,13 +2062,14 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
     } catch (error: any) {
       console.error('AI chat error:', error);
       
-      // If OpenAI API key is missing or invalid
+      // If API key is missing or invalid
       if (error.status === 401 || error.message?.includes('API key')) {
         return res.json({
           id: `msg_${Date.now()}`,
           role: 'assistant',
-          content: 'It looks like the OpenAI API key is not configured correctly. Please ensure you have set up your OPENAI_API_KEY in the environment variables.',
-          timestamp: Date.now()
+          content: `It looks like the ${provider.name} API key is not configured correctly. Please ensure you have set up the required API key in the environment variables.`,
+          timestamp: Date.now(),
+          provider: provider.name
         });
       }
       
