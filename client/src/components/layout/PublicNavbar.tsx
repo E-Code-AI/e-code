@@ -239,7 +239,7 @@ export function PublicNavbar() {
                       className="w-full"
                       onClick={() => {
                         setMobileMenuOpen(false);
-                        navigate('/auth');
+                        setTimeout(() => navigate('/auth'), 150);
                       }}
                     >
                       Log in
@@ -248,7 +248,7 @@ export function PublicNavbar() {
                       className="w-full"
                       onClick={() => {
                         setMobileMenuOpen(false);
-                        navigate('/auth');
+                        setTimeout(() => navigate('/auth'), 150);
                       }}
                     >
                       Sign up
