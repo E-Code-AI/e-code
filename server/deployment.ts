@@ -3,6 +3,8 @@ import { storage } from './storage';
 import { codeExecutor } from './execution/executor';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { edgeManager } from './edge/edge-manager';
+import { cdnService } from './edge/cdn-service';
 
 export interface DeploymentConfig {
   projectId: number;
@@ -14,6 +16,12 @@ export interface DeploymentConfig {
   buildCommand?: string;
   startCommand?: string;
   port?: number;
+  // Edge deployment options
+  edgeEnabled?: boolean;
+  edgeLocations?: string[];
+  routing?: 'geo-nearest' | 'round-robin' | 'least-loaded' | 'custom';
+  cacheStrategy?: 'aggressive' | 'moderate' | 'minimal';
+  replication?: 'full' | 'partial' | 'on-demand';
 }
 
 export interface DeploymentStatus {
@@ -26,6 +34,10 @@ export interface DeploymentStatus {
   createdAt: Date;
   updatedAt: Date;
   error?: string;
+  // Edge deployment information
+  edgeDeploymentId?: string;
+  edgeLocations?: string[];
+  cdnUrl?: string;
 }
 
 export class DeploymentManager {
@@ -131,6 +143,33 @@ export class DeploymentManager {
 
       // Simulate deployment
       await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // Handle edge deployment if enabled
+      if (config.edgeEnabled) {
+        this.addLog(deploymentId, 'Deploying to edge locations...');
+        
+        const edgeDeployment = await edgeManager.deployToEdge(String(config.projectId), {
+          locations: config.edgeLocations,
+          routing: config.routing || 'geo-nearest',
+          replication: config.replication || 'full',
+          cacheStrategy: config.cacheStrategy || 'moderate',
+          failoverEnabled: true,
+          sslEnabled: true,
+          customDomains: config.customDomain ? [config.customDomain] : []
+        });
+
+        deployment.edgeDeploymentId = edgeDeployment.id;
+        deployment.edgeLocations = edgeDeployment.locations;
+        
+        // Upload static assets to CDN
+        this.addLog(deploymentId, 'Uploading assets to CDN...');
+        await this.uploadAssetsToCDN(config.projectId, deploymentPath);
+        
+        // Generate CDN URL
+        deployment.cdnUrl = cdnService.generateCDNUrl(String(config.projectId), '');
+        
+        this.addLog(deploymentId, `Edge deployment successful! Deployed to ${edgeDeployment.locations.length} locations`);
+      }
 
       // Update deployment status
       deployment.status = 'running';
@@ -248,6 +287,66 @@ export class DeploymentManager {
       uptime: 99.9,
       bandwidth: Math.random() * 1000 // MB
     };
+  }
+
+  private async uploadAssetsToCDN(projectId: number, deploymentPath: string): Promise<void> {
+    const staticExtensions = ['.html', '.css', '.js', '.jpg', '.jpeg', '.png', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf'];
+    
+    // Recursively scan deployment directory for static assets
+    const scanDir = async (dir: string, baseDir: string = ''): Promise<void> => {
+      const files = await fs.readdir(dir, { withFileTypes: true });
+      
+      for (const file of files) {
+        const fullPath = path.join(dir, file.name);
+        const relativePath = path.join(baseDir, file.name);
+        
+        if (file.isDirectory()) {
+          // Skip node_modules and hidden directories
+          if (!file.name.startsWith('.') && file.name !== 'node_modules') {
+            await scanDir(fullPath, relativePath);
+          }
+        } else {
+          const ext = path.extname(file.name).toLowerCase();
+          if (staticExtensions.includes(ext)) {
+            // Read file content
+            const content = await fs.readFile(fullPath);
+            
+            // Determine content type
+            const contentType = this.getContentType(ext);
+            
+            // Upload to CDN
+            await cdnService.uploadAsset(
+              String(projectId),
+              relativePath,
+              content,
+              contentType
+            );
+          }
+        }
+      }
+    };
+    
+    await scanDir(deploymentPath);
+  }
+
+  private getContentType(extension: string): string {
+    const mimeTypes: Record<string, string> = {
+      '.html': 'text/html',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.json': 'application/json',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon',
+      '.woff': 'font/woff',
+      '.woff2': 'font/woff2',
+      '.ttf': 'font/ttf'
+    };
+    
+    return mimeTypes[extension] || 'application/octet-stream';
   }
 
   private updateDeploymentStatus(deploymentId: string, status: DeploymentStatus['status'], error?: string) {
