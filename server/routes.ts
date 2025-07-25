@@ -198,6 +198,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create project from template
+  app.post('/api/projects/from-template', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { templateId, name } = req.body;
+
+      if (!templateId || !name) {
+        return res.status(400).json({ error: 'Template ID and project name are required' });
+      }
+
+      // Template configurations
+      const templateConfigs: Record<string, any> = {
+        'nextjs-blog': {
+          language: 'nodejs',
+          description: 'A modern blog built with Next.js',
+          files: [
+            { name: 'package.json', content: JSON.stringify({
+              name: 'nextjs-blog',
+              version: '1.0.0',
+              scripts: {
+                dev: 'next dev',
+                build: 'next build',
+                start: 'next start'
+              },
+              dependencies: {
+                next: '^14.0.0',
+                react: '^18.2.0',
+                'react-dom': '^18.2.0'
+              }
+            }, null, 2) },
+            { name: 'pages/index.js', content: `export default function Home() {
+  return (
+    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
+      <h1>Welcome to Your Blog!</h1>
+      <p>This is a Next.js blog starter template.</p>
+    </div>
+  );
+}` },
+            { name: 'pages/_app.js', content: `export default function App({ Component, pageProps }) {
+  return <Component {...pageProps} />;
+}` },
+            { name: 'README.md', content: `# Next.js Blog
+
+A modern blog starter built with Next.js.
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+Visit http://localhost:3000 to see your blog!
+` }
+          ]
+        },
+        'express-api': {
+          language: 'nodejs',
+          description: 'A REST API built with Express.js',
+          files: [
+            { name: 'package.json', content: JSON.stringify({
+              name: 'express-api',
+              version: '1.0.0',
+              scripts: {
+                start: 'node server.js',
+                dev: 'nodemon server.js'
+              },
+              dependencies: {
+                express: '^4.18.0',
+                cors: '^2.8.5',
+                dotenv: '^16.0.0'
+              },
+              devDependencies: {
+                nodemon: '^3.0.0'
+              }
+            }, null, 2) },
+            { name: 'server.js', content: `const express = require('express');
+const cors = require('cors');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to your Express API!' });
+});
+
+app.get('/api/users', (req, res) => {
+  res.json([
+    { id: 1, name: 'John Doe' },
+    { id: 2, name: 'Jane Smith' }
+  ]);
+});
+
+app.listen(PORT, () => {
+  console.log(\`Server running on port \${PORT}\`);
+});` },
+            { name: 'README.md', content: `# Express REST API
+
+A production-ready REST API starter.
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm start
+\`\`\`
+
+API will be available at http://localhost:3000
+` }
+          ]
+        }
+      };
+
+      const config = templateConfigs[templateId];
+      if (!config) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Create the project
+      const project = await storage.createProject({
+        name,
+        userId,
+        language: config.language,
+        description: config.description,
+        visibility: 'private',
+      });
+
+      // Create the files
+      for (const file of config.files) {
+        await storage.createFile({
+          projectId: project.id,
+          name: file.name,
+          content: file.content,
+          path: file.name,
+        });
+      }
+
+      res.json(project);
+    } catch (error) {
+      console.error('Error creating project from template:', error);
+      res.status(500).json({ error: 'Failed to create project from template' });
+    }
+  });
+
   app.post('/api/projects/from-template', ensureAuthenticated, async (req, res) => {
     try {
       const { templateId, name } = req.body;
