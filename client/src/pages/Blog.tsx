@@ -7,6 +7,8 @@ import {
   Code, Calendar, Clock, User, Tag, ChevronRight, 
   ArrowRight, TrendingUp, Zap, Users, Globe
 } from 'lucide-react';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface BlogPost {
   id: string;
@@ -23,6 +25,9 @@ interface BlogPost {
 export default function Blog() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const featuredPost: BlogPost = {
     id: 'introducing-ai-assistant',
@@ -104,6 +109,45 @@ export default function Blog() {
       'Community': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
     };
     return colors[category] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+  };
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Success!",
+          description: data.message,
+        });
+        setEmail('');
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || 'Failed to subscribe',
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to subscribe. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -272,15 +316,17 @@ export default function Blog() {
               <p className="text-muted-foreground mb-6">
                 Get the latest product updates, engineering insights, and community stories delivered to your inbox.
               </p>
-              <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
                 <input
                   type="email"
                   placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="flex-1 px-4 py-2 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
-                <Button type="submit">
-                  Subscribe
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Subscribing...' : 'Subscribe'}
                 </Button>
               </form>
               <p className="text-sm text-muted-foreground mt-4">
