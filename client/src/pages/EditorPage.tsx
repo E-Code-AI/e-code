@@ -11,6 +11,9 @@ import { File, Project } from '@shared/schema';
 import TopNavbar from '@/components/TopNavbar';
 import TerminalPanel from '@/components/TerminalPanel';
 import { RunButton } from '@/components/RunButton';
+import { ResponsiveTerminal } from '@/components/editor/ResponsiveTerminal';
+import { ResponsiveWebPreview } from '@/components/editor/ResponsiveWebPreview';
+import { MobileEditorTabs } from '@/components/editor/MobileEditorTabs';
 import { EnvironmentVariables } from '@/components/EnvironmentVariables';
 import { PackageManager } from '@/components/PackageManager';
 import { WebPreview } from '@/components/WebPreview';
@@ -29,7 +32,15 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { ReplitEditorLayout } from '@/components/editor/ReplitEditorLayout';
 import { ReplitFileSidebar } from '@/components/editor/ReplitFileSidebar';
 import { ReplitCodeEditor } from '@/components/editor/ReplitCodeEditor';
-import { Globe } from 'lucide-react';
+import { Globe, MoreVertical } from 'lucide-react';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { CollaborationPresence } from '@/components/editor/CollaborationPresence';
 
 export default function EditorPage() {
   const { projectId } = useParams();
@@ -207,6 +218,7 @@ export default function EditorPage() {
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [selectedCode, setSelectedCode] = useState<string | undefined>(undefined);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [mobileActiveTab, setMobileActiveTab] = useState('code');
 
   // Update active file handler
   const handleActiveFileChange = (file: File | undefined) => {
@@ -259,17 +271,22 @@ export default function EditorPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showAIAssistant]);
   
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[var(--ecode-background)]">
       {/* Replit-style Header */}
-      <div className="h-12 flex items-center justify-between border-b border-[var(--ecode-border)] bg-[var(--ecode-background)] px-4">
-        <div className="flex items-center gap-4 flex-1">
+      <div className="h-12 flex items-center justify-between border-b border-[var(--ecode-border)] bg-[var(--ecode-background)] px-2 sm:px-4">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1">
           {/* Project name and controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Button variant="ghost" size="icon" onClick={() => navigate('/projects')} className="h-8 w-8">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-sm font-medium">{project?.name || 'Loading...'}</h1>
+            <h1 className="text-xs sm:text-sm font-medium truncate max-w-[120px] sm:max-w-none">
+              {project?.name || 'Loading...'}
+            </h1>
           </div>
           
           {/* Run button - Replit style */}
@@ -281,60 +298,130 @@ export default function EditorPage() {
               setExecutionId(execId);
             }}
             className="h-8"
+            variant="default"
+            size={isMobile ? "icon" : "sm"}
           />
         </div>
         
         {/* Right side controls */}
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8 text-xs">
-            <Users className="h-3 w-3 mr-1" />
-            Invite
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 text-xs">
-            <Rocket className="h-3 w-3 mr-1" />
-            Deploy
-          </Button>
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Collaboration Presence */}
+          {user && !isMobile && (
+            <CollaborationPresence 
+              projectId={projectIdNum} 
+              currentUserId={user.id}
+              compact={true}
+              className="mr-2"
+            />
+          )}
+          {!isMobile && (
+            <>
+              <Button variant="outline" size="sm" className="h-8 text-xs">
+                <Users className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">Invite</span>
+              </Button>
+              <Button variant="outline" size="sm" className="h-8 text-xs">
+                <Rocket className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">Deploy</span>
+              </Button>
+            </>
+          )}
+          {isMobile && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <Users className="h-4 w-4 mr-2" />
+                  Invite
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Rocket className="h-4 w-4 mr-2" />
+                  Deploy
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
       
-      {/* Main Content Area - Replit Style Layout */}
-      <ReplitEditorLayout
-        leftPanel={
-          <ReplitFileSidebar
-            files={files}
-            activeFileId={activeFile?.id}
-            onFileSelect={handleActiveFileChange}
-            onFileCreate={handleFileCreate}
-            onFileDelete={handleFileDelete}
-            projectName={project?.name}
-          />
-        }
-        centerPanel={
-          <ReplitCodeEditor
-            files={files}
-            activeFile={activeFile}
-            onFileUpdate={handleFileUpdate}
-          />
-        }
-        bottomPanel={
-          <TerminalPanel projectId={projectIdNum} />
-        }
-        rightPanels={[
-          {
-            id: 'console',
-            title: 'Console',
-            icon: <TerminalIcon className="h-3 w-3" />,
-            content: <ReplitConsole projectId={projectIdNum} isRunning={isProjectRunning} executionId={executionId} />
-          },
-          {
-            id: 'preview',
-            title: 'Webview',
-            icon: <Globe className="h-3 w-3" />,
-            content: <WebPreview projectId={projectIdNum} isRunning={isProjectRunning} />
+      {/* Main Content Area - Responsive Layout */}
+      {isMobile ? (
+        <MobileEditorTabs
+          fileExplorer={
+            <ReplitFileSidebar
+              files={files}
+              activeFileId={activeFile?.id}
+              onFileSelect={handleActiveFileChange}
+              onFileCreate={handleFileCreate}
+              onFileDelete={handleFileDelete}
+              projectName={project?.name}
+              projectId={projectIdNum}
+            />
           }
-        ]}
-        defaultRightPanel="console"
-      />
+          codeEditor={
+            <ReplitCodeEditor
+              files={files}
+              activeFile={activeFile}
+              onFileUpdate={handleFileUpdate}
+            />
+          }
+          terminal={
+            <ResponsiveTerminal 
+              projectId={projectIdNum}
+            />
+          }
+          preview={
+            <ResponsiveWebPreview 
+              projectId={projectIdNum} 
+              isRunning={isProjectRunning}
+            />
+          }
+          defaultTab={mobileActiveTab}
+        />
+      ) : (
+        <ReplitEditorLayout
+          leftPanel={
+            <ReplitFileSidebar
+              files={files}
+              activeFileId={activeFile?.id}
+              onFileSelect={handleActiveFileChange}
+              onFileCreate={handleFileCreate}
+              onFileDelete={handleFileDelete}
+              projectName={project?.name}
+              projectId={projectIdNum}
+            />
+          }
+          centerPanel={
+            <ReplitCodeEditor
+              files={files}
+              activeFile={activeFile}
+              onFileUpdate={handleFileUpdate}
+            />
+          }
+          bottomPanel={
+            <ResponsiveTerminal projectId={projectIdNum} />
+          }
+          rightPanels={[
+            {
+              id: 'console',
+              title: 'Console',
+              icon: <TerminalIcon className="h-3 w-3" />,
+              content: <ReplitConsole projectId={projectIdNum} isRunning={isProjectRunning} executionId={executionId} />
+            },
+            {
+              id: 'preview',
+              title: 'Webview',
+              icon: <Globe className="h-3 w-3" />,
+              content: <ResponsiveWebPreview projectId={projectIdNum} isRunning={isProjectRunning} />
+            }
+          ]}
+          defaultRightPanel="console"
+        />
+      )}
 
       {/* Global Search Dialog */}
       {showGlobalSearch && (

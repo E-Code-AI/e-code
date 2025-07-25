@@ -21,7 +21,8 @@ import {
   FileJson,
   GitBranch,
   Database,
-  Package
+  Package,
+  X
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,6 +33,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { File as FileType } from '@shared/schema';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { FileUpload } from './FileUpload';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface ReplitFileSidebarProps {
   files: FileType[];
@@ -41,6 +51,7 @@ interface ReplitFileSidebarProps {
   onFileDelete: (fileId: number) => void;
   onFileRename?: (fileId: number, newName: string) => void;
   projectName?: string;
+  projectId?: number;
 }
 
 interface FileTreeItemProps {
@@ -292,13 +303,16 @@ export function ReplitFileSidebar({
   onFileCreate, 
   onFileDelete,
   onFileRename,
-  projectName = "Project"
+  projectName = "Project",
+  projectId
 }: ReplitFileSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [showNewInput, setShowNewInput] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemType, setNewItemType] = useState<'file' | 'folder'>('file');
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const rootFiles = files.filter(f => !f.parentId);
   
@@ -344,7 +358,10 @@ export function ReplitFileSidebar({
                 New Folder
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                setShowUploadDialog(true);
+                setShowNewMenu(false);
+              }}>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload Files
               </DropdownMenuItem>
@@ -437,6 +454,24 @@ export function ReplitFileSidebar({
           Packages
         </Button>
       </div>
+
+      {/* Upload Dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upload Files</DialogTitle>
+            <DialogDescription>
+              Drag and drop files here or click to browse
+            </DialogDescription>
+          </DialogHeader>
+          {projectId && (
+            <FileUpload 
+              projectId={projectId} 
+              onClose={() => setShowUploadDialog(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
