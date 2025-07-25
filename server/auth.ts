@@ -549,6 +549,35 @@ export function setupAuth(app: Express) {
     }
   });
   
+  // Dev auth login endpoint (development only)
+  app.post('/api/dev-auth/login', (req, res) => {
+    if (process.env.NODE_ENV !== 'development') {
+      return res.status(403).json({ message: 'Dev auth only available in development' });
+    }
+
+    // Create a dev user for testing
+    const devUser = {
+      id: 1,
+      username: 'testuser',
+      email: 'test@example.com',
+      displayName: 'Test User',
+      avatarUrl: null,
+      bio: 'Development test user',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Log in the dev user
+    req.login(devUser, (err) => {
+      if (err) {
+        console.error('Dev login error:', err);
+        return res.status(500).json({ message: 'Login failed', error: err.message });
+      }
+      console.log('Dev user logged in successfully:', devUser.username);
+      res.json({ success: true, message: 'Logged in successfully', user: devUser });
+    });
+  });
+
   // Get current user info
   app.get("/api/user", async (req, res) => {
     console.log('User auth check:', {
