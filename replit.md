@@ -274,6 +274,32 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
   * Added JWT access/refresh token system alongside session-based authentication
   * Created email utilities supporting SendGrid integration (falls back to console logging)
   * All authentication endpoints include proper error handling and security best practices
+- 2025-01-30: **Newsletter System Enhancement & Gandi Email Integration**:
+  * **Email Validation Enhanced**:
+    - Created comprehensive E-Code design email validator with proper regex validation
+    - Added blocked disposable email domains (tempmail, guerrillamail, etc.)
+    - Implemented typo suggestions for common email domain mistakes (gmial.com → gmail.com)
+    - Added business email detection and sanitization functions
+  * **Gandi Email Service Integration**:
+    - Created full Gandi SMTP integration in `server/utils/gandi-email.ts`
+    - Added nodemailer transport with Gandi configuration (mail.gandi.net:587)
+    - Created beautiful HTML email templates with E-Code branding
+    - Implemented newsletter welcome email with confirmation link
+    - Added confirmation success email after verification
+    - Falls back to console logging when Gandi credentials not configured
+  * **Newsletter Infrastructure Verified**:
+    - All API endpoints working: subscribe, unsubscribe, confirm, admin subscribers list
+    - Database storage complete with newsletter_subscribers table
+    - Soft delete for unsubscribe (preserves data, sets isActive to false)
+    - Reactivation support for previously unsubscribed emails
+  * **Admin Features Added**:
+    - Test Gandi connection endpoint: `/api/newsletter/test-gandi`
+    - Newsletter settings page for admin dashboard
+    - Shows Gandi connection status and configuration
+  * **User Experience Improvements**:
+    - Created NewsletterConfirmed page with confetti animation
+    - Enhanced subscription forms with real-time validation feedback
+    - Clear error messages for validation failures
 - 2025-01-25: **Additional Replit Features Implementation**:
   * Created DatabaseBrowser component: Full database management UI with table browsing, data viewing, structure inspection, and SQL query execution
   * Created PackageViewer component: Complete package management interface showing installed packages, system packages, npm search, install/uninstall functionality
