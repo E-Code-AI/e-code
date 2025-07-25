@@ -528,12 +528,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/projects/:id/deploy', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
-      // const result = await deployProject(projectId);
-      // For now, return a mock deployment response
-      res.json({ 
-        deploymentId: Math.floor(Math.random() * 1000000).toString(),
+      const userId = req.user!.id;
+      const { environment = 'production', region = 'us-east-1', customDomain } = req.body;
+      
+      // Get project details
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      
+      // Create deployment record
+      const deployment = await storage.createDeployment({
+        projectId,
         status: 'deploying',
-        url: `https://project-${projectId}.replit.app`
+        url: `https://project-${projectId}-${Date.now()}.ecode-app.com`,
+        buildLogs: '',
+        config: JSON.stringify({
+          environment,
+          region,
+          customDomain,
+          userId
+        }),
+        logs: 'Deployment started...',
+        version: `v${Date.now()}`
+      });
+      
+      // Start deployment process asynchronously
+      setTimeout(async () => {
+        try {
+          // Simulate deployment steps
+          await storage.updateDeployment(deployment.id, {
+            status: 'running',
+            logs: 'Deployment completed successfully',
+            updatedAt: new Date()
+          });
+        } catch (error) {
+          console.error('Deployment process error:', error);
+          await storage.updateDeployment(deployment.id, {
+            status: 'failed',
+            logs: `Deployment failed: ${error}`,
+            updatedAt: new Date()
+          });
+        }
+      }, 5000); // Simulate 5 second deployment
+      
+      res.json({ 
+        deploymentId: deployment.id.toString(),
+        status: deployment.status,
+        url: deployment.url
       });
     } catch (error) {
       console.error('Error deploying project:', error);
@@ -2259,25 +2301,54 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
         return res.status(400).json({ message: 'Invalid project ID' });
       }
       
-      // const result = await deployProject(projectId);
-      const result = { 
-        success: true,
-        deployment: {
-          id: Math.floor(Math.random() * 1000000),
-          url: `https://project-${projectId}.replit.app`,
-          status: 'deploying'
-        },
-        message: undefined as string | undefined
-      };
+      const userId = req.user!.id;
+      const { environment = 'production', region = 'us-east-1', customDomain } = req.body;
       
-      if (!result.success) {
-        return res.status(500).json({ message: result.message || 'Failed to deploy project' });
+      // Get project details
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
       }
       
+      // Create deployment record
+      const deployment = await storage.createDeployment({
+        projectId,
+        status: 'deploying',
+        url: `https://project-${projectId}-${Date.now()}.ecode-app.com`,
+        buildLogs: '',
+        config: JSON.stringify({
+          environment,
+          region,
+          customDomain,
+          userId
+        }),
+        logs: 'Deployment started...',
+        version: `v${Date.now()}`
+      });
+      
+      // Start deployment process asynchronously
+      setTimeout(async () => {
+        try {
+          // Simulate deployment steps
+          await storage.updateDeployment(deployment.id, {
+            status: 'running',
+            logs: 'Deployment completed successfully',
+            updatedAt: new Date()
+          });
+        } catch (error) {
+          console.error('Deployment process error:', error);
+          await storage.updateDeployment(deployment.id, {
+            status: 'failed',
+            logs: `Deployment failed: ${error}`,
+            updatedAt: new Date()
+          });
+        }
+      }, 5000); // Simulate 5 second deployment
+      
       res.json({
-        deploymentId: result.deployment.id,
-        url: result.deployment.url,
-        status: result.deployment.status
+        deploymentId: deployment.id,
+        url: deployment.url,
+        status: deployment.status
       });
     } catch (error) {
       console.error("Error deploying project:", error);

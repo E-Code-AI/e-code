@@ -406,7 +406,9 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
                               variant="ghost"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                window.open(deployment.url, '_blank');
+                                if (deployment.url) {
+                                  window.open(deployment.url, '_blank');
+                                }
                               }}
                               className="h-7 w-7"
                             >
