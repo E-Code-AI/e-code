@@ -22,13 +22,19 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
   const { user, logoutMutation } = useAuth();
 
   const handleNavigate = (path: string) => {
-    navigate(path);
+    // Close the menu immediately
     setOpen(false);
+    // Navigate after a small delay to ensure smooth animation
+    setTimeout(() => {
+      navigate(path);
+    }, 150);
   };
 
   const handleLogout = () => {
-    logoutMutation.mutate();
     setOpen(false);
+    setTimeout(() => {
+      logoutMutation.mutate();
+    }, 150);
   };
 
   const primaryLinks = [
@@ -39,6 +45,25 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
     { icon: Users, label: 'Community', path: '/community' },
     { icon: Briefcase, label: 'Teams', path: '/teams' },
   ];
+
+  const handlePrimaryLinkClick = (link: any) => {
+    if (link.action === 'create') {
+      // Close menu and navigate to projects with create action
+      setOpen(false);
+      setTimeout(() => {
+        navigate('/projects');
+        // Trigger create modal after navigation
+        setTimeout(() => {
+          const createButton = document.querySelector('[data-create-project]');
+          if (createButton) {
+            (createButton as HTMLElement).click();
+          }
+        }, 300);
+      }, 150);
+    } else {
+      handleNavigate(link.path);
+    }
+  };
 
   const toolsLinks = [
     { icon: Terminal, label: 'Shell', path: '/shell' },
@@ -112,7 +137,10 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
             {/* User Info */}
             {user && (
               <>
-                <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-[var(--ecode-surface)]">
+                <div 
+                  className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-[var(--ecode-surface)] cursor-pointer hover:bg-[var(--ecode-sidebar-hover)] transition-colors"
+                  onClick={() => handleNavigate(`/@${user.username}`)}
+                >
                   <div className="w-10 h-10 rounded-full bg-[var(--ecode-accent)] text-white flex items-center justify-center font-semibold">
                     {user.username.charAt(0).toUpperCase()}
                   </div>
@@ -133,10 +161,10 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
               </h3>
               {primaryLinks.map((link) => (
                 <Button
-                  key={link.path}
+                  key={link.label}
                   variant="ghost"
                   className="w-full justify-start"
-                  onClick={() => handleNavigate(link.path)}
+                  onClick={() => handlePrimaryLinkClick(link)}
                 >
                   <link.icon className="mr-3 h-4 w-4" />
                   {link.label}
