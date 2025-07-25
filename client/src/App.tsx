@@ -14,6 +14,8 @@ const Editor = lazy(() => import("@/pages/Editor"));
 const AuthPage = lazy(() => import("@/pages/auth-page"));
 const ProjectsPage = lazy(() => import("@/pages/ProjectsPage"));
 const DevLogin = lazy(() => import("@/pages/DevLogin"));
+const Login = lazy(() => import("@/pages/Login"));
+const Register = lazy(() => import("@/pages/Register"));
 const ProjectPage = lazy(() => import("@/pages/ProjectPage"));
 const RuntimesPage = lazy(() => import("@/pages/RuntimesPage"));
 const RuntimeDiagnosticsPage = lazy(() => import("@/pages/RuntimeDiagnosticsPage"));
@@ -100,6 +102,8 @@ function AppContent() {
         <Suspense fallback={<PageLoader />}>
           <Switch>
           <Route path="/auth" component={AuthPage} />
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
           <Route path="/dev-login" component={DevLogin} />
           <Route path="/runtime-test" component={RuntimePublicPage} />
           <Route path="/runtime-dependencies" component={RuntimeTest} />
