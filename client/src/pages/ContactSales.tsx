@@ -85,7 +85,7 @@ export default function ContactSales() {
                 onClick={() => navigate('/')}
               >
                 <Code className="h-6 w-6" />
-                <span className="font-bold text-xl">Replit</span>
+                <span className="font-bold text-xl">E-Code</span>
               </div>
               <div className="hidden md:flex items-center gap-6">
                 <Button variant="ghost" size="sm" onClick={() => navigate('/pricing')}>
@@ -124,7 +124,7 @@ export default function ContactSales() {
               <span className="text-primary">amazing together</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Get in touch with our sales team to discuss how Replit can transform 
+              Get in touch with our sales team to discuss how E-Code can transform 
               your organization's development workflow.
             </p>
           </div>
@@ -245,7 +245,7 @@ export default function ContactSales() {
                         rows={4}
                         value={formData.message}
                         onChange={(e) => handleChange('message', e.target.value)}
-                        placeholder="What challenges are you looking to solve? How many developers will be using Replit?"
+                        placeholder="What challenges are you looking to solve? How many developers will be using E-Code?"
                       />
                     </div>
 
@@ -318,7 +318,7 @@ export default function ContactSales() {
       {/* Footer */}
       <footer className="border-t py-8 px-4 mt-16">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 Replit Clone. All rights reserved.</p>
+          <p>&copy; 2024 E-Code Clone. All rights reserved.</p>
         </div>
       </footer>
     </div>

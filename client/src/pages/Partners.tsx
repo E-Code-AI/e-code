@@ -10,7 +10,7 @@ export default function Partners() {
     {
       icon: Building2,
       title: 'Enterprise Partners',
-      description: 'Scale your development teams with Replit Enterprise',
+      description: 'Scale your development teams with E-Code Enterprise',
       benefits: [
         'Custom deployment options',
         'Advanced security features',
@@ -32,7 +32,7 @@ export default function Partners() {
     {
       icon: Code,
       title: 'Technology Partners',
-      description: 'Integrate your tools and services with Replit',
+      description: 'Integrate your tools and services with E-Code',
       benefits: [
         'API access',
         'Co-marketing opportunities',
@@ -54,19 +54,19 @@ export default function Partners() {
   const successStories = [
     {
       company: 'TechCorp Inc.',
-      quote: 'Replit helped us onboard new developers 3x faster with zero setup time.',
+      quote: 'E-Code helped us onboard new developers 3x faster with zero setup time.',
       author: 'Sarah Chen, CTO',
       metric: '70% faster onboarding',
     },
     {
       company: 'State University',
-      quote: 'Our CS enrollment doubled after introducing Replit to our curriculum.',
+      quote: 'Our CS enrollment doubled after introducing E-Code to our curriculum.',
       author: 'Dr. James Wilson, CS Department',
       metric: '2x enrollment growth',
     },
     {
       company: 'StartupXYZ',
-      quote: 'We built and deployed our MVP entirely on Replit in just 2 weeks.',
+      quote: 'We built and deployed our MVP entirely on E-Code in just 2 weeks.',
       author: 'Alex Kumar, Founder',
       metric: '10x faster deployment',
     },
@@ -82,9 +82,9 @@ export default function Partners() {
           <div className="container-responsive">
             <div className="text-center max-w-3xl mx-auto">
               <Handshake className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <h1 className="text-4xl font-bold mb-4">Partner with Replit</h1>
+              <h1 className="text-4xl font-bold mb-4">Partner with E-Code</h1>
               <p className="text-lg text-muted-foreground mb-8">
-                Join thousands of organizations using Replit to transform how they build software
+                Join thousands of organizations using E-Code to transform how they build software
               </p>
               <Button size="lg" onClick={() => window.location.href = '/contact-sales'}>
                 Become a Partner
@@ -173,7 +173,7 @@ export default function Partners() {
         <section className="py-responsive bg-muted">
           <div className="container-responsive">
             <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-8">Why Partner with Replit?</h2>
+              <h2 className="text-3xl font-bold mb-8">Why Partner with E-Code?</h2>
               
               <div className="grid md:grid-cols-2 gap-8 text-left">
                 <div>
@@ -221,7 +221,7 @@ export default function Partners() {
           <div className="container-responsive text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to Partner?</h2>
             <p className="text-lg mb-8 opacity-90 max-w-2xl mx-auto">
-              Join the growing ecosystem of Replit partners and transform how software is built
+              Join the growing ecosystem of E-Code partners and transform how software is built
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 

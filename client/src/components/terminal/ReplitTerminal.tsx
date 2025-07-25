@@ -170,7 +170,7 @@ export function ReplitTerminal({
 
     // Message de bienvenue
     terminal.writeln("\x1b[1;32m╭─────────────────────────────────────────╮\x1b[0m");
-    terminal.writeln("\x1b[1;32m│\x1b[0m \x1b[1;36mWelcome to Replit Terminal\x1b[0m           \x1b[1;32m│\x1b[0m");
+    terminal.writeln("\x1b[1;32m│\x1b[0m \x1b[1;36mWelcome to E-Code Terminal\x1b[0m           \x1b[1;32m│\x1b[0m");
     terminal.writeln("\x1b[1;32m│\x1b[0m \x1b[90mConnecting to workspace...\x1b[0m            \x1b[1;32m│\x1b[0m");
     terminal.writeln("\x1b[1;32m╰─────────────────────────────────────────╯\x1b[0m");
     terminal.writeln("");
@@ -389,11 +389,11 @@ export function ReplitTerminal({
 
   if (isMinimized) {
     return (
-      <div className={`bg-[var(--replit-surface)] border border-[var(--replit-border)] rounded-md ${className}`}>
+      <div className={`bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-md ${className}`}>
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center space-x-2">
-            <TerminalIcon className="h-4 w-4 text-[var(--replit-text-secondary)]" />
-            <span className="text-sm font-medium text-[var(--replit-text)]">Terminal</span>
+            <TerminalIcon className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+            <span className="text-sm font-medium text-[var(--ecode-text)]">Terminal</span>
             <Badge 
               variant="outline" 
               className={`text-xs ${isConnected ? 'border-green-500 text-green-500' : 'border-red-500 text-red-500'}`}
@@ -405,7 +405,7 @@ export function ReplitTerminal({
             variant="ghost"
             size="sm"
             onClick={() => setIsMinimized(false)}
-            className="h-6 w-6 p-0 text-[var(--replit-text-secondary)] hover:text-[var(--replit-text)]"
+            className="h-6 w-6 p-0 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)]"
           >
             <Maximize2 className="h-3 w-3" />
           </Button>
@@ -416,9 +416,9 @@ export function ReplitTerminal({
 
   return (
     <TooltipProvider>
-      <div className={`flex flex-col bg-[var(--replit-surface)] border border-[var(--replit-border)] rounded-md ${isFullscreen ? 'fixed inset-4 z-50' : className}`}>
+      <div className={`flex flex-col bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-md ${isFullscreen ? 'fixed inset-4 z-50' : className}`}>
         {/* Header du terminal */}
-        <div className="flex items-center justify-between p-2 border-b border-[var(--replit-border)]">
+        <div className="flex items-center justify-between p-2 border-b border-[var(--ecode-border)]">
           <div className="flex items-center space-x-2">
             {/* Onglets des sessions */}
             <div className="flex items-center space-x-1">
@@ -430,8 +430,8 @@ export function ReplitTerminal({
                     onClick={() => setActiveSessionId(session.id)}
                     className={`h-6 px-2 text-xs ${
                       session.id === activeSessionId
-                        ? "bg-[var(--replit-accent)] text-white"
-                        : "text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                        ? "bg-[var(--ecode-accent)] text-white"
+                        : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                     }`}
                   >
                     <TerminalIcon className="h-3 w-3 mr-1" />
@@ -447,7 +447,7 @@ export function ReplitTerminal({
                       variant="ghost"
                       size="sm"
                       onClick={() => closeSession(session.id)}
-                      className="h-4 w-4 p-0 ml-1 text-[var(--replit-text-secondary)] hover:text-[var(--replit-danger)]"
+                      className="h-4 w-4 p-0 ml-1 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-danger)]"
                     >
                       <X className="h-2 w-2" />
                     </Button>
@@ -460,7 +460,7 @@ export function ReplitTerminal({
                   variant="ghost"
                   size="sm"
                   onClick={createNewSession}
-                  className="h-6 w-6 p-0 text-[var(--replit-text-secondary)] hover:text-[var(--replit-text)]"
+                  className="h-6 w-6 p-0 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)]"
                 >
                   <Plus className="h-3 w-3" />
                 </Button>
@@ -494,7 +494,7 @@ export function ReplitTerminal({
                   variant="ghost"
                   size="sm"
                   onClick={clearTerminal}
-                  className="h-6 w-6 p-0 text-[var(--replit-text-secondary)] hover:text-[var(--replit-text)]"
+                  className="h-6 w-6 p-0 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)]"
                 >
                   <Square className="h-3 w-3" />
                 </Button>
@@ -508,7 +508,7 @@ export function ReplitTerminal({
                   variant="ghost"
                   size="sm"
                   onClick={restartSession}
-                  className="h-6 w-6 p-0 text-[var(--replit-text-secondary)] hover:text-[var(--replit-text)]"
+                  className="h-6 w-6 p-0 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)]"
                 >
                   <RotateCcw className="h-3 w-3" />
                 </Button>
@@ -522,22 +522,22 @@ export function ReplitTerminal({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0 text-[var(--replit-text-secondary)] hover:text-[var(--replit-text)]"
+                  className="h-6 w-6 p-0 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)]"
                 >
                   <Settings className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-40 bg-[var(--replit-surface)] border-[var(--replit-border)]">
-                <DropdownMenuItem onClick={copySelection} className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <DropdownMenuContent className="w-40 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+                <DropdownMenuItem onClick={copySelection} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                   <Copy className="mr-2 h-3 w-3" />
                   Copy
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={pasteFromClipboard} className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+                <DropdownMenuItem onClick={pasteFromClipboard} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                   <Copy className="mr-2 h-3 w-3" />
                   Paste
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
-                <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+                <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                   <Search className="mr-2 h-3 w-3" />
                   Find
                 </DropdownMenuItem>
@@ -548,7 +548,7 @@ export function ReplitTerminal({
               variant="ghost"
               size="sm"
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="h-6 w-6 p-0 text-[var(--replit-text-secondary)] hover:text-[var(--replit-text)]"
+              className="h-6 w-6 p-0 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)]"
             >
               {isFullscreen ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
             </Button>
@@ -557,7 +557,7 @@ export function ReplitTerminal({
               variant="ghost"
               size="sm"
               onClick={() => setIsMinimized(true)}
-              className="h-6 w-6 p-0 text-[var(--replit-text-secondary)] hover:text-[var(--replit-text)]"
+              className="h-6 w-6 p-0 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)]"
             >
               <ChevronDown className="h-3 w-3" />
             </Button>
@@ -566,7 +566,7 @@ export function ReplitTerminal({
 
         {/* Zone du terminal */}
         <div 
-          className="flex-1 terminal-container bg-[var(--replit-editor-bg)] overflow-hidden"
+          className="flex-1 terminal-container bg-[var(--ecode-editor-bg)] overflow-hidden"
           style={{ maxHeight: isFullscreen ? 'none' : `${maxHeight}px` }}
         >
           <div
@@ -578,7 +578,7 @@ export function ReplitTerminal({
 
         {/* Footer avec informations de session */}
         {activeSession && (
-          <div className="flex items-center justify-between px-3 py-1 bg-[var(--replit-surface-secondary)] border-t border-[var(--replit-border)] text-xs text-[var(--replit-text-secondary)]">
+          <div className="flex items-center justify-between px-3 py-1 bg-[var(--ecode-surface-secondary)] border-t border-[var(--ecode-border)] text-xs text-[var(--ecode-text-secondary)]">
             <div className="flex items-center space-x-4">
               <span>
                 <Clock className="h-3 w-3 inline mr-1" />

@@ -26,7 +26,7 @@ export default function Themes() {
         preview: { bg: '#1e1e1e', fg: '#d4d4d4', accent: '#007acc' },
         downloads: 124500,
         rating: 4.9,
-        author: 'Replit Team',
+        author: 'E-Code Team',
         official: true
       },
       {
@@ -36,7 +36,7 @@ export default function Themes() {
         preview: { bg: '#ffffff', fg: '#333333', accent: '#0066cc' },
         downloads: 89230,
         rating: 4.7,
-        author: 'Replit Team',
+        author: 'E-Code Team',
         official: true
       },
       {
@@ -84,7 +84,7 @@ export default function Themes() {
       {
         id: 'default',
         name: 'Default',
-        description: 'Replit default UI theme',
+        description: 'E-Code default UI theme',
         preview: { primary: '#0079f2', bg: '#0e1525', surface: '#1c2333' }
       },
       {
@@ -249,7 +249,7 @@ export default function Themes() {
             <CardHeader>
               <CardTitle>UI Themes</CardTitle>
               <CardDescription>
-                Change the overall appearance of Replit
+                Change the overall appearance of E-Code
               </CardDescription>
             </CardHeader>
             <CardContent>

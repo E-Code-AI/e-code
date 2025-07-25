@@ -52,7 +52,7 @@ export default function Landing() {
 
   const testimonials = [
     {
-      quote: "Replit transformed how our team collaborates. We ship features 3x faster now.",
+      quote: "E-Code transformed how our team collaborates. We ship features 3x faster now.",
       author: "Sarah Chen",
       role: "CTO at TechStart",
       avatar: "SC"
@@ -130,7 +130,7 @@ export default function Landing() {
                 <span className="text-xs text-muted-foreground">main.py</span>
               </div>
               <div className="p-4 bg-background font-mono text-sm">
-                <div className="text-muted-foreground"># Welcome to Replit!</div>
+                <div className="text-muted-foreground"># Welcome to E-Code!</div>
                 <div>
                   <span className="text-blue-400">def</span>{' '}
                   <span className="text-yellow-400">hello_world</span>():
@@ -194,7 +194,7 @@ export default function Landing() {
               Built for every developer
             </h2>
             <p className="text-lg text-muted-foreground">
-              From learning to launching, Replit scales with you
+              From learning to launching, E-Code scales with you
             </p>
           </div>
 
@@ -264,7 +264,7 @@ export default function Landing() {
               Loved by developers
             </h2>
             <p className="text-lg text-muted-foreground">
-              Join millions of developers who build with Replit
+              Join millions of developers who build with E-Code
             </p>
           </div>
 

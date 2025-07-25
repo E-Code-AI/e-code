@@ -159,7 +159,7 @@ export default function Security() {
                   <div>
                     <h4 className="font-semibold mb-2">Data Ownership</h4>
                     <p className="text-muted-foreground">
-                      You retain full ownership of all code and data you create on Replit
+                      You retain full ownership of all code and data you create on E-Code
                     </p>
                   </div>
                   <div>

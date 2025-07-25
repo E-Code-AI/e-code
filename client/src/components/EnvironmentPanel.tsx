@@ -119,7 +119,7 @@ export default function EnvironmentPanel({ projectId }: EnvironmentPanelProps) {
 
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Header Section - Styled exactly like Replit */}
+      {/* Header Section - Styled exactly like E-Code */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <div className="flex items-center gap-2">
           <KeyRound className="h-5 w-5 text-primary" />
@@ -208,7 +208,7 @@ export default function EnvironmentPanel({ projectId }: EnvironmentPanelProps) {
         </Dialog>
       </div>
       
-      {/* Main Content - Exactly like Replit */}
+      {/* Main Content - Exactly like E-Code */}
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex items-center p-3 gap-4">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "dev" | "prod")} className="w-full">

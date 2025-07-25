@@ -303,7 +303,7 @@ export default function Settings() {
               <CardHeader>
                 <CardTitle>Appearance</CardTitle>
                 <CardDescription>
-                  Customize how Replit looks for you
+                  Customize how E-Code looks for you
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -482,7 +482,7 @@ export default function Settings() {
                     <div className="space-y-0.5">
                       <Label>Analytics</Label>
                       <p className="text-sm text-muted-foreground">
-                        Help improve Replit with anonymous usage data
+                        Help improve E-Code with anonymous usage data
                       </p>
                     </div>
                     <Switch defaultChecked />

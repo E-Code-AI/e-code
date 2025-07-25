@@ -24,7 +24,7 @@ export function PublicFooter() {
       { label: 'Forum', href: '/forum' },
       { label: 'Status', href: '/status' },
       { label: 'Import from GitHub', href: '/github-import' },
-      { label: 'Replit Desktop App', href: '/desktop' },
+      { label: 'E-Code Desktop App', href: '/desktop' },
       { label: 'Programming Languages', href: '/languages' },
     ],
     company: [
@@ -43,11 +43,11 @@ export function PublicFooter() {
       { label: 'Security', href: '/security' },
     ],
     compare: [
-      { label: 'Replit vs GitHub Codespaces', href: '/compare/github-codespaces' },
-      { label: 'Replit vs Glitch', href: '/compare/glitch' },
-      { label: 'Replit vs Heroku', href: '/compare/heroku' },
-      { label: 'Replit vs CodeSandbox', href: '/compare/codesandbox' },
-      { label: 'Replit vs AWS Cloud9', href: '/compare/aws-cloud9' },
+      { label: 'E-Code vs GitHub Codespaces', href: '/compare/github-codespaces' },
+      { label: 'E-Code vs Glitch', href: '/compare/glitch' },
+      { label: 'E-Code vs Heroku', href: '/compare/heroku' },
+      { label: 'E-Code vs CodeSandbox', href: '/compare/codesandbox' },
+      { label: 'E-Code vs AWS Cloud9', href: '/compare/aws-cloud9' },
     ],
   };
 
@@ -202,11 +202,11 @@ export function PublicFooter() {
                   />
                   <circle cx="12" cy="12" r="3" fill="white" />
                 </svg>
-                <span className="font-bold text-lg">Replit</span>
+                <span className="font-bold text-lg">E-Code</span>
               </div>
             </Link>
             <span className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Replit Inc. All rights reserved.
+              © {new Date().getFullYear()} E-Code Inc. All rights reserved.
             </span>
           </div>
 

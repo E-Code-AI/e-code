@@ -9,25 +9,25 @@ export default function Press() {
   const pressReleases = [
     {
       date: '2024-11-15',
-      title: 'Replit Announces $100M Series C Funding Round',
+      title: 'E-Code Announces $100M Series C Funding Round',
       description: 'Leading online IDE platform secures funding to accelerate AI development',
       link: '#',
     },
     {
       date: '2024-09-22',
-      title: 'Replit Launches AI Code Assistant for All Users',
+      title: 'E-Code Launches AI Code Assistant for All Users',
       description: 'Revolutionary AI features now available to millions of developers',
       link: '#',
     },
     {
       date: '2024-07-10',
-      title: 'Replit Partners with Major Universities for CS Education',
+      title: 'E-Code Partners with Major Universities for CS Education',
       description: 'Bringing cloud-based coding to classrooms worldwide',
       link: '#',
     },
     {
       date: '2024-05-03',
-      title: 'Replit Mobile App Reaches 1 Million Downloads',
+      title: 'E-Code Mobile App Reaches 1 Million Downloads',
       description: 'Mobile coding revolution continues with milestone achievement',
       link: '#',
     },
@@ -61,7 +61,7 @@ export default function Press() {
               <Newspaper className="h-12 w-12 mx-auto mb-4 text-primary" />
               <h1 className="text-4xl font-bold mb-4">Press & Media</h1>
               <p className="text-lg text-muted-foreground">
-                Get the latest news, press releases, and media resources about Replit
+                Get the latest news, press releases, and media resources about E-Code
               </p>
             </div>
           </div>

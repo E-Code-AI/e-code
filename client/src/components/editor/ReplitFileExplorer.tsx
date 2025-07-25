@@ -378,8 +378,8 @@ export function ReplitFileExplorer({
               <div
                 className={`
                   flex items-center py-1 px-2 rounded-md cursor-pointer select-none
-                  ${isSelected ? "bg-[var(--replit-accent)] text-white" : "hover:bg-[var(--replit-sidebar-hover)]"}
-                  ${isDragOver ? "bg-[var(--replit-accent)]/20" : ""}
+                  ${isSelected ? "bg-[var(--ecode-accent)] text-white" : "hover:bg-[var(--ecode-sidebar-hover)]"}
+                  ${isDragOver ? "bg-[var(--ecode-accent)]/20" : ""}
                   ${isHidden ? "opacity-60" : ""}
                 `}
                 style={{ paddingLeft: `${8 + level * 16}px` }}
@@ -404,9 +404,9 @@ export function ReplitFileExplorer({
                       <ChevronRight className="h-4 w-4 mr-1 flex-shrink-0" />
                     )}
                     {isExpanded ? (
-                      <FolderOpen className="h-4 w-4 mr-2 flex-shrink-0 text-[var(--replit-blue)]" />
+                      <FolderOpen className="h-4 w-4 mr-2 flex-shrink-0 text-[var(--ecode-blue)]" />
                     ) : (
-                      <Folder className="h-4 w-4 mr-2 flex-shrink-0 text-[var(--replit-blue)]" />
+                      <Folder className="h-4 w-4 mr-2 flex-shrink-0 text-[var(--ecode-blue)]" />
                     )}
                   </>
                 ) : (
@@ -473,11 +473,11 @@ export function ReplitFileExplorer({
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-full bg-[var(--replit-sidebar-bg)]">
+      <div className="flex flex-col h-full bg-[var(--ecode-sidebar-bg)]">
         {/* Header */}
-        <div className="p-3 border-b border-[var(--replit-border)]">
+        <div className="p-3 border-b border-[var(--ecode-border)]">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-[var(--replit-text)]">Files</h3>
+            <h3 className="text-sm font-medium text-[var(--ecode-text)]">Files</h3>
             <div className="flex items-center space-x-1">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -553,13 +553,13 @@ export function ReplitFileExplorer({
           
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-[var(--replit-text-secondary)]" />
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-[var(--ecode-text-secondary)]" />
             <Input
               type="text"
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-7 pl-7 pr-7 text-xs bg-[var(--replit-bg)] border-[var(--replit-border)]"
+              className="h-7 pl-7 pr-7 text-xs bg-[var(--ecode-bg)] border-[var(--ecode-border)]"
             />
             {searchQuery && (
               <Button
@@ -579,10 +579,10 @@ export function ReplitFileExplorer({
           <div className="p-2">
             {isLoading ? (
               <div className="text-center py-4">
-                <RefreshCw className="h-4 w-4 animate-spin mx-auto text-[var(--replit-text-secondary)]" />
+                <RefreshCw className="h-4 w-4 animate-spin mx-auto text-[var(--ecode-text-secondary)]" />
               </div>
             ) : filteredTree.length === 0 ? (
-              <div className="text-center py-4 text-[var(--replit-text-secondary)] text-sm">
+              <div className="text-center py-4 text-[var(--ecode-text-secondary)] text-sm">
                 {searchQuery ? "No files found" : "No files in this project"}
               </div>
             ) : (

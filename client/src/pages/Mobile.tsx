@@ -52,10 +52,10 @@ export default function Mobile() {
                 Available on iOS & Android
               </Badge>
               <h1 className="text-responsive-xl font-bold mb-6">
-                Code Anywhere with Replit Mobile
+                Code Anywhere with E-Code Mobile
               </h1>
               <p className="text-responsive-base text-muted-foreground mb-8">
-                The full power of Replit in your pocket. Write, run, and deploy code from your mobile device with our native apps.
+                The full power of E-Code in your pocket. Write, run, and deploy code from your mobile device with our native apps.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -95,7 +95,7 @@ export default function Mobile() {
                   <div className="rounded-[2rem] overflow-hidden w-full h-full bg-white dark:bg-gray-800">
                     <img 
                       src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=300&h=600&fit=crop" 
-                      alt="Replit Mobile App"
+                      alt="E-Code Mobile App"
                       className="w-full h-full object-cover"
                     />
                   </div>

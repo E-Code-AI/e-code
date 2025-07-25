@@ -98,7 +98,7 @@ export default function Home() {
   return (
     <AppLayout>
       <div className="flex flex-col h-full">
-        {/* Hero Section with Chat Input - Replit Style */}
+        {/* Hero Section with Chat Input - E-Code Style */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-8 text-white">
           <div className="max-w-5xl mx-auto">
             <h1 className="text-4xl font-bold mb-4">Let's build something amazing</h1>

@@ -49,10 +49,10 @@ export default function Desktop() {
                 Desktop App
               </Badge>
               <h1 className="text-responsive-xl font-bold mb-6">
-                Replit Desktop
+                E-Code Desktop
               </h1>
               <p className="text-responsive-base text-muted-foreground mb-8">
-                The full power of Replit on your desktop. Code offline, sync online, and enjoy native performance.
+                The full power of E-Code on your desktop. Code offline, sync online, and enjoy native performance.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -75,13 +75,13 @@ export default function Desktop() {
                       <div className="w-3 h-3 rounded-full bg-green-500"></div>
                     </div>
                     <div className="flex-1 text-center text-sm text-slate-400">
-                      Replit Desktop - project.py
+                      E-Code Desktop - project.py
                     </div>
                   </div>
                   <div className="p-6">
                     <img 
                       src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=450&fit=crop" 
-                      alt="Replit Desktop App"
+                      alt="E-Code Desktop App"
                       className="w-full rounded"
                     />
                   </div>
@@ -185,7 +185,7 @@ export default function Desktop() {
         {/* CTA Section */}
         <section className="py-responsive bg-primary text-primary-foreground">
           <div className="container-responsive text-center">
-            <h2 className="text-3xl font-bold mb-4">Download Replit Desktop</h2>
+            <h2 className="text-3xl font-bold mb-4">Download E-Code Desktop</h2>
             <p className="text-lg mb-8 opacity-90 max-w-2xl mx-auto">
               Code anywhere, anytime. Online or offline.
             </p>

@@ -21,7 +21,7 @@ export function Shell({ projectId, isRunning = false }: ShellProps) {
 
     // Initialize shell with welcome message
     const welcomeMessage = `
-Welcome to Replit Shell
+Welcome to E-Code Shell
 Type 'help' for available commands
 Project: ${projectId}
 ─────────────────────────────────

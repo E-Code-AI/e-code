@@ -217,7 +217,7 @@ export default function Features() {
                 onClick={() => navigate('/')}
               >
                 <Code className="h-6 w-6" />
-                <span className="font-bold text-xl">Replit</span>
+                <span className="font-bold text-xl">E-Code</span>
               </div>
               <div className="hidden md:flex items-center gap-6">
                 <Button variant="ghost" size="sm" onClick={() => navigate('/features')}>
@@ -259,7 +259,7 @@ export default function Features() {
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               From writing your first line of code to deploying at scale, 
-              Replit provides all the tools you need in a single platform.
+              E-Code provides all the tools you need in a single platform.
             </p>
             <div className="flex gap-4 justify-center">
               <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
@@ -412,7 +412,7 @@ export default function Features() {
             Experience the future of development
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join millions of developers who are building faster with Replit
+            Join millions of developers who are building faster with E-Code
           </p>
           <div className="flex gap-4 justify-center">
             <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
@@ -429,7 +429,7 @@ export default function Features() {
       {/* Footer */}
       <footer className="border-t py-8 px-4">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 Replit Clone. All rights reserved.</p>
+          <p>&copy; 2024 E-Code Clone. All rights reserved.</p>
         </div>
       </footer>
     </div>

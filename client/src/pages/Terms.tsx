@@ -21,19 +21,19 @@ export default function Terms() {
               <section>
                 <h2 className="text-2xl font-semibold mt-8 mb-4">1. Acceptance of Terms</h2>
                 <p>
-                  By accessing and using Replit ("Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
+                  By accessing and using E-Code ("Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-semibold mt-8 mb-4">2. Use License</h2>
                 <p>
-                  Permission is granted to temporarily use Replit for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
+                  Permission is granted to temporarily use E-Code for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
                 </p>
                 <ul className="list-disc pl-6 mt-4 space-y-2">
                   <li>modify or copy the materials</li>
                   <li>use the materials for any commercial purpose or for any public display</li>
-                  <li>attempt to reverse engineer any software contained on Replit</li>
+                  <li>attempt to reverse engineer any software contained on E-Code</li>
                   <li>remove any copyright or other proprietary notations from the materials</li>
                 </ul>
               </section>
@@ -83,7 +83,7 @@ export default function Terms() {
               <section>
                 <h2 className="text-2xl font-semibold mt-8 mb-4">8. Disclaimer</h2>
                 <p>
-                  The information on this website is provided on an "as is" basis. To the fullest extent permitted by law, Replit:
+                  The information on this website is provided on an "as is" basis. To the fullest extent permitted by law, E-Code:
                 </p>
                 <ul className="list-disc pl-6 mt-4 space-y-2">
                   <li>excludes all representations and warranties relating to this website and its contents</li>
@@ -97,7 +97,7 @@ export default function Terms() {
                   If you have any questions about these Terms, please contact us at:
                 </p>
                 <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <p>Replit Inc.</p>
+                  <p>E-Code Inc.</p>
                   <p>Email: legal@replit.com</p>
                   <p>Address: 548 Market St #16093, San Francisco, CA 94104</p>
                 </div>

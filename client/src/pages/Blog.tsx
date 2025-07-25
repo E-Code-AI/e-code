@@ -39,7 +39,7 @@ export default function Blog() {
     {
       id: 'scaling-to-20m-users',
       title: 'How We Scaled to 20 Million Users',
-      excerpt: 'A deep dive into the infrastructure changes and optimizations that allowed us to scale Replit to support millions of concurrent users.',
+      excerpt: 'A deep dive into the infrastructure changes and optimizations that allowed us to scale E-Code to support millions of concurrent users.',
       author: 'Marcus Johnson',
       date: 'January 18, 2024',
       readTime: '8 min read',
@@ -65,8 +65,8 @@ export default function Blog() {
     },
     {
       id: 'teaching-cs-with-replit',
-      title: 'Teaching Computer Science with Replit: A Guide',
-      excerpt: 'How educators are using Replit to teach programming to students of all ages, with tips and best practices.',
+      title: 'Teaching Computer Science with E-Code: A Guide',
+      excerpt: 'How educators are using E-Code to teach programming to students of all ages, with tips and best practices.',
       author: 'Dr. James Wilson',
       date: 'January 10, 2024',
       readTime: '7 min read',
@@ -75,7 +75,7 @@ export default function Blog() {
     {
       id: 'deployment-best-practices',
       title: 'Deployment Best Practices for Production Apps',
-      excerpt: 'Everything you need to know about deploying production-ready applications on Replit, from optimization to monitoring.',
+      excerpt: 'Everything you need to know about deploying production-ready applications on E-Code, from optimization to monitoring.',
       author: 'David Kim',
       date: 'January 8, 2024',
       readTime: '9 min read',
@@ -118,7 +118,7 @@ export default function Blog() {
                 onClick={() => navigate('/')}
               >
                 <Code className="h-6 w-6" />
-                <span className="font-bold text-xl">Replit</span>
+                <span className="font-bold text-xl">E-Code</span>
               </div>
               <div className="hidden md:flex items-center gap-6">
                 <Button variant="ghost" size="sm" onClick={() => navigate('/features')}>
@@ -152,7 +152,7 @@ export default function Blog() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold">
-              Replit Blog
+              E-Code Blog
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Product updates, engineering insights, and stories from our community
@@ -294,7 +294,7 @@ export default function Blog() {
       {/* Footer */}
       <footer className="border-t py-8 px-4">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 Replit Clone. All rights reserved.</p>
+          <p>&copy; 2024 E-Code Clone. All rights reserved.</p>
         </div>
       </footer>
     </div>

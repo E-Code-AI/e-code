@@ -199,15 +199,15 @@ export function ReplitFileExplorer({
   const getFileIcon = (file: FileNode) => {
     if (file.type === "folder") {
       return expandedFolders.has(file.path) ? (
-        <FolderOpen className="h-4 w-4 text-[var(--replit-blue)]" />
+        <FolderOpen className="h-4 w-4 text-[var(--ecode-blue)]" />
       ) : (
-        <Folder className="h-4 w-4 text-[var(--replit-blue)]" />
+        <Folder className="h-4 w-4 text-[var(--ecode-blue)]" />
       );
     }
 
     // Icônes par extension
     const extension = file.name.split('.').pop()?.toLowerCase();
-    const iconClass = "h-4 w-4 text-[var(--replit-text-secondary)]";
+    const iconClass = "h-4 w-4 text-[var(--ecode-text-secondary)]";
 
     switch (extension) {
       case 'js':
@@ -223,20 +223,20 @@ export function ReplitFileExplorer({
       case 'rb':
       case 'go':
       case 'rs':
-        return <FileCode className={iconClass} style={{ color: 'var(--replit-green)' }} />;
+        return <FileCode className={iconClass} style={{ color: 'var(--ecode-green)' }} />;
       
       case 'html':
       case 'css':
       case 'scss':
       case 'sass':
       case 'less':
-        return <FileCode className={iconClass} style={{ color: 'var(--replit-orange)' }} />;
+        return <FileCode className={iconClass} style={{ color: 'var(--ecode-orange)' }} />;
       
       case 'json':
       case 'xml':
       case 'yaml':
       case 'yml':
-        return <FileText className={iconClass} style={{ color: 'var(--replit-purple)' }} />;
+        return <FileText className={iconClass} style={{ color: 'var(--ecode-purple)' }} />;
       
       case 'png':
       case 'jpg':
@@ -244,19 +244,19 @@ export function ReplitFileExplorer({
       case 'gif':
       case 'svg':
       case 'webp':
-        return <FileImage className={iconClass} style={{ color: 'var(--replit-blue)' }} />;
+        return <FileImage className={iconClass} style={{ color: 'var(--ecode-blue)' }} />;
       
       case 'mp4':
       case 'avi':
       case 'mov':
       case 'wmv':
-        return <FileVideo className={iconClass} style={{ color: 'var(--replit-red)' }} />;
+        return <FileVideo className={iconClass} style={{ color: 'var(--ecode-red)' }} />;
       
       case 'mp3':
       case 'wav':
       case 'ogg':
       case 'flac':
-        return <FileAudio className={iconClass} style={{ color: 'var(--replit-warning)' }} />;
+        return <FileAudio className={iconClass} style={{ color: 'var(--ecode-warning)' }} />;
       
       default:
         return <File className={iconClass} />;
@@ -306,8 +306,8 @@ export function ReplitFileExplorer({
             <div
               className={`flex items-center py-1 px-2 rounded-md cursor-pointer replit-transition group ${
                 selectedFile?.id === file.id
-                  ? "bg-[var(--replit-accent)] text-white"
-                  : "text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                  ? "bg-[var(--ecode-accent)] text-white"
+                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
               style={{ paddingLeft: `${8 + level * 16}px` }}
               onClick={() => {
@@ -356,13 +356,13 @@ export function ReplitFileExplorer({
               {/* Indicateurs d'état */}
               <div className="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 {file.isStarred && (
-                  <Star className="h-3 w-3 text-[var(--replit-warning)] fill-current" />
+                  <Star className="h-3 w-3 text-[var(--ecode-warning)] fill-current" />
                 )}
                 {file.isReadOnly && (
-                  <Lock className="h-3 w-3 text-[var(--replit-text-secondary)]" />
+                  <Lock className="h-3 w-3 text-[var(--ecode-text-secondary)]" />
                 )}
                 {file.isHidden && (
-                  <EyeOff className="h-3 w-3 text-[var(--replit-text-secondary)]" />
+                  <EyeOff className="h-3 w-3 text-[var(--ecode-text-secondary)]" />
                 )}
               </div>
 
@@ -379,27 +379,27 @@ export function ReplitFileExplorer({
                       <MoreHorizontal className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-48 bg-[var(--replit-surface)] border-[var(--replit-border)]">
-                    <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+                  <DropdownMenuContent className="w-48 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+                    <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                       <Edit className="mr-2 h-3 w-3" />
                       Rename
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+                    <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                       <Copy className="mr-2 h-3 w-3" />
                       Duplicate
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+                    <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                       <Move className="mr-2 h-3 w-3" />
                       Move
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
-                    <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+                    <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+                    <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                       <Download className="mr-2 h-3 w-3" />
                       Download
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
+                    <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
                     <DropdownMenuItem
-                      className="text-[var(--replit-danger)] hover:bg-[var(--replit-danger)]/10"
+                      className="text-[var(--ecode-danger)] hover:bg-[var(--ecode-danger)]/10"
                       onClick={() => deleteFileMutation.mutate(file)}
                     >
                       <Trash2 className="mr-2 h-3 w-3" />
@@ -412,31 +412,31 @@ export function ReplitFileExplorer({
           </ContextMenuTrigger>
 
           {!readonly && (
-            <ContextMenuContent className="w-48 bg-[var(--replit-surface)] border-[var(--replit-border)]">
-              <ContextMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+            <ContextMenuContent className="w-48 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+              <ContextMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                 <Plus className="mr-2 h-3 w-3" />
                 New File
               </ContextMenuItem>
-              <ContextMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <ContextMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                 <Folder className="mr-2 h-3 w-3" />
                 New Folder
               </ContextMenuItem>
-              <ContextMenuSeparator className="bg-[var(--replit-border)]" />
-              <ContextMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <ContextMenuSeparator className="bg-[var(--ecode-border)]" />
+              <ContextMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                 <Upload className="mr-2 h-3 w-3" />
                 Upload Files
               </ContextMenuItem>
-              <ContextMenuSeparator className="bg-[var(--replit-border)]" />
-              <ContextMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <ContextMenuSeparator className="bg-[var(--ecode-border)]" />
+              <ContextMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                 <Copy className="mr-2 h-3 w-3" />
                 Copy
               </ContextMenuItem>
-              <ContextMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <ContextMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                 <Edit className="mr-2 h-3 w-3" />
                 Rename
               </ContextMenuItem>
-              <ContextMenuSeparator className="bg-[var(--replit-border)]" />
-              <ContextMenuItem className="text-[var(--replit-danger)] hover:bg-[var(--replit-danger)]/10">
+              <ContextMenuSeparator className="bg-[var(--ecode-border)]" />
+              <ContextMenuItem className="text-[var(--ecode-danger)] hover:bg-[var(--ecode-danger)]/10">
                 <Trash2 className="mr-2 h-3 w-3" />
                 Delete
               </ContextMenuItem>
@@ -477,7 +477,7 @@ export function ReplitFileExplorer({
     return (
       <div className={`flex flex-col ${className}`}>
         <div className="flex items-center justify-center py-8">
-          <RefreshCw className="h-6 w-6 animate-spin text-[var(--replit-text-secondary)]" />
+          <RefreshCw className="h-6 w-6 animate-spin text-[var(--ecode-text-secondary)]" />
         </div>
       </div>
     );
@@ -487,16 +487,16 @@ export function ReplitFileExplorer({
     <TooltipProvider>
       <div className={`flex flex-col ${className}`}>
         {/* Header avec recherche et actions */}
-        <div className="p-3 border-b border-[var(--replit-border)]">
+        <div className="p-3 border-b border-[var(--ecode-border)]">
           <div className="flex items-center space-x-2 mb-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-[var(--replit-text-secondary)]" />
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-[var(--ecode-text-secondary)]" />
               <Input
                 type="text"
                 placeholder="Search files..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-7 h-7 text-xs bg-[var(--replit-surface-secondary)] border-[var(--replit-border)] text-[var(--replit-text)] placeholder:text-[var(--replit-text-secondary)]"
+                className="pl-7 h-7 text-xs bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-secondary)]"
               />
             </div>
             
@@ -505,7 +505,7 @@ export function ReplitFileExplorer({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-[var(--replit-text-secondary)] hover:text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                  className="h-7 w-7 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                   onClick={() => refetch()}
                 >
                   <RefreshCw className="h-3 w-3" />
@@ -521,7 +521,7 @@ export function ReplitFileExplorer({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-xs text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                className="h-7 px-2 text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                 onClick={() => handleCreateNew("file")}
               >
                 <Plus className="h-3 w-3 mr-1" />
@@ -531,7 +531,7 @@ export function ReplitFileExplorer({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-xs text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                className="h-7 px-2 text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                 onClick={() => handleCreateNew("folder")}
               >
                 <Folder className="h-3 w-3 mr-1" />
@@ -547,7 +547,7 @@ export function ReplitFileExplorer({
             {fileTree.length > 0 ? (
               renderFileTree(fileTree)
             ) : (
-              <div className="text-center py-8 text-[var(--replit-text-secondary)]">
+              <div className="text-center py-8 text-[var(--ecode-text-secondary)]">
                 <FileMinus className="h-8 w-8 mx-auto mb-2" />
                 <p className="text-sm">No files found</p>
                 {!readonly && (
@@ -567,12 +567,12 @@ export function ReplitFileExplorer({
 
         {/* Dialog de création */}
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogContent className="bg-[var(--replit-surface)] border-[var(--replit-border)]">
+          <DialogContent className="bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
             <DialogHeader>
-              <DialogTitle className="text-[var(--replit-text)]">
+              <DialogTitle className="text-[var(--ecode-text)]">
                 Create New {createType === "file" ? "File" : "Folder"}
               </DialogTitle>
-              <DialogDescription className="text-[var(--replit-text-secondary)]">
+              <DialogDescription className="text-[var(--ecode-text-secondary)]">
                 Enter a name for the new {createType}.
               </DialogDescription>
             </DialogHeader>
@@ -584,7 +584,7 @@ export function ReplitFileExplorer({
                 value={newItemName}
                 onChange={(e) => setNewItemName(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleCreateSubmit()}
-                className="bg-[var(--replit-surface-secondary)] border-[var(--replit-border)] text-[var(--replit-text)]"
+                className="bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text)]"
                 autoFocus
               />
             </div>
@@ -593,14 +593,14 @@ export function ReplitFileExplorer({
               <Button
                 variant="ghost"
                 onClick={() => setCreateDialogOpen(false)}
-                className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleCreateSubmit}
                 disabled={!newItemName.trim() || createFileMutation.isPending}
-                className="bg-[var(--replit-accent)] hover:bg-[var(--replit-accent-hover)] text-white"
+                className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
               >
                 {createFileMutation.isPending ? "Creating..." : "Create"}
               </Button>

@@ -29,7 +29,7 @@ export function PublicNavbar() {
   ];
 
   const resourcesItems = [
-    { title: 'Documentation', href: '/docs', description: 'Learn how to use Replit' },
+    { title: 'Documentation', href: '/docs', description: 'Learn how to use E-Code' },
     { title: 'Blog', href: '/blog', description: 'News and updates' },
     { title: 'Community', href: '/community', description: 'Connect with developers' },
     { title: 'Templates', href: '/templates', description: 'Start from a template' },
@@ -72,7 +72,7 @@ export function PublicNavbar() {
                   />
                   <circle cx="12" cy="12" r="3" fill="white" />
                 </svg>
-                <span className="font-bold text-xl hidden sm:inline-block">Replit</span>
+                <span className="font-bold text-xl hidden sm:inline-block">E-Code</span>
               </div>
             </Link>
 

@@ -64,7 +64,7 @@ export default function About() {
                 onClick={() => navigate('/')}
               >
                 <Code className="h-6 w-6" />
-                <span className="font-bold text-xl">Replit</span>
+                <span className="font-bold text-xl">E-Code</span>
               </div>
               <div className="hidden md:flex items-center gap-6">
                 <Button variant="ghost" size="sm" onClick={() => navigate('/features')}>
@@ -250,7 +250,7 @@ export default function About() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Meet our team</h2>
             <p className="text-lg text-muted-foreground">
-              The people making Replit possible
+              The people making E-Code possible
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -303,7 +303,7 @@ export default function About() {
       {/* Footer */}
       <footer className="border-t py-8 px-4">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 Replit Clone. All rights reserved.</p>
+          <p>&copy; 2024 E-Code Clone. All rights reserved.</p>
         </div>
       </footer>
     </div>

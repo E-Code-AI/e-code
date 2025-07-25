@@ -206,7 +206,7 @@ export function registerSnippets() {
 }
 
 export function setupMonacoTheme() {
-  // Define the Replit dark theme
+  // Define the E-Code dark theme
   monaco.editor.defineTheme('replitDark', {
     base: 'vs-dark',
     inherit: true,
@@ -237,7 +237,7 @@ export function setupMonacoTheme() {
     }
   });
 
-  // Define the Replit light theme
+  // Define the E-Code light theme
   monaco.editor.defineTheme('replitLight', {
     base: 'vs',
     inherit: true,
