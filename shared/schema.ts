@@ -18,10 +18,21 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  email: text("email").unique(),
+  email: text("email").notNull().unique(),
   displayName: text("display_name"),
   avatarUrl: text("avatar_url"),
   bio: text("bio"),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  emailVerificationToken: text("email_verification_token"),
+  emailVerificationExpiry: timestamp("email_verification_expiry"),
+  passwordResetToken: text("password_reset_token"),
+  passwordResetExpiry: timestamp("password_reset_expiry"),
+  failedLoginAttempts: integer("failed_login_attempts").default(0).notNull(),
+  accountLockedUntil: timestamp("account_locked_until"),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
+  twoFactorSecret: text("two_factor_secret"),
+  lastLoginAt: timestamp("last_login_at"),
+  lastLoginIp: text("last_login_ip"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -33,6 +44,47 @@ export const insertUserSchema = createInsertSchema(users).pick({
   displayName: true,
   avatarUrl: true,
   bio: true,
+});
+
+// Login history table
+export const loginHistory = pgTable("login_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  ipAddress: text("ip_address").notNull(),
+  userAgent: text("user_agent"),
+  successful: boolean("successful").notNull(),
+  failureReason: text("failure_reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertLoginHistorySchema = createInsertSchema(loginHistory).pick({
+  userId: true,
+  ipAddress: true,
+  userAgent: true,
+  successful: true,
+  failureReason: true,
+});
+
+// API tokens table
+export const apiTokens = pgTable("api_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  token: text("token").notNull().unique(),
+  tokenHash: text("token_hash").notNull().unique(), // Store hashed version for lookups
+  lastUsedAt: timestamp("last_used_at"),
+  expiresAt: timestamp("expires_at"),
+  scopes: json("scopes").default(['read', 'write']), // JSON array of permission scopes
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertApiTokenSchema = createInsertSchema(apiTokens).pick({
+  userId: true,
+  name: true,
+  token: true,
+  tokenHash: true,
+  expiresAt: true,
+  scopes: true,
 });
 
 // Projects table
@@ -257,6 +309,12 @@ export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSub
 // Export types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type LoginHistory = typeof loginHistory.$inferSelect;
+export type InsertLoginHistory = z.infer<typeof insertLoginHistorySchema>;
+
+export type ApiToken = typeof apiTokens.$inferSelect;
+export type InsertApiToken = z.infer<typeof insertApiTokenSchema>;
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
