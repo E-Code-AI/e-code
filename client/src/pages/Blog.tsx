@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { ECodeLoading } from '@/components/ECodeLoading';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 
@@ -30,76 +32,29 @@ export default function Blog() {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const featuredPost: BlogPost = {
-    id: 'introducing-ai-assistant',
-    title: 'Introducing AI Assistant: Your New Coding Partner',
-    excerpt: 'Today we\'re excited to announce AI Assistant, a revolutionary feature that helps you write better code faster. Powered by advanced language models, it understands your intent and suggests entire functions.',
-    author: 'Sarah Chen',
-    date: 'January 20, 2024',
-    readTime: '5 min read',
-    category: 'Product',
-    featured: true
-  };
+  // Fetch blog posts from API
+  const { data: allPosts = [], isLoading } = useQuery({
+    queryKey: ['/api/blog/posts'],
+  });
 
-  const posts: BlogPost[] = [
-    {
-      id: 'scaling-to-20m-users',
-      title: 'How We Scaled to 20 Million Users',
-      excerpt: 'A deep dive into the infrastructure changes and optimizations that allowed us to scale E-Code to support millions of concurrent users.',
-      author: 'Marcus Johnson',
-      date: 'January 18, 2024',
-      readTime: '8 min read',
-      category: 'Engineering'
-    },
-    {
-      id: 'year-in-review-2023',
-      title: '2023 Year in Review: A Record Breaking Year',
-      excerpt: 'Looking back at an incredible year of growth, new features, and community achievements. Plus, a sneak peek at what\'s coming in 2024.',
-      author: 'Amjad Masad',
-      date: 'January 15, 2024',
-      readTime: '6 min read',
-      category: 'Company'
-    },
-    {
-      id: 'multiplayer-architecture',
-      title: 'Building Real-time Collaboration at Scale',
-      excerpt: 'Learn how we built our multiplayer infrastructure to support thousands of developers coding together in real-time.',
-      author: 'Emily Rodriguez',
-      date: 'January 12, 2024',
-      readTime: '10 min read',
-      category: 'Engineering'
-    },
-    {
-      id: 'teaching-cs-with-replit',
-      title: 'Teaching Computer Science with E-Code: A Guide',
-      excerpt: 'How educators are using E-Code to teach programming to students of all ages, with tips and best practices.',
-      author: 'Dr. James Wilson',
-      date: 'January 10, 2024',
-      readTime: '7 min read',
-      category: 'Education'
-    },
-    {
-      id: 'deployment-best-practices',
-      title: 'Deployment Best Practices for Production Apps',
-      excerpt: 'Everything you need to know about deploying production-ready applications on E-Code, from optimization to monitoring.',
-      author: 'David Kim',
-      date: 'January 8, 2024',
-      readTime: '9 min read',
-      category: 'Tutorial'
-    },
-    {
-      id: 'community-spotlight-jan',
-      title: 'Community Spotlight: Amazing Projects from January',
-      excerpt: 'Showcasing the most innovative and creative projects built by our community this month.',
-      author: 'Lisa Park',
-      date: 'January 5, 2024',
-      readTime: '4 min read',
-      category: 'Community'
-    }
-  ];
+  const { data: featuredPosts = [] } = useQuery({
+    queryKey: ['/api/blog/featured'],
+  });
 
-  const categories = ['All', 'Product', 'Engineering', 'Company', 'Education', 'Tutorial', 'Community'];
+  // Filter posts by category
+  const filteredPosts = selectedCategory === 'All' 
+    ? allPosts 
+    : allPosts.filter((post: any) => post.category.toLowerCase() === selectedCategory.toLowerCase());
+
+  // Get the first featured post
+  const featuredPost = featuredPosts[0];
+
+  // Get non-featured posts
+  const posts = filteredPosts.filter((post: any) => !post.featured).slice(0, 6);
+
+  const categories = ['All', 'Product', 'Engineering', 'Announcements', 'Tutorial', 'Community'];
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -170,76 +125,97 @@ export default function Blog() {
         </div>
       </section>
 
-      {/* Featured Post */}
-      <section className="py-12 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-            <div className="grid md:grid-cols-2 gap-0">
-              <div className="relative h-64 md:h-auto bg-gradient-to-br from-primary/20 to-purple-600/20">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Zap className="h-24 w-24 text-primary/30" />
-                </div>
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <ECodeLoading size="lg" />
+        </div>
+      ) : (
+        <>
+          {/* Featured Post */}
+          {featuredPost && (
+            <section className="py-12 px-4">
+              <div className="container mx-auto max-w-6xl">
+                <Card 
+                  className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => window.location.href = `/blog/${featuredPost.slug}`}
+                >
+                  <div className="grid md:grid-cols-2 gap-0">
+                    <div className="relative h-64 md:h-auto bg-gradient-to-br from-primary/20 to-purple-600/20">
+                      {featuredPost.coverImage ? (
+                        <img 
+                          src={featuredPost.coverImage} 
+                          alt={featuredPost.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Zap className="h-24 w-24 text-primary/30" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-8 flex flex-col justify-center">
+                      <Badge className={`w-fit mb-4 ${getCategoryColor(featuredPost.category)}`}>
+                        {featuredPost.category}
+                      </Badge>
+                      <h2 className="text-3xl font-bold mb-4">{featuredPost.title}</h2>
+                      <p className="text-lg text-muted-foreground mb-6">{featuredPost.excerpt}</p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <span>{featuredPost.author}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>{new Date(featuredPost.publishedAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{featuredPost.readTime} min read</span>
+                        </div>
+                      </div>
+                      <Button className="mt-6 w-fit">
+                        Read more
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
               </div>
-              <div className="p-8 flex flex-col justify-center">
-                <Badge className={`w-fit mb-4 ${getCategoryColor(featuredPost.category)}`}>
-                  {featuredPost.category}
-                </Badge>
-                <h2 className="text-3xl font-bold mb-4">{featuredPost.title}</h2>
-                <p className="text-lg text-muted-foreground mb-6">{featuredPost.excerpt}</p>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    <span>{featuredPost.author}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{featuredPost.date}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{featuredPost.readTime}</span>
-                  </div>
-                </div>
-                <Button className="mt-6 w-fit">
-                  Read more
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+            </section>
+          )}
+
+          {/* Category Filter */}
+          <section className="py-8 px-4">
+            <div className="container mx-auto max-w-6xl">
+              <div className="flex gap-2 flex-wrap">
+                {categories.map(category => (
+                  <Button
+                    key={category}
+                    variant="outline"
+                    size="sm"
+                    className={category === selectedCategory ? 'bg-primary text-primary-foreground' : ''}
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    {category}
+                  </Button>
+                ))}
               </div>
             </div>
-          </Card>
-        </div>
-      </section>
-
-      {/* Category Filter */}
-      <section className="py-8 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="flex gap-2 flex-wrap">
-            {categories.map(category => (
-              <Button
-                key={category}
-                variant="outline"
-                size="sm"
-                className={category === 'All' ? 'bg-primary text-primary-foreground' : ''}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </section>
+          </section>
 
       {/* Blog Posts Grid */}
       <section className="py-8 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map(post => (
-              <Card key={post.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+              <Card key={post.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = `/blog/${post.slug}`}>
                 <CardHeader>
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="secondary" className={getCategoryColor(post.category)}>
                       {post.category}
                     </Badge>
-                    <span className="text-sm text-muted-foreground">{post.readTime}</span>
+                    <span className="text-sm text-muted-foreground">{post.readTime} min read</span>
                   </div>
                   <CardTitle className="line-clamp-2">{post.title}</CardTitle>
                 </CardHeader>
@@ -252,7 +228,7 @@ export default function Blog() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      <span>{post.date}</span>
+                      <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -273,6 +249,8 @@ export default function Blog() {
           </div>
         </div>
       </section>
+        </>
+      )}
 
       {/* Newsletter Section */}
       <section className="py-16 px-4 bg-muted/30">
