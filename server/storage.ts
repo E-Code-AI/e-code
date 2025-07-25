@@ -8,9 +8,11 @@ import {
   NewsletterSubscriber, InsertNewsletterSubscriber,
   Bounty, InsertBounty,
   BountySubmission, InsertBountySubmission,
-  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions
+  LoginHistory, InsertLoginHistory,
+  ApiToken, InsertApiToken,
+  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens
 } from "@shared/schema";
-import { eq, and, desc, isNull } from "drizzle-orm";
+import { eq, and, desc, isNull, sql } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";
@@ -22,7 +24,10 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, update: Partial<User>): Promise<User>;
   
   // Project methods
   getAllProjects(): Promise<Project[]>;
@@ -74,9 +79,22 @@ export interface IStorage {
   
   // Bounty submission methods
   getBountySubmissions(bountyId: number): Promise<BountySubmission[]>;
+  getBountySubmission(id: number): Promise<BountySubmission | undefined>;
   getUserBountySubmissions(userId: number): Promise<BountySubmission[]>;
   createBountySubmission(submission: InsertBountySubmission): Promise<BountySubmission>;
   updateBountySubmission(id: number, update: Partial<BountySubmission>): Promise<BountySubmission>;
+  
+  // Login history methods
+  createLoginHistory(loginHistory: InsertLoginHistory): Promise<LoginHistory>;
+  getLoginHistory(userId: number, limit?: number): Promise<LoginHistory[]>;
+  getRecentFailedLogins(userId: number, minutes: number): Promise<number>;
+  
+  // API token methods
+  createApiToken(token: InsertApiToken): Promise<ApiToken>;
+  getApiToken(tokenHash: string): Promise<ApiToken | undefined>;
+  getUserApiTokens(userId: number): Promise<ApiToken[]>;
+  updateApiToken(id: number, update: Partial<ApiToken>): Promise<ApiToken>;
+  deleteApiToken(id: number): Promise<void>;
   
   // Session store for authentication
   sessionStore: Store;
@@ -133,8 +151,25 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
   
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+  
   async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(userData).returning();
+    return user;
+  }
+  
+  async updateUser(id: number, update: Partial<User>): Promise<User> {
+    const [user] = await db.update(users)
+      .set({...update, updatedAt: new Date()})
+      .where(eq(users.id, id))
+      .returning();
     return user;
   }
   
@@ -679,6 +714,100 @@ export class DatabaseStorage implements IStorage {
     
     return updatedSubmission;
   }
+  
+  async getBountySubmission(id: number): Promise<BountySubmission | undefined> {
+    try {
+      const [submission] = await db.select()
+        .from(bountySubmissions)
+        .where(eq(bountySubmissions.id, id));
+      return submission;
+    } catch (error: any) {
+      if (error.message?.includes('relation "bounty_submissions" does not exist')) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+  
+  // Login history methods
+  async createLoginHistory(loginHistoryData: InsertLoginHistory): Promise<LoginHistory> {
+    const [history] = await db
+      .insert(loginHistory)
+      .values(loginHistoryData)
+      .returning();
+    return history;
+  }
+  
+  async getLoginHistory(userId: number, limit: number = 10): Promise<LoginHistory[]> {
+    return await db.select()
+      .from(loginHistory)
+      .where(eq(loginHistory.userId, userId))
+      .orderBy(desc(loginHistory.createdAt))
+      .limit(limit);
+  }
+  
+  async getRecentFailedLogins(userId: number, minutes: number): Promise<number> {
+    const cutoffTime = new Date(Date.now() - minutes * 60 * 1000);
+    const result = await db.select()
+      .from(loginHistory)
+      .where(
+        and(
+          eq(loginHistory.userId, userId),
+          eq(loginHistory.successful, false),
+          sql`${loginHistory.createdAt} >= ${cutoffTime}`
+        )
+      );
+    return result.length;
+  }
+  
+  // API token methods
+  async createApiToken(tokenData: InsertApiToken): Promise<ApiToken> {
+    const [token] = await db
+      .insert(apiTokens)
+      .values(tokenData)
+      .returning();
+    return token;
+  }
+  
+  async getApiToken(tokenHash: string): Promise<ApiToken | undefined> {
+    const [token] = await db.select()
+      .from(apiTokens)
+      .where(eq(apiTokens.tokenHash, tokenHash));
+    
+    if (token) {
+      // Update last used time
+      await db.update(apiTokens)
+        .set({ lastUsedAt: new Date() })
+        .where(eq(apiTokens.id, token.id));
+    }
+    
+    return token;
+  }
+  
+  async getUserApiTokens(userId: number): Promise<ApiToken[]> {
+    return await db.select()
+      .from(apiTokens)
+      .where(eq(apiTokens.userId, userId))
+      .orderBy(desc(apiTokens.createdAt));
+  }
+  
+  async updateApiToken(id: number, update: Partial<ApiToken>): Promise<ApiToken> {
+    const [token] = await db.update(apiTokens)
+      .set(update)
+      .where(eq(apiTokens.id, id))
+      .returning();
+    
+    if (!token) {
+      throw new Error('API token not found');
+    }
+    
+    return token;
+  }
+  
+  async deleteApiToken(id: number): Promise<void> {
+    await db.delete(apiTokens)
+      .where(eq(apiTokens.id, id));
+  }
 }
 
 // In-memory storage implementation (kept for backwards compatibility)
@@ -689,12 +818,16 @@ export class MemStorage implements IStorage {
   private collaborators: Map<number, ProjectCollaborator>;
   private deployments: Map<number, Deployment>;
   private environmentVariables: Map<number, EnvironmentVariable>;
+  private loginHistory: Map<number, LoginHistory>;
+  private apiTokens: Map<number, ApiToken>;
   private projectIdCounter: number;
   private fileIdCounter: number;
   private userIdCounter: number;
   private collaboratorIdCounter: number;
   private deploymentIdCounter: number;
   private environmentVariableIdCounter: number;
+  private loginHistoryIdCounter: number;
+  private apiTokenIdCounter: number;
   sessionStore: Store;
 
   constructor() {
@@ -704,12 +837,16 @@ export class MemStorage implements IStorage {
     this.collaborators = new Map();
     this.deployments = new Map();
     this.environmentVariables = new Map();
+    this.loginHistory = new Map();
+    this.apiTokens = new Map();
     this.projectIdCounter = 1;
     this.fileIdCounter = 1;
     this.userIdCounter = 1;
     this.collaboratorIdCounter = 1;
     this.deploymentIdCounter = 1;
     this.environmentVariableIdCounter = 1;
+    this.loginHistoryIdCounter = 1;
+    this.apiTokenIdCounter = 1;
     
     const MemoryStore = require('memorystore')(session);
     this.sessionStore = new MemoryStore({
@@ -727,6 +864,15 @@ export class MemStorage implements IStorage {
       .find(user => user.username === username);
   }
   
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values())
+      .find(user => user.email === email);
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+  
   async createUser(userData: InsertUser): Promise<User> {
     const now = new Date();
     const user: User = {
@@ -737,12 +883,39 @@ export class MemStorage implements IStorage {
       displayName: userData.displayName ?? null,
       avatarUrl: userData.avatarUrl ?? null,
       bio: userData.bio ?? null,
+      emailVerified: userData.emailVerified ?? false,
+      emailVerificationToken: userData.emailVerificationToken ?? null,
+      emailVerificationExpiry: userData.emailVerificationExpiry ?? null,
+      passwordResetToken: userData.passwordResetToken ?? null,
+      passwordResetExpiry: userData.passwordResetExpiry ?? null,
+      failedLoginAttempts: userData.failedLoginAttempts ?? 0,
+      accountLockedUntil: userData.accountLockedUntil ?? null,
+      twoFactorEnabled: userData.twoFactorEnabled ?? false,
+      twoFactorSecret: userData.twoFactorSecret ?? null,
+      lastLoginAt: userData.lastLoginAt ?? null,
+      lastLoginIp: userData.lastLoginIp ?? null,
       createdAt: now,
       updatedAt: now
     };
     
     this.users.set(user.id, user);
     return user;
+  }
+  
+  async updateUser(id: number, update: Partial<User>): Promise<User> {
+    const user = this.users.get(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    const updatedUser = {
+      ...user,
+      ...update,
+      updatedAt: new Date()
+    };
+    
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
 
   // Project methods
@@ -1186,6 +1359,74 @@ export class MemStorage implements IStorage {
     });
     
     return true;
+  }
+  
+  // Authentication methods
+  async createLoginHistory(loginData: InsertLoginHistory): Promise<LoginHistory> {
+    const now = new Date();
+    const login: LoginHistory = {
+      id: this.loginHistoryIdCounter++,
+      userId: loginData.userId,
+      ipAddress: loginData.ipAddress,
+      userAgent: loginData.userAgent ?? null,
+      successful: loginData.successful,
+      failureReason: loginData.failureReason ?? null,
+      createdAt: now
+    };
+    
+    this.loginHistory.set(login.id, login);
+    return login;
+  }
+  
+  async getUserLoginHistory(userId: number, limit?: number): Promise<LoginHistory[]> {
+    const history = Array.from(this.loginHistory.values())
+      .filter(login => login.userId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    return limit ? history.slice(0, limit) : history;
+  }
+  
+  async createApiToken(tokenData: InsertApiToken): Promise<ApiToken> {
+    const now = new Date();
+    const token: ApiToken = {
+      id: this.apiTokenIdCounter++,
+      userId: tokenData.userId,
+      name: tokenData.name,
+      token: tokenData.token,
+      tokenHash: tokenData.tokenHash,
+      expiresAt: tokenData.expiresAt ?? null,
+      lastUsedAt: tokenData.lastUsedAt ?? null,
+      scopes: tokenData.scopes,
+      createdAt: now
+    };
+    
+    this.apiTokens.set(token.id, token);
+    return token;
+  }
+  
+  async getUserApiTokens(userId: number): Promise<ApiToken[]> {
+    return Array.from(this.apiTokens.values())
+      .filter(token => token.userId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async updateApiToken(id: number, update: Partial<ApiToken>): Promise<ApiToken> {
+    const token = this.apiTokens.get(id);
+    if (!token) {
+      throw new Error('API token not found');
+    }
+    
+    const updatedToken = {
+      ...token,
+      ...update
+    };
+    
+    this.apiTokens.set(id, updatedToken);
+    return updatedToken;
+  }
+  
+  async deleteApiToken(id: number): Promise<void> {
+    this.apiTokens.delete(id);
   }
 }
 
