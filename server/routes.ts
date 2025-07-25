@@ -2617,6 +2617,210 @@ Would you like me to help you set up the OpenAI API integration?`,
     }
   });
 
+  // Community API endpoints
+  app.get('/api/community/posts', async (req, res) => {
+    try {
+      const { category, search } = req.query;
+      
+      // Mock community posts data
+      const mockPosts = [
+        {
+          id: '1',
+          title: 'Built a Real-Time Collaboration Editor with WebSockets',
+          content: 'Check out my latest project! I created a collaborative code editor that supports real-time editing with multiple users...',
+          author: {
+            id: '1',
+            username: 'sarah_dev',
+            displayName: 'Sarah Chen',
+            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
+            reputation: 2456,
+          },
+          category: 'showcase',
+          tags: ['websockets', 'react', 'collaboration'],
+          likes: 234,
+          comments: 45,
+          views: 1234,
+          isLiked: Math.random() > 0.5,
+          isBookmarked: Math.random() > 0.7,
+          createdAt: '2 hours ago',
+          projectUrl: '/project/123',
+          imageUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=project1',
+        },
+        {
+          id: '2',
+          title: 'How to optimize React performance in large applications',
+          content: 'I\'ve been working on performance optimization and wanted to share some tips that helped me reduce rendering time by 60%...',
+          author: {
+            id: '2',
+            username: 'alex_code',
+            displayName: 'Alex Rodriguez',
+            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
+            reputation: 3890,
+          },
+          category: 'tutorials',
+          tags: ['react', 'performance', 'optimization'],
+          likes: 567,
+          comments: 89,
+          views: 4567,
+          isLiked: Math.random() > 0.5,
+          isBookmarked: Math.random() > 0.7,
+          createdAt: '5 hours ago',
+        },
+        {
+          id: '3',
+          title: 'Need help with async/await in Node.js',
+          content: 'I\'m having trouble understanding when to use async/await vs promises. Can someone explain the differences?',
+          author: {
+            id: '3',
+            username: 'newbie_coder',
+            displayName: 'Jamie Wilson',
+            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jamie',
+            reputation: 156,
+          },
+          category: 'help',
+          tags: ['nodejs', 'async', 'promises'],
+          likes: 23,
+          comments: 12,
+          views: 234,
+          isLiked: Math.random() > 0.5,
+          isBookmarked: Math.random() > 0.7,
+          createdAt: '1 day ago',
+        }
+      ];
+
+      // Filter by category and search
+      let filteredPosts = mockPosts;
+      if (category && category !== 'all') {
+        filteredPosts = filteredPosts.filter(post => post.category === category);
+      }
+      if (search) {
+        const searchTerm = search.toString().toLowerCase();
+        filteredPosts = filteredPosts.filter(post => 
+          post.title.toLowerCase().includes(searchTerm) ||
+          post.content.toLowerCase().includes(searchTerm) ||
+          post.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+        );
+      }
+
+      res.json(filteredPosts);
+    } catch (error) {
+      console.error('Error fetching community posts:', error);
+      res.status(500).json({ message: 'Failed to fetch community posts' });
+    }
+  });
+
+  app.get('/api/community/challenges', async (req, res) => {
+    try {
+      const mockChallenges = [
+        {
+          id: '1',
+          title: 'Build a Todo App with AI Integration',
+          description: 'Create a todo application that uses AI to categorize and prioritize tasks automatically.',
+          difficulty: 'medium',
+          category: 'full-stack',
+          participants: 127,
+          submissions: 45,
+          prize: '500 E-Code Cycles',
+          deadline: '2025-02-15',
+          status: 'active',
+        },
+        {
+          id: '2',
+          title: 'CSS Animation Challenge',
+          description: 'Design the most creative CSS-only animation. No JavaScript allowed!',
+          difficulty: 'easy',
+          category: 'frontend',
+          participants: 89,
+          submissions: 23,
+          prize: '250 E-Code Cycles',
+          deadline: '2025-02-10',
+          status: 'active',
+        },
+        {
+          id: '3',
+          title: 'Machine Learning Model Competition',
+          description: 'Build the most accurate ML model for predicting stock prices.',
+          difficulty: 'hard',
+          category: 'data-science',
+          participants: 56,
+          submissions: 12,
+          prize: '1000 E-Code Cycles',
+          deadline: '2025-02-20',
+          status: 'active',
+        }
+      ];
+
+      res.json(mockChallenges);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+      res.status(500).json({ message: 'Failed to fetch challenges' });
+    }
+  });
+
+  app.get('/api/community/leaderboard', async (req, res) => {
+    try {
+      const mockLeaderboard = [
+        {
+          id: '1',
+          username: 'code_master',
+          displayName: 'Emily Zhang',
+          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=emily',
+          score: 12450,
+          rank: 1,
+          badges: ['top-contributor', 'challenge-winner', 'mentor'],
+          streakDays: 45,
+        },
+        {
+          id: '2',
+          username: 'dev_wizard',
+          displayName: 'Marcus Johnson',
+          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=marcus',
+          score: 11234,
+          rank: 2,
+          badges: ['top-contributor', 'helpful'],
+          streakDays: 32,
+        },
+        {
+          id: '3',
+          username: 'tech_guru',
+          displayName: 'Priya Patel',
+          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=priya',
+          score: 10890,
+          rank: 3,
+          badges: ['challenge-winner', 'mentor'],
+          streakDays: 28,
+        }
+      ];
+
+      res.json(mockLeaderboard);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      res.status(500).json({ message: 'Failed to fetch leaderboard' });
+    }
+  });
+
+  app.post('/api/community/posts/:id/like', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      // In a real app, toggle like status in database
+      res.json({ success: true, message: 'Post liked' });
+    } catch (error) {
+      console.error('Error liking post:', error);
+      res.status(500).json({ message: 'Failed to like post' });
+    }
+  });
+
+  app.post('/api/community/posts/:id/bookmark', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      // In a real app, toggle bookmark status in database
+      res.json({ success: true, message: 'Post bookmarked' });
+    } catch (error) {
+      console.error('Error bookmarking post:', error);
+      res.status(500).json({ message: 'Failed to bookmark post' });
+    }
+  });
+
   // Bounty API routes
   app.get('/api/bounties', async (req, res) => {
     try {

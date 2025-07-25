@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { ReplitLayout } from '@/components/layout/ReplitLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -224,25 +223,37 @@ export default function Community() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch community posts
-  const { data: posts = MOCK_POSTS, isLoading: postsLoading } = useQuery({
+  const { data: posts = [], isLoading: postsLoading } = useQuery({
     queryKey: ['/api/community/posts', activeCategory, searchQuery],
     queryFn: async () => {
-      // In production, this would fetch from the API
-      return MOCK_POSTS.filter(post => 
-        (activeCategory === 'all' || post.category === activeCategory) &&
-        (!searchQuery || post.title.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+      const params = new URLSearchParams();
+      if (activeCategory !== 'all') params.append('category', activeCategory);
+      if (searchQuery) params.append('search', searchQuery);
+      
+      const response = await fetch(`/api/community/posts?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch posts');
+      return response.json();
     },
   });
 
   // Fetch challenges
-  const { data: challenges = MOCK_CHALLENGES } = useQuery<Challenge[]>({
+  const { data: challenges = [] } = useQuery<Challenge[]>({
     queryKey: ['/api/community/challenges'],
+    queryFn: async () => {
+      const response = await fetch('/api/community/challenges');
+      if (!response.ok) throw new Error('Failed to fetch challenges');
+      return response.json();
+    },
   });
 
   // Fetch leaderboard
-  const { data: leaderboard = MOCK_LEADERBOARD } = useQuery<LeaderboardUser[]>({
+  const { data: leaderboard = [] } = useQuery<LeaderboardUser[]>({
     queryKey: ['/api/community/leaderboard'],
+    queryFn: async () => {
+      const response = await fetch('/api/community/leaderboard');
+      if (!response.ok) throw new Error('Failed to fetch leaderboard');
+      return response.json();
+    },
   });
 
   // Like post mutation
@@ -293,51 +304,55 @@ export default function Community() {
   };
 
   return (
-    <ReplitLayout>
-      <div className="container-responsive py-responsive space-y-4 sm:space-y-6 mb-16 md:mb-0">
+    <div className="min-h-screen bg-background overflow-auto">
+      <div className="container mx-auto px-4 py-6 space-y-6 max-w-7xl">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center justify-between">
           <div>
-            <h1 className="text-responsive-xl font-bold">Community</h1>
-            <p className="text-muted-foreground mt-1 text-responsive-sm">
-              Share your projects, get help, and connect with other developers
+            <h1 className="text-2xl md:text-3xl font-bold">Community</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+              Share your projects, get help, and connect with other creators
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center gap-3">
             <Input
               placeholder="Search community..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-[300px]"
+              className="w-full sm:w-[280px] md:w-[320px]"
             />
             <Link href="/community/new">
-              <Button className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto whitespace-nowrap">
                 <Plus className="h-4 w-4 mr-2" />
-                <span className="sm:inline">New Post</span>
+                New Post
               </Button>
             </Link>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Posts Section */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-3 space-y-6">
             {/* Category Tabs */}
             <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-              <TabsList className="grid grid-cols-3 md:grid-cols-6 h-auto gap-1">
-                {CATEGORIES.map(category => (
-                  <TabsTrigger 
-                    key={category.id} 
-                    value={category.id}
-                    className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  >
-                    <category.icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{category.name}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
+              <ScrollArea className="w-full">
+                <TabsList className="inline-flex h-auto p-1 bg-muted rounded-lg">
+                  <div className="flex space-x-1">
+                    {CATEGORIES.map(category => (
+                      <TabsTrigger 
+                        key={category.id} 
+                        value={category.id}
+                        className="flex items-center gap-2 px-3 py-2 rounded-md whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                      >
+                        <category.icon className="h-4 w-4" />
+                        <span className="text-sm">{category.name}</span>
+                      </TabsTrigger>
+                    ))}
+                  </div>
+                </TabsList>
+              </ScrollArea>
+              
               <TabsContent value={activeCategory} className="mt-6 space-y-4">
                 {postsLoading ? (
                   <div className="space-y-4">
@@ -631,6 +646,6 @@ export default function Community() {
           </div>
         </div>
       </div>
-    </ReplitLayout>
+    </div>
   );
 }
