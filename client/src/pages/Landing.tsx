@@ -164,20 +164,20 @@ export default function Landing() {
             <Card className="relative overflow-hidden border-2">
               <div className="bg-muted/50 p-2 flex items-center gap-2 border-b">
                 <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <div className="w-3 h-3 rounded-full bg-red-600 dark:bg-red-400" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-600 dark:bg-yellow-400" />
+                  <div className="w-3 h-3 rounded-full bg-green-600 dark:bg-green-400" />
                 </div>
                 <span className="text-xs text-muted-foreground">main.py</span>
               </div>
               <div className="p-4 bg-background font-mono text-sm">
                 <div className="text-muted-foreground"># Your first line of code!</div>
                 <div className="mt-2">
-                  <span className="text-blue-400">print</span>(
-                  <span className="text-green-400">"Hello! I'm learning to code! 🎉"</span>)
+                  <span className="text-blue-600 dark:text-blue-400">print</span>(
+                  <span className="text-green-600 dark:text-green-400">"Hello! I'm learning to code! 🎉"</span>)
                 </div>
                 <div className="mt-3 text-muted-foreground"># Click Run to see what happens ▶️</div>
-                <div className="mt-2 text-green-400">Output: Hello! I'm learning to code! 🎉</div>
+                <div className="mt-2 text-green-600 dark:text-green-400">Output: Hello! I'm learning to code! 🎉</div>
               </div>
             </Card>
           </div>
@@ -204,8 +204,8 @@ export default function Landing() {
               
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="p-1 bg-green-500/20 rounded">
-                    <Check className="h-4 w-4 text-green-500" />
+                  <div className="p-1 bg-green-600/20 dark:bg-green-400/20 rounded">
+                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
                     <h4 className="font-semibold">Natural Language</h4>
@@ -216,8 +216,8 @@ export default function Landing() {
                 </div>
                 
                 <div className="flex items-start gap-3">
-                  <div className="p-1 bg-green-500/20 rounded">
-                    <Check className="h-4 w-4 text-green-500" />
+                  <div className="p-1 bg-green-600/20 dark:bg-green-400/20 rounded">
+                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
                     <h4 className="font-semibold">Instant Results</h4>
@@ -228,8 +228,8 @@ export default function Landing() {
                 </div>
                 
                 <div className="flex items-start gap-3">
-                  <div className="p-1 bg-green-500/20 rounded">
-                    <Check className="h-4 w-4 text-green-500" />
+                  <div className="p-1 bg-green-600/20 dark:bg-green-400/20 rounded">
+                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
                     <h4 className="font-semibold">Full Control</h4>
@@ -266,11 +266,11 @@ export default function Landing() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                       <span className="text-sm">Created weather API integration</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                       <span className="text-sm">Added 5-day forecast display</span>
                     </div>
                     <div className="flex items-center gap-2">

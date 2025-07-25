@@ -154,21 +154,21 @@ export default function Bounties() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'beginner': return 'bg-green-500/10 text-green-600 dark:text-green-400';
+      case 'intermediate': return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400';
+      case 'advanced': return 'bg-red-500/10 text-red-600 dark:text-red-400';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'open': return <AlertCircle className="h-4 w-4 text-blue-500" />;
-      case 'in-progress': return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'completed': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'submitted': return <Clock className="h-4 w-4 text-blue-500" />;
-      case 'accepted': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'rejected': return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'open': return <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
+      case 'in-progress': return <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />;
+      case 'completed': return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
+      case 'submitted': return <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
+      case 'accepted': return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
+      case 'rejected': return <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />;
       default: return null;
     }
   };
@@ -177,7 +177,7 @@ export default function Bounties() {
     <div className="container-responsive py-responsive mb-16 md:mb-0">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-responsive-xl font-bold flex items-center gap-2">
-          <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500" />
+          <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600 dark:text-yellow-400" />
           Bounties
         </h1>
         <p className="text-muted-foreground mt-1 sm:mt-2 text-responsive-sm">
@@ -194,7 +194,7 @@ export default function Bounties() {
                 <p className="text-sm text-muted-foreground">Total Earned</p>
                 <p className="text-2xl font-bold">$1,250</p>
               </div>
-              <DollarSign className="h-8 w-8 text-green-500" />
+              <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -205,7 +205,7 @@ export default function Bounties() {
                 <p className="text-sm text-muted-foreground">Completed</p>
                 <p className="text-2xl font-bold">8</p>
               </div>
-              <Trophy className="h-8 w-8 text-yellow-500" />
+              <Trophy className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
             </div>
           </CardContent>
         </Card>
@@ -216,7 +216,7 @@ export default function Bounties() {
                 <p className="text-sm text-muted-foreground">In Progress</p>
                 <p className="text-2xl font-bold">3</p>
               </div>
-              <Clock className="h-8 w-8 text-blue-500" />
+              <Clock className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -227,7 +227,7 @@ export default function Bounties() {
                 <p className="text-sm text-muted-foreground">Success Rate</p>
                 <p className="text-2xl font-bold">87%</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-purple-500" />
+              <TrendingUp className="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
           </CardContent>
         </Card>

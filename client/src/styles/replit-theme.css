@@ -1,5 +1,81 @@
 /* Thème exact de E-Code - Variables CSS personnalisées */
 :root {
+  /* Light mode colors by default */
+  --ecode-background: #ffffff;
+  --ecode-surface: #f6f8fa;
+  --ecode-surface-secondary: #f1f3f4;
+  --ecode-border: #d0d7de;
+  --ecode-text: #24292f;
+  --ecode-text-secondary: #656d76;
+  --ecode-accent: #1f883d;
+  --ecode-accent-hover: #1a7f37;
+  --ecode-danger: #cf222e;
+  --ecode-warning: #9a6700;
+  --ecode-info: #0550ae;
+  
+  /* Couleurs spécifiques E-Code - Light mode */
+  --ecode-green: #1a7f37;
+  --ecode-blue: #0969da;
+  --ecode-purple: #8250df;
+  --ecode-orange: #fb8500;
+  --ecode-red: #da3633;
+  
+  /* Navigation et sidebar */
+  --ecode-sidebar-bg: #f6f8fa;
+  --ecode-sidebar-hover: #eef1f3;
+  --ecode-sidebar-active: #1f883d;
+  
+  /* Éditeur */
+  --ecode-editor-bg: #ffffff;
+  --ecode-editor-gutter: #f6f8fa;
+  --ecode-editor-selection: #b6d7ff;
+  --ecode-editor-line-highlight: #f6f8fa;
+  
+  /* Terminal */
+  --ecode-terminal-bg: #ffffff;
+  --ecode-terminal-text: #24292f;
+  --ecode-terminal-cursor: #1f883d;
+  
+  /* Boutons et contrôles */
+  --ecode-button-primary: #1f883d;
+  --ecode-button-primary-hover: #1a7f37;
+  --ecode-button-secondary: #f6f8fa;
+  --ecode-button-secondary-hover: #eef1f3;
+  
+  /* Shadows et elevations */
+  --ecode-shadow-sm: 0 1px 3px rgba(31, 35, 40, 0.12);
+  --ecode-shadow-md: 0 4px 6px rgba(31, 35, 40, 0.15);
+  --ecode-shadow-lg: 0 10px 20px rgba(31, 35, 40, 0.2);
+  
+  /* Spacing système E-Code */
+  --ecode-space-1: 4px;
+  --ecode-space-2: 8px;
+  --ecode-space-3: 12px;
+  --ecode-space-4: 16px;
+  --ecode-space-5: 20px;
+  --ecode-space-6: 24px;
+  --ecode-space-8: 32px;
+  --ecode-space-10: 40px;
+  --ecode-space-12: 48px;
+  
+  /* Typography E-Code */
+  --ecode-font-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  --ecode-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Border radius */
+  --ecode-radius-sm: 0px;
+  --ecode-radius-md: 0px;
+  --ecode-radius-lg: 0px;
+  
+  /* Z-index layers */
+  --ecode-z-dropdown: 1000;
+  --ecode-z-modal: 1100;
+  --ecode-z-tooltip: 1200;
+  --ecode-z-notification: 1300;
+}
+
+/* Dark mode E-Code */
+.dark {
   /* Couleurs de base E-Code */
   --ecode-background: #0e1117;
   --ecode-surface: #161b22;
@@ -46,36 +122,10 @@
   --ecode-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
   --ecode-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.15);
   --ecode-shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.2);
-  
-  /* Spacing système E-Code */
-  --ecode-space-1: 4px;
-  --ecode-space-2: 8px;
-  --ecode-space-3: 12px;
-  --ecode-space-4: 16px;
-  --ecode-space-5: 20px;
-  --ecode-space-6: 24px;
-  --ecode-space-8: 32px;
-  --ecode-space-10: 40px;
-  --ecode-space-12: 48px;
-  
-  /* Typography E-Code */
-  --ecode-font-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  --ecode-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  
-  /* Border radius */
-  --ecode-radius-sm: 0px;
-  --ecode-radius-md: 0px;
-  --ecode-radius-lg: 0px;
-  
-  /* Z-index layers */
-  --ecode-z-dropdown: 1000;
-  --ecode-z-modal: 1100;
-  --ecode-z-tooltip: 1200;
-  --ecode-z-notification: 1300;
 }
 
-/* Mode clair E-Code */
-[data-theme="light"] {
+/* Keeping light mode selector for compatibility */
+.light {
   --ecode-background: #ffffff;
   --ecode-surface: #f6f8fa;
   --ecode-surface-secondary: #f1f3f4;
@@ -84,6 +134,15 @@
   --ecode-text-secondary: #656d76;
   --ecode-accent: #1f883d;
   --ecode-accent-hover: #1a7f37;
+  --ecode-danger: #cf222e;
+  --ecode-warning: #9a6700;
+  --ecode-info: #0550ae;
+  
+  --ecode-green: #1a7f37;
+  --ecode-blue: #0969da;
+  --ecode-purple: #8250df;
+  --ecode-orange: #fb8500;
+  --ecode-red: #da3633;
   
   --ecode-sidebar-bg: #f6f8fa;
   --ecode-sidebar-hover: #eef1f3;
@@ -102,6 +161,10 @@
   --ecode-button-primary-hover: #1a7f37;
   --ecode-button-secondary: #f6f8fa;
   --ecode-button-secondary-hover: #eef1f3;
+  
+  --ecode-shadow-sm: 0 1px 3px rgba(31, 35, 40, 0.12);
+  --ecode-shadow-md: 0 4px 6px rgba(31, 35, 40, 0.15);
+  --ecode-shadow-lg: 0 10px 20px rgba(31, 35, 40, 0.2);
 }
 
 /* Animations et transitions E-Code */
