@@ -9,9 +9,10 @@ interface RunButtonProps {
   projectId: number;
   language?: string;
   onRunning?: (running: boolean, executionId?: string) => void;
+  className?: string;
 }
 
-export function RunButton({ projectId, language, onRunning }: RunButtonProps) {
+export function RunButton({ projectId, language, onRunning, className }: RunButtonProps) {
   const [isRunning, setIsRunning] = useState(false);
   const { toast } = useToast();
 
@@ -94,7 +95,7 @@ export function RunButton({ projectId, language, onRunning }: RunButtonProps) {
         isRunning 
           ? 'bg-red-600 hover:bg-red-700 text-white' 
           : 'bg-green-600 hover:bg-green-700 text-white'
-      }`}
+      } ${className || ''}`}
     >
       {isLoading ? (
         <>

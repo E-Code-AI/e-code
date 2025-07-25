@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, Settings, Package, Key, FileCode, Terminal as TerminalIcon, GitBranch, Database, Rocket, Bot, Search } from 'lucide-react';
+import { Loader2, ArrowLeft, Settings, Package, Key, FileCode, Terminal as TerminalIcon, GitBranch, Database, Rocket, Bot, Search, Users } from 'lucide-react';
 import { File, Project } from '@shared/schema';
 import TopNavbar from '@/components/TopNavbar';
 import TerminalPanel from '@/components/TerminalPanel';
@@ -15,6 +15,7 @@ import { EnvironmentVariables } from '@/components/EnvironmentVariables';
 import { PackageManager } from '@/components/PackageManager';
 import { WebPreview } from '@/components/WebPreview';
 import { Shell } from '@/components/Shell';
+import { ReplitConsole } from '@/components/editor/ReplitConsole';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { GitIntegration } from '@/components/GitIntegration';
 import { ReplitDB } from '@/components/ReplitDB';
@@ -25,6 +26,10 @@ import { BillingSystem } from '@/components/BillingSystem';
 import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { ReplitEditorLayout } from '@/components/editor/ReplitEditorLayout';
+import { ReplitFileSidebar } from '@/components/editor/ReplitFileSidebar';
+import { ReplitCodeEditor } from '@/components/editor/ReplitCodeEditor';
+import { Globe } from 'lucide-react';
 
 export default function EditorPage() {
   const { projectId } = useParams();
@@ -196,6 +201,7 @@ export default function EditorPage() {
   const [showReplitDB, setShowReplitDB] = useState(false);
   const [showCollaboration, setShowCollaboration] = useState(false);
   const [isProjectRunning, setIsProjectRunning] = useState(false);
+  const [executionId, setExecutionId] = useState<string | undefined>();
   const [rightPanelTab, setRightPanelTab] = useState('preview');
   const [bottomPanelTab, setBottomPanelTab] = useState('terminal');
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
@@ -254,189 +260,81 @@ export default function EditorPage() {
   }, [showAIAssistant]);
   
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      {/* Header with Run Button */}
-      <div className="flex items-center justify-between border-b bg-background px-responsive py-2">
-        <TopNavbar 
-          project={project} 
-          activeFile={activeFile}
-          isLoading={isLoadingProject || isLoadingFiles}
-          onNixConfigOpen={handleNixConfigOpen}
-          onCommandPaletteOpen={handleCommandPaletteOpen}
-          onKeyboardShortcutsOpen={handleKeyboardShortcutsOpen}
-          onDatabaseOpen={handleDatabaseOpen}
-          onCollaborationOpen={handleCollaborationOpen}
-        />
-        <RunButton 
-          projectId={projectIdNum} 
-          language={project?.language || 'javascript'}
-          onRunning={setIsProjectRunning}
-        />
+    <div className="h-screen flex flex-col overflow-hidden bg-[var(--ecode-background)]">
+      {/* Replit-style Header */}
+      <div className="h-12 flex items-center justify-between border-b border-[var(--ecode-border)] bg-[var(--ecode-background)] px-4">
+        <div className="flex items-center gap-4 flex-1">
+          {/* Project name and controls */}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/projects')} className="h-8 w-8">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-sm font-medium">{project?.name || 'Loading...'}</h1>
+          </div>
+          
+          {/* Run button - Replit style */}
+          <RunButton 
+            projectId={projectIdNum} 
+            language={project?.language || 'javascript'}
+            onRunning={(running, execId) => {
+              setIsProjectRunning(running);
+              setExecutionId(execId);
+            }}
+            className="h-8"
+          />
+        </div>
+        
+        {/* Right side controls */}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-8 text-xs">
+            <Users className="h-3 w-3 mr-1" />
+            Invite
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs">
+            <Rocket className="h-3 w-3 mr-1" />
+            Deploy
+          </Button>
+        </div>
       </div>
       
-      {/* Main Content Area */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
-        {/* Left Panel - File Explorer */}
-        <ResizablePanel defaultSize={20} minSize={15}>
-          <div className="h-full border-r">
-            <EditorWorkspace
-              project={project}
-              files={files}
-              onFileUpdate={handleFileUpdate}
-              onFileCreate={handleFileCreate}
-              onFileDelete={handleFileDelete}
-              onActiveFileChange={handleActiveFileChange}
-              initialShowNixConfig={showNixConfig}
-              initialShowCommandPalette={showCommandPalette}
-              initialShowKeyboardShortcuts={showKeyboardShortcuts}
-              initialShowReplitDB={showReplitDB}
-              initialShowCollaboration={showCollaboration}
-              onNixConfigChange={setShowNixConfig}
-              onCommandPaletteChange={setShowCommandPalette}
-              onKeyboardShortcutsChange={setShowKeyboardShortcuts}
-              onReplitDBChange={setShowReplitDB}
-              onCollaborationChange={setShowCollaboration}
-              sidebarOnly={true}
-            />
-          </div>
-        </ResizablePanel>
-        
-        <ResizableHandle />
-        
-        {/* Center Panel - Code Editor */}
-        <ResizablePanel defaultSize={50}>
-          <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={70}>
-              <EditorWorkspace
-                project={project}
-                files={files}
-                onFileUpdate={handleFileUpdate}
-                onFileCreate={handleFileCreate}
-                onFileDelete={handleFileDelete}
-                onActiveFileChange={handleActiveFileChange}
-                editorOnly={true}
-              />
-            </ResizablePanel>
-            
-            <ResizableHandle />
-            
-            {/* Bottom Panel - Terminal/Shell */}
-            <ResizablePanel defaultSize={30} minSize={20}>
-              <Tabs value={bottomPanelTab} onValueChange={setBottomPanelTab} className="h-full">
-                <TabsList className="h-10 w-full justify-start rounded-none border-b">
-                  <TabsTrigger value="terminal" className="gap-1">
-                    <TerminalIcon className="h-3 w-3" />
-                    Terminal
-                  </TabsTrigger>
-                  <TabsTrigger value="shell" className="gap-1">
-                    <TerminalIcon className="h-3 w-3" />
-                    Shell
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="terminal" className="h-[calc(100%-40px)] m-0">
-                  <TerminalPanel projectId={projectIdNum} />
-                </TabsContent>
-                <TabsContent value="shell" className="h-[calc(100%-40px)] m-0">
-                  <Shell projectId={projectIdNum} isRunning={isProjectRunning} />
-                </TabsContent>
-              </Tabs>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-        
-        <ResizableHandle />
-        
-        {/* Right Panel - Preview/Settings */}
-        <ResizablePanel defaultSize={30} minSize={20}>
-          <Tabs value={rightPanelTab} onValueChange={setRightPanelTab} className="h-full">
-            <TabsList className="h-10 w-full justify-start rounded-none border-b overflow-x-auto">
-              <TabsTrigger value="preview" className="gap-1">
-                <FileCode className="h-3 w-3" />
-                Preview
-              </TabsTrigger>
-              <TabsTrigger value="packages" className="gap-1">
-                <Package className="h-3 w-3" />
-                Packages
-              </TabsTrigger>
-              <TabsTrigger value="env" className="gap-1">
-                <Key className="h-3 w-3" />
-                Env
-              </TabsTrigger>
-              <TabsTrigger value="git" className="gap-1">
-                <GitBranch className="h-3 w-3" />
-                Git
-              </TabsTrigger>
-              <TabsTrigger value="database" className="gap-1">
-                <Database className="h-3 w-3" />
-                Database
-              </TabsTrigger>
-              <TabsTrigger value="deploy" className="gap-1">
-                <Rocket className="h-3 w-3" />
-                Deploy
-              </TabsTrigger>
-              <TabsTrigger value="ai" className="gap-1">
-                <Bot className="h-3 w-3" />
-                AI
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-1">
-                <Settings className="h-3 w-3" />
-                Settings
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="preview" className="h-[calc(100%-40px)] m-0">
-              <WebPreview 
-                projectId={projectIdNum} 
-                port={3000} 
-                isRunning={isProjectRunning} 
-              />
-            </TabsContent>
-            <TabsContent value="packages" className="h-[calc(100%-40px)] m-0">
-              <PackageManager 
-                projectId={projectIdNum} 
-                language={project?.language || 'javascript'} 
-              />
-            </TabsContent>
-            <TabsContent value="env" className="h-[calc(100%-40px)] m-0">
-              <EnvironmentVariables projectId={projectIdNum} />
-            </TabsContent>
-            <TabsContent value="git" className="h-[calc(100%-40px)] m-0">
-              <GitIntegration projectId={projectIdNum} />
-            </TabsContent>
-            <TabsContent value="database" className="h-[calc(100%-40px)] m-0">
-              <ReplitDB projectId={projectIdNum} />
-            </TabsContent>
-            <TabsContent value="deploy" className="h-[calc(100%-40px)] m-0">
-              <DeploymentManager projectId={projectIdNum} />
-            </TabsContent>
-            <TabsContent value="ai" className="h-[calc(100%-40px)] m-0">
-              <AIAssistant 
-                projectId={projectIdNum}
-                selectedFile={activeFile?.name}
-                selectedCode={selectedCode}
-              />
-            </TabsContent>
-            <TabsContent value="settings" className="h-[calc(100%-40px)] m-0 p-4 overflow-y-auto">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Project Settings</h3>
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    Language: {project?.language || 'Not set'}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Created: {project?.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'Unknown'}
-                  </p>
-                </div>
-                
-                <div className="pt-4 space-y-4">
-                  <ImportExport projectId={projectIdNum} />
-                  <BillingSystem userId={user?.id || 0} />
-                  <ExtensionsMarketplace projectId={projectIdNum} />
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+      {/* Main Content Area - Replit Style Layout */}
+      <ReplitEditorLayout
+        leftPanel={
+          <ReplitFileSidebar
+            files={files}
+            activeFileId={activeFile?.id}
+            onFileSelect={handleActiveFileChange}
+            onFileCreate={handleFileCreate}
+            onFileDelete={handleFileDelete}
+            projectName={project?.name}
+          />
+        }
+        centerPanel={
+          <ReplitCodeEditor
+            files={files}
+            activeFile={activeFile}
+            onFileUpdate={handleFileUpdate}
+          />
+        }
+        bottomPanel={
+          <TerminalPanel projectId={projectIdNum} />
+        }
+        rightPanels={[
+          {
+            id: 'console',
+            title: 'Console',
+            icon: <TerminalIcon className="h-3 w-3" />,
+            content: <ReplitConsole projectId={projectIdNum} isRunning={isProjectRunning} executionId={executionId} />
+          },
+          {
+            id: 'preview',
+            title: 'Webview',
+            icon: <Globe className="h-3 w-3" />,
+            content: <WebPreview projectId={projectIdNum} isRunning={isProjectRunning} />
+          }
+        ]}
+        defaultRightPanel="console"
+      />
 
       {/* Global Search Dialog */}
       {showGlobalSearch && (
@@ -445,7 +343,7 @@ export default function EditorPage() {
           isOpen={showGlobalSearch}
           onClose={() => setShowGlobalSearch(false)}
           onFileSelect={(file) => {
-            setActiveFile(file);
+            setActiveFile(file.content !== undefined ? {...file, content: file.content ?? null} : undefined);
             setShowGlobalSearch(false);
           }}
         />
