@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { 
   FileCode, 
   Terminal as TerminalIcon, 
@@ -10,9 +11,11 @@ import {
   Maximize2,
   Minimize2,
   PanelRightClose,
-  PanelRightOpen
+  PanelRightOpen,
+  Menu
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 interface ReplitEditorLayoutProps {
   leftPanel: React.ReactNode;
@@ -39,11 +42,89 @@ export function ReplitEditorLayout({
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [activeRightPanel, setActiveRightPanel] = useState(defaultRightPanel || rightPanels[0]?.id);
   const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+
+  useEffect(() => {
+    if (isMobile) {
+      setRightPanelOpen(false);
+      setBottomPanelOpen(false);
+    }
+  }, [isMobile]);
 
   const handleRightPanelChange = (panelId: string | null) => {
     setActiveRightPanel(panelId || '');
     onRightPanelChange?.(panelId);
   };
+
+  // Mobile layout
+  if (isMobile) {
+    return (
+      <div className="h-[calc(100vh-48px)] flex flex-col relative">
+        {/* Mobile Menu Button */}
+        <div className="absolute top-2 left-2 z-50">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileSidebarOpen(true)}
+            className="bg-[var(--ecode-surface)] border border-[var(--ecode-border)]"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Mobile Sidebar Sheet */}
+        <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+          <SheetContent side="left" className="w-[80vw] p-0 bg-[var(--ecode-background)]">
+            {leftPanel}
+          </SheetContent>
+        </Sheet>
+
+        {/* Main Content */}
+        <div className="flex-1 bg-[var(--ecode-background)]">
+          {centerPanel}
+        </div>
+
+        {/* Mobile Bottom Panel */}
+        {bottomPanel && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileBottomPanelOpen(!mobileBottomPanelOpen)}
+              className="h-8 w-full rounded-none border-t border-[var(--ecode-border)] justify-between px-4"
+            >
+              <span>Terminal</span>
+              <TerminalIcon className="h-3 w-3" />
+            </Button>
+            {mobileBottomPanelOpen && (
+              <div className="h-[40vh] border-t border-[var(--ecode-border)]">
+                {bottomPanel}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Mobile Right Panel Tabs */}
+        {rightPanels.length > 0 && (
+          <div className="border-t border-[var(--ecode-border)]">
+            <Tabs value={activeRightPanel} onValueChange={handleRightPanelChange}>
+              <TabsList className="w-full rounded-none h-9">
+                {rightPanels.map((panel) => (
+                  <TabsTrigger key={panel.id} value={panel.id} className="flex-1">
+                    {panel.icon}
+                    <span className="ml-1 text-xs">{panel.title}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-48px)] flex">

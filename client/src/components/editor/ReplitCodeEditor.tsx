@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 interface EditorTab {
   fileId: number;
@@ -77,6 +78,7 @@ export function ReplitCodeEditor({
   onFileUpdate,
   className 
 }: ReplitCodeEditorProps) {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [tabs, setTabs] = useState<EditorTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
   const [editorContent, setEditorContent] = useState('');
@@ -224,15 +226,18 @@ export function ReplitCodeEditor({
           onChange={handleEditorChange}
           theme="vs-dark"
           options={{
-            fontSize: 13,
+            fontSize: isMobile ? 12 : 13,
             fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
-            minimap: { enabled: false },
+            minimap: { enabled: !isMobile },
             scrollBeyondLastLine: false,
             renderWhitespace: 'selection',
             tabSize: 2,
             wordWrap: 'on',
             automaticLayout: true,
             fixedOverflowWidgets: true,
+            lineNumbers: isMobile ? 'off' : 'on',
+            folding: !isMobile,
+            glyphMargin: !isMobile,
             suggest: {
               showMethods: true,
               showFunctions: true,

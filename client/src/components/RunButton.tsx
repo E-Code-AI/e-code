@@ -4,15 +4,25 @@ import { Play, Square, Loader2 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface RunButtonProps {
   projectId: number;
   language?: string;
   onRunning?: (running: boolean, executionId?: string) => void;
   className?: string;
+  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link' | 'destructive';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
-export function RunButton({ projectId, language, onRunning, className }: RunButtonProps) {
+export function RunButton({ 
+  projectId, 
+  language, 
+  onRunning, 
+  className,
+  variant = 'default',
+  size = 'default'
+}: RunButtonProps) {
   const [isRunning, setIsRunning] = useState(false);
   const { toast } = useToast();
 
@@ -90,27 +100,26 @@ export function RunButton({ projectId, language, onRunning, className }: RunButt
     <Button
       onClick={handleClick}
       disabled={isLoading}
-      size="sm"
-      className={`gap-2 font-medium ${
-        isRunning 
-          ? 'bg-red-600 hover:bg-red-700 text-white' 
-          : 'bg-green-600 hover:bg-green-700 text-white'
-      } ${className || ''}`}
+      size={size}
+      variant={isRunning ? "destructive" : variant}
+      className={cn("gap-2 font-medium", className)}
     >
       {isLoading ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin" />
-          {isRunning ? 'Stopping...' : 'Starting...'}
+          <span className="hidden sm:inline">
+            {isRunning ? 'Stopping...' : 'Starting...'}
+          </span>
         </>
       ) : isRunning ? (
         <>
           <Square className="h-4 w-4" />
-          Stop
+          <span className="hidden sm:inline">Stop</span>
         </>
       ) : (
         <>
           <Play className="h-4 w-4" />
-          Run
+          <span className="hidden sm:inline">Run</span>
         </>
       )}
     </Button>

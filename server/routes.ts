@@ -2298,5 +2298,50 @@ Would you like me to help you set up the OpenAI API integration?`,
   const fileUploadRoutesModule = await import('./routes/file-upload');
   app.use(fileUploadRoutesModule.default);
 
+  // Simple preview route for HTML/CSS/JS projects
+  app.get('/preview/:projectId/*', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const filepath = req.params[0] || 'index.html';
+      
+      // Get all project files
+      const files = await storage.getFilesByProject(projectId);
+      
+      // Find the requested file
+      const file = files.find(f => f.name === filepath && !f.isFolder);
+      
+      if (!file) {
+        // Try to find index.html as default
+        const indexFile = files.find(f => f.name === 'index.html' && !f.isFolder);
+        if (indexFile) {
+          res.type('html').send(indexFile.content || '');
+          return;
+        }
+        return res.status(404).send('File not found');
+      }
+      
+      // Set appropriate content type
+      const ext = path.extname(filepath).toLowerCase();
+      switch (ext) {
+        case '.html':
+          res.type('text/html');
+          break;
+        case '.css':
+          res.type('text/css');
+          break;
+        case '.js':
+          res.type('application/javascript');
+          break;
+        default:
+          res.type('text/plain');
+      }
+      
+      res.send(file.content || '');
+    } catch (error) {
+      console.error('Error serving preview:', error);
+      res.status(500).send('Error loading preview');
+    }
+  });
+
   return httpServer;
 }
