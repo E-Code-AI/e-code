@@ -92,11 +92,22 @@ const ProjectPage = () => {
       
       const res = await apiRequest('GET', `/api/projects/${projectId}`);
       if (!res.ok) {
-        throw new Error('Failed to fetch project');
+        const error = await res.text();
+        if (res.status === 401) {
+          throw new Error('You need to log in to access this project');
+        }
+        throw new Error(error || 'Failed to fetch project');
       }
       return res.json();
     },
-    enabled: !!projectId
+    enabled: !!projectId,
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error.message.includes('log in')) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   // Query for fetching project files
@@ -111,11 +122,22 @@ const ProjectPage = () => {
       
       const res = await apiRequest('GET', `/api/projects/${projectId}/files`);
       if (!res.ok) {
-        throw new Error('Failed to fetch files');
+        const error = await res.text();
+        if (res.status === 401) {
+          throw new Error('You need to log in to access this project');
+        }
+        throw new Error(error || 'Failed to fetch files');
       }
       return res.json();
     },
-    enabled: !!projectId
+    enabled: !!projectId,
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error.message.includes('log in')) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   // Mutation for saving file changes
@@ -413,20 +435,38 @@ const ProjectPage = () => {
 
   // Show error state
   if (projectError || filesError) {
+    const errorMessage = (projectError || filesError)?.message || 'Unknown error';
+    const isAuthError = errorMessage.includes('log in');
+    
     return (
       <div className="container mx-auto py-10 flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="bg-destructive/10 p-4 rounded-lg text-destructive">
-          <p>Error loading project: {(projectError || filesError)?.message}</p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
-              queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
-            }}
-          >
-            Try Again
-          </Button>
+        <div className={`p-6 rounded-lg ${isAuthError ? 'bg-warning/10' : 'bg-destructive/10'}`}>
+          <h2 className="text-xl font-bold mb-2">
+            {isAuthError ? 'Authentication Required' : 'Error Loading Project'}
+          </h2>
+          <p className={`mb-4 ${isAuthError ? 'text-warning-foreground' : 'text-destructive'}`}>
+            {errorMessage}
+          </p>
+          <div className="flex gap-2">
+            {isAuthError ? (
+              <Button onClick={() => window.location.href = '/auth'}>
+                Log In
+              </Button>
+            ) : (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+                }}
+              >
+                Try Again
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => navigate('/projects')}>
+              Go to Projects
+            </Button>
+          </div>
         </div>
       </div>
     );
