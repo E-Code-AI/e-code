@@ -1,10 +1,10 @@
-# E-Code Clone Project
+# E-Code Project
 
 ## Overview
-A comprehensive web-based IDE that clones Replit.com exactly, then adds unique features. The project focuses on pixel-perfect replication of Replit's interface and functionality, built with React, TypeScript, and advanced web technologies, now rebranded as E-Code.
+A comprehensive web-based IDE inspired by Replit, with additional unique features. The project focuses on creating a professional development environment with Replit's interface excellence, built with React, TypeScript, and advanced web technologies, branded as E-Code.
 
 ## User Preferences
-- **Vision**: Create exact pixel-perfect clone of replit.com first, then add personal features, rebranded as E-Code
+- **Vision**: Create a pixel-perfect development platform inspired by Replit, then add personal features, branded as E-Code
 - **Development Approach**: Systematic implementation following detailed roadmap
 - **Communication**: Direct, concise updates with clear progress indicators
 - **Architecture**: Modern full-stack with React frontend, Express backend, PostgreSQL database
