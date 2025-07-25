@@ -29,13 +29,13 @@ export function ReplitLayout({
           </div>
         )}
         
-        <main className={`flex-1 flex flex-col overflow-hidden ${className}`}>
+        <main className={`flex-1 flex flex-col overflow-auto ${className}`}>
           {children}
         </main>
       </div>
       
       {/* Mobile bottom navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 safe-area-inset-bottom">
         <nav className="flex items-center justify-around h-14">
           <Button variant="ghost" size="sm" className="flex-1 h-full px-2" asChild>
             <Link href="/dashboard">
