@@ -48,6 +48,13 @@ app.use((req, res, next) => {
     // Initialize the database first
     await initializeDatabase();
     console.log("Database setup complete");
+    
+    // Seed database with test user in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Seeding database with test user...");
+      const { seedDatabase } = await import("./db-seed");
+      await seedDatabase();
+    }
   } catch (error) {
     console.error("Failed to initialize database:", error);
   }
