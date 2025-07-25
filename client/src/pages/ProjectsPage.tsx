@@ -1035,11 +1035,7 @@ const ProjectsPage = () => {
               </form>
             </Form>
           </DialogContent>
-          </Dialog>
-            </div>
-          </div>
-        </div>
-      </div>
+        </Dialog>
 
       {/* Projects Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
