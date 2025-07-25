@@ -1,12 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { 
   Zap, Globe, Users, Shield, Code, Terminal, GitBranch, 
   Rocket, Package, Database, Cpu, Cloud, Lock, Star,
-  ChevronRight, ArrowRight, CheckCircle, PlayCircle
+  ChevronRight, ArrowRight, CheckCircle, PlayCircle,
+  Sparkles, Check, Loader2
 } from 'lucide-react';
 import { useState } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
@@ -178,6 +180,216 @@ export default function Landing() {
                 <div className="mt-2 text-green-400">Output: Hello! I'm learning to code! 🎉</div>
               </div>
             </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Build Section - New */}
+      <section className="py-20 bg-gradient-to-b from-background to-muted/30">
+        <div className="container-responsive max-w-6xl">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6">
+              <Badge variant="secondary" className="mb-2">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Powered by AI
+              </Badge>
+              <h2 className="text-4xl md:text-5xl font-bold">
+                Just describe what you want.
+                <span className="text-primary block">We'll build it instantly.</span>
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                No coding experience? No problem. Tell us your idea in plain English, 
+                and watch as E-Code's AI creates a working app in seconds.
+              </p>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-1 bg-green-500/20 rounded">
+                    <Check className="h-4 w-4 text-green-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Natural Language</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Type "Build me a todo app with dark mode" and watch it happen
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="p-1 bg-green-500/20 rounded">
+                    <Check className="h-4 w-4 text-green-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Instant Results</h4>
+                    <p className="text-sm text-muted-foreground">
+                      See your app running live in seconds, not hours
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="p-1 bg-green-500/20 rounded">
+                    <Check className="h-4 w-4 text-green-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Full Control</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Edit the generated code or let AI refine it with more instructions
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <Button size="lg" onClick={handleGetStarted} className="gap-2">
+                Try AI Builder
+                <Sparkles className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="relative">
+              <Card className="overflow-hidden">
+                <div className="bg-muted p-4 border-b">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <Input
+                      value="Create a weather app that shows 5-day forecast with beautiful animations"
+                      readOnly
+                      className="flex-1"
+                    />
+                    <Button size="sm">Generate</Button>
+                  </div>
+                </div>
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    AI is building your app...
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Created weather API integration</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Added 5-day forecast display</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Implemented smooth animations</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Styling the interface...</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+              
+              <div className="absolute -bottom-4 -right-4 bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                30 seconds to build!
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* No-Code Examples Section */}
+      <section className="py-20">
+        <div className="container-responsive max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              See what people are building with just words
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Real apps created by describing ideas, no coding required
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="group hover:shadow-lg transition-all cursor-pointer">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Badge variant="secondary">Built with AI</Badge>
+                  <span className="text-sm text-muted-foreground">2 min ago</span>
+                </div>
+                <CardTitle className="text-lg">Recipe Finder</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  "Build an app that finds recipes based on ingredients I have at home"
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted rounded-lg p-4 mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-xs text-muted-foreground">Live</span>
+                  </div>
+                  <p className="text-sm">🥕 Carrot, 🥔 Potato, 🧅 Onion</p>
+                  <p className="text-sm font-semibold mt-2">Found 12 recipes!</p>
+                </div>
+                <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
+                  View Project
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card className="group hover:shadow-lg transition-all cursor-pointer">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Badge variant="secondary">Built with AI</Badge>
+                  <span className="text-sm text-muted-foreground">5 min ago</span>
+                </div>
+                <CardTitle className="text-lg">Budget Tracker</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  "I need a simple app to track my monthly expenses with charts"
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted rounded-lg p-4 mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-xs text-muted-foreground">Live</span>
+                  </div>
+                  <div className="h-20 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded" />
+                </div>
+                <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
+                  View Project
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card className="group hover:shadow-lg transition-all cursor-pointer">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Badge variant="secondary">Built with AI</Badge>
+                  <span className="text-sm text-muted-foreground">10 min ago</span>
+                </div>
+                <CardTitle className="text-lg">Study Timer</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  "Create a pomodoro timer with relaxing sounds and break reminders"
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted rounded-lg p-4 mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-xs text-muted-foreground">Live</span>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">25:00</p>
+                    <p className="text-xs text-muted-foreground">Focus Time</p>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
+                  View Project
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="mt-8 text-center">
+            <Button size="lg" onClick={handleGetStarted} variant="outline">
+              Start building with AI
+            </Button>
           </div>
         </div>
       </section>
