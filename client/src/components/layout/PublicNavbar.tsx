@@ -87,13 +87,11 @@ export function PublicNavbar() {
                         {productItems.map((item) => (
                           <li key={item.title}>
                             <NavigationMenuLink asChild>
-                              <Link href={item.href}>
-                                <a className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                                  <div className="text-sm font-medium leading-none">{item.title}</div>
-                                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                    {item.description}
-                                  </p>
-                                </a>
+                              <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                                <div className="text-sm font-medium leading-none">{item.title}</div>
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                  {item.description}
+                                </p>
                               </Link>
                             </NavigationMenuLink>
                           </li>
@@ -109,13 +107,11 @@ export function PublicNavbar() {
                         {resourcesItems.map((item) => (
                           <li key={item.title}>
                             <NavigationMenuLink asChild>
-                              <Link href={item.href}>
-                                <a className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                                  <div className="text-sm font-medium leading-none">{item.title}</div>
-                                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                    {item.description}
-                                  </p>
-                                </a>
+                              <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                                <div className="text-sm font-medium leading-none">{item.title}</div>
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                  {item.description}
+                                </p>
                               </Link>
                             </NavigationMenuLink>
                           </li>
@@ -131,13 +127,11 @@ export function PublicNavbar() {
                         {companyItems.map((item) => (
                           <li key={item.title}>
                             <NavigationMenuLink asChild>
-                              <Link href={item.href}>
-                                <a className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                                  <div className="text-sm font-medium leading-none">{item.title}</div>
-                                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                    {item.description}
-                                  </p>
-                                </a>
+                              <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                                <div className="text-sm font-medium leading-none">{item.title}</div>
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                  {item.description}
+                                </p>
                               </Link>
                             </NavigationMenuLink>
                           </li>
