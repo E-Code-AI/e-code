@@ -24,7 +24,11 @@ import {
   Search,
   Filter,
   Grid3X3,
-  List
+  List,
+  Eye,
+  EyeOff,
+  ChevronRight,
+  Crown
 } from 'lucide-react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
@@ -157,34 +161,36 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-14 md:pb-0">
-      {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container-responsive py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <h1 className="text-responsive-lg font-bold">Dashboard</h1>
-              <Badge variant="secondary" className="gap-1">
-                <Zap className="h-3 w-3" />
-                <span className="hidden sm:inline">Pro</span>
-              </Badge>
+    <div className="min-h-screen bg-[var(--ecode-background)]">
+      {/* Replit-style Dashboard Header */}
+      <div className="border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--ecode-text)]">Home</h1>
+              {user?.username === 'admin' && (
+                <Badge variant="outline" className="border-[var(--ecode-accent)] text-[var(--ecode-accent)]">
+                  <Crown className="h-3 w-3 mr-1" />
+                  Pro
+                </Badge>
+              )}
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <div className="relative flex-1 sm:flex-initial">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-muted)]" />
                 <Input
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full sm:w-64 pl-10"
+                  className="w-full sm:w-80 pl-10 bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-muted)]"
                 />
               </div>
               <Button 
                 onClick={() => setIsCreateModalOpen(true)} 
-                className="gap-2 w-full sm:w-auto"
+                className="gap-2 bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
               >
                 <Plus className="h-4 w-4" />
-                <span className="sm:inline">Create Project</span>
+                Create Repl
               </Button>
             </div>
           </div>
@@ -192,204 +198,210 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="container-responsive py-responsive">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
             {/* Recent Projects */}
-            <Card>
-              <CardHeader>
+            <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
+              <div className="p-6 border-b border-[var(--ecode-border)]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Your Projects</CardTitle>
-                    <CardDescription>Things you've been working on recently</CardDescription>
+                    <h2 className="text-xl font-semibold text-[var(--ecode-text)]">Recent</h2>
+                    <p className="text-sm text-[var(--ecode-muted)] mt-1">Pick up where you left off</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-[var(--ecode-sidebar)] rounded-md p-1">
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="sm"
                       onClick={() => setViewMode('grid')}
-                      className={viewMode === 'grid' ? 'bg-accent' : ''}
+                      className={`h-8 px-3 ${viewMode === 'grid' ? 'bg-[var(--ecode-background)] shadow-sm' : ''}`}
                     >
                       <Grid3X3 className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="sm"
                       onClick={() => setViewMode('list')}
-                      className={viewMode === 'list' ? 'bg-accent' : ''}
+                      className={`h-8 px-3 ${viewMode === 'list' ? 'bg-[var(--ecode-background)] shadow-sm' : ''}`}
                     >
                       <List className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </div>
+              <div className="p-6">
                 {loadingRecent ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent" />
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin h-8 w-8 border-2 border-[var(--ecode-accent)] border-t-transparent rounded-full" />
                   </div>
                 ) : recentProjects.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Code2 className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                    <p className="text-muted-foreground">No recent projects</p>
+                  <div className="text-center py-12">
+                    <Code2 className="h-16 w-16 mx-auto text-[var(--ecode-muted)] mb-4" />
+                    <h3 className="text-lg font-medium text-[var(--ecode-text)] mb-2">No projects yet</h3>
+                    <p className="text-[var(--ecode-muted)] mb-6">Create your first project to get started</p>
                     <Button 
                       onClick={() => setIsCreateModalOpen(true)} 
-                      className="mt-4"
-                      variant="outline"
+                      className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
                     >
-                      Start your first project
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create your first Repl
                     </Button>
                   </div>
                 ) : (
-                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4' : 'space-y-3'}>
+                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'space-y-3'}>
                     {recentProjects.map((project: any) => (
-                      <Card 
+                      <div 
                         key={project.id} 
-                        className="cursor-pointer hover:shadow-md transition-all"
+                        className="group bg-[var(--ecode-sidebar)] rounded-lg p-4 hover:bg-[var(--ecode-sidebar-hover)] cursor-pointer transition-all border border-transparent hover:border-[var(--ecode-border)]"
                         onClick={() => navigate(`/project/${project.id}`)}
                       >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="font-semibold">{project.name}</h3>
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                {project.description || 'No description'}
-                              </p>
-                            </div>
-                            <Badge variant="secondary" className={`ml-2 ${getLanguageColor(project.language)}`}>
-                              {project.language}
-                            </Badge>
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors truncate">
+                              {project.name}
+                            </h3>
+                            <p className="text-sm text-[var(--ecode-muted)] mt-1 line-clamp-2">
+                              {project.description || 'No description'}
+                            </p>
                           </div>
-                          <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {project.updatedAt}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Globe className="h-3 w-3" />
-                              {project.visibility || 'Private'}
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
+                          <div className={`h-2 w-2 rounded-full ml-3 mt-1.5 ${getLanguageColor(project.language)}`} />
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-[var(--ecode-muted)]">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(project.updatedAt).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            {project.visibility === 'private' ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                            {project.visibility || 'private'}
+                          </span>
+                          <span className="text-[var(--ecode-muted)]">
+                            {project.language}
+                          </span>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Trending Repls */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Popular Projects
-                </CardTitle>
-                <CardDescription>See what others are creating</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {trendingRepls.map((repl) => (
-                    <div key={repl.id} className="flex items-start gap-3 p-3 hover:bg-accent/50 cursor-pointer">
-                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                        <AvatarImage src={repl.avatar || undefined} />
-                        <AvatarFallback>{repl.author[0].toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <h4 className="font-semibold text-responsive-sm truncate">{repl.name}</h4>
-                            <p className="text-xs sm:text-sm text-muted-foreground">by {repl.author}</p>
-                            <p className="text-xs sm:text-sm mt-1 line-clamp-2">{repl.description}</p>
-                          </div>
-                          <Badge variant="secondary" className={`${getLanguageColor(repl.language)} flex-shrink-0 text-xs`}>
-                            {repl.language}
-                          </Badge>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            {repl.stars} likes
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <GitFork className="h-3 w-3" />
-                            {repl.forks} remixes
-                          </span>
-                          <span className="hidden sm:inline">{repl.lastUpdated}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+            {/* Explore Templates */}
+            <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
+              <div className="p-6 border-b border-[var(--ecode-border)]">
+                <h2 className="text-xl font-semibold text-[var(--ecode-text)]">Start with a template</h2>
+                <p className="text-sm text-[var(--ecode-muted)] mt-1">Jumpstart your next project</p>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col p-4 border-[var(--ecode-border)] hover:bg-[var(--ecode-sidebar)] hover:border-[var(--ecode-accent)]"
+                    onClick={() => navigate('/templates')}
+                  >
+                    <Globe className="h-8 w-8 mb-2 text-[var(--ecode-accent)]" />
+                    <span className="text-sm font-medium">Website</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col p-4 border-[var(--ecode-border)] hover:bg-[var(--ecode-sidebar)] hover:border-[var(--ecode-accent)]"
+                    onClick={() => navigate('/templates')}
+                  >
+                    <Zap className="h-8 w-8 mb-2 text-yellow-500" />
+                    <span className="text-sm font-medium">Game</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col p-4 border-[var(--ecode-border)] hover:bg-[var(--ecode-sidebar)] hover:border-[var(--ecode-accent)]"
+                    onClick={() => navigate('/templates')}
+                  >
+                    <MessageSquare className="h-8 w-8 mb-2 text-green-500" />
+                    <span className="text-sm font-medium">Chat App</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col p-4 border-[var(--ecode-border)] hover:bg-[var(--ecode-sidebar)] hover:border-[var(--ecode-accent)]"
+                    onClick={() => navigate('/templates')}
+                  >
+                    <Rocket className="h-8 w-8 mb-2 text-purple-500" />
+                    <span className="text-sm font-medium">API</span>
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
+                <Button 
+                  variant="ghost" 
+                  className="w-full mt-4 text-[var(--ecode-accent)] hover:bg-[var(--ecode-sidebar)]"
+                  onClick={() => navigate('/templates')}
+                >
+                  Browse all templates
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-4 sm:space-y-6">
             {/* Quick Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Stats</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{recentProjects.length}</div>
-                    <div className="text-xs text-muted-foreground">Your Projects</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">12</div>
-                    <div className="text-xs text-muted-foreground">Friends</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">45</div>
-                    <div className="text-xs text-muted-foreground">Total Likes</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">8</div>
-                    <div className="text-xs text-muted-foreground">Shared Projects</div>
-                  </div>
+            <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] p-6">
+              <h3 className="text-lg font-semibold text-[var(--ecode-text)] mb-4">Your Activity</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">{recentProjects.length}</div>
+                  <div className="text-xs text-[var(--ecode-muted)]">Projects</div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">47</div>
+                  <div className="text-xs text-[var(--ecode-muted)]">Likes</div>
+                </div>
+                <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">12</div>
+                  <div className="text-xs text-[var(--ecode-muted)]">Followers</div>
+                </div>
+                <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">8</div>
+                  <div className="text-xs text-[var(--ecode-muted)]">Following</div>
+                </div>
+              </div>
+            </div>
 
-            {/* Activity Feed */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            {/* Community Feed */}
+            <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
+              <div className="p-6 border-b border-[var(--ecode-border)]">
+                <h3 className="text-lg font-semibold text-[var(--ecode-text)] flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Community Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[300px]">
-                  <div className="space-y-3">
-                    {activityFeed.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-3 text-sm">
-                        <div className={`mt-0.5 ${
-                          activity.type === 'star' ? 'text-yellow-500' :
-                          activity.type === 'fork' ? 'text-blue-500' :
-                          activity.type === 'comment' ? 'text-green-500' :
-                          'text-purple-500'
-                        }`}>
-                          {getActivityIcon(activity.type)}
-                        </div>
-                        <div className="flex-1">
-                          <p>
-                            <span className="font-semibold">{activity.user}</span>
-                            {' '}{activity.action}{' '}
-                            <span className="font-semibold">{activity.target}</span>
-                          </p>
-                          <p className="text-xs text-muted-foreground">{activity.time}</p>
-                        </div>
+                  Community Feed
+                </h3>
+              </div>
+              <ScrollArea className="h-[300px]">
+                <div className="p-6 space-y-4">
+                  {activityFeed.map((activity) => (
+                    <div key={activity.id} className="flex items-start gap-3">
+                      <div className={`mt-1 ${
+                        activity.type === 'like' ? 'text-pink-500' :
+                        activity.type === 'remix' ? 'text-blue-500' :
+                        activity.type === 'comment' ? 'text-green-500' :
+                        'text-purple-500'
+                      }`}>
+                        {getActivityIcon(activity.type)}
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm text-[var(--ecode-text)]">
+                          <span className="font-medium hover:text-[var(--ecode-accent)] cursor-pointer">
+                            {activity.user}
+                          </span>
+                          {' '}{activity.action}{' '}
+                          <span className="font-medium hover:text-[var(--ecode-accent)] cursor-pointer">
+                            {activity.target}
+                          </span>
+                        </p>
+                        <p className="text-xs text-[var(--ecode-muted)]">{activity.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
 
             {/* Quick Actions */}
             <Card>

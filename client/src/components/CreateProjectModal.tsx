@@ -88,24 +88,24 @@ export const CreateProjectModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[500px] bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <DialogHeader>
-            <DialogTitle>Let's Create Something New!</DialogTitle>
-            <DialogDescription>
-              What would you like to call your creation? You can also tell us what you want to make.
+            <DialogTitle className="text-2xl text-[var(--ecode-text)]">Create a Repl</DialogTitle>
+            <DialogDescription className="text-[var(--ecode-muted)]">
+              A Repl is an interactive programming environment
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4">
+          <div className="py-6 space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-right">
-                Name your creation
+              <Label htmlFor="name" className="text-[var(--ecode-text)]">
+                Title
               </Label>
               <Input
                 id="name"
-                placeholder="Something fun and creative"
+                placeholder="My Repl"
                 {...form.register("name")}
-                className="col-span-3"
+                className="bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-muted)]"
               />
               {form.formState.errors.name && (
                 <p className="text-sm text-destructive">
@@ -115,53 +115,63 @@ export const CreateProjectModal = ({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-right">
-                What do you want to make? (optional)
-              </Label>
-              <Textarea
-                id="description"
-                placeholder="Tell us about your idea..."
-                {...form.register("description")}
-                className="min-h-[80px] resize-none"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="template" className="text-right">
-                How do you want to start?
+              <Label htmlFor="template" className="text-[var(--ecode-text)]">
+                Template
               </Label>
               <Select defaultValue="blank" {...form.register("template")}>
-                <SelectTrigger id="template">
-                  <SelectValue placeholder="Choose a starting point" />
+                <SelectTrigger 
+                  id="template"
+                  className="bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] text-[var(--ecode-text)]"
+                >
+                  <SelectValue placeholder="Choose a template" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="blank">Start from scratch</SelectItem>
-                  <SelectItem value="html">HTML/CSS/JS</SelectItem>
-                  <SelectItem value="react">React</SelectItem>
-                  <SelectItem value="express">Express.js</SelectItem>
-                  <SelectItem value="flask">Flask</SelectItem>
+                <SelectContent className="bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+                  <SelectItem value="blank" className="text-[var(--ecode-text)]">Blank Repl</SelectItem>
+                  <SelectItem value="python" className="text-[var(--ecode-text)]">Python</SelectItem>
+                  <SelectItem value="nodejs" className="text-[var(--ecode-text)]">Node.js</SelectItem>
+                  <SelectItem value="html" className="text-[var(--ecode-text)]">HTML/CSS/JS</SelectItem>
+                  <SelectItem value="react" className="text-[var(--ecode-text)]">React</SelectItem>
+                  <SelectItem value="typescript" className="text-[var(--ecode-text)]">TypeScript</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2"
-              onClick={() => setAiGenerated(!aiGenerated)}
-            >
-              <Sparkles className="h-4 w-4 text-yellow-500" />
-              Generate with AI
-            </Button>
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-[var(--ecode-text)]">
+                Description (optional)
+              </Label>
+              <Textarea
+                id="description"
+                placeholder="What will your Repl do?"
+                {...form.register("description")}
+                className="min-h-[80px] resize-none bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-muted)]"
+              />
+            </div>
+            
+            {aiGenerated && (
+              <div className="flex items-center gap-2 p-3 bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)] rounded-md">
+                <Sparkles className="h-4 w-4" />
+                <span className="text-sm">AI generated from your description</span>
+              </div>
+            )}
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={onClose} type="button">
+            <Button 
+              variant="outline" 
+              onClick={onClose} 
+              type="button"
+              className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar)]"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
+            >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Project
+              Create Repl
             </Button>
           </DialogFooter>
         </form>
