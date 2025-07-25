@@ -388,6 +388,7 @@ export default function Teams() {
                     </Tabs>
                   </div>
                 </CardContent>
+              </Card>
             ) : (
               <Card className="h-64">
                 <CardContent className="flex items-center justify-center h-full">

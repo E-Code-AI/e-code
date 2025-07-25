@@ -86,7 +86,11 @@ export default function Press() {
                       <h3 className="text-xl font-semibold mb-2">{release.title}</h3>
                       <p className="text-muted-foreground">{release.description}</p>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.location.href = '/blog'}
+                    >
                       Read More
                     </Button>
                   </CardContent>
@@ -95,7 +99,10 @@ export default function Press() {
             </div>
 
             <div className="mt-8 text-center">
-              <Button variant="outline">
+              <Button 
+                variant="outline"
+                onClick={() => window.location.href = '/blog'}
+              >
                 View All Press Releases
               </Button>
             </div>

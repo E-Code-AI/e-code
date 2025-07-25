@@ -219,7 +219,12 @@ export default function Forum() {
                 </div>
 
                 <div className="mt-8 flex justify-center">
-                  <Button variant="outline">Load More Posts</Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => window.location.href = '/forum'}
+                  >
+                    Load More Posts
+                  </Button>
                 </div>
               </div>
             </div>

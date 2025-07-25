@@ -355,11 +355,19 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
 
               {/* Quick Actions */}
               <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => window.location.href = '/account'}
+                >
                   <Clock className="h-4 w-4 mr-2" />
                   Billing History
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => window.location.href = '/account'}
+                >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Payment Methods
                 </Button>

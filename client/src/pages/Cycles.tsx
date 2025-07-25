@@ -393,7 +393,11 @@ export default function Cycles() {
                         <div>
                           <h3 className="font-semibold">Refer Friends</h3>
                           <p className="text-sm text-muted-foreground">Get 500 Cycles for each friend who signs up</p>
-                          <Button variant="link" className="p-0 h-auto mt-1">
+                          <Button 
+                            variant="link" 
+                            className="p-0 h-auto mt-1"
+                            onClick={() => window.location.href = '/referrals'}
+                          >
                             Get your referral link
                           </Button>
                         </div>

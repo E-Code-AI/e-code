@@ -218,6 +218,7 @@ export default function AI() {
                 size="lg" 
                 variant="outline"
                 className="text-primary-foreground border-primary-foreground hover:bg-primary-foreground/10"
+                onClick={() => window.location.href = '/pricing'}
               >
                 View Pricing
               </Button>
