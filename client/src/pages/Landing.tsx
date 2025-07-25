@@ -134,17 +134,17 @@ export default function Landing() {
       <section className="py-responsive">
         <div className="container-responsive max-w-6xl">
           <div className="text-center space-y-6">
-            <Badge variant="secondary" className="mb-4">
-              <Star className="h-3 w-3 mr-1" />
-              Used by 20M+ learners, creators & professionals
+            <Badge variant="secondary" className="mb-4 animate-pulse">
+              <Sparkles className="h-3 w-3 mr-1" />
+              Build apps and sites with AI
             </Badge>
-            <h1 className="text-5xl md:text-6xl font-bold">
-              Create, learn, and explore{' '}
-              <span className="text-primary">code together</span>
+            <h1 className="text-5xl md:text-7xl font-bold">
+              Build <span className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">software</span> fast
+              <br />
+              with AI
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              The friendly platform where anyone can start their coding journey. No experience needed, 
-              no complex setup. Just open your browser and begin creating.
+              Code with AI. Deploy instantly. Share with the world. Build and ship software 10x faster.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button size="lg" onClick={handleGetStarted} className="gap-2">
@@ -168,16 +168,44 @@ export default function Landing() {
                   <div className="w-3 h-3 rounded-full bg-yellow-600 dark:bg-yellow-400" />
                   <div className="w-3 h-3 rounded-full bg-green-600 dark:bg-green-400" />
                 </div>
-                <span className="text-xs text-muted-foreground">main.py</span>
+                <span className="text-xs text-muted-foreground">App.jsx</span>
               </div>
               <div className="p-4 bg-background font-mono text-sm">
-                <div className="text-muted-foreground"># Your first line of code!</div>
-                <div className="mt-2">
-                  <span className="text-blue-600 dark:text-blue-400">print</span>(
-                  <span className="text-green-600 dark:text-green-400">"Hello! I'm learning to code! 🎉"</span>)
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-purple-600 dark:text-purple-400">import</span> {' '}
+                    <span className="text-blue-600 dark:text-blue-400">React</span> {' '}
+                    <span className="text-purple-600 dark:text-purple-400">from</span> {' '}
+                    <span className="text-green-600 dark:text-green-400">'react'</span>;
+                  </div>
+                  <div>
+                    <span className="text-purple-600 dark:text-purple-400">import</span> {' '}
+                    <span className="text-blue-600 dark:text-blue-400">{'{ createRoot }'}</span> {' '}
+                    <span className="text-purple-600 dark:text-purple-400">from</span> {' '}
+                    <span className="text-green-600 dark:text-green-400">'react-dom/client'</span>;
+                  </div>
+                  <div className="mt-3">
+                    <span className="text-purple-600 dark:text-purple-400">function</span> {' '}
+                    <span className="text-yellow-600 dark:text-yellow-400">App</span>() {'{'}
+                  </div>
+                  <div className="ml-4">
+                    <span className="text-purple-600 dark:text-purple-400">return</span> (
+                  </div>
+                  <div className="ml-8">
+                    <span className="text-gray-500">&lt;</span>
+                    <span className="text-red-600 dark:text-red-400">h1</span>
+                    <span className="text-gray-500">&gt;</span>
+                    <span className="text-green-600 dark:text-green-400">Welcome to E-Code!</span>
+                    <span className="text-gray-500">&lt;/</span>
+                    <span className="text-red-600 dark:text-red-400">h1</span>
+                    <span className="text-gray-500">&gt;</span>
+                  </div>
+                  <div className="ml-4">);</div>
+                  <div>{'}'}</div>
+                  <div className="mt-3 p-2 bg-muted rounded">
+                    <span className="text-green-600 dark:text-green-400">✓ App running at localhost:3000</span>
+                  </div>
                 </div>
-                <div className="mt-3 text-muted-foreground"># Click Run to see what happens ▶️</div>
-                <div className="mt-2 text-green-600 dark:text-green-400">Output: Hello! I'm learning to code! 🎉</div>
               </div>
             </Card>
           </div>
@@ -318,15 +346,30 @@ export default function Landing() {
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="bg-muted rounded-lg p-4 mb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-xs text-muted-foreground">Live</span>
+                <div className="bg-muted rounded-lg p-3 mb-3 font-mono text-xs">
+                  <div className="space-y-1">
+                    <div>
+                      <span className="text-purple-600 dark:text-purple-400">const</span> {' '}
+                      <span className="text-blue-600 dark:text-blue-400">ingredients</span> = [
+                      <span className="text-green-600 dark:text-green-400">'carrot'</span>,
+                      <span className="text-green-600 dark:text-green-400">'potato'</span>];
+                    </div>
+                    <div>
+                      <span className="text-purple-600 dark:text-purple-400">const</span> {' '}
+                      <span className="text-blue-600 dark:text-blue-400">recipes</span> = 
+                      <span className="text-yellow-600 dark:text-yellow-400">findRecipes</span>(ingredients);
+                    </div>
+                    <div className="mt-2 text-green-600 dark:text-green-400">
+                      // Found 12 matching recipes!
+                    </div>
                   </div>
-                  <p className="text-sm">🥕 Carrot, 🥔 Potato, 🧅 Onion</p>
-                  <p className="text-sm font-semibold mt-2">Found 12 recipes!</p>
                 </div>
-                <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
+                  onClick={() => window.location.href = '/templates'}
+                >
                   View Project
                 </Button>
               </CardContent>
@@ -344,14 +387,31 @@ export default function Landing() {
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="bg-muted rounded-lg p-4 mb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-xs text-muted-foreground">Live</span>
+                <div className="bg-muted rounded-lg p-3 mb-3 font-mono text-xs">
+                  <div className="space-y-1">
+                    <div>
+                      <span className="text-purple-600 dark:text-purple-400">interface</span> {' '}
+                      <span className="text-blue-600 dark:text-blue-400">Expense</span> {'{'}
+                    </div>
+                    <div className="ml-2">
+                      <span className="text-blue-600 dark:text-blue-400">amount</span>: number;
+                    </div>
+                    <div className="ml-2">
+                      <span className="text-blue-600 dark:text-blue-400">category</span>: string;
+                    </div>
+                    <div>{'}'}</div>
+                    <div className="mt-2">
+                      <span className="text-yellow-600 dark:text-yellow-400">Chart</span>.
+                      <span className="text-yellow-600 dark:text-yellow-400">render</span>(expenses);
+                    </div>
                   </div>
-                  <div className="h-20 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded" />
                 </div>
-                <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
+                  onClick={() => window.location.href = '/templates'}
+                >
                   View Project
                 </Button>
               </CardContent>
@@ -369,17 +429,31 @@ export default function Landing() {
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="bg-muted rounded-lg p-4 mb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-xs text-muted-foreground">Live</span>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold">25:00</p>
-                    <p className="text-xs text-muted-foreground">Focus Time</p>
+                <div className="bg-muted rounded-lg p-3 mb-3 font-mono text-xs">
+                  <div className="space-y-1">
+                    <div>
+                      <span className="text-purple-600 dark:text-purple-400">let</span> {' '}
+                      <span className="text-blue-600 dark:text-blue-400">minutes</span> = 25;
+                    </div>
+                    <div>
+                      <span className="text-purple-600 dark:text-purple-400">let</span> {' '}
+                      <span className="text-blue-600 dark:text-blue-400">seconds</span> = 0;
+                    </div>
+                    <div className="mt-2">
+                      <span className="text-yellow-600 dark:text-yellow-400">setInterval</span>(() =&gt; {'{'}
+                    </div>
+                    <div className="ml-2">
+                      <span className="text-yellow-600 dark:text-yellow-400">updateTimer</span>();
+                    </div>
+                    <div>{'}'}, 1000);</div>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
+                  onClick={() => window.location.href = '/templates'}
+                >
                   View Project
                 </Button>
               </CardContent>
@@ -390,6 +464,112 @@ export default function Landing() {
             <Button size="lg" onClick={handleGetStarted} variant="outline">
               Start building with AI
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Live Coding Demo Section */}
+      <section className="py-20 bg-gradient-to-b from-background to-muted/30">
+        <div className="container-responsive max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Watch code come to life instantly
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              From idea to running app in seconds. No setup, no downloads, just code.
+            </p>
+          </div>
+          
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
+            {/* Code Editor */}
+            <Card className="overflow-hidden">
+              <div className="bg-muted/50 p-2 flex items-center justify-between border-b">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-600 dark:bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-600 dark:bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-600 dark:bg-green-400" />
+                  </div>
+                  <span className="text-xs text-muted-foreground">app.py</span>
+                </div>
+                <Button size="sm" className="h-7 text-xs gap-1">
+                  <PlayCircle className="h-3 w-3" />
+                  Run
+                </Button>
+              </div>
+              <div className="p-4 bg-background font-mono text-sm">
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-purple-600 dark:text-purple-400">from</span> {' '}
+                    <span className="text-blue-600 dark:text-blue-400">flask</span> {' '}
+                    <span className="text-purple-600 dark:text-purple-400">import</span> Flask, render_template
+                  </div>
+                  <div>
+                    <span className="text-purple-600 dark:text-purple-400">import</span> {' '}
+                    <span className="text-blue-600 dark:text-blue-400">requests</span>
+                  </div>
+                  <div className="mt-3">
+                    app = <span className="text-yellow-600 dark:text-yellow-400">Flask</span>(__name__)
+                  </div>
+                  <div className="mt-3">
+                    <span className="text-blue-600 dark:text-blue-400">@app.route</span>(<span className="text-green-600 dark:text-green-400">'/'</span>)
+                  </div>
+                  <div>
+                    <span className="text-purple-600 dark:text-purple-400">def</span> {' '}
+                    <span className="text-yellow-600 dark:text-yellow-400">home</span>():
+                  </div>
+                  <div className="ml-4">
+                    weather = <span className="text-yellow-600 dark:text-yellow-400">get_weather</span>()
+                  </div>
+                  <div className="ml-4">
+                    <span className="text-purple-600 dark:text-purple-400">return</span> {' '}
+                    <span className="text-yellow-600 dark:text-yellow-400">render_template</span>(<span className="text-green-600 dark:text-green-400">'index.html'</span>, weather=weather)
+                  </div>
+                  <div className="mt-3">
+                    <span className="text-purple-600 dark:text-purple-400">if</span> __name__ == <span className="text-green-600 dark:text-green-400">'__main__'</span>:
+                  </div>
+                  <div className="ml-4">
+                    app.<span className="text-yellow-600 dark:text-yellow-400">run</span>(debug=<span className="text-purple-600 dark:text-purple-400">True</span>)
+                  </div>
+                </div>
+              </div>
+            </Card>
+            
+            {/* Live Preview */}
+            <div className="space-y-4">
+              <Card className="overflow-hidden">
+                <div className="bg-muted/50 p-2 flex items-center gap-2 border-b">
+                  <Globe className="h-4 w-4" />
+                  <span className="text-xs text-muted-foreground">localhost:5000</span>
+                  <div className="ml-auto w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                </div>
+                <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
+                  <h3 className="text-2xl font-bold mb-4">Weather App 🌤️</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card className="p-4">
+                      <p className="text-sm text-muted-foreground">Today</p>
+                      <p className="text-3xl font-bold">72°F</p>
+                      <p className="text-sm">Sunny</p>
+                    </Card>
+                    <Card className="p-4">
+                      <p className="text-sm text-muted-foreground">Tomorrow</p>
+                      <p className="text-3xl font-bold">68°F</p>
+                      <p className="text-sm">Cloudy</p>
+                    </Card>
+                  </div>
+                </div>
+              </Card>
+              
+              <div className="flex items-center gap-4">
+                <Badge variant="secondary" className="gap-1">
+                  <Terminal className="h-3 w-3" />
+                  Console
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Server running on http://localhost:5000
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

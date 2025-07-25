@@ -41,6 +41,16 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
 - Emphasize that no prior coding experience is needed
 
 ## Recent Changes
+- 2025-01-30: **Homepage Redesigned to Match Replit**:
+  * **Hero Section Updated**: Changed messaging to "Build software fast with AI" with gradient text
+  * **Code Demonstrations Added**: Replaced simple examples with syntax-highlighted code:
+    - Hero code preview shows React component with proper syntax highlighting
+    - Recipe Finder shows JavaScript with findRecipes function
+    - Budget Tracker shows TypeScript interface and Chart rendering
+    - Study Timer shows timer implementation with setInterval
+  * **Live Coding Demo Section**: Added new section showing Flask app with live preview
+  * **Fixed "No Code" Issues**: All sections now display actual code snippets with proper highlighting
+  * **Visual Enhancements**: Added gradient backgrounds, animation effects, and Replit-style design elements
 - 2025-01-30: **Terminal, Preview, and File Operations Testing & Debugging**:
   * **Terminal Integration Fixed**: 
     - Fixed WebSocket connection mismatch - client was connecting to `/api/projects/${projectId}/terminal` but server used `/terminal`
