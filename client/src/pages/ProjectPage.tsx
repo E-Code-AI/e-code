@@ -16,6 +16,7 @@ import { DeploymentPanel } from '@/components/DeploymentPanel';
 import Collaboration from '@/components/Collaboration';
 import GitPanel from '@/components/GitPanel';
 import AIPanel from '@/components/AIPanel';
+import { ReplitAgentChat } from '@/components/ReplitAgentChat';
 import EnvironmentPanel from '@/components/EnvironmentPanel';
 import { EnvironmentProvider } from '@/hooks/useEnvironment';
 import { Button } from '@/components/ui/button';
@@ -766,33 +767,25 @@ const ProjectPage = () => {
         
         {/* Right Panel: AI Assistant */}
         {aiPanelVisible && projectId && (
-          <div className="w-96 border-l border-border overflow-hidden">
-            <div className="h-8 bg-muted/30 border-b border-border flex items-center px-4 justify-between">
-              <div className="flex items-center">
-                <Sparkles className="h-4 w-4 mr-2 text-primary" />
-                <h3 className="text-sm font-medium">AI Assistant</h3>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="h-6 w-6"
-                onClick={toggleAiPanel}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="h-[calc(100%-32px)] overflow-hidden">
-              <AIPanel 
-                projectId={projectId!} 
-                currentFileContent={selectedFile?.content || ''}
-                currentLanguage={project?.language || 'javascript'}
-                onInsertCode={(code) => {
-                  if (selectedFile) {
-                    handleFileChange(code);
-                  }
-                }}
-              />
-            </div>
+          <div className="w-[400px] border-l border-border overflow-hidden flex flex-col">
+            <ReplitAgentChat 
+              projectId={projectId}
+              currentFile={selectedFile ? {
+                name: selectedFile.name,
+                content: selectedFile.content || '',
+                language: project?.language || 'javascript'
+              } : undefined}
+              onApplyCode={(code) => {
+                if (selectedFile) {
+                  handleFileChange(code);
+                }
+              }}
+              onRunCode={() => {
+                if (!projectRunning) {
+                  toggleProjectRunning();
+                }
+              }}
+            />
           </div>
         )}
         
