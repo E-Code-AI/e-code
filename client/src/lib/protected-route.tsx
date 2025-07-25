@@ -35,8 +35,8 @@ export function ProtectedRoute({
         <Component />
       ) : (
         <>
-          {console.log(`Redirecting to /auth from ${path} - user not authenticated`)}
-          <Redirect to="/auth" />
+          {console.log(`Redirecting to /api/login from ${path} - user not authenticated`)}
+          {window.location.href = '/api/login'}
         </>
       )}
     </Route>

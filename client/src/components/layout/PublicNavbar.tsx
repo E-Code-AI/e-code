@@ -139,11 +139,11 @@ export function PublicNavbar() {
           <div className="flex items-center gap-4">
             <ThemeSwitcher />
             
-            <Button variant="ghost" onClick={() => navigate('/auth')}>
+            <Button variant="ghost" onClick={() => window.location.href = '/api/login'}>
               Log in
             </Button>
             
-            <Button onClick={() => navigate('/auth')} className="hidden sm:inline-flex">
+            <Button onClick={() => window.location.href = '/api/login'} className="hidden sm:inline-flex">
               Sign up
             </Button>
 
