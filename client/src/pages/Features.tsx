@@ -27,102 +27,102 @@ export default function Features() {
     // Development Environment
     {
       icon: <Code className="h-6 w-6" />,
-      title: 'Powerful Code Editor',
-      description: 'A full-featured IDE in your browser with intelligent code completion',
+      title: 'Friendly Code Editor',
+      description: 'Write code easily with helpful suggestions and colorful highlighting',
       details: [
-        'Syntax highlighting for 50+ languages',
-        'IntelliSense and auto-completion',
-        'Multi-cursor editing',
-        'Code folding and navigation',
-        'Integrated linting and formatting',
-        'Custom themes and settings'
+        'Colors that make code easy to read',
+        'Helpful suggestions as you type',
+        'Multiple ways to edit faster',
+        'Easy navigation through your code',
+        'Automatic error detection',
+        'Choose colors that feel comfortable'
       ],
-      category: 'Development'
+      category: 'Creating'
     },
     {
       icon: <Terminal className="h-6 w-6" />,
-      title: 'Integrated Terminal',
-      description: 'Full Linux terminal with root access in every project',
+      title: 'Command Center',
+      description: 'Run your code and see results instantly, just like magic',
       details: [
-        'Persistent shell sessions',
-        'Multiple terminal tabs',
-        'Custom shell configurations',
-        'Package installation via apt/pip/npm',
-        'Background process support',
-        'Terminal sharing for collaboration'
+        'Run your programs with one click',
+        'See results immediately',
+        'Try multiple things at once',
+        'Install tools you need easily',
+        'Everything stays running',
+        'Share your screen with helpers'
       ],
-      category: 'Development'
+      category: 'Creating'
     },
     {
       icon: <FileCode className="h-6 w-6" />,
-      title: 'File Management',
-      description: 'Advanced file explorer with drag-and-drop support',
+      title: 'Your Project Files',
+      description: 'Organize your work just like folders on your computer',
       details: [
-        'Tree view file explorer',
-        'Drag and drop file operations',
-        'File search and replace',
-        'Git integration in file tree',
-        'File preview and quick edit',
-        'Bulk file operations'
+        'See all your files clearly',
+        'Move files by dragging them',
+        'Find any file quickly',
+        'Track your changes easily',
+        'Preview without opening',
+        'Work with many files at once'
       ],
-      category: 'Development'
+      category: 'Creating'
     },
     {
       icon: <Package className="h-6 w-6" />,
-      title: 'Package Management',
-      description: 'Install any package from npm, pip, cargo, and more',
+      title: 'Add Cool Features',
+      description: 'Easily add pre-made tools to make your projects awesome',
       details: [
-        'Automatic dependency detection',
-        'Package search and discovery',
-        'Version management',
-        'Lock file support',
-        'Private registry support',
-        'Vulnerability scanning'
+        'We find what you need automatically',
+        'Browse thousands of helpful tools',
+        'Always use the right version',
+        'Everything stays organized',
+        'Access special tools',
+        'Stay safe from bad code'
       ],
-      category: 'Development'
+      category: 'Creating'
     },
 
     // Collaboration
     {
       icon: <Users className="h-6 w-6" />,
-      title: 'Real-time Collaboration',
-      description: 'Code together with your team in real-time',
+      title: 'Learn Together',
+      description: 'Get help from friends or mentors in real-time',
       details: [
-        'Live cursor tracking',
-        'Shared debugging sessions',
-        'Voice and video chat',
-        'Code reviews and comments',
-        'Presence indicators',
-        'Collaborative terminals'
+        'See where others are working',
+        'Fix problems together',
+        'Talk while you code',
+        'Leave helpful notes',
+        'Know who\'s online',
+        'Share your screen easily'
       ],
-      category: 'Collaboration'
+      category: 'Learning Together'
     },
     {
       icon: <GitBranch className="h-6 w-6" />,
-      title: 'Version Control',
-      description: 'Built-in Git support with visual tools',
+      title: 'Save Your Progress',
+      description: 'Never lose your work with automatic saving and history',
       details: [
-        'Visual Git interface',
-        'Branch management',
-        'Merge conflict resolution',
-        'GitHub/GitLab integration',
-        'Pull request creation',
-        'Commit history visualization'
+        'See what changed visually',
+        'Try different ideas safely',
+        'Fix mistakes easily',
+        'Connect to GitHub simply',
+        'Share your work',
+        'See your journey over time'
       ],
-      category: 'Collaboration'
+      category: 'Learning Together'
     },
 
     // Infrastructure
     {
       icon: <Cloud className="h-6 w-6" />,
-      title: 'Cloud Infrastructure',
-      description: 'Scalable cloud computing powered by Google Cloud',
+      title: 'Always Available',
+      description: 'Your projects work from anywhere, anytime',
       details: [
-        'Auto-scaling resources',
-        'Global CDN distribution',
-        'DDoS protection',
-        '99.9% uptime SLA',
-        'Multiple region deployment',
+        'Grows with your needs',
+        'Fast loading everywhere',
+        'Protected from attacks',
+        'Almost never goes down',
+        'Works worldwide',
         'Load balancing'
       ],
       category: 'Infrastructure'

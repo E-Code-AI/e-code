@@ -33,6 +33,13 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
 - **ReplitFileExplorer**: Interactive file system with drag/drop
 - **ReplitTerminal**: Full-featured terminal with multiple sessions
 
+## User Preferences - Public Website Messaging
+- **IMPORTANT**: The public website should emphasize that E-Code is NOT just for developers
+- Make it clear this is a platform for everyone: beginners, students, hobbyists, artists, entrepreneurs
+- Use inclusive language: "learners", "creators", "people" instead of just "developers"
+- Focus on accessibility, learning, and creativity rather than technical development
+- Emphasize that no prior coding experience is needed
+
 ## Recent Changes
 - 2025-01-21: Fixed critical database "NaN" error and missing `/api/projects/recent` endpoint
 - 2025-01-21: Enhanced ReplitFileExplorer with drag & drop, search, context menus, file upload
