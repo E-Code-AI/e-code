@@ -42,38 +42,38 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  // Fetch trending repls (mock data for now)
+  // Fetch trending projects (mock data for now)
   const trendingRepls = [
     {
       id: 1,
-      name: 'ChatGPT Clone',
-      author: 'alex_dev',
-      language: 'Python',
+      name: 'My First Website',
+      author: 'alex_beginner',
+      language: 'HTML',
       stars: 342,
       forks: 89,
-      description: 'A full-featured ChatGPT clone with streaming responses',
+      description: 'A colorful personal website I made to share my hobbies',
       lastUpdated: '2 hours ago',
       avatar: null,
     },
     {
       id: 2,
-      name: '3D Game Engine',
-      author: 'gamedev123',
+      name: 'Fun Drawing App',
+      author: 'creative_sarah',
       language: 'JavaScript',
       stars: 567,
       forks: 123,
-      description: 'WebGL-based 3D game engine with physics',
+      description: 'Draw and paint right in your browser - super easy to use!',
       lastUpdated: '5 hours ago',
       avatar: null,
     },
     {
       id: 3,
-      name: 'Music Synthesizer',
-      author: 'soundwave',
-      language: 'TypeScript',
+      name: 'Daily Journal',
+      author: 'mindful_mike',
+      language: 'Python',
       stars: 234,
       forks: 45,
-      description: 'Browser-based music synthesizer with MIDI support',
+      description: 'A simple app to write and save your daily thoughts',
       lastUpdated: '1 day ago',
       avatar: null,
     },
@@ -83,44 +83,44 @@ export default function Dashboard() {
   const activityFeed = [
     {
       id: 1,
-      type: 'fork',
-      user: 'sarah_coder',
-      action: 'forked',
-      target: 'Neural Network Visualizer',
+      type: 'remix',
+      user: 'sarah_learner',
+      action: 'remixed',
+      target: 'Birthday Card Maker',
       time: '10 minutes ago',
     },
     {
       id: 2,
-      type: 'star',
-      user: 'dev_mike',
-      action: 'starred',
-      target: 'Real-time Chat App',
+      type: 'like',
+      user: 'creative_mike',
+      action: 'liked',
+      target: 'Story Writing Helper',
       time: '25 minutes ago',
     },
     {
       id: 3,
       type: 'comment',
-      user: 'tech_guru',
-      action: 'commented on',
-      target: 'Machine Learning Toolkit',
+      user: 'helpful_emma',
+      action: 'gave feedback on',
+      target: 'Recipe Organizer',
       time: '1 hour ago',
     },
     {
       id: 4,
-      type: 'deploy',
-      user: 'deploy_master',
-      action: 'deployed',
-      target: 'E-commerce Platform',
+      type: 'share',
+      user: 'proud_parent',
+      action: 'shared',
+      target: 'Kids Math Game',
       time: '2 hours ago',
     },
   ];
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'fork': return <GitFork className="h-4 w-4" />;
-      case 'star': return <Star className="h-4 w-4" />;
+      case 'remix': return <GitFork className="h-4 w-4" />;
+      case 'like': return <Star className="h-4 w-4" />;
       case 'comment': return <MessageSquare className="h-4 w-4" />;
-      case 'deploy': return <Rocket className="h-4 w-4" />;
+      case 'share': return <Rocket className="h-4 w-4" />;
       default: return <Zap className="h-4 w-4" />;
     }
   };
@@ -167,7 +167,7 @@ export default function Dashboard() {
                 className="gap-2 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4" />
-                <span className="sm:inline">Create Repl</span>
+                <span className="sm:inline">Create Project</span>
               </Button>
             </div>
           </div>
@@ -184,8 +184,8 @@ export default function Dashboard() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Recent Repls</CardTitle>
-                    <CardDescription>Your recently accessed projects</CardDescription>
+                    <CardTitle>Your Projects</CardTitle>
+                    <CardDescription>Things you've been working on recently</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -221,7 +221,7 @@ export default function Dashboard() {
                       className="mt-4"
                       variant="outline"
                     >
-                      Create your first Repl
+                      Start your first project
                     </Button>
                   </div>
                 ) : (
@@ -267,9 +267,9 @@ export default function Dashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
-                  Trending Repls
+                  Popular Projects
                 </CardTitle>
-                <CardDescription>Popular projects from the community</CardDescription>
+                <CardDescription>See what others are creating</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -293,11 +293,11 @@ export default function Dashboard() {
                         <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Star className="h-3 w-3" />
-                            {repl.stars}
+                            {repl.stars} likes
                           </span>
                           <span className="flex items-center gap-1">
                             <GitFork className="h-3 w-3" />
-                            {repl.forks}
+                            {repl.forks} remixes
                           </span>
                           <span className="hidden sm:inline">{repl.lastUpdated}</span>
                         </div>
@@ -320,19 +320,19 @@ export default function Dashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{recentProjects.length}</div>
-                    <div className="text-xs text-muted-foreground">Total Repls</div>
+                    <div className="text-xs text-muted-foreground">Your Projects</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">12</div>
-                    <div className="text-xs text-muted-foreground">Followers</div>
+                    <div className="text-xs text-muted-foreground">Friends</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">45</div>
-                    <div className="text-xs text-muted-foreground">Total Stars</div>
+                    <div className="text-xs text-muted-foreground">Total Likes</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">8</div>
-                    <div className="text-xs text-muted-foreground">Deployments</div>
+                    <div className="text-xs text-muted-foreground">Shared Projects</div>
                   </div>
                 </div>
               </CardContent>

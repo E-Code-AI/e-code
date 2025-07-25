@@ -63,12 +63,12 @@ export const CreateProjectModal = ({
     if (initialDescription) {
       // Extract a name from the description
       let projectName = "";
-      if (initialDescription.includes("web app")) {
-        projectName = "Web App";
-      } else if (initialDescription.includes("Flask")) {
-        projectName = "Flask API";
-      } else if (initialDescription.includes("React")) {
-        projectName = "React Project";
+      if (initialDescription.includes("web app") || initialDescription.includes("website")) {
+        projectName = "My Website";
+      } else if (initialDescription.includes("game")) {
+        projectName = "Fun Game";
+      } else if (initialDescription.includes("app")) {
+        projectName = "My App";
       } else {
         // Use the first 3-4 words as the name
         const words = initialDescription.split(" ").slice(0, 4);
@@ -91,19 +91,19 @@ export const CreateProjectModal = ({
       <DialogContent className="sm:max-w-[550px]">
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <DialogHeader>
-            <DialogTitle>Create New Project</DialogTitle>
+            <DialogTitle>Let's Create Something New!</DialogTitle>
             <DialogDescription>
-              Give your project a name to get started or describe what you want to build.
+              What would you like to call your creation? You can also tell us what you want to make.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-right">
-                Project Name
+                Name your creation
               </Label>
               <Input
                 id="name"
-                placeholder="My awesome project"
+                placeholder="Something fun and creative"
                 {...form.register("name")}
                 className="col-span-3"
               />
@@ -116,11 +116,11 @@ export const CreateProjectModal = ({
             
             <div className="space-y-2">
               <Label htmlFor="description" className="text-right">
-                Description (optional)
+                What do you want to make? (optional)
               </Label>
               <Textarea
                 id="description"
-                placeholder="Describe what you want to build..."
+                placeholder="Tell us about your idea..."
                 {...form.register("description")}
                 className="min-h-[80px] resize-none"
               />
@@ -128,14 +128,14 @@ export const CreateProjectModal = ({
             
             <div className="space-y-2">
               <Label htmlFor="template" className="text-right">
-                Template
+                How do you want to start?
               </Label>
               <Select defaultValue="blank" {...form.register("template")}>
                 <SelectTrigger id="template">
-                  <SelectValue placeholder="Select a template" />
+                  <SelectValue placeholder="Choose a starting point" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="blank">Blank Project</SelectItem>
+                  <SelectItem value="blank">Start from scratch</SelectItem>
                   <SelectItem value="html">HTML/CSS/JS</SelectItem>
                   <SelectItem value="react">React</SelectItem>
                   <SelectItem value="express">Express.js</SelectItem>
