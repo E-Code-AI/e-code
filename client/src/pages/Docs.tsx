@@ -183,17 +183,17 @@ export default function Docs() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-16 px-4 bg-gradient-to-b from-primary/5 to-transparent">
+      <section className="py-12 sm:py-16 md:py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center space-y-6">
-            <Badge variant="secondary" className="mb-4">
+          <div className="text-center space-y-4 sm:space-y-6">
+            <Badge variant="secondary" className="mb-2 sm:mb-4 text-xs sm:text-sm">
               <BookOpen className="h-3 w-3 mr-1" />
               Documentation
             </Badge>
-            <h1 className="text-4xl md:text-5xl font-bold">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
               Build anything with E-Code
             </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
               Everything you need to know to create, collaborate, and deploy amazing projects
             </p>
             

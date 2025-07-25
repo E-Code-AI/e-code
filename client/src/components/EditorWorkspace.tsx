@@ -531,41 +531,19 @@ export function EditorWorkspace({
         <div className="fixed top-0 right-0 h-full w-80 z-40">
           <CollaborationPanel
             projectId={project.id}
-            fileId={activeFile.id}
-            visible={showCollaboration}
-            onInviteClick={() => {
-              toast({
-                title: "Invite Users",
-                description: "Invitation link copied to clipboard.",
-              });
-            }}
           />
         </div>
       )}
       
       {/* Command Palette */}
-      <CommandPalette
-        open={showCommandPalette}
-        onOpenChange={setShowCommandPalette}
-        project={project}
-        files={files}
-        onFileSelect={handleFileSelect}
-        onCreateFile={(isFolder) => {
-          const name = isFolder ? 'New Folder' : 'new_file.js';
-          onFileCreate(name, isFolder, null);
-          toast({
-            title: isFolder ? "Folder Created" : "File Created",
-            description: `${name} has been created.`,
-          });
-        }}
-        onActionSelect={handleCommandAction}
-      />
+      {showCommandPalette && (
+        <CommandPalette />
+      )}
       
       {/* Keyboard Shortcuts */}
-      <KeyboardShortcuts
-        open={showKeyboardShortcuts}
-        onOpenChange={setShowKeyboardShortcuts}
-      />
+      {showKeyboardShortcuts && (
+        <KeyboardShortcuts />
+      )}
       
       {/* ReplitDB */}
       {showReplitDB && (
@@ -580,11 +558,11 @@ export function EditorWorkspace({
       )}
       
       {/* Nix Config */}
-      <NixConfig
-        projectId={project.id}
-        open={showNixConfig}
-        onOpenChange={setShowNixConfig}
-      />
+      {showNixConfig && (
+        <NixConfig
+          projectId={project.id}
+        />
+      )}
     </div>
   );
 }
