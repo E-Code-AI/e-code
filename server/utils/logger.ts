@@ -1,32 +1,30 @@
-/**
- * Logger utility for PLOT
- * Provides a standardized way to log messages with proper formatting
- */
-
-import { log as viteLog } from '../vite';
-
-type LogLevel = 'info' | 'warn' | 'error';
-
-/**
- * Log a message with source and level information
- */
-export function log(message: string, source: string, level: LogLevel = 'info'): void {
-  const formattedMessage = level === 'info' 
-    ? message
-    : level === 'warn'
-      ? `WARNING: ${message}`
-      : `ERROR: ${message}`;
-      
-  viteLog(formattedMessage, source);
+export interface Logger {
+  info(message: string, ...args: any[]): void;
+  error(message: string, ...args: any[]): void;
+  warn(message: string, ...args: any[]): void;
+  debug(message: string, ...args: any[]): void;
 }
 
-/**
- * Create a source-specific logger
- */
-export function createLogger(defaultSource: string) {
+export function createLogger(name: string): Logger {
+  const timestamp = () => new Date().toISOString();
+  
   return {
-    info: (message: string, source: string = defaultSource) => log(message, source, 'info'),
-    warn: (message: string, source: string = defaultSource) => log(message, source, 'warn'),
-    error: (message: string, source: string = defaultSource) => log(message, source, 'error')
+    info(message: string, ...args: any[]): void {
+      console.log(`[${timestamp()}] [${name}] INFO: ${message}`, ...args);
+    },
+    
+    error(message: string, ...args: any[]): void {
+      console.error(`[${timestamp()}] [${name}] ERROR: ${message}`, ...args);
+    },
+    
+    warn(message: string, ...args: any[]): void {
+      console.warn(`[${timestamp()}] [${name}] WARN: ${message}`, ...args);
+    },
+    
+    debug(message: string, ...args: any[]): void {
+      if (process.env.NODE_ENV === 'development') {
+        console.debug(`[${timestamp()}] [${name}] DEBUG: ${message}`, ...args);
+      }
+    }
   };
 }

@@ -3,8 +3,10 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { EventEmitter } from 'events';
 import { storage } from '../storage';
-import { sandboxExecutor } from '../sandbox/sandbox-executor';
-// import { RuntimeManager } from '../runtimes/runtime-manager';
+import { containerOrchestrator } from '../orchestration/container-orchestrator';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('executor');
 
 export interface ExecutionOptions {
   projectId: number;
@@ -38,6 +40,9 @@ export interface ExecutionProcess {
 
 export class CodeExecutor extends EventEmitter {
   private executingProcesses: Map<string, ExecutionProcess> = new Map();
+  private taskToExecution: Map<string, string> = new Map(); // Maps task ID to execution ID
+  private executionToTask: Map<string, string> = new Map(); // Maps execution ID to task ID
+  
   constructor() {
     super();
   }
@@ -48,8 +53,8 @@ export class CodeExecutor extends EventEmitter {
     const startTime = Date.now();
 
     try {
-      // Initialize sandbox executor if not already done
-      await sandboxExecutor.initialize();
+      // Initialize container orchestrator if not already done
+      await containerOrchestrator.initialize();
 
       // Get project files
       const files = await storage.getFilesByProject(projectId);
@@ -74,41 +79,63 @@ export class CodeExecutor extends EventEmitter {
         throw new Error(`Main file ${entryFile} not found or has no content`);
       }
       
-      // Convert files to sandbox format
-      const sandboxFiles: { [path: string]: string } = {};
+      // Convert files to orchestrator format
+      const taskFiles: Record<string, string> = {};
       for (const file of files) {
         if (file.name !== entryFile && !file.isFolder && file.content !== null) {
-          sandboxFiles[file.name] = file.content;
+          taskFiles[file.name] = file.content;
         }
       }
       
-      // Normalize language names for sandbox
-      let sandboxLanguage = language;
+      // Normalize language names
+      let taskLanguage = language;
       if (language === 'nodejs') {
-        sandboxLanguage = 'javascript';
+        taskLanguage = 'javascript';
       }
       
-      // Execute in sandbox
-      const sandboxResult = await sandboxExecutor.execute({
-        language: sandboxLanguage,
-        code: mainFileRecord.content,
-        files: sandboxFiles,
-        stdin: stdin,
-        env: envVars,
-        timeout: Math.floor(timeout / 1000), // Convert to seconds
-        securityPolicy: 'standard' // Use standard policy by default
-      });
+      // Submit task to container orchestrator
+      const taskId = await containerOrchestrator.submitTask(
+        String(projectId),
+        userId,
+        taskLanguage,
+        mainFileRecord.content,
+        taskFiles,
+        {
+          env: envVars,
+          timeout: Math.floor(timeout / 1000), // Convert to seconds
+          memoryLimit: 512, // Default 512MB
+          cpuLimit: 1, // Default 1 CPU
+          networkEnabled: false // Network disabled by default for security
+        }
+      );
       
-      // Convert sandbox result to execution result
+      // Store task mapping
+      this.taskToExecution.set(taskId, executionId);
+      this.executionToTask.set(executionId, taskId);
+      
+      // Wait for task completion
+      let task = await containerOrchestrator.getTaskStatus(taskId);
+      while (task && ['pending', 'scheduled', 'preparing', 'running'].includes(task.status)) {
+        await new Promise(resolve => setTimeout(resolve, 100)); // Poll every 100ms
+        task = await containerOrchestrator.getTaskStatus(taskId);
+      }
+      
+      if (!task || !task.result) {
+        throw new Error('Task execution failed or was cancelled');
+      }
+      
+      // Convert task result to execution result
       return {
-        stdout: sandboxResult.stdout,
-        stderr: sandboxResult.stderr,
-        exitCode: sandboxResult.exitCode,
-        executionTime: sandboxResult.executionTime * 1000, // Convert to milliseconds
-        error: sandboxResult.error,
-        timedOut: sandboxResult.executionTime >= (timeout / 1000)
+        stdout: task.result.stdout,
+        stderr: task.result.stderr,
+        exitCode: task.result.exitCode,
+        executionTime: task.result.executionTime * 1000, // Convert to milliseconds
+        error: task.status === 'failed' ? task.result.stderr : undefined,
+        timedOut: task.status === 'timeout'
       };
+      
     } catch (error) {
+      logger.error(`Execution failed for ${executionId}:`, String(error));
       return {
         stdout: '',
         stderr: error instanceof Error ? error.message : 'Unknown error',
@@ -116,25 +143,33 @@ export class CodeExecutor extends EventEmitter {
         executionTime: Date.now() - startTime,
         error: error instanceof Error ? error.message : 'Unknown error'
       };
+    } finally {
+      // Clean up mappings
+      const taskId = this.executionToTask.get(executionId);
+      if (taskId) {
+        this.taskToExecution.delete(taskId);
+        this.executionToTask.delete(executionId);
+      }
     }
   }
 
   async stop(executionId: string): Promise<boolean> {
-    const execution = this.executingProcesses.get(executionId);
-    if (!execution || !execution.isRunning) {
+    // Get the task ID for this execution
+    const taskId = this.executionToTask.get(executionId);
+    if (!taskId) {
       return false;
     }
 
-    execution.process.kill('SIGTERM');
+    // Cancel the task in the orchestrator
+    const cancelled = await containerOrchestrator.cancelTask(taskId);
     
-    // Give process time to terminate gracefully
-    setTimeout(() => {
-      if (execution.isRunning) {
-        execution.process.kill('SIGKILL');
-      }
-    }, 1000);
+    if (cancelled) {
+      // Clean up mappings
+      this.taskToExecution.delete(taskId);
+      this.executionToTask.delete(executionId);
+    }
 
-    return true;
+    return cancelled;
   }
 
   getRunningProcesses(userId?: number): ExecutionProcess[] {
