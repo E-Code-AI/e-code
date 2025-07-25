@@ -194,7 +194,7 @@ export default function Desktop() {
                 size="lg" 
                 variant="secondary"
                 className="gap-2"
-                onClick={() => window.location.href = '/auth'}
+                onClick={() => window.location.href = '/api/login'}
               >
                 <Download className="h-4 w-4" />
                 Download Now

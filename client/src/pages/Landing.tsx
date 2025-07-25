@@ -78,7 +78,7 @@ export default function Landing() {
     if (user) {
       navigate('/dashboard');
     } else {
-      navigate('/auth');
+      window.location.href = '/api/login';
     }
   };
 
