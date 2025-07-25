@@ -87,7 +87,7 @@ export default function Dashboard() {
   // Mock data for additional features
   const pinnedProjects = recentProjects.slice(0, 2);
   const recentDeployments = [
-    { id: 1, project: 'Portfolio Site', status: 'active', url: 'https://portfolio.replit.app', time: '2 hours ago' },
+    { id: 1, project: 'Portfolio Site', status: 'active', url: 'https://portfolio.e-code.app', time: '2 hours ago' },
     { id: 2, project: 'Blog Platform', status: 'building', url: null, time: '5 hours ago' },
   ];
   

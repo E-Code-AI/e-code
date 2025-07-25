@@ -86,7 +86,7 @@ export default function Privacy() {
                 </p>
                 <div className="mt-4 p-4 bg-muted rounded-lg">
                   <p>E-Code Inc.</p>
-                  <p>Email: privacy@replit.com</p>
+                  <p>Email: privacy@e-code.com</p>
                   <p>Address: 548 Market St #16093, San Francisco, CA 94104</p>
                 </div>
               </section>

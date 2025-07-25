@@ -161,7 +161,7 @@ export default function Press() {
             <div className="space-y-4">
               <div>
                 <p className="font-semibold">Email</p>
-                <p>press@replit.com</p>
+                <p>press@e-code.com</p>
               </div>
               <div>
                 <p className="font-semibold">Phone</p>

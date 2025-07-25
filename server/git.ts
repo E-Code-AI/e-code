@@ -146,7 +146,7 @@ export async function initRepo(projectId: number): Promise<GitResult> {
       'commit', 
       '-m', 
       'Initial commit',
-      '--author="PLOT <plot@replit.clone>"'
+      '--author="E-CODE <system@e-code.com>"'
     ]);
     
     return { 

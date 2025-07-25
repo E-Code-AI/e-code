@@ -20,7 +20,7 @@ export default function Deployments() {
     {
       id: 1,
       name: 'portfolio-website',
-      url: 'https://portfolio-website.repl.co',
+      url: 'https://portfolio-website.e-code.app',
       status: 'active',
       environment: 'production',
       lastDeployed: '2024-01-30T10:30:00Z',
@@ -40,7 +40,7 @@ export default function Deployments() {
     {
       id: 2,
       name: 'api-backend',
-      url: 'https://api-backend.repl.co',
+      url: 'https://api-backend.e-code.app',
       status: 'active',
       environment: 'production',
       lastDeployed: '2024-01-29T15:45:00Z',
@@ -60,7 +60,7 @@ export default function Deployments() {
     {
       id: 3,
       name: 'blog-staging',
-      url: 'https://blog-staging.repl.co',
+      url: 'https://blog-staging.e-code.app',
       status: 'paused',
       environment: 'staging',
       lastDeployed: '2024-01-28T08:20:00Z',
@@ -80,7 +80,7 @@ export default function Deployments() {
     {
       id: 4,
       name: 'failed-deployment',
-      url: 'https://failed-deployment.repl.co',
+      url: 'https://failed-deployment.e-code.app',
       status: 'failed',
       environment: 'production',
       lastDeployed: '2024-01-27T12:15:00Z',

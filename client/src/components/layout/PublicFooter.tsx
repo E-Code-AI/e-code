@@ -53,11 +53,11 @@ export function PublicFooter() {
   };
 
   const socialLinks = [
-    { icon: Twitter, href: 'https://twitter.com/replit', label: 'Twitter' },
-    { icon: Github, href: 'https://github.com/replit', label: 'GitHub' },
-    { icon: Youtube, href: 'https://youtube.com/replit', label: 'YouTube' },
-    { icon: Linkedin, href: 'https://linkedin.com/company/replit', label: 'LinkedIn' },
-    { icon: Instagram, href: 'https://instagram.com/replit', label: 'Instagram' },
+    { icon: Twitter, href: 'https://twitter.com/ecode', label: 'Twitter' },
+    { icon: Github, href: 'https://github.com/ecode', label: 'GitHub' },
+    { icon: Youtube, href: 'https://youtube.com/ecode', label: 'YouTube' },
+    { icon: Linkedin, href: 'https://linkedin.com/company/ecode', label: 'LinkedIn' },
+    { icon: Instagram, href: 'https://instagram.com/ecode', label: 'Instagram' },
   ];
 
   return (
@@ -155,7 +155,7 @@ export function PublicFooter() {
             <h3 className="font-semibold mb-4 text-foreground">Mobile App</h3>
             <div className="space-y-3">
               <a 
-                href="https://apps.apple.com/app/replit" 
+                href="https://apps.apple.com/app/e-code" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-block"
@@ -167,7 +167,7 @@ export function PublicFooter() {
                 />
               </a>
               <a 
-                href="https://play.google.com/store/apps/details?id=com.replit.app" 
+                href="https://play.google.com/store/apps/details?id=com.e-code.app" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-block"

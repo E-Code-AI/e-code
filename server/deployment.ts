@@ -132,7 +132,7 @@ export class DeploymentManager {
       this.addLog(deploymentId, 'Deploying application...');
 
       // Generate deployment URL
-      const baseUrl = process.env.DEPLOYMENT_BASE_URL || 'https://replit-clone.app';
+      const baseUrl = process.env.DEPLOYMENT_BASE_URL || 'https://e-code.app';
       const deploymentUrl = `${baseUrl}/${project.name}-${deploymentId.substring(0, 8)}`;
 
       // In a real implementation, this would:
