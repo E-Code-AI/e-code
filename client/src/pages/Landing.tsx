@@ -20,54 +20,54 @@ export default function Landing() {
   const features = [
     {
       icon: <Zap className="h-6 w-6" />,
-      title: 'Instant Development',
-      description: 'Start coding in seconds with zero setup. No downloads, no configuration.'
+      title: 'Start in Seconds',
+      description: 'No confusing setup or downloads. Just click and start creating. Perfect for beginners!'
     },
     {
       icon: <Globe className="h-6 w-6" />,
-      title: 'Code from Anywhere',
-      description: 'Access your projects from any device with a browser. Your workspace follows you.'
+      title: 'Learn from Anywhere',
+      description: 'Use any device with a browser. Your learning progress follows you everywhere.'
     },
     {
       icon: <Users className="h-6 w-6" />,
-      title: 'Real-time Collaboration',
-      description: 'Code together with your team in real-time. See changes as they happen.'
+      title: 'Learn Together',
+      description: 'Get help from mentors or learn with friends. See each other\'s code in real-time.'
     },
     {
       icon: <Shield className="h-6 w-6" />,
-      title: 'Secure & Reliable',
-      description: 'Enterprise-grade security with automatic backups and version control.'
+      title: 'Safe Space to Experiment',
+      description: 'Make mistakes without breaking anything. We save your work automatically.'
     },
     {
       icon: <Package className="h-6 w-6" />,
-      title: '50+ Languages',
-      description: 'Support for Python, JavaScript, Go, Rust, and dozens more languages.'
+      title: 'All Popular Languages',
+      description: 'Try Python, JavaScript, HTML, and more. Find the language that clicks with you.'
     },
     {
       icon: <Rocket className="h-6 w-6" />,
-      title: 'Deploy Instantly',
-      description: 'Go from code to production with one click. Automatic SSL and scaling.'
+      title: 'Share Your Creations',
+      description: 'Show your work to the world with one click. No technical knowledge needed.'
     }
   ];
 
   const testimonials = [
     {
-      quote: "E-Code transformed how our team collaborates. We ship features 3x faster now.",
-      author: "Sarah Chen",
-      role: "CTO at TechStart",
-      avatar: "SC"
+      quote: "I went from knowing nothing about code to building my first website in a week!",
+      author: "Maria Garcia",
+      role: "Small Business Owner",
+      avatar: "MG"
     },
     {
-      quote: "The best online IDE I've ever used. It just works, no matter what language.",
-      author: "Marcus Johnson",
-      role: "Full Stack Developer",
-      avatar: "MJ"
+      quote: "My 12-year-old daughter learned Python here. The interface is so friendly and encouraging.",
+      author: "James Wilson",
+      role: "Parent",
+      avatar: "JW"
     },
     {
-      quote: "Teaching programming has never been easier. My students love it!",
-      author: "Dr. Emily Rodriguez",
-      role: "CS Professor",
-      avatar: "ER"
+      quote: "Perfect for my art students who want to create interactive digital projects.",
+      author: "Lisa Park",
+      role: "Art Teacher",
+      avatar: "LP"
     }
   ];
 
@@ -95,24 +95,24 @@ export default function Landing() {
           <div className="text-center space-y-6">
             <Badge variant="secondary" className="mb-4">
               <Star className="h-3 w-3 mr-1" />
-              Used by 20M+ developers worldwide
+              Used by 20M+ learners, creators & professionals
             </Badge>
             <h1 className="text-5xl md:text-6xl font-bold">
-              Build software faster,{' '}
-              <span className="text-primary">together</span>
+              Create, learn, and explore{' '}
+              <span className="text-primary">code together</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              The collaborative browser-based IDE that makes coding accessible to everyone. 
-              Write, run, and deploy code in 50+ languages — no setup required.
+              The friendly platform where anyone can start their coding journey. No experience needed, 
+              no complex setup. Just open your browser and begin creating.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button size="lg" onClick={handleGetStarted} className="gap-2">
-                Start coding for free
+                Start your journey free
                 <ArrowRight className="h-4 w-4" />
               </Button>
               <Button size="lg" variant="outline" className="gap-2">
                 <PlayCircle className="h-4 w-4" />
-                Watch demo
+                See how it works
               </Button>
             </div>
           </div>
@@ -130,19 +130,13 @@ export default function Landing() {
                 <span className="text-xs text-muted-foreground">main.py</span>
               </div>
               <div className="p-4 bg-background font-mono text-sm">
-                <div className="text-muted-foreground"># Welcome to E-Code!</div>
-                <div>
-                  <span className="text-blue-400">def</span>{' '}
-                  <span className="text-yellow-400">hello_world</span>():
-                </div>
-                <div className="pl-4">
-                  <span className="text-blue-400">print</span>(
-                  <span className="text-green-400">"Hello from the cloud! 🌍"</span>)
-                </div>
+                <div className="text-muted-foreground"># Your first line of code!</div>
                 <div className="mt-2">
-                  <span className="text-yellow-400">hello_world</span>()
+                  <span className="text-blue-400">print</span>(
+                  <span className="text-green-400">"Hello! I'm learning to code! 🎉"</span>)
                 </div>
-                <div className="mt-2 text-green-400"># Output: Hello from the cloud! 🌍</div>
+                <div className="mt-3 text-muted-foreground"># Click Run to see what happens ▶️</div>
+                <div className="mt-2 text-green-400">Output: Hello! I'm learning to code! 🎉</div>
               </div>
             </Card>
           </div>
@@ -154,10 +148,10 @@ export default function Landing() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Everything you need to build
+              Everything you need to succeed
             </h2>
             <p className="text-lg text-muted-foreground">
-              Powerful features that make development faster and more enjoyable
+              Friendly features designed to make learning and creating enjoyable for everyone
             </p>
           </div>
 
@@ -191,10 +185,10 @@ export default function Landing() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Built for every developer
+              Made for everyone
             </h2>
             <p className="text-lg text-muted-foreground">
-              From learning to launching, E-Code scales with you
+              Whether you're curious about code or building the next big thing
             </p>
           </div>
 
@@ -204,11 +198,11 @@ export default function Landing() {
                 <div className="mx-auto p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full w-fit mb-2">
                   <Code className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 </div>
-                <CardTitle>Learn to Code</CardTitle>
+                <CardTitle>Complete Beginners</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Perfect for beginners. Start with interactive tutorials and learn at your own pace.
+                  Never written code before? Perfect! Start with fun, bite-sized lessons designed for absolute beginners.
                 </p>
                 <Button variant="link" className="gap-1">
                   Start learning

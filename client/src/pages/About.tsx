@@ -15,32 +15,32 @@ export default function About() {
   const values = [
     {
       icon: <Lightbulb className="h-6 w-6" />,
-      title: 'Innovation First',
-      description: 'We push the boundaries of what\'s possible in browser-based development'
+      title: 'Simple Yet Powerful',
+      description: 'Making complex technology feel easy and approachable for everyone'
     },
     {
       icon: <Users className="h-6 w-6" />,
-      title: 'Community Driven',
-      description: 'Built by developers, for developers, with input from our amazing community'
+      title: 'Community for All',
+      description: 'A welcoming space for beginners, students, hobbyists, and professionals alike'
     },
     {
       icon: <Globe className="h-6 w-6" />,
-      title: 'Accessible to All',
-      description: 'Making programming accessible to everyone, regardless of their background'
+      title: 'No Barriers to Entry',
+      description: 'Start creating immediately - no downloads, installations, or technical setup'
     },
     {
       icon: <Heart className="h-6 w-6" />,
-      title: 'Developer Experience',
-      description: 'Obsessed with creating the best possible experience for developers'
+      title: 'Learning Made Fun',
+      description: 'We make the journey from curious beginner to confident creator enjoyable'
     }
   ];
 
   const milestones = [
-    { year: '2016', event: 'Founded with a vision to make coding accessible' },
-    { year: '2018', event: 'Launched multiplayer coding - a world first' },
-    { year: '2020', event: 'Reached 10 million developers worldwide' },
-    { year: '2022', event: 'Introduced AI-powered coding assistance' },
-    { year: '2024', event: '20 million developers and counting' }
+    { year: '2016', event: 'Founded to make coding accessible to everyone' },
+    { year: '2018', event: 'Introduced real-time collaboration for learning together' },
+    { year: '2020', event: 'Reached 10 million learners and creators worldwide' },
+    { year: '2022', event: 'Added AI helpers to guide beginners' },
+    { year: '2024', event: '20 million people discovering the joy of coding' }
   ];
 
   const team = [
@@ -102,12 +102,12 @@ export default function About() {
               Our Story
             </Badge>
             <h1 className="text-4xl md:text-5xl font-bold">
-              Making programming more{' '}
-              <span className="text-primary">accessible</span>
+              Making coding{' '}
+              <span className="text-primary">for everyone</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              We believe everyone should have access to powerful programming tools. 
-              Our mission is to bring the next billion software creators online.
+              We believe coding is a form of creative expression that should be accessible to all. 
+              Whether you're 8 or 80, artist or entrepreneur, we're here to help you create.
             </p>
           </div>
         </div>
@@ -123,12 +123,12 @@ export default function About() {
                 Our Mission
               </Badge>
               <h2 className="text-3xl font-bold mb-4">
-                Empowering the next generation of builders
+                Empowering everyone to create
               </h2>
               <p className="text-lg text-muted-foreground mb-6">
-                We're on a mission to make programming more accessible, collaborative, and fun. 
-                By removing barriers to entry and providing powerful tools in the browser, 
-                we're enabling millions to turn their ideas into reality.
+                We're on a mission to make coding accessible, collaborative, and enjoyable for all. 
+                By eliminating technical barriers and creating a friendly environment, 
+                we help people of all ages and backgrounds bring their ideas to life.
               </p>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -144,7 +144,7 @@ export default function About() {
                     <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <p className="text-sm">
-                    <strong>20M+ developers</strong> building amazing things every day
+                    <strong>20M+ people</strong> learning and creating every day
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
@@ -163,7 +163,7 @@ export default function About() {
                 <CardContent className="p-8">
                   <div className="text-center space-y-6">
                     <div className="text-6xl font-bold text-primary">20M+</div>
-                    <p className="text-xl font-semibold">Developers worldwide</p>
+                    <p className="text-xl font-semibold">Learners & creators worldwide</p>
                     <div className="grid grid-cols-3 gap-4 pt-4">
                       <div>
                         <div className="text-2xl font-bold">1B+</div>
