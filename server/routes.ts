@@ -305,10 +305,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
+      
+      // Validate file name
+      if (!req.body.name || req.body.name.trim() === '') {
+        return res.status(400).json({ error: 'File name is required' });
+      }
+      
+      // Check for invalid file names
+      const invalidChars = /[<>:"|?*]/g;
+      if (invalidChars.test(req.body.name)) {
+        return res.status(400).json({ error: 'File name contains invalid characters' });
+      }
+      
+      // Check for duplicate file names in the same directory
+      const existingFiles = await storage.getFilesByProject(projectId);
+      const duplicate = existingFiles.find(f => 
+        f.name === req.body.name && 
+        f.parentId === (req.body.parentId || null)
+      );
+      
+      if (duplicate) {
+        return res.status(409).json({ error: 'A file with this name already exists in this directory' });
+      }
+      
       const fileData = {
-        name: req.body.name,
+        name: req.body.name.trim(),
         projectId: projectId,
-        content: req.body.content || null,
+        content: req.body.content || '',
         isFolder: req.body.isFolder || false,
         parentId: req.body.parentId || null
       };
@@ -367,6 +390,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user!.id);
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      // Validate new file name if provided
+      if (req.body.name) {
+        if (req.body.name.trim() === '') {
+          return res.status(400).json({ error: 'File name cannot be empty' });
+        }
+        
+        const invalidChars = /[<>:"|?*]/g;
+        if (invalidChars.test(req.body.name)) {
+          return res.status(400).json({ error: 'File name contains invalid characters' });
+        }
+        
+        // Check for duplicate names
+        const existingFiles = await storage.getFilesByProject(file.projectId);
+        const duplicate = existingFiles.find(f => 
+          f.id !== fileId && 
+          f.name === req.body.name && 
+          f.parentId === file.parentId
+        );
+        
+        if (duplicate) {
+          return res.status(409).json({ error: 'A file with this name already exists in this directory' });
+        }
+      }
+      
+      // Validate content size for non-folders
+      if (!file.isFolder && req.body.content !== undefined) {
+        const maxSize = 10 * 1024 * 1024; // 10MB limit
+        if (req.body.content.length > maxSize) {
+          return res.status(413).json({ error: 'File content exceeds maximum size limit (10MB)' });
         }
       }
       
@@ -820,6 +875,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error searching project:', error);
       res.status(500).json({ error: 'Failed to search project' });
+    }
+  });
+
+  // Terminal Session Management Routes
+  app.get('/api/projects/:id/terminal/sessions', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      // Return mock sessions for now
+      res.json([
+        {
+          id: `session-${projectId}-1`,
+          name: 'Main Terminal',
+          active: true,
+          created: new Date().toISOString()
+        }
+      ]);
+    } catch (error) {
+      console.error('Error getting terminal sessions:', error);
+      res.status(500).json({ error: 'Failed to get terminal sessions' });
+    }
+  });
+
+  app.post('/api/projects/:id/terminal/sessions', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { name } = req.body;
+      
+      const sessionId = `session-${projectId}-${Date.now()}`;
+      res.json({
+        id: sessionId,
+        name: name || 'New Terminal',
+        active: true,
+        created: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error creating terminal session:', error);
+      res.status(500).json({ error: 'Failed to create terminal session' });
+    }
+  });
+
+  app.delete('/api/projects/:id/terminal/sessions/:sessionId', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting terminal session:', error);
+      res.status(500).json({ error: 'Failed to delete terminal session' });
+    }
+  });
+
+  // Preview URL endpoint
+  app.get('/api/projects/:id/preview-url', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      
+      // Get project files to check if it's a web project
+      const files = await storage.getFilesByProject(projectId);
+      const hasHtmlFile = files.some(f => f.name.endsWith('.html'));
+      
+      if (hasHtmlFile) {
+        // Return the preview URL for web projects
+        const previewUrl = `/api/projects/${projectId}/preview/`;
+        res.json({ previewUrl });
+      } else {
+        // Non-web projects don't have a preview
+        res.json({ previewUrl: null });
+      }
+    } catch (error) {
+      console.error('Error getting preview URL:', error);
+      res.status(500).json({ error: 'Failed to get preview URL' });
     }
   });
 

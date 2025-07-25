@@ -177,7 +177,7 @@ export function ReplitTerminal({
 
     // Configuration WebSocket
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const wsUrl = `${protocol}//${window.location.host}/terminal?projectId=${projectId}`;
     
     const connectWebSocket = () => {
       const ws = new WebSocket(wsUrl);

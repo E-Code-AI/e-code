@@ -80,7 +80,7 @@ export function ResponsiveTerminal({
 
     // Connect to WebSocket
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/api/projects/${projectId}/terminal`);
+    const ws = new WebSocket(`${protocol}//${window.location.host}/terminal?projectId=${projectId}`);
     wsRef.current = ws;
 
     ws.onopen = () => {

@@ -41,6 +41,21 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
 - Emphasize that no prior coding experience is needed
 
 ## Recent Changes
+- 2025-01-30: **Terminal, Preview, and File Operations Testing & Debugging**:
+  * **Terminal Integration Fixed**: 
+    - Fixed WebSocket connection mismatch - client was connecting to `/api/projects/${projectId}/terminal` but server used `/terminal`
+    - Updated terminal connections in ResponsiveTerminal.tsx, Terminal.tsx, and ReplitTerminal.tsx to use `/terminal?projectId=${projectId}`
+    - Added terminal session management endpoints: get sessions, create session, delete session
+  * **Preview Functionality Fixed**:
+    - Added `/api/projects/:id/preview-url` endpoint to return preview URLs for web projects
+    - Preview now correctly detects HTML files and returns appropriate preview paths
+    - Fixed preview URL generation to use relative paths instead of localhost URLs
+  * **File Operations Enhanced**:
+    - Added robust error handling for file creation with validation for empty names and invalid characters
+    - Implemented duplicate file prevention in the same directory
+    - Added file size limit validation (10MB) for content updates
+    - Enhanced error messages for better user feedback (409 for duplicates, 413 for size limits)
+    - Added comprehensive access control checks for all file operations
 - 2025-01-30: **Fixed Missing Public Pages**:
   * **Subprocessors Page**: Created comprehensive page listing all third-party data processors
     - Added route for /subprocessors in App.tsx to fix 404 error
