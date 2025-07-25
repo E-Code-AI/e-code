@@ -67,6 +67,7 @@ const Subprocessors = lazy(() => import("@/pages/Subprocessors"));
 const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
 const Languages = lazy(() => import("@/pages/Languages"));
 const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
+const Git = lazy(() => import("@/pages/Git"));
 const Shell = lazy(() => import("@/pages/ResponsiveShell"));
 const Secrets = lazy(() => import("@/pages/Secrets"));
 const Workflows = lazy(() => import("@/pages/Workflows"));
@@ -138,6 +139,7 @@ function AppContent() {
           <Route path="/student-dpa" component={StudentDPA} />
           <Route path="/languages" component={Languages} />
           <Route path="/github-import" component={GitHubImport} />
+          <Route path="/git" component={Git} />
           {/* Newsletter pages */}
           <Route path="/newsletter-confirmed" component={NewsletterConfirmed} />
           {/* Comparison pages */}
