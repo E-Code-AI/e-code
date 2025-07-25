@@ -5,6 +5,7 @@ import { EventEmitter } from 'events';
 import { storage } from '../storage';
 import { containerOrchestrator } from '../orchestration/container-orchestrator';
 import { createLogger } from '../utils/logger';
+import { nixPackageManager } from '../package-management/nix-package-manager';
 
 const logger = createLogger('executor');
 
@@ -93,6 +94,10 @@ export class CodeExecutor extends EventEmitter {
         taskLanguage = 'javascript';
       }
       
+      // Get installed packages for the project
+      const packages = await nixPackageManager.getInstalledPackages(String(projectId));
+      const packageNames = packages.map(pkg => pkg.name);
+      
       // Submit task to container orchestrator
       const taskId = await containerOrchestrator.submitTask(
         String(projectId),
@@ -105,7 +110,8 @@ export class CodeExecutor extends EventEmitter {
           timeout: Math.floor(timeout / 1000), // Convert to seconds
           memoryLimit: 512, // Default 512MB
           cpuLimit: 1, // Default 1 CPU
-          networkEnabled: false // Network disabled by default for security
+          networkEnabled: false, // Network disabled by default for security
+          packages: packageNames // Pass packages for Nix environment
         }
       );
       

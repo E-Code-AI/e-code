@@ -4,6 +4,7 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { spawn, ChildProcess } from 'child_process';
 import { createLogger } from '../utils/logger';
+import { nixEnvironmentBuilder } from '../package-management/nix-environment-builder';
 
 const logger = createLogger('container-runtime');
 
@@ -48,6 +49,12 @@ export interface ContainerConfig {
   autoRemove?: boolean;
   restartPolicy?: RestartPolicy;
   healthcheck?: HealthCheck;
+  
+  // Nix package management
+  nixEnabled?: boolean;
+  nixPackages?: string[];
+  nixProjectId?: string;
+  nixLanguage?: string;
 }
 
 export interface VolumeMount {
@@ -308,6 +315,8 @@ class Container {
   private cgroupPath?: string;
   private logPath: string;
   private logStream?: fs.FileHandle;
+  private nixEnv?: Record<string, string>;
+  private nixMounts?: Map<string, string>;
   
   constructor(id: string, config: ContainerConfig, rootDir: string) {
     this.id = id;
@@ -327,6 +336,11 @@ class Container {
     
     // Extract or set up the root filesystem
     await this.setupRootfs();
+    
+    // Set up Nix environment if enabled
+    if (this.config.nixEnabled) {
+      await this.setupNixEnvironment();
+    }
     
     // Create cgroup for resource control
     await this.createCgroup();
@@ -378,6 +392,63 @@ class Container {
       } catch (error) {
         // Skip if file doesn't exist
       }
+    }
+  }
+  
+  private async setupNixEnvironment(): Promise<void> {
+    if (!this.config.nixEnabled || !this.config.nixProjectId) {
+      return;
+    }
+    
+    logger.info(`Setting up Nix environment for container ${this.id}`);
+    
+    try {
+      // Build Nix environment
+      const environment = await nixEnvironmentBuilder.buildEnvironment({
+        projectId: this.config.nixProjectId,
+        language: this.config.nixLanguage || 'bash',
+        packages: this.config.nixPackages || []
+      });
+      
+      // Store Nix environment variables
+      this.nixEnv = environment.envVars;
+      
+      // Merge Nix environment variables with container config
+      this.config.env = {
+        ...this.config.env,
+        ...environment.envVars,
+        PATH: `${environment.binPaths.join(':')}:${this.config.env?.PATH || '/usr/local/bin:/usr/bin:/bin'}`,
+        LD_LIBRARY_PATH: environment.libPaths.join(':'),
+        C_INCLUDE_PATH: environment.includePaths.join(':')
+      };
+      
+      // Create Nix bind mounts
+      this.nixMounts = await nixEnvironmentBuilder.createContainerBindMounts(environment);
+      
+      // Add Nix mounts to container volumes
+      const nixVolumes: VolumeMount[] = [];
+      for (const [source, target] of Array.from(this.nixMounts)) {
+        const [targetPath, options] = target.split(':');
+        nixVolumes.push({
+          source,
+          target: targetPath,
+          type: 'bind',
+          readOnly: options === 'ro',
+          options: ['bind']
+        });
+      }
+      
+      this.config.volumes = [...(this.config.volumes || []), ...nixVolumes];
+      
+      // Create nix directory in rootfs
+      const rootfs = path.join(this.bundleDir, 'rootfs');
+      await fs.mkdir(path.join(rootfs, 'nix'), { recursive: true });
+      await fs.mkdir(path.join(rootfs, 'ecode'), { recursive: true });
+      
+      logger.info(`Nix environment setup complete for container ${this.id}`);
+    } catch (error) {
+      logger.error(`Failed to setup Nix environment for container ${this.id}:`, String(error));
+      throw error;
     }
   }
   

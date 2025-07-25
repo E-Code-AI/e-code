@@ -392,7 +392,12 @@ export class ContainerOrchestrator extends EventEmitter {
         },
         command: task.command,
         workingDir: '/workspace',
-        autoRemove: true
+        autoRemove: true,
+        // Enable Nix package management
+        nixEnabled: true,
+        nixProjectId: task.projectId,
+        nixLanguage: task.language,
+        nixPackages: task.packages || []
       };
       
       // Create sandbox for additional isolation

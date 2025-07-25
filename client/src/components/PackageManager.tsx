@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Package, Plus, Trash2, Search, Loader2, ExternalLink } from 'lucide-react';
+import { Package, Plus, Trash2, Search, Loader2, ExternalLink, RotateCcw, Download, RefreshCw } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -94,34 +94,142 @@ export function PackageManager({ projectId, language }: PackageManagerProps) {
     },
   });
 
+  // Update packages
+  const updatePackagesMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', `/api/projects/${projectId}/packages/update`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
+      toast({
+        title: 'Packages updated',
+        description: 'All packages have been updated to their latest versions',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Update failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Rollback packages
+  const rollbackPackagesMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', `/api/projects/${projectId}/packages/rollback`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
+      toast({
+        title: 'Packages rolled back',
+        description: 'Environment has been restored to the previous state',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Rollback failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Export environment
+  const exportEnvironmentMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('GET', `/api/projects/${projectId}/packages/environment`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      // Create a blob and download the shell.nix file
+      const blob = new Blob([data.shellNix], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'shell.nix';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Environment exported',
+        description: 'shell.nix file has been downloaded',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Export failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   const getPackageManagerName = () => {
-    switch (language) {
-      case 'javascript':
-      case 'typescript':
-        return 'npm';
-      case 'python':
-        return 'pip';
-      case 'ruby':
-        return 'gem';
-      case 'rust':
-        return 'cargo';
-      case 'go':
-        return 'go';
-      default:
-        return 'package';
-    }
+    // E-Code uses Nix as the universal package manager
+    return 'Nix';
   };
 
   return (
     <Card className="h-full overflow-hidden">
       <CardHeader className="border-b bg-muted/20">
-        <div className="flex items-center gap-2">
-          <Package className="h-5 w-5" />
-          <CardTitle>Package Manager</CardTitle>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              <CardTitle>Package Manager</CardTitle>
+            </div>
+            <CardDescription className="mt-1">
+              Universal package management with {getPackageManagerName()} - instant, reproducible, and rollback-enabled
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => updatePackagesMutation.mutate()}
+              disabled={updatePackagesMutation.isPending}
+            >
+              {updatePackagesMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Update All
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => rollbackPackagesMutation.mutate()}
+              disabled={rollbackPackagesMutation.isPending}
+            >
+              {rollbackPackagesMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCcw className="h-4 w-4" />
+              )}
+              Rollback
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportEnvironmentMutation.mutate()}
+              disabled={exportEnvironmentMutation.isPending}
+            >
+              {exportEnvironmentMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              Export
+            </Button>
+          </div>
         </div>
-        <CardDescription>
-          Manage {getPackageManagerName()} packages for your {language} project
-        </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="h-full">
