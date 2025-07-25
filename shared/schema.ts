@@ -272,6 +272,31 @@ export const bountySubmissions = pgTable("bounty_submissions", {
   reviewedAt: timestamp("reviewed_at"),
 });
 
+// Secrets table
+export const secrets = pgTable("secrets", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  key: text("key").notNull(),
+  value: text("value").notNull(), // This will be encrypted in production
+  description: text("description"),
+  projectId: integer("project_id").references(() => projects.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("unique_user_key").on(table.userId, table.key),
+]);
+
+export const insertSecretSchema = createInsertSchema(secrets).pick({
+  userId: true,
+  key: true,
+  value: true,
+  description: true,
+  projectId: true,
+});
+
+export type InsertSecret = z.infer<typeof insertSecretSchema>;
+export type Secret = typeof secrets.$inferSelect;
+
 // Newsletter subscribers table
 export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   id: serial("id").primaryKey(),

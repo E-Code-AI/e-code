@@ -2592,6 +2592,138 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
       res.status(500).send('Error loading preview');
     }
   });
+  
+  // Secrets Routes
+  app.get('/api/secrets', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const userSecrets = await storage.getSecretsByUser(userId);
+      
+      // Don't send the actual values for security
+      const sanitizedSecrets = userSecrets.map(secret => ({
+        id: secret.id,
+        key: secret.key,
+        description: secret.description,
+        projectId: secret.projectId,
+        createdAt: secret.createdAt,
+        updatedAt: secret.updatedAt
+      }));
+      
+      res.json(sanitizedSecrets);
+    } catch (error) {
+      console.error('Error fetching secrets:', error);
+      res.status(500).json({ error: 'Failed to fetch secrets' });
+    }
+  });
+  
+  app.post('/api/secrets', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { key, value, description, projectId } = req.body;
+      
+      if (!key || !value) {
+        return res.status(400).json({ error: 'Key and value are required' });
+      }
+      
+      // Validate key format (uppercase, underscores only)
+      if (!/^[A-Z_]+$/.test(key)) {
+        return res.status(400).json({ error: 'Key must contain only uppercase letters and underscores' });
+      }
+      
+      const secret = await storage.createSecret({
+        userId,
+        key,
+        value,
+        description,
+        projectId
+      });
+      
+      // Return without the value for security
+      res.json({
+        id: secret.id,
+        key: secret.key,
+        description: secret.description,
+        projectId: secret.projectId,
+        createdAt: secret.createdAt,
+        updatedAt: secret.updatedAt
+      });
+    } catch (error: any) {
+      if (error.message?.includes('duplicate key')) {
+        return res.status(409).json({ error: 'A secret with this key already exists' });
+      }
+      console.error('Error creating secret:', error);
+      res.status(500).json({ error: 'Failed to create secret' });
+    }
+  });
+  
+  app.put('/api/secrets/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const secretId = parseInt(req.params.id);
+      const { value, description } = req.body;
+      
+      // Verify ownership
+      const secret = await storage.getSecret(secretId);
+      if (!secret || secret.userId !== userId) {
+        return res.status(404).json({ error: 'Secret not found' });
+      }
+      
+      const updated = await storage.updateSecret(secretId, {
+        value,
+        description
+      });
+      
+      // Return without the value for security
+      res.json({
+        id: updated.id,
+        key: updated.key,
+        description: updated.description,
+        projectId: updated.projectId,
+        createdAt: updated.createdAt,
+        updatedAt: updated.updatedAt
+      });
+    } catch (error) {
+      console.error('Error updating secret:', error);
+      res.status(500).json({ error: 'Failed to update secret' });
+    }
+  });
+  
+  app.delete('/api/secrets/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const secretId = parseInt(req.params.id);
+      
+      // Verify ownership
+      const secret = await storage.getSecret(secretId);
+      if (!secret || secret.userId !== userId) {
+        return res.status(404).json({ error: 'Secret not found' });
+      }
+      
+      await storage.deleteSecret(secretId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting secret:', error);
+      res.status(500).json({ error: 'Failed to delete secret' });
+    }
+  });
+  
+  // Get secret value (for server-side use only)
+  app.get('/api/secrets/:id/value', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const secretId = parseInt(req.params.id);
+      
+      const secret = await storage.getSecret(secretId);
+      if (!secret || secret.userId !== userId) {
+        return res.status(404).json({ error: 'Secret not found' });
+      }
+      
+      res.json({ value: secret.value });
+    } catch (error) {
+      console.error('Error fetching secret value:', error);
+      res.status(500).json({ error: 'Failed to fetch secret value' });
+    }
+  });
 
   // Newsletter API routes
   app.post('/api/newsletter/subscribe', async (req, res) => {

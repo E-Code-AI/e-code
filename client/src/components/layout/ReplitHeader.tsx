@@ -26,6 +26,9 @@ import {
   Globe,
   Menu,
   X,
+  Lock,
+  Terminal,
+  Palette,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
@@ -166,6 +169,20 @@ export function ReplitHeader() {
               }`}
             >
               Shell
+            </Button>
+          </Link>
+          
+          <Link href="/secrets">
+            <Button
+              variant={isActive("/secrets") ? "default" : "ghost"}
+              size="sm"
+              className={`replit-transition ${
+                isActive("/secrets")
+                  ? "bg-[var(--ecode-accent)] text-white"
+                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+              }`}
+            >
+              Secrets
             </Button>
           </Link>
         </nav>

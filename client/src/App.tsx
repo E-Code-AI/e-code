@@ -64,6 +64,7 @@ const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
 const Languages = lazy(() => import("@/pages/Languages"));
 const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
 const Shell = lazy(() => import("@/pages/Shell"));
+const Secrets = lazy(() => import("@/pages/Secrets"));
 // Newsletter pages
 const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
 
@@ -204,6 +205,11 @@ function AppContent() {
           <ProtectedRoute path="/shell" component={() => (
             <ReplitLayout>
               <Shell />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/secrets" component={() => (
+            <ReplitLayout>
+              <Secrets />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin" component={() => (
