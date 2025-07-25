@@ -59,18 +59,18 @@ export default function About() {
       <PublicNavbar />
 
       {/* Hero Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
+      <section className="py-12 sm:py-16 md:py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center space-y-6">
-            <Badge variant="secondary" className="mb-4">
+          <div className="text-center space-y-4 sm:space-y-6">
+            <Badge variant="secondary" className="mb-2 sm:mb-4 text-xs sm:text-sm">
               <Building2 className="h-3 w-3 mr-1" />
               Our Story
             </Badge>
-            <h1 className="text-4xl md:text-5xl font-bold">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
               Making coding{' '}
               <span className="text-primary">for everyone</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
               We believe coding is a form of creative expression that should be accessible to all. 
               Whether you're 8 or 80, artist or entrepreneur, we're here to help you create.
             </p>

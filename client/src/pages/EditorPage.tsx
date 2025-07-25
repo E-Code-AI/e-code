@@ -395,10 +395,8 @@ export default function EditorPage() {
           defaultTab={mobileActiveTab}
           isRunning={isProjectRunning}
           onRun={() => {
-            // Handle run action
-            if (runMutation) {
-              runMutation.mutate();
-            }
+            // Handle run action - project runs automatically
+            console.log('Running project', projectIdNum);
           }}
         />
       ) : (

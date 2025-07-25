@@ -112,14 +112,14 @@ export default function ContactSales() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-16 px-4 bg-gradient-to-b from-primary/5 to-transparent">
+      <section className="py-12 sm:py-16 md:py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center space-y-4">
-            <Badge variant="secondary" className="mb-2">
+          <div className="text-center space-y-4 sm:space-y-6">
+            <Badge variant="secondary" className="mb-2 sm:mb-4 text-xs sm:text-sm">
               <Building2 className="h-3 w-3 mr-1" />
               Enterprise Sales
             </Badge>
-            <h1 className="text-4xl md:text-5xl font-bold">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
               Let's build something{' '}
               <span className="text-primary">amazing together</span>
             </h1>

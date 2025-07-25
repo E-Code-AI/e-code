@@ -157,13 +157,13 @@ export default function Blog() {
       <PublicNavbar />
 
       {/* Hero Section */}
-      <section className="py-16 px-4 bg-gradient-to-b from-primary/5 to-transparent">
+      <section className="py-12 sm:py-16 md:py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold">
+          <div className="text-center space-y-4 sm:space-y-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
               E-Code Blog
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0">
               Product updates, engineering insights, and stories from our community
             </p>
           </div>
