@@ -52,10 +52,10 @@ export function ReplitHeader() {
 
   return (
     <>
-    <header className="h-14 bg-[var(--replit-surface)] border-b border-[var(--replit-border)] flex items-center justify-between px-4 replit-transition">
+    <header className="h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition">
       {/* Logo et navigation principale */}
       <div className="flex items-center space-x-2 md:space-x-6">
-        {/* Replit Logo */}
+        {/* E-Code Logo */}
         <Link href="/">
           <div className="flex items-center space-x-2 cursor-pointer group">
             <svg
@@ -79,7 +79,7 @@ export function ReplitHeader() {
               <circle cx="12" cy="12" r="3" fill="white" />
             </svg>
             <span className="font-bold text-xl hidden md:inline-block group-hover:opacity-80 transition-opacity">
-              Replit
+              E-Code
             </span>
           </div>
         </Link>
@@ -91,7 +91,7 @@ export function ReplitHeader() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[250px] bg-[var(--replit-surface)] border-[var(--replit-border)]">
+          <SheetContent side="left" className="w-[250px] bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
             <nav className="flex flex-col space-y-4 mt-6">
               <Link href="/projects" onClick={() => setMobileMenuOpen(false)}>
                 <Button
@@ -138,10 +138,10 @@ export function ReplitHeader() {
         </Sheet>
 
         <Link href="/" className="flex items-center space-x-2 replit-hover rounded-lg px-2 py-1">
-          <div className="w-8 h-8 bg-[var(--replit-green)] rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[var(--ecode-green)] rounded-lg flex items-center justify-center">
             <Code className="h-5 w-5 text-black" />
           </div>
-          <span className={cn("font-bold text-lg text-[var(--replit-text)]", isMobile && "hidden sm:block")}>PLOT</span>
+          <span className={cn("font-bold text-lg text-[var(--ecode-text)]", isMobile && "hidden sm:block")}>E-Code</span>
         </Link>
 
         <nav className="hidden md:flex items-center space-x-1">
@@ -151,8 +151,8 @@ export function ReplitHeader() {
               size="sm"
               className={`replit-transition ${
                 isActive("/projects")
-                  ? "bg-[var(--replit-accent)] text-white"
-                  : "text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                  ? "bg-[var(--ecode-accent)] text-white"
+                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
               My Repls
@@ -164,23 +164,23 @@ export function ReplitHeader() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)] replit-transition"
+                className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] replit-transition"
               >
                 Create
                 <Plus className="ml-1 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-[var(--replit-surface)] border-[var(--replit-border)]">
-              <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+            <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                 <Code className="mr-2 h-4 w-4" />
-                New Repl
+                New Code
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                 <Database className="mr-2 h-4 w-4" />
                 Import from GitHub
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
-              <DropdownMenuItem className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                 <Users className="mr-2 h-4 w-4" />
                 Team
               </DropdownMenuItem>
@@ -193,8 +193,8 @@ export function ReplitHeader() {
               size="sm"
               className={`replit-transition ${
                 isActive("/explore")
-                  ? "bg-[var(--replit-accent)] text-white"
-                  : "text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                  ? "bg-[var(--ecode-accent)] text-white"
+                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
               Explore
@@ -207,8 +207,8 @@ export function ReplitHeader() {
               size="sm"
               className={`replit-transition ${
                 isActive("/community")
-                  ? "bg-[var(--replit-accent)] text-white"
-                  : "text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                  ? "bg-[var(--ecode-accent)] text-white"
+                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
               Community
@@ -221,8 +221,8 @@ export function ReplitHeader() {
               size="sm"
               className={`replit-transition ${
                 isActive("/teams")
-                  ? "bg-[var(--replit-accent)] text-white"
-                  : "text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                  ? "bg-[var(--ecode-accent)] text-white"
+                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
               Teams
@@ -235,7 +235,7 @@ export function ReplitHeader() {
       <div className="flex-1 max-w-md mx-6 hidden lg:block">
         <Button
           variant="outline"
-          className="w-full justify-start text-left font-normal bg-[var(--replit-surface-secondary)] border-[var(--replit-border)] text-[var(--replit-text-secondary)] hover:bg-[var(--replit-sidebar-hover)]"
+          className="w-full justify-start text-left font-normal bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text-secondary)] hover:bg-[var(--ecode-sidebar-hover)]"
           onClick={() => setSpotlightOpen(true)}
         >
           <Search className="mr-2 h-4 w-4" />
@@ -252,7 +252,7 @@ export function ReplitHeader() {
         <Button
           variant="outline"
           size="sm"
-          className="hidden sm:flex items-center space-x-1 border-[var(--replit-warning)] text-[var(--replit-warning)] hover:bg-[var(--replit-warning)]/10 replit-transition"
+          className="hidden sm:flex items-center space-x-1 border-[var(--ecode-warning)] text-[var(--ecode-warning)] hover:bg-[var(--ecode-warning)]/10 replit-transition"
         >
           <Crown className="h-4 w-4" />
           <span>Upgrade</span>
@@ -270,111 +270,111 @@ export function ReplitHeader() {
             <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 replit-hover">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user?.avatarUrl || ""} alt={user?.username} />
-                <AvatarFallback className="bg-[var(--replit-accent)] text-white">
+                <AvatarFallback className="bg-[var(--ecode-accent)] text-white">
                   {user?.username?.charAt(0).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-[var(--replit-surface)] border-[var(--replit-border)]" align="end">
+          <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]" align="end">
             <div className="flex items-center justify-start gap-2 p-2">
               <div className="flex flex-col space-y-1 leading-none">
-                <p className="font-medium text-[var(--replit-text)]">{user?.displayName || user?.username}</p>
-                <p className="w-[200px] truncate text-sm text-[var(--replit-text-secondary)]">
+                <p className="font-medium text-[var(--ecode-text)]">{user?.displayName || user?.username}</p>
+                <p className="w-[200px] truncate text-sm text-[var(--ecode-text-secondary)]">
                   {user?.email}
                 </p>
               </div>
             </div>
-            <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
+            <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
             
             <DropdownMenuItem 
               onClick={() => navigate(`/@${user?.username}`)}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <User className="mr-2 h-4 w-4" />
               View Profile
             </DropdownMenuItem>
             
             <DropdownMenuItem 
               onClick={() => navigate('/account')}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Settings className="mr-2 h-4 w-4" />
               Account
             </DropdownMenuItem>
             
-            <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
+            <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
             
             <DropdownMenuItem 
               onClick={() => navigate('/cycles')}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Zap className="mr-2 h-4 w-4" />
               Cycles & Power Ups
             </DropdownMenuItem>
             
             <DropdownMenuItem 
               onClick={() => navigate('/deployments')}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Globe className="mr-2 h-4 w-4" />
               Deployments
             </DropdownMenuItem>
             
             <DropdownMenuItem 
               onClick={() => navigate('/bounties')}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Database className="mr-2 h-4 w-4" />
               Bounties
             </DropdownMenuItem>
             
             <DropdownMenuItem 
               onClick={() => navigate('/teams')}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Users className="mr-2 h-4 w-4" />
               Teams & Orgs
             </DropdownMenuItem>
             
-            <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
+            <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
             
             <DropdownMenuItem 
               onClick={() => navigate('/learn')}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Book className="mr-2 h-4 w-4" />
               Learn
             </DropdownMenuItem>
             
             <DropdownMenuItem 
               onClick={() => navigate('/docs')}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Book className="mr-2 h-4 w-4" />
               Documentation
             </DropdownMenuItem>
             
             <DropdownMenuItem 
               onClick={() => navigate('/support')}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <HelpCircle className="mr-2 h-4 w-4" />
               Support
             </DropdownMenuItem>
             
-            <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
+            <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
             
             <DropdownMenuItem 
               onClick={() => navigate('/themes')}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Settings className="mr-2 h-4 w-4" />
               Themes
             </DropdownMenuItem>
             
             <DropdownMenuItem 
               onClick={() => navigate('/referrals')}
-              className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Users className="mr-2 h-4 w-4" />
               Refer a Friend
             </DropdownMenuItem>
             
-            <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
+            <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
             
             <DropdownMenuItem
               onClick={handleLogout}
-              className="text-[var(--replit-danger)] hover:bg-[var(--replit-danger)]/10"
+              className="text-[var(--ecode-danger)] hover:bg-[var(--ecode-danger)]/10"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Log out

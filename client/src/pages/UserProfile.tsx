@@ -112,7 +112,7 @@ export default function UserProfile() {
       <div className="min-h-screen bg-background">
         <header className="border-b">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold">Replit Clone</Link>
+            <Link href="/" className="text-xl font-bold">E-Code Clone</Link>
             <div className="flex items-center gap-4">
               <Link href="/projects" className="text-sm">Projects</Link>
               <Link href="/settings" className="text-sm">Settings</Link>
@@ -145,7 +145,7 @@ export default function UserProfile() {
       <div className="min-h-screen bg-background">
         <header className="border-b">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold">Replit Clone</Link>
+            <Link href="/" className="text-xl font-bold">E-Code Clone</Link>
             <div className="flex items-center gap-4">
               <Link href="/projects" className="text-sm">Projects</Link>
               <Link href="/settings" className="text-sm">Settings</Link>
@@ -174,7 +174,7 @@ export default function UserProfile() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container-responsive py-4 flex items-center justify-between">
-          <Link href="/" className="text-responsive-lg font-bold">Replit Clone</Link>
+          <Link href="/" className="text-responsive-lg font-bold">E-Code Clone</Link>
           <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/projects" className="text-responsive-xs">Projects</Link>
             <Link href="/settings" className="text-responsive-xs">Settings</Link>

@@ -112,10 +112,10 @@ export default function Referrals() {
         });
         break;
       case 'email':
-        window.open(`mailto:?subject=Join me on Replit&body=${customMessage || 'Check out Replit!'} ${referralUrl}`);
+        window.open(`mailto:?subject=Join me on E-Code&body=${customMessage || 'Check out E-Code!'} ${referralUrl}`);
         break;
       case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(customMessage || 'Join me on Replit!')} ${referralUrl}`);
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(customMessage || 'Join me on E-Code!')} ${referralUrl}`);
         break;
       case 'facebook':
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${referralUrl}`);
@@ -140,7 +140,7 @@ export default function Referrals() {
           Refer a Friend
         </h1>
         <p className="text-muted-foreground mt-2">
-          Invite friends to Replit and earn rewards together
+          Invite friends to E-Code and earn rewards together
         </p>
       </div>
 
@@ -265,7 +265,7 @@ export default function Referrals() {
                   <div>
                     <h4 className="font-semibold">Share your link</h4>
                     <p className="text-sm text-muted-foreground">
-                      Send your referral link to friends who might enjoy Replit
+                      Send your referral link to friends who might enjoy E-Code
                     </p>
                   </div>
                 </div>
@@ -403,7 +403,7 @@ export default function Referrals() {
             <CardHeader>
               <CardTitle>Top Referrers</CardTitle>
               <CardDescription>
-                See how you rank among other Replit ambassadors
+                See how you rank among other E-Code ambassadors
               </CardDescription>
             </CardHeader>
             <CardContent>

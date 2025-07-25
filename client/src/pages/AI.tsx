@@ -74,7 +74,7 @@ export default function AI() {
                 AI That Codes With You
               </h1>
               <p className="text-responsive-base text-muted-foreground mb-8">
-                Experience the future of coding with Replit AI. Get intelligent code suggestions, 
+                Experience the future of coding with E-Code AI. Get intelligent code suggestions, 
                 explanations, and assistance that adapts to your coding style.
               </p>
               

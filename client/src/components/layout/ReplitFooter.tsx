@@ -83,14 +83,14 @@ export function ReplitFooter() {
     };
     
     const threshold = thresholds[type];
-    if (value >= threshold.danger) return "text-[var(--replit-danger)]";
-    if (value >= threshold.warning) return "text-[var(--replit-warning)]";
-    return "text-[var(--replit-green)]";
+    if (value >= threshold.danger) return "text-[var(--ecode-danger)]";
+    if (value >= threshold.warning) return "text-[var(--ecode-warning)]";
+    return "text-[var(--ecode-green)]";
   };
 
   return (
     <TooltipProvider>
-      <footer className="h-6 bg-[var(--replit-surface)] border-t border-[var(--replit-border)] flex items-center justify-between px-3 text-xs">
+      <footer className="h-6 bg-[var(--ecode-surface)] border-t border-[var(--ecode-border)] flex items-center justify-between px-3 text-xs">
         {/* Section gauche - Status système */}
         <div className="flex items-center space-x-4">
           {/* Status de connexion */}
@@ -98,13 +98,13 @@ export function ReplitFooter() {
             <TooltipTrigger asChild>
               <div className="flex items-center space-x-1 cursor-default">
                 {status.connection === "online" ? (
-                  <Wifi className="h-3 w-3 text-[var(--replit-green)]" />
+                  <Wifi className="h-3 w-3 text-[var(--ecode-green)]" />
                 ) : status.connection === "offline" ? (
-                  <WifiOff className="h-3 w-3 text-[var(--replit-danger)]" />
+                  <WifiOff className="h-3 w-3 text-[var(--ecode-danger)]" />
                 ) : (
-                  <Wifi className="h-3 w-3 text-[var(--replit-warning)] animate-pulse" />
+                  <Wifi className="h-3 w-3 text-[var(--ecode-warning)] animate-pulse" />
                 )}
-                <span className="text-[var(--replit-text-secondary)]">
+                <span className="text-[var(--ecode-text-secondary)]">
                   {status.connection === "online" ? "Online" : 
                    status.connection === "offline" ? "Offline" : "Connecting..."}
                 </span>
@@ -117,8 +117,8 @@ export function ReplitFooter() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center space-x-1 cursor-default">
-                <Users className="h-3 w-3 text-[var(--replit-blue)]" />
-                <span className="text-[var(--replit-text-secondary)]">
+                <Users className="h-3 w-3 text-[var(--ecode-blue)]" />
+                <span className="text-[var(--ecode-text-secondary)]">
                   {status.activeUsers}
                 </span>
               </div>
@@ -130,8 +130,8 @@ export function ReplitFooter() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center space-x-1 cursor-default">
-                <GitBranch className="h-3 w-3 text-[var(--replit-purple)]" />
-                <span className="text-[var(--replit-text-secondary)]">
+                <GitBranch className="h-3 w-3 text-[var(--ecode-purple)]" />
+                <span className="text-[var(--ecode-text-secondary)]">
                   {status.gitBranch}
                 </span>
               </div>
@@ -144,11 +144,11 @@ export function ReplitFooter() {
             <TooltipTrigger asChild>
               <div className="flex items-center space-x-1 cursor-default">
                 {status.hasErrors ? (
-                  <AlertCircle className="h-3 w-3 text-[var(--replit-danger)]" />
+                  <AlertCircle className="h-3 w-3 text-[var(--ecode-danger)]" />
                 ) : (
-                  <CheckCircle className="h-3 w-3 text-[var(--replit-green)]" />
+                  <CheckCircle className="h-3 w-3 text-[var(--ecode-green)]" />
                 )}
-                <span className="text-[var(--replit-text-secondary)]">
+                <span className="text-[var(--ecode-text-secondary)]">
                   {formatLastSaved(status.lastSaved)}
                 </span>
               </div>
@@ -163,7 +163,7 @@ export function ReplitFooter() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center space-x-1 cursor-default">
-                <Cpu className="h-3 w-3 text-[var(--replit-text-secondary)]" />
+                <Cpu className="h-3 w-3 text-[var(--ecode-text-secondary)]" />
                 <span className={getStatusColor(status.cpu, "cpu")}>
                   {status.cpu}%
                 </span>
@@ -176,7 +176,7 @@ export function ReplitFooter() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center space-x-1 cursor-default">
-                <Activity className="h-3 w-3 text-[var(--replit-text-secondary)]" />
+                <Activity className="h-3 w-3 text-[var(--ecode-text-secondary)]" />
                 <span className={getStatusColor(status.memory, "memory")}>
                   {status.memory}%
                 </span>
@@ -189,7 +189,7 @@ export function ReplitFooter() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center space-x-1 cursor-default">
-                <HardDrive className="h-3 w-3 text-[var(--replit-text-secondary)]" />
+                <HardDrive className="h-3 w-3 text-[var(--ecode-text-secondary)]" />
                 <span className={getStatusColor(status.storage, "storage")}>
                   {status.storage}%
                 </span>
@@ -204,7 +204,7 @@ export function ReplitFooter() {
           {/* Plan actuel */}
           <Badge
             variant="outline"
-            className="text-xs border-[var(--replit-warning)] text-[var(--replit-warning)] bg-[var(--replit-warning)]/10"
+            className="text-xs border-[var(--ecode-warning)] text-[var(--ecode-warning)] bg-[var(--ecode-warning)]/10"
           >
             <Zap className="h-3 w-3 mr-1" />
             Free Plan
@@ -214,8 +214,8 @@ export function ReplitFooter() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center space-x-1 cursor-default">
-                <Clock className="h-3 w-3 text-[var(--replit-text-secondary)]" />
-                <span className="text-[var(--replit-text-secondary)] font-mono">
+                <Clock className="h-3 w-3 text-[var(--ecode-text-secondary)]" />
+                <span className="text-[var(--ecode-text-secondary)] font-mono">
                   {formatTime(currentTime)}
                 </span>
               </div>
@@ -227,12 +227,12 @@ export function ReplitFooter() {
           <div className="flex items-center space-x-1">
             <div className={`h-2 w-2 rounded-full ${
               status.hasErrors 
-                ? "bg-[var(--replit-danger)]" 
+                ? "bg-[var(--ecode-danger)]" 
                 : status.connection === "online"
-                ? "bg-[var(--replit-green)]"
-                : "bg-[var(--replit-warning)]"
+                ? "bg-[var(--ecode-green)]"
+                : "bg-[var(--ecode-warning)]"
             } animate-pulse`}></div>
-            <span className="text-[var(--replit-text-secondary)]">
+            <span className="text-[var(--ecode-text-secondary)]">
               {status.hasErrors ? "Error" : "Ready"}
             </span>
           </div>

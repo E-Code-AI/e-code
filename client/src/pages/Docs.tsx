@@ -35,7 +35,7 @@ export default function Docs() {
       items: [
         {
           title: 'Quick Start Guide',
-          description: 'Get up and running with Replit in minutes',
+          description: 'Get up and running with E-Code in minutes',
           href: '/docs/quick-start'
         },
         {
@@ -45,7 +45,7 @@ export default function Docs() {
         },
         {
           title: 'Understanding the Interface',
-          description: 'Navigate the Replit IDE like a pro',
+          description: 'Navigate the E-Code IDE like a pro',
           href: '/docs/interface'
         }
       ]
@@ -99,7 +99,7 @@ export default function Docs() {
         },
         {
           title: 'Database',
-          description: 'Work with PostgreSQL and Replit DB',
+          description: 'Work with PostgreSQL and E-Code DB',
           href: '/docs/database'
         }
       ]
@@ -153,7 +153,7 @@ export default function Docs() {
                 onClick={() => navigate('/')}
               >
                 <Code className="h-6 w-6" />
-                <span className="font-bold text-xl">Replit</span>
+                <span className="font-bold text-xl">E-Code</span>
               </div>
               <div className="hidden md:flex items-center gap-6">
                 <Button variant="ghost" size="sm" onClick={() => navigate('/docs')}>
@@ -191,7 +191,7 @@ export default function Docs() {
               Documentation
             </Badge>
             <h1 className="text-4xl md:text-5xl font-bold">
-              Build anything with Replit
+              Build anything with E-Code
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Everything you need to know to create, collaborate, and deploy amazing projects
@@ -225,7 +225,7 @@ export default function Docs() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  New to Replit? Start here and build your first app in minutes.
+                  New to E-Code? Start here and build your first app in minutes.
                 </p>
                 <Button variant="link" className="p-0">
                   Get started
@@ -243,7 +243,7 @@ export default function Docs() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Integrate Replit into your workflow with our comprehensive API.
+                  Integrate E-Code into your workflow with our comprehensive API.
                 </p>
                 <Button variant="link" className="p-0">
                   View API docs
@@ -359,7 +359,7 @@ export default function Docs() {
       {/* Footer */}
       <footer className="border-t py-8 px-4">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 Replit Clone. All rights reserved.</p>
+          <p>&copy; 2024 E-Code Clone. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -39,7 +39,7 @@ export default function Support() {
       id: 3,
       category: 'Technical',
       question: 'What languages are supported?',
-      answer: 'Replit supports over 50 programming languages including Python, JavaScript, TypeScript, Java, C++, Go, Rust, Ruby, PHP, and many more. Each language comes with pre-configured environments.'
+      answer: 'E-Code supports over 50 programming languages including Python, JavaScript, TypeScript, Java, C++, Go, Rust, Ruby, PHP, and many more. Each language comes with pre-configured environments.'
     },
     {
       id: 4,
@@ -133,7 +133,7 @@ export default function Support() {
           Support Center
         </h1>
         <p className="text-muted-foreground mt-2">
-          Get help with your Replit account and projects
+          Get help with your E-Code account and projects
         </p>
       </div>
 
@@ -255,7 +255,7 @@ export default function Support() {
             <CardHeader>
               <CardTitle>Frequently Asked Questions</CardTitle>
               <CardDescription>
-                Find answers to common questions about Replit
+                Find answers to common questions about E-Code
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -395,7 +395,7 @@ export default function Support() {
             <CardHeader>
               <CardTitle>System Status</CardTitle>
               <CardDescription>
-                Current status of Replit services
+                Current status of E-Code services
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -144,7 +144,7 @@ export default function Careers() {
                 onClick={() => navigate('/')}
               >
                 <Code className="h-6 w-6" />
-                <span className="font-bold text-xl">Replit</span>
+                <span className="font-bold text-xl">E-Code</span>
               </div>
               <div className="hidden md:flex items-center gap-6">
                 <Button variant="ghost" size="sm" onClick={() => navigate('/about')}>
@@ -224,7 +224,7 @@ export default function Careers() {
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-600/20 blur-3xl" />
               <Card className="relative">
                 <CardHeader>
-                  <CardTitle>Life at Replit</CardTitle>
+                  <CardTitle>Life at E-Code</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -369,7 +369,7 @@ export default function Careers() {
       {/* Footer */}
       <footer className="border-t py-8 px-4">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 Replit Clone. All rights reserved.</p>
+          <p>&copy; 2024 E-Code Clone. All rights reserved.</p>
         </div>
       </footer>
     </div>

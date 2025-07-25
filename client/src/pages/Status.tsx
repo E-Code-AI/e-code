@@ -69,7 +69,7 @@ export default function Status() {
             <div className="text-center mb-12">
               <h1 className="text-4xl font-bold mb-4">System Status</h1>
               <p className="text-lg text-muted-foreground">
-                Current status and incident history for all Replit services
+                Current status and incident history for all E-Code services
               </p>
             </div>
 

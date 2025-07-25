@@ -61,7 +61,7 @@ export function AdvancedEditorIntegration({
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* File Explorer */}
         <ResizablePanel defaultSize={20} minSize={15} maxSize={35}>
-          <div className="h-full border-r border-[var(--replit-border)] bg-[var(--replit-sidebar)]">
+          <div className="h-full border-r border-[var(--ecode-border)] bg-[var(--ecode-sidebar)]">
             <ReplitFileExplorer
               projectId={projectId}
               onFileSelect={handleFileSelect}
@@ -74,14 +74,14 @@ export function AdvancedEditorIntegration({
           </div>
         </ResizablePanel>
 
-        <ResizableHandle className="bg-[var(--replit-border)] hover:bg-[var(--replit-accent)]/50" />
+        <ResizableHandle className="bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent)]/50" />
 
         {/* Editor and Terminal */}
         <ResizablePanel defaultSize={80}>
           <ResizablePanelGroup direction="vertical" className="h-full">
             {/* Monaco Editor */}
             <ResizablePanel defaultSize={showTerminal ? 65 : 100}>
-              <div className="h-full bg-[var(--replit-editor-bg)]">
+              <div className="h-full bg-[var(--ecode-editor-bg)]">
                 {selectedFile ? (
                   <ReplitMonacoEditor
                     projectId={projectId}
@@ -95,13 +95,13 @@ export function AdvancedEditorIntegration({
                 ) : (
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center">
-                      <div className="text-6xl mb-4 text-[var(--replit-text-secondary)]">
+                      <div className="text-6xl mb-4 text-[var(--ecode-text-secondary)]">
                         📁
                       </div>
-                      <h3 className="text-lg font-medium text-[var(--replit-text)] mb-2">
+                      <h3 className="text-lg font-medium text-[var(--ecode-text)] mb-2">
                         Welcome to Your Workspace
                       </h3>
-                      <p className="text-[var(--replit-text-secondary)] mb-4">
+                      <p className="text-[var(--ecode-text-secondary)] mb-4">
                         Select a file from the sidebar to start coding
                       </p>
                     </div>
@@ -113,7 +113,7 @@ export function AdvancedEditorIntegration({
             {/* Terminal */}
             {showTerminal && (
               <>
-                <ResizableHandle className="bg-[var(--replit-border)] hover:bg-[var(--replit-accent)]/50" />
+                <ResizableHandle className="bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent)]/50" />
                 <ResizablePanel defaultSize={35} minSize={25}>
                   <ReplitTerminal
                     projectId={projectId}

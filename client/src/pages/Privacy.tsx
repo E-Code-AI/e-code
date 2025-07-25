@@ -85,7 +85,7 @@ export default function Privacy() {
                   If you have questions about this Privacy Policy, please contact us at:
                 </p>
                 <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <p>Replit Inc.</p>
+                  <p>E-Code Inc.</p>
                   <p>Email: privacy@replit.com</p>
                   <p>Address: 548 Market St #16093, San Francisco, CA 94104</p>
                 </div>

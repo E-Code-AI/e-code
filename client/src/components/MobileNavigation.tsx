@@ -20,7 +20,7 @@ export function MobileNavigation() {
 
   return (
     <>
-      {/* Ligne noire en bas de l'écran, exactement comme sur Replit */}
+      {/* Ligne noire en bas de l'écran, exactement comme sur E-Code */}
       <div className="fixed bottom-0 left-0 right-0 h-1 bg-black md:hidden z-50"></div>
       
       {/* Navigation mobile principale */}

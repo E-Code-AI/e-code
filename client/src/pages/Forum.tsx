@@ -17,7 +17,7 @@ export default function Forum() {
 
   const recentPosts = [
     {
-      title: 'How to deploy a Next.js app on Replit?',
+      title: 'How to deploy a Next.js app on E-Code?',
       author: 'alex_dev',
       category: 'Help & Support',
       replies: 23,

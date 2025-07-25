@@ -159,7 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: 'A modern blog with MDX support, dark mode, and SEO optimization',
           category: 'web',
           tags: ['nextjs', 'react', 'blog', 'mdx'],
-          author: { name: 'Replit Team', verified: true },
+          author: { name: 'E-Code Team', verified: true },
           stats: { uses: 15420, stars: 892, forks: 234 },
           language: 'TypeScript',
           framework: 'Next.js',
@@ -176,7 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: 'Production-ready REST API with authentication and PostgreSQL',
           category: 'api',
           tags: ['express', 'nodejs', 'api', 'postgresql'],
-          author: { name: 'Replit Team', verified: true },
+          author: { name: 'E-Code Team', verified: true },
           stats: { uses: 23100, stars: 1243, forks: 567 },
           language: 'JavaScript',
           framework: 'Express.js',
@@ -824,7 +824,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ReplitDB Routes
+  // ECodeDB Routes
   app.get('/api/projects/:id/db/:key', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);

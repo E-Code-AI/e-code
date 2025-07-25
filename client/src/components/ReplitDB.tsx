@@ -344,7 +344,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center">
               <Database className="h-4 w-4 mr-2" />
-              Replit DB
+              E-Code DB
             </CardTitle>
             <div className="flex items-center space-x-2">
               <Button

@@ -422,7 +422,7 @@ export function EditorWorkspace({
                   size="sm"
                   onClick={toggleReplitDB}
                   className="h-8"
-                  title="Database (Replit DB)"
+                  title="Database (E-Code DB)"
                 >
                   <Database className="h-4 w-4 mr-2" />
                   <span className="hidden lg:inline">Database</span>

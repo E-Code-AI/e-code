@@ -129,7 +129,7 @@ export function ReplitMonacoEditor({
   useEffect(() => {
     if (!editorRef.current || !file) return;
 
-    // Configuration du thème Replit
+    // Configuration du thème E-Code
     monaco.editor.defineTheme("replit-dark", {
       base: "vs-dark",
       inherit: true,
@@ -309,10 +309,10 @@ export function ReplitMonacoEditor({
 
   if (fileLoading || !file) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[var(--replit-editor-bg)]">
+      <div className="flex-1 flex items-center justify-center bg-[var(--ecode-editor-bg)]">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-[var(--replit-accent)] border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-[var(--replit-text-secondary)]">Loading editor...</p>
+          <div className="animate-spin w-8 h-8 border-4 border-[var(--ecode-accent)] border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-[var(--ecode-text-secondary)]">Loading editor...</p>
         </div>
       </div>
     );
@@ -320,16 +320,16 @@ export function ReplitMonacoEditor({
 
   return (
     <TooltipProvider>
-      <div className={`flex flex-col bg-[var(--replit-editor-bg)] ${isFullscreen ? 'fixed inset-0 z-50' : 'flex-1'}`}>
+      <div className={`flex flex-col bg-[var(--ecode-editor-bg)] ${isFullscreen ? 'fixed inset-0 z-50' : 'flex-1'}`}>
         {/* Barre d'outils de l'éditeur */}
-        <div className="h-12 bg-[var(--replit-surface)] border-b border-[var(--replit-border)] flex items-center justify-between px-4">
+        <div className="h-12 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4">
           <div className="flex items-center space-x-3">
             {/* Infos du fichier */}
             <div className="flex items-center space-x-2">
-              <FileText className="h-4 w-4 text-[var(--replit-text-secondary)]" />
-              <span className="text-sm font-medium text-[var(--replit-text)]">{file.name}</span>
+              <FileText className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
+              <span className="text-sm font-medium text-[var(--ecode-text)]">{file.name}</span>
               {hasUnsavedChanges && (
-                <div className="h-2 w-2 bg-[var(--replit-warning)] rounded-full"></div>
+                <div className="h-2 w-2 bg-[var(--ecode-warning)] rounded-full"></div>
               )}
               <Badge variant="outline" className="text-xs">
                 {file.language}
@@ -345,7 +345,7 @@ export function ReplitMonacoEditor({
                     size="sm"
                     onClick={handleSave}
                     disabled={saveFileMutation.isPending || !hasUnsavedChanges}
-                    className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                    className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                   >
                     <Save className="h-4 w-4" />
                   </Button>
@@ -360,7 +360,7 @@ export function ReplitMonacoEditor({
                     size="sm"
                     onClick={onRunCode}
                     disabled={isRunning}
-                    className="text-[var(--replit-green)] hover:bg-[var(--replit-green)]/10"
+                    className="text-[var(--ecode-green)] hover:bg-[var(--ecode-green)]/10"
                   >
                     {isRunning ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   </Button>
@@ -372,7 +372,7 @@ export function ReplitMonacoEditor({
 
           <div className="flex items-center space-x-3">
             {/* Status de sauvegarde */}
-            <div className="flex items-center space-x-1 text-xs text-[var(--replit-text-secondary)]">
+            <div className="flex items-center space-x-1 text-xs text-[var(--ecode-text-secondary)]">
               <Clock className="h-3 w-3" />
               <span>Saved {formatLastSaved(lastSaved)}</span>
             </div>
@@ -380,13 +380,13 @@ export function ReplitMonacoEditor({
             {/* Collaborateurs */}
             {showCollaborators && collaborators.length > 0 && (
               <div className="flex items-center space-x-1">
-                <Users className="h-4 w-4 text-[var(--replit-text-secondary)]" />
+                <Users className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
                 <div className="flex -space-x-2">
                   {collaborators.slice(0, 3).map((user) => (
                     <Tooltip key={user.id}>
                       <TooltipTrigger asChild>
                         <div
-                          className="h-6 w-6 rounded-full border-2 border-[var(--replit-surface)] flex items-center justify-center text-xs font-medium text-white"
+                          className="h-6 w-6 rounded-full border-2 border-[var(--ecode-surface)] flex items-center justify-center text-xs font-medium text-white"
                           style={{ backgroundColor: user.color }}
                         >
                           {user.username.charAt(0).toUpperCase()}
@@ -396,7 +396,7 @@ export function ReplitMonacoEditor({
                     </Tooltip>
                   ))}
                   {collaborators.length > 3 && (
-                    <div className="h-6 w-6 rounded-full bg-[var(--replit-text-secondary)] border-2 border-[var(--replit-surface)] flex items-center justify-center text-xs font-medium text-white">
+                    <div className="h-6 w-6 rounded-full bg-[var(--ecode-text-secondary)] border-2 border-[var(--ecode-surface)] flex items-center justify-center text-xs font-medium text-white">
                       +{collaborators.length - 3}
                     </div>
                   )}
@@ -410,27 +410,27 @@ export function ReplitMonacoEditor({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]"
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                 >
                   <Settings className="h-4 w-4" />
                   <ChevronDown className="h-3 w-3 ml-1" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 bg-[var(--replit-surface)] border-[var(--replit-border)]">
-                <DropdownMenuItem onClick={handleFind} className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+              <DropdownMenuContent className="w-48 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+                <DropdownMenuItem onClick={handleFind} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                   <Search className="mr-2 h-4 w-4" />
                   Find (Ctrl+F)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleReplace} className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+                <DropdownMenuItem onClick={handleReplace} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                   <Replace className="mr-2 h-4 w-4" />
                   Replace (Ctrl+H)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleFormat} className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+                <DropdownMenuItem onClick={handleFormat} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                   <Palette className="mr-2 h-4 w-4" />
                   Format Document
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-[var(--replit-border)]" />
-                <DropdownMenuItem onClick={toggleFullscreen} className="text-[var(--replit-text)] hover:bg-[var(--replit-sidebar-hover)]">
+                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+                <DropdownMenuItem onClick={toggleFullscreen} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
                   {isFullscreen ? (
                     <>
                       <Minimize2 className="mr-2 h-4 w-4" />
@@ -454,7 +454,7 @@ export function ReplitMonacoEditor({
           
           {/* Overlay de status */}
           {isRunning && (
-            <div className="absolute top-2 right-2 flex items-center space-x-2 bg-[var(--replit-green)] text-white px-3 py-1 rounded-md text-sm">
+            <div className="absolute top-2 right-2 flex items-center space-x-2 bg-[var(--ecode-green)] text-white px-3 py-1 rounded-md text-sm">
               <Zap className="h-3 w-3 animate-pulse" />
               <span>Running</span>
             </div>

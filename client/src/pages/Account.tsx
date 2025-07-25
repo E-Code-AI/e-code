@@ -436,7 +436,7 @@ export default function Account() {
                   <div className="space-y-0.5">
                     <Label>Tips & tutorials</Label>
                     <p className="text-sm text-muted-foreground">
-                      Receive helpful tips to get the most out of Replit
+                      Receive helpful tips to get the most out of E-Code
                     </p>
                   </div>
                   <Switch
@@ -469,7 +469,7 @@ export default function Account() {
             <CardHeader>
               <CardTitle>In-App Notifications</CardTitle>
               <CardDescription>
-                Control what notifications you see in Replit
+                Control what notifications you see in E-Code
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -514,7 +514,7 @@ export default function Account() {
             <CardHeader>
               <CardTitle>API Keys</CardTitle>
               <CardDescription>
-                Manage your API keys for accessing Replit programmatically
+                Manage your API keys for accessing E-Code programmatically
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
