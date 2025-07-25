@@ -289,7 +289,7 @@ export default function Explore() {
               <Card 
                 key={repl.id} 
                 className="cursor-pointer hover:shadow-lg transition-all"
-                onClick={() => navigate(`/repl/${repl.id}`)}
+                onClick={() => navigate(`/project/${repl.id}`)}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
