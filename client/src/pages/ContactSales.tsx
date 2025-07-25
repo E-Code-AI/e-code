@@ -9,10 +9,12 @@ import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { 
   Code, Building2, Users, Mail, Phone, Globe, MessageSquare,
-  ChevronRight, Check, Calendar, Clock, Shield
+  ChevronRight, Check, Calendar, Clock, Shield, Sparkles, ArrowRight
 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { PublicFooter } from '@/components/layout/PublicFooter';
 
 export default function ContactSales() {
   const [, navigate] = useLocation();
@@ -54,98 +56,115 @@ export default function ContactSales() {
     {
       icon: <Users className="h-5 w-5" />,
       title: 'Dedicated Support',
-      description: 'Get a dedicated success manager'
+      description: 'Get a dedicated success manager and priority support'
     },
     {
       icon: <Shield className="h-5 w-5" />,
       title: 'Enterprise Security',
-      description: 'SOC2, HIPAA, and custom compliance'
+      description: 'SOC2, HIPAA compliance, SSO, and custom security requirements'
     },
     {
       icon: <Globe className="h-5 w-5" />,
       title: 'Global Scale',
-      description: 'Deploy across multiple regions'
+      description: 'Deploy across multiple regions with guaranteed uptime'
     },
     {
       icon: <Building2 className="h-5 w-5" />,
       title: 'Custom Solutions',
-      description: 'Tailored to your specific needs'
+      description: 'Tailored features and integrations for your organization'
     }
   ];
 
+  const features = [
+    'Unlimited private projects and collaborators',
+    'Advanced AI agent capabilities and priority access',
+    'Custom deployment configurations',
+    'Dedicated infrastructure and resources',
+    'SLA guarantees and 24/7 support',
+    'Custom training for your team',
+    'API access and webhook integrations',
+    'White-label options available'
+  ];
+
   return (
-    <div className="min-h-screen">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-8">
-              <div 
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={() => navigate('/')}
-              >
-                <Code className="h-6 w-6" />
-                <span className="font-bold text-xl">E-Code</span>
-              </div>
-              <div className="hidden md:flex items-center gap-6">
-                <Button variant="ghost" size="sm" onClick={() => navigate('/pricing')}>
-                  Pricing
+    <div className="min-h-screen flex flex-col">
+      <PublicNavbar />
+
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="py-20 bg-gradient-to-b from-background to-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="text-center max-w-4xl mx-auto">
+              <Badge variant="secondary" className="mb-6">
+                <Building2 className="h-3 w-3 mr-1" />
+                Enterprise Sales
+              </Badge>
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                Empower your entire organization
+              </h1>
+              <p className="text-xl text-muted-foreground mb-8">
+                Transform how your teams build, deploy, and collaborate with E-Code Enterprise. 
+                Get dedicated support, enhanced security, and custom solutions tailored to your needs.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Button size="lg" onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Contact Sales
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/features')}>
-                  Features
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/about')}>
-                  About
+                <Button size="lg" variant="outline" onClick={() => navigate('/pricing')}>
+                  View Pricing
                 </Button>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => navigate('/auth')}>
-                Log in
-              </Button>
-              <Button onClick={() => navigate(user ? '/dashboard' : '/auth')}>
-                {user ? 'Dashboard' : 'Sign up'}
-              </Button>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <h2 className="text-3xl font-bold text-center mb-12">Enterprise Features</h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {benefits.map((benefit, index) => (
+                  <Card key={index} className="border-none shadow-sm">
+                    <CardContent className="pt-6">
+                      <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4">
+                        {benefit.icon}
+                      </div>
+                      <h3 className="font-semibold mb-2">{benefit.title}</h3>
+                      <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <div className="mt-12 grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+                {features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">{feature}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </section>
 
-      {/* Hero Section */}
-      <section className="py-12 sm:py-16 md:py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center space-y-4 sm:space-y-6">
-            <Badge variant="secondary" className="mb-2 sm:mb-4 text-xs sm:text-sm">
-              <Building2 className="h-3 w-3 mr-1" />
-              Enterprise Sales
-            </Badge>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
-              Let's build something{' '}
-              <span className="text-primary">amazing together</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Get in touch with our sales team to discuss how E-Code can transform 
-              your organization's development workflow.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Content */}
-      <section className="py-12 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Get in Touch</CardTitle>
-                  <CardDescription>
-                    Fill out the form below and our team will reach out within 24 hours
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Contact Form Section */}
+        <section className="py-16" id="contact-form">
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="grid lg:grid-cols-3 gap-12">
+                {/* Contact Form */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Contact Our Sales Team</CardTitle>
+                      <CardDescription>
+                        Fill out the form below and we'll get back to you within 24 hours
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="firstName">First Name *</Label>
@@ -285,11 +304,11 @@ export default function ContactSales() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm">enterprise@replit.com</span>
+                    <span className="text-sm">enterprise@ecode.com</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Phone className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm">1-888-REPLIT-1</span>
+                    <span className="text-sm">1-888-ECODE-01</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Clock className="h-5 w-5 text-muted-foreground" />
@@ -310,17 +329,14 @@ export default function ContactSales() {
                   </Button>
                 </CardContent>
               </Card>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* Footer */}
-      <footer className="border-t py-8 px-4 mt-16">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 E-Code Clone. All rights reserved.</p>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
