@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, uniqueIndex, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, uniqueIndex, json, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -338,4 +338,29 @@ export type BountySubmission = typeof bountySubmissions.$inferSelect;
 export type InsertBountySubmission = z.infer<typeof insertBountySubmissionSchema>;
 
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+
+// Blog posts table
+export const blogPosts = pgTable('blog_posts', {
+  id: serial('id').primaryKey(),
+  slug: varchar('slug', { length: 255 }).unique().notNull(),
+  title: varchar('title', { length: 500 }).notNull(),
+  excerpt: text('excerpt').notNull(),
+  content: text('content').notNull(),
+  author: varchar('author', { length: 255 }).notNull(),
+  authorRole: varchar('author_role', { length: 255 }),
+  category: varchar('category', { length: 100 }).notNull(),
+  tags: text('tags').array(),
+  coverImage: varchar('cover_image', { length: 500 }),
+  readTime: integer('read_time').notNull(), // in minutes
+  featured: boolean('featured').default(false),
+  published: boolean('published').default(true),
+  publishedAt: timestamp('published_at').defaultNow(),
+  views: integer('views').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts);
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;

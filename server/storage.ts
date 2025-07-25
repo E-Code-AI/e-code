@@ -10,7 +10,8 @@ import {
   BountySubmission, InsertBountySubmission,
   LoginHistory, InsertLoginHistory,
   ApiToken, InsertApiToken,
-  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens
+  BlogPost, InsertBlogPost,
+  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts
 } from "@shared/schema";
 import { eq, and, desc, isNull, sql } from "drizzle-orm";
 import { db } from "./db";
@@ -95,6 +96,15 @@ export interface IStorage {
   getUserApiTokens(userId: number): Promise<ApiToken[]>;
   updateApiToken(id: number, update: Partial<ApiToken>): Promise<ApiToken>;
   deleteApiToken(id: number): Promise<void>;
+  
+  // Blog methods
+  getAllBlogPosts(published?: boolean): Promise<BlogPost[]>;
+  getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
+  getBlogPostsByCategory(category: string): Promise<BlogPost[]>;
+  getFeaturedBlogPosts(): Promise<BlogPost[]>;
+  createBlogPost(data: InsertBlogPost): Promise<BlogPost>;
+  updateBlogPost(id: number, data: Partial<InsertBlogPost>): Promise<BlogPost | undefined>;
+  incrementBlogPostViews(slug: string): Promise<void>;
   
   // Session store for authentication
   sessionStore: Store;
@@ -808,6 +818,135 @@ export class DatabaseStorage implements IStorage {
     await db.delete(apiTokens)
       .where(eq(apiTokens.id, id));
   }
+  
+  // Blog methods
+  async getAllBlogPosts(published: boolean = true): Promise<BlogPost[]> {
+    try {
+      if (published) {
+        return await db.select()
+          .from(blogPosts)
+          .where(eq(blogPosts.published, true))
+          .orderBy(desc(blogPosts.publishedAt));
+      }
+      return await db.select()
+        .from(blogPosts)
+        .orderBy(desc(blogPosts.publishedAt));
+    } catch (error: any) {
+      if (error.message?.includes('relation "blog_posts" does not exist')) {
+        console.log('Blog posts table does not exist yet');
+        return [];
+      }
+      throw error;
+    }
+  }
+  
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    try {
+      const [post] = await db.select()
+        .from(blogPosts)
+        .where(eq(blogPosts.slug, slug));
+      
+      if (post) {
+        // Increment views
+        await this.incrementBlogPostViews(slug);
+      }
+      
+      return post;
+    } catch (error: any) {
+      if (error.message?.includes('relation "blog_posts" does not exist')) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+  
+  async getBlogPostsByCategory(category: string): Promise<BlogPost[]> {
+    try {
+      return await db.select()
+        .from(blogPosts)
+        .where(and(
+          eq(blogPosts.category, category),
+          eq(blogPosts.published, true)
+        ))
+        .orderBy(desc(blogPosts.publishedAt));
+    } catch (error: any) {
+      if (error.message?.includes('relation "blog_posts" does not exist')) {
+        return [];
+      }
+      throw error;
+    }
+  }
+  
+  async getFeaturedBlogPosts(): Promise<BlogPost[]> {
+    try {
+      return await db.select()
+        .from(blogPosts)
+        .where(and(
+          eq(blogPosts.featured, true),
+          eq(blogPosts.published, true)
+        ))
+        .orderBy(desc(blogPosts.publishedAt))
+        .limit(5);
+    } catch (error: any) {
+      if (error.message?.includes('relation "blog_posts" does not exist')) {
+        return [];
+      }
+      throw error;
+    }
+  }
+  
+  async createBlogPost(data: InsertBlogPost): Promise<BlogPost> {
+    const [post] = await db.insert(blogPosts)
+      .values({
+        slug: data.slug,
+        title: data.title,
+        excerpt: data.excerpt,
+        content: data.content,
+        author: data.author,
+        authorRole: data.authorRole,
+        category: data.category,
+        tags: data.tags,
+        coverImage: data.coverImage,
+        readTime: data.readTime,
+        featured: data.featured,
+        published: data.published,
+        publishedAt: data.publishedAt || new Date(),
+        views: data.views || 0
+      })
+      .returning();
+    return post;
+  }
+  
+  async updateBlogPost(id: number, data: Partial<InsertBlogPost>): Promise<BlogPost | undefined> {
+    const updateData: any = { updatedAt: new Date() };
+    
+    if (data.slug !== undefined) updateData.slug = data.slug;
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.excerpt !== undefined) updateData.excerpt = data.excerpt;
+    if (data.content !== undefined) updateData.content = data.content;
+    if (data.author !== undefined) updateData.author = data.author;
+    if (data.authorRole !== undefined) updateData.authorRole = data.authorRole;
+    if (data.category !== undefined) updateData.category = data.category;
+    if (data.tags !== undefined) updateData.tags = data.tags;
+    if (data.coverImage !== undefined) updateData.coverImage = data.coverImage;
+    if (data.readTime !== undefined) updateData.readTime = data.readTime;
+    if (data.featured !== undefined) updateData.featured = data.featured;
+    if (data.published !== undefined) updateData.published = data.published;
+    if (data.publishedAt !== undefined) updateData.publishedAt = data.publishedAt;
+    if (data.views !== undefined) updateData.views = data.views;
+    
+    const [post] = await db.update(blogPosts)
+      .set(updateData)
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return post;
+  }
+  
+  async incrementBlogPostViews(slug: string): Promise<void> {
+    await db.update(blogPosts)
+      .set({ views: sql`${blogPosts.views} + 1` })
+      .where(eq(blogPosts.slug, slug));
+  }
 }
 
 // In-memory storage implementation (kept for backwards compatibility)
@@ -839,6 +978,9 @@ export class MemStorage implements IStorage {
     this.environmentVariables = new Map();
     this.loginHistory = new Map();
     this.apiTokens = new Map();
+    this.bounties = new Map();
+    this.bountySubmissions = new Map();
+    this.blogPosts = new Map();
     this.projectIdCounter = 1;
     this.fileIdCounter = 1;
     this.userIdCounter = 1;
@@ -847,6 +989,9 @@ export class MemStorage implements IStorage {
     this.environmentVariableIdCounter = 1;
     this.loginHistoryIdCounter = 1;
     this.apiTokenIdCounter = 1;
+    this.bountyIdCounter = 1;
+    this.bountySubmissionIdCounter = 1;
+    this.blogPostIdCounter = 1;
     
     const MemoryStore = require('memorystore')(session);
     this.sessionStore = new MemoryStore({
@@ -1378,12 +1523,23 @@ export class MemStorage implements IStorage {
     return login;
   }
   
-  async getUserLoginHistory(userId: number, limit?: number): Promise<LoginHistory[]> {
+  async getLoginHistory(userId: number, limit: number = 10): Promise<LoginHistory[]> {
     const history = Array.from(this.loginHistory.values())
       .filter(login => login.userId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     
-    return limit ? history.slice(0, limit) : history;
+    return history.slice(0, limit);
+  }
+  
+  async getRecentFailedLogins(userId: number, minutes: number): Promise<number> {
+    const cutoffTime = new Date(Date.now() - minutes * 60 * 1000);
+    const failedLogins = Array.from(this.loginHistory.values())
+      .filter(login => 
+        login.userId === userId && 
+        !login.successful && 
+        new Date(login.createdAt).getTime() >= cutoffTime.getTime()
+      );
+    return failedLogins.length;
   }
   
   async createApiToken(tokenData: InsertApiToken): Promise<ApiToken> {
@@ -1401,6 +1557,19 @@ export class MemStorage implements IStorage {
     };
     
     this.apiTokens.set(token.id, token);
+    return token;
+  }
+  
+  async getApiToken(tokenHash: string): Promise<ApiToken | undefined> {
+    const token = Array.from(this.apiTokens.values())
+      .find(t => t.tokenHash === tokenHash);
+    
+    if (token) {
+      // Update last used time
+      token.lastUsedAt = new Date();
+      this.apiTokens.set(token.id, token);
+    }
+    
     return token;
   }
   
@@ -1427,6 +1596,195 @@ export class MemStorage implements IStorage {
   
   async deleteApiToken(id: number): Promise<void> {
     this.apiTokens.delete(id);
+  }
+  
+  // Bounty methods
+  private bounties: Map<number, Bounty> = new Map();
+  private bountySubmissions: Map<number, BountySubmission> = new Map();
+  private bountyIdCounter = 1;
+  private bountySubmissionIdCounter = 1;
+  
+  async getAllBounties(): Promise<Bounty[]> {
+    return Array.from(this.bounties.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async getBounty(id: number): Promise<Bounty | undefined> {
+    return this.bounties.get(id);
+  }
+  
+  async getBountiesByUser(userId: number): Promise<Bounty[]> {
+    return Array.from(this.bounties.values())
+      .filter(bounty => bounty.authorId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async createBounty(bountyData: InsertBounty): Promise<Bounty> {
+    const now = new Date();
+    const bounty: Bounty = {
+      id: this.bountyIdCounter++,
+      title: bountyData.title,
+      description: bountyData.description,
+      amount: bountyData.amount,
+      currency: bountyData.currency ?? 'cycles',
+      status: bountyData.status ?? 'open',
+      authorId: bountyData.authorId,
+      winnerId: bountyData.winnerId ?? null,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.bounties.set(bounty.id, bounty);
+    return bounty;
+  }
+  
+  async updateBounty(id: number, update: Partial<Bounty>): Promise<Bounty> {
+    const bounty = this.bounties.get(id);
+    if (!bounty) {
+      throw new Error('Bounty not found');
+    }
+    
+    const updatedBounty = {
+      ...bounty,
+      ...update,
+      updatedAt: new Date()
+    };
+    
+    this.bounties.set(id, updatedBounty);
+    return updatedBounty;
+  }
+  
+  async deleteBounty(id: number): Promise<void> {
+    this.bounties.delete(id);
+  }
+  
+  async getBountySubmissions(bountyId: number): Promise<BountySubmission[]> {
+    return Array.from(this.bountySubmissions.values())
+      .filter(submission => submission.bountyId === bountyId)
+      .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+  }
+  
+  async getBountySubmission(id: number): Promise<BountySubmission | undefined> {
+    return this.bountySubmissions.get(id);
+  }
+  
+  async getUserBountySubmissions(userId: number): Promise<BountySubmission[]> {
+    return Array.from(this.bountySubmissions.values())
+      .filter(submission => submission.userId === userId)
+      .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+  }
+  
+  async createBountySubmission(submissionData: InsertBountySubmission): Promise<BountySubmission> {
+    const now = new Date();
+    const submission: BountySubmission = {
+      id: this.bountySubmissionIdCounter++,
+      bountyId: submissionData.bountyId,
+      userId: submissionData.userId,
+      status: submissionData.status ?? 'submitted',
+      submissionUrl: submissionData.submissionUrl,
+      feedback: submissionData.feedback ?? null,
+      submittedAt: now,
+      reviewedAt: null
+    };
+    
+    this.bountySubmissions.set(submission.id, submission);
+    return submission;
+  }
+  
+  async updateBountySubmission(id: number, update: Partial<BountySubmission>): Promise<BountySubmission> {
+    const submission = this.bountySubmissions.get(id);
+    if (!submission) {
+      throw new Error('Bounty submission not found');
+    }
+    
+    const updatedSubmission = {
+      ...submission,
+      ...update,
+      reviewedAt: update.status === 'accepted' || update.status === 'rejected' ? new Date() : submission.reviewedAt
+    };
+    
+    this.bountySubmissions.set(id, updatedSubmission);
+    return updatedSubmission;
+  }
+  
+  // Blog methods
+  private blogPosts: Map<number, BlogPost> = new Map();
+  private blogPostIdCounter = 1;
+  
+  async getAllBlogPosts(published: boolean = true): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values())
+      .filter(post => !published || post.published)
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  }
+  
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    const post = Array.from(this.blogPosts.values()).find(p => p.slug === slug);
+    if (post) {
+      // Increment views
+      await this.incrementBlogPostViews(slug);
+    }
+    return post;
+  }
+  
+  async getBlogPostsByCategory(category: string): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values())
+      .filter(post => post.category === category && post.published)
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  }
+  
+  async getFeaturedBlogPosts(): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values())
+      .filter(post => post.featured && post.published)
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .slice(0, 5);
+  }
+  
+  async createBlogPost(data: InsertBlogPost): Promise<BlogPost> {
+    const now = new Date();
+    const post: BlogPost = {
+      id: this.blogPostIdCounter++,
+      slug: data.slug,
+      title: data.title,
+      excerpt: data.excerpt,
+      content: data.content,
+      author: data.author,
+      authorRole: data.authorRole ?? null,
+      category: data.category,
+      tags: data.tags ?? null,
+      coverImage: data.coverImage ?? null,
+      readTime: data.readTime,
+      featured: data.featured ?? false,
+      published: data.published ?? true,
+      publishedAt: data.publishedAt ?? now,
+      views: data.views ?? 0,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.blogPosts.set(post.id, post);
+    return post;
+  }
+  
+  async updateBlogPost(id: number, data: Partial<InsertBlogPost>): Promise<BlogPost | undefined> {
+    const post = this.blogPosts.get(id);
+    if (!post) return undefined;
+    
+    const updatedPost = {
+      ...post,
+      ...data,
+      updatedAt: new Date()
+    };
+    
+    this.blogPosts.set(id, updatedPost);
+    return updatedPost;
+  }
+  
+  async incrementBlogPostViews(slug: string): Promise<void> {
+    const post = Array.from(this.blogPosts.values()).find(p => p.slug === slug);
+    if (post) {
+      post.views++;
+      this.blogPosts.set(post.id, post);
+    }
   }
 }
 

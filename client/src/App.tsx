@@ -37,6 +37,7 @@ const Features = lazy(() => import("@/pages/Features"));
 const About = lazy(() => import("@/pages/About"));
 const Careers = lazy(() => import("@/pages/Careers"));
 const Blog = lazy(() => import("@/pages/Blog"));
+const BlogDetail = lazy(() => import("@/pages/BlogDetail"));
 const Docs = lazy(() => import("@/pages/Docs"));
 const ContactSales = lazy(() => import("@/pages/ContactSales"));
 const Terms = lazy(() => import("@/pages/Terms"));
@@ -100,6 +101,7 @@ function AppContent() {
           <Route path="/about" component={About} />
           <Route path="/careers" component={Careers} />
           <Route path="/blog" component={Blog} />
+          <Route path="/blog/:slug" component={BlogDetail} />
           <Route path="/docs" component={Docs} />
           <Route path="/contact-sales" component={ContactSales} />
           <Route path="/terms" component={Terms} />
