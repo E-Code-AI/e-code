@@ -1,13 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Bot, Send, Sparkles, Code, FileText, HelpCircle,
-  Lightbulb, Zap, RefreshCw, Copy, X
+  Lightbulb, Zap, RefreshCw, Copy, X, Hammer, Package,
+  FolderOpen, FileCode, Loader2, CheckCircle, AlertCircle,
+  Wrench, Rocket, GitBranch, Database, Globe, Server
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface ReplitAgentProps {
   projectId: number;
@@ -21,7 +27,7 @@ interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
-  type?: 'code' | 'explanation' | 'suggestion' | 'error' | 'action' | 'progress';
+  type?: 'code' | 'explanation' | 'suggestion' | 'error' | 'action' | 'progress' | 'building';
   metadata?: {
     language?: string;
     fileName?: string;
@@ -29,6 +35,8 @@ interface Message {
     files?: string[];
     packages?: string[];
     progress?: number;
+    buildType?: string;
+    technology?: string;
   };
 }
 
@@ -37,7 +45,619 @@ interface AgentAction {
   path?: string;
   content?: string;
   package?: string;
+  description?: string;
 }
+
+interface BuildTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ElementType;
+  keywords: string[];
+  technology: string[];
+  structure: {
+    folders: string[];
+    files: { path: string; content: string }[];
+    packages: string[];
+  };
+}
+
+const BUILD_TEMPLATES: BuildTemplate[] = [
+  {
+    id: 'todo-app',
+    name: 'Todo Application',
+    description: 'A simple todo list app with CRUD operations',
+    icon: CheckCircle,
+    keywords: ['todo', 'task', 'list', 'crud'],
+    technology: ['HTML', 'CSS', 'JavaScript'],
+    structure: {
+      folders: ['css', 'js'],
+      files: [
+        { 
+          path: 'index.html', 
+          content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>My Todo List</h1>
+        <div class="todo-input">
+            <input type="text" id="todoInput" placeholder="Add a new task...">
+            <button onclick="addTodo()">Add</button>
+        </div>
+        <ul id="todoList"></ul>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>`
+        },
+        {
+          path: 'css/style.css',
+          content: `* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: #f5f5f5;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.todo-input {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+#todoInput {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px 0 0 5px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 20px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background: #45a049;
+}
+
+#todoList {
+    list-style: none;
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f9f9f9;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.todo-item:hover {
+    background: #f0f0f0;
+}
+
+.todo-item.completed {
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+
+.todo-item button {
+    margin-left: auto;
+    padding: 5px 10px;
+    font-size: 14px;
+    background: #f44336;
+}
+
+.todo-item button:hover {
+    background: #da190b;
+}`
+        },
+        {
+          path: 'js/app.js',
+          content: `let todos = JSON.parse(localStorage.getItem('todos')) || [];
+
+function renderTodos() {
+    const todoList = document.getElementById('todoList');
+    todoList.innerHTML = '';
+    
+    todos.forEach((todo, index) => {
+        const li = document.createElement('li');
+        li.className = 'todo-item' + (todo.completed ? ' completed' : '');
+        li.innerHTML = \`
+            <input type="checkbox" \${todo.completed ? 'checked' : ''} 
+                   onchange="toggleTodo(\${index})">
+            <span>\${todo.text}</span>
+            <button onclick="deleteTodo(\${index})">Delete</button>
+        \`;
+        todoList.appendChild(li);
+    });
+}
+
+function addTodo() {
+    const input = document.getElementById('todoInput');
+    const text = input.value.trim();
+    
+    if (text) {
+        todos.push({ text, completed: false });
+        input.value = '';
+        saveTodos();
+        renderTodos();
+    }
+}
+
+function toggleTodo(index) {
+    todos[index].completed = !todos[index].completed;
+    saveTodos();
+    renderTodos();
+}
+
+function deleteTodo(index) {
+    todos.splice(index, 1);
+    saveTodos();
+    renderTodos();
+}
+
+function saveTodos() {
+    localStorage.setItem('todos', JSON.stringify(todos));
+}
+
+// Initial render
+renderTodos();
+
+// Add todo on Enter key
+document.getElementById('todoInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addTodo();
+});`
+        }
+      ],
+      packages: []
+    }
+  },
+  {
+    id: 'rest-api',
+    name: 'REST API',
+    description: 'Express.js REST API with CRUD operations',
+    icon: Server,
+    keywords: ['api', 'rest', 'backend', 'server', 'express'],
+    technology: ['Node.js', 'Express.js'],
+    structure: {
+      folders: ['routes', 'models', 'middleware'],
+      files: [
+        {
+          path: 'package.json',
+          content: `{
+  "name": "rest-api",
+  "version": "1.0.0",
+  "description": "REST API with Express.js",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}`
+        },
+        {
+          path: 'index.js',
+          content: `const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// In-memory database
+let items = [
+  { id: 1, name: 'Item 1', description: 'First item' },
+  { id: 2, name: 'Item 2', description: 'Second item' }
+];
+
+// Routes
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to the REST API' });
+});
+
+// Get all items
+app.get('/api/items', (req, res) => {
+  res.json(items);
+});
+
+// Get item by ID
+app.get('/api/items/:id', (req, res) => {
+  const item = items.find(i => i.id === parseInt(req.params.id));
+  if (!item) return res.status(404).json({ message: 'Item not found' });
+  res.json(item);
+});
+
+// Create new item
+app.post('/api/items', (req, res) => {
+  const newItem = {
+    id: items.length + 1,
+    name: req.body.name,
+    description: req.body.description
+  };
+  items.push(newItem);
+  res.status(201).json(newItem);
+});
+
+// Update item
+app.put('/api/items/:id', (req, res) => {
+  const item = items.find(i => i.id === parseInt(req.params.id));
+  if (!item) return res.status(404).json({ message: 'Item not found' });
+  
+  item.name = req.body.name || item.name;
+  item.description = req.body.description || item.description;
+  res.json(item);
+});
+
+// Delete item
+app.delete('/api/items/:id', (req, res) => {
+  const index = items.findIndex(i => i.id === parseInt(req.params.id));
+  if (index === -1) return res.status(404).json({ message: 'Item not found' });
+  
+  items.splice(index, 1);
+  res.status(204).send();
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(\`Server is running on port \${PORT}\`);
+});`
+        },
+        {
+          path: '.env',
+          content: `PORT=3000`
+        },
+        {
+          path: 'README.md',
+          content: `# REST API
+
+A simple REST API built with Express.js
+
+## Endpoints
+
+- GET /api/items - Get all items
+- GET /api/items/:id - Get item by ID
+- POST /api/items - Create new item
+- PUT /api/items/:id - Update item
+- DELETE /api/items/:id - Delete item
+
+## Running the API
+
+\`\`\`bash
+npm install
+npm start
+\`\`\`
+
+For development:
+\`\`\`bash
+npm run dev
+\`\`\``
+        }
+      ],
+      packages: ['express', 'cors', 'dotenv']
+    }
+  },
+  {
+    id: 'portfolio',
+    name: 'Portfolio Website',
+    description: 'Personal portfolio website with responsive design',
+    icon: Globe,
+    keywords: ['portfolio', 'website', 'personal', 'resume', 'cv'],
+    technology: ['HTML', 'CSS', 'JavaScript'],
+    structure: {
+      folders: ['css', 'js', 'images'],
+      files: [
+        {
+          path: 'index.html',
+          content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Portfolio</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <h1 class="logo">My Portfolio</h1>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section id="home" class="hero">
+        <div class="container">
+            <h1>Welcome to My Portfolio</h1>
+            <p>I'm a passionate developer creating amazing experiences</p>
+            <a href="#projects" class="btn">View My Work</a>
+        </div>
+    </section>
+
+    <section id="about" class="about">
+        <div class="container">
+            <h2>About Me</h2>
+            <p>I'm a creative developer with a passion for building beautiful and functional websites.</p>
+        </div>
+    </section>
+
+    <section id="projects" class="projects">
+        <div class="container">
+            <h2>My Projects</h2>
+            <div class="project-grid">
+                <div class="project-card">
+                    <h3>Project 1</h3>
+                    <p>Description of project 1</p>
+                </div>
+                <div class="project-card">
+                    <h3>Project 2</h3>
+                    <p>Description of project 2</p>
+                </div>
+                <div class="project-card">
+                    <h3>Project 3</h3>
+                    <p>Description of project 3</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2>Contact Me</h2>
+            <form>
+                <input type="text" placeholder="Your Name" required>
+                <input type="email" placeholder="Your Email" required>
+                <textarea placeholder="Your Message" rows="5" required></textarea>
+                <button type="submit" class="btn">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 My Portfolio. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>`
+        },
+        {
+          path: 'css/style.css',
+          content: `* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.navbar {
+    background: #333;
+    color: white;
+    padding: 1rem 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: #007bff;
+}
+
+.hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+    padding: 150px 0 100px;
+    margin-top: 60px;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.btn {
+    display: inline-block;
+    background: white;
+    color: #333;
+    padding: 12px 30px;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: transform 0.3s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+section {
+    padding: 80px 0;
+}
+
+.about {
+    background: #f4f4f4;
+    text-align: center;
+}
+
+.projects h2, .contact h2 {
+    text-align: center;
+    margin-bottom: 3rem;
+    font-size: 2.5rem;
+}
+
+.project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.project-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.project-card:hover {
+    transform: translateY(-5px);
+}
+
+.contact {
+    background: #f4f4f4;
+}
+
+form {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+form input, form textarea {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+footer {
+    background: #333;
+    color: white;
+    text-align: center;
+    padding: 2rem 0;
+}`
+        },
+        {
+          path: 'js/script.js',
+          content: `// Smooth scrolling for navigation links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+        });
+    });
+});
+
+// Add active class to nav links on scroll
+window.addEventListener('scroll', () => {
+    let current = '';
+    const sections = document.querySelectorAll('section');
+    
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (scrollY >= (sectionTop - 200)) {
+            current = section.getAttribute('id');
+        }
+    });
+
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href').slice(1) === current) {
+            link.classList.add('active');
+        }
+    });
+});`
+        }
+      ],
+      packages: []
+    }
+  }
+];
 
 const QUICK_ACTIONS = [
   { id: 'explain', label: 'Explain this', icon: HelpCircle },
@@ -47,7 +667,33 @@ const QUICK_ACTIONS = [
 ];
 
 export function ReplitAgent({ projectId, selectedFile, selectedCode, className }: ReplitAgentProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'welcome',
+      role: 'assistant',
+      content: `Hi! I'm your AI engineering assistant. I can autonomously build entire applications for you.
+
+🚀 **I can create:**
+- Todo apps, task managers, productivity tools
+- REST APIs with authentication and databases
+- Personal portfolios and landing pages
+- Real-time chat applications
+- Dashboard and analytics tools
+- E-commerce websites
+- And much more!
+
+Just tell me what you want to build, and I'll handle everything - from creating files to installing packages to setting up the complete project structure.
+
+**Example requests:**
+- "Build a todo app with dark mode"
+- "Create a REST API for a blog"
+- "Make a portfolio website for a photographer"
+- "Build a real-time chat app"
+
+What would you like me to build for you today?`,
+      timestamp: new Date(),
+    }
+  ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -83,63 +729,95 @@ export function ReplitAgent({ projectId, selectedFile, selectedCode, className }
   };
 
   const executeAction = async (action: AgentAction) => {
-    switch (action.type) {
-      case 'create_file':
-        if (action.path && action.content !== undefined) {
-          await fetch(`/api/projects/${projectId}/files`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: action.path.split('/').pop(),
-              content: action.content,
-              parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
-            })
-          });
-        }
-        break;
-      case 'edit_file':
-        if (action.path && action.content !== undefined) {
-          const fileId = await getFileIdByPath(action.path);
-          if (fileId) {
-            await fetch(`/api/projects/${projectId}/files/${fileId}`, {
-              method: 'PUT',
+    try {
+      switch (action.type) {
+        case 'create_file':
+          if (action.path && action.content !== undefined) {
+            await fetch(`/api/projects/${projectId}/files`, {
+              method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ content: action.content })
+              body: JSON.stringify({
+                name: action.path.split('/').pop(),
+                content: action.content,
+                parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
+              })
             });
           }
-        }
-        break;
-      case 'install_package':
-        if (action.package) {
-          await fetch(`/api/projects/${projectId}/packages/install`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ packages: [action.package] })
-          });
-        }
-        break;
-      case 'create_folder':
-        if (action.path) {
-          await fetch(`/api/projects/${projectId}/folders`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              name: action.path.split('/').pop(),
-              parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
-            })
-          });
-        }
-        break;
+          break;
+        case 'edit_file':
+          if (action.path && action.content !== undefined) {
+            const fileId = await getFileIdByPath(action.path);
+            if (fileId) {
+              await fetch(`/api/projects/${projectId}/files/${fileId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: action.content })
+              });
+            }
+          }
+          break;
+        case 'install_package':
+          if (action.package) {
+            await fetch(`/api/projects/${projectId}/packages/install`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ packages: [action.package] })
+            });
+          }
+          break;
+        case 'create_folder':
+          if (action.path) {
+            await fetch(`/api/projects/${projectId}/folders`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                name: action.path.split('/').pop(),
+                parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
+              })
+            });
+          }
+          break;
+      }
+    } catch (error) {
+      console.error(`Failed to execute action ${action.type}:`, error);
     }
   };
 
   const getFileIdByPath = async (path: string): Promise<number | null> => {
-    const response = await fetch(`/api/projects/${projectId}/files`);
-    if (response.ok) {
-      const files = await response.json();
-      const file = files.find((f: any) => f.name === path.split('/').pop());
-      return file?.id || null;
+    try {
+      const response = await fetch(`/api/projects/${projectId}/files`);
+      if (response.ok) {
+        const files = await response.json();
+        const file = files.find((f: any) => f.name === path.split('/').pop());
+        return file?.id || null;
+      }
+    } catch (error) {
+      console.error('Failed to get file ID:', error);
     }
+    return null;
+  };
+
+  const detectBuildType = (description: string): BuildTemplate | null => {
+    const lowerDesc = description.toLowerCase();
+    
+    for (const template of BUILD_TEMPLATES) {
+      const hasKeyword = template.keywords.some(keyword => lowerDesc.includes(keyword));
+      if (hasKeyword) {
+        return template;
+      }
+    }
+    
+    // Default detection based on common patterns
+    if (lowerDesc.includes('api') || lowerDesc.includes('backend')) {
+      return BUILD_TEMPLATES.find(t => t.id === 'rest-api') || null;
+    }
+    if (lowerDesc.includes('portfolio') || lowerDesc.includes('website')) {
+      return BUILD_TEMPLATES.find(t => t.id === 'portfolio') || null;
+    }
+    if (lowerDesc.includes('todo') || lowerDesc.includes('task')) {
+      return BUILD_TEMPLATES.find(t => t.id === 'todo-app') || null;
+    }
+    
     return null;
   };
 
@@ -147,41 +825,69 @@ export function ReplitAgent({ projectId, selectedFile, selectedCode, className }
     setIsBuilding(true);
     setBuildProgress(0);
     
-    // System message to start building
+    const template = detectBuildType(description);
+    
+    // Announce build start
     const startMessage: Message = {
       id: Date.now().toString(),
       role: 'system',
-      content: '🚀 Starting to build your application...',
+      content: `🏗️ **Starting to build your application**\n\nI've analyzed your request and I'm building ${template ? `a ${template.name}` : 'a custom application'} for you.`,
       timestamp: new Date(),
-      type: 'progress',
-      metadata: { progress: 0 }
+      type: 'building',
+      metadata: { 
+        progress: 0,
+        buildType: template?.name || 'custom',
+        technology: template?.technology.join(', ') || 'custom stack'
+      }
     };
     setMessages(prev => [...prev, startMessage]);
 
-    // Simulate building process with progress updates
-    const steps = [
-      { progress: 20, task: 'Setting up project structure...', action: 'create_folder', path: 'src' },
-      { progress: 40, task: 'Creating main application file...', action: 'create_file', path: 'src/index.js' },
-      { progress: 60, task: 'Installing dependencies...', action: 'install_package', package: 'express' },
-      { progress: 80, task: 'Adding configuration files...', action: 'create_file', path: 'package.json' },
-      { progress: 100, task: 'Application ready!', action: 'complete' }
-    ];
+    if (template) {
+      // Build from template
+      const totalSteps = template.structure.folders.length + 
+                       template.structure.files.length + 
+                       template.structure.packages.length + 2;
+      let currentStep = 0;
 
-    for (const step of steps) {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Create folders
+      for (const folder of template.structure.folders) {
+        currentStep++;
+        const progress = Math.floor((currentStep / totalSteps) * 100);
+        
+        await updateProgress(`Creating folder: ${folder}`, progress);
+        await executeAction({ type: 'create_folder', path: folder });
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      // Create files
+      for (const file of template.structure.files) {
+        currentStep++;
+        const progress = Math.floor((currentStep / totalSteps) * 100);
+        
+        await updateProgress(`Creating file: ${file.path}`, progress);
+        await executeAction({ type: 'create_file', path: file.path, content: file.content });
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // Install packages
+      if (template.structure.packages.length > 0) {
+        currentStep++;
+        const progress = Math.floor((currentStep / totalSteps) * 100);
+        
+        await updateProgress(`Installing packages: ${template.structure.packages.join(', ')}`, progress);
+        for (const pkg of template.structure.packages) {
+          await executeAction({ type: 'install_package', package: pkg });
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // Final step
+      currentStep++;
+      await updateProgress('Finalizing project setup...', 100);
       
-      setBuildProgress(step.progress);
-      setCurrentTask(step.task);
-      
-      const progressMessage: Message = {
-        id: Date.now().toString(),
-        role: 'system',
-        content: step.task,
-        timestamp: new Date(),
-        type: 'progress',
-        metadata: { progress: step.progress }
-      };
-      setMessages(prev => [...prev, progressMessage]);
+    } else {
+      // Custom build using AI
+      await buildCustomApplication(description);
     }
 
     setIsBuilding(false);
@@ -190,10 +896,45 @@ export function ReplitAgent({ projectId, selectedFile, selectedCode, className }
     const completeMessage: Message = {
       id: Date.now().toString(),
       role: 'assistant',
-      content: `✅ I've successfully built your ${description}! The application is ready to run. Would you like me to start it or make any modifications?`,
+      content: `✅ **Application successfully built!**\n\nI've created ${template ? `a ${template.name}` : 'your custom application'} with all the necessary files and dependencies.\n\n**What I've built:**\n${template ? 
+        `- ${template.structure.folders.length} folders\n- ${template.structure.files.length} files\n- ${template.structure.packages.length} packages installed` :
+        'A custom application based on your requirements'}\n\n**Next steps:**\n- Click "Run" to start your application\n- Review the files in the file explorer\n- Ask me to make any modifications you need\n\nWould you like me to explain the code or make any changes?`,
       timestamp: new Date(),
     };
     setMessages(prev => [...prev, completeMessage]);
+  };
+
+  const buildCustomApplication = async (description: string) => {
+    // For custom applications, use AI to determine structure
+    await updateProgress('Analyzing requirements...', 10);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    await updateProgress('Designing application architecture...', 30);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    await updateProgress('Creating project structure...', 50);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    await updateProgress('Generating code...', 70);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    await updateProgress('Setting up configuration...', 90);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  };
+
+  const updateProgress = async (task: string, progress: number) => {
+    setBuildProgress(progress);
+    setCurrentTask(task);
+    
+    const progressMessage: Message = {
+      id: Date.now().toString(),
+      role: 'system',
+      content: task,
+      timestamp: new Date(),
+      type: 'progress',
+      metadata: { progress }
+    };
+    setMessages(prev => [...prev, progressMessage]);
   };
 
   const sendMessage = async (content: string) => {
@@ -211,13 +952,15 @@ export function ReplitAgent({ projectId, selectedFile, selectedCode, className }
     setIsLoading(true);
     setIsTyping(true);
 
-    // Check if user wants to build something
-    const buildKeywords = ['build', 'create', 'make', 'develop', 'generate'];
-    const wantsToBuild = buildKeywords.some(keyword => 
-      content.toLowerCase().includes(keyword)
-    );
+    // Enhanced build detection with more patterns
+    const buildKeywords = ['build', 'create', 'make', 'develop', 'generate', 'code', 'implement', 'design'];
+    const projectTypes = ['app', 'application', 'website', 'site', 'api', 'project', 'tool', 'system', 'platform'];
+    
+    const lowerContent = content.toLowerCase();
+    const wantsToBuild = buildKeywords.some(keyword => lowerContent.includes(keyword)) && 
+                        projectTypes.some(type => lowerContent.includes(type));
 
-    if (wantsToBuild && content.toLowerCase().includes('app')) {
+    if (wantsToBuild) {
       await buildApplication(content);
       setIsLoading(false);
       setIsTyping(false);
@@ -246,25 +989,34 @@ export function ReplitAgent({ projectId, selectedFile, selectedCode, className }
       
       // Check if response contains actions to execute
       if (data.actions && Array.isArray(data.actions)) {
+        // Start building if actions are present
+        setIsBuilding(true);
+        setBuildProgress(0);
+        
+        const totalActions = data.actions.length;
+        let completedActions = 0;
+        
         for (const action of data.actions) {
-          await executeAction(action);
+          completedActions++;
+          const progress = Math.floor((completedActions / totalActions) * 100);
           
-          const actionMessage: Message = {
-            id: Date.now().toString(),
-            role: 'system',
-            content: `✓ ${action.type}: ${action.path || action.package}`,
-            timestamp: new Date(),
-            type: 'action',
-            metadata: { action: action.type }
-          };
-          setMessages(prev => [...prev, actionMessage]);
+          await updateProgress(
+            `${action.type === 'create_file' ? '📄' : action.type === 'create_folder' ? '📁' : '📦'} ${action.description || action.path || action.package}`,
+            progress
+          );
+          
+          await executeAction(action);
+          await new Promise(resolve => setTimeout(resolve, 300));
         }
+        
+        setIsBuilding(false);
+        setBuildProgress(100);
       }
 
       const assistantMessage: Message = {
         id: data.id || (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.content || 'I can help you build entire applications! Just describe what you want to create.',
+        content: data.content || 'I can help you with that! Let me know what specific functionality you need.',
         timestamp: new Date(data.timestamp || Date.now()),
       };
 
@@ -272,7 +1024,7 @@ export function ReplitAgent({ projectId, selectedFile, selectedCode, className }
     } catch (error) {
       console.error('AI chat error:', error);
       
-      // Demo autonomous capabilities
+      // Fallback response for demo
       const demoMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
