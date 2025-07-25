@@ -551,7 +551,7 @@ export default function Dashboard() {
                       <div 
                         key={repl.id} 
                         className="group cursor-pointer hover:bg-[var(--ecode-sidebar)] p-3 rounded-lg transition-all"
-                        onClick={() => navigate(`/@${repl.author}/${repl.name}`)}
+                        onClick={() => navigate(`/project/${repl.id}`)}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-3">
