@@ -3282,6 +3282,137 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
     }
   });
 
+  // Get single community post
+  app.get('/api/community/posts/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Mock community posts data - in real app, fetch from database
+      const mockPosts = [
+        {
+          id: '1',
+          title: 'Built a Real-Time Collaboration Editor with WebSockets',
+          content: 'Check out my latest project! I created a collaborative code editor that supports real-time editing with multiple users. The project uses WebSockets for real-time communication, React for the frontend, and Node.js for the backend.\n\nKey features:\n- Real-time cursor tracking\n- Collaborative editing with conflict resolution\n- Syntax highlighting for multiple languages\n- User presence indicators\n\nThe most challenging part was implementing the operational transformation algorithm to handle concurrent edits. I learned a lot about distributed systems and real-time synchronization.\n\nYou can check out the project and try it yourself!',
+          author: {
+            id: '1',
+            username: 'sarah_dev',
+            displayName: 'Sarah Chen',
+            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
+            reputation: 2456,
+          },
+          category: 'showcase',
+          tags: ['websockets', 'react', 'collaboration', 'nodejs', 'real-time'],
+          likes: 234,
+          comments: 45,
+          views: 1234,
+          isLiked: Math.random() > 0.5,
+          isBookmarked: Math.random() > 0.7,
+          createdAt: '2 hours ago',
+          projectUrl: '/project/123',
+          imageUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=project1',
+          commentsData: [
+            {
+              id: 'c1',
+              author: {
+                id: '3',
+                username: 'mike_tech',
+                displayName: 'Mike Johnson',
+                avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike',
+                reputation: 892,
+              },
+              content: 'This is amazing! I\'ve been looking for a good example of OT implementation. Would you consider writing a detailed blog post about it?',
+              likes: 12,
+              isLiked: false,
+              createdAt: '1 hour ago',
+            },
+            {
+              id: 'c2',
+              author: {
+                id: '4',
+                username: 'dev_emma',
+                displayName: 'Emma Wilson',
+                avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=emma',
+                reputation: 1543,
+              },
+              content: 'Great work! How did you handle the cursor positions when text is inserted or deleted?',
+              likes: 8,
+              isLiked: true,
+              createdAt: '30 minutes ago',
+            },
+          ],
+        },
+        {
+          id: '2',
+          title: 'How to optimize React performance in large applications',
+          content: 'I\'ve been working on performance optimization for our React app and wanted to share some tips that helped me reduce rendering time by 60%.\n\n1. Use React.memo() wisely\n2. Implement proper code splitting\n3. Optimize bundle size with tree shaking\n4. Use lazy loading for images and components\n5. Implement virtual scrolling for long lists\n\nThe biggest win came from properly implementing React.memo() and useCallback() hooks. Many components were re-rendering unnecessarily.\n\nI also discovered that we were importing entire libraries when we only needed specific functions. Tree shaking helped reduce our bundle size significantly.\n\nHappy to answer any questions!',
+          author: {
+            id: '2',
+            username: 'alex_code',
+            displayName: 'Alex Rodriguez',
+            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
+            reputation: 3890,
+          },
+          category: 'tutorials',
+          tags: ['react', 'performance', 'optimization', 'javascript'],
+          likes: 567,
+          comments: 89,
+          views: 4567,
+          isLiked: false,
+          isBookmarked: true,
+          createdAt: '5 hours ago',
+          commentsData: [
+            {
+              id: 'c3',
+              author: {
+                id: '5',
+                username: 'newbie_dev',
+                displayName: 'John Doe',
+                avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=john',
+                reputation: 234,
+              },
+              content: 'Thanks for sharing! Can you explain more about virtual scrolling?',
+              likes: 5,
+              isLiked: false,
+              createdAt: '3 hours ago',
+            },
+          ],
+        },
+        {
+          id: '3',
+          title: 'Need help with TypeScript generics',
+          content: 'I\'m struggling with TypeScript generics in my project. Specifically, I\'m trying to create a generic function that can work with different types but maintain type safety.\n\nHere\'s what I\'m trying to do:\n- Create a generic cache class\n- Ensure type safety for different data types\n- Make it work with async functions\n\nAny help would be appreciated!',
+          author: {
+            id: '6',
+            username: 'learning_ts',
+            displayName: 'Lisa Park',
+            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lisa',
+            reputation: 567,
+          },
+          category: 'help',
+          tags: ['typescript', 'generics', 'help'],
+          likes: 23,
+          comments: 15,
+          views: 234,
+          isLiked: true,
+          isBookmarked: false,
+          createdAt: '1 day ago',
+          commentsData: [],
+        },
+      ];
+
+      const post = mockPosts.find(p => p.id === id);
+      
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      res.json(post);
+    } catch (error) {
+      console.error('Error fetching post:', error);
+      res.status(500).json({ message: 'Failed to fetch post' });
+    }
+  });
+
   app.post('/api/community/posts/:id/like', ensureAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
@@ -3301,6 +3432,41 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
     } catch (error) {
       console.error('Error bookmarking post:', error);
       res.status(500).json({ message: 'Failed to bookmark post' });
+    }
+  });
+
+  // Add comment to community post
+  app.post('/api/community/posts/:id/comments', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { content } = req.body;
+      const userId = req.user?.id;
+      
+      if (!content) {
+        return res.status(400).json({ message: 'Comment content is required' });
+      }
+
+      // In a real app, save comment to database
+      const newComment = {
+        id: `c${Date.now()}`,
+        postId: id,
+        author: {
+          id: userId,
+          username: 'current_user',
+          displayName: 'Current User',
+          avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
+          reputation: 100,
+        },
+        content,
+        likes: 0,
+        isLiked: false,
+        createdAt: 'just now',
+      };
+
+      res.json(newComment);
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      res.status(500).json({ message: 'Failed to add comment' });
     }
   });
 

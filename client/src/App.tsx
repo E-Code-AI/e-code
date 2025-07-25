@@ -28,6 +28,7 @@ const UserProfile = lazy(() => import("@/pages/UserProfile"));
 const UserSettings = lazy(() => import("@/pages/UserSettings"));
 const TemplatesPage = lazy(() => import("@/pages/TemplatesPage"));
 const Community = lazy(() => import("@/pages/Community"));
+const CommunityPost = lazy(() => import("@/pages/CommunityPost"));
 const SearchPage = lazy(() => import("@/pages/SearchPage"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 // Public pages
@@ -195,6 +196,11 @@ function AppContent() {
           <ProtectedRoute path="/community" component={() => (
             <ReplitLayout>
               <Community />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/community/post/:id" component={() => (
+            <ReplitLayout>
+              <CommunityPost />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/search" component={() => (
