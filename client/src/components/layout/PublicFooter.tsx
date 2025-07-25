@@ -3,6 +3,7 @@ import {
   Twitter, Github, Youtube, Linkedin, Instagram,
   Globe, Code, Users, BookOpen, Shield, HelpCircle
 } from 'lucide-react';
+import { ECodeLogo } from '@/components/ECodeLogo';
 
 export function PublicFooter() {
   const footerLinks = {
@@ -181,28 +182,8 @@ export function PublicFooter() {
           {/* Logo and Copyright */}
           <div className="flex items-center gap-4">
             <Link href="/">
-              <div className="flex items-center gap-2 cursor-pointer">
-                <svg
-                  className="h-6 w-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12 2L2 7L2 17L12 22L22 17V7L12 2Z"
-                    fill="#F26207"
-                  />
-                  <path
-                    d="M12 2L22 7V17L12 12V2Z"
-                    fill="#F99D25"
-                  />
-                  <path
-                    d="M12 12L22 17L12 22V12Z"
-                    fill="#F26207"
-                  />
-                  <circle cx="12" cy="12" r="3" fill="white" />
-                </svg>
-                <span className="font-bold text-lg">E-Code</span>
+              <div className="cursor-pointer">
+                <ECodeLogo size="sm" />
               </div>
             </Link>
             <span className="text-sm text-muted-foreground">
