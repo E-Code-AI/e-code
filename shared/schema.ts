@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, uniqueIndex, json, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, uniqueIndex, json, jsonb, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -389,3 +389,55 @@ export const insertBlogPostSchema = createInsertSchema(blogPosts);
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
+
+// Notifications table
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: varchar('type', { length: 50 }).notNull(), // comment, follow, deploy, star, pr, system, mention
+  title: varchar('title', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+  entityType: varchar('entity_type', { length: 50 }), // project, user, deployment, etc.
+  entityId: integer('entity_id'), // ID of the related entity
+  fromUserId: integer('from_user_id').references(() => users.id, { onDelete: 'set null' }),
+  read: boolean('read').default(false),
+  readAt: timestamp('read_at'),
+  actionUrl: varchar('action_url', { length: 500 }), // URL to navigate when clicked
+  metadata: jsonb('metadata'), // Additional data for the notification
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  readAt: true,
+  createdAt: true,
+});
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
+
+// Notification preferences table
+export const notificationPreferences = pgTable('notification_preferences', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  emailEnabled: boolean('email_enabled').default(true),
+  pushEnabled: boolean('push_enabled').default(true),
+  commentNotifications: boolean('comment_notifications').default(true),
+  followNotifications: boolean('follow_notifications').default(true),
+  deploymentNotifications: boolean('deployment_notifications').default(true),
+  starNotifications: boolean('star_notifications').default(true),
+  mentionNotifications: boolean('mention_notifications').default(true),
+  systemNotifications: boolean('system_notifications').default(true),
+  newsletterEnabled: boolean('newsletter_enabled').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect;

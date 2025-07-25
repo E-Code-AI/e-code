@@ -18,6 +18,7 @@ import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, attachToProjectLogs, checkRuntimeDependencies } from "./runtime";
 import { setupLogsWebsocket } from "./logs";
 import shellRoutes, { setupShellWebSocket } from "./routes/shell";
+import { notificationRoutes } from "./routes/notifications";
 // import { deployProject, stopDeployment, getDeploymentStatus, getDeploymentLogs } from "./deployment";
 import { 
   initRepo, 
@@ -2539,6 +2540,9 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
   
   // Shell routes
   app.use("/api/shell", shellRoutes);
+  
+  // Notification routes
+  app.use(notificationRoutes);
   
   // Preview routes
   const previewRoutesModule = await import('./routes/preview');
