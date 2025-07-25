@@ -35,6 +35,7 @@ import { useIsMobile } from "@/hooks/use-media-query";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { ECodeLogo } from "@/components/ECodeLogo";
 
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();
@@ -57,30 +58,8 @@ export function ReplitHeader() {
       <div className="flex items-center space-x-2 md:space-x-6">
         {/* E-Code Logo */}
         <Link href="/">
-          <div className="flex items-center space-x-2 cursor-pointer group">
-            <svg
-              className="h-6 w-6 group-hover:opacity-80 transition-opacity"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 2L2 7L2 17L12 22L22 17V7L12 2Z"
-                fill="#F26207"
-              />
-              <path
-                d="M12 2L22 7V17L12 12V2Z"
-                fill="#F99D25"
-              />
-              <path
-                d="M12 12L22 17L12 22V12Z"
-                fill="#F26207"
-              />
-              <circle cx="12" cy="12" r="3" fill="white" />
-            </svg>
-            <span className="font-bold text-xl hidden md:inline-block group-hover:opacity-80 transition-opacity">
-              E-Code
-            </span>
+          <div className="group cursor-pointer">
+            <ECodeLogo size="sm" showText={!isMobile} className="group-hover:opacity-80 transition-opacity" />
           </div>
         </Link>
         
