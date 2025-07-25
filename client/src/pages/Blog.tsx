@@ -262,7 +262,11 @@ export default function Blog() {
 
           {/* Load More */}
           <div className="text-center mt-12">
-            <Button variant="outline" size="lg">
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => window.location.reload()}
+            >
               Load more posts
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>

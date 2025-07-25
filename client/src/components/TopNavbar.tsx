@@ -228,6 +228,7 @@ const TopNavbar = ({
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => window.location.href = '/support'}
                 >
                   <Bell className="h-4 w-4" />
                 </Button>

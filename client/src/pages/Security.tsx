@@ -193,7 +193,10 @@ export default function Security() {
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
               Learn more about our security practices, compliance certifications, and commitment to protecting your data
             </p>
-            <button className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+            <button 
+              className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              onClick={() => window.location.href = '/trust-center'}
+            >
               Visit Trust Center
             </button>
           </div>

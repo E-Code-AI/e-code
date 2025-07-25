@@ -117,7 +117,12 @@ export default function Partners() {
                           </li>
                         ))}
                       </ul>
-                      <Button className="w-full">Learn More</Button>
+                      <Button 
+                        className="w-full"
+                        onClick={() => window.location.href = '/contact-sales'}
+                      >
+                        Learn More
+                      </Button>
                     </CardContent>
                   </Card>
                 );
@@ -235,6 +240,7 @@ export default function Partners() {
                 size="lg" 
                 variant="outline"
                 className="text-primary-foreground border-primary-foreground hover:bg-primary-foreground/10"
+                onClick={() => window.location.href = '/docs'}
               >
                 Download Partner Guide
               </Button>

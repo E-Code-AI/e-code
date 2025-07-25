@@ -194,6 +194,7 @@ export default function Desktop() {
                 size="lg" 
                 variant="secondary"
                 className="gap-2"
+                onClick={() => window.location.href = '/auth'}
               >
                 <Download className="h-4 w-4" />
                 Download Now
@@ -202,6 +203,7 @@ export default function Desktop() {
                 size="lg" 
                 variant="outline"
                 className="text-primary-foreground border-primary-foreground hover:bg-primary-foreground/10"
+                onClick={() => window.location.href = '/docs'}
               >
                 View Documentation
               </Button>
