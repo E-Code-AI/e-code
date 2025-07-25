@@ -212,110 +212,213 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* AI Build Section - New */}
+      {/* AI Agent Hero Section - New */}
       <section className="py-20 bg-gradient-to-b from-background to-muted/30">
         <div className="container-responsive max-w-6xl">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="text-center mb-16">
+            <Badge variant="default" className="mb-4 text-sm px-4 py-1">
+              <Sparkles className="h-4 w-4 mr-1" />
+              NEW: AI Agent
+            </Badge>
+            <h2 className="text-5xl md:text-6xl font-bold mb-6">
+              Meet your personal
+              <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent"> AI developer</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Just describe your app idea in plain English. Our AI agent builds complete, working applications 
+              from scratch - handling all the files, code, and setup automatically.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
             <div className="space-y-6">
-              <Badge variant="secondary" className="mb-2">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Powered by AI
-              </Badge>
-              <h2 className="text-4xl md:text-5xl font-bold">
-                Just describe what you want.
-                <span className="text-primary block">We'll build it instantly.</span>
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                No coding experience? No problem. Tell us your idea in plain English, 
-                and watch as E-Code's AI creates a working app in seconds.
-              </p>
+              <h3 className="text-3xl font-bold">
+                From idea to app in <span className="text-primary">under a minute</span>
+              </h3>
               
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="p-1 bg-green-600/20 dark:bg-green-400/20 rounded">
-                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <div className="p-2 bg-violet-600/20 dark:bg-violet-400/20 rounded-lg">
+                    <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold">Natural Language</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Type "Build me a todo app with dark mode" and watch it happen
+                    <h4 className="font-semibold text-lg">100% Autonomous</h4>
+                    <p className="text-muted-foreground">
+                      No step-by-step guidance needed. Just tell it what you want to build.
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
-                  <div className="p-1 bg-green-600/20 dark:bg-green-400/20 rounded">
-                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <div className="p-2 bg-violet-600/20 dark:bg-violet-400/20 rounded-lg">
+                    <Code className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold">Instant Results</h4>
-                    <p className="text-sm text-muted-foreground">
-                      See your app running live in seconds, not hours
+                    <h4 className="font-semibold text-lg">Production-Ready Code</h4>
+                    <p className="text-muted-foreground">
+                      Generates clean, professional code following best practices.
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
-                  <div className="p-1 bg-green-600/20 dark:bg-green-400/20 rounded">
-                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <div className="p-2 bg-violet-600/20 dark:bg-violet-400/20 rounded-lg">
+                    <Zap className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold">Full Control</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Edit the generated code or let AI refine it with more instructions
+                    <h4 className="font-semibold text-lg">Instant Deployment</h4>
+                    <p className="text-muted-foreground">
+                      Your app is live and shareable the moment it's built.
                     </p>
                   </div>
                 </div>
               </div>
               
-              <Button size="lg" onClick={handleGetStarted} className="gap-2">
-                Try AI Builder
-                <Sparkles className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-4">
+                <Button size="lg" onClick={handleGetStarted} className="gap-2">
+                  Start Building
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Button size="lg" variant="outline" className="gap-2">
+                  <PlayCircle className="h-4 w-4" />
+                  Watch Demo
+                </Button>
+              </div>
             </div>
             
             <div className="relative">
-              <Card className="overflow-hidden">
-                <div className="bg-muted p-4 border-b">
+              <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 blur-3xl" />
+              <Card className="relative overflow-hidden shadow-2xl">
+                <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 p-4 text-white">
                   <div className="flex items-center gap-3">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    <Input
-                      value="Create a weather app that shows 5-day forecast with beautiful animations"
-                      readOnly
-                      className="flex-1"
-                    />
-                    <Button size="sm">Generate</Button>
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <Sparkles className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold">AI Agent</h4>
+                      <p className="text-sm opacity-90">Ready to build your idea</p>
+                    </div>
                   </div>
                 </div>
-                <div className="p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    AI is building your app...
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <span className="text-sm">Created weather API integration</span>
+                <div className="p-6 space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-semibold">You</span>
+                      </div>
+                      <div className="bg-muted rounded-lg p-3 flex-1">
+                        <p className="text-sm">"Build a todo app with categories, due dates, and the ability to mark tasks complete"</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <span className="text-sm">Added 5-day forecast display</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      <span className="text-sm">Implemented smooth animations</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm">Styling the interface...</span>
+                    
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="h-4 w-4 text-white" />
+                      </div>
+                      <div className="space-y-2 flex-1">
+                        <div className="bg-primary/10 rounded-lg p-3">
+                          <p className="text-sm font-medium">I'll build that for you! Creating a todo app with all those features...</p>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-600" />
+                            <span>Created project structure</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-600" />
+                            <span>Built task management system</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-600" />
+                            <span>Added category filters</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Implementing due date tracking...</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </Card>
-              
-              <div className="absolute -bottom-4 -right-4 bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                30 seconds to build!
-              </div>
+            </div>
+          </div>
+
+          {/* Example Apps Built with AI */}
+          <div className="mt-20">
+            <h3 className="text-2xl font-bold text-center mb-12">
+              Apps our users built in minutes
+            </h3>
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="group hover:shadow-xl transition-all">
+                <CardHeader>
+                  <Badge className="mb-2 w-fit">Built in 45 seconds</Badge>
+                  <CardTitle>Personal Finance Tracker</CardTitle>
+                  <CardDescription>
+                    "Build an expense tracker with graphs and monthly budgets"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
+                    <div className="p-4 font-mono text-xs">
+                      <div className="text-green-600">✓ Dashboard created</div>
+                      <div className="text-green-600">✓ Expense categories added</div>
+                      <div className="text-green-600">✓ Charts integrated</div>
+                      <div className="text-green-600">✓ Budget alerts set up</div>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Try this template
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="group hover:shadow-xl transition-all">
+                <CardHeader>
+                  <Badge className="mb-2 w-fit">Built in 30 seconds</Badge>
+                  <CardTitle>Team Chat App</CardTitle>
+                  <CardDescription>
+                    "Create a real-time chat with channels and direct messages"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
+                    <div className="p-4 font-mono text-xs">
+                      <div className="text-green-600">✓ WebSocket setup</div>
+                      <div className="text-green-600">✓ Channel system built</div>
+                      <div className="text-green-600">✓ User authentication</div>
+                      <div className="text-green-600">✓ Message history added</div>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Try this template
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="group hover:shadow-xl transition-all">
+                <CardHeader>
+                  <Badge className="mb-2 w-fit">Built in 60 seconds</Badge>
+                  <CardTitle>E-commerce Store</CardTitle>
+                  <CardDescription>
+                    "Make an online store with products, cart, and checkout"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
+                    <div className="p-4 font-mono text-xs">
+                      <div className="text-green-600">✓ Product catalog ready</div>
+                      <div className="text-green-600">✓ Shopping cart working</div>
+                      <div className="text-green-600">✓ Payment flow added</div>
+                      <div className="text-green-600">✓ Order tracking built</div>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Try this template
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

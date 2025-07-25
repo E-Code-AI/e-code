@@ -46,7 +46,8 @@ import {
   School,
   UserPlus,
   Upload,
-  Home
+  Home,
+  Check
 } from 'lucide-react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
@@ -327,6 +328,52 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
+
+              {/* AI Agent Hero Section */}
+              <div className="bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 rounded-lg border border-[var(--ecode-border)] p-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg">
+                    <Sparkles className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-[var(--ecode-text)] mb-2">
+                      Build apps instantly with AI Agent
+                    </h3>
+                    <p className="text-[var(--ecode-muted)] mb-4">
+                      Just describe what you want to build in plain English. Our AI agent creates complete, working applications in seconds.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span className="text-sm">No coding required</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span className="text-sm">Build in 30 seconds</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span className="text-sm">Production-ready code</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button 
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white"
+                      >
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Try AI Agent Now
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => navigate('/ai-agent')}
+                      >
+                        Learn More
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Continue Learning */}
               <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">

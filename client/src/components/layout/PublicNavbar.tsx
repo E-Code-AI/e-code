@@ -20,6 +20,7 @@ export function PublicNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const productItems = [
+    { title: 'AI Agent', href: '/ai-agent', description: 'Build apps with AI in seconds' },
     { title: 'IDE', href: '/features', description: 'Code in your browser' },
     { title: 'Multiplayer', href: '/features#multiplayer', description: 'Code with your team' },
     { title: 'Mobile App', href: '/mobile', description: 'Code on the go' },

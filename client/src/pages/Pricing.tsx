@@ -42,16 +42,18 @@ export default function Pricing() {
       monthlyPrice: 0,
       yearlyPrice: 0,
       features: [
+        { text: 'AI Agent - 10 apps per month', included: true, tooltip: 'Build complete apps by describing them in plain English' },
         { text: 'Unlimited projects to share with friends', included: true },
         { text: '3 private projects for personal work', included: true },
+        { text: 'Basic AI code suggestions', included: true },
         { text: 'Enough space for your creations', included: true },
         { text: 'Works great for learning', included: true },
         { text: 'Friendly community help', included: true },
         { text: 'Your projects are secure', included: true },
+        { text: 'Advanced AI features', included: false },
         { text: 'Your own web address', included: false },
         { text: 'Work with friends', included: false },
-        { text: 'Fast help when stuck', included: false },
-        { text: 'Professional features', included: false }
+        { text: 'Fast help when stuck', included: false }
       ],
       cta: 'Start free',
       ctaVariant: 'outline'
@@ -63,16 +65,18 @@ export default function Pricing() {
       yearlyPrice: 70,
       popular: true,
       features: [
+        { text: 'AI Agent - Unlimited apps', included: true, tooltip: 'Build as many apps as you want with our AI' },
         { text: 'Everything in Starter', included: true },
+        { text: 'Priority AI processing', included: true, tooltip: 'Faster AI response times' },
+        { text: 'Advanced AI code refactoring', included: true },
         { text: 'Keep all projects private', included: true },
         { text: 'Lots more space for bigger projects', included: true },
-        { text: 'Faster performance for complex work', included: true },
         { text: 'Your own custom web address', included: true },
         { text: 'Collaborate with 5 friends', included: true },
         { text: 'Share projects privately', included: true },
         { text: 'Get help by email', included: true },
         { text: 'Advanced tools when ready', included: true },
-        { text: 'Personal assistant', included: false }
+        { text: 'Personal AI tutor', included: false }
       ],
       cta: 'Become a Creator',
       ctaVariant: 'default'
@@ -83,7 +87,10 @@ export default function Pricing() {
       monthlyPrice: 25,
       yearlyPrice: 250,
       features: [
+        { text: 'AI Agent - Priority access & custom models', included: true, tooltip: 'Use custom AI models trained on your code style' },
         { text: 'Everything in Creator', included: true },
+        { text: 'AI code reviews & optimization', included: true },
+        { text: 'AI-powered debugging assistant', included: true },
         { text: 'Massive storage for all your work', included: true },
         { text: 'Super fast performance', included: true },
         { text: 'Unlimited team collaboration', included: true },
@@ -104,7 +111,10 @@ export default function Pricing() {
       yearlyPrice: -1,
       enterprise: true,
       features: [
+        { text: 'AI Agent - Dedicated instances & custom training', included: true, tooltip: 'Train AI on your organization\'s codebase and standards' },
         { text: 'Everything in Pro', included: true },
+        { text: 'Private AI deployment option', included: true },
+        { text: 'Custom AI guardrails & policies', included: true },
         { text: 'Unlimited storage', included: true },
         { text: 'Custom compute resources', included: true },
         { text: 'Enterprise SSO', included: true },
