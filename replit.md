@@ -41,6 +41,12 @@ A comprehensive web-based IDE that clones Replit.com exactly, then adds unique f
 - Emphasize that no prior coding experience is needed
 
 ## Recent Changes
+- 2025-01-30: **Fixed Subprocessors Page Error**:
+  * Created comprehensive Subprocessors page listing all third-party data processors
+  * Added route for /subprocessors in App.tsx to fix 404 error
+  * Page includes categorized service providers (Infrastructure, Developer Tools, Security, Communication)
+  * Displays compliance certifications, data processing locations, and notification processes
+  * Integrated with public website navigation (linked from footer)
 - 2025-01-21: Fixed critical database "NaN" error and missing `/api/projects/recent` endpoint
 - 2025-01-21: Enhanced ReplitFileExplorer with drag & drop, search, context menus, file upload
 - 2025-01-21: Created AdvancedTerminal with multiple sessions, search, history, themes
