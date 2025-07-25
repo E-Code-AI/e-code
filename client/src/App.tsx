@@ -76,6 +76,12 @@ const Dependencies = lazy(() => import("@/pages/Dependencies"));
 const ObjectStorage = lazy(() => import("@/pages/ObjectStorage"));
 // Newsletter pages
 const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
+// Comparison pages
+const AWSCloud9Comparison = lazy(() => import("@/pages/compare/AWSCloud9"));
+const GitHubCodespacesComparison = lazy(() => import("@/pages/compare/GitHubCodespaces"));
+const GlitchComparison = lazy(() => import("@/pages/compare/Glitch"));
+const HerokuComparison = lazy(() => import("@/pages/compare/Heroku"));
+const CodeSandboxComparison = lazy(() => import("@/pages/compare/CodeSandbox"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -134,6 +140,12 @@ function AppContent() {
           <Route path="/github-import" component={GitHubImport} />
           {/* Newsletter pages */}
           <Route path="/newsletter-confirmed" component={NewsletterConfirmed} />
+          {/* Comparison pages */}
+          <Route path="/compare/aws-cloud9" component={AWSCloud9Comparison} />
+          <Route path="/compare/github-codespaces" component={GitHubCodespacesComparison} />
+          <Route path="/compare/glitch" component={GlitchComparison} />
+          <Route path="/compare/heroku" component={HerokuComparison} />
+          <Route path="/compare/codesandbox" component={CodeSandboxComparison} />
           <ProtectedRoute path="/dashboard" component={() => (
             <ReplitLayout>
               <Dashboard />
