@@ -54,6 +54,8 @@ import { deploymentManager } from "./deployment";
 import * as path from "path";
 import adminRoutes from "./admin/routes";
 import OpenAI from 'openai';
+import { performanceMiddleware } from './monitoring/performance';
+import { monitoringRouter } from './monitoring/routes';
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -117,6 +119,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   if (process.env.NODE_ENV === 'development') {
     app.use('/api', devAuthBypass);
   }
+  
+  // Add performance monitoring middleware for all routes
+  app.use(performanceMiddleware);
   
   // Add debug middleware for all API routes
   app.use('/api', (req, res, next) => {
@@ -2687,6 +2692,9 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
   
   // Shell routes
   app.use("/api/shell", shellRoutes);
+  
+  // Monitoring routes
+  app.use("/api/monitoring", monitoringRouter);
   
   // Notification routes
   app.use(notificationRoutes);
