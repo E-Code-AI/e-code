@@ -62,6 +62,8 @@ import { performanceMiddleware } from './monitoring/performance';
 import { monitoringRouter } from './monitoring/routes';
 import { nixPackageManager } from './package-management/nix-package-manager';
 import { nixEnvironmentBuilder } from './package-management/nix-environment-builder';
+import { edgeManager } from './edge/edge-manager';
+import { cdnService } from './edge/cdn-service';
 
 const logger = createLogger('routes');
 
@@ -3015,6 +3017,130 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
     } catch (error) {
       console.error('Error fetching secret value:', error);
       res.status(500).json({ error: 'Failed to fetch secret value' });
+    }
+  });
+
+  // Edge Computing and CDN routes
+  app.get('/api/edge/locations', async (req, res) => {
+    try {
+      const locations = await edgeManager.getEdgeLocations();
+      res.json(locations);
+    } catch (error) {
+      console.error('Error fetching edge locations:', error);
+      res.status(500).json({ message: 'Failed to fetch edge locations' });
+    }
+  });
+
+  app.post('/api/projects/:id/edge-deploy', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const userId = (req.user as any).id;
+      
+      // Verify project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+
+      const deployment = await edgeManager.deployToEdge(projectId, req.body);
+      res.json(deployment);
+    } catch (error) {
+      console.error('Error deploying to edge:', error);
+      res.status(500).json({ message: 'Failed to deploy to edge' });
+    }
+  });
+
+  app.get('/api/projects/:id/edge-deployments', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const userId = (req.user as any).id;
+      
+      // Verify project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+
+      const deployments = await edgeManager.getProjectDeployments(projectId);
+      res.json(deployments);
+    } catch (error) {
+      console.error('Error fetching edge deployments:', error);
+      res.status(500).json({ message: 'Failed to fetch edge deployments' });
+    }
+  });
+
+  app.get('/api/edge/metrics/:deploymentId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deploymentId } = req.params;
+      const { start, end } = req.query;
+      
+      const timeRange = start && end ? {
+        start: new Date(start as string),
+        end: new Date(end as string)
+      } : undefined;
+
+      const metrics = await edgeManager.getMetrics(deploymentId, timeRange);
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      res.status(500).json({ message: 'Failed to fetch metrics' });
+    }
+  });
+
+  app.post('/api/projects/:id/cdn/purge', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const userId = (req.user as any).id;
+      
+      // Verify project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+
+      const purgeRequest = await cdnService.purgeCache(projectId, req.body);
+      res.json(purgeRequest);
+    } catch (error) {
+      console.error('Error purging CDN cache:', error);
+      res.status(500).json({ message: 'Failed to purge CDN cache' });
+    }
+  });
+
+  app.get('/api/projects/:id/cdn/assets', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const userId = (req.user as any).id;
+      
+      // Verify project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+
+      const assets = await cdnService.getProjectAssets(projectId);
+      res.json(assets);
+    } catch (error) {
+      console.error('Error fetching CDN assets:', error);
+      res.status(500).json({ message: 'Failed to fetch CDN assets' });
+    }
+  });
+
+  app.get('/api/projects/:id/cdn/usage', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const userId = (req.user as any).id;
+      
+      // Verify project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+
+      const usage = await cdnService.getUsageStats(projectId);
+      res.json(usage);
+    } catch (error) {
+      console.error('Error fetching CDN usage:', error);
+      res.status(500).json({ message: 'Failed to fetch CDN usage' });
     }
   });
 
