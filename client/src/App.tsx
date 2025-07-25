@@ -62,8 +62,7 @@ const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
 const Languages = lazy(() => import("@/pages/Languages"));
 const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
 // Newsletter pages
-const NewsletterConfirm = lazy(() => import("@/pages/NewsletterConfirm"));
-const NewsletterUnsubscribe = lazy(() => import("@/pages/NewsletterUnsubscribe"));
+const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -120,8 +119,7 @@ function AppContent() {
           <Route path="/languages" component={Languages} />
           <Route path="/github-import" component={GitHubImport} />
           {/* Newsletter pages */}
-          <Route path="/newsletter/confirm" component={NewsletterConfirm} />
-          <Route path="/newsletter/unsubscribe" component={NewsletterUnsubscribe} />
+          <Route path="/newsletter-confirmed" component={NewsletterConfirmed} />
           <ProtectedRoute path="/dashboard" component={() => (
             <ReplitLayout>
               <Dashboard />

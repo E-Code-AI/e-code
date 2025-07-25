@@ -2479,22 +2479,39 @@ Would you like me to help you set up the OpenAI API integration?`,
     try {
       const { email } = req.body;
       
-      if (!email || !email.includes('@')) {
-        return res.status(400).json({ message: 'Valid email is required' });
+      // Import validation utilities
+      const { validateEmail, sanitizeEmail } = await import('./utils/email-validator');
+      const { sendNewsletterWelcomeEmail } = await import('./utils/gandi-email');
+      
+      // Validate email with E-Code design standards
+      const validation = validateEmail(email);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
       }
       
-      // Subscribe to newsletter (without sending actual email since we don't have SendGrid key)
+      // Sanitize email
+      const sanitizedEmail = sanitizeEmail(email);
+      
+      // Generate confirmation token
+      const confirmationToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      // Subscribe to newsletter
       const subscriber = await storage.subscribeToNewsletter({
-        email,
-        isActive: true
+        email: sanitizedEmail,
+        isActive: true,
+        confirmationToken
       });
+      
+      // Send welcome email with confirmation link
+      await sendNewsletterWelcomeEmail(sanitizedEmail, confirmationToken);
       
       res.json({ 
         success: true, 
-        message: 'Successfully subscribed to newsletter!',
+        message: 'Successfully subscribed! Please check your email to confirm your subscription.',
         data: {
           email: subscriber.email,
-          subscribed: true
+          subscribed: true,
+          confirmationRequired: true
         }
       });
     } catch (error: any) {
@@ -2542,10 +2559,12 @@ Would you like me to help you set up the OpenAI API integration?`,
       );
       
       if (confirmed) {
-        res.json({ 
-          success: true, 
-          message: 'Email confirmed successfully!' 
-        });
+        // Send confirmation success email
+        const { sendNewsletterConfirmedEmail } = await import('./utils/gandi-email');
+        await sendNewsletterConfirmedEmail(email as string);
+        
+        // Redirect to success page
+        res.redirect('/newsletter-confirmed?success=true');
       } else {
         res.status(400).json({ message: 'Invalid confirmation link' });
       }
@@ -2568,6 +2587,33 @@ Would you like me to help you set up the OpenAI API integration?`,
     } catch (error) {
       console.error('Error fetching subscribers:', error);
       res.status(500).json({ message: 'Failed to fetch subscribers' });
+    }
+  });
+
+  // Admin endpoint to test Gandi email connection
+  app.get('/api/newsletter/test-gandi', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check if user is admin
+      if (req.user?.username !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+      
+      const { testGandiConnection } = await import('./utils/gandi-email');
+      const connected = await testGandiConnection();
+      
+      res.json({ 
+        connected,
+        message: connected ? 'Gandi SMTP connection successful' : 'Gandi SMTP not configured or connection failed',
+        config: {
+          host: process.env.GANDI_SMTP_HOST || 'mail.gandi.net',
+          port: process.env.GANDI_SMTP_PORT || '587',
+          userConfigured: !!process.env.GANDI_SMTP_USER || !!process.env.GANDI_EMAIL,
+          passConfigured: !!process.env.GANDI_SMTP_PASS || !!process.env.GANDI_PASSWORD
+        }
+      });
+    } catch (error) {
+      console.error('Error testing Gandi connection:', error);
+      res.status(500).json({ message: 'Failed to test Gandi connection' });
     }
   });
 
