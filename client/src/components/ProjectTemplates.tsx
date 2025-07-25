@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -179,41 +180,77 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [projectName, setProjectName] = useState('');
+
+  // Icon mapping for template categories
+  const iconMap: Record<string, React.ReactNode> = {
+    'nextjs-blog': <FileCode className="h-8 w-8" />,
+    'express-api': <Server className="h-8 w-8" />,
+    'react-dashboard': <BarChart className="h-8 w-8" />,
+    'discord-bot': <Bot className="h-8 w-8" />,
+    'python-flask': <Globe className="h-8 w-8" />,
+    'vue-spa': <Code className="h-8 w-8" />,
+    'phaser-game': <Gamepad className="h-8 w-8" />,
+    'default': <Code className="h-8 w-8" />
+  };
 
   // Fetch templates from API
-  const { data: templates = MOCK_TEMPLATES, isLoading } = useQuery({
-    queryKey: ['/api/templates', selectedCategory, searchQuery, sortBy],
-    queryFn: async () => {
-      // For now, return mock data
-      return MOCK_TEMPLATES;
-    }
+  const { data: apiTemplates = [], isLoading } = useQuery<Template[]>({
+    queryKey: ['/api/templates'],
   });
+
+  // Map API templates with icons
+  const templates = apiTemplates.map((template) => ({
+    ...template,
+    icon: iconMap[template.id] || iconMap.default
+  }));
 
   // Create project from template mutation
   const createProjectMutation = useMutation({
-    mutationFn: async (template: Template) => {
-      const res = await apiRequest('POST', '/api/projects/from-template', {
-        templateId: template.id,
-        name: `My ${template.name}`,
+    mutationFn: async ({ template, name }: { template: Template; name: string }) => {
+      const response = await apiRequest('/api/projects/from-template', {
+        method: 'POST',
+        body: JSON.stringify({
+          templateId: template.id,
+          name: name || `My ${template.name}`,
+        }),
       });
-      if (!res.ok) throw new Error('Failed to create project');
-      return res.json();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create project');
+      }
+      return response.json();
     },
     onSuccess: (project) => {
       toast({
-        title: 'Project created',
-        description: 'Your project has been created from the template',
+        title: 'Project created!',
+        description: `"${project.name}" has been created successfully.`,
       });
       navigate(`/editor/${project.id}`);
+      setShowCreateDialog(false);
+      setShowPreviewDialog(false);
+      setProjectName('');
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: 'Failed to create project',
-        description: 'Something went wrong. Please try again.',
+        description: error.message || 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
     }
   });
+
+  const handleUseTemplate = (template: Template) => {
+    setSelectedTemplate(template);
+    setProjectName(`My ${template.name}`);
+    setShowCreateDialog(true);
+  };
+
+  const handleCreateProject = () => {
+    if (!selectedTemplate || !projectName.trim()) return;
+    createProjectMutation.mutate({ template: selectedTemplate, name: projectName.trim() });
+  };
 
   // Filter and sort templates
   const filteredTemplates = templates
@@ -503,9 +540,8 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          createProjectMutation.mutate(template);
+                          handleUseTemplate(template);
                         }}
-                        disabled={createProjectMutation.isPending}
                       >
                         Use Template
                       </Button>
@@ -660,13 +696,68 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                 Cancel
               </Button>
               <Button
-                onClick={() => {
-                  createProjectMutation.mutate(selectedTemplate);
-                  setShowPreviewDialog(false);
-                }}
-                disabled={createProjectMutation.isPending}
+                onClick={() => handleUseTemplate(selectedTemplate)}
               >
-                {createProjectMutation.isPending ? 'Creating...' : 'Use This Template'}
+                Use This Template
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Create Project Dialog */}
+      {selectedTemplate && (
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create Project from Template</DialogTitle>
+              <DialogDescription>
+                Give your new project a name to get started with the {selectedTemplate.name} template.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="project-name">Project Name</Label>
+                <Input
+                  id="project-name"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  placeholder="Enter project name..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && projectName.trim()) {
+                      handleCreateProject();
+                    }
+                  }}
+                />
+              </div>
+              
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
+                <div className="p-2 rounded bg-background">
+                  {React.cloneElement(selectedTemplate.icon as React.ReactElement, { className: 'h-5 w-5' })}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{selectedTemplate.name}</p>
+                  <p className="text-xs text-muted-foreground">{selectedTemplate.language}</p>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowCreateDialog(false);
+                  setProjectName('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateProject}
+                disabled={!projectName.trim() || createProjectMutation.isPending}
+              >
+                {createProjectMutation.isPending ? 'Creating...' : 'Create Project'}
               </Button>
             </DialogFooter>
           </DialogContent>
