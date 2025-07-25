@@ -63,6 +63,7 @@ const Subprocessors = lazy(() => import("@/pages/Subprocessors"));
 const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
 const Languages = lazy(() => import("@/pages/Languages"));
 const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
+const Shell = lazy(() => import("@/pages/Shell"));
 // Newsletter pages
 const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
 
@@ -198,6 +199,11 @@ function AppContent() {
           <ProtectedRoute path="/search" component={() => (
             <ReplitLayout>
               <SearchPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/shell" component={() => (
+            <ReplitLayout>
+              <Shell />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin" component={() => (

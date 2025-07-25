@@ -17,6 +17,7 @@ import {
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, attachToProjectLogs, checkRuntimeDependencies } from "./runtime";
 import { setupLogsWebsocket } from "./logs";
+import shellRoutes, { setupShellWebSocket } from "./routes/shell";
 // import { deployProject, stopDeployment, getDeploymentStatus, getDeploymentLogs } from "./deployment";
 import { 
   initRepo, 
@@ -1154,6 +1155,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // WebSocket for project logs
   const logsWss = setupLogsWebsocket(httpServer);
+  
+  // WebSocket for shell
+  const shellWss = setupShellWebSocket(httpServer);
   
   // Define WebSocket client interface for collaboration
   interface CollaborationClient extends WebSocket {
@@ -2532,6 +2536,9 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
 
   // Admin routes
   app.use("/api/admin", adminRoutes);
+  
+  // Shell routes
+  app.use("/api/shell", shellRoutes);
   
   // Preview routes
   const previewRoutesModule = await import('./routes/preview');

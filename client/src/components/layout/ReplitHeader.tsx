@@ -154,6 +154,20 @@ export function ReplitHeader() {
               Teams
             </Button>
           </Link>
+          
+          <Link href="/shell">
+            <Button
+              variant={isActive("/shell") ? "default" : "ghost"}
+              size="sm"
+              className={`replit-transition ${
+                isActive("/shell")
+                  ? "bg-[var(--ecode-accent)] text-white"
+                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+              }`}
+            >
+              Shell
+            </Button>
+          </Link>
         </nav>
       </div>
 
