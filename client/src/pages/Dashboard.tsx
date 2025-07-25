@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { Project } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,9 +38,25 @@ export default function Dashboard() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Fetch recent projects
-  const { data: recentProjects = [], isLoading: loadingRecent } = useQuery({
+  const { data: recentProjects = [], isLoading: loadingRecent } = useQuery<Project[]>({
     queryKey: ['/api/projects/recent'],
     enabled: !!user,
+  });
+
+  // Create project mutation
+  const createProjectMutation = useMutation({
+    mutationFn: async (name: string) => {
+      return await apiRequest('POST', '/api/projects', {
+        name,
+        language: 'javascript',
+        visibility: 'private',
+      });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects/recent'] });
+      setIsCreateModalOpen(false);
+      navigate(`/project/${data.id}`);
+    },
   });
 
   // Fetch trending projects (mock data for now)
@@ -416,6 +433,8 @@ export default function Dashboard() {
       <CreateProjectModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={(name) => createProjectMutation.mutate(name)}
+        isLoading={createProjectMutation.isPending}
       />
     </div>
   );

@@ -239,10 +239,10 @@ const ProjectsPage = () => {
   }
 
   return (
-    <div className="container-responsive py-responsive">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-responsive-xl font-bold">My Projects</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Your creative work</h1>
           <p className="text-muted-foreground mt-1 text-responsive-sm">All your creative work in one place</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">

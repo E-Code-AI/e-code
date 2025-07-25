@@ -36,6 +36,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { ECodeLogo } from "@/components/ECodeLogo";
+import { MobileMenu } from "./MobileMenu";
 
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();
@@ -53,77 +54,23 @@ export function ReplitHeader() {
 
   return (
     <>
-    <header className="h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition">
+    <header className="h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-2 sm:px-4 replit-transition">
       {/* Logo et navigation principale */}
-      <div className="flex items-center space-x-2 md:space-x-6">
+      <div className="flex items-center">
+        {/* Mobile menu button - only on mobile */}
+        <div className="lg:hidden mr-2">
+          <MobileMenu onOpenSpotlight={() => setSpotlightOpen(true)} />
+        </div>
+        
         {/* E-Code Logo */}
         <Link href="/">
-          <div className="group cursor-pointer">
+          <div className="group cursor-pointer flex items-center">
             <ECodeLogo size="sm" showText={!isMobile} className="group-hover:opacity-80 transition-opacity" />
           </div>
         </Link>
-        
-        {/* Mobile menu button */}
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[250px] bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
-            <nav className="flex flex-col space-y-4 mt-6">
-              <Link href="/projects" onClick={() => setMobileMenuOpen(false)}>
-                <Button
-                  variant={isActive("/projects") ? "default" : "ghost"}
-                  className="w-full justify-start"
-                >
-                  My Projects
-                </Button>
-              </Link>
-              <Link href="/explore" onClick={() => setMobileMenuOpen(false)}>
-                <Button
-                  variant={isActive("/explore") ? "default" : "ghost"}
-                  className="w-full justify-start"
-                >
-                  Explore
-                </Button>
-              </Link>
-              <Link href="/community" onClick={() => setMobileMenuOpen(false)}>
-                <Button
-                  variant={isActive("/community") ? "default" : "ghost"}
-                  className="w-full justify-start"
-                >
-                  Community
-                </Button>
-              </Link>
-              <Link href="/teams" onClick={() => setMobileMenuOpen(false)}>
-                <Button
-                  variant={isActive("/teams") ? "default" : "ghost"}
-                  className="w-full justify-start"
-                >
-                  Teams
-                </Button>
-              </Link>
-              <Link href="/templates" onClick={() => setMobileMenuOpen(false)}>
-                <Button
-                  variant={isActive("/templates") ? "default" : "ghost"}
-                  className="w-full justify-start"
-                >
-                  Templates
-                </Button>
-              </Link>
-            </nav>
-          </SheetContent>
-        </Sheet>
 
-        <Link href="/" className="flex items-center space-x-2 replit-hover rounded-lg px-2 py-1">
-          <div className="w-8 h-8 bg-[var(--ecode-green)] rounded-lg flex items-center justify-center">
-            <Code className="h-5 w-5 text-black" />
-          </div>
-          <span className={cn("font-bold text-lg text-[var(--ecode-text)]", isMobile && "hidden sm:block")}>E-Code</span>
-        </Link>
-
-        <nav className="hidden md:flex items-center space-x-1">
+        {/* Navigation principale - hidden on mobile */}
+        <nav className="hidden lg:flex items-center space-x-1 ml-8">
           <Link href="/projects">
             <Button
               variant={isActive("/projects") ? "default" : "ghost"}
@@ -210,15 +157,16 @@ export function ReplitHeader() {
         </nav>
       </div>
 
-      {/* Barre de recherche */}
-      <div className="flex-1 max-w-md mx-6 hidden lg:block">
+      {/* Search bar - only on larger screens */}
+      <div className="flex-1 max-w-md mx-4 sm:mx-6 hidden lg:block">
         <Button
           variant="outline"
           className="w-full justify-start text-left font-normal bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text-secondary)] hover:bg-[var(--ecode-sidebar-hover)]"
           onClick={() => setSpotlightOpen(true)}
         >
           <Search className="mr-2 h-4 w-4" />
-          <span>Search or run a command...</span>
+          <span className="hidden xl:inline">Search or run a command...</span>
+          <span className="xl:hidden">Search...</span>
           <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
             <span className="text-xs">⌘</span>K
           </kbd>

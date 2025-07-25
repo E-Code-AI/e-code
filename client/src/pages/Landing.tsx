@@ -131,27 +131,27 @@ export default function Landing() {
       <PublicNavbar />
 
       {/* Hero Section */}
-      <section className="py-responsive">
-        <div className="container-responsive max-w-6xl">
-          <div className="text-center space-y-6">
-            <Badge variant="secondary" className="mb-4 animate-pulse">
+      <section className="py-8 sm:py-12 md:py-16 lg:py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+          <div className="text-center space-y-4 sm:space-y-6">
+            <Badge variant="secondary" className="mb-2 sm:mb-4 animate-pulse text-xs sm:text-sm">
               <Sparkles className="h-3 w-3 mr-1" />
               Build apps and sites with AI
             </Badge>
-            <h1 className="text-5xl md:text-7xl font-bold">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold">
               Build <span className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">software</span> fast
-              <br />
-              with AI
+              <br className="hidden sm:block" />
+              <span className="sm:ml-2">with AI</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
               Code with AI. Deploy instantly. Share with the world. Build and ship software 10x faster.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" onClick={handleGetStarted} className="gap-2">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full sm:w-auto px-4 sm:px-0">
+              <Button size="lg" onClick={handleGetStarted} className="gap-2 w-full sm:w-auto">
                 Start your journey free
                 <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="gap-2">
+              <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto">
                 <PlayCircle className="h-4 w-4" />
                 See how it works
               </Button>
@@ -159,18 +159,18 @@ export default function Landing() {
           </div>
 
           {/* IDE Preview */}
-          <div className="mt-16 relative">
+          <div className="mt-8 sm:mt-12 md:mt-16 relative px-4 sm:px-0">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-600/20 blur-3xl" />
-            <Card className="relative overflow-hidden border-2">
+            <Card className="relative overflow-hidden border-2 mx-auto max-w-4xl">
               <div className="bg-muted/50 p-2 flex items-center gap-2 border-b">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-600 dark:bg-red-400" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-600 dark:bg-yellow-400" />
-                  <div className="w-3 h-3 rounded-full bg-green-600 dark:bg-green-400" />
+                <div className="flex gap-1 sm:gap-1.5">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-red-600 dark:bg-red-400" />
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-yellow-600 dark:bg-yellow-400" />
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-600 dark:bg-green-400" />
                 </div>
                 <span className="text-xs text-muted-foreground">App.jsx</span>
               </div>
-              <div className="p-4 bg-background font-mono text-sm">
+              <div className="p-3 sm:p-4 bg-background font-mono text-xs sm:text-sm overflow-x-auto">
                 <div className="space-y-2">
                   <div>
                     <span className="text-purple-600 dark:text-purple-400">import</span> {' '}
