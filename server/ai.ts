@@ -1,41 +1,38 @@
-import OpenAI from 'openai';
 import { Request, Response } from 'express';
+import { aiProviderManager, ChatMessage } from './ai/ai-provider';
 
-// Create a new OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Constants
-const GPT_MODEL = 'gpt-4o'; // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+// Get available AI providers
+export async function getAvailableProviders(req: Request, res: Response) {
+  try {
+    const providers = aiProviderManager.getAvailableProviders();
+    res.json({ providers });
+  } catch (error) {
+    console.error('Error getting AI providers:', error);
+    res.status(500).json({ error: 'Failed to get AI providers' });
+  }
+}
 
 // Generate code completion
 export async function generateCompletion(req: Request, res: Response) {
   try {
-    const { code, language, maxTokens = 1024 } = req.body;
+    const { code, language, maxTokens = 1024, provider: providerName } = req.body;
 
     if (!code) {
       return res.status(400).json({ error: 'Code is required' });
     }
 
-    const prompt = getPromptForLanguage(language, code);
+    const provider = providerName 
+      ? aiProviderManager.getProvider(providerName) || aiProviderManager.getDefaultProvider()
+      : aiProviderManager.getDefaultProvider();
 
-    const completion = await openai.chat.completions.create({
-      model: GPT_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert programmer that generates high-quality code completion suggestions. Complete the code in a way that follows best practices for the language and implements the functionality that seems to be intended based on variable names, comments, and existing code. Return only the suggested code to complete what was given.',
-        },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: maxTokens,
-      temperature: 0.2, // Low temperature for more deterministic output
-    });
+    const prompt = getPromptForLanguage(language, code);
+    const systemPrompt = 'You are an expert programmer that generates high-quality code completion suggestions. Complete the code in a way that follows best practices for the language and implements the functionality that seems to be intended based on variable names, comments, and existing code. Return only the suggested code to complete what was given.';
+
+    const completion = await provider.generateCompletion(prompt, systemPrompt, maxTokens, 0.2);
 
     res.json({
-      completion: completion.choices[0].message.content?.trim() || '',
+      completion,
+      provider: provider.name
     });
   } catch (error) {
     console.error('Error generating code completion:', error);
@@ -46,31 +43,32 @@ export async function generateCompletion(req: Request, res: Response) {
 // Generate code explanation
 export async function generateExplanation(req: Request, res: Response) {
   try {
-    const { code, language } = req.body;
+    const { code, language, provider: providerName } = req.body;
 
     if (!code) {
       return res.status(400).json({ error: 'Code is required' });
     }
 
-    const completion = await openai.chat.completions.create({
-      model: GPT_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert programmer that provides clear, concise, and insightful explanations of code. Explain what the code does at a high level, and point out any important details, patterns, or potential issues. Format the response in markdown.',
-        },
-        {
-          role: 'user',
-          content: `Please explain this ${language} code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
-        },
-      ],
-      max_tokens: 1024,
-      temperature: 0.5,
-    });
+    const provider = providerName 
+      ? aiProviderManager.getProvider(providerName) || aiProviderManager.getDefaultProvider()
+      : aiProviderManager.getDefaultProvider();
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: 'You are an expert programmer that provides clear, concise, and insightful explanations of code. Explain what the code does at a high level, and point out any important details, patterns, or potential issues. Format the response in markdown.',
+      },
+      {
+        role: 'user',
+        content: `Please explain this ${language} code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      },
+    ];
+
+    const explanation = await provider.generateChat(messages, 1024, 0.5);
 
     res.json({
-      explanation: completion.choices[0].message.content?.trim() || '',
+      explanation,
+      provider: provider.name
     });
   } catch (error) {
     console.error('Error generating code explanation:', error);
@@ -81,31 +79,32 @@ export async function generateExplanation(req: Request, res: Response) {
 // Generate code conversion between languages
 export async function convertCode(req: Request, res: Response) {
   try {
-    const { code, fromLanguage, toLanguage } = req.body;
+    const { code, fromLanguage, toLanguage, provider: providerName } = req.body;
 
     if (!code || !fromLanguage || !toLanguage) {
       return res.status(400).json({ error: 'Code, source language, and target language are required' });
     }
 
-    const completion = await openai.chat.completions.create({
-      model: GPT_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert programmer that converts code between different programming languages. Provide an accurate translation that preserves the functionality and logic of the original code while following the best practices of the target language.',
-        },
-        {
-          role: 'user',
-          content: `Convert this ${fromLanguage} code to ${toLanguage}:\n\n\`\`\`${fromLanguage}\n${code}\n\`\`\`\n\nOutput the converted code without explanations.`,
-        },
-      ],
-      max_tokens: 2048,
-      temperature: 0.2,
-    });
+    const provider = providerName 
+      ? aiProviderManager.getProvider(providerName) || aiProviderManager.getDefaultProvider()
+      : aiProviderManager.getDefaultProvider();
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: 'You are an expert programmer that converts code between different programming languages. Provide an accurate translation that preserves the functionality and logic of the original code while following the best practices of the target language.',
+      },
+      {
+        role: 'user',
+        content: `Convert this ${fromLanguage} code to ${toLanguage}:\n\n\`\`\`${fromLanguage}\n${code}\n\`\`\`\n\nOutput the converted code without explanations.`,
+      },
+    ];
+
+    const convertedCode = await provider.generateChat(messages, 2048, 0.2);
 
     res.json({
-      convertedCode: completion.choices[0].message.content?.trim() || '',
+      convertedCode,
+      provider: provider.name
     });
   } catch (error) {
     console.error('Error converting code:', error);

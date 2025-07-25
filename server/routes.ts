@@ -8,12 +8,14 @@ import { devAuthBypass, setupAuthBypass } from "./dev-auth-bypass";
 import { WebSocketServer, WebSocket } from "ws";
 import * as os from 'os';
 import { 
+  getAvailableProviders,
   generateCompletion, 
   generateExplanation, 
   convertCode, 
   generateDocumentation, 
   generateTests 
 } from "./ai";
+import { aiProviderManager, type ChatMessage } from "./ai/ai-provider";
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, attachToProjectLogs, checkRuntimeDependencies } from "./runtime";
 import { setupLogsWebsocket } from "./logs";
@@ -1872,6 +1874,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // AI Routes
   
+  // Get available AI providers
+  app.get('/api/ai/providers', ensureAuthenticated, getAvailableProviders);
+  
   // Generate code completion
   app.post('/api/ai/completion', ensureAuthenticated, generateCompletion);
   
@@ -1891,7 +1896,7 @@ document.addEventListener('DOMContentLoaded', function() {
   app.post('/api/projects/:projectId/ai/chat', ensureAuthenticated, async (req, res) => {
     try {
       const { projectId } = req.params;
-      const { message, context } = req.body;
+      const { message, context, provider: providerName } = req.body;
       
       if (!message) {
         return res.status(400).json({ error: 'Message is required' });
@@ -1911,17 +1916,17 @@ document.addEventListener('DOMContentLoaded', function() {
         .map(f => `File: ${f.name}\n\`\`\`${f.name.split('.').pop() || 'txt'}\n${f.content}\n\`\`\``)
         .join('\n\n');
       
-      // Create OpenAI client
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
+      // Get the AI provider
+      const provider = providerName 
+        ? aiProviderManager.getProvider(providerName) || aiProviderManager.getDefaultProvider()
+        : aiProviderManager.getDefaultProvider();
       
       // Build conversation history
       const conversationHistory = context?.history || [];
       
       const systemMessage = {
         role: 'system' as const,
-        content: `You are E-Code AI Assistant, an expert coding assistant similar to Replit's Ghostwriter. You help users with their ${project.name} project.
+        content: `You are E-Code AI Assistant powered by ${provider.name}, an expert coding assistant similar to Replit's Ghostwriter. You help users with their ${project.name} project.
         
 Current project context:
 - Language: ${project.language || 'Not specified'}
@@ -1973,7 +1978,7 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
               content: `You are E-Code AI Agent, an autonomous coding assistant that can build entire applications. You can create files, install packages, and set up complete projects. When a user asks you to build something, respond with specific actions and code.`
             };
             
-            const agentMessages = [
+            const agentMessages: ChatMessage[] = [
               systemMessageAgent,
               ...conversationHistory.map((msg: any) => ({
                 role: msg.role as 'user' | 'assistant',
@@ -1982,15 +1987,9 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
               { role: 'user' as const, content: message }
             ];
             
-            const completion = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: agentMessages,
-              temperature: 0.7,
-              max_tokens: 1500,
-              stream: false,
-            });
+            const agentResponse = await provider.generateChat(agentMessages, 1500, 0.7);
             
-            responseContent = completion.choices[0].message.content || "I'll help you build that! Let me create the necessary files and structure for your application.";
+            responseContent = agentResponse || "I'll help you build that! Let me create the necessary files and structure for your application.";
           }
 
           res.json({
@@ -2004,7 +2003,7 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
         }
       }
       
-      const messages = [
+      const messages: ChatMessage[] = [
         systemMessage,
         ...conversationHistory.map((msg: any) => ({
           role: msg.role as 'user' | 'assistant',
@@ -2013,20 +2012,15 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
         { role: 'user' as const, content: message }
       ];
       
-      // Create OpenAI completion
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages,
-        temperature: 0.7,
-        max_tokens: 1000,
-        stream: false,
-      });
+      // Generate response using the selected provider
+      const response = await provider.generateChat(messages, 1000, 0.7);
       
       const assistantMessage = {
         id: `msg_${Date.now()}`,
         role: 'assistant',
-        content: completion.choices[0].message.content || 'I apologize, but I was unable to generate a response.',
-        timestamp: Date.now()
+        content: response || 'I apologize, but I was unable to generate a response.',
+        timestamp: Date.now(),
+        provider: provider.name
       };
       
       res.json(assistantMessage);
