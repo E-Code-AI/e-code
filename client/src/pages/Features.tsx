@@ -10,6 +10,8 @@ import {
   FileCode, Bug, BarChart, Palette, Layers, Settings,
   ChevronRight, ArrowRight, CheckCircle
 } from 'lucide-react';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { PublicFooter } from '@/components/layout/PublicFooter';
 
 interface Feature {
   icon: React.ReactNode;
@@ -206,45 +208,8 @@ export default function Features() {
   const categories = ['All', 'Development', 'Collaboration', 'Infrastructure', 'Security', 'Analytics'];
 
   return (
-    <div className="min-h-screen">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-8">
-              <div 
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={() => navigate('/')}
-              >
-                <Code className="h-6 w-6" />
-                <span className="font-bold text-xl">E-Code</span>
-              </div>
-              <div className="hidden md:flex items-center gap-6">
-                <Button variant="ghost" size="sm" onClick={() => navigate('/features')}>
-                  Features
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/pricing')}>
-                  Pricing
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/templates')}>
-                  Templates
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/docs')}>
-                  Docs
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => navigate('/auth')}>
-                Log in
-              </Button>
-              <Button onClick={() => navigate(user ? '/dashboard' : '/auth')}>
-                {user ? 'Dashboard' : 'Sign up'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen flex flex-col">
+      <PublicNavbar />
 
       {/* Hero Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
@@ -426,12 +391,7 @@ export default function Features() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t py-8 px-4">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 E-Code Clone. All rights reserved.</p>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
