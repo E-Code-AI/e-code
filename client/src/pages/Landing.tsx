@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Landing() {
   const [, navigate] = useLocation();
@@ -79,10 +80,48 @@ export default function Landing() {
     }
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would subscribe the email
-    navigate('/auth');
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Success!",
+          description: data.message,
+        });
+        setEmail('');
+        // Navigate to auth after successful subscription
+        setTimeout(() => navigate('/auth'), 1500);
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || 'Failed to subscribe',
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to subscribe. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -308,8 +347,8 @@ export default function Landing() {
                   className="flex-1 px-4 py-2 rounded-lg bg-white/10 border border-white/20 placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
                   required
                 />
-                <Button type="submit" size="lg" variant="secondary">
-                  Get started free
+                <Button type="submit" size="lg" variant="secondary" disabled={isSubmitting}>
+                  {isSubmitting ? 'Subscribing...' : 'Get started free'}
                 </Button>
               </form>
               <p className="text-sm mt-4 opacity-75">

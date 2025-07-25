@@ -5,7 +5,8 @@ import {
   ProjectCollaborator, InsertProjectCollaborator,
   Deployment, InsertDeployment,
   EnvironmentVariable, InsertEnvironmentVariable,
-  projects, files, users, projectCollaborators, deployments, environmentVariables
+  NewsletterSubscriber, InsertNewsletterSubscriber,
+  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers
 } from "@shared/schema";
 import { eq, and, desc, isNull } from "drizzle-orm";
 import { db } from "./db";
@@ -53,6 +54,13 @@ export interface IStorage {
   createEnvironmentVariable(variable: InsertEnvironmentVariable): Promise<EnvironmentVariable>;
   updateEnvironmentVariable(id: number, update: Partial<EnvironmentVariable>): Promise<EnvironmentVariable>;
   deleteEnvironmentVariable(id: number): Promise<void>;
+  
+  // Newsletter methods
+  getNewsletterSubscribers(): Promise<NewsletterSubscriber[]>;
+  getNewsletterSubscriber(email: string): Promise<NewsletterSubscriber | undefined>;
+  subscribeToNewsletter(subscriber: InsertNewsletterSubscriber): Promise<NewsletterSubscriber>;
+  unsubscribeFromNewsletter(email: string): Promise<void>;
+  confirmNewsletterSubscription(email: string, token: string): Promise<boolean>;
   
   // Session store for authentication
   sessionStore: Store;
@@ -409,6 +417,100 @@ export class DatabaseStorage implements IStorage {
       .update(projects)
       .set({ updatedAt: new Date() })
       .where(eq(projects.id, variable.projectId));
+  }
+
+  // Newsletter methods
+  async getNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+    try {
+      return await db.select()
+        .from(newsletterSubscribers)
+        .where(eq(newsletterSubscribers.isActive, true))
+        .orderBy(desc(newsletterSubscribers.subscribedAt));
+    } catch (error: any) {
+      if (error.message?.includes('relation "newsletter_subscribers" does not exist')) {
+        console.log('Newsletter subscribers table does not exist yet');
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async getNewsletterSubscriber(email: string): Promise<NewsletterSubscriber | undefined> {
+    try {
+      const [subscriber] = await db.select()
+        .from(newsletterSubscribers)
+        .where(eq(newsletterSubscribers.email, email));
+      return subscriber;
+    } catch (error: any) {
+      if (error.message?.includes('relation "newsletter_subscribers" does not exist')) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+
+  async subscribeToNewsletter(subscriberData: InsertNewsletterSubscriber): Promise<NewsletterSubscriber> {
+    // Check if already subscribed
+    const existing = await this.getNewsletterSubscriber(subscriberData.email);
+    
+    if (existing) {
+      if (existing.isActive) {
+        throw new Error('Email already subscribed');
+      }
+      
+      // Reactivate subscription
+      const [reactivated] = await db
+        .update(newsletterSubscribers)
+        .set({ 
+          isActive: true, 
+          subscribedAt: new Date(),
+          unsubscribedAt: null 
+        })
+        .where(eq(newsletterSubscribers.email, subscriberData.email))
+        .returning();
+      
+      return reactivated;
+    }
+    
+    // Create new subscription
+    const [subscriber] = await db
+      .insert(newsletterSubscribers)
+      .values({
+        ...subscriberData,
+        confirmationToken: subscriberData.confirmationToken || Math.random().toString(36).substring(2, 15)
+      })
+      .returning();
+    
+    return subscriber;
+  }
+
+  async unsubscribeFromNewsletter(email: string): Promise<void> {
+    await db
+      .update(newsletterSubscribers)
+      .set({ 
+        isActive: false,
+        unsubscribedAt: new Date()
+      })
+      .where(eq(newsletterSubscribers.email, email));
+  }
+
+  async confirmNewsletterSubscription(email: string, token: string): Promise<boolean> {
+    const subscriber = await this.getNewsletterSubscriber(email);
+    
+    if (!subscriber || subscriber.confirmationToken !== token) {
+      return false;
+    }
+    
+    if (subscriber.confirmedAt) {
+      return true; // Already confirmed
+    }
+    
+    await db
+      .update(newsletterSubscribers)
+      .set({ confirmedAt: new Date() })
+      .where(eq(newsletterSubscribers.email, email));
+    
+    return true;
   }
 }
 
@@ -837,6 +939,86 @@ export class MemStorage implements IStorage {
   async isProjectCollaborator(projectId: number, userId: number): Promise<boolean> {
     return Array.from(this.collaborators.values())
       .some(collab => collab.projectId === projectId && collab.userId === userId);
+  }
+
+  // Newsletter methods (in-memory implementation)
+  private newsletterSubscribers: Map<string, NewsletterSubscriber> = new Map();
+  private newsletterIdCounter = 1;
+
+  async getNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+    return Array.from(this.newsletterSubscribers.values())
+      .filter(sub => sub.isActive)
+      .sort((a, b) => new Date(b.subscribedAt).getTime() - new Date(a.subscribedAt).getTime());
+  }
+
+  async getNewsletterSubscriber(email: string): Promise<NewsletterSubscriber | undefined> {
+    return this.newsletterSubscribers.get(email);
+  }
+
+  async subscribeToNewsletter(subscriberData: InsertNewsletterSubscriber): Promise<NewsletterSubscriber> {
+    const existing = this.newsletterSubscribers.get(subscriberData.email);
+    
+    if (existing) {
+      if (existing.isActive) {
+        throw new Error('Email already subscribed');
+      }
+      
+      // Reactivate subscription
+      const reactivated: NewsletterSubscriber = {
+        ...existing,
+        isActive: true,
+        subscribedAt: new Date(),
+        unsubscribedAt: null
+      };
+      
+      this.newsletterSubscribers.set(subscriberData.email, reactivated);
+      return reactivated;
+    }
+    
+    // Create new subscription
+    const now = new Date();
+    const subscriber: NewsletterSubscriber = {
+      id: this.newsletterIdCounter++,
+      email: subscriberData.email,
+      isActive: subscriberData.isActive ?? true,
+      subscribedAt: now,
+      unsubscribedAt: null,
+      confirmationToken: subscriberData.confirmationToken || Math.random().toString(36).substring(2, 15),
+      confirmedAt: null
+    };
+    
+    this.newsletterSubscribers.set(subscriber.email, subscriber);
+    return subscriber;
+  }
+
+  async unsubscribeFromNewsletter(email: string): Promise<void> {
+    const subscriber = this.newsletterSubscribers.get(email);
+    if (subscriber) {
+      this.newsletterSubscribers.set(email, {
+        ...subscriber,
+        isActive: false,
+        unsubscribedAt: new Date()
+      });
+    }
+  }
+
+  async confirmNewsletterSubscription(email: string, token: string): Promise<boolean> {
+    const subscriber = this.newsletterSubscribers.get(email);
+    
+    if (!subscriber || subscriber.confirmationToken !== token) {
+      return false;
+    }
+    
+    if (subscriber.confirmedAt) {
+      return true; // Already confirmed
+    }
+    
+    this.newsletterSubscribers.set(email, {
+      ...subscriber,
+      confirmedAt: new Date()
+    });
+    
+    return true;
   }
 }
 

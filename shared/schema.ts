@@ -189,6 +189,27 @@ export const deploymentsRelations = relations(deployments, ({ one }) => ({
   }),
 }));
 
+// Newsletter subscribers table
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  isActive: boolean("is_active").default(true).notNull(),
+  subscribedAt: timestamp("subscribed_at").defaultNow().notNull(),
+  unsubscribedAt: timestamp("unsubscribed_at"),
+  confirmationToken: text("confirmation_token"),
+  confirmedAt: timestamp("confirmed_at"),
+}, (table) => {
+  return {
+    emailIdx: uniqueIndex("email_idx").on(table.email),
+  };
+});
+
+export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSubscribers).pick({
+  email: true,
+  isActive: true,
+  confirmationToken: true,
+});
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -207,3 +228,6 @@ export type InsertDeployment = z.infer<typeof insertDeploymentSchema>;
 
 export type EnvironmentVariable = typeof environmentVariables.$inferSelect;
 export type InsertEnvironmentVariable = z.infer<typeof insertEnvironmentVariableSchema>;
+
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;

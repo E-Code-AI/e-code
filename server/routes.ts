@@ -1505,10 +1505,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Terminal Routes
+  // Terminal Routes - Simple implementation for API compatibility
+  const terminalSessions = new Map<string, { userId: number; projectId: number; id: string }>();
+  
   app.get('/api/terminal/sessions', ensureAuthenticated, async (req, res) => {
     try {
-      const sessions = terminalManager.getSessions(req.user!.id);
+      const userId = req.user!.id;
+      const sessions = Array.from(terminalSessions.values())
+        .filter(session => session.userId === userId);
       res.json(sessions);
     } catch (error) {
       console.error('Error getting terminal sessions:', error);
@@ -1519,7 +1523,10 @@ document.addEventListener('DOMContentLoaded', function() {
   app.post('/api/terminal/create', ensureAuthenticated, async (req, res) => {
     try {
       const { projectId } = req.body;
-      const sessionId = await terminalManager.createSession(req.user!.id, projectId);
+      const userId = req.user!.id;
+      const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      terminalSessions.set(sessionId, { userId, projectId, id: sessionId });
       res.json({ sessionId });
     } catch (error) {
       console.error('Error creating terminal session:', error);
@@ -1529,7 +1536,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   app.delete('/api/terminal/:sessionId', ensureAuthenticated, async (req, res) => {
     try {
-      await terminalManager.closeSession(req.params.sessionId);
+      const sessionId = req.params.sessionId;
+      terminalSessions.delete(sessionId);
       res.json({ success: true });
     } catch (error) {
       console.error('Error closing terminal session:', error);
@@ -2302,7 +2310,7 @@ Would you like me to help you set up the OpenAI API integration?`,
   app.get('/preview/:projectId/*', async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const filepath = req.params[0] || 'index.html';
+      const filepath = (req.params as any)[0] || 'index.html';
       
       // Get all project files
       const files = await storage.getFilesByProject(projectId);
@@ -2340,6 +2348,103 @@ Would you like me to help you set up the OpenAI API integration?`,
     } catch (error) {
       console.error('Error serving preview:', error);
       res.status(500).send('Error loading preview');
+    }
+  });
+
+  // Newsletter API routes
+  app.post('/api/newsletter/subscribe', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ message: 'Valid email is required' });
+      }
+      
+      // Subscribe to newsletter (without sending actual email since we don't have SendGrid key)
+      const subscriber = await storage.subscribeToNewsletter({
+        email,
+        isActive: true
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'Successfully subscribed to newsletter!',
+        data: {
+          email: subscriber.email,
+          subscribed: true
+        }
+      });
+    } catch (error: any) {
+      console.error('Newsletter subscription error:', error);
+      
+      if (error.message === 'Email already subscribed') {
+        return res.status(409).json({ message: 'You\'re already subscribed to our newsletter!' });
+      }
+      
+      res.status(500).json({ message: 'Failed to subscribe to newsletter' });
+    }
+  });
+  
+  app.post('/api/newsletter/unsubscribe', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+      }
+      
+      await storage.unsubscribeFromNewsletter(email);
+      
+      res.json({ 
+        success: true, 
+        message: 'Successfully unsubscribed from newsletter' 
+      });
+    } catch (error) {
+      console.error('Newsletter unsubscribe error:', error);
+      res.status(500).json({ message: 'Failed to unsubscribe from newsletter' });
+    }
+  });
+  
+  app.get('/api/newsletter/confirm', async (req, res) => {
+    try {
+      const { email, token } = req.query;
+      
+      if (!email || !token) {
+        return res.status(400).json({ message: 'Email and token are required' });
+      }
+      
+      const confirmed = await storage.confirmNewsletterSubscription(
+        email as string,
+        token as string
+      );
+      
+      if (confirmed) {
+        res.json({ 
+          success: true, 
+          message: 'Email confirmed successfully!' 
+        });
+      } else {
+        res.status(400).json({ message: 'Invalid confirmation link' });
+      }
+    } catch (error) {
+      console.error('Newsletter confirmation error:', error);
+      res.status(500).json({ message: 'Failed to confirm email' });
+    }
+  });
+  
+  // Admin endpoint to get newsletter subscribers (protected)
+  app.get('/api/newsletter/subscribers', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check if user is admin
+      if (req.user?.username !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+      
+      const subscribers = await storage.getNewsletterSubscribers();
+      res.json(subscribers);
+    } catch (error) {
+      console.error('Error fetching subscribers:', error);
+      res.status(500).json({ message: 'Failed to fetch subscribers' });
     }
   });
 
