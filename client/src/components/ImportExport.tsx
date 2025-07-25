@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -271,6 +271,9 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Export Project</DialogTitle>
+            <DialogDescription>
+              Download your project files as an archive for backup or sharing.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
@@ -403,6 +406,9 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Import Project Files</DialogTitle>
+            <DialogDescription>
+              Import files from a ZIP archive or GitHub repository to your project.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">

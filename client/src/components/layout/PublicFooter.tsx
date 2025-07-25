@@ -71,10 +71,11 @@ export function PublicFooter() {
             <ul className="space-y-2">
               {footerLinks.product.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href}>
-                    <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {link.label}
-                    </a>
+                  <Link 
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -87,10 +88,11 @@ export function PublicFooter() {
             <ul className="space-y-2">
               {footerLinks.resources.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href}>
-                    <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {link.label}
-                    </a>
+                  <Link 
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -103,10 +105,11 @@ export function PublicFooter() {
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href}>
-                    <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {link.label}
-                    </a>
+                  <Link 
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -119,10 +122,11 @@ export function PublicFooter() {
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href}>
-                    <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {link.label}
-                    </a>
+                  <Link 
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -135,10 +139,11 @@ export function PublicFooter() {
             <ul className="space-y-2">
               {footerLinks.compare.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href}>
-                    <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {link.label}
-                    </a>
+                  <Link 
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
                   </Link>
                 </li>
               ))}
