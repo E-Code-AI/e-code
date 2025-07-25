@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 import { 
   Plus, 
   TrendingUp, 
@@ -28,7 +29,24 @@ import {
   Eye,
   EyeOff,
   ChevronRight,
-  Crown
+  Crown,
+  Github,
+  BookOpen,
+  Trophy,
+  Bell,
+  HardDrive,
+  Pin,
+  Coins,
+  Calendar,
+  Activity,
+  Play,
+  Pause,
+  MoreHorizontal,
+  Sparkles,
+  School,
+  UserPlus,
+  Upload,
+  Home
 } from 'lucide-react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
@@ -41,6 +59,7 @@ export default function Dashboard() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedTab, setSelectedTab] = useState('home');
 
   // Fetch recent projects
   const { data: recentProjects = [], isLoading: loadingRecent } = useQuery<Project[]>({
@@ -63,6 +82,36 @@ export default function Dashboard() {
       navigate(`/project/${data.id}`);
     },
   });
+
+  // Mock data for additional features
+  const pinnedProjects = recentProjects.slice(0, 2);
+  const recentDeployments = [
+    { id: 1, project: 'Portfolio Site', status: 'active', url: 'https://portfolio.replit.app', time: '2 hours ago' },
+    { id: 2, project: 'Blog Platform', status: 'building', url: null, time: '5 hours ago' },
+  ];
+  
+  const learningProgress = {
+    course: '100 Days of Code',
+    day: 23,
+    streak: 15,
+    lastCompleted: 'Day 22: Async/Await',
+    nextLesson: 'Day 23: Error Handling',
+    progress: 23,
+  };
+
+  const storageUsed = 1.2; // GB
+  const storageLimit = 5; // GB
+  const cyclesBalance = 500;
+  
+  const announcements = [
+    { id: 1, title: 'New AI Features Available', type: 'feature', time: '1 day ago' },
+    { id: 2, title: 'Scheduled Maintenance', type: 'maintenance', time: '3 days ago' },
+  ];
+
+  const teams = [
+    { id: 1, name: 'Web Dev Team', members: 5, role: 'owner' },
+    { id: 2, name: 'Open Source Contributors', members: 128, role: 'member' },
+  ];
 
   // Fetch trending projects (mock data for now)
   const trendingRepls = [
@@ -165,25 +214,33 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[var(--ecode-background)]">
       {/* Replit-style Dashboard Header */}
       <div className="border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--ecode-text)]">Home</h1>
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-semibold text-[var(--ecode-text)]">Home</h1>
               {user?.username === 'admin' && (
-                <Badge variant="outline" className="border-[var(--ecode-accent)] text-[var(--ecode-accent)]">
-                  <Crown className="h-3 w-3 mr-1" />
-                  Pro
+                <Badge variant="secondary" className="bg-gradient-to-r from-orange-400 to-pink-400 text-white border-0">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Hacker
                 </Badge>
               )}
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/github-import')}
+                className="gap-2 border-[var(--ecode-border)] hover:bg-[var(--ecode-sidebar)]"
+              >
+                <Github className="h-4 w-4" />
+                Import from GitHub
+              </Button>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-muted)]" />
                 <Input
-                  placeholder="Search projects..."
+                  placeholder="Search or run a command..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full sm:w-80 pl-10 bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-muted)]"
+                  className="w-full sm:w-96 pl-10 bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-muted)]"
                 />
               </div>
               <Button 
@@ -195,14 +252,164 @@ export default function Dashboard() {
               </Button>
             </div>
           </div>
+          
+          {/* Tabs */}
+          <div className="mt-4 flex items-center gap-1 border-b border-[var(--ecode-border)]">
+            <Button
+              variant="ghost"
+              className={`px-4 py-2 rounded-t-md border-b-2 ${
+                selectedTab === 'home' 
+                  ? 'border-[var(--ecode-accent)] text-[var(--ecode-text)]' 
+                  : 'border-transparent text-[var(--ecode-muted)] hover:text-[var(--ecode-text)]'
+              }`}
+              onClick={() => setSelectedTab('home')}
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </Button>
+            <Button
+              variant="ghost"
+              className={`px-4 py-2 rounded-t-md border-b-2 ${
+                selectedTab === 'deployments' 
+                  ? 'border-[var(--ecode-accent)] text-[var(--ecode-text)]' 
+                  : 'border-transparent text-[var(--ecode-muted)] hover:text-[var(--ecode-text)]'
+              }`}
+              onClick={() => setSelectedTab('deployments')}
+            >
+              <Rocket className="h-4 w-4 mr-2" />
+              Deployments
+            </Button>
+            <Button
+              variant="ghost"
+              className={`px-4 py-2 rounded-t-md border-b-2 ${
+                selectedTab === 'teams' 
+                  ? 'border-[var(--ecode-accent)] text-[var(--ecode-text)]' 
+                  : 'border-transparent text-[var(--ecode-muted)] hover:text-[var(--ecode-text)]'
+              }`}
+              onClick={() => setSelectedTab('teams')}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Teams
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content Area */}
-          <div className="lg:col-span-2 space-y-6">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {selectedTab === 'home' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Main Content Area */}
+            <div className="lg:col-span-8 space-y-6">
+              {/* Notifications/Announcements */}
+              {announcements.length > 0 && (
+                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-[var(--ecode-border)] p-4">
+                  <div className="flex items-start gap-3">
+                    <Bell className="h-5 w-5 text-[var(--ecode-accent)] mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="font-medium text-[var(--ecode-text)] mb-2">Latest Updates</h3>
+                      <div className="space-y-2">
+                        {announcements.map(announcement => (
+                          <div key={announcement.id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className={
+                                announcement.type === 'feature' ? 'bg-green-500/10 text-green-600' : 'bg-yellow-500/10 text-yellow-600'
+                              }>
+                                {announcement.type}
+                              </Badge>
+                              <span className="text-sm text-[var(--ecode-text)]">{announcement.title}</span>
+                            </div>
+                            <span className="text-xs text-[var(--ecode-muted)]">{announcement.time}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Continue Learning */}
+              <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
+                <div className="p-6 border-b border-[var(--ecode-border)]">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <BookOpen className="h-5 w-5 text-[var(--ecode-accent)]" />
+                      <h2 className="text-xl font-semibold text-[var(--ecode-text)]">Continue Learning</h2>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => navigate('/learn')}>
+                      View all courses
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="bg-[var(--ecode-sidebar)] rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="font-medium text-[var(--ecode-text)] flex items-center gap-2">
+                          {learningProgress.course}
+                          <Badge variant="secondary" className="bg-orange-500/10 text-orange-600">
+                            {learningProgress.streak} day streak!
+                          </Badge>
+                        </h3>
+                        <p className="text-sm text-[var(--ecode-muted)] mt-1">Last completed: {learningProgress.lastCompleted}</p>
+                      </div>
+                      <Trophy className="h-8 w-8 text-yellow-500" />
+                    </div>
+                    <Progress value={learningProgress.progress} className="mb-4" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-[var(--ecode-muted)]">Day {learningProgress.day} of 100</span>
+                      <Button 
+                        size="sm" 
+                        className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
+                        onClick={() => navigate('/learn/100-days-of-code')}
+                      >
+                        Continue to {learningProgress.nextLesson}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pinned Projects */}
+              {pinnedProjects.length > 0 && (
+                <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
+                  <div className="p-6 border-b border-[var(--ecode-border)]">
+                    <div className="flex items-center gap-2">
+                      <Pin className="h-5 w-5 text-[var(--ecode-accent)]" />
+                      <h2 className="text-xl font-semibold text-[var(--ecode-text)]">Pinned</h2>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {pinnedProjects.map((project: any) => (
+                        <div 
+                          key={project.id}
+                          className="group bg-[var(--ecode-sidebar)] rounded-lg p-4 hover:bg-[var(--ecode-sidebar-hover)] cursor-pointer transition-all border border-transparent hover:border-[var(--ecode-accent)]"
+                          onClick={() => navigate(`/project/${project.id}`)}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-medium text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)]">
+                              {project.name}
+                            </h3>
+                            <Pin className="h-4 w-4 text-[var(--ecode-muted)]" />
+                          </div>
+                          <p className="text-sm text-[var(--ecode-muted)] mb-3">
+                            {project.description || 'No description'}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-[var(--ecode-muted)]">
+                            <span className={`h-2 w-2 rounded-full ${getLanguageColor(project.language)}`} />
+                            <span>{project.language}</span>
+                            <span>•</span>
+                            <span>{new Date(project.updatedAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
             {/* Recent Projects */}
             <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
               <div className="p-6 border-b border-[var(--ecode-border)]">
@@ -288,6 +495,100 @@ export default function Dashboard() {
               </div>
             </div>
 
+              {/* Recent Deployments */}
+              <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
+                <div className="p-6 border-b border-[var(--ecode-border)]">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Rocket className="h-5 w-5 text-[var(--ecode-accent)]" />
+                      <h2 className="text-xl font-semibold text-[var(--ecode-text)]">Recent Deployments</h2>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => navigate('/deployments')}>
+                      View all
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-3">
+                    {recentDeployments.map(deployment => (
+                      <div key={deployment.id} className="flex items-center justify-between p-3 bg-[var(--ecode-sidebar)] rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`h-2 w-2 rounded-full ${
+                            deployment.status === 'active' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'
+                          }`} />
+                          <div>
+                            <h4 className="font-medium text-[var(--ecode-text)]">{deployment.project}</h4>
+                            <p className="text-sm text-[var(--ecode-muted)]">
+                              {deployment.status === 'active' ? deployment.url : 'Building...'}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs text-[var(--ecode-muted)]">{deployment.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Trending Projects */}
+              <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
+                <div className="p-6 border-b border-[var(--ecode-border)]">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-[var(--ecode-accent)]" />
+                      <h2 className="text-xl font-semibold text-[var(--ecode-text)]">Trending</h2>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => navigate('/explore')}>
+                      Explore
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-4">
+                    {trendingRepls.map((repl) => (
+                      <div 
+                        key={repl.id} 
+                        className="group cursor-pointer hover:bg-[var(--ecode-sidebar)] p-3 rounded-lg transition-all"
+                        onClick={() => navigate(`/@${repl.author}/${repl.name}`)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-[var(--ecode-accent)] text-white">
+                                {repl.author.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <h4 className="font-medium text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)]">
+                                {repl.name}
+                              </h4>
+                              <p className="text-sm text-[var(--ecode-muted)] mb-1">by {repl.author}</p>
+                              <p className="text-sm text-[var(--ecode-muted)] line-clamp-2">{repl.description}</p>
+                              <div className="flex items-center gap-4 mt-2 text-xs text-[var(--ecode-muted)]">
+                                <span className="flex items-center gap-1">
+                                  <Star className="h-3 w-3" />
+                                  {repl.stars}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <GitFork className="h-3 w-3" />
+                                  {repl.forks}
+                                </span>
+                                <span className={`h-2 w-2 rounded-full ${getLanguageColor(repl.language)}`} />
+                                <span>{repl.language}</span>
+                                <span>•</span>
+                                <span>{repl.lastUpdated}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
             {/* Explore Templates */}
             <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
               <div className="p-6 border-b border-[var(--ecode-border)]">
@@ -342,26 +643,118 @@ export default function Dashboard() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4 sm:space-y-6">
+          <div className="lg:col-span-4 space-y-4">
+            {/* Cycles & Storage */}
+            <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] p-6">
+              <h3 className="text-lg font-semibold text-[var(--ecode-text)] mb-4">Account Overview</h3>
+              
+              {/* Cycles Balance */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Coins className="h-4 w-4 text-yellow-500" />
+                    <span className="text-sm font-medium text-[var(--ecode-text)]">Cycles</span>
+                  </div>
+                  <span className="text-sm font-bold text-[var(--ecode-text)]">{cyclesBalance}</span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full border-yellow-500/20 hover:bg-yellow-500/10"
+                  onClick={() => navigate('/cycles')}
+                >
+                  Get more Cycles
+                </Button>
+              </div>
+
+              {/* Storage Usage */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <HardDrive className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm font-medium text-[var(--ecode-text)]">Storage</span>
+                  </div>
+                  <span className="text-sm text-[var(--ecode-muted)]">{storageUsed}GB / {storageLimit}GB</span>
+                </div>
+                <Progress value={(storageUsed / storageLimit) * 100} className="h-2" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[var(--ecode-border)]">
+                <div className="text-center">
+                  <div className="text-xl font-bold text-[var(--ecode-accent)]">{recentProjects.length}</div>
+                  <div className="text-xs text-[var(--ecode-muted)]">Repls</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-[var(--ecode-accent)]">2</div>
+                  <div className="text-xs text-[var(--ecode-muted)]">Active</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Your Teams */}
+            <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
+              <div className="p-6 border-b border-[var(--ecode-border)]">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-[var(--ecode-text)] flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Your Teams
+                  </h3>
+                  <Button variant="ghost" size="sm" onClick={() => navigate('/teams/create')}>
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="space-y-3">
+                  {teams.map(team => (
+                    <div 
+                      key={team.id}
+                      className="flex items-center justify-between p-3 bg-[var(--ecode-sidebar)] rounded-lg hover:bg-[var(--ecode-sidebar-hover)] cursor-pointer transition-all"
+                      onClick={() => navigate(`/teams/${team.id}`)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold">
+                          {team.name.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-medium text-[var(--ecode-text)]">{team.name}</h4>
+                          <p className="text-xs text-[var(--ecode-muted)]">{team.members} members • {team.role}</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-[var(--ecode-muted)]" />
+                    </div>
+                  ))}
+                </div>
+                <Button 
+                  variant="ghost" 
+                  className="w-full mt-3 text-[var(--ecode-accent)]"
+                  onClick={() => navigate('/teams')}
+                >
+                  View all teams
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+
             {/* Quick Stats */}
             <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] p-6">
               <h3 className="text-lg font-semibold text-[var(--ecode-text)] mb-4">Your Activity</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
                   <div className="text-2xl font-bold text-[var(--ecode-accent)]">{recentProjects.length}</div>
-                  <div className="text-xs text-[var(--ecode-muted)]">Projects</div>
+                  <div className="text-xs text-[var(--ecode-muted)]">Creations</div>
                 </div>
                 <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
-                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">47</div>
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">89</div>
+                  <div className="text-xs text-[var(--ecode-muted)]">Remixes</div>
+                </div>
+                <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">234</div>
                   <div className="text-xs text-[var(--ecode-muted)]">Likes</div>
                 </div>
                 <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
-                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">12</div>
-                  <div className="text-xs text-[var(--ecode-muted)]">Followers</div>
-                </div>
-                <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
-                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">8</div>
-                  <div className="text-xs text-[var(--ecode-muted)]">Following</div>
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">1.2K</div>
+                  <div className="text-xs text-[var(--ecode-muted)]">Views</div>
                 </div>
               </div>
             </div>
@@ -440,6 +833,117 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
+        )}
+
+        {/* Deployments Tab */}
+        {selectedTab === 'deployments' && (
+          <div className="space-y-6">
+            <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-[var(--ecode-text)]">Your Deployments</h2>
+                  <Button 
+                    className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
+                    onClick={() => navigate('/deployments')}
+                  >
+                    <Rocket className="h-4 w-4 mr-2" />
+                    New Deployment
+                  </Button>
+                </div>
+                {recentDeployments.length > 0 ? (
+                  <div className="space-y-4">
+                    {recentDeployments.map(deployment => (
+                      <div key={deployment.id} className="bg-[var(--ecode-sidebar)] rounded-lg p-6">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="text-lg font-medium text-[var(--ecode-text)] mb-2">{deployment.project}</h3>
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-2">
+                                <div className={`h-2 w-2 rounded-full ${
+                                  deployment.status === 'active' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'
+                                }`} />
+                                <span className={deployment.status === 'active' ? 'text-green-500' : 'text-yellow-500'}>
+                                  {deployment.status === 'active' ? 'Active' : 'Building'}
+                                </span>
+                              </div>
+                              {deployment.url && (
+                                <a href={deployment.url} target="_blank" rel="noopener noreferrer" className="text-[var(--ecode-accent)] hover:underline">
+                                  {deployment.url}
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-sm text-[var(--ecode-muted)]">{deployment.time}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Rocket className="h-16 w-16 mx-auto text-[var(--ecode-muted)] mb-4" />
+                    <h3 className="text-lg font-medium text-[var(--ecode-text)] mb-2">No deployments yet</h3>
+                    <p className="text-[var(--ecode-muted)] mb-6">Deploy your first project to see it here</p>
+                    <Button onClick={() => navigate('/deployments')}>
+                      Learn about Deployments
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Teams Tab */}
+        {selectedTab === 'teams' && (
+          <div className="space-y-6">
+            <div className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)]">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-[var(--ecode-text)]">Your Teams</h2>
+                  <Button 
+                    className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
+                    onClick={() => navigate('/teams/create')}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Create Team
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {teams.map(team => (
+                    <Card 
+                      key={team.id}
+                      className="hover:border-[var(--ecode-accent)] cursor-pointer transition-all"
+                      onClick={() => navigate(`/teams/${team.id}`)}
+                    >
+                      <CardHeader>
+                        <div className="w-12 h-12 rounded bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold mb-3">
+                          {team.name.charAt(0)}
+                        </div>
+                        <CardTitle>{team.name}</CardTitle>
+                        <CardDescription>{team.members} members • {team.role}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button variant="ghost" className="w-full">
+                          View Team <ChevronRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  <Card 
+                    className="border-dashed hover:border-[var(--ecode-accent)] cursor-pointer transition-all"
+                    onClick={() => navigate('/teams/create')}
+                  >
+                    <CardContent className="flex flex-col items-center justify-center h-full py-12">
+                      <UserPlus className="h-12 w-12 text-[var(--ecode-muted)] mb-4" />
+                      <p className="text-sm font-medium text-[var(--ecode-text)]">Create a new team</p>
+                      <p className="text-xs text-[var(--ecode-muted)] mt-1">Collaborate with others</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Create Project Modal */}
