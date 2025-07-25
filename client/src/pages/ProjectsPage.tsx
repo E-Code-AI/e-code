@@ -46,7 +46,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Spinner } from '@/components/ui/spinner';
+import { ECodeLoading, ECodeSpinner } from '@/components/ECodeLoading';
 import { 
   Code, 
   Plus, 
@@ -232,8 +232,7 @@ const ProjectsPage = () => {
   if (isLoading) {
     return (
       <div className="container-responsive py-10 flex flex-col items-center justify-center min-h-[60vh]">
-        <Spinner size="lg" />
-        <p className="mt-4 text-muted-foreground text-responsive-sm">Loading projects...</p>
+        <ECodeLoading size="lg" text="Loading your creative work..." />
       </div>
     );
   }
@@ -403,7 +402,7 @@ const ProjectsPage = () => {
                     disabled={createProjectMutation.isPending}
                   >
                     {createProjectMutation.isPending && (
-                      <Spinner size="sm" className="mr-2" />
+                      <ECodeSpinner className="mr-2" size={16} />
                     )}
                     Create Project
                   </Button>
@@ -522,7 +521,7 @@ const ProjectsPage = () => {
               disabled={deleteProjectMutation.isPending}
             >
               {deleteProjectMutation.isPending && (
-                <Spinner size="sm" className="mr-2" />
+                <ECodeSpinner className="mr-2" size={16} />
               )}
               Delete
             </Button>

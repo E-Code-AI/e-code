@@ -17,7 +17,7 @@ import { useLocation } from 'wouter';
 import { 
   GitBranch, 
   Github, 
-  Loader2,
+
   Check,
   AlertCircle,
   Info,
@@ -35,6 +35,7 @@ import {
   Sparkles,
   Zap
 } from 'lucide-react';
+import { ECodeSpinner } from '@/components/ECodeLoading';
 
 interface GitHubRepo {
   id: number;
@@ -319,7 +320,7 @@ export default function GitHubImport() {
                     />
                     <Button onClick={handleSearch} disabled={isSearching}>
                       {isSearching ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <ECodeSpinner size={16} />
                       ) : (
                         <Search className="h-4 w-4" />
                       )}
@@ -405,7 +406,7 @@ export default function GitHubImport() {
                       <Button onClick={loadMyRepos} disabled={isLoadingRepos}>
                         {isLoadingRepos ? (
                           <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            <ECodeSpinner className="mr-2" size={16} />
                             Connecting...
                           </>
                         ) : (
@@ -587,7 +588,7 @@ export default function GitHubImport() {
                   >
                     {isImporting ? (
                       <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <ECodeSpinner className="mr-2" size={16} />
                         Importing...
                       </>
                     ) : (

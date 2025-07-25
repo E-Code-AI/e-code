@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, Settings, Package, Key, FileCode, Terminal as TerminalIcon, GitBranch, Database, Rocket, Bot, Search, Users } from 'lucide-react';
+import { ArrowLeft, Settings, Package, Key, FileCode, Terminal as TerminalIcon, GitBranch, Database, Rocket, Bot, Search, Users } from 'lucide-react';
+import { ECodeLoading } from '@/components/ECodeLoading';
 import { File, Project } from '@shared/schema';
 import TopNavbar from '@/components/TopNavbar';
 import TerminalPanel from '@/components/TerminalPanel';
@@ -179,10 +180,7 @@ export default function EditorPage() {
   if (isLoadingProject || isLoadingFiles) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading editor...</p>
-        </div>
+        <ECodeLoading size="lg" text="Loading editor..." />
       </div>
     );
   }
@@ -289,7 +287,7 @@ export default function EditorPage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-sm lg:text-base font-medium truncate max-w-[100px] sm:max-w-[150px] lg:max-w-none">
-              {project?.name || 'Loading...'}
+              {project?.name || ''}
             </h1>
           </div>
           

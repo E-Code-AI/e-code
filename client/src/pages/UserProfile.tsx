@@ -20,7 +20,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Link } from 'wouter';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ECodeLoading } from '@/components/ECodeLoading';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface UserProfile {
@@ -119,22 +119,8 @@ export default function UserProfile() {
             </div>
           </div>
         </header>
-        <div className="container mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="p-8">
-              <div className="flex items-start space-x-6">
-                <Skeleton className="h-32 w-32 rounded-full" />
-                <div className="flex-1 space-y-4">
-                  <Skeleton className="h-8 w-64" />
-                  <Skeleton className="h-4 w-96" />
-                  <div className="flex space-x-4">
-                    <Skeleton className="h-10 w-24" />
-                    <Skeleton className="h-10 w-24" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
+          <ECodeLoading size="lg" text="Loading user profile..." />
         </div>
       </div>
     );
