@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   DollarSign, Trophy, Code, Clock, Users, 
   ChevronRight, Filter, Search, Star, TrendingUp,
@@ -18,107 +21,134 @@ export default function Bounties() {
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTab, setSelectedTab] = useState('browse');
+  
+  // Form state for creating bounty
+  const [bountyForm, setBountyForm] = useState({
+    title: '',
+    description: '',
+    reward: 100,
+    difficulty: 'intermediate',
+    deadline: '',
+    tags: ''
+  });
 
-  const bounties = [
-    {
-      id: 1,
-      title: 'Build a Discord Bot with AI Integration',
-      description: 'Create a Discord bot that uses OpenAI to respond to user messages intelligently. Must include command handling and proper error management.',
-      reward: 500,
-      status: 'open',
-      difficulty: 'intermediate',
-      submissions: 12,
-      deadline: '2024-02-15',
-      tags: ['Python', 'Discord.py', 'OpenAI', 'Bot'],
-      author: {
-        name: 'TechStartup Inc',
-        avatar: '🏢',
-        verified: true
-      }
-    },
-    {
-      id: 2,
-      title: 'React Native Mobile App - Weather Tracker',
-      description: 'Develop a mobile weather tracking app using React Native. Must include location services, weather API integration, and offline support.',
-      reward: 750,
-      status: 'open',
-      difficulty: 'advanced',
-      submissions: 8,
-      deadline: '2024-02-20',
-      tags: ['React Native', 'Mobile', 'API', 'TypeScript'],
-      author: {
-        name: 'MobileFirst',
-        avatar: '📱',
-        verified: true
-      }
-    },
-    {
-      id: 3,
-      title: 'Fix Memory Leak in Node.js Application',
-      description: 'Identify and fix a memory leak in our production Node.js application. Must provide detailed analysis and solution.',
-      reward: 300,
-      status: 'in-progress',
-      difficulty: 'intermediate',
-      submissions: 5,
-      deadline: '2024-02-10',
-      tags: ['Node.js', 'Performance', 'Debugging'],
-      author: {
-        name: 'DevOps Team',
-        avatar: '🔧',
-        verified: false
-      }
-    },
-    {
-      id: 4,
-      title: 'Create Educational Python Tutorial Series',
-      description: 'Write a 5-part tutorial series teaching Python basics to beginners. Include code examples and exercises.',
-      reward: 400,
-      status: 'completed',
-      difficulty: 'beginner',
-      submissions: 25,
-      deadline: '2024-01-30',
-      tags: ['Python', 'Tutorial', 'Education', 'Writing'],
-      author: {
-        name: 'EduTech',
-        avatar: '🎓',
-        verified: true
-      },
-      winner: 'user123'
+  // Fetch all bounties
+  const { data: bounties = [], isLoading: loadingBounties } = useQuery({
+    queryKey: ['/api/bounties'],
+  });
+  
+  // Fetch user's bounties
+  const { data: userBounties = [] } = useQuery({
+    queryKey: ['/api/user/bounties'],
+  });
+  
+  // Fetch user's submissions
+  const { data: userSubmissions = [] } = useQuery({
+    queryKey: ['/api/user/submissions'],
+  });
+  
+  // Count submissions for each bounty
+  const bountiesWithCounts = bounties.map(bounty => {
+    const submissionsCount = userSubmissions.filter(sub => sub.bountyId === bounty.id).length;
+    return { ...bounty, submissions: submissionsCount };
+  });
+  
+  // Filter and sort bounties
+  const filteredBounties = bountiesWithCounts.filter(bounty => {
+    if (filter !== 'all' && bounty.status !== filter) return false;
+    if (searchQuery && !bounty.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+  
+  const sortedBounties = [...filteredBounties].sort((a, b) => {
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case 'reward-high':
+        return b.reward - a.reward;
+      case 'reward-low':
+        return a.reward - b.reward;
+      case 'deadline':
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      default:
+        return 0;
     }
-  ];
-
-  const myBounties = [
-    {
-      id: 5,
-      title: 'Implement Authentication System',
-      description: 'Add JWT-based authentication to existing Express API',
-      reward: 250,
-      status: 'submitted',
-      submittedAt: '2024-01-28',
-      feedback: 'Under review'
+  });
+  
+  // Create bounty mutation
+  const createBountyMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest('/api/bounties', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
     },
-    {
-      id: 6,
-      title: 'Data Visualization Dashboard',
-      description: 'Create interactive charts using D3.js',
-      reward: 600,
-      status: 'accepted',
-      submittedAt: '2024-01-25',
-      feedback: 'Great work! Payment processing.'
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bounties'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/bounties'] });
+      toast({
+        title: "Bounty created!",
+        description: "Your bounty has been posted successfully."
+      });
+      setSelectedTab('browse');
+      setBountyForm({
+        title: '',
+        description: '',
+        reward: 100,
+        difficulty: 'intermediate',
+        deadline: '',
+        tags: ''
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create bounty. Please try again.",
+        variant: "destructive"
+      });
     }
-  ];
+  });
+  
+  // Submit to bounty mutation
+  const submitToBountyMutation = useMutation({
+    mutationFn: async ({ bountyId, data }: { bountyId: number; data: any }) => {
+      return apiRequest(`/api/bounties/${bountyId}/submit`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/submissions'] });
+      toast({
+        title: "Submitted!",
+        description: "Your submission has been sent to the bounty creator."
+      });
+    }
+  });
 
   const handleApplyToBounty = (bountyId: number) => {
-    toast({
-      title: "Application submitted",
-      description: "You've successfully applied to this bounty. Good luck!"
+    const submissionUrl = prompt('Enter your submission URL (GitHub, demo link, etc.):');
+    if (!submissionUrl) return;
+    
+    submitToBountyMutation.mutate({
+      bountyId,
+      data: {
+        submissionUrl,
+        feedback: 'Submission pending review'
+      }
     });
   };
 
-  const handleCreateBounty = () => {
-    toast({
-      title: "Bounty created",
-      description: "Your bounty has been posted and is now visible to the community."
+  const handleCreateBounty = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const tags = bountyForm.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+    
+    createBountyMutation.mutate({
+      ...bountyForm,
+      tags,
+      deadline: new Date(bountyForm.deadline).toISOString()
     });
   };
 
@@ -203,7 +233,7 @@ export default function Bounties() {
         </Card>
       </div>
 
-      <Tabs defaultValue="browse" className="space-y-4">
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="browse">Browse Bounties</TabsTrigger>
           <TabsTrigger value="my-bounties">My Bounties</TabsTrigger>
@@ -255,7 +285,12 @@ export default function Bounties() {
 
           {/* Bounty List */}
           <div className="space-y-4">
-            {bounties.map((bounty) => (
+            {loadingBounties ? (
+              <p className="text-center text-muted-foreground">Loading bounties...</p>
+            ) : sortedBounties.length === 0 ? (
+              <p className="text-center text-muted-foreground">No bounties found</p>
+            ) : (
+              sortedBounties.map((bounty) => (
               <Card key={bounty.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
@@ -273,7 +308,7 @@ export default function Bounties() {
                       </p>
                       
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {bounty.tags.map((tag) => (
+                        {bounty.tags && Array.isArray(bounty.tags) && bounty.tags.map((tag) => (
                           <Badge key={tag} variant="secondary">
                             {tag}
                           </Badge>
@@ -284,16 +319,16 @@ export default function Bounties() {
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            <span>Due {bounty.deadline}</span>
+                            <span>Due {new Date(bounty.deadline).toLocaleDateString()}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            <span>{bounty.submissions} submissions</span>
+                            <span>{bounty.submissions || 0} submissions</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold">{bounty.author.avatar}</span>
-                            <span>{bounty.author.name}</span>
-                            {bounty.author.verified && (
+                            <span className="font-semibold">{bounty.authorAvatar || '👤'}</span>
+                            <span>{bounty.authorName}</span>
+                            {bounty.authorVerified && (
                               <Badge variant="secondary" className="h-5">
                                 <CheckCircle className="h-3 w-3" />
                               </Badge>
@@ -314,9 +349,9 @@ export default function Bounties() {
                           Apply
                           <ChevronRight className="ml-1 h-4 w-4" />
                         </Button>
-                      ) : bounty.status === 'completed' && bounty.winner ? (
+                      ) : bounty.status === 'completed' && bounty.winnerId ? (
                         <Badge variant="secondary">
-                          Won by @{bounty.winner}
+                          Won by user#{bounty.winnerId}
                         </Badge>
                       ) : (
                         <Badge variant="secondary">
@@ -327,7 +362,7 @@ export default function Bounties() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )))}
           </div>
         </TabsContent>
 
@@ -335,13 +370,16 @@ export default function Bounties() {
         <TabsContent value="my-bounties" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Your Submissions</CardTitle>
+              <CardTitle>Your Created Bounties</CardTitle>
               <CardDescription>
-                Track the status of your bounty submissions
+                Manage the bounties you've created
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {myBounties.map((bounty) => (
+              {userBounties.length === 0 ? (
+                <p className="text-center text-muted-foreground">You haven't created any bounties yet</p>
+              ) : (
+                userBounties.map((bounty) => (
                 <Card key={bounty.id}>
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
@@ -355,25 +393,69 @@ export default function Bounties() {
                         </p>
                         <div className="flex items-center gap-4 text-sm">
                           <span className="text-muted-foreground">
-                            Submitted {bounty.submittedAt}
+                            Created {new Date(bounty.createdAt).toLocaleDateString()}
                           </span>
-                          <Badge variant={bounty.status === 'accepted' ? 'default' : 'secondary'}>
-                            {bounty.feedback}
+                          <Badge variant="secondary">
+                            {bounty.status}
                           </Badge>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-xl font-bold">${bounty.reward}</p>
-                        {bounty.status === 'accepted' && (
-                          <Button size="sm" variant="outline" className="mt-2">
-                            View Details
-                          </Button>
+                        <Button size="sm" variant="outline" className="mt-2">
+                          Manage
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )))}
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Submissions</CardTitle>
+              <CardDescription>
+                Track the status of your bounty submissions
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {userSubmissions.length === 0 ? (
+                <p className="text-center text-muted-foreground">You haven't submitted to any bounties yet</p>
+              ) : (
+                userSubmissions.map((submission) => (
+                <Card key={submission.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          {getStatusIcon(submission.status)}
+                          <h4 className="font-semibold">Bounty #{submission.bountyId}</h4>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Submission: <a href={submission.submissionUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            {submission.submissionUrl}
+                          </a>
+                        </p>
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="text-muted-foreground">
+                            Submitted {new Date(submission.submittedAt).toLocaleDateString()}
+                          </span>
+                          <Badge variant={submission.status === 'accepted' ? 'default' : 'secondary'}>
+                            {submission.status}
+                          </Badge>
+                        </div>
+                        {submission.feedback && (
+                          <p className="text-sm mt-2 text-muted-foreground">
+                            Feedback: {submission.feedback}
+                          </p>
                         )}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )))}
             </CardContent>
           </Card>
         </TabsContent>
@@ -388,21 +470,27 @@ export default function Bounties() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4">
+              <form onSubmit={handleCreateBounty} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Bounty Title</Label>
                   <Input
                     id="title"
                     placeholder="e.g., Build a REST API with Node.js"
+                    value={bountyForm.title}
+                    onChange={(e) => setBountyForm({ ...bountyForm, title: e.target.value })}
+                    required
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
-                  <textarea
+                  <Textarea
                     id="description"
-                    className="w-full min-h-[150px] px-3 py-2 text-sm rounded-md border bg-background"
+                    className="min-h-[150px]"
                     placeholder="Describe what you need built, including requirements and deliverables..."
+                    value={bountyForm.description}
+                    onChange={(e) => setBountyForm({ ...bountyForm, description: e.target.value })}
+                    required
                   />
                 </div>
 
@@ -413,12 +501,19 @@ export default function Bounties() {
                       id="reward"
                       type="number"
                       placeholder="500"
+                      min="10"
+                      value={bountyForm.reward}
+                      onChange={(e) => setBountyForm({ ...bountyForm, reward: parseInt(e.target.value) || 0 })}
+                      required
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="difficulty">Difficulty</Label>
-                    <Select>
+                    <Select 
+                      value={bountyForm.difficulty} 
+                      onValueChange={(value) => setBountyForm({ ...bountyForm, difficulty: value })}
+                    >
                       <SelectTrigger id="difficulty">
                         <SelectValue placeholder="Select difficulty" />
                       </SelectTrigger>
@@ -435,6 +530,10 @@ export default function Bounties() {
                     <Input
                       id="deadline"
                       type="date"
+                      value={bountyForm.deadline}
+                      onChange={(e) => setBountyForm({ ...bountyForm, deadline: e.target.value })}
+                      required
+                      min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                 </div>
@@ -444,20 +543,26 @@ export default function Bounties() {
                   <Input
                     id="tags"
                     placeholder="React, TypeScript, API, Frontend"
+                    value={bountyForm.tags}
+                    onChange={(e) => setBountyForm({ ...bountyForm, tags: e.target.value })}
                   />
                 </div>
 
                 <div className="border rounded-lg p-4 bg-muted/50">
                   <h4 className="font-semibold mb-2">Bounty Preview</h4>
                   <div className="text-sm space-y-1">
-                    <p><strong>Reward:</strong> $500</p>
-                    <p><strong>Platform Fee (10%):</strong> $50</p>
-                    <p><strong>You'll Pay:</strong> $550</p>
+                    <p><strong>Reward:</strong> ${bountyForm.reward}</p>
+                    <p><strong>Platform Fee (10%):</strong> ${Math.round(bountyForm.reward * 0.1)}</p>
+                    <p><strong>You'll Pay:</strong> ${Math.round(bountyForm.reward * 1.1)}</p>
                   </div>
                 </div>
 
-                <Button onClick={handleCreateBounty} className="w-full">
-                  Create Bounty
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={createBountyMutation.isPending}
+                >
+                  {createBountyMutation.isPending ? 'Creating...' : 'Create Bounty'}
                 </Button>
               </form>
             </CardContent>

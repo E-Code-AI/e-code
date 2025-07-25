@@ -189,6 +189,37 @@ export const deploymentsRelations = relations(deployments, ({ one }) => ({
   }),
 }));
 
+// Bounties table
+export const bounties = pgTable("bounties", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  reward: integer("reward").notNull(),
+  status: text("status", { enum: ["open", "in-progress", "completed", "cancelled"] }).default("open").notNull(),
+  difficulty: text("difficulty", { enum: ["beginner", "intermediate", "advanced"] }).notNull(),
+  deadline: timestamp("deadline").notNull(),
+  tags: text("tags").array().default([]).notNull(),
+  authorId: integer("author_id").references(() => users.id).notNull(),
+  authorName: text("author_name").notNull(),
+  authorAvatar: text("author_avatar"),
+  authorVerified: boolean("author_verified").default(false).notNull(),
+  winnerId: integer("winner_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Bounty submissions table
+export const bountySubmissions = pgTable("bounty_submissions", {
+  id: serial("id").primaryKey(),
+  bountyId: integer("bounty_id").references(() => bounties.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  status: text("status", { enum: ["pending", "submitted", "accepted", "rejected"] }).default("pending").notNull(),
+  submissionUrl: text("submission_url"),
+  feedback: text("feedback"),
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+});
+
 // Newsletter subscribers table
 export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   id: serial("id").primaryKey(),
@@ -202,6 +233,19 @@ export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   return {
     emailIdx: uniqueIndex("email_idx").on(table.email),
   };
+});
+
+export const insertBountySchema = createInsertSchema(bounties).omit({
+  id: true,
+  winnerId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBountySubmissionSchema = createInsertSchema(bountySubmissions).omit({
+  id: true,
+  reviewedAt: true,
+  submittedAt: true,
 });
 
 export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSubscribers).pick({
@@ -228,6 +272,12 @@ export type InsertDeployment = z.infer<typeof insertDeploymentSchema>;
 
 export type EnvironmentVariable = typeof environmentVariables.$inferSelect;
 export type InsertEnvironmentVariable = z.infer<typeof insertEnvironmentVariableSchema>;
+
+export type Bounty = typeof bounties.$inferSelect;
+export type InsertBounty = z.infer<typeof insertBountySchema>;
+
+export type BountySubmission = typeof bountySubmissions.$inferSelect;
+export type InsertBountySubmission = z.infer<typeof insertBountySubmissionSchema>;
 
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
