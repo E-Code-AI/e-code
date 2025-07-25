@@ -60,6 +60,7 @@ const Referrals = lazy(() => import("@/pages/Referrals"));
 const Subprocessors = lazy(() => import("@/pages/Subprocessors"));
 const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
 const Languages = lazy(() => import("@/pages/Languages"));
+const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
 // Newsletter pages
 const NewsletterConfirm = lazy(() => import("@/pages/NewsletterConfirm"));
 const NewsletterUnsubscribe = lazy(() => import("@/pages/NewsletterUnsubscribe"));
@@ -117,6 +118,7 @@ function AppContent() {
           <Route path="/subprocessors" component={Subprocessors} />
           <Route path="/student-dpa" component={StudentDPA} />
           <Route path="/languages" component={Languages} />
+          <Route path="/github-import" component={GitHubImport} />
           {/* Newsletter pages */}
           <Route path="/newsletter/confirm" component={NewsletterConfirm} />
           <Route path="/newsletter/unsubscribe" component={NewsletterUnsubscribe} />
