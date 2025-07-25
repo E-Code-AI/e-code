@@ -44,8 +44,8 @@ export function ReplitEditorLayout({
   const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const isTablet = useMediaQuery('(max-width: 1024px)');
+  const isMobile = useMediaQuery('(max-width: 1024px)');
+  const isTablet = useMediaQuery('(max-width: 1280px)');
 
   useEffect(() => {
     if (isMobile) {

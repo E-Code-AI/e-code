@@ -275,25 +275,25 @@ export default function EditorPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showAIAssistant]);
   
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const isTablet = useMediaQuery('(max-width: 1024px)');
+  const isMobile = useMediaQuery('(max-width: 1024px)');
+  const isTablet = useMediaQuery('(max-width: 1280px)');
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[var(--ecode-background)]">
-      {/* Replit-style Header */}
-      <div className="h-12 flex items-center justify-between border-b border-[var(--ecode-border)] bg-[var(--ecode-background)] px-2 sm:px-4">
-        <div className="flex items-center gap-2 sm:gap-4 flex-1">
+      {/* E-Code-style Header - Responsive */}
+      <div className="h-12 flex items-center justify-between border-b border-[var(--ecode-border)] bg-[var(--ecode-background)] px-3 lg:px-4">
+        <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
           {/* Project name and controls */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/projects')} className="h-8 w-8">
+          <div className="flex items-center gap-1 lg:gap-2 min-w-0">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/projects')} className="h-8 w-8 flex-shrink-0">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-xs sm:text-sm font-medium truncate max-w-[120px] sm:max-w-none">
+            <h1 className="text-sm lg:text-base font-medium truncate max-w-[100px] sm:max-w-[150px] lg:max-w-none">
               {project?.name || 'Loading...'}
             </h1>
           </div>
           
-          {/* Run button - Replit style */}
+          {/* Run button - E-Code style */}
           <RunButton 
             projectId={projectIdNum} 
             language={project?.language || 'javascript'}
@@ -301,15 +301,15 @@ export default function EditorPage() {
               setIsProjectRunning(running);
               setExecutionId(execId);
             }}
-            className="h-8"
+            className="h-8 flex-shrink-0"
             variant="default"
-            size={isMobile ? "icon" : "sm"}
+            size={isMobile ? "sm" : "sm"}
           />
         </div>
         
         {/* Right side controls */}
-        <div className="flex items-center gap-1 sm:gap-2">
-          {/* Collaboration Presence */}
+        <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
+          {/* Collaboration Presence - Hidden on mobile */}
           {user && !isMobile && (
             <CollaborationPresence 
               projectId={projectIdNum} 
@@ -318,18 +318,22 @@ export default function EditorPage() {
               className="mr-2"
             />
           )}
+          
+          {/* Desktop buttons */}
           {!isMobile && (
             <>
               <Button variant="outline" size="sm" className="h-8 text-xs">
                 <Users className="h-3 w-3 mr-1" />
-                <span className="hidden sm:inline">Invite</span>
+                <span className="hidden xl:inline">Invite</span>
               </Button>
               <Button variant="outline" size="sm" className="h-8 text-xs">
                 <Rocket className="h-3 w-3 mr-1" />
-                <span className="hidden sm:inline">Deploy</span>
+                <span className="hidden xl:inline">Deploy</span>
               </Button>
             </>
           )}
+          
+          {/* Mobile dropdown menu */}
           {isMobile && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -337,14 +341,18 @@ export default function EditorPage() {
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem>
                   <Users className="h-4 w-4 mr-2" />
-                  Invite
+                  Invite to collaborate
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Rocket className="h-4 w-4 mr-2" />
-                  Deploy
+                  Deploy project
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Project settings
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -385,6 +393,13 @@ export default function EditorPage() {
             />
           }
           defaultTab={mobileActiveTab}
+          isRunning={isProjectRunning}
+          onRun={() => {
+            // Handle run action
+            if (runMutation) {
+              runMutation.mutate();
+            }
+          }}
         />
       ) : (
         <ReplitEditorLayout

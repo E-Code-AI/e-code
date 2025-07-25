@@ -312,7 +312,7 @@ export function ReplitFileSidebar({
   const [newItemName, setNewItemName] = useState('');
   const [newItemType, setNewItemType] = useState<'file' | 'folder'>('file');
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery('(max-width: 1024px)');
 
   const rootFiles = files.filter(f => !f.parentId);
   
