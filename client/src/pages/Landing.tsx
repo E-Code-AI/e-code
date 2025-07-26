@@ -146,7 +146,55 @@ export default function Landing() {
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
               Code with AI. Deploy instantly. Share with the world. Build and ship software 10x faster.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full sm:w-auto px-4 sm:px-0">
+            
+            {/* AI Chat Input */}
+            <div className="max-w-3xl mx-auto px-4 sm:px-0 mt-10">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-600/30 via-purple-600/30 to-fuchsia-600/30 blur-2xl group-hover:blur-3xl transition-all animate-pulse" />
+                <div className="relative bg-card/90 backdrop-blur-sm border-2 border-primary/30 rounded-3xl p-6 shadow-2xl hover:shadow-3xl transition-all hover:border-primary/50">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-2xl flex-shrink-0 shadow-lg">
+                      <Sparkles className="h-6 w-6 text-white animate-pulse" />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        placeholder="Describe your app idea in plain English... (e.g., 'Build a recipe finder app with AI suggestions')"
+                        className="w-full bg-transparent border-none outline-none text-xl placeholder:text-muted-foreground/70 focus:ring-0 font-medium"
+                        onFocus={(e) => {
+                          e.preventDefault();
+                          handleGetStarted();
+                        }}
+                      />
+                    </div>
+                    <Button 
+                      size="lg" 
+                      className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all text-lg px-6"
+                      onClick={handleGetStarted}
+                    >
+                      <Zap className="h-5 w-5 mr-2" />
+                      Launch AI
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-6 mt-4 ml-16 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Free to start
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      No credit card
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      AI builds instantly
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full sm:w-auto px-4 sm:px-0 mt-6">
               <Button size="lg" onClick={handleGetStarted} className="gap-2 w-full sm:w-auto">
                 Start your journey free
                 <ArrowRight className="h-4 w-4" />
