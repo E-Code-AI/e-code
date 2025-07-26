@@ -9,13 +9,12 @@ import {
   Zap, Globe, Users, Shield, Code, Terminal, GitBranch, 
   Rocket, Package, Database, Cpu, Cloud, Lock, Star,
   ChevronRight, ArrowRight, CheckCircle, PlayCircle,
-  Sparkles, Check, Loader2, MessageSquare, Bot,
-  Send, Paperclip, Mic
+  Sparkles, Check, Loader2, MessageSquare, Bot
 } from 'lucide-react';
 import { useState } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-// import { ReplitChat } from '@/components/ReplitChat';
+import { MobileChatInterface } from '@/components/MobileChatInterface';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Landing() {
@@ -94,7 +93,6 @@ export default function Landing() {
   };
 
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,112 +201,12 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Chat Modal */}
-            {chatOpen && (
-              <div className="fixed inset-0 z-50 bg-background">
-                <div className="h-full flex flex-col">
-                  {/* Header */}
-                  <div className="flex items-center justify-between p-4 border-b">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-medium">
-                        {user ? (user.displayName || user.username || 'You').slice(0, 2).toUpperCase() : 'GU'}
-                      </div>
-                      <span className="font-medium">
-                        {user ? `${user.displayName || user.username || 'Your'}'s workspace` : "Guest's workspace"}
-                      </span>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => setChatOpen(false)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      ✕
-                    </Button>
-                  </div>
-
-                  {/* Main Chat Interface */}
-                  <div className="flex-1 flex flex-col justify-center p-4 md:p-8 max-w-2xl mx-auto w-full">
-                    <div className="text-center mb-8">
-                      <h2 className="text-2xl md:text-3xl font-semibold mb-2">
-                        Hi {user ? (user.displayName || user.username || 'there') : 'there'},
-                      </h2>
-                      <p className="text-xl md:text-2xl text-muted-foreground">
-                        what do you want to make?
-                      </p>
-                    </div>
-
-                    <Card className="p-4 md:p-6 shadow-lg">
-                      <div className="relative">
-                        <textarea
-                          placeholder="Describe a website or app you want to make..."
-                          className="w-full min-h-[120px] md:min-h-[200px] text-base md:text-lg resize-none border-none focus:ring-0 focus:border-none bg-transparent p-0 outline-none"
-                        />
-                        
-                        <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" className="p-2">
-                              <Paperclip className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="p-2">
-                              <Mic className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          
-                          <Button 
-                            onClick={handleStartBuilding}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6"
-                          >
-                            <Send className="h-4 w-4 mr-2" />
-                            Start chat
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-
-                    {/* Quick suggestions */}
-                    <div className="mt-6 space-y-2">
-                      <p className="text-sm text-muted-foreground text-center">Try these ideas:</p>
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        <Button variant="outline" size="sm" className="text-xs">
-                          Todo app with dark mode
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-xs">
-                          Portfolio website
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-xs">
-                          Weather dashboard
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom navigation */}
-                  <div className="border-t p-4">
-                    <div className="flex justify-around max-w-sm mx-auto">
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-6 h-6 bg-muted rounded flex items-center justify-center">
-                          <MessageSquare className="h-4 w-4" />
-                        </div>
-                        <span className="text-xs text-muted-foreground">My Apps</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">+</span>
-                        </div>
-                        <span className="text-xs font-medium">Create</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
-                          <div className="w-4 h-4 bg-muted-foreground rounded-full" />
-                        </div>
-                        <span className="text-xs text-muted-foreground">Account</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Mobile Chat Interface */}
+            <MobileChatInterface
+              isOpen={chatOpen}
+              onClose={() => setChatOpen(false)}
+              onStartBuilding={handleStartBuilding}
+            />
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full sm:w-auto px-4 sm:px-0 mt-6">
               <Button size="lg" onClick={handleGetStarted} className="gap-2 w-full sm:w-auto">
@@ -322,41 +220,24 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* IDE Preview */}
+          {/* E-Code IDE Preview */}
           <div className="mt-8 sm:mt-12 md:mt-16 relative px-4 sm:px-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-600/20 blur-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-amber-500/20 blur-3xl" />
             <Card className="relative overflow-hidden border-2 mx-auto max-w-4xl">
               <div className="bg-muted/50 p-2 flex items-center gap-2 border-b">
                 <div className="flex gap-1 sm:gap-1.5">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-red-600 dark:bg-red-400" />
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-yellow-600 dark:bg-yellow-400" />
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-600 dark:bg-green-400" />
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-red-500" />
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-yellow-500" />
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-500" />
                 </div>
-                <span className="text-xs text-muted-foreground">App.jsx</span>
+                <span className="text-xs text-muted-foreground">App.js</span>
               </div>
-              <div className="relative bg-muted/50 rounded-b-lg min-h-[300px] flex items-center justify-center">
-                <div className="text-center space-y-4 p-8">
-                  <div className="relative">
-                    <div className="w-16 h-16 mx-auto bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center animate-pulse">
-                      <CheckCircle className="h-8 w-8 text-white" />
-                    </div>
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full animate-bounce" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse" />
-                    <div className="h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse delay-100" />
-                    <div className="h-2 bg-gradient-to-r from-pink-400 to-red-400 rounded-full animate-pulse delay-200" />
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    ⚡ Live coding simulation
-                  </div>
-                </div>
-                <div className="absolute bottom-4 left-4 right-4 bg-green-100 dark:bg-green-900/20 rounded-lg p-3">
-                  <div className="text-green-700 dark:text-green-400 text-sm flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4" />
-                    ✓ App running at localhost:3000
-                  </div>
-                </div>
+              <div className="relative bg-gray-900 rounded-b-lg min-h-[300px] p-0 overflow-hidden">
+                <img 
+                  src="/assets/hero-image.svg" 
+                  alt="E-Code IDE Preview" 
+                  className="w-full h-full object-cover"
+                />
               </div>
             </Card>
           </div>
