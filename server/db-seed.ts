@@ -40,6 +40,15 @@ export async function seedDatabase() {
     console.log("   Password: testpass123");
     console.log("   Email: test@example.com");
     
+    // Also update admin user if exists to have email verified for development
+    const adminUser = await storage.getUserByUsername("admin");
+    if (adminUser && !adminUser.emailVerified) {
+      await storage.updateUser(adminUser.id, {
+        emailVerified: true
+      });
+      console.log("✅ Admin user email verification status updated");
+    }
+    
     return testUser;
   } catch (error) {
     console.error("Error seeding database:", error);
