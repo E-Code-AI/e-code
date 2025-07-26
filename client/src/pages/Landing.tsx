@@ -319,23 +319,18 @@ export default function Landing() {
                         <div className="bg-primary/10 rounded-lg p-3">
                           <p className="text-sm font-medium">I'll build that for you! Creating a todo app with all those features...</p>
                         </div>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-green-600" />
-                            <span>Created project structure</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-green-600" />
-                            <span>Built task management system</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-green-600" />
-                            <span>Added category filters</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Implementing due date tracking...</span>
-                          </div>
+                        <div className="rounded-lg overflow-hidden mt-3">
+                          <img 
+                            src="https://cdn.sanity.io/images/bj34pdbp/migration/f9b1d5e7c8a2b3f4d5e6a7b8c9d0e1f2-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                            alt="AI building a todo app in real-time"
+                            className="w-full rounded-lg shadow-lg"
+                          />
+                        </div>
+                        <div className="mt-3 p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                          <p className="text-sm text-green-700 dark:text-green-400 flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" />
+                            App built successfully! Ready to deploy.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -360,12 +355,18 @@ export default function Landing() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
-                    <div className="p-4 font-mono text-xs">
-                      <div className="text-green-600">✓ Dashboard created</div>
-                      <div className="text-green-600">✓ Expense categories added</div>
-                      <div className="text-green-600">✓ Charts integrated</div>
-                      <div className="text-green-600">✓ Budget alerts set up</div>
+                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden relative group">
+                    <img 
+                      src="https://cdn.sanity.io/images/bj34pdbp/migration/aebfbf61a0419a42b2c043f30f9bb13de5e5831d-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                      alt="Finance tracker app being built by AI"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-4 left-4 text-white font-mono text-xs space-y-1">
+                        <div>✓ Dashboard created</div>
+                        <div>✓ Charts integrated</div>
+                        <div>✓ Budget alerts ready</div>
+                      </div>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" className="w-full">
@@ -383,12 +384,18 @@ export default function Landing() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
-                    <div className="p-4 font-mono text-xs">
-                      <div className="text-green-600">✓ WebSocket setup</div>
-                      <div className="text-green-600">✓ Channel system built</div>
-                      <div className="text-green-600">✓ User authentication</div>
-                      <div className="text-green-600">✓ Message history added</div>
+                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden relative group">
+                    <img 
+                      src="https://cdn.sanity.io/images/bj34pdbp/migration/8fc3bec1e2b4fe0c70c9f0a1c2e8a3b9d7f5e4c2-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                      alt="Team chat app being built by AI"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-4 left-4 text-white font-mono text-xs space-y-1">
+                        <div>✓ Real-time chat ready</div>
+                        <div>✓ Channels configured</div>
+                        <div>✓ WebSocket connected</div>
+                      </div>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" className="w-full">
@@ -406,12 +413,18 @@ export default function Landing() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
-                    <div className="p-4 font-mono text-xs">
-                      <div className="text-green-600">✓ Product catalog ready</div>
-                      <div className="text-green-600">✓ Shopping cart working</div>
-                      <div className="text-green-600">✓ Payment flow added</div>
-                      <div className="text-green-600">✓ Order tracking built</div>
+                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden relative group">
+                    <img 
+                      src="https://cdn.sanity.io/images/bj34pdbp/migration/56601d61f8d75710bc3c793c3fb18614cf7b7f96-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                      alt="E-commerce store being built by AI"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-4 left-4 text-white font-mono text-xs space-y-1">
+                        <div>✓ Product catalog ready</div>
+                        <div>✓ Shopping cart working</div>
+                        <div>✓ Payment integrated</div>
+                      </div>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" className="w-full">
