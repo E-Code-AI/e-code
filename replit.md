@@ -40,6 +40,12 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - Focus on accessibility, learning, and creativity rather than technical development
 - Emphasize that no prior coding experience is needed
 
+## Authentication & Login Information
+- **Frontend Login Page**: `/login` - Displays the login form UI for users
+- **API Login Status**: `/api/login` - Returns JSON authentication status (not for direct user access)
+- **API Login Endpoint**: `/api/login` (POST) - Handles login form submissions
+- **Default Test User**: Username: `admin`, Password: `admin` (for development)
+
 ## Recent Changes
 - 2025-02-01: **Git Version Control Page Implementation (100% Complete)**:
   * **Created Comprehensive Git Page**: Built full-featured Git version control page at `/git` route matching Replit's functionality
