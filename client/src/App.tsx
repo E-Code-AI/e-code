@@ -75,6 +75,7 @@ const SSH = lazy(() => import("@/pages/SSH"));
 const SecurityScanner = lazy(() => import("@/pages/SecurityScanner"));
 const Dependencies = lazy(() => import("@/pages/Dependencies"));
 const ObjectStorage = lazy(() => import("@/pages/ObjectStorage"));
+const ReplitDemo = lazy(() => import("@/pages/ReplitDemo"));
 // Newsletter pages
 const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
 // Comparison pages
