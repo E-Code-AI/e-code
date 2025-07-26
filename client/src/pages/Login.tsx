@@ -1,22 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
 import { Loader2, Code } from 'lucide-react';
 import { Link } from 'wouter';
 
 export default function Login() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, loginMutation } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   });
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,39 +37,12 @@ export default function Login() {
       return;
     }
 
-    setIsLoading(true);
-    
     try {
-      const response = await apiRequest('POST', '/api/login', formData);
-      
-      if (response.ok) {
-        const data = await response.json();
-        toast({
-          title: 'Success',
-          description: 'Logged in successfully!',
-        });
-        
-        // Redirect to dashboard or projects page
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 500);
-      } else {
-        const error = await response.json();
-        toast({
-          title: 'Login Failed',
-          description: error.message || 'Invalid username or password',
-          variant: 'destructive'
-        });
-      }
+      await loginMutation.mutateAsync(formData);
+      // Navigation will happen automatically via the useEffect when user is set
     } catch (error) {
+      // Error handling is done by the mutation in use-auth hook
       console.error('Login error:', error);
-      toast({
-        title: 'Error',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -106,7 +86,7 @@ export default function Login() {
                   placeholder="Enter your username"
                   value={formData.username}
                   onChange={handleInputChange}
-                  disabled={isLoading}
+                  disabled={loginMutation.isPending}
                   required
                 />
               </div>
@@ -119,7 +99,7 @@ export default function Login() {
                   placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  disabled={isLoading}
+                  disabled={loginMutation.isPending}
                   required
                 />
               </div>
@@ -133,9 +113,9 @@ export default function Login() {
               <Button 
                 type="submit" 
                 className="w-full"
-                disabled={isLoading}
+                disabled={loginMutation.isPending}
               >
-                {isLoading ? (
+                {loginMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Signing in...
