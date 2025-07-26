@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 import { MobileChatInterface } from '@/components/MobileChatInterface';
+import { AnimatedPlatformDemo } from '@/components/AnimatedPlatformDemo';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Landing() {
@@ -220,26 +221,27 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* E-Code IDE Preview */}
-          <div className="mt-8 sm:mt-12 md:mt-16 relative px-4 sm:px-0">
+          {/* Watch E-Code in Action */}
+          <div className="mt-16 sm:mt-20 md:mt-24 text-center px-4 sm:px-0">
+            <div className="mb-8">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+                Watch E-Code 
+                <span className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent"> AI Agent</span> 
+                {" "}in Action
+              </h2>
+              <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+                See how our AI Agent understands your ideas and builds complete applications in seconds. 
+                From concept to deployment, all automatically.
+              </p>
+            </div>
+          </div>
+
+          {/* Animated Platform Demo */}
+          <div className="mt-8 relative px-4 sm:px-0">
             <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-amber-500/20 blur-3xl" />
-            <Card className="relative overflow-hidden border-2 mx-auto max-w-4xl">
-              <div className="bg-muted/50 p-2 flex items-center gap-2 border-b">
-                <div className="flex gap-1 sm:gap-1.5">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-red-500" />
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-yellow-500" />
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-500" />
-                </div>
-                <span className="text-xs text-muted-foreground">App.js</span>
-              </div>
-              <div className="relative bg-gray-900 rounded-b-lg min-h-[300px] p-0 overflow-hidden">
-                <img 
-                  src="/assets/hero-image.svg" 
-                  alt="E-Code IDE Preview" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </Card>
+            <div className="relative">
+              <AnimatedPlatformDemo />
+            </div>
           </div>
         </div>
       </section>
