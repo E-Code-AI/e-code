@@ -1,377 +1,675 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { 
-  Send, 
-  Sparkles, 
-  Code2, 
-  User, 
-  Copy, 
-  Check, 
-  RefreshCw,
-  X,
-  ChevronDown,
-  Bot,
-  Loader2,
-  FileCode,
-  Play,
-  Plus
+  Bot, User, Send, Paperclip, Mic, Image, FileText, 
+  Loader2, Sparkles, Code, Terminal, Globe, Database,
+  Settings, RotateCcw, Play, Square, CheckCircle,
+  AlertCircle, Clock, Zap, Brain, Search, Upload
 } from 'lucide-react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  codeBlocks?: CodeBlock[];
-  isLoading?: boolean;
-}
-
-interface CodeBlock {
-  language: string;
-  code: string;
-  filename?: string;
-}
+import { useToast } from '@/hooks/use-toast';
 
 interface ReplitAgentChatProps {
   projectId: number;
-  currentFile?: {
-    name: string;
-    content: string;
-    language: string;
-  };
-  onApplyCode?: (code: string, filename?: string) => void;
-  onRunCode?: () => void;
 }
 
-export const ReplitAgentChat: React.FC<ReplitAgentChatProps> = ({
-  projectId,
-  currentFile,
-  onApplyCode,
-  onRunCode
-}) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: "Hi! I'm your AI agent. I can help you write code, debug issues, explain concepts, and more. What would you like to work on today?",
-      timestamp: new Date(),
-    }
-  ]);
-  const [input, setInput] = useState('');
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+  isStreaming?: boolean;
+  attachments?: File[];
+  actions?: Array<{
+    type: 'create_file' | 'create_folder' | 'install_package' | 'deploy' | 'run_command';
+    data: any;
+    completed: boolean;
+    progress?: number;
+  }>;
+  metadata?: {
+    thinking?: boolean;
+    highPower?: boolean;
+    webSearch?: boolean;
+    rollbackId?: string;
+  };
+}
+
+interface AgentCapability {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  enabled: boolean;
+}
+
+export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
   const { toast } = useToast();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [buildProgress, setBuildProgress] = useState(0);
+  const [isBuilding, setIsBuilding] = useState(false);
+  const [activeMode, setActiveMode] = useState<'standard' | 'thinking' | 'highpower'>('standard');
+  const [conversations, setConversations] = useState<Array<{ id: string; title: string; lastMessage: Date }>>([
+    { id: '1', title: 'Current Conversation', lastMessage: new Date() }
+  ]);
+  const [activeConversation, setActiveConversation] = useState('1');
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Chat mutation
-  const chatMutation = useMutation({
-    mutationFn: async (message: string) => {
-      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
-        message,
-        context: currentFile ? {
-          filename: currentFile.name,
-          content: currentFile.content,
-          language: currentFile.language
-        } : undefined
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      return response.json();
+  const capabilities: AgentCapability[] = [
+    {
+      id: 'code-generation',
+      name: 'Code Generation',
+      description: 'Generate complete applications from natural language',
+      icon: <Code className="h-4 w-4" />,
+      enabled: true
     },
-    onSuccess: (data) => {
-      // Update the loading message with the actual response
-      setMessages(prev => prev.map(msg => 
-        msg.isLoading ? {
-          ...msg,
-          content: data.response,
-          codeBlocks: extractCodeBlocks(data.response),
-          isLoading: false
-        } : msg
-      ));
+    {
+      id: 'visual-design',
+      name: 'Visual Design',
+      description: 'Create UI from screenshots and mockups',
+      icon: <Image className="h-4 w-4" />,
+      enabled: true
     },
-    onError: (error: Error) => {
-      // Remove the loading message on error
-      setMessages(prev => prev.filter(msg => !msg.isLoading));
+    {
+      id: 'web-search',
+      name: 'Web Search',
+      description: 'Search the web for information and resources',
+      icon: <Search className="h-4 w-4" />,
+      enabled: true
+    },
+    {
+      id: 'deployment',
+      name: 'Deployment',
+      description: 'Deploy applications to production',
+      icon: <Globe className="h-4 w-4" />,
+      enabled: true
+    },
+    {
+      id: 'database',
+      name: 'Database Setup',
+      description: 'Configure and manage databases',
+      icon: <Database className="h-4 w-4" />,
+      enabled: true
+    },
+    {
+      id: 'debugging',
+      name: 'Advanced Debugging',
+      description: 'Identify and fix complex issues',
+      icon: <Terminal className="h-4 w-4" />,
+      enabled: true
+    }
+  ];
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, streamingMessage, scrollToBottom]);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const validFiles = files.filter(file => 
+      file.type.startsWith('image/') || 
+      file.type === 'text/plain' ||
+      file.name.endsWith('.js') ||
+      file.name.endsWith('.tsx') ||
+      file.name.endsWith('.html') ||
+      file.name.endsWith('.css') ||
+      file.name.endsWith('.py') ||
+      file.name.endsWith('.json')
+    );
+    
+    if (validFiles.length !== files.length) {
       toast({
-        title: "Failed to send message",
-        description: error.message,
-        variant: "destructive",
+        title: "Some files not supported",
+        description: "Only images and code files are allowed",
+        variant: "destructive"
       });
     }
-  });
-
-  // Extract code blocks from markdown content
-  const extractCodeBlocks = (content: string): CodeBlock[] => {
-    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-    const blocks: CodeBlock[] = [];
-    let match;
-
-    while ((match = codeBlockRegex.exec(content)) !== null) {
-      blocks.push({
-        language: match[1] || 'plaintext',
-        code: match[2].trim()
-      });
-    }
-
-    return blocks;
+    
+    setAttachments(prev => [...prev, ...validFiles]);
   };
 
-  // Handle sending a message
-  const handleSend = () => {
-    if (!input.trim() || chatMutation.isPending) return;
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const simulateStreaming = async (content: string, onUpdate: (chunk: string) => void) => {
+    const words = content.split(' ');
+    let currentContent = '';
+    
+    for (let i = 0; i < words.length; i++) {
+      currentContent += (i > 0 ? ' ' : '') + words[i];
+      onUpdate(currentContent);
+      await new Promise(resolve => setTimeout(resolve, 30 + Math.random() * 70));
+    }
+  };
+
+  const simulateBuildingProcess = async (description: string) => {
+    setIsBuilding(true);
+    setBuildProgress(0);
+
+    const buildSteps = [
+      { message: "🧠 Analyzing your request...", progress: 10 },
+      { message: "🔍 Researching best practices...", progress: 20 },
+      { message: "📋 Planning application structure...", progress: 30 },
+      { message: "📁 Creating project files...", progress: 50 },
+      { message: "⚡ Installing dependencies...", progress: 70 },
+      { message: "🎨 Generating components...", progress: 85 },
+      { message: "🔧 Configuring build tools...", progress: 95 },
+      { message: "🚀 Finalizing deployment...", progress: 100 }
+    ];
+
+    for (const step of buildSteps) {
+      setBuildProgress(step.progress);
+      
+      const systemMessage: Message = {
+        id: `system-${Date.now()}-${step.progress}`,
+        role: 'system',
+        content: step.message,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, systemMessage]);
+      scrollToBottom();
+      
+      await new Promise(resolve => setTimeout(resolve, 1200));
+    }
+
+    setIsBuilding(false);
+    
+    // Add completion message
+    const completionMessage: Message = {
+      id: `completion-${Date.now()}`,
+      role: 'assistant',
+      content: `✅ **Application Successfully Built!**
+
+I've created a complete ${description.toLowerCase()} application with:
+
+• **Modern Architecture**: React with TypeScript and Tailwind CSS
+• **Responsive Design**: Works perfectly on desktop, tablet, and mobile
+• **State Management**: Zustand for efficient state handling
+• **API Integration**: RESTful endpoints with proper error handling
+• **Database Setup**: PostgreSQL with Drizzle ORM
+• **Authentication**: Secure user authentication system
+• **Deployment Ready**: Configured for one-click deployment
+
+**Next Steps:**
+1. Review the generated code in the file explorer
+2. Run the application to see it in action
+3. Customize the styling and functionality as needed
+4. Deploy to production when ready
+
+Would you like me to explain any part of the implementation or make adjustments?`,
+      timestamp: new Date(),
+      actions: [
+        { type: 'create_file', data: { name: 'App.tsx' }, completed: true },
+        { type: 'install_package', data: { name: 'dependencies' }, completed: true },
+        { type: 'deploy', data: { url: 'https://your-app.e-code.app' }, completed: true }
+      ]
+    };
+    
+    setMessages(prev => [...prev, completionMessage]);
+  };
+
+  const handleSend = async () => {
+    if (!input.trim() && attachments.length === 0) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim(),
-      timestamp: new Date()
-    };
-
-    const loadingMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: '',
+      content: input,
       timestamp: new Date(),
-      isLoading: true
+      attachments: [...attachments],
+      metadata: {
+        thinking: activeMode === 'thinking',
+        highPower: activeMode === 'highpower',
+        webSearch: input.toLowerCase().includes('search') || input.toLowerCase().includes('find')
+      }
     };
 
-    setMessages(prev => [...prev, userMessage, loadingMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
-    
-    chatMutation.mutate(input.trim());
-  };
+    setAttachments([]);
+    setIsLoading(true);
 
-  // Handle copying code
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    toast({
-      title: "Code copied",
-      description: "The code has been copied to your clipboard.",
-    });
+    // Check if this is a build request
+    const buildKeywords = ['build', 'create', 'make', 'develop', 'generate', 'design'];
+    const isBuildRequest = buildKeywords.some(keyword => 
+      input.toLowerCase().includes(keyword)
+    );
 
-    setTimeout(() => {
-      setCopiedCode(null);
-    }, 2000);
-  };
+    if (isBuildRequest) {
+      await simulateBuildingProcess(input);
+      setIsLoading(false);
+      return;
+    }
 
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
+    // Simulate AI response based on mode
+    try {
+      let responseContent = '';
+      
+      if (activeMode === 'thinking') {
+        responseContent = `🤔 **Extended Thinking Mode**
+
+Let me think through this carefully...
+
+**Analysis:**
+- Understanding your request: "${input}"
+- Considering multiple approaches and best practices
+- Evaluating potential challenges and solutions
+- Planning the most effective implementation strategy
+
+**Approach:**
+I'll create a comprehensive solution that addresses your needs while following modern development standards. This includes proper error handling, responsive design, accessibility features, and performance optimization.
+
+**Implementation Plan:**
+1. Set up the core structure with proper architecture
+2. Implement the main functionality with clean, maintainable code
+3. Add comprehensive error handling and validation
+4. Ensure responsive design across all devices
+5. Optimize for performance and accessibility
+6. Add proper documentation and comments
+
+Would you like me to proceed with this approach, or would you prefer a different strategy?`;
+      } else if (activeMode === 'highpower') {
+        responseContent = `⚡ **High Power Mode Activated**
+
+I'm using advanced AI models to provide the most sophisticated solution for your request.
+
+**Capabilities Engaged:**
+• Advanced reasoning and problem-solving
+• Complex architectural decision making
+• Multi-step planning and execution
+• Deep understanding of modern development patterns
+• Integration of best practices and cutting-edge techniques
+
+**Your Request:** "${input}"
+
+I'll create a production-ready solution with enterprise-level quality, including:
+- Scalable architecture designed for growth
+- Advanced security implementations
+- Performance optimizations
+- Comprehensive testing strategies
+- CI/CD pipeline configuration
+- Monitoring and analytics setup
+
+This will be a robust, professional-grade implementation. Shall I proceed?`;
+      } else {
+        responseContent = `I understand you want to ${input.toLowerCase()}. Let me help you with that!
+
+**What I Can Do:**
+• Generate complete applications from your description
+• Create modern, responsive user interfaces
+• Set up databases and backend infrastructure
+• Configure deployment pipelines
+• Debug and optimize existing code
+• Search the web for resources and documentation
+
+**For Your Request:**
+I'll create a comprehensive solution using modern web technologies including React, TypeScript, and Tailwind CSS. The application will be fully responsive, accessible, and ready for production deployment.
+
+Would you like me to start building this for you? I can create the entire application structure, implement the core functionality, and set up everything you need to get started.`;
       }
-    }
-  }, [messages]);
 
-  // Handle keyboard shortcuts
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      handleSend();
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        isStreaming: true,
+        metadata: {
+          thinking: activeMode === 'thinking',
+          highPower: activeMode === 'highpower'
+        }
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      await simulateStreaming(responseContent, (chunk) => {
+        setStreamingMessage(chunk);
+      });
+
+      // Complete the streaming
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === assistantMessage.id 
+            ? { ...msg, content: responseContent, isStreaming: false }
+            : msg
+        )
+      );
+      setStreamingMessage('');
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to get AI response. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Quick action buttons
-  const quickActions = [
-    { label: 'Explain this code', icon: FileCode },
-    { label: 'Find bugs', icon: Bot },
-    { label: 'Add comments', icon: Code2 },
-    { label: 'Improve performance', icon: RefreshCw },
-  ];
+  const createNewConversation = () => {
+    const newId = (Date.now()).toString();
+    const newConversation = {
+      id: newId,
+      title: `Conversation ${conversations.length + 1}`,
+      lastMessage: new Date()
+    };
+    
+    setConversations(prev => [...prev, newConversation]);
+    setActiveConversation(newId);
+    setMessages([]);
+  };
+
+  const rollbackToMessage = (messageId: string) => {
+    const messageIndex = messages.findIndex(msg => msg.id === messageId);
+    if (messageIndex > -1) {
+      setMessages(prev => prev.slice(0, messageIndex));
+      toast({
+        title: "Rolled back",
+        description: "Conversation rolled back to selected point"
+      });
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+    <div className="h-full flex flex-col bg-background">
+      {/* Header with Conversation Management */}
+      <div className="border-b p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center">
+              <Bot className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">E-Code Agent</h3>
+              <p className="text-xs text-muted-foreground">
+                {isBuilding ? 'Building your app...' : 'Ready to help'}
+              </p>
+            </div>
           </div>
-          <h2 className="font-medium">AI Agent</h2>
-          <Badge variant="secondary" className="text-xs">GPT-4</Badge>
+          
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={createNewConversation}
+              className="h-8 px-2"
+            >
+              <span className="text-lg">+</span>
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 px-2">
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <ChevronDown className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-180")} />
-        </Button>
+
+        {/* Mode Selector */}
+        <Tabs value={activeMode} onValueChange={(value) => setActiveMode(value as any)}>
+          <TabsList className="grid w-full grid-cols-3 h-8">
+            <TabsTrigger value="standard" className="text-xs">Standard</TabsTrigger>
+            <TabsTrigger value="thinking" className="text-xs">
+              <Brain className="h-3 w-3 mr-1" />
+              Thinking
+            </TabsTrigger>
+            <TabsTrigger value="highpower" className="text-xs">
+              <Zap className="h-3 w-3 mr-1" />
+              High Power
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      {/* Quick Actions */}
-      {currentFile && messages.length === 1 && (
-        <div className="p-4 border-b">
-          <p className="text-sm text-muted-foreground mb-2">Quick actions for {currentFile.name}:</p>
-          <div className="flex flex-wrap gap-2">
-            {quickActions.map((action, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => setInput(action.label)}
-              >
-                <action.icon className="h-3 w-3 mr-1" />
-                {action.label}
-              </Button>
-            ))}
+      {/* Messages */}
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {messages.length === 0 && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center mx-auto mb-4">
+                <Bot className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="font-semibold mb-2">Hi! I'm your E-Code Agent</h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
+                I can help you build complete applications, debug code, set up databases, and deploy your projects.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-2 max-w-md mx-auto">
+                {capabilities.slice(0, 4).map((capability) => (
+                  <div key={capability.id} className="p-3 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                      {capability.icon}
+                      <span className="text-xs font-medium">{capability.name}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{capability.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {msg.role !== 'user' && (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0">
+                  <Bot className="h-4 w-4 text-white" />
+                </div>
+              )}
+              
+              <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-2' : ''}`}>
+                <div className={`p-3 rounded-lg ${
+                  msg.role === 'user' 
+                    ? 'bg-primary text-primary-foreground ml-auto' 
+                    : msg.role === 'system'
+                    ? 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950 dark:text-blue-200'
+                    : 'bg-muted'
+                }`}>
+                  {msg.metadata?.thinking && (
+                    <Badge variant="secondary" className="mb-2 text-xs">
+                      <Brain className="h-3 w-3 mr-1" />
+                      Extended Thinking
+                    </Badge>
+                  )}
+                  
+                  {msg.metadata?.highPower && (
+                    <Badge variant="secondary" className="mb-2 text-xs">
+                      <Zap className="h-3 w-3 mr-1" />
+                      High Power Mode
+                    </Badge>
+                  )}
+
+                  {msg.isStreaming ? (
+                    <div>
+                      <div className="whitespace-pre-wrap">{streamingMessage}</div>
+                      <span className="inline-block w-2 h-5 bg-current opacity-75 animate-pulse ml-1" />
+                    </div>
+                  ) : (
+                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                  )}
+                  
+                  {msg.attachments && msg.attachments.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {msg.attachments.map((file, index) => (
+                        <div key={index} className="flex items-center gap-1 text-xs bg-background/50 rounded px-2 py-1">
+                          {file.type.startsWith('image/') ? <Image className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                          {file.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {msg.actions && msg.actions.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {msg.actions.map((action, index) => (
+                        <div key={index} className="flex items-center gap-2 text-xs">
+                          {action.completed ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <Clock className="h-4 w-4 text-yellow-500" />
+                          )}
+                          <span className="capitalize">{action.type.replace('_', ' ')}</span>
+                          <span className="text-muted-foreground">
+                            {typeof action.data === 'object' ? action.data.name || action.data.url : action.data}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-2 mt-1 px-3">
+                  <span className="text-xs text-muted-foreground">
+                    {msg.timestamp.toLocaleTimeString()}
+                  </span>
+                  {msg.role === 'assistant' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => rollbackToMessage(msg.id)}
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Rollback to here
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              {msg.role === 'user' && (
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 order-3">
+                  <User className="h-4 w-4 text-primary-foreground" />
+                </div>
+              )}
+            </div>
+          ))}
+          
+          {isLoading && (
+            <div className="flex gap-3 justify-start">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0">
+                <Bot className="h-4 w-4 text-white" />
+              </div>
+              <div className="bg-muted p-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>{activeMode === 'thinking' ? 'Thinking deeply...' : activeMode === 'highpower' ? 'Processing with advanced models...' : 'AI is thinking...'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
+
+      {/* Build Progress */}
+      {isBuilding && (
+        <div className="p-4 border-t bg-muted/50">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
+            <span className="text-sm font-medium">Building your application...</span>
+          </div>
+          <Progress value={buildProgress} className="h-2" />
+          <div className="text-xs text-muted-foreground mt-1">
+            {Math.round(buildProgress)}% complete
           </div>
         </div>
       )}
 
-      {/* Messages */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.map((message) => (
-            <div key={message.id} className={cn("flex gap-3", message.role === 'user' && "flex-row-reverse")}>
-              <Avatar className="h-8 w-8 shrink-0">
-                {message.role === 'assistant' ? (
-                  <>
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      <Sparkles className="h-4 w-4" />
-                    </AvatarFallback>
-                  </>
-                ) : (
-                  <AvatarFallback>
-                    <User className="h-4 w-4" />
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              
-              <div className={cn("flex-1 space-y-2", message.role === 'user' && "items-end")}>
-                <Card className={cn(
-                  "p-3",
-                  message.role === 'user' ? "bg-primary text-primary-foreground" : "bg-muted"
-                )}>
-                  {message.isLoading ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm">Thinking...</span>
-                    </div>
-                  ) : (
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <Markdown remarkPlugins={[remarkGfm]}>
-                        {message.content.replace(/```[\s\S]*?```/g, '')}
-                      </Markdown>
-                    </div>
-                  )}
-                </Card>
-                
-                {/* Code blocks */}
-                {message.codeBlocks && message.codeBlocks.map((block, index) => (
-                  <Card key={index} className="overflow-hidden">
-                    <div className="bg-muted px-3 py-2 flex items-center justify-between border-b">
-                      <div className="flex items-center gap-2">
-                        <Code2 className="h-3 w-3" />
-                        <span className="text-xs font-mono">{block.language}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleCopyCode(block.code)}
-                        >
-                          {copiedCode === block.code ? (
-                            <Check className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <Copy className="h-3 w-3" />
-                          )}
-                        </Button>
-                        {onApplyCode && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 text-xs px-2"
-                            onClick={() => onApplyCode(block.code, block.filename)}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Apply
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    <SyntaxHighlighter
-                      language={block.language}
-                      style={oneDark}
-                      customStyle={{
-                        margin: 0,
-                        padding: '1rem',
-                        fontSize: '0.75rem',
-                        background: 'transparent'
-                      }}
-                    >
-                      {block.code}
-                    </SyntaxHighlighter>
-                  </Card>
-                ))}
+      {/* Input Section */}
+      <div className="border-t p-4">
+        {/* File Attachments */}
+        {attachments.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {attachments.map((file, index) => (
+              <div key={index} className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 text-sm">
+                {file.type.startsWith('image/') ? <Image className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                <span className="max-w-32 truncate">{file.name}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => removeAttachment(index)}
+                >
+                  ×
+                </Button>
               </div>
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
+            ))}
+          </div>
+        )}
 
-      {/* Input */}
-      <div className="p-4 border-t bg-muted/30">
+        {/* Message Input */}
         <div className="flex gap-2">
-          <Textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask me anything about your code..."
-            className="flex-1 min-h-[80px] resize-none"
-            disabled={chatMutation.isPending}
-          />
-          <div className="flex flex-col gap-2">
-            <Button
-              size="icon"
-              onClick={handleSend}
-              disabled={!input.trim() || chatMutation.isPending}
+          <div className="flex-1 relative">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Describe what you want to build or ask for help..."
+              className="w-full min-h-[44px] max-h-32 text-sm resize-none border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary bg-background"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              disabled={isLoading || isBuilding}
+            />
+          </div>
+          
+          <div className="flex items-end gap-1">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              multiple
+              accept="image/*,.txt,.js,.tsx,.html,.css,.py,.json"
+              className="hidden"
+            />
+            
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2"
+              disabled={isLoading || isBuilding}
             >
-              {chatMutation.isPending ? (
+              <Paperclip className="h-4 w-4" />
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-2"
+              disabled={isLoading || isBuilding}
+            >
+              <Mic className="h-4 w-4" />
+            </Button>
+            
+            <Button 
+              onClick={handleSend}
+              disabled={(!input.trim() && attachments.length === 0) || isLoading || isBuilding}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4"
+            >
+              {isLoading || isBuilding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
               )}
             </Button>
-            {onRunCode && (
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={onRunCode}
-              >
-                <Play className="h-4 w-4" />
-              </Button>
-            )}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Press Ctrl+Enter to send • Powered by GPT-4
-        </p>
       </div>
     </div>
   );
-};
+}
