@@ -8,7 +8,7 @@ import {
   Zap, Globe, Users, Shield, Code, Terminal, GitBranch, 
   Rocket, Package, Database, Cpu, Cloud, Lock, Star,
   ChevronRight, ArrowRight, CheckCircle, PlayCircle,
-  Sparkles, Check, Loader2
+  Sparkles, Check, Loader2, MessageSquare, Bot
 } from 'lucide-react';
 import { useState } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
@@ -218,12 +218,23 @@ export default function Landing() {
                 </div>
                 <span className="text-xs text-muted-foreground">App.jsx</span>
               </div>
-              <div className="relative">
-                <img 
-                  src="https://cdn.sanity.io/images/bj34pdbp/migration/56601d61f8d75710bc3c793c3fb18614cf7b7f96-800x601.gif?w=1200&q=80&fit=clip&auto=format"
-                  alt="Live coding demo showing React app development"
-                  className="w-full h-auto rounded-b-lg"
-                />
+              <div className="relative bg-muted/50 rounded-b-lg min-h-[300px] flex items-center justify-center">
+                <div className="text-center space-y-4 p-8">
+                  <div className="relative">
+                    <div className="w-16 h-16 mx-auto bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                      <CheckCircle className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full animate-bounce" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse" />
+                    <div className="h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse delay-100" />
+                    <div className="h-2 bg-gradient-to-r from-pink-400 to-red-400 rounded-full animate-pulse delay-200" />
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    ⚡ Live coding simulation
+                  </div>
+                </div>
                 <div className="absolute bottom-4 left-4 right-4 bg-green-100 dark:bg-green-900/20 rounded-lg p-3">
                   <div className="text-green-700 dark:text-green-400 text-sm flex items-center gap-2">
                     <CheckCircle className="h-4 w-4" />
@@ -343,12 +354,26 @@ export default function Landing() {
                         <div className="bg-primary/10 rounded-lg p-3">
                           <p className="text-sm font-medium">I'll build that for you! Creating a todo app with all those features...</p>
                         </div>
-                        <div className="rounded-lg overflow-hidden mt-3">
-                          <img 
-                            src="https://cdn.sanity.io/images/bj34pdbp/migration/f9b1d5e7c8a2b3f4d5e6a7b8c9d0e1f2-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                            alt="AI building a todo app in real-time"
-                            className="w-full rounded-lg shadow-lg"
-                          />
+                        <div className="rounded-lg overflow-hidden mt-3 bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 p-4">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 text-sm">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                              <span className="text-muted-foreground">Creating components...</span>
+                            </div>
+                            <div className="bg-white dark:bg-gray-800 rounded p-3 font-mono text-xs">
+                              <div className="text-blue-600 dark:text-blue-400 animate-pulse">// TodoApp.jsx</div>
+                              <div className="text-green-600 dark:text-green-400 animate-pulse delay-100">function TodoApp() {'{}'}</div>
+                              <div className="text-purple-600 dark:text-purple-400 animate-pulse delay-200">export default TodoApp;</div>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse delay-75"></div>
+                              <span className="text-muted-foreground">Adding categories...</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse delay-150"></div>
+                              <span className="text-muted-foreground">Setting up due dates...</span>
+                            </div>
+                          </div>
                         </div>
                         <div className="mt-3 p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
                           <p className="text-sm text-green-700 dark:text-green-400 flex items-center gap-2">
@@ -379,17 +404,27 @@ export default function Landing() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden relative group">
-                    <img 
-                      src="https://cdn.sanity.io/images/bj34pdbp/migration/aebfbf61a0419a42b2c043f30f9bb13de5e5831d-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                      alt="Finance tracker app being built by AI"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="aspect-video bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg mb-4 overflow-hidden relative group flex items-center justify-center">
+                    <div className="text-center space-y-4 p-6">
+                      <div className="relative">
+                        <div className="w-16 h-16 mx-auto bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl flex items-center justify-center animate-pulse">
+                          <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+                            <div className="w-4 h-4 bg-green-500 rounded animate-bounce"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-2 bg-gradient-to-r from-green-400 to-blue-400 rounded-full animate-pulse w-20 mx-auto" />
+                        <div className="h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse delay-100 w-16 mx-auto" />
+                        <div className="h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse delay-200 w-24 mx-auto" />
+                      </div>
+                      <div className="text-xs text-muted-foreground">💰 Building dashboard</div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="absolute bottom-4 left-4 text-white font-mono text-xs space-y-1">
-                        <div>✓ Dashboard created</div>
-                        <div>✓ Charts integrated</div>
-                        <div>✓ Budget alerts ready</div>
+                        <div className="animate-pulse delay-100">✓ Dashboard created</div>
+                        <div className="animate-pulse delay-200">✓ Charts integrated</div>
+                        <div className="animate-pulse delay-300">✓ Budget alerts ready</div>
                       </div>
                     </div>
                   </div>
@@ -408,17 +443,25 @@ export default function Landing() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden relative group">
-                    <img 
-                      src="https://cdn.sanity.io/images/bj34pdbp/migration/8fc3bec1e2b4fe0c70c9f0a1c2e8a3b9d7f5e4c2-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                      alt="Team chat app being built by AI"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="aspect-video bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg mb-4 overflow-hidden relative group flex items-center justify-center">
+                    <div className="text-center space-y-4 p-6">
+                      <div className="relative">
+                        <div className="w-16 h-16 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center animate-pulse">
+                          <MessageSquare className="h-8 w-8 text-white animate-bounce" />
+                        </div>
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-ping" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse w-16 mx-auto" />
+                        <div className="h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse delay-100 w-20 mx-auto" />
+                      </div>
+                      <div className="text-xs text-muted-foreground">💬 Building chat</div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="absolute bottom-4 left-4 text-white font-mono text-xs space-y-1">
-                        <div>✓ Real-time chat ready</div>
-                        <div>✓ Channels configured</div>
-                        <div>✓ WebSocket connected</div>
+                        <div className="animate-pulse delay-100">✓ Real-time chat ready</div>
+                        <div className="animate-pulse delay-200">✓ Channels configured</div>
+                        <div className="animate-pulse delay-300">✓ WebSocket connected</div>
                       </div>
                     </div>
                   </div>
@@ -437,17 +480,26 @@ export default function Landing() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden relative group">
-                    <img 
-                      src="https://cdn.sanity.io/images/bj34pdbp/migration/56601d61f8d75710bc3c793c3fb18614cf7b7f96-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                      alt="E-commerce store being built by AI"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="aspect-video bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg mb-4 overflow-hidden relative group flex items-center justify-center">
+                    <div className="text-center space-y-4 p-6">
+                      <div className="relative">
+                        <div className="w-16 h-16 mx-auto bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center animate-pulse">
+                          <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+                            <div className="w-4 h-4 bg-orange-500 rounded animate-spin"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-2 bg-gradient-to-r from-orange-400 to-red-400 rounded-full animate-pulse w-24 mx-auto" />
+                        <div className="h-2 bg-gradient-to-r from-red-400 to-pink-400 rounded-full animate-pulse delay-100 w-20 mx-auto" />
+                      </div>
+                      <div className="text-xs text-muted-foreground">🛒 Building store</div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="absolute bottom-4 left-4 text-white font-mono text-xs space-y-1">
-                        <div>✓ Product catalog ready</div>
-                        <div>✓ Shopping cart working</div>
-                        <div>✓ Payment integrated</div>
+                        <div className="animate-pulse delay-100">✓ Product catalog ready</div>
+                        <div className="animate-pulse delay-200">✓ Shopping cart working</div>
+                        <div className="animate-pulse delay-300">✓ Payment integrated</div>
                       </div>
                     </div>
                   </div>
@@ -580,7 +632,7 @@ export default function Landing() {
                       <span className="text-blue-600 dark:text-blue-400">seconds</span> = 0;
                     </div>
                     <div className="mt-2">
-                      <span className="text-yellow-600 dark:text-yellow-400">setInterval</span>(() =&gt; {'{'}
+                      <span className="text-yellow-600 dark:text-yellow-400">setInterval</span>(() =&gt; {"{"}
                     </div>
                     <div className="ml-2">
                       <span className="text-yellow-600 dark:text-yellow-400">updateTimer</span>();
@@ -724,12 +776,15 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <Card className="group hover:shadow-xl transition-all cursor-pointer">
               <CardContent className="p-0">
-                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
-                  <img 
-                    src="https://cdn.sanity.io/images/bj34pdbp/migration/python-coding-demo-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                    alt="Python coding demo"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
+                <div className="aspect-video bg-gradient-to-br from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-t-lg overflow-hidden flex items-center justify-center">
+                  <div className="text-center space-y-3">
+                    <div className="text-4xl animate-bounce">🐍</div>
+                    <div className="font-mono text-xs space-y-1">
+                      <div className="animate-pulse text-blue-600 dark:text-blue-400">print("Hello World!")</div>
+                      <div className="animate-pulse delay-100 text-green-600 dark:text-green-400">data = [1, 2, 3]</div>
+                      <div className="animate-pulse delay-200 text-purple-600 dark:text-purple-400">for i in data:</div>
+                    </div>
+                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-lg mb-2">Python</h3>
@@ -740,12 +795,15 @@ export default function Landing() {
 
             <Card className="group hover:shadow-xl transition-all cursor-pointer">
               <CardContent className="p-0">
-                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
-                  <img 
-                    src="https://cdn.sanity.io/images/bj34pdbp/migration/javascript-react-demo-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                    alt="JavaScript React demo"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
+                <div className="aspect-video bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-t-lg overflow-hidden flex items-center justify-center">
+                  <div className="text-center space-y-3">
+                    <div className="text-4xl animate-bounce">⚡</div>
+                    <div className="font-mono text-xs space-y-1">
+                      <div className="animate-pulse text-blue-600 dark:text-blue-400">const App = () =&gt; {"{}"}</div>
+                      <div className="animate-pulse delay-100 text-purple-600 dark:text-purple-400">return {"<div>"}</div>
+                      <div className="animate-pulse delay-200 text-green-600 dark:text-green-400">export default App</div>
+                    </div>
+                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-lg mb-2">JavaScript</h3>
@@ -756,12 +814,15 @@ export default function Landing() {
 
             <Card className="group hover:shadow-xl transition-all cursor-pointer">
               <CardContent className="p-0">
-                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
-                  <img 
-                    src="https://cdn.sanity.io/images/bj34pdbp/migration/html-css-web-demo-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                    alt="HTML CSS web demo"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
+                <div className="aspect-video bg-gradient-to-br from-red-50 to-blue-50 dark:from-red-900/20 dark:to-blue-900/20 rounded-t-lg overflow-hidden flex items-center justify-center">
+                  <div className="text-center space-y-3">
+                    <div className="text-4xl animate-bounce">🎨</div>
+                    <div className="font-mono text-xs space-y-1">
+                      <div className="animate-pulse text-red-600 dark:text-red-400">{"<div class=\"header\">"}</div>
+                      <div className="animate-pulse delay-100 text-blue-600 dark:text-blue-400">.header {"{ color: blue; }"}</div>
+                      <div className="animate-pulse delay-200 text-green-600 dark:text-green-400">{"</div>"}</div>
+                    </div>
+                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-lg mb-2">HTML & CSS</h3>
@@ -772,12 +833,15 @@ export default function Landing() {
 
             <Card className="group hover:shadow-xl transition-all cursor-pointer">
               <CardContent className="p-0">
-                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
-                  <img 
-                    src="https://cdn.sanity.io/images/bj34pdbp/migration/java-spring-api-demo-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                    alt="Java Spring API demo"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
+                <div className="aspect-video bg-gradient-to-br from-orange-50 to-purple-50 dark:from-orange-900/20 dark:to-purple-900/20 rounded-t-lg overflow-hidden flex items-center justify-center">
+                  <div className="text-center space-y-3">
+                    <div className="text-4xl animate-bounce">☕</div>
+                    <div className="font-mono text-xs space-y-1">
+                      <div className="animate-pulse text-purple-600 dark:text-purple-400">@RestController</div>
+                      <div className="animate-pulse delay-100 text-blue-600 dark:text-blue-400">public class API {}</div>
+                      <div className="animate-pulse delay-200 text-green-600 dark:text-green-400">@GetMapping("/users")</div>
+                    </div>
+                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-lg mb-2">Java</h3>
@@ -854,12 +918,20 @@ export default function Landing() {
                 <CardTitle>Complete Beginners</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
-                  <img 
-                    src="https://cdn.sanity.io/images/bj34pdbp/migration/beginners-tutorial-coding-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                    alt="Beginner-friendly coding tutorial"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="aspect-video bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg mb-4 overflow-hidden flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <div className="relative">
+                      <div className="w-16 h-16 mx-auto bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                        <div className="text-white text-2xl animate-bounce">📚</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-sm text-muted-foreground animate-pulse">Step 1: Create your first variable</div>
+                      <div className="font-mono text-xs bg-white dark:bg-gray-800 rounded p-2 animate-pulse delay-100">
+                        name = "Hello World"
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <p className="text-muted-foreground mb-4">
                   Never written code before? Perfect! Start with fun, bite-sized lessons designed for absolute beginners.
@@ -879,12 +951,20 @@ export default function Landing() {
                 <CardTitle>Collaborate</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
-                  <img 
-                    src="https://cdn.sanity.io/images/bj34pdbp/migration/collaboration-demo-realtime-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                    alt="Real-time collaboration demo"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="aspect-video bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg mb-4 overflow-hidden flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <div className="flex justify-center gap-2">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">👤</div>
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-pulse delay-100">👤</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground animate-pulse">2 people coding together</div>
+                      <div className="flex gap-1 justify-center">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-ping delay-100"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <p className="text-muted-foreground mb-4">
                   Work together in real-time. Perfect for pair programming and team projects.
