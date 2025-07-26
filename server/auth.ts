@@ -210,6 +210,22 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // GET login status
+  app.get("/api/login", (req, res) => {
+    if (req.isAuthenticated()) {
+      const { password, ...userWithoutPassword } = req.user!;
+      res.json({
+        authenticated: true,
+        user: userWithoutPassword
+      });
+    } else {
+      res.json({
+        authenticated: false,
+        message: "Not authenticated"
+      });
+    }
+  });
+
   // Login route with enhanced security
   app.post("/api/login", 
     createRateLimiter("login"), 
