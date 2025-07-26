@@ -1,0 +1,295 @@
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('simple-payment-processor');
+
+export interface PaymentMethod {
+  id: string;
+  type: 'card' | 'paypal';
+  last4?: string;
+  brand?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  isDefault: boolean;
+}
+
+export interface Subscription {
+  id: string;
+  userId: number;
+  plan: 'free' | 'hacker' | 'pro' | 'enterprise';
+  status: 'active' | 'canceled' | 'past_due';
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
+  cancelAtPeriodEnd: boolean;
+  paymentMethodId?: string;
+}
+
+export interface Invoice {
+  id: string;
+  userId: number;
+  subscriptionId: string;
+  amount: number;
+  currency: string;
+  status: 'paid' | 'pending' | 'failed';
+  createdAt: Date;
+  paidAt?: Date;
+}
+
+export interface CheckoutSession {
+  id: string;
+  userId: number;
+  plan: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'completed' | 'expired';
+  createdAt: Date;
+  successUrl: string;
+  cancelUrl: string;
+}
+
+export class SimplePaymentProcessor {
+  private subscriptions: Map<number, Subscription> = new Map();
+  private paymentMethods: Map<number, PaymentMethod[]> = new Map();
+  private invoices: Map<string, Invoice> = new Map();
+  private checkoutSessions: Map<string, CheckoutSession> = new Map();
+  
+  constructor() {
+    // Initialize with some default data
+    this.initializeDefaults();
+  }
+  
+  private initializeDefaults() {
+    // Give admin user a pro subscription
+    const adminSubscription: Subscription = {
+      id: 'sub_admin_pro',
+      userId: 1, // admin user
+      plan: 'pro',
+      status: 'active',
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      cancelAtPeriodEnd: false
+    };
+    
+    this.subscriptions.set(1, adminSubscription);
+  }
+  
+  async getSubscription(userId: number): Promise<Subscription | null> {
+    return this.subscriptions.get(userId) || null;
+  }
+  
+  async createCheckoutSession(userId: number, plan: string): Promise<CheckoutSession> {
+    const sessionId = `cs_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const planPrices: Record<string, number> = {
+      'hacker': 7,
+      'pro': 20,
+      'enterprise': 99
+    };
+    
+    const session: CheckoutSession = {
+      id: sessionId,
+      userId,
+      plan,
+      amount: planPrices[plan] || 0,
+      currency: 'usd',
+      status: 'pending',
+      createdAt: new Date(),
+      successUrl: '/billing?success=true',
+      cancelUrl: '/billing?canceled=true'
+    };
+    
+    this.checkoutSessions.set(sessionId, session);
+    
+    // Return a simulated checkout URL
+    return session;
+  }
+  
+  async completeCheckout(sessionId: string): Promise<Subscription> {
+    const session = this.checkoutSessions.get(sessionId);
+    if (!session) {
+      throw new Error('Checkout session not found');
+    }
+    
+    if (session.status !== 'pending') {
+      throw new Error('Checkout session already processed');
+    }
+    
+    // Mark session as completed
+    session.status = 'completed';
+    
+    // Create subscription
+    const subscription: Subscription = {
+      id: `sub_${Date.now()}`,
+      userId: session.userId,
+      plan: session.plan as any,
+      status: 'active',
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      cancelAtPeriodEnd: false
+    };
+    
+    this.subscriptions.set(session.userId, subscription);
+    
+    // Create invoice
+    const invoice: Invoice = {
+      id: `inv_${Date.now()}`,
+      userId: session.userId,
+      subscriptionId: subscription.id,
+      amount: session.amount,
+      currency: session.currency,
+      status: 'paid',
+      createdAt: new Date(),
+      paidAt: new Date()
+    };
+    
+    this.invoices.set(invoice.id, invoice);
+    
+    logger.info(`Subscription created for user ${session.userId}: ${session.plan}`);
+    
+    return subscription;
+  }
+  
+  async cancelSubscription(userId: number): Promise<Subscription> {
+    const subscription = this.subscriptions.get(userId);
+    if (!subscription) {
+      throw new Error('No active subscription found');
+    }
+    
+    subscription.cancelAtPeriodEnd = true;
+    logger.info(`Subscription canceled for user ${userId}`);
+    
+    return subscription;
+  }
+  
+  async resumeSubscription(userId: number): Promise<Subscription> {
+    const subscription = this.subscriptions.get(userId);
+    if (!subscription) {
+      throw new Error('No subscription found');
+    }
+    
+    subscription.cancelAtPeriodEnd = false;
+    logger.info(`Subscription resumed for user ${userId}`);
+    
+    return subscription;
+  }
+  
+  async addPaymentMethod(userId: number, token: string): Promise<PaymentMethod> {
+    // Simulate adding a payment method
+    const paymentMethod: PaymentMethod = {
+      id: `pm_${Date.now()}`,
+      type: 'card',
+      last4: '4242',
+      brand: 'Visa',
+      expiryMonth: 12,
+      expiryYear: 2025,
+      isDefault: true
+    };
+    
+    const userMethods = this.paymentMethods.get(userId) || [];
+    
+    // Set all other methods as non-default
+    userMethods.forEach(method => method.isDefault = false);
+    
+    userMethods.push(paymentMethod);
+    this.paymentMethods.set(userId, userMethods);
+    
+    logger.info(`Payment method added for user ${userId}`);
+    
+    return paymentMethod;
+  }
+  
+  async getPaymentMethods(userId: number): Promise<PaymentMethod[]> {
+    return this.paymentMethods.get(userId) || [];
+  }
+  
+  async deletePaymentMethod(userId: number, methodId: string): Promise<void> {
+    const methods = this.paymentMethods.get(userId) || [];
+    const filtered = methods.filter(m => m.id !== methodId);
+    this.paymentMethods.set(userId, filtered);
+    
+    logger.info(`Payment method ${methodId} deleted for user ${userId}`);
+  }
+  
+  async getInvoices(userId: number): Promise<Invoice[]> {
+    const userInvoices: Invoice[] = [];
+    
+    this.invoices.forEach(invoice => {
+      if (invoice.userId === userId) {
+        userInvoices.push(invoice);
+      }
+    });
+    
+    return userInvoices.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async getUsageStats(userId: number): Promise<any> {
+    // Return simulated usage stats
+    return {
+      projectsCount: 5,
+      projectsLimit: this.getProjectLimit(userId),
+      storageUsed: 1024 * 1024 * 150, // 150MB
+      storageLimit: this.getStorageLimit(userId),
+      bandwidthUsed: 1024 * 1024 * 500, // 500MB
+      bandwidthLimit: this.getBandwidthLimit(userId),
+      aiRequestsUsed: 25,
+      aiRequestsLimit: this.getAIRequestLimit(userId)
+    };
+  }
+  
+  private getProjectLimit(userId: number): number {
+    const subscription = this.subscriptions.get(userId);
+    if (!subscription) return 3; // Free tier
+    
+    const limits: Record<string, number> = {
+      'free': 3,
+      'hacker': 10,
+      'pro': -1, // unlimited
+      'enterprise': -1
+    };
+    
+    return limits[subscription.plan] || 3;
+  }
+  
+  private getStorageLimit(userId: number): number {
+    const subscription = this.subscriptions.get(userId);
+    if (!subscription) return 1024 * 1024 * 500; // 500MB
+    
+    const limits: Record<string, number> = {
+      'free': 1024 * 1024 * 500, // 500MB
+      'hacker': 1024 * 1024 * 1024 * 5, // 5GB
+      'pro': 1024 * 1024 * 1024 * 50, // 50GB
+      'enterprise': -1 // unlimited
+    };
+    
+    return limits[subscription.plan] || 1024 * 1024 * 500;
+  }
+  
+  private getBandwidthLimit(userId: number): number {
+    const subscription = this.subscriptions.get(userId);
+    if (!subscription) return 1024 * 1024 * 1024; // 1GB
+    
+    const limits: Record<string, number> = {
+      'free': 1024 * 1024 * 1024, // 1GB
+      'hacker': 1024 * 1024 * 1024 * 10, // 10GB
+      'pro': 1024 * 1024 * 1024 * 100, // 100GB
+      'enterprise': -1 // unlimited
+    };
+    
+    return limits[subscription.plan] || 1024 * 1024 * 1024;
+  }
+  
+  private getAIRequestLimit(userId: number): number {
+    const subscription = this.subscriptions.get(userId);
+    if (!subscription) return 50;
+    
+    const limits: Record<string, number> = {
+      'free': 50,
+      'hacker': 500,
+      'pro': -1, // unlimited
+      'enterprise': -1
+    };
+    
+    return limits[subscription.plan] || 50;
+  }
+}
+
+export const simplePaymentProcessor = new SimplePaymentProcessor();

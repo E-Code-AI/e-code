@@ -47,7 +47,8 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
   useEffect(() => {
     // Initialize WebSocket connection for real-time collaboration
     const connectWebSocket = () => {
-      const ws = new WebSocket(`ws://localhost:5000/multiplayer?projectId=${projectId}`);
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws?projectId=${projectId}`);
       
       ws.onopen = () => {
         setIsConnected(true);

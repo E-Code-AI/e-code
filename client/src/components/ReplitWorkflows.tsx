@@ -65,11 +65,16 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
-  const [newWorkflow, setNewWorkflow] = useState({
+  const [newWorkflow, setNewWorkflow] = useState<{
+    name: string;
+    description: string;
+    trigger: { type: 'manual' | 'push' | 'schedule' | 'webhook' };
+    steps: Array<{ id: string; name: string; type: 'command' | 'script' | 'deploy' | 'test'; command?: string }>;
+  }>({
     name: '',
     description: '',
-    trigger: { type: 'manual' as const },
-    steps: [{ id: '1', name: 'Build', type: 'command' as const, command: 'npm run build' }]
+    trigger: { type: 'manual' },
+    steps: [{ id: '1', name: 'Build', type: 'command', command: 'npm run build' }]
   });
 
   useEffect(() => {
