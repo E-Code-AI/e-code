@@ -733,59 +733,102 @@ What would you like me to build for you today?`,
       switch (action.type) {
         case 'create_file':
           if (action.path && action.content !== undefined) {
-            await fetch(`/api/projects/${projectId}/files`, {
+            const response = await fetch(`/api/projects/${projectId}/files`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'credentials': 'include'
+              },
+              credentials: 'include',
               body: JSON.stringify({
                 name: action.path.split('/').pop(),
                 content: action.content,
                 parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
               })
             });
+            
+            if (!response.ok) {
+              throw new Error(`Failed to create file: ${response.statusText}`);
+            }
           }
           break;
         case 'edit_file':
           if (action.path && action.content !== undefined) {
             const fileId = await getFileIdByPath(action.path);
             if (fileId) {
-              await fetch(`/api/projects/${projectId}/files/${fileId}`, {
+              const response = await fetch(`/api/projects/${projectId}/files/${fileId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'credentials': 'include'
+                },
+                credentials: 'include',
                 body: JSON.stringify({ content: action.content })
               });
+              
+              if (!response.ok) {
+                throw new Error(`Failed to edit file: ${response.statusText}`);
+              }
             }
           }
           break;
         case 'install_package':
           if (action.package) {
-            await fetch(`/api/projects/${projectId}/packages/install`, {
+            const response = await fetch(`/api/projects/${projectId}/packages/install`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'credentials': 'include'
+              },
+              credentials: 'include',
               body: JSON.stringify({ packages: [action.package] })
             });
+            
+            if (!response.ok) {
+              throw new Error(`Failed to install package: ${response.statusText}`);
+            }
           }
           break;
         case 'create_folder':
           if (action.path) {
-            await fetch(`/api/projects/${projectId}/folders`, {
+            const response = await fetch(`/api/projects/${projectId}/folders`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'credentials': 'include'
+              },
+              credentials: 'include',
               body: JSON.stringify({ 
                 name: action.path.split('/').pop(),
                 parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
               })
             });
+            
+            if (!response.ok) {
+              throw new Error(`Failed to create folder: ${response.statusText}`);
+            }
           }
           break;
       }
     } catch (error) {
       console.error(`Failed to execute action ${action.type}:`, error);
+      toast({
+        title: "Action Failed",
+        description: error instanceof Error ? error.message : "Failed to execute action",
+        variant: "destructive"
+      });
+      throw error; // Re-throw to stop the build process
     }
   };
 
   const getFileIdByPath = async (path: string): Promise<number | null> => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/files`);
+      const response = await fetch(`/api/projects/${projectId}/files`, {
+        headers: { 
+          'credentials': 'include'
+        },
+        credentials: 'include'
+      });
       if (response.ok) {
         const files = await response.json();
         const file = files.find((f: any) => f.name === path.split('/').pop());
@@ -854,9 +897,25 @@ What would you like me to build for you today?`,
         currentStep++;
         const progress = Math.floor((currentStep / totalSteps) * 100);
         
-        await updateProgress(`Creating folder: ${folder}`, progress);
-        await executeAction({ type: 'create_folder', path: folder });
-        await new Promise(resolve => setTimeout(resolve, 300));
+        try {
+          await updateProgress(`Creating folder: ${folder}`, progress);
+          await executeAction({ type: 'create_folder', path: folder });
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (error) {
+          console.error(`Failed to create folder ${folder}:`, error);
+          setIsBuilding(false);
+          setBuildProgress(0);
+          
+          const errorMessage: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `❌ **Build failed**\n\nI encountered an error while creating the folder "${folder}". Please make sure you have access to this project and try again.`,
+            timestamp: new Date(),
+            type: 'error'
+          };
+          setMessages(prev => [...prev, errorMessage]);
+          return;
+        }
       }
 
       // Create files
@@ -864,9 +923,25 @@ What would you like me to build for you today?`,
         currentStep++;
         const progress = Math.floor((currentStep / totalSteps) * 100);
         
-        await updateProgress(`Creating file: ${file.path}`, progress);
-        await executeAction({ type: 'create_file', path: file.path, content: file.content });
-        await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+          await updateProgress(`Creating file: ${file.path}`, progress);
+          await executeAction({ type: 'create_file', path: file.path, content: file.content });
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+          console.error(`Failed to create file ${file.path}:`, error);
+          setIsBuilding(false);
+          setBuildProgress(0);
+          
+          const errorMessage: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `❌ **Build failed**\n\nI encountered an error while creating the file "${file.path}". Please make sure you have access to this project and try again.`,
+            timestamp: new Date(),
+            type: 'error'
+          };
+          setMessages(prev => [...prev, errorMessage]);
+          return;
+        }
       }
 
       // Install packages
@@ -874,11 +949,16 @@ What would you like me to build for you today?`,
         currentStep++;
         const progress = Math.floor((currentStep / totalSteps) * 100);
         
-        await updateProgress(`Installing packages: ${template.structure.packages.join(', ')}`, progress);
-        for (const pkg of template.structure.packages) {
-          await executeAction({ type: 'install_package', package: pkg });
+        try {
+          await updateProgress(`Installing packages: ${template.structure.packages.join(', ')}`, progress);
+          for (const pkg of template.structure.packages) {
+            await executeAction({ type: 'install_package', package: pkg });
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error('Failed to install packages:', error);
+          // Continue anyway - packages can be installed manually later
         }
-        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
       // Final step
