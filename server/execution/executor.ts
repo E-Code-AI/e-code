@@ -110,8 +110,7 @@ export class CodeExecutor extends EventEmitter {
           timeout: Math.floor(timeout / 1000), // Convert to seconds
           memoryLimit: 512, // Default 512MB
           cpuLimit: 1, // Default 1 CPU
-          networkEnabled: false, // Network disabled by default for security
-          packages: packageNames // Pass packages for Nix environment
+          networkEnabled: false // Network disabled by default for security
         }
       );
       
