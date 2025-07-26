@@ -2,23 +2,28 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { 
   Zap, Globe, Users, Shield, Code, Terminal, GitBranch, 
   Rocket, Package, Database, Cpu, Cloud, Lock, Star,
   ChevronRight, ArrowRight, CheckCircle, PlayCircle,
-  Sparkles, Check, Loader2, MessageSquare, Bot
+  Sparkles, Check, Loader2, MessageSquare, Bot,
+  Send, Paperclip, Mic
 } from 'lucide-react';
 import { useState } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+// import { ReplitChat } from '@/components/ReplitChat';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Landing() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [email, setEmail] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const features = [
     {
@@ -75,10 +80,16 @@ export default function Landing() {
   ];
 
   const handleGetStarted = () => {
+    setChatOpen(true);
+  };
+
+  const handleStartBuilding = (description: string) => {
+    console.log('Starting to build:', description);
+    setChatOpen(false);
     if (user) {
       navigate('/dashboard');
     } else {
-      window.location.href = '/api/login';
+      navigate('/register');
     }
   };
 
@@ -160,17 +171,15 @@ export default function Landing() {
                       <input
                         type="text"
                         placeholder="Describe your app idea in plain English... (e.g., 'Build a recipe finder app with AI suggestions')"
-                        className="w-full bg-transparent border-none outline-none text-xl placeholder:text-muted-foreground/70 focus:ring-0 font-medium"
-                        onFocus={(e) => {
-                          e.preventDefault();
-                          handleGetStarted();
-                        }}
+                        className="w-full bg-transparent border-none outline-none text-xl placeholder:text-muted-foreground/70 focus:ring-0 font-medium cursor-pointer"
+                        onClick={() => setChatOpen(true)}
+                        readOnly
                       />
                     </div>
                     <Button 
                       size="lg" 
                       className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all text-lg px-6"
-                      onClick={handleGetStarted}
+                      onClick={() => setChatOpen(true)}
                     >
                       <Zap className="h-5 w-5 mr-2" />
                       Launch AI
@@ -193,6 +202,113 @@ export default function Landing() {
                 </div>
               </div>
             </div>
+
+            {/* Chat Modal */}
+            {chatOpen && (
+              <div className="fixed inset-0 z-50 bg-background">
+                <div className="h-full flex flex-col">
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-4 border-b">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-medium">
+                        {user ? (user.displayName || user.username || 'You').slice(0, 2).toUpperCase() : 'GU'}
+                      </div>
+                      <span className="font-medium">
+                        {user ? `${user.displayName || user.username || 'Your'}'s workspace` : "Guest's workspace"}
+                      </span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setChatOpen(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      ✕
+                    </Button>
+                  </div>
+
+                  {/* Main Chat Interface */}
+                  <div className="flex-1 flex flex-col justify-center p-4 md:p-8 max-w-2xl mx-auto w-full">
+                    <div className="text-center mb-8">
+                      <h2 className="text-2xl md:text-3xl font-semibold mb-2">
+                        Hi {user ? (user.displayName || user.username || 'there') : 'there'},
+                      </h2>
+                      <p className="text-xl md:text-2xl text-muted-foreground">
+                        what do you want to make?
+                      </p>
+                    </div>
+
+                    <Card className="p-4 md:p-6 shadow-lg">
+                      <div className="relative">
+                        <textarea
+                          placeholder="Describe a website or app you want to make..."
+                          className="w-full min-h-[120px] md:min-h-[200px] text-base md:text-lg resize-none border-none focus:ring-0 focus:border-none bg-transparent p-0 outline-none"
+                        />
+                        
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" className="p-2">
+                              <Paperclip className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="p-2">
+                              <Mic className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          <Button 
+                            onClick={handleStartBuilding}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6"
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            Start chat
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+
+                    {/* Quick suggestions */}
+                    <div className="mt-6 space-y-2">
+                      <p className="text-sm text-muted-foreground text-center">Try these ideas:</p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        <Button variant="outline" size="sm" className="text-xs">
+                          Todo app with dark mode
+                        </Button>
+                        <Button variant="outline" size="sm" className="text-xs">
+                          Portfolio website
+                        </Button>
+                        <Button variant="outline" size="sm" className="text-xs">
+                          Weather dashboard
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom navigation */}
+                  <div className="border-t p-4">
+                    <div className="flex justify-around max-w-sm mx-auto">
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="w-6 h-6 bg-muted rounded flex items-center justify-center">
+                          <MessageSquare className="h-4 w-4" />
+                        </div>
+                        <span className="text-xs text-muted-foreground">My Apps</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">+</span>
+                        </div>
+                        <span className="text-xs font-medium">Create</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
+                          <div className="w-4 h-4 bg-muted-foreground rounded-full" />
+                        </div>
+                        <span className="text-xs text-muted-foreground">Account</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full sm:w-auto px-4 sm:px-0 mt-6">
               <Button size="lg" onClick={handleGetStarted} className="gap-2 w-full sm:w-auto">
