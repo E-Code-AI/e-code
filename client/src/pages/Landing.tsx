@@ -170,40 +170,16 @@ export default function Landing() {
                 </div>
                 <span className="text-xs text-muted-foreground">App.jsx</span>
               </div>
-              <div className="p-3 sm:p-4 bg-background font-mono text-xs sm:text-sm overflow-x-auto">
-                <div className="space-y-2">
-                  <div>
-                    <span className="text-purple-600 dark:text-purple-400">import</span> {' '}
-                    <span className="text-blue-600 dark:text-blue-400">React</span> {' '}
-                    <span className="text-purple-600 dark:text-purple-400">from</span> {' '}
-                    <span className="text-green-600 dark:text-green-400">'react'</span>;
-                  </div>
-                  <div>
-                    <span className="text-purple-600 dark:text-purple-400">import</span> {' '}
-                    <span className="text-blue-600 dark:text-blue-400">{'{ createRoot }'}</span> {' '}
-                    <span className="text-purple-600 dark:text-purple-400">from</span> {' '}
-                    <span className="text-green-600 dark:text-green-400">'react-dom/client'</span>;
-                  </div>
-                  <div className="mt-3">
-                    <span className="text-purple-600 dark:text-purple-400">function</span> {' '}
-                    <span className="text-yellow-600 dark:text-yellow-400">App</span>() {'{'}
-                  </div>
-                  <div className="ml-4">
-                    <span className="text-purple-600 dark:text-purple-400">return</span> (
-                  </div>
-                  <div className="ml-8">
-                    <span className="text-gray-500">&lt;</span>
-                    <span className="text-red-600 dark:text-red-400">h1</span>
-                    <span className="text-gray-500">&gt;</span>
-                    <span className="text-green-600 dark:text-green-400">Welcome to E-Code!</span>
-                    <span className="text-gray-500">&lt;/</span>
-                    <span className="text-red-600 dark:text-red-400">h1</span>
-                    <span className="text-gray-500">&gt;</span>
-                  </div>
-                  <div className="ml-4">);</div>
-                  <div>{'}'}</div>
-                  <div className="mt-3 p-2 bg-muted rounded">
-                    <span className="text-green-600 dark:text-green-400">✓ App running at localhost:3000</span>
+              <div className="relative">
+                <img 
+                  src="https://cdn.sanity.io/images/bj34pdbp/migration/56601d61f8d75710bc3c793c3fb18614cf7b7f96-800x601.gif?w=1200&q=80&fit=clip&auto=format"
+                  alt="Live coding demo showing React app development"
+                  className="w-full h-auto rounded-b-lg"
+                />
+                <div className="absolute bottom-4 left-4 right-4 bg-green-100 dark:bg-green-900/20 rounded-lg p-3">
+                  <div className="text-green-700 dark:text-green-400 text-sm flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    ✓ App running at localhost:3000
                   </div>
                 </div>
               </div>
@@ -659,19 +635,14 @@ export default function Landing() {
                   <span className="text-xs text-muted-foreground">localhost:5000</span>
                   <div className="ml-auto w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 </div>
-                <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
-                  <h3 className="text-2xl font-bold mb-4">Weather App 🌤️</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Card className="p-4">
-                      <p className="text-sm text-muted-foreground">Today</p>
-                      <p className="text-3xl font-bold">72°F</p>
-                      <p className="text-sm">Sunny</p>
-                    </Card>
-                    <Card className="p-4">
-                      <p className="text-sm text-muted-foreground">Tomorrow</p>
-                      <p className="text-3xl font-bold">68°F</p>
-                      <p className="text-sm">Cloudy</p>
-                    </Card>
+                <div className="relative">
+                  <img 
+                    src="https://cdn.sanity.io/images/bj34pdbp/migration/c7f2a8b9e4d5f6g7h8i9j0k1l2m3n4o5-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                    alt="Weather app running live"
+                    className="w-full h-auto"
+                  />
+                  <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/90 rounded-lg px-3 py-2">
+                    <p className="text-sm font-medium">🌤️ Weather App - Live</p>
                   </div>
                 </div>
               </Card>
@@ -686,6 +657,93 @@ export default function Landing() {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Language Showcase */}
+      <section className="py-20 bg-gradient-to-b from-muted/30 to-background">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Code in your favorite language
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              From Python to JavaScript, from beginners to experts - we support them all
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <Card className="group hover:shadow-xl transition-all cursor-pointer">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
+                  <img 
+                    src="https://cdn.sanity.io/images/bj34pdbp/migration/python-coding-demo-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                    alt="Python coding demo"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg mb-2">Python</h3>
+                  <p className="text-sm text-muted-foreground">Perfect for beginners, data science, and AI</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-xl transition-all cursor-pointer">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
+                  <img 
+                    src="https://cdn.sanity.io/images/bj34pdbp/migration/javascript-react-demo-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                    alt="JavaScript React demo"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg mb-2">JavaScript</h3>
+                  <p className="text-sm text-muted-foreground">Build websites, apps, and interactive experiences</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-xl transition-all cursor-pointer">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
+                  <img 
+                    src="https://cdn.sanity.io/images/bj34pdbp/migration/html-css-web-demo-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                    alt="HTML CSS web demo"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg mb-2">HTML & CSS</h3>
+                  <p className="text-sm text-muted-foreground">Create beautiful websites from scratch</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-xl transition-all cursor-pointer">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
+                  <img 
+                    src="https://cdn.sanity.io/images/bj34pdbp/migration/java-spring-api-demo-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                    alt="Java Spring API demo"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg mb-2">Java</h3>
+                  <p className="text-sm text-muted-foreground">Enterprise applications and backend services</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center">
+            <Button size="lg" variant="outline" onClick={() => navigate('/languages')}>
+              Explore all 20+ languages
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
           </div>
         </div>
       </section>
@@ -748,6 +806,13 @@ export default function Landing() {
                 <CardTitle>Complete Beginners</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
+                  <img 
+                    src="https://cdn.sanity.io/images/bj34pdbp/migration/beginners-tutorial-coding-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                    alt="Beginner-friendly coding tutorial"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <p className="text-muted-foreground mb-4">
                   Never written code before? Perfect! Start with fun, bite-sized lessons designed for absolute beginners.
                 </p>
@@ -766,6 +831,13 @@ export default function Landing() {
                 <CardTitle>Collaborate</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
+                  <img 
+                    src="https://cdn.sanity.io/images/bj34pdbp/migration/collaboration-demo-realtime-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                    alt="Real-time collaboration demo"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <p className="text-muted-foreground mb-4">
                   Work together in real-time. Perfect for pair programming and team projects.
                 </p>
@@ -784,6 +856,13 @@ export default function Landing() {
                 <CardTitle>Ship to Production</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
+                  <img 
+                    src="https://cdn.sanity.io/images/bj34pdbp/migration/deployment-one-click-800x601.gif?w=800&q=80&fit=clip&auto=format"
+                    alt="One-click deployment demo"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <p className="text-muted-foreground mb-4">
                   Deploy your apps with one click. Automatic SSL, custom domains, and scaling.
                 </p>
