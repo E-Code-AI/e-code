@@ -163,7 +163,7 @@ export default function AIAgent() {
               </div>
               <h3 className="text-xl font-semibold">1. Describe Your Idea</h3>
               <p className="text-muted-foreground">
-                Type what you want in plain English. "Build me a recipe app with search and favorites"
+                Type what you want in any language. "Build me a recipe app with search and favorites"
               </p>
             </div>
 

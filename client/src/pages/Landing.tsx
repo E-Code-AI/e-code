@@ -169,7 +169,7 @@ export default function Landing() {
                     <div className="flex-1">
                       <input
                         type="text"
-                        placeholder="Describe your app idea in plain English... (e.g., 'Build a recipe finder app with AI suggestions')"
+                        placeholder="Describe your app idea in any language... (e.g., 'Build a recipe finder app with AI suggestions')"
                         className="w-full bg-transparent border-none outline-none text-xl placeholder:text-muted-foreground/70 focus:ring-0 font-medium cursor-pointer"
                         onClick={() => setChatOpen(true)}
                         readOnly

@@ -359,7 +359,7 @@ export default function Dashboard() {
                       Build apps instantly with AI Agent
                     </h3>
                     <p className="text-[var(--ecode-muted)] mb-4">
-                      Just describe what you want to build in plain English. Our AI agent creates complete, working applications in seconds.
+                      Just describe what you want to build in any language. Our AI agent creates complete, working applications in seconds.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                       <div className="flex items-center gap-2">
