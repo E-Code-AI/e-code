@@ -130,25 +130,24 @@ export async function generateDocumentation(req: Request, res: Response) {
       docStyle = 'Use NumPy style documentation for Python.';
     }
 
-    const completion = await openai.chat.completions.create({
-      model: GPT_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content:
-            `You are an expert programmer that generates comprehensive documentation for code. ${docStyle} Follow best practices for the programming language and include descriptions of parameters, return values, exceptions, and examples where appropriate. Return only the documented code.`,
-        },
-        {
-          role: 'user',
-          content: `Please document this ${language} code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
-        },
-      ],
-      max_tokens: 2048,
-      temperature: 0.3,
-    });
+    const provider = aiProviderManager.getDefaultProvider();
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `You are an expert programmer that generates comprehensive documentation for code. ${docStyle} Follow best practices for the programming language and include descriptions of parameters, return values, exceptions, and examples where appropriate. Return only the documented code.`,
+      },
+      {
+        role: 'user',
+        content: `Please document this ${language} code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      },
+    ];
+
+    const documentedCode = await provider.generateChat(messages, 2048, 0.3);
 
     res.json({
-      documentedCode: completion.choices[0].message.content?.trim() || '',
+      documentedCode,
+      provider: provider.name
     });
   } catch (error) {
     console.error('Error generating documentation:', error);
@@ -170,25 +169,24 @@ export async function generateTests(req: Request, res: Response) {
       testFramework = `Use the ${framework} testing framework.`;
     }
 
-    const completion = await openai.chat.completions.create({
-      model: GPT_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content:
-            `You are an expert programmer that generates comprehensive unit tests for code. ${testFramework} Write tests that cover the functionality, edge cases, and potential error conditions. Return only the test code without explanations.`,
-        },
-        {
-          role: 'user',
-          content: `Write unit tests for this ${language} code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
-        },
-      ],
-      max_tokens: 2048,
-      temperature: 0.3,
-    });
+    const provider = aiProviderManager.getDefaultProvider();
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `You are an expert programmer that generates comprehensive unit tests for code. ${testFramework} Write tests that cover the functionality, edge cases, and potential error conditions. Return only the test code without explanations.`,
+      },
+      {
+        role: 'user',
+        content: `Write unit tests for this ${language} code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
+      },
+    ];
+
+    const testCode = await provider.generateChat(messages, 2048, 0.3);
 
     res.json({
-      testCode: completion.choices[0].message.content?.trim() || '',
+      testCode,
+      provider: provider.name
     });
   } catch (error) {
     console.error('Error generating tests:', error);
