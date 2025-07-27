@@ -11,6 +11,7 @@ import {
   AlertCircle, Clock, Zap, Brain, Search, Upload
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface ReplitAgentChatProps {
   projectId: number;
@@ -243,91 +244,77 @@ Would you like me to explain any part of the implementation or make adjustments?
     setAttachments([]);
     setIsLoading(true);
 
-    // Check if this is a build request
-    const buildKeywords = ['build', 'create', 'make', 'develop', 'generate', 'design'];
-    const isBuildRequest = buildKeywords.some(keyword => 
-      input.toLowerCase().includes(keyword)
-    );
-
-    if (isBuildRequest) {
-      await simulateBuildingProcess(input);
-      setIsLoading(false);
-      return;
-    }
-
-    // Simulate AI response based on mode
     try {
-      let responseContent = '';
-      
-      if (activeMode === 'thinking') {
-        responseContent = `🤔 **Extended Thinking Mode**
+      // Make real API call to backend
+      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
+        message: input,
+        context: {
+          mode: 'agent',
+          thinking: activeMode === 'thinking',
+          highPower: activeMode === 'highpower',
+          webSearch: userMessage.metadata?.webSearch
+        }
+      });
 
-Let me think through this carefully...
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
 
-**Analysis:**
-- Understanding your request: "${input}"
-- Considering multiple approaches and best practices
-- Evaluating potential challenges and solutions
-- Planning the most effective implementation strategy
+      const data = await response.json();
 
-**Approach:**
-I'll create a comprehensive solution that addresses your needs while following modern development standards. This includes proper error handling, responsive design, accessibility features, and performance optimization.
+      // Handle building actions if returned by backend
+      if (data.actions && data.actions.length > 0) {
+        setIsBuilding(true);
+        setBuildProgress(0);
 
-**Implementation Plan:**
-1. Set up the core structure with proper architecture
-2. Implement the main functionality with clean, maintainable code
-3. Add comprehensive error handling and validation
-4. Ensure responsive design across all devices
-5. Optimize for performance and accessibility
-6. Add proper documentation and comments
-
-Would you like me to proceed with this approach, or would you prefer a different strategy?`;
-      } else if (activeMode === 'highpower') {
-        responseContent = `⚡ **High Power Mode Activated**
-
-I'm using advanced AI models to provide the most sophisticated solution for your request.
-
-**Capabilities Engaged:**
-• Advanced reasoning and problem-solving
-• Complex architectural decision making
-• Multi-step planning and execution
-• Deep understanding of modern development patterns
-• Integration of best practices and cutting-edge techniques
-
-**Your Request:** "${input}"
-
-I'll create a production-ready solution with enterprise-level quality, including:
-- Scalable architecture designed for growth
-- Advanced security implementations
-- Performance optimizations
-- Comprehensive testing strategies
-- CI/CD pipeline configuration
-- Monitoring and analytics setup
-
-This will be a robust, professional-grade implementation. Shall I proceed?`;
-      } else {
-        responseContent = `I understand you want to ${input.toLowerCase()}. Let me help you with that!
-
-**What I Can Do:**
-• Generate complete applications from your description
-• Create modern, responsive user interfaces
-• Set up databases and backend infrastructure
-• Configure deployment pipelines
-• Debug and optimize existing code
-• Search the web for resources and documentation
-
-**For Your Request:**
-I'll create a comprehensive solution using modern web technologies including React, TypeScript, and Tailwind CSS. The application will be fully responsive, accessible, and ready for production deployment.
-
-Would you like me to start building this for you? I can create the entire application structure, implement the core functionality, and set up everything you need to get started.`;
+        // Process actions
+        for (const action of data.actions) {
+          const systemMessage: Message = {
+            id: `system-${Date.now()}-${action.type}`,
+            role: 'system',
+            content: `${action.type === 'create_file' ? '📄 Creating' : action.type === 'create_folder' ? '📁 Creating' : '📦 Installing'} ${action.data.name || action.data.path}...`,
+            timestamp: new Date()
+          };
+          
+          setMessages(prev => [...prev, systemMessage]);
+          setBuildProgress(prev => Math.min(prev + (100 / data.actions.length), 100));
+          
+          // Execute the action
+          if (action.type === 'create_file' && action.data.path && action.data.content) {
+            await apiRequest('POST', `/api/projects/${projectId}/files`, {
+              path: action.data.path,
+              content: action.data.content
+            });
+          } else if (action.type === 'create_folder' && action.data.path) {
+            await apiRequest('POST', `/api/projects/${projectId}/folders`, {
+              path: action.data.path
+            });
+          } else if (action.type === 'install_package' && action.data.packages) {
+            await apiRequest('POST', `/api/projects/${projectId}/packages`, {
+              packages: action.data.packages
+            });
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        setIsBuilding(false);
+        setBuildProgress(100);
+        
+        // Refresh file list
+        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
       }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: '',
+        content: data.response || '',
         timestamp: new Date(),
-        isStreaming: true,
+        isStreaming: false,
+        actions: data.actions?.map((action: any) => ({
+          ...action,
+          completed: true
+        })),
         metadata: {
           thinking: activeMode === 'thinking',
           highPower: activeMode === 'highpower'
@@ -336,24 +323,31 @@ Would you like me to start building this for you? I can create the entire applic
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      await simulateStreaming(responseContent, (chunk) => {
-        setStreamingMessage(chunk);
-      });
-
-      // Complete the streaming
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === assistantMessage.id 
-            ? { ...msg, content: responseContent, isStreaming: false }
-            : msg
-        )
-      );
-      setStreamingMessage('');
-
     } catch (error) {
+      console.error('Failed to get AI response:', error);
+      
+      // Fallback to simulation if API fails
+      const fallbackMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `I understand you want to ${input.toLowerCase()}. While I'm having trouble connecting to the AI service right now, I can still help you build your application.
+
+**What I can do for you:**
+• Generate complete applications from your description
+• Create modern, responsive user interfaces
+• Set up databases and backend infrastructure
+• Debug and optimize existing code
+
+Please make sure you have configured your AI API key in the project settings. You can add it in the Secrets tab.`,
+        timestamp: new Date(),
+        isStreaming: false
+      };
+      
+      setMessages(prev => [...prev, fallbackMessage]);
+      
       toast({
-        title: "Error",
-        description: "Failed to get AI response. Please try again.",
+        title: "Connection Issue",
+        description: "Please check your AI API key in project secrets.",
         variant: "destructive"
       });
     } finally {

@@ -55,7 +55,7 @@ import { ReplitDatabase } from '@/components/ReplitDatabase';
 import { CollaborationPanel } from '@/components/CollaborationPanel';
 import { useYjsCollaboration } from '@/hooks/useYjsCollaboration';
 
-type MobileTab = 'files' | 'secrets' | 'database' | 'auth' | 'agent';
+type MobileTab = 'files' | 'agent' | 'secrets' | 'database' | 'auth';
 
 const ReplitProjectPage = () => {
   const [, params] = useRoute('/project/:id');
@@ -71,7 +71,7 @@ const ReplitProjectPage = () => {
   const [executionId, setExecutionId] = useState<string | undefined>();
   const [showAIChat, setShowAIChat] = useState(true); // Show AI chat by default
   const [showTerminal, setShowTerminal] = useState(false); // Hide terminal by default like Replit
-  const [mobileTab, setMobileTab] = useState<MobileTab>('files');
+  const [mobileTab, setMobileTab] = useState<MobileTab>('agent'); // Default to agent on mobile like Replit
   const [showCollaboration, setShowCollaboration] = useState(false);
   const [aiMode, setAIMode] = useState<'agent' | 'advanced'>('agent'); // Default to agent mode
 
@@ -105,6 +105,32 @@ const ReplitProjectPage = () => {
   const MobileBottomNav = () => (
     <div className="bg-background border-t h-16 md:hidden">
       <div className="flex h-full">
+        <button
+          onClick={() => setMobileTab('files')}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
+            mobileTab === 'files' 
+              ? 'text-primary' 
+              : 'text-muted-foreground'
+          )}
+        >
+          <FileCode className="h-5 w-5" />
+          <span className="text-[10px] font-medium">Files</span>
+        </button>
+
+        <button
+          onClick={() => setMobileTab('agent')}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
+            mobileTab === 'agent' 
+              ? 'text-primary' 
+              : 'text-muted-foreground'
+          )}
+        >
+          <Bot className="h-5 w-5" />
+          <span className="text-[10px] font-medium">Agent</span>
+        </button>
+
         <button
           onClick={() => setMobileTab('secrets')}
           className={cn(
@@ -142,26 +168,6 @@ const ReplitProjectPage = () => {
         >
           <UserCheck className="h-5 w-5" />
           <span className="text-[10px] font-medium">Auth</span>
-        </button>
-
-        <button
-          onClick={() => {
-            // Create new tab logic
-            setMobileTab('agent');
-            toast({
-              title: "New Tab",
-              description: "Opening AI Agent chat",
-            });
-          }}
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
-            mobileTab === 'agent' 
-              ? 'text-primary' 
-              : 'text-muted-foreground'
-          )}
-        >
-          <Plus className="h-5 w-5" />
-          <span className="text-[10px] font-medium">New Tab</span>
         </button>
       </div>
     </div>
