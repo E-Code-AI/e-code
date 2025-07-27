@@ -18,6 +18,7 @@ import {
 import { aiProviderManager, type ChatMessage } from "./ai/ai-provider";
 import { CodeAnalyzer } from "./ai/code-analyzer";
 import { AdvancedAIService } from "./ai/advanced-ai-service";
+import { AIProviderFactory } from "./ai/ai-providers";
 import { createLogger } from "./utils/logger";
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, getProjectLogs } from "./simple-executor";
@@ -2362,10 +2363,59 @@ document.addEventListener('DOMContentLoaded', function() {
         .map(f => `File: ${f.name}\n\`\`\`${f.name.split('.').pop() || 'txt'}\n${f.content}\n\`\`\``)
         .join('\n\n');
       
-      // Get the AI provider
-      const provider = providerName 
-        ? aiProviderManager.getProvider(providerName) || aiProviderManager.getDefaultProvider()
-        : aiProviderManager.getDefaultProvider();
+      // Get the AI provider based on environment variables
+      let provider;
+      let apiKey;
+      
+      // Check for available API keys and create provider
+      if (providerName) {
+        // User specified a provider
+        switch (providerName.toLowerCase()) {
+          case 'anthropic':
+            apiKey = process.env.ANTHROPIC_API_KEY;
+            if (apiKey) provider = AIProviderFactory.create('anthropic', apiKey);
+            break;
+          case 'gemini':
+            apiKey = process.env.GEMINI_API_KEY;
+            if (apiKey) provider = AIProviderFactory.create('gemini', apiKey);
+            break;
+          case 'xai':
+            apiKey = process.env.XAI_API_KEY;
+            if (apiKey) provider = AIProviderFactory.create('xai', apiKey);
+            break;
+          case 'perplexity':
+            apiKey = process.env.PERPLEXITY_API_KEY;
+            if (apiKey) provider = AIProviderFactory.create('perplexity', apiKey);
+            break;
+          case 'openai':
+          default:
+            apiKey = process.env.OPENAI_API_KEY;
+            if (apiKey) provider = AIProviderFactory.create('openai', apiKey);
+            break;
+        }
+      } else {
+        // Auto-select based on available API keys
+        if (process.env.OPENAI_API_KEY) {
+          provider = AIProviderFactory.create('openai', process.env.OPENAI_API_KEY);
+        } else if (process.env.ANTHROPIC_API_KEY) {
+          provider = AIProviderFactory.create('anthropic', process.env.ANTHROPIC_API_KEY);
+        } else if (process.env.GEMINI_API_KEY) {
+          provider = AIProviderFactory.create('gemini', process.env.GEMINI_API_KEY);
+        } else if (process.env.XAI_API_KEY) {
+          provider = AIProviderFactory.create('xai', process.env.XAI_API_KEY);
+        } else if (process.env.PERPLEXITY_API_KEY) {
+          provider = AIProviderFactory.create('perplexity', process.env.PERPLEXITY_API_KEY);
+        }
+      }
+      
+      if (!provider) {
+        return res.json({
+          id: `msg_${Date.now()}`,
+          role: 'assistant',
+          content: `No AI provider is configured. Please add one of the following API keys to Secrets:\n\n• OPENAI_API_KEY - For GPT-4o (latest OpenAI model)\n• ANTHROPIC_API_KEY - For Claude Sonnet 4 (latest Anthropic model)\n• GEMINI_API_KEY - For Gemini 2.5 Flash/Pro\n• XAI_API_KEY - For Grok 2\n• PERPLEXITY_API_KEY - For Perplexity with web search\n\nAdd the key in Secrets tab and try again.`,
+          timestamp: Date.now()
+        });
+      }
       
       // Build conversation history
       const conversationHistory = context?.history || [];
@@ -2472,7 +2522,7 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
             let agentResponse;
             if (codeAnalysis && provider.generateCodeWithUnderstanding) {
               agentResponse = await provider.generateCodeWithUnderstanding(
-                message,
+                agentMessages,
                 codeAnalysis,
                 {
                   language: project.language || 'javascript',
@@ -2483,7 +2533,7 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
               );
             } else {
               // Fallback to regular generateChat if no code analysis
-              agentResponse = await provider.generateChat(agentMessages, 1500, 0.7);
+              agentResponse = await provider.generateChat(agentMessages, { maxTokens: 1500, temperature: 0.7 });
             }
             
             responseContent = agentResponse || "I'll help you build that! Let me create the necessary files and structure for your application.";
@@ -2519,7 +2569,7 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
       ];
       
       // Generate response using the selected provider
-      const response = await provider.generateChat(messages, 1000, 0.7);
+      const response = await provider.generateChat(messages, { maxTokens: 1000, temperature: 0.7 });
       
       const assistantMessage = {
         id: `msg_${Date.now()}`,

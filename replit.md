@@ -47,6 +47,23 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-27: **Multiple AI Model Support Implemented (100% Complete)**:
+  * **AI Provider System Created**: Built comprehensive AIProviderFactory supporting 5 major AI models
+    - OpenAI GPT-4o (latest model, not GPT-4)
+    - Anthropic Claude Sonnet 4 (latest model, not Claude 3.x)
+    - Google Gemini 2.5 Flash/Pro
+    - xAI Grok 2 with vision capabilities
+    - Perplexity with web search
+  * **Backend Integration**: 
+    - Updated AI chat endpoint to dynamically select providers based on available API keys
+    - Auto-fallback system: tries OpenAI first, then Anthropic, Gemini, xAI, Perplexity
+    - User can specify preferred provider in API request
+  * **Frontend UI Enhancement**:
+    - Added AI model selector dropdown in ReplitAgentChat component
+    - Shows all 5 available AI models with descriptions
+    - Seamlessly switches between providers without page reload
+  * **Key Fix**: Resolved critical AI agent file creation issue - actions now use correct API format (name instead of path)
+  * **100% Autonomous**: AI agent can now build complete applications by creating actual files and folders
 - 2025-07-27: **About Page Team Section Updated**:
   * Updated leadership team on About page with new names and titles:
     - CEO: Simon Benarrous (replacing Amjad Masad)

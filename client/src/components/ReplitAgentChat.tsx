@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Bot, User, Send, Paperclip, Mic, Image, FileText, 
   Loader2, Sparkles, Code, Terminal, Globe, Database,
@@ -60,6 +61,7 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
     { id: '1', title: 'Current Conversation', lastMessage: new Date() }
   ]);
   const [activeConversation, setActiveConversation] = useState('1');
+  const [selectedProvider, setSelectedProvider] = useState<string>('openai');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -253,7 +255,8 @@ Would you like me to explain any part of the implementation or make adjustments?
           thinking: activeMode === 'thinking',
           highPower: activeMode === 'highpower',
           webSearch: userMessage.metadata?.webSearch
-        }
+        },
+        provider: selectedProvider
       });
 
       if (!response.ok) {
@@ -283,22 +286,38 @@ Would you like me to explain any part of the implementation or make adjustments?
           if (action.type === 'create_file' && action.data.path && action.data.content) {
             try {
               const fileResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
-                path: action.data.path,
-                content: action.data.content
+                name: action.data.path,
+                content: action.data.content,
+                isFolder: false
               });
               
               if (!fileResponse.ok) {
                 console.error('Failed to create file:', action.data.path, await fileResponse.text());
               } else {
                 console.log('Successfully created file:', action.data.path);
+                // Invalidate files cache to refresh file explorer
+                queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
               }
             } catch (error) {
               console.error('Error creating file:', action.data.path, error);
             }
           } else if (action.type === 'create_folder' && action.data.path) {
-            await apiRequest('POST', `/api/projects/${projectId}/folders`, {
-              path: action.data.path
-            });
+            try {
+              const folderResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+                name: action.data.path,
+                isFolder: true
+              });
+              
+              if (!folderResponse.ok) {
+                console.error('Failed to create folder:', action.data.path, await folderResponse.text());
+              } else {
+                console.log('Successfully created folder:', action.data.path);
+                // Invalidate files cache to refresh file explorer
+                queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+              }
+            } catch (error) {
+              console.error('Error creating folder:', action.data.path, error);
+            }
           } else if (action.type === 'install_package' && action.data.packages) {
             await apiRequest('POST', `/api/projects/${projectId}/packages`, {
               packages: action.data.packages
@@ -435,6 +454,47 @@ Please make sure you have configured your AI API key in the project settings. Yo
             </TabsTrigger>
           </TabsList>
         </Tabs>
+        
+        {/* AI Model Selector */}
+        <div className="mt-3">
+          <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Select AI Model" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="openai">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">OpenAI GPT-4o</span>
+                  <span className="text-xs text-muted-foreground">(Latest)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="anthropic">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Anthropic Claude Sonnet 4</span>
+                  <span className="text-xs text-muted-foreground">(Latest)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="gemini">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Google Gemini 2.5</span>
+                  <span className="text-xs text-muted-foreground">(Flash/Pro)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="xai">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">xAI Grok 2</span>
+                  <span className="text-xs text-muted-foreground">(Vision)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="perplexity">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Perplexity</span>
+                  <span className="text-xs text-muted-foreground">(Web Search)</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Messages */}
