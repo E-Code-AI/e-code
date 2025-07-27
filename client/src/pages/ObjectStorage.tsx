@@ -90,19 +90,6 @@ export default function ObjectStorage() {
   // Fetch storage stats
   const { data: stats, isLoading: statsLoading } = useQuery<StorageStats>({
     queryKey: ['/api/storage/stats'],
-    queryFn: async () => {
-      // Mock data for demonstration
-      return {
-        totalSize: 5 * 1024 * 1024 * 1024, // 5 GB
-        usedSize: 1.2 * 1024 * 1024 * 1024, // 1.2 GB
-        fileCount: 156,
-        folderCount: 12,
-        bandwidth: {
-          used: 8.5 * 1024 * 1024 * 1024, // 8.5 GB
-          limit: 100 * 1024 * 1024 * 1024 // 100 GB
-        }
-      };
-    }
   });
 
   // Fetch files and folders
@@ -111,81 +98,6 @@ export default function ObjectStorage() {
     folders: StorageFolder[];
   }>({
     queryKey: ['/api/storage/list', currentPath],
-    queryFn: async () => {
-      // Mock data for demonstration
-      return {
-        folders: [
-          {
-            id: 'f1',
-            name: 'images',
-            path: '/images',
-            fileCount: 45,
-            size: 256 * 1024 * 1024,
-            lastModified: '2 days ago'
-          },
-          {
-            id: 'f2',
-            name: 'documents',
-            path: '/documents',
-            fileCount: 23,
-            size: 128 * 1024 * 1024,
-            lastModified: '1 week ago'
-          },
-          {
-            id: 'f3',
-            name: 'videos',
-            path: '/videos',
-            fileCount: 8,
-            size: 512 * 1024 * 1024,
-            lastModified: '3 days ago'
-          }
-        ],
-        files: [
-          {
-            id: '1',
-            name: 'logo.png',
-            path: '/logo.png',
-            size: 124 * 1024,
-            type: 'image',
-            mimeType: 'image/png',
-            lastModified: '1 hour ago',
-            url: 'https://storage.ecode.app/logo.png',
-            isPublic: true
-          },
-          {
-            id: '2',
-            name: 'report.pdf',
-            path: '/report.pdf',
-            size: 2.3 * 1024 * 1024,
-            type: 'document',
-            mimeType: 'application/pdf',
-            lastModified: '3 hours ago',
-            isPublic: false
-          },
-          {
-            id: '3',
-            name: 'demo-video.mp4',
-            path: '/demo-video.mp4',
-            size: 45 * 1024 * 1024,
-            type: 'video',
-            mimeType: 'video/mp4',
-            lastModified: '1 day ago',
-            url: 'https://storage.ecode.app/demo-video.mp4',
-            isPublic: true
-          },
-          {
-            id: '4',
-            name: 'data-export.json',
-            path: '/data-export.json',
-            size: 856 * 1024,
-            type: 'file',
-            mimeType: 'application/json',
-            lastModified: '5 hours ago',
-            isPublic: false
-          }
-        ]
-      };
-    }
   });
 
   // Upload file mutation

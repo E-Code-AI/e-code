@@ -499,3 +499,346 @@ export const insertNotificationPreferencesSchema = createInsertSchema(notificati
 
 export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
 export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
+
+// Templates table - for project templates
+export const templates = pgTable('templates', {
+  id: serial('id').primaryKey(),
+  slug: varchar('slug', { length: 255 }).unique().notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  icon: varchar('icon', { length: 100 }), // icon name from lucide-react
+  category: varchar('category', { length: 50 }).notNull(), // web, api, mobile, data, game, etc.
+  tags: text('tags').array().default([]).notNull(),
+  authorId: integer('author_id').references(() => users.id),
+  authorName: varchar('author_name', { length: 255 }).notNull(),
+  authorVerified: boolean('author_verified').default(false),
+  language: varchar('language', { length: 50 }).notNull(),
+  framework: varchar('framework', { length: 100 }),
+  difficulty: varchar('difficulty', { length: 20 }).notNull(), // beginner, intermediate, advanced
+  estimatedTime: varchar('estimated_time', { length: 50 }),
+  features: text('features').array().default([]).notNull(),
+  files: jsonb('files').notNull(), // JSON structure of template files
+  dependencies: jsonb('dependencies'), // package.json dependencies
+  uses: integer('uses').default(0).notNull(),
+  stars: integer('stars').default(0).notNull(),
+  forks: integer('forks').default(0).notNull(),
+  isFeatured: boolean('is_featured').default(false),
+  isOfficial: boolean('is_official').default(false),
+  published: boolean('published').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertTemplateSchema = createInsertSchema(templates).omit({
+  id: true,
+  uses: true,
+  stars: true,
+  forks: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertTemplate = z.infer<typeof insertTemplateSchema>;
+export type Template = typeof templates.$inferSelect;
+
+// Community posts table
+export const communityPosts = pgTable('community_posts', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 500 }).notNull(),
+  content: text('content').notNull(),
+  authorId: integer('author_id').notNull().references(() => users.id),
+  category: varchar('category', { length: 50 }).notNull(), // showcase, tutorials, help, discuss
+  tags: text('tags').array().default([]).notNull(),
+  projectId: integer('project_id').references(() => projects.id),
+  imageUrl: varchar('image_url', { length: 500 }),
+  likes: integer('likes').default(0).notNull(),
+  comments: integer('comments').default(0).notNull(),
+  views: integer('views').default(0).notNull(),
+  isPinned: boolean('is_pinned').default(false),
+  isLocked: boolean('is_locked').default(false),
+  published: boolean('published').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertCommunityPostSchema = createInsertSchema(communityPosts).omit({
+  id: true,
+  likes: true,
+  comments: true,
+  views: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCommunityPost = z.infer<typeof insertCommunityPostSchema>;
+export type CommunityPost = typeof communityPosts.$inferSelect;
+
+// Community challenges table
+export const communityChallenges = pgTable('community_challenges', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 500 }).notNull(),
+  description: text('description').notNull(),
+  difficulty: varchar('difficulty', { length: 20 }).notNull(), // easy, medium, hard
+  category: varchar('category', { length: 50 }).notNull(),
+  participants: integer('participants').default(0).notNull(),
+  submissions: integer('submissions').default(0).notNull(),
+  prize: varchar('prize', { length: 255 }),
+  deadline: timestamp('deadline').notNull(),
+  status: varchar('status', { length: 20 }).default('active').notNull(), // active, completed, cancelled
+  rules: text('rules'),
+  judgeId: integer('judge_id').references(() => users.id),
+  winnerId: integer('winner_id').references(() => users.id),
+  tags: text('tags').array().default([]).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertCommunityChallengeSchema = createInsertSchema(communityChallenges).omit({
+  id: true,
+  participants: true,
+  submissions: true,
+  winnerId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCommunityChallenge = z.infer<typeof insertCommunityChallengeSchema>;
+export type CommunityChallenge = typeof communityChallenges.$inferSelect;
+
+// Themes table - for editor and UI themes
+export const themes = pgTable('themes', {
+  id: serial('id').primaryKey(),
+  slug: varchar('slug', { length: 255 }).unique().notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  type: varchar('type', { length: 20 }).notNull(), // editor, syntax, ui
+  preview: jsonb('preview').notNull(), // { bg: '#...', fg: '#...', accent: '#...' }
+  config: jsonb('config').notNull(), // Full theme configuration
+  authorId: integer('author_id').references(() => users.id),
+  authorName: varchar('author_name', { length: 255 }).notNull(),
+  downloads: integer('downloads').default(0).notNull(),
+  rating: integer('rating').default(0), // Average rating 0-5
+  isOfficial: boolean('is_official').default(false),
+  isDark: boolean('is_dark').default(true),
+  published: boolean('published').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertThemeSchema = createInsertSchema(themes).omit({
+  id: true,
+  downloads: true,
+  rating: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertTheme = z.infer<typeof insertThemeSchema>;
+export type Theme = typeof themes.$inferSelect;
+
+// Announcements table
+export const announcements = pgTable('announcements', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 500 }).notNull(),
+  content: text('content'),
+  type: varchar('type', { length: 50 }).notNull(), // feature, maintenance, security, general
+  priority: varchar('priority', { length: 20 }).default('normal').notNull(), // low, normal, high, critical
+  targetAudience: varchar('target_audience', { length: 50 }).default('all').notNull(), // all, free, pro, enterprise
+  icon: varchar('icon', { length: 100 }),
+  link: varchar('link', { length: 500 }),
+  active: boolean('active').default(true),
+  dismissible: boolean('dismissible').default(true),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
+export type Announcement = typeof announcements.$inferSelect;
+
+// Learning courses table
+export const learningCourses = pgTable('learning_courses', {
+  id: serial('id').primaryKey(),
+  slug: varchar('slug', { length: 255 }).unique().notNull(),
+  title: varchar('title', { length: 500 }).notNull(),
+  description: text('description').notNull(),
+  category: varchar('category', { length: 100 }).notNull(),
+  difficulty: varchar('difficulty', { length: 20 }).notNull(),
+  duration: varchar('duration', { length: 100 }), // e.g., "4 weeks", "20 hours"
+  thumbnail: varchar('thumbnail', { length: 500 }),
+  authorId: integer('author_id').references(() => users.id),
+  authorName: varchar('author_name', { length: 255 }).notNull(),
+  totalLessons: integer('total_lessons').default(0).notNull(),
+  enrollments: integer('enrollments').default(0).notNull(),
+  rating: integer('rating').default(0), // Average rating 0-5
+  tags: text('tags').array().default([]).notNull(),
+  prerequisites: text('prerequisites').array().default([]).notNull(),
+  published: boolean('published').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertLearningCourseSchema = createInsertSchema(learningCourses).omit({
+  id: true,
+  enrollments: true,
+  rating: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertLearningCourse = z.infer<typeof insertLearningCourseSchema>;
+export type LearningCourse = typeof learningCourses.$inferSelect;
+
+// User learning progress table
+export const userLearningProgress = pgTable('user_learning_progress', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  courseId: integer('course_id').notNull().references(() => learningCourses.id),
+  currentLesson: integer('current_lesson').default(1).notNull(),
+  completedLessons: integer('completed_lessons').default(0).notNull(),
+  progress: integer('progress').default(0).notNull(), // Percentage
+  streak: integer('streak').default(0).notNull(), // Days in a row
+  lastActivityAt: timestamp('last_activity_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+  startedAt: timestamp('started_at').defaultNow(),
+}, (table) => ({
+  userCourseIdx: uniqueIndex('user_course_idx').on(table.userId, table.courseId),
+}));
+
+export const insertUserLearningProgressSchema = createInsertSchema(userLearningProgress).omit({
+  id: true,
+  startedAt: true,
+});
+
+export type InsertUserLearningProgress = z.infer<typeof insertUserLearningProgressSchema>;
+export type UserLearningProgress = typeof userLearningProgress.$inferSelect;
+
+// Cycles (virtual currency) table
+export const userCycles = pgTable('user_cycles', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().unique().references(() => users.id),
+  balance: integer('balance').default(0).notNull(),
+  totalEarned: integer('total_earned').default(0).notNull(),
+  totalSpent: integer('total_spent').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertUserCyclesSchema = createInsertSchema(userCycles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserCycles = z.infer<typeof insertUserCyclesSchema>;
+export type UserCycles = typeof userCycles.$inferSelect;
+
+// Cycles transactions table
+export const cyclesTransactions = pgTable('cycles_transactions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  amount: integer('amount').notNull(), // Positive for credit, negative for debit
+  type: varchar('type', { length: 50 }).notNull(), // bounty_reward, purchase, referral, etc.
+  description: text('description').notNull(),
+  relatedId: integer('related_id'), // ID of related entity (bounty, purchase, etc.)
+  relatedType: varchar('related_type', { length: 50 }), // bounty, powerup, etc.
+  balance: integer('balance').notNull(), // Balance after transaction
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const insertCyclesTransactionSchema = createInsertSchema(cyclesTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCyclesTransaction = z.infer<typeof insertCyclesTransactionSchema>;
+export type CyclesTransaction = typeof cyclesTransactions.$inferSelect;
+
+// Object storage table - for S3-like storage
+export const objectStorage = pgTable('object_storage', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  projectId: integer('project_id').references(() => projects.id),
+  name: varchar('name', { length: 255 }).notNull(),
+  path: varchar('path', { length: 1000 }).notNull(),
+  size: integer('size').notNull(), // in bytes
+  type: varchar('type', { length: 20 }).notNull(), // file, folder
+  mimeType: varchar('mime_type', { length: 100 }),
+  url: varchar('url', { length: 1000 }),
+  cdnUrl: varchar('cdn_url', { length: 1000 }),
+  isPublic: boolean('is_public').default(false),
+  metadata: jsonb('metadata'), // Additional file metadata
+  parentId: integer('parent_id').references(() => objectStorage.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  userPathIdx: uniqueIndex('user_path_idx').on(table.userId, table.path),
+}));
+
+export const insertObjectStorageSchema = createInsertSchema(objectStorage).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertObjectStorage = z.infer<typeof insertObjectStorageSchema>;
+export type ObjectStorage = typeof objectStorage.$inferSelect;
+
+// Extensions table
+export const extensions = pgTable('extensions', {
+  id: serial('id').primaryKey(),
+  extensionId: varchar('extension_id', { length: 100 }).notNull().unique(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  author: varchar('author', { length: 255 }).notNull(),
+  authorAvatar: varchar('author_avatar', { length: 500 }),
+  version: varchar('version', { length: 50 }).notNull(),
+  downloads: integer('downloads').default(0).notNull(),
+  rating: real('rating').default(0).notNull(),
+  ratingCount: integer('rating_count').default(0).notNull(),
+  category: varchar('category', { length: 50 }).notNull(), // 'themes' | 'languages' | 'formatters' | 'linters' | 'snippets' | 'tools'
+  tags: text().array().default([]).notNull(),
+  icon: varchar('icon', { length: 10 }).notNull(),
+  price: real('price').default(0).notNull(),
+  screenshots: text().array().default([]),
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertExtensionSchema = createInsertSchema(extensions).omit({
+  id: true,
+  downloads: true,
+  rating: true,
+  ratingCount: true,
+  lastUpdated: true,
+  createdAt: true,
+});
+
+export type InsertExtension = z.infer<typeof insertExtensionSchema>;
+export type Extension = typeof extensions.$inferSelect;
+
+// User Extensions (installed extensions per user)
+export const userExtensions = pgTable('user_extensions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  extensionId: integer('extension_id').notNull().references(() => extensions.id),
+  installedAt: timestamp('installed_at').defaultNow().notNull(),
+  hasUpdate: boolean('has_update').default(false).notNull(),
+}, (table) => ({
+  userExtensionUnique: uniqueIndex('user_extension_unique').on(table.userId, table.extensionId),
+}));
+
+export const insertUserExtensionSchema = createInsertSchema(userExtensions).omit({
+  id: true,
+  installedAt: true,
+  hasUpdate: true,
+});
+
+export type InsertUserExtension = z.infer<typeof insertUserExtensionSchema>;
+export type UserExtension = typeof userExtensions.$inferSelect;

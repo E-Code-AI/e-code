@@ -74,6 +74,51 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  // Fetch recent deployments
+  const { data: recentDeployments = [] } = useQuery<any[]>({
+    queryKey: ['/api/user/deployments/recent'],
+    enabled: !!user,
+  });
+
+  // Fetch storage usage
+  const { data: storageData = { used: 0, limit: 5, unit: 'GB' } } = useQuery<any>({
+    queryKey: ['/api/user/storage'],
+    enabled: !!user,
+  });
+
+  // Fetch learning progress
+  const { data: learningProgress = null } = useQuery<any>({
+    queryKey: ['/api/user/learning'],
+    enabled: !!user,
+  });
+
+  // Fetch cycles balance
+  const { data: cyclesData = { balance: 0, currency: 'cycles' } } = useQuery<any>({
+    queryKey: ['/api/user/cycles'],
+    enabled: !!user,
+  });
+
+  // Fetch announcements
+  const { data: announcements = [] } = useQuery<any[]>({
+    queryKey: ['/api/announcements'],
+  });
+
+  // Fetch teams
+  const { data: teams = [] } = useQuery<any[]>({
+    queryKey: ['/api/user/teams'],
+    enabled: !!user,
+  });
+
+  // Fetch trending projects
+  const { data: trendingRepls = [] } = useQuery<any[]>({
+    queryKey: ['/api/trending'],
+  });
+
+  // Fetch activity feed
+  const { data: activityFeed = [] } = useQuery<any[]>({
+    queryKey: ['/api/activity-feed'],
+  });
+
   // Create project mutation
   const createProjectMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -90,25 +135,11 @@ export default function Dashboard() {
     },
   });
 
-  // Mock data for additional features
+  // Derived data
   const pinnedProjects = recentProjects.slice(0, 2);
-  const recentDeployments = [
-    { id: 1, project: 'Portfolio Site', status: 'active', url: 'https://portfolio.e-code.app', time: '2 hours ago' },
-    { id: 2, project: 'Blog Platform', status: 'building', url: null, time: '5 hours ago' },
-  ];
-  
-  const learningProgress = {
-    course: '100 Days of Code',
-    day: 23,
-    streak: 15,
-    lastCompleted: 'Day 22: Async/Await',
-    nextLesson: 'Day 23: Error Handling',
-    progress: 23,
-  };
-
-  const storageUsed = 1.2; // GB
-  const storageLimit = 5; // GB
-  const cyclesBalance = 500;
+  const storageUsed = storageData.used;
+  const storageLimit = storageData.limit;
+  const cyclesBalance = cyclesData.balance;
 
   // Calculate real statistics from all projects
   const stats = useMemo(() => {
@@ -123,88 +154,7 @@ export default function Dashboard() {
     };
   }, [allProjects]);
   
-  const announcements = [
-    { id: 1, title: 'New AI Features Available', type: 'feature', time: '1 day ago' },
-    { id: 2, title: 'Scheduled Maintenance', type: 'maintenance', time: '3 days ago' },
-  ];
 
-  const teams = [
-    { id: 1, name: 'Web Dev Team', members: 5, role: 'owner' },
-    { id: 2, name: 'Open Source Contributors', members: 128, role: 'member' },
-  ];
-
-  // Fetch trending projects (mock data for now)
-  const trendingRepls = [
-    {
-      id: 1,
-      name: 'My First Website',
-      author: 'alex_beginner',
-      language: 'HTML',
-      stars: 342,
-      forks: 89,
-      description: 'A colorful personal website I made to share my hobbies',
-      lastUpdated: '2 hours ago',
-      avatar: null,
-    },
-    {
-      id: 2,
-      name: 'Fun Drawing App',
-      author: 'creative_sarah',
-      language: 'JavaScript',
-      stars: 567,
-      forks: 123,
-      description: 'Draw and paint right in your browser - super easy to use!',
-      lastUpdated: '5 hours ago',
-      avatar: null,
-    },
-    {
-      id: 3,
-      name: 'Daily Journal',
-      author: 'mindful_mike',
-      language: 'Python',
-      stars: 234,
-      forks: 45,
-      description: 'A simple app to write and save your daily thoughts',
-      lastUpdated: '1 day ago',
-      avatar: null,
-    },
-  ];
-
-  // Community activity feed (mock data)
-  const activityFeed = [
-    {
-      id: 1,
-      type: 'remix',
-      user: 'sarah_learner',
-      action: 'remixed',
-      target: 'Birthday Card Maker',
-      time: '10 minutes ago',
-    },
-    {
-      id: 2,
-      type: 'like',
-      user: 'creative_mike',
-      action: 'liked',
-      target: 'Story Writing Helper',
-      time: '25 minutes ago',
-    },
-    {
-      id: 3,
-      type: 'comment',
-      user: 'helpful_emma',
-      action: 'gave feedback on',
-      target: 'Recipe Organizer',
-      time: '1 hour ago',
-    },
-    {
-      id: 4,
-      type: 'share',
-      user: 'proud_parent',
-      action: 'shared',
-      target: 'Kids Math Game',
-      time: '2 hours ago',
-    },
-  ];
 
   const getActivityIcon = (type: string) => {
     switch (type) {
