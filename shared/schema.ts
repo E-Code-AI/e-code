@@ -8,9 +8,8 @@ export const visibilityEnum = pgEnum("visibility", ["public", "private", "unlist
 
 // Programming language enum
 export const languageEnum = pgEnum("language", [
-  "nodejs", "python", "java", "go", "ruby", "rust", "php", "c", "cpp", 
-  "csharp", "swift", "kotlin", "dart", "typescript", "bash", 
-  "html-css-js", "nix", "deno"
+  "javascript", "python", "html", "css", "typescript", "java", 
+  "c", "cpp", "go", "ruby", "php", "rust", "nodejs"
 ]);
 
 // Users table
