@@ -281,10 +281,20 @@ Would you like me to explain any part of the implementation or make adjustments?
           
           // Execute the action
           if (action.type === 'create_file' && action.data.path && action.data.content) {
-            await apiRequest('POST', `/api/projects/${projectId}/files`, {
-              path: action.data.path,
-              content: action.data.content
-            });
+            try {
+              const fileResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+                path: action.data.path,
+                content: action.data.content
+              });
+              
+              if (!fileResponse.ok) {
+                console.error('Failed to create file:', action.data.path, await fileResponse.text());
+              } else {
+                console.log('Successfully created file:', action.data.path);
+              }
+            } catch (error) {
+              console.error('Error creating file:', action.data.path, error);
+            }
           } else if (action.type === 'create_folder' && action.data.path) {
             await apiRequest('POST', `/api/projects/${projectId}/folders`, {
               path: action.data.path
@@ -308,7 +318,7 @@ Would you like me to explain any part of the implementation or make adjustments?
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.response || '',
+        content: data.content || data.response || '',
         timestamp: new Date(),
         isStreaming: false,
         actions: data.actions?.map((action: any) => ({
