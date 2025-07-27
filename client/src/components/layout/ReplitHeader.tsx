@@ -63,7 +63,7 @@ export function ReplitHeader() {
 
   return (
     <>
-    <header className="h-12 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-3 replit-transition">
+    <header className="h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition shadow-sm">
       {/* Logo et navigation principale */}
       <div className="flex items-center">
         {/* Mobile menu button - only on mobile */}

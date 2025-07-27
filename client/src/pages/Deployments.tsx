@@ -69,13 +69,13 @@ export default function Deployments() {
   };
 
   return (
-    <div className="container mx-auto max-w-7xl py-8 px-4">
+    <div className="container mx-auto max-w-6xl py-8 px-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
+        <h1 className="text-3xl font-semibold flex items-center gap-3 text-[var(--ecode-text)]">
           <Globe className="h-8 w-8 text-blue-500" />
           Deployments
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-[var(--ecode-text-secondary)] mt-2 text-base">
           Manage and monitor your deployed applications
         </p>
       </div>

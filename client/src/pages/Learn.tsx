@@ -237,7 +237,7 @@ export default function Learn() {
           {/* Course Grid */}
           <div className="grid md:grid-cols-2 gap-6">
             {courses.map((course) => (
-              <Card key={course.id} className="hover:shadow-lg transition-shadow">
+              <Card key={course.id} className="replit-card-hover">
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
                     <div className="text-4xl">{course.thumbnail}</div>

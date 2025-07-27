@@ -80,10 +80,10 @@ export default function Account() {
   };
 
   return (
-    <div className="container-responsive py-responsive mb-16 md:mb-0">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-responsive-xl font-bold">Account Settings</h1>
-        <p className="text-muted-foreground mt-1 sm:mt-2 text-responsive-sm">
+    <div className="container mx-auto max-w-6xl py-8 px-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-semibold text-[var(--ecode-text)]">Account Settings</h1>
+        <p className="text-[var(--ecode-text-secondary)] mt-2 text-base">
           Manage your account settings and preferences
         </p>
       </div>

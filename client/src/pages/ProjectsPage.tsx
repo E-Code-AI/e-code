@@ -803,7 +803,7 @@ const ProjectsPage = () => {
                 {filteredProjects.map((project) => (
                   <div 
                     key={project.id} 
-                    className="group relative bg-white dark:bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-md transition-all overflow-hidden"
+                    className="group relative bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-md hover:-translate-y-1 transition-all duration-150 overflow-hidden"
                   >
                     {/* Pin Indicator */}
                     {pinnedProjects.includes(project.id) && (
