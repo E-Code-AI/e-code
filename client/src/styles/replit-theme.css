@@ -1,53 +1,54 @@
-/* Thème exact de E-Code - Variables CSS personnalisées */
+/* Replit Exact Design System - E-Code Branded */
 :root {
-  /* Light mode colors by default */
+  /* Light mode colors - Exact Replit values */
   --ecode-background: #ffffff;
-  --ecode-surface: #f6f8fa;
-  --ecode-surface-secondary: #f1f3f4;
-  --ecode-border: #d0d7de;
-  --ecode-text: #24292f;
-  --ecode-text-secondary: #656d76;
-  --ecode-accent: #1f883d;
-  --ecode-accent-hover: #1a7f37;
-  --ecode-danger: #cf222e;
-  --ecode-warning: #9a6700;
-  --ecode-info: #0550ae;
+  --ecode-surface: #fafafa;
+  --ecode-surface-secondary: #f5f5f5;
+  --ecode-border: #e0e0e0;
+  --ecode-text: #0f172a;
+  --ecode-text-secondary: #64748b;
+  --ecode-accent: #0079F2;
+  --ecode-accent-hover: #0066CC;
+  --ecode-danger: #ef4444;
+  --ecode-warning: #f59e0b;
+  --ecode-info: #3b82f6;
   
-  /* Couleurs spécifiques E-Code - Light mode */
-  --ecode-green: #1a7f37;
-  --ecode-blue: #0969da;
-  --ecode-purple: #8250df;
-  --ecode-orange: #fb8500;
-  --ecode-red: #da3633;
+  /* Specific Replit colors - Light mode */
+  --ecode-green: #10b981;
+  --ecode-blue: #0079F2;
+  --ecode-purple: #8b5cf6;
+  --ecode-orange: #f97316;
+  --ecode-red: #ef4444;
   
-  /* Navigation et sidebar */
-  --ecode-sidebar-bg: #f6f8fa;
-  --ecode-sidebar-hover: #eef1f3;
-  --ecode-sidebar-active: #1f883d;
+  /* Navigation and sidebar */
+  --ecode-sidebar-bg: #fcfcfc;
+  --ecode-sidebar-hover: #f5f5f5;
+  --ecode-sidebar-active: #0079F2;
+  --ecode-sidebar-border: #e5e5e5;
   
-  /* Éditeur */
+  /* Editor */
   --ecode-editor-bg: #ffffff;
-  --ecode-editor-gutter: #f6f8fa;
-  --ecode-editor-selection: #b6d7ff;
-  --ecode-editor-line-highlight: #f6f8fa;
+  --ecode-editor-gutter: #fafafa;
+  --ecode-editor-selection: #b3d4fc;
+  --ecode-editor-line-highlight: #f8f8f8;
   
   /* Terminal */
-  --ecode-terminal-bg: #ffffff;
-  --ecode-terminal-text: #24292f;
-  --ecode-terminal-cursor: #1f883d;
+  --ecode-terminal-bg: #1e1e1e;
+  --ecode-terminal-text: #d4d4d4;
+  --ecode-terminal-cursor: #00ff00;
   
-  /* Boutons et contrôles */
-  --ecode-button-primary: #1f883d;
-  --ecode-button-primary-hover: #1a7f37;
-  --ecode-button-secondary: #f6f8fa;
-  --ecode-button-secondary-hover: #eef1f3;
+  /* Buttons and controls */
+  --ecode-button-primary: #0079F2;
+  --ecode-button-primary-hover: #0066CC;
+  --ecode-button-secondary: #f5f5f5;
+  --ecode-button-secondary-hover: #e8e8e8;
   
-  /* Shadows et elevations */
-  --ecode-shadow-sm: 0 1px 3px rgba(31, 35, 40, 0.12);
-  --ecode-shadow-md: 0 4px 6px rgba(31, 35, 40, 0.15);
-  --ecode-shadow-lg: 0 10px 20px rgba(31, 35, 40, 0.2);
+  /* Shadows - Replit style */
+  --ecode-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --ecode-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --ecode-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   
-  /* Spacing système E-Code */
+  /* Spacing - Replit system */
   --ecode-space-1: 4px;
   --ecode-space-2: 8px;
   --ecode-space-3: 12px;
@@ -58,14 +59,14 @@
   --ecode-space-10: 40px;
   --ecode-space-12: 48px;
   
-  /* Typography E-Code */
-  --ecode-font-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  --ecode-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Typography - Replit exact */
+  --ecode-font-mono: 'IBM Plex Mono', 'SF Mono', Monaco, 'Inconsolata', 'Fira Mono', 'Droid Sans Mono', 'Source Code Pro', monospace;
+  --ecode-font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   
-  /* Border radius */
-  --ecode-radius-sm: 0px;
-  --ecode-radius-md: 0px;
-  --ecode-radius-lg: 0px;
+  /* Border radius - Replit values */
+  --ecode-radius-sm: 4px;
+  --ecode-radius-md: 8px;
+  --ecode-radius-lg: 12px;
   
   /* Z-index layers */
   --ecode-z-dropdown: 1000;
@@ -74,54 +75,55 @@
   --ecode-z-notification: 1300;
 }
 
-/* Dark mode E-Code */
+/* Dark mode - Replit exact */
 .dark {
-  /* Couleurs de base E-Code */
-  --ecode-background: #0e1117;
-  --ecode-surface: #161b22;
-  --ecode-surface-secondary: #21262d;
-  --ecode-border: #30363d;
-  --ecode-text: #e6edf3;
-  --ecode-text-secondary: #7d8590;
-  --ecode-accent: #238636;
-  --ecode-accent-hover: #2ea043;
-  --ecode-danger: #da3633;
-  --ecode-warning: #d29922;
-  --ecode-info: #0969da;
+  /* Base colors - Replit dark theme */
+  --ecode-background: #0e1525;
+  --ecode-surface: #1c2333;
+  --ecode-surface-secondary: #262c3b;
+  --ecode-border: #313744;
+  --ecode-text: #f5f9fc;
+  --ecode-text-secondary: #9ba3b3;
+  --ecode-accent: #0079F2;
+  --ecode-accent-hover: #0099ff;
+  --ecode-danger: #ef4444;
+  --ecode-warning: #f59e0b;
+  --ecode-info: #3b82f6;
   
-  /* Couleurs spécifiques E-Code */
-  --ecode-green: #56f39a;
-  --ecode-blue: #58a6ff;
-  --ecode-purple: #a5a5ff;
-  --ecode-orange: #ffab40;
-  --ecode-red: #ff6b6b;
+  /* Specific colors */
+  --ecode-green: #34d399;
+  --ecode-blue: #0079F2;
+  --ecode-purple: #a78bfa;
+  --ecode-orange: #fb923c;
+  --ecode-red: #f87171;
   
-  /* Navigation et sidebar */
-  --ecode-sidebar-bg: #161b22;
-  --ecode-sidebar-hover: #21262d;
-  --ecode-sidebar-active: #238636;
+  /* Navigation and sidebar */
+  --ecode-sidebar-bg: #1c2333;
+  --ecode-sidebar-hover: #262c3b;
+  --ecode-sidebar-active: #0079F2;
+  --ecode-sidebar-border: #313744;
   
-  /* Éditeur */
-  --ecode-editor-bg: #0d1117;
-  --ecode-editor-gutter: #161b22;
-  --ecode-editor-selection: #264f78;
-  --ecode-editor-line-highlight: #2f3349;
+  /* Editor */
+  --ecode-editor-bg: #0e1525;
+  --ecode-editor-gutter: #1c2333;
+  --ecode-editor-selection: #2d4a7c;
+  --ecode-editor-line-highlight: #1a2332;
   
   /* Terminal */
-  --ecode-terminal-bg: #0d1117;
-  --ecode-terminal-text: #e6edf3;
-  --ecode-terminal-cursor: #56f39a;
+  --ecode-terminal-bg: #0e1525;
+  --ecode-terminal-text: #f5f9fc;
+  --ecode-terminal-cursor: #00ff00;
   
-  /* Boutons et contrôles */
-  --ecode-button-primary: #238636;
-  --ecode-button-primary-hover: #2ea043;
-  --ecode-button-secondary: #21262d;
-  --ecode-button-secondary-hover: #30363d;
+  /* Buttons and controls */
+  --ecode-button-primary: #0079F2;
+  --ecode-button-primary-hover: #0099ff;
+  --ecode-button-secondary: #262c3b;
+  --ecode-button-secondary-hover: #313744;
   
-  /* Shadows et elevations */
-  --ecode-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
-  --ecode-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.15);
-  --ecode-shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.2);
+  /* Shadows */
+  --ecode-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --ecode-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --ecode-shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.5);
 }
 
 /* Keeping light mode selector for compatibility */

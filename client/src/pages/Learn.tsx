@@ -132,8 +132,9 @@ export default function Learn() {
   };
 
   return (
-    <div className="container mx-auto max-w-7xl py-8 px-4">
-      <div className="mb-8">
+    <ReplitLayout showSidebar={false}>
+      <div className="container mx-auto max-w-6xl py-12 px-6">
+        <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Book className="h-8 w-8 text-primary" />
           Learn
@@ -465,6 +466,7 @@ export default function Learn() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </ReplitLayout>
   );
 }

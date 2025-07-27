@@ -388,8 +388,8 @@ Would you like me to start building this for you? I can create the entire applic
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header with Conversation Management */}
-      <div className="border-b p-3">
-        <div className="flex items-center justify-between mb-2">
+      <div className="border-b border-[var(--ecode-border)] p-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center">
               <Bot className="h-4 w-4 text-white" />
