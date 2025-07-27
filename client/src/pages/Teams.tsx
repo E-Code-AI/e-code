@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -39,90 +39,39 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
-// Mock data for teams
-const mockTeams = [
-  {
-    id: 1,
-    name: 'Web Dev Squad',
-    description: 'Building amazing web applications together',
-    members: 5,
-    projects: 12,
-    role: 'owner',
-    plan: 'pro',
-    avatar: null,
-    created: '2024-01-15',
-  },
-  {
-    id: 2,
-    name: 'ML Research Team',
-    description: 'Exploring the frontiers of machine learning',
-    members: 8,
-    projects: 23,
-    role: 'admin',
-    plan: 'pro',
-    avatar: null,
-    created: '2024-03-20',
-  },
-  {
-    id: 3,
-    name: 'Open Source Contributors',
-    description: 'Contributing to open source projects',
-    members: 15,
-    projects: 45,
-    role: 'member',
-    plan: 'free',
-    avatar: null,
-    created: '2024-06-10',
-  },
-];
-
-const teamMembers = [
-  {
-    id: 1,
-    username: 'alex_dev',
-    email: 'alex@example.com',
-    role: 'owner',
-    joinedAt: '2024-01-15',
-    lastActive: '5 minutes ago',
-    contributions: 234,
-    avatar: null,
-  },
-  {
-    id: 2,
-    username: 'sarah_coder',
-    email: 'sarah@example.com',
-    role: 'admin',
-    joinedAt: '2024-01-20',
-    lastActive: '2 hours ago',
-    contributions: 189,
-    avatar: null,
-  },
-  {
-    id: 3,
-    username: 'mike_tech',
-    email: 'mike@example.com',
-    role: 'member',
-    joinedAt: '2024-02-10',
-    lastActive: '1 day ago',
-    contributions: 67,
-    avatar: null,
-  },
-  {
-    id: 4,
-    username: 'emma_design',
-    email: 'emma@example.com',
-    role: 'member',
-    joinedAt: '2024-03-05',
-    lastActive: '3 days ago',
-    contributions: 45,
-    avatar: null,
-  },
-];
-
 export default function Teams() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const [selectedTeam, setSelectedTeam] = useState(mockTeams[0]);
+  const [selectedTeam, setSelectedTeam] = useState<any>(null);
+  
+  // Fetch user's teams
+  const { data: teams = [], isLoading: teamsLoading } = useQuery({
+    queryKey: ['/api/user/teams'],
+    queryFn: async () => {
+      const response = await fetch('/api/user/teams', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch teams');
+      return response.json();
+    },
+  });
+  
+  // Fetch team members when a team is selected
+  const { data: teamMembers = [], isLoading: membersLoading } = useQuery({
+    queryKey: ['/api/teams', selectedTeam?.id, 'members'],
+    queryFn: async () => {
+      if (!selectedTeam?.id) return [];
+      const response = await fetch(`/api/teams/${selectedTeam.id}/members`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch team members');
+      return response.json();
+    },
+    enabled: !!selectedTeam?.id,
+  });
+  
+  // Set initial selected team when teams are loaded
+  useEffect(() => {
+    if (teams.length > 0 && !selectedTeam) {
+      setSelectedTeam(teams[0]);
+    }
+  }, [teams, selectedTeam]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
@@ -163,7 +112,7 @@ export default function Teams() {
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground">Your Teams</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
-                {mockTeams.map((team) => (
+                {teams.map((team: any) => (
                   <Card
                     key={team.id}
                     className={`cursor-pointer transition-all hover:shadow-md ${
@@ -267,7 +216,7 @@ export default function Teams() {
 
                         {/* Members List */}
                         <div className="space-y-3">
-                          {teamMembers.map((member) => (
+                          {teamMembers.map((member: any) => (
                             <Card key={member.id}>
                               <CardContent className="p-4">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

@@ -130,77 +130,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
     enabled: debouncedQuery.length > 0,
   });
 
-  // Mock results for demonstration
-  const mockResults: SearchResult[] = debouncedQuery ? [
-    {
-      id: '1',
-      type: 'project',
-      title: 'React Todo App',
-      description: 'A modern todo application built with React and TypeScript',
-      icon: <Folder className="h-5 w-5" />,
-      metadata: {
-        language: 'typescript',
-        owner: 'johndoe',
-        stars: 245,
-        lastModified: '2 hours ago',
-        visibility: 'public',
-      },
-      url: '/project/1',
-    },
-    {
-      id: '2',
-      type: 'file',
-      title: 'components/TodoList.tsx',
-      description: 'Main todo list component with filtering and sorting',
-      icon: <FileText className="h-5 w-5" />,
-      metadata: {
-        language: 'typescript',
-        owner: 'johndoe',
-        lastModified: '3 hours ago',
-        matches: 5,
-      },
-      url: '/editor/1/files/components/TodoList.tsx',
-    },
-    {
-      id: '3',
-      type: 'code',
-      title: 'const [todos, setTodos] = useState<Todo[]>([]);',
-      description: 'in TodoList.tsx',
-      icon: <Code className="h-5 w-5" />,
-      metadata: {
-        language: 'typescript',
-        lineNumber: 15,
-        preview: '  const [todos, setTodos] = useState<Todo[]>([]);\n  const [filter, setFilter] = useState<FilterType>("all");',
-      },
-      url: '/editor/1/files/components/TodoList.tsx#L15',
-    },
-    {
-      id: '4',
-      type: 'user',
-      title: 'John Doe',
-      description: 'Full-stack developer • 127 projects',
-      icon: <Users className="h-5 w-5" />,
-      metadata: {
-        stars: 892,
-      },
-      url: '/user/johndoe',
-    },
-    {
-      id: '5',
-      type: 'template',
-      title: 'Next.js Starter',
-      description: 'Production-ready Next.js template with TypeScript',
-      icon: <Package className="h-5 w-5" />,
-      metadata: {
-        language: 'typescript',
-        stars: 1243,
-        lastModified: '1 week ago',
-      },
-      url: '/templates/nextjs-starter',
-    },
-  ] : [];
-
-  const displayResults = results || mockResults;
+  const displayResults = results || [];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

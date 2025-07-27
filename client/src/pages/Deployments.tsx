@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,89 +17,23 @@ export default function Deployments() {
   const { toast } = useToast();
   const [selectedDeployment, setSelectedDeployment] = useState<number | null>(null);
 
-  const deployments = [
-    {
-      id: 1,
-      name: 'portfolio-website',
-      url: 'https://portfolio-website.e-code.app',
-      status: 'active',
-      environment: 'production',
-      lastDeployed: '2024-01-30T10:30:00Z',
-      version: 'v1.2.3',
-      metrics: {
-        uptime: 99.9,
-        requests: 15420,
-        avgResponseTime: 234,
-        errorRate: 0.02
-      },
-      resources: {
-        cpu: 45,
-        memory: 62,
-        storage: 30
-      }
+  const { data: deployments = [], isLoading: deploymentsLoading } = useQuery({
+    queryKey: ['/api/user/deployments'],
+    queryFn: async () => {
+      const response = await fetch('/api/user/deployments', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch deployments');
+      return response.json();
     },
-    {
-      id: 2,
-      name: 'api-backend',
-      url: 'https://api-backend.e-code.app',
-      status: 'active',
-      environment: 'production',
-      lastDeployed: '2024-01-29T15:45:00Z',
-      version: 'v2.0.1',
-      metrics: {
-        uptime: 99.5,
-        requests: 48230,
-        avgResponseTime: 89,
-        errorRate: 0.08
-      },
-      resources: {
-        cpu: 72,
-        memory: 85,
-        storage: 45
-      }
+  });
+
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['/api/user/deployments/stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/user/deployments/stats', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch deployment stats');
+      return response.json();
     },
-    {
-      id: 3,
-      name: 'blog-staging',
-      url: 'https://blog-staging.e-code.app',
-      status: 'paused',
-      environment: 'staging',
-      lastDeployed: '2024-01-28T08:20:00Z',
-      version: 'v0.9.5',
-      metrics: {
-        uptime: 0,
-        requests: 0,
-        avgResponseTime: 0,
-        errorRate: 0
-      },
-      resources: {
-        cpu: 0,
-        memory: 0,
-        storage: 15
-      }
-    },
-    {
-      id: 4,
-      name: 'failed-deployment',
-      url: 'https://failed-deployment.e-code.app',
-      status: 'failed',
-      environment: 'production',
-      lastDeployed: '2024-01-27T12:15:00Z',
-      version: 'v1.0.0',
-      error: 'Build failed: Module not found',
-      metrics: {
-        uptime: 0,
-        requests: 0,
-        avgResponseTime: 0,
-        errorRate: 0
-      },
-      resources: {
-        cpu: 0,
-        memory: 0,
-        storage: 10
-      }
-    }
-  ];
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -152,7 +87,7 @@ export default function Deployments() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Active</p>
-                <p className="text-2xl font-bold">2</p>
+                <p className="text-2xl font-bold">{stats?.active || deployments.filter(d => d.status === 'active').length || 0}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
@@ -163,7 +98,7 @@ export default function Deployments() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Requests</p>
-                <p className="text-2xl font-bold">63.6K</p>
+                <p className="text-2xl font-bold">{stats?.totalRequests ? (stats.totalRequests > 1000 ? `${(stats.totalRequests / 1000).toFixed(1)}K` : stats.totalRequests) : '0'}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-blue-500" />
             </div>
@@ -174,7 +109,7 @@ export default function Deployments() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Avg Uptime</p>
-                <p className="text-2xl font-bold">99.7%</p>
+                <p className="text-2xl font-bold">{stats?.avgUptime ? `${stats.avgUptime}%` : '0%'}</p>
               </div>
               <Activity className="h-8 w-8 text-purple-500" />
             </div>
@@ -185,7 +120,7 @@ export default function Deployments() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Environments</p>
-                <p className="text-2xl font-bold">3</p>
+                <p className="text-2xl font-bold">{stats?.environments || new Set(deployments.map(d => d.environment)).size || 0}</p>
               </div>
               <Server className="h-8 w-8 text-orange-500" />
             </div>

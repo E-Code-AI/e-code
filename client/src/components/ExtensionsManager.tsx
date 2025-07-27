@@ -58,69 +58,8 @@ export function ExtensionsManager({ isOpen, onClose }: ExtensionsManagerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   
-  // Mock extensions data
-  const [extensions, setExtensions] = useState<Extension[]>([
-    {
-      id: "1",
-      name: "Python Language Support",
-      description: "Advanced Python language features including linting, formatting, and intellisense",
-      author: "PLOT Team",
-      version: "1.2.0",
-      stars: 1234,
-      downloads: 45678,
-      installed: true,
-      enabled: true,
-      category: "language"
-    },
-    {
-      id: "2",
-      name: "React Developer Tools",
-      description: "Enhanced development experience for React applications",
-      author: "Web Tools",
-      version: "3.1.5",
-      stars: 987,
-      downloads: 23456,
-      installed: true,
-      enabled: true,
-      category: "tool"
-    },
-    {
-      id: "3",
-      name: "Dark+ Theme",
-      description: "A dark theme optimized for long coding sessions",
-      author: "ThemeCreator",
-      version: "2.0.1",
-      stars: 567,
-      downloads: 12345,
-      installed: false,
-      enabled: false,
-      category: "theme"
-    },
-    {
-      id: "4",
-      name: "Go Language Support",
-      description: "Full language server for Go programming",
-      author: "Go Team",
-      version: "1.0.0",
-      stars: 423,
-      downloads: 8765,
-      installed: false,
-      enabled: false,
-      category: "language"
-    },
-    {
-      id: "5",
-      name: "ESLint Integration",
-      description: "JavaScript and TypeScript linting with ESLint",
-      author: "Lint Tools",
-      version: "2.3.4",
-      stars: 876,
-      downloads: 32109,
-      installed: false,
-      enabled: false,
-      category: "tool"
-    }
-  ]);
+  // State for extensions
+  const [extensions, setExtensions] = useState<Extension[]>([]);
   
   const filteredExtensions = extensions.filter(ext => 
     ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

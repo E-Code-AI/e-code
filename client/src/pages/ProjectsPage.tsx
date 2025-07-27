@@ -141,21 +141,39 @@ const ProjectsPage = () => {
     },
   });
 
-  // Mock data for teams and folders
-  const teams = [
-    { id: 'personal', name: 'Personal', icon: User },
-    { id: 'team-1', name: 'E-Code Team', icon: Users },
-    { id: 'team-2', name: 'Dev Squad', icon: Users },
-  ];
+  // Fetch teams
+  const { data: teams = [] } = useQuery({
+    queryKey: ['/api/teams'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/teams');
+      if (!res.ok) throw new Error('Failed to fetch teams');
+      const teamsData = await res.json();
+      return [
+        { id: 'personal', name: 'Personal', icon: User },
+        ...teamsData.map((team: any) => ({ 
+          id: team.id, 
+          name: team.name, 
+          icon: Users 
+        }))
+      ];
+    }
+  });
 
-  const folders = [
-    { id: 'folder-1', name: 'Web Projects', count: 5 },
-    { id: 'folder-2', name: 'Python Scripts', count: 3 },
-    { id: 'folder-3', name: 'Learning', count: 8 },
-  ];
+  // Fetch folders
+  const { data: folders = [] } = useQuery({
+    queryKey: ['/api/folders'],
+  });
 
-  // Mock pinned projects
-  const pinnedProjects = [1, 3]; // IDs of pinned projects
+  // Fetch pinned projects
+  const { data: pinnedProjects = [] } = useQuery({
+    queryKey: ['/api/projects/pinned'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/projects/pinned');
+      if (!res.ok) return [];
+      const projects = await res.json();
+      return projects.map((p: any) => p.id);
+    }
+  });
 
   // Query for fetching projects
   const { data: projects, isLoading, error } = useQuery<Project[]>({
