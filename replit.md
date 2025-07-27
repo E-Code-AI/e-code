@@ -47,6 +47,11 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-27: **Responsive Design Fixes**:
+  * Fixed scrolling issue on `/agent` page by changing overflow-hidden to overflow-y-auto
+  * Made Account page tabs responsive with horizontal scrolling on mobile devices
+  * Tabs now extend to screen edges on mobile for better touch interaction
+  * Desktop view shows all tabs in full width without scrolling
 - 2025-07-27: **Multiple AI Model Support Implemented (100% Complete)**:
   * **AI Provider System Created**: Built comprehensive AIProviderFactory supporting 5 major AI models
     - OpenAI GPT-4o (latest model, not GPT-4)

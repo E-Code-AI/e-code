@@ -89,14 +89,16 @@ export default function Account() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="developer">Developer</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+          <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground w-max min-w-full md:w-full">
+            <TabsTrigger value="profile" className="whitespace-nowrap">Profile</TabsTrigger>
+            <TabsTrigger value="account" className="whitespace-nowrap">Account</TabsTrigger>
+            <TabsTrigger value="security" className="whitespace-nowrap">Security</TabsTrigger>
+            <TabsTrigger value="billing" className="whitespace-nowrap">Billing</TabsTrigger>
+            <TabsTrigger value="notifications" className="whitespace-nowrap">Notifications</TabsTrigger>
+            <TabsTrigger value="developer" className="whitespace-nowrap">Developer</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-4">
