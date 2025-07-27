@@ -75,8 +75,10 @@ import { simpleAnalytics } from './analytics/simple-analytics';
 import { simpleBackupManager } from './backup/simple-backup-manager';
 import { edgeManager } from './edge/edge-manager';
 import { cdnService } from './edge/cdn-service';
+import { TeamsService } from './teams/teams-service';
 
 const logger = createLogger('routes');
+const teamsService = new TeamsService();
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -194,6 +196,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching recent projects:', error);
       res.status(500).json({ error: 'Failed to fetch recent projects' });
+    }
+  });
+
+  // Get pinned projects
+  app.get('/api/projects/pinned', ensureAuthenticated, async (req, res) => {
+    try {
+      const projects = await storage.getProjectsByUser(req.user!.id);
+      // Filter only pinned projects
+      const pinnedProjects = projects.filter(p => p.isPinned);
+      // Sort by updatedAt to show most recent first
+      const sortedProjects = pinnedProjects.sort((a, b) => 
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+      res.json(sortedProjects);
+    } catch (error) {
+      console.error('Error fetching pinned projects:', error);
+      res.status(500).json({ error: 'Failed to fetch pinned projects' });
     }
   });
 
@@ -2367,6 +2386,12 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
       if (context?.mode === 'agent') {
         const lowerMessage = message.toLowerCase();
         
+        logger.info('Agent mode request:', {
+          message: message,
+          lowerMessage: lowerMessage,
+          mode: context?.mode
+        });
+        
         // Create code analyzer instance
         const codeAnalyzer = new CodeAnalyzer();
         
@@ -2384,6 +2409,12 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
         
         // Detect building intent
         if (lowerMessage.includes('build') || lowerMessage.includes('create') || lowerMessage.includes('make')) {
+          logger.info('Building intent detected:', {
+            hasBuild: lowerMessage.includes('build'),
+            hasCreate: lowerMessage.includes('create'),
+            hasMake: lowerMessage.includes('make'),
+            hasCounter: lowerMessage.includes('counter')
+          });
           const actions = [];
           let responseContent = '';
 
@@ -2413,6 +2444,14 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
               { type: 'create_file', path: 'style.css', content: 'body { margin: 0; font-family: -apple-system, sans-serif; }\nheader { background: #333; color: white; padding: 2rem; }\nnav a { color: white; margin: 0 1rem; text-decoration: none; }\n.project-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 2rem; }\n.project { background: #f0f0f0; padding: 2rem; border-radius: 8px; }' }
             );
             responseContent = "I'm building a portfolio website for you! It will have a modern design with sections for About, Projects, and Contact. The layout will be responsive and professional.";
+          } else if (lowerMessage.includes('counter')) {
+            // Building a counter app
+            actions.push(
+              { type: 'create_file', path: 'index.html', content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Counter App</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <div class="counter-container">\n    <h1>Counter App</h1>\n    <div class="counter-display" id="counter">0</div>\n    <div class="button-group">\n      <button class="btn btn-increment" id="increment">+</button>\n      <button class="btn btn-decrement" id="decrement">-</button>\n      <button class="btn btn-reset" id="reset">Reset</button>\n    </div>\n  </div>\n  <script src="script.js"></script>\n</body>\n</html>' },
+              { type: 'create_file', path: 'style.css', content: 'body {\n  font-family: -apple-system, BlinkMacSystemFont, sans-serif;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n  margin: 0;\n  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n}\n\n.counter-container {\n  background: white;\n  padding: 2rem;\n  border-radius: 20px;\n  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);\n  text-align: center;\n  min-width: 300px;\n}\n\nh1 {\n  color: #333;\n  margin-bottom: 1.5rem;\n}\n\n.counter-display {\n  font-size: 4rem;\n  font-weight: bold;\n  color: #667eea;\n  margin: 2rem 0;\n}\n\n.button-group {\n  display: flex;\n  gap: 1rem;\n  justify-content: center;\n}\n\n.btn {\n  padding: 0.75rem 1.5rem;\n  font-size: 1.2rem;\n  border: none;\n  border-radius: 10px;\n  cursor: pointer;\n  transition: transform 0.2s;\n}\n\n.btn:hover {\n  transform: translateY(-2px);\n}\n\n.btn-increment {\n  background: #4caf50;\n  color: white;\n}\n\n.btn-decrement {\n  background: #f44336;\n  color: white;\n}\n\n.btn-reset {\n  background: #ff9800;\n  color: white;\n}' },
+              { type: 'create_file', path: 'script.js', content: 'let counterValue = 0;\n\nconst counterElement = document.getElementById("counter");\nconst incrementBtn = document.getElementById("increment");\nconst decrementBtn = document.getElementById("decrement");\nconst resetBtn = document.getElementById("reset");\n\nfunction updateCounter() {\n  counterElement.textContent = counterValue;\n  counterElement.style.transform = "scale(1.2)";\n  setTimeout(() => {\n    counterElement.style.transform = "scale(1)";\n  }, 200);\n}\n\nincrementBtn.addEventListener("click", () => {\n  counterValue++;\n  updateCounter();\n});\n\ndecrementBtn.addEventListener("click", () => {\n  counterValue--;\n  updateCounter();\n});\n\nresetBtn.addEventListener("click", () => {\n  counterValue = 0;\n  updateCounter();\n});\n\n// Initialize\nupdateCounter();' }
+            );
+            responseContent = "I'm building a beautiful counter app for you! It will have increment, decrement, and reset buttons with a modern gradient design and smooth animations.";
           } else {
             // Use sophisticated code understanding for complex requests
             const systemMessageAgent = {
@@ -2450,6 +2489,11 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
             responseContent = agentResponse || "I'll help you build that! Let me create the necessary files and structure for your application.";
           }
 
+          logger.info('Returning agent response with actions:', {
+            actionsCount: actions.length,
+            responseContentLength: responseContent.length
+          });
+          
           res.json({
             id: `msg_${Date.now()}`,
             role: 'assistant',
@@ -2458,7 +2502,11 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
             actions: actions
           });
           return;
+        } else {
+          logger.info('No building intent detected in agent mode');
         }
+      } else {
+        logger.info('Not in agent mode:', { mode: context?.mode });
       }
       
       const messages: ChatMessage[] = [
@@ -2487,12 +2535,13 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
       
       // If API key is missing or invalid
       if (error.status === 401 || error.message?.includes('API key')) {
+        const providerName = aiProviderManager.getDefaultProvider()?.name || 'AI';
         return res.json({
           id: `msg_${Date.now()}`,
           role: 'assistant',
-          content: `It looks like the ${provider.name} API key is not configured correctly. Please ensure you have set up the required API key in the environment variables.`,
+          content: `It looks like the ${providerName} API key is not configured correctly. Please ensure you have set up the required API key in the environment variables.`,
           timestamp: Date.now(),
-          provider: provider.name
+          provider: providerName
         });
       }
       
