@@ -84,6 +84,10 @@ const GitHubCodespacesComparison = lazy(() => import("@/pages/compare/GitHubCode
 const GlitchComparison = lazy(() => import("@/pages/compare/Glitch"));
 const HerokuComparison = lazy(() => import("@/pages/compare/Heroku"));
 const CodeSandboxComparison = lazy(() => import("@/pages/compare/CodeSandbox"));
+// Legal pages
+const DPA = lazy(() => import("@/pages/DPA"));
+const CommercialAgreement = lazy(() => import("@/pages/CommercialAgreement"));
+const ReportAbuse = lazy(() => import("@/pages/ReportAbuse"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -127,6 +131,9 @@ function AppContent() {
           <Route path="/contact-sales" component={ContactSales} />
           <Route path="/terms" component={Terms} />
           <Route path="/privacy" component={Privacy} />
+          <Route path="/dpa" component={DPA} />
+          <Route path="/commercial-agreement" component={CommercialAgreement} />
+          <Route path="/report-abuse" component={ReportAbuse} />
           <Route path="/status" component={Status} />
           <Route path="/mobile" component={Mobile} />
           <Route path="/ai" component={AI} />
