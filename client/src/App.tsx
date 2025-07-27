@@ -196,9 +196,7 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/project/:id" component={() => (
-            <ReplitLayout showSidebar={true}>
-              <ProjectPage />
-            </ReplitLayout>
+            <ProjectPage />
           )} />
           <ProtectedRoute path="/editor/:id" component={() => (
             <ReplitLayout showSidebar={true}>
