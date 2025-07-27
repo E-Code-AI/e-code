@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Project } from '@shared/schema';
@@ -68,6 +68,12 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  // Fetch all projects to calculate statistics
+  const { data: allProjects = [] } = useQuery<Project[]>({
+    queryKey: ['/api/projects'],
+    enabled: !!user,
+  });
+
   // Create project mutation
   const createProjectMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -103,6 +109,19 @@ export default function Dashboard() {
   const storageUsed = 1.2; // GB
   const storageLimit = 5; // GB
   const cyclesBalance = 500;
+
+  // Calculate real statistics from all projects
+  const stats = useMemo(() => {
+    const totalForks = allProjects.reduce((sum, project) => sum + (project.forks || 0), 0);
+    const totalLikes = allProjects.reduce((sum, project) => sum + (project.likes || 0), 0);
+    const totalViews = allProjects.reduce((sum, project) => sum + (project.views || 0), 0);
+    
+    return {
+      forks: totalForks,
+      likes: totalLikes,
+      views: totalViews >= 1000 ? `${(totalViews / 1000).toFixed(1)}K` : totalViews.toString()
+    };
+  }, [allProjects]);
   
   const announcements = [
     { id: 1, title: 'New AI Features Available', type: 'feature', time: '1 day ago' },
@@ -788,19 +807,19 @@ export default function Dashboard() {
               <h3 className="text-lg font-semibold text-[var(--ecode-text)] mb-4">Your Activity</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
-                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">{recentProjects.length}</div>
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">{allProjects.length}</div>
                   <div className="text-xs text-[var(--ecode-muted)]">Creations</div>
                 </div>
                 <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
-                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">89</div>
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">{stats.forks}</div>
                   <div className="text-xs text-[var(--ecode-muted)]">Remixes</div>
                 </div>
                 <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
-                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">234</div>
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">{stats.likes}</div>
                   <div className="text-xs text-[var(--ecode-muted)]">Likes</div>
                 </div>
                 <div className="text-center p-3 bg-[var(--ecode-sidebar)] rounded-lg">
-                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">1.2K</div>
+                  <div className="text-2xl font-bold text-[var(--ecode-accent)]">{stats.views}</div>
                   <div className="text-xs text-[var(--ecode-muted)]">Views</div>
                 </div>
               </div>

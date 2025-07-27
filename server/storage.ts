@@ -14,6 +14,8 @@ import {
   Secret, InsertSecret,
   Notification, InsertNotification,
   NotificationPreferences, InsertNotificationPreferences,
+  projectLikes, projectViews, activityLog,
+  insertProjectLikeSchema, insertProjectViewSchema, insertActivityLogSchema,
   projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts, secrets, notifications, notificationPreferences
 } from "@shared/schema";
 import { eq, and, desc, isNull, sql } from "drizzle-orm";
@@ -132,6 +134,20 @@ export interface IStorage {
   // Notification preferences
   getNotificationPreferences(userId: number): Promise<NotificationPreferences | undefined>;
   updateNotificationPreferences(userId: number, preferences: Partial<InsertNotificationPreferences>): Promise<NotificationPreferences>;
+  
+  // Project statistics methods
+  trackProjectView(projectId: number, userId?: number, ipAddress?: string): Promise<void>;
+  likeProject(projectId: number, userId: number): Promise<void>;
+  unlikeProject(projectId: number, userId: number): Promise<void>;
+  isProjectLiked(projectId: number, userId: number): Promise<boolean>;
+  getProjectLikes(projectId: number): Promise<number>;
+  
+  // Activity log methods
+  logActivity(projectId: number, userId: number, action: string, details?: any): Promise<void>;
+  getProjectActivity(projectId: number, limit?: number): Promise<any[]>;
+  
+  // Fork methods
+  forkProject(sourceProjectId: number, userId: number, newName: string): Promise<Project>;
 }
 
 // Database storage implementation
@@ -1135,6 +1151,173 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedPrefs;
+  }
+
+  // Project statistics methods
+  async trackProjectView(projectId: number, userId?: number, ipAddress?: string): Promise<void> {
+    // Record the view
+    await db.insert(projectViews)
+      .values({
+        projectId,
+        userId,
+        ipAddress
+      });
+    
+    // Increment view count on project
+    await db.update(projects)
+      .set({ views: sql`${projects.views} + 1` })
+      .where(eq(projects.id, projectId));
+  }
+
+  async likeProject(projectId: number, userId: number): Promise<void> {
+    // Check if already liked
+    const existing = await db.select()
+      .from(projectLikes)
+      .where(and(
+        eq(projectLikes.projectId, projectId),
+        eq(projectLikes.userId, userId)
+      ));
+    
+    if (existing.length === 0) {
+      // Add like
+      await db.insert(projectLikes)
+        .values({ projectId, userId });
+      
+      // Increment like count
+      await db.update(projects)
+        .set({ likes: sql`${projects.likes} + 1` })
+        .where(eq(projects.id, projectId));
+    }
+  }
+
+  async unlikeProject(projectId: number, userId: number): Promise<void> {
+    const result = await db.delete(projectLikes)
+      .where(and(
+        eq(projectLikes.projectId, projectId),
+        eq(projectLikes.userId, userId)
+      ));
+    
+    // Decrement like count only if a like was actually removed
+    if (result.rowsAffected > 0) {
+      await db.update(projects)
+        .set({ likes: sql`GREATEST(${projects.likes} - 1, 0)` })
+        .where(eq(projects.id, projectId));
+    }
+  }
+
+  async isProjectLiked(projectId: number, userId: number): Promise<boolean> {
+    const [like] = await db.select()
+      .from(projectLikes)
+      .where(and(
+        eq(projectLikes.projectId, projectId),
+        eq(projectLikes.userId, userId)
+      ));
+    return !!like;
+  }
+
+  async getProjectLikes(projectId: number): Promise<number> {
+    const [project] = await db.select({ likes: projects.likes })
+      .from(projects)
+      .where(eq(projects.id, projectId));
+    return project?.likes || 0;
+  }
+
+  // Activity log methods
+  async logActivity(projectId: number, userId: number, action: string, details?: any): Promise<void> {
+    await db.insert(activityLog)
+      .values({
+        projectId,
+        userId,
+        action,
+        details
+      });
+  }
+
+  async getProjectActivity(projectId: number, limit: number = 50): Promise<any[]> {
+    const activities = await db.select({
+      id: activityLog.id,
+      projectId: activityLog.projectId,
+      userId: activityLog.userId,
+      action: activityLog.action,
+      details: activityLog.details,
+      createdAt: activityLog.createdAt,
+      username: users.username,
+      userAvatar: users.avatarUrl
+    })
+      .from(activityLog)
+      .leftJoin(users, eq(activityLog.userId, users.id))
+      .where(eq(activityLog.projectId, projectId))
+      .orderBy(desc(activityLog.createdAt))
+      .limit(limit);
+    
+    return activities;
+  }
+
+  // Fork methods
+  async forkProject(sourceProjectId: number, userId: number, newName: string): Promise<Project> {
+    // Get source project
+    const sourceProject = await this.getProject(sourceProjectId);
+    if (!sourceProject) {
+      throw new Error('Source project not found');
+    }
+
+    // Create new project
+    const forkedProject = await this.createProject({
+      name: newName,
+      description: sourceProject.description || `Forked from ${sourceProject.name}`,
+      visibility: sourceProject.visibility,
+      language: sourceProject.language,
+      ownerId: userId,
+      forkedFromId: sourceProjectId,
+      coverImage: sourceProject.coverImage
+    });
+
+    // Copy all files from source project
+    const sourceFiles = await this.getFilesByProject(sourceProjectId);
+    
+    // Create a mapping of old parent IDs to new parent IDs
+    const fileIdMap = new Map<number, number>();
+    
+    // Sort files to ensure parents are created before children
+    const sortedFiles = sourceFiles.sort((a, b) => {
+      if (a.parentId === null && b.parentId !== null) return -1;
+      if (a.parentId !== null && b.parentId === null) return 1;
+      return 0;
+    });
+
+    for (const file of sortedFiles) {
+      const newParentId = file.parentId ? fileIdMap.get(file.parentId) || null : null;
+      
+      const newFile = await this.createFile({
+        name: file.name,
+        content: file.content,
+        isFolder: file.isFolder,
+        parentId: newParentId,
+        projectId: forkedProject.id
+      });
+      
+      if (file.id) {
+        fileIdMap.set(file.id, newFile.id);
+      }
+    }
+
+    // Increment fork count on source project
+    await db.update(projects)
+      .set({ forks: sql`${projects.forks} + 1` })
+      .where(eq(projects.id, sourceProjectId));
+
+    // Log the fork activity
+    await this.logActivity(sourceProjectId, userId, 'forked', {
+      forkedProjectId: forkedProject.id,
+      forkedProjectName: newName
+    });
+
+    await this.logActivity(forkedProject.id, userId, 'created', {
+      forkedFromId: sourceProjectId,
+      forkedFromName: sourceProject.name
+    });
+
+    return forkedProject;
   }
 }
 

@@ -125,6 +125,10 @@ const ProjectsPage = () => {
   const [folderName, setFolderName] = useState('');
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
   const [bulkActionOpen, setBulkActionOpen] = useState(false);
+  const [forkDialogOpen, setForkDialogOpen] = useState(false);
+  const [forkProjectId, setForkProjectId] = useState<number | null>(null);
+  const [forkProjectName, setForkProjectName] = useState('');
+  const [likedProjects, setLikedProjects] = useState<Set<number>>(new Set());
 
   // Form for new project
   const form = useForm<ProjectFormValues>({
@@ -279,6 +283,121 @@ const ProjectsPage = () => {
     if (deleteProjectId) {
       deleteProjectMutation.mutate(deleteProjectId);
     }
+  };
+
+  // Mutation for forking a project
+  const forkProjectMutation = useMutation({
+    mutationFn: async ({ projectId, name }: { projectId: number; name: string }) => {
+      const res = await apiRequest('POST', `/api/projects/${projectId}/fork`, { name });
+      if (!res.ok) {
+        throw new Error('Failed to fork project');
+      }
+      return res.json();
+    },
+    onSuccess: (project: Project) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      setForkDialogOpen(false);
+      setForkProjectId(null);
+      setForkProjectName('');
+      toast({
+        title: "Project forked successfully",
+        description: `"${project.name}" has been created as a fork.`,
+      });
+      setLocation(`/project/${project.id}`);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to fork project",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation for liking a project
+  const likeProjectMutation = useMutation({
+    mutationFn: async (projectId: number) => {
+      const res = await apiRequest('POST', `/api/projects/${projectId}/like`);
+      if (!res.ok) {
+        throw new Error('Failed to like project');
+      }
+      return res.json();
+    },
+    onSuccess: (_, projectId) => {
+      setLikedProjects(prev => new Set(prev).add(projectId));
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      toast({
+        title: "Project liked",
+        description: "You've liked this project.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to like project",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation for unliking a project
+  const unlikeProjectMutation = useMutation({
+    mutationFn: async (projectId: number) => {
+      const res = await apiRequest('DELETE', `/api/projects/${projectId}/like`);
+      if (!res.ok) {
+        throw new Error('Failed to unlike project');
+      }
+      return res.json();
+    },
+    onSuccess: (_, projectId) => {
+      setLikedProjects(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(projectId);
+        return newSet;
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to unlike project",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation for tracking project views
+  const trackViewMutation = useMutation({
+    mutationFn: async (projectId: number) => {
+      const res = await apiRequest('POST', `/api/projects/${projectId}/view`);
+      if (!res.ok) {
+        throw new Error('Failed to track view');
+      }
+      return res.json();
+    }
+  });
+
+  // Handle fork project
+  const handleFork = () => {
+    if (forkProjectId && forkProjectName.trim()) {
+      forkProjectMutation.mutate({ projectId: forkProjectId, name: forkProjectName });
+    }
+  };
+
+  // Handle like/unlike
+  const handleLikeToggle = (e: React.MouseEvent, projectId: number) => {
+    e.stopPropagation();
+    if (likedProjects.has(projectId)) {
+      unlikeProjectMutation.mutate(projectId);
+    } else {
+      likeProjectMutation.mutate(projectId);
+    }
+  };
+
+  // Handle project click with view tracking
+  const handleProjectClick = (projectId: number) => {
+    trackViewMutation.mutate(projectId);
+    setLocation(`/project/${projectId}`);
   };
 
   // Function to get language icon
@@ -678,7 +797,7 @@ const ProjectsPage = () => {
                     {/* Project Cover Image */}
                     <div 
                       className="h-32 bg-gradient-to-br from-[var(--ecode-accent)] to-[var(--ecode-accent-hover)] opacity-20 cursor-pointer"
-                      onClick={() => setLocation(`/project/${project.id}`)}
+                      onClick={() => handleProjectClick(project.id)}
                     />
                     
                     {/* Project Info */}
@@ -686,7 +805,7 @@ const ProjectsPage = () => {
                       <div className="flex items-start justify-between mb-2">
                         <h3 
                           className="font-medium text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors truncate flex-1 cursor-pointer"
-                          onClick={() => setLocation(`/project/${project.id}`)}
+                          onClick={() => handleProjectClick(project.id)}
                         >
                           {project.name}
                         </h3>
@@ -701,15 +820,15 @@ const ProjectsPage = () => {
                       <div className="flex items-center gap-3 text-xs text-[var(--ecode-muted)] mb-3">
                         <span className="flex items-center gap-1">
                           <Play className="h-3 w-3" />
-                          {Math.floor(Math.random() * 100)} runs
+                          {project.runs || 0} runs
                         </span>
                         <span className="flex items-center gap-1">
                           <GitFork className="h-3 w-3" />
-                          {Math.floor(Math.random() * 10)} forks
+                          {project.forks || 0} forks
                         </span>
                         <span className="flex items-center gap-1">
                           <Heart className="h-3 w-3" />
-                          {Math.floor(Math.random() * 50)}
+                          {project.likes || 0}
                         </span>
                       </div>
                       
@@ -729,7 +848,7 @@ const ProjectsPage = () => {
                         variant="secondary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setLocation(`/project/${project.id}`);
+                          handleProjectClick(project.id);
                         }}
                       >
                         <Play className="h-4 w-4 mr-1" />
@@ -740,11 +859,21 @@ const ProjectsPage = () => {
                         variant="secondary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Fork functionality
+                          setForkProjectId(project.id);
+                          setForkProjectName(`${project.name}-fork`);
+                          setForkDialogOpen(true);
                         }}
                       >
                         <GitFork className="h-4 w-4 mr-1" />
                         Fork
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => handleLikeToggle(e, project.id)}
+                      >
+                        <Heart className={cn("h-4 w-4 mr-1", likedProjects.has(project.id) && "fill-current text-red-500")} />
+                        {likedProjects.has(project.id) ? 'Unlike' : 'Like'}
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -809,7 +938,7 @@ const ProjectsPage = () => {
                           <div className="flex items-center gap-2">
                             <h3 
                               className="font-medium text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] cursor-pointer"
-                              onClick={() => setLocation(`/project/${project.id}`)}
+                              onClick={() => handleProjectClick(project.id)}
                             >
                               {project.name}
                             </h3>
@@ -828,16 +957,19 @@ const ProjectsPage = () => {
                         <div className="flex items-center gap-4 text-sm text-[var(--ecode-muted)]">
                           <span className="flex items-center gap-1">
                             <Play className="h-3 w-3" />
-                            {Math.floor(Math.random() * 100)}
+                            {project.runs || 0} runs
                           </span>
                           <span className="flex items-center gap-1">
                             <GitFork className="h-3 w-3" />
-                            {Math.floor(Math.random() * 10)}
+                            {project.forks || 0} forks
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Heart className="h-3 w-3" />
-                            {Math.floor(Math.random() * 50)}
-                          </span>
+                          <button
+                            className="flex items-center gap-1 hover:text-[var(--ecode-text)] transition-colors"
+                            onClick={(e) => handleLikeToggle(e, project.id)}
+                          >
+                            <Heart className={cn("h-3 w-3", likedProjects.has(project.id) && "fill-current text-red-500")} />
+                            {project.likes || 0}
+                          </button>
                         </div>
                         
                         <span className="text-sm text-[var(--ecode-muted)]">
@@ -851,11 +983,15 @@ const ProjectsPage = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setLocation(`/project/${project.id}`)}>
+                            <DropdownMenuItem onClick={() => handleProjectClick(project.id)}>
                               <Play className="h-4 w-4 mr-2" />
                               Run
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setForkProjectId(project.id);
+                              setForkProjectName(`${project.name}-fork`);
+                              setForkDialogOpen(true);
+                            }}>
                               <GitFork className="h-4 w-4 mr-2" />
                               Fork
                             </DropdownMenuItem>
@@ -1192,6 +1328,49 @@ const ProjectsPage = () => {
               disabled={!folderName.trim()}
             >
               Create Folder
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fork Project Dialog */}
+      <Dialog open={forkDialogOpen} onOpenChange={setForkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Fork Project</DialogTitle>
+            <DialogDescription>
+              Create your own copy of this project to customize and build upon
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="fork-name">New Project Name</Label>
+            <Input
+              id="fork-name"
+              value={forkProjectName}
+              onChange={(e) => setForkProjectName(e.target.value)}
+              placeholder="Enter a name for your fork"
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setForkDialogOpen(false);
+                setForkProjectId(null);
+                setForkProjectName('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleFork}
+              disabled={!forkProjectName.trim() || forkProjectMutation.isPending}
+            >
+              {forkProjectMutation.isPending && (
+                <ECodeSpinner className="mr-2" size={16} />
+              )}
+              Fork Project
             </Button>
           </DialogFooter>
         </DialogContent>

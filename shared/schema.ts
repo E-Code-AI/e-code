@@ -88,13 +88,20 @@ export const insertApiTokenSchema = createInsertSchema(apiTokens).pick({
 });
 
 // Projects table
-export const projects = pgTable("projects", {
+export const projects: any = pgTable("projects", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
   visibility: visibilityEnum("visibility").default("private").notNull(),
   language: languageEnum("language").default("nodejs"),
   ownerId: integer("owner_id").notNull().references(() => users.id),
+  forkedFromId: integer("forked_from_id").references(() => projects.id),
+  views: integer("views").default(0).notNull(),
+  likes: integer("likes").default(0).notNull(),
+  forks: integer("forks").default(0).notNull(),
+  runs: integer("runs").default(0).notNull(),
+  coverImage: text("cover_image"),
+  isPinned: boolean("is_pinned").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -105,6 +112,8 @@ export const insertProjectSchema = createInsertSchema(projects).pick({
   visibility: true,
   language: true,
   ownerId: true,
+  forkedFromId: true,
+  coverImage: true,
 });
 
 // Project collaborators table - represents users who have access to a project
@@ -329,6 +338,55 @@ export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSub
   email: true,
   isActive: true,
   confirmationToken: true,
+});
+
+// Project likes table
+export const projectLikes = pgTable("project_likes", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    projectUserIdx: uniqueIndex("project_likes_user_idx").on(table.projectId, table.userId),
+  };
+});
+
+export const insertProjectLikeSchema = createInsertSchema(projectLikes).pick({
+  projectId: true,
+  userId: true,
+});
+
+// Project views table (for tracking unique views)
+export const projectViews = pgTable("project_views", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id),
+  userId: integer("user_id"),
+  ipAddress: text("ip_address"),
+  viewedAt: timestamp("viewed_at").defaultNow().notNull(),
+});
+
+export const insertProjectViewSchema = createInsertSchema(projectViews).pick({
+  projectId: true,
+  userId: true,
+  ipAddress: true,
+});
+
+// Activity log table
+export const activityLog = pgTable("activity_log", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  action: text("action").notNull(), // created, updated, forked, liked, viewed, deployed, etc.
+  details: jsonb("details"), // Additional details about the action
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertActivityLogSchema = createInsertSchema(activityLog).pick({
+  projectId: true,
+  userId: true,
+  action: true,
+  details: true,
 });
 
 // Export types
