@@ -84,16 +84,10 @@ export default function Deployments() {
 
   return (
     <ReplitLayout>
-      <div className="max-w-6xl mx-auto space-y-6 pb-20">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <Globe className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Deployments</h1>
-        </div>
-
+      <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl space-y-6 pb-20">
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full justify-start">
+          <TabsList className="w-full justify-start overflow-x-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -107,10 +101,10 @@ export default function Deployments() {
             <Card>
               <CardContent className="pt-6">
                 {/* Deployment Header */}
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-xl font-semibold">my-awesome-app</h2>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <h2 className="text-lg sm:text-xl font-semibold">my-awesome-app</h2>
                       <Badge variant="default" className="bg-green-500">
                         Production
                       </Badge>
@@ -120,7 +114,7 @@ export default function Deployments() {
                       </Badge>
                     </div>
                     
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Globe className="h-3 w-3" />
                         <a href="#" className="hover:text-primary flex items-center gap-1">
@@ -148,21 +142,23 @@ export default function Deployments() {
                   </Button>
                 </div>
 
-            {/* Deployment Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
-              <Button size="lg" onClick={handleRedeploy} className="flex-1 sm:flex-initial">
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Redeploy
-              </Button>
-              <Button size="lg" variant="outline" className="flex-1 sm:flex-initial">
-                <Edit2 className="mr-2 h-4 w-4" />
-                Edit commands and secrets
-              </Button>
-              <Button size="lg" variant="outline" onClick={handleSecurityScan} className="flex-1 sm:flex-initial">
-                <Shield className="mr-2 h-4 w-4" />
-                Run security scan
-              </Button>
-            </div>
+                {/* Deployment Actions */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <Button size="default" onClick={handleRedeploy} className="w-full sm:w-auto">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Redeploy
+                  </Button>
+                  <Button size="default" variant="outline" className="w-full sm:w-auto">
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Edit commands and secrets</span>
+                    <span className="sm:hidden">Edit config</span>
+                  </Button>
+                  <Button size="default" variant="outline" onClick={handleSecurityScan} className="w-full sm:w-auto">
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Run security scan</span>
+                    <span className="sm:hidden">Scan</span>
+                  </Button>
+                </div>
 
             {/* Build Status Alert */}
             <Card className="border-red-500 bg-red-50 dark:bg-red-950/20 mb-6">
@@ -282,7 +278,7 @@ export default function Deployments() {
           {/* Logs Tab */}
           <TabsContent value="logs" className="space-y-4 mt-6">
             {/* Search and Filters */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -294,15 +290,16 @@ export default function Deployments() {
                 />
               </div>
               
-              {/* Time Filter */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <Clock className="h-4 w-4" />
-                    Time
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </PopoverTrigger>
+              <div className="flex gap-2">
+                {/* Time Filter */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="default" className="gap-1 sm:gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span className="hidden sm:inline">Time</span>
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
                 <PopoverContent align="end" className="w-80">
                   <div className="space-y-4">
                     <h4 className="font-medium">Date range</h4>
@@ -340,14 +337,15 @@ export default function Deployments() {
                 </PopoverContent>
               </Popover>
 
-              {/* Log Level Filter */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    Log
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </PopoverTrigger>
+                {/* Log Level Filter */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="default" className="gap-1 sm:gap-2">
+                      <span className="hidden sm:inline">Log</span>
+                      <span className="sm:hidden">Log</span>
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
                 <PopoverContent align="end" className="w-48">
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
@@ -361,21 +359,22 @@ export default function Deployments() {
                   </div>
                 </PopoverContent>
               </Popover>
+              </div>
             </div>
 
             {/* Logs Display */}
-            <Card className="font-mono text-sm">
+            <Card className="font-mono text-xs sm:text-sm">
               <CardContent className="p-0">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto max-h-[300px] sm:max-h-[500px] overflow-y-auto">
                   <div className="min-w-full">
                     {filteredLogs.map((log, index) => (
                       <div 
                         key={index} 
-                        className={`px-4 py-1 hover:bg-muted/50 border-b border-border/50 ${
+                        className={`px-2 sm:px-4 py-1 hover:bg-muted/50 border-b border-border/50 ${
                           log.level === 'error' ? 'text-red-500' : ''
-                        }`}
+                        } ${wrapText ? 'whitespace-pre-wrap' : 'whitespace-nowrap'}`}
                       >
-                        <span className="text-muted-foreground mr-4">{log.time}</span>
+                        <span className="text-muted-foreground mr-2 sm:mr-4">{log.time}</span>
                         <span className={showColors ? (log.level === 'error' ? 'text-red-500' : '') : ''}>
                           {log.message}
                         </span>
@@ -387,31 +386,32 @@ export default function Deployments() {
             </Card>
 
             {/* Log Controls */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setExpandLogs(!expandLogs)}
+                  className="h-8"
                 >
-                  <ChevronDown className={`h-4 w-4 mr-1 transition-transform ${expandLogs ? 'rotate-180' : ''}`} />
-                  Expand
+                  <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 transition-transform ${expandLogs ? 'rotate-180' : ''}`} />
+                  <span className="text-xs sm:text-sm">Expand</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setWrapText(!wrapText)}
-                  className={wrapText ? '' : 'text-muted-foreground'}
+                  className={`h-8 ${wrapText ? '' : 'text-muted-foreground'}`}
                 >
-                  Wrap
+                  <span className="text-xs sm:text-sm">Wrap</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowColors(!showColors)}
-                  className={showColors ? '' : 'text-muted-foreground'}
+                  className={`h-8 ${showColors ? '' : 'text-muted-foreground'}`}
                 >
-                  Colors
+                  <span className="text-xs sm:text-sm">Colors</span>
                 </Button>
               </div>
               
@@ -419,9 +419,10 @@ export default function Deployments() {
                 variant={isLive ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setIsLive(!isLive)}
+                className="h-8 w-full sm:w-auto"
               >
-                {isLive ? <Pause className="h-4 w-4 mr-1" /> : <Play className="h-4 w-4 mr-1" />}
-                Live
+                {isLive ? <Pause className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> : <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />}
+                <span className="text-xs sm:text-sm">Live</span>
               </Button>
             </div>
           </TabsContent>
@@ -446,25 +447,23 @@ export default function Deployments() {
         </Tabs>
 
         {/* Bottom action icons */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4">
-          <div className="container mx-auto">
-            <div className="flex items-center justify-around">
-              <Button variant="ghost" size="icon">
-                <Laptop className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Terminal className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Database className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Activity className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Package className="h-5 w-5" />
-              </Button>
-            </div>
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-2 sm:p-4 md:hidden">
+          <div className="flex items-center justify-around">
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Laptop className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Terminal className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Database className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Activity className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Package className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
@@ -473,24 +472,29 @@ export default function Deployments() {
           <div className="fixed inset-0 z-50" onClick={() => setShowBottomMenu(false)}>
             <div className="absolute inset-0 bg-black/50" />
             <div className="absolute bottom-0 left-0 right-0 bg-background border-t animate-slide-up">
-              <div className="p-4 space-y-2">
+              <div className="p-4 space-y-2 safe-bottom">
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start"
-                  onClick={handleRedeploy}
+                  className="w-full justify-start text-base"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRedeploy();
+                    setShowBottomMenu(false);
+                  }}
                 >
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                  <RefreshCw className="mr-3 h-5 w-5" />
                   Redeploy
                 </Button>
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start"
-                  onClick={() => {
+                  className="w-full justify-start text-base"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setShowBottomMenu(false);
                     toast({ title: "Tab closed" });
                   }}
                 >
-                  <X className="mr-2 h-4 w-4" />
+                  <X className="mr-3 h-5 w-5" />
                   Close Tab
                 </Button>
               </div>
