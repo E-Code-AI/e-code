@@ -234,20 +234,11 @@ export default function Dashboard() {
                           </h3>
                           <p className="text-sm text-[var(--ecode-text-secondary)]">
                             {getTimeAgo(project.updatedAt)}
-                        </p>
+                          </p>
+                        </div>
                       </div>
-                      </div>
-                    </div>
-                    
-                    {isDeployed(project) && (
-                      <div className="flex items-center gap-1.5 px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full">
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        <span className="text-xs font-medium">Deployed</span>
-                      </div>
-                    )}
-                    </div>
-                    
-                    <DropdownMenu>
+                      
+                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
@@ -275,6 +266,13 @@ export default function Dashboard() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
+                    
+                    {isDeployed(project) && (
+                      <div className="mt-3 flex items-center gap-1.5 px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full w-fit">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span className="text-xs font-medium">Deployed</span>
+                      </div>
+                    )}
                   </div>
                 </Card>
               ))}
