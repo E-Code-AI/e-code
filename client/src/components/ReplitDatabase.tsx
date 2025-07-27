@@ -464,7 +464,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
               <div>// Read a value</div>
               <div>const value = await db.get('user_settings');</div>
               <div className="mt-2">// Set a value</div>
-              <div>await db.set('user_settings', {'theme': 'dark'});</div>
+              <div>{`await db.set('user_settings', {theme: 'dark'});`}</div>
               <div className="mt-2">// Delete a value</div>
               <div>await db.delete('user_settings');</div>
             </div>
