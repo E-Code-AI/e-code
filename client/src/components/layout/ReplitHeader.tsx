@@ -35,6 +35,9 @@ import {
   Key,
   Package,
   ChevronDown,
+  GraduationCap,
+  DollarSign,
+  Gift,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
@@ -80,6 +83,44 @@ export function ReplitHeader() {
 
         {/* Navigation principale - hidden on mobile */}
         <nav className="hidden lg:flex items-center space-x-1 ml-8">
+          {/* Create Button - First like Replit */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] replit-transition"
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Create
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" onClick={() => navigate('/agent')}>
+                <Zap className="mr-2 h-4 w-4" />
+                Build with AI
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" onClick={() => navigate('/new')}>
+                <Code className="mr-2 h-4 w-4" />
+                Start from scratch
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" onClick={() => navigate('/templates')}>
+                <Package className="mr-2 h-4 w-4" />
+                From template
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" onClick={() => navigate('/github-import')}>
+                <Database className="mr-2 h-4 w-4" />
+                Import from GitHub
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" onClick={() => navigate('/teams/new')}>
+                <Users className="mr-2 h-4 w-4" />
+                Create a team
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* My Repls - Second like Replit */}
           <Link href="/projects">
             <Button
               variant={isActive("/projects") ? "default" : "ghost"}
@@ -90,38 +131,26 @@ export function ReplitHeader() {
                   : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
-              My Projects
+              My Repls
             </Button>
           </Link>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] replit-transition"
-              >
-                Create
-                <Plus className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
-              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-                <Code className="mr-2 h-4 w-4" />
-                Start from scratch
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-                <Database className="mr-2 h-4 w-4" />
-                Import existing work
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-                <Users className="mr-2 h-4 w-4" />
-                Team
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
 
+          {/* Home - Third like Replit */}
+          <Link href="/dashboard">
+            <Button
+              variant={isActive("/dashboard") ? "default" : "ghost"}
+              size="sm"
+              className={`replit-transition ${
+                isActive("/dashboard")
+                  ? "bg-[var(--ecode-accent)] text-white"
+                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+              }`}
+            >
+              Home
+            </Button>
+          </Link>
+
+          {/* Apps - Fourth like Replit */}
           <Link href="/explore">
             <Button
               variant={isActive("/explore") ? "default" : "ghost"}
@@ -132,66 +161,24 @@ export function ReplitHeader() {
                   : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
-              Explore
+              Apps
             </Button>
           </Link>
 
-          <Link href="/community">
+          {/* Deployments - Fifth like Replit */}
+          <Link href="/deployments">
             <Button
-              variant={isActive("/community") ? "default" : "ghost"}
+              variant={isActive("/deployments") ? "default" : "ghost"}
               size="sm"
               className={`replit-transition ${
-                isActive("/community")
+                isActive("/deployments")
                   ? "bg-[var(--ecode-accent)] text-white"
                   : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
-              Community
+              Deployments
             </Button>
           </Link>
-          
-          <Link href="/teams">
-            <Button
-              variant={isActive("/teams") ? "default" : "ghost"}
-              size="sm"
-              className={`replit-transition ${
-                isActive("/teams")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
-            >
-              Teams
-            </Button>
-          </Link>
-          
-          <Link href="/shell">
-            <Button
-              variant={isActive("/shell") ? "default" : "ghost"}
-              size="sm"
-              className={`replit-transition ${
-                isActive("/shell")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
-            >
-              Shell
-            </Button>
-          </Link>
-          
-          <Link href="/secrets">
-            <Button
-              variant={isActive("/secrets") ? "default" : "ghost"}
-              size="sm"
-              className={`replit-transition ${
-                isActive("/secrets")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
-            >
-              Secrets
-            </Button>
-          </Link>
-          
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -330,7 +317,7 @@ export function ReplitHeader() {
             <DropdownMenuItem 
               onClick={() => navigate('/bounties')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-              <Database className="mr-2 h-4 w-4" />
+              <DollarSign className="mr-2 h-4 w-4" />
               Bounties
             </DropdownMenuItem>
             
@@ -346,7 +333,7 @@ export function ReplitHeader() {
             <DropdownMenuItem 
               onClick={() => navigate('/learn')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-              <Book className="mr-2 h-4 w-4" />
+              <GraduationCap className="mr-2 h-4 w-4" />
               Learn
             </DropdownMenuItem>
             
@@ -367,16 +354,9 @@ export function ReplitHeader() {
             <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
             
             <DropdownMenuItem 
-              onClick={() => navigate('/themes')}
-              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-              <Settings className="mr-2 h-4 w-4" />
-              Themes
-            </DropdownMenuItem>
-            
-            <DropdownMenuItem 
               onClick={() => navigate('/referrals')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
-              <Users className="mr-2 h-4 w-4" />
+              <Gift className="mr-2 h-4 w-4" />
               Refer a Friend
             </DropdownMenuItem>
             

@@ -38,12 +38,11 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
   };
 
   const primaryLinks = [
+    { icon: Plus, label: 'Create', path: '/agent', action: 'create' },
+    { icon: Code, label: 'My Repls', path: '/projects' },
     { icon: Home, label: 'Home', path: '/dashboard' },
-    { icon: Code, label: 'My Projects', path: '/projects' },
-    { icon: Plus, label: 'Create New', path: '/projects', action: 'create' },
-    { icon: Globe, label: 'Explore', path: '/explore' },
-    { icon: Users, label: 'Community', path: '/community' },
-    { icon: Briefcase, label: 'Teams', path: '/teams' },
+    { icon: Globe, label: 'Apps', path: '/explore' },
+    { icon: Package, label: 'Deployments', path: '/deployments' },
   ];
 
   const handlePrimaryLinkClick = (link: any) => {
