@@ -132,47 +132,15 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
       }
     } catch (error) {
       console.error('Search error:', error);
-      // For now, show mock results
-      setResults(getMockResults(debouncedQuery, searchType));
+      setResults([]);
+      toast({
+        title: "Search failed",
+        description: "Unable to search files. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSearching(false);
     }
-  };
-
-  const getMockResults = (query: string, type: string): SearchResult[] => {
-    if (!query) return [];
-    
-    // Mock results for demonstration
-    if (type === 'files') {
-      return [
-        {
-          id: 1,
-          name: 'App.tsx',
-          path: '/src/App.tsx',
-          type: 'file',
-          matches: [],
-          size: 2048,
-          lastModified: '2 hours ago',
-          language: 'typescript'
-        },
-        {
-          id: 2,
-          name: 'index.ts',
-          path: '/src/index.ts',
-          type: 'file',
-          matches: [],
-          size: 512,
-          lastModified: '1 day ago',
-          language: 'typescript'
-        }
-      ];
-    } else if (type === 'content') {
-      return [
-        {
-          id: 1,
-          name: 'App.tsx',
-          path: '/src/App.tsx',
-          type: 'file',
           language: 'typescript',
           matches: [
             {
@@ -188,51 +156,6 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
               context: `const ${query} = useState('');`
             }
           ]
-        },
-        {
-          id: 2,
-          name: 'utils.ts',
-          path: '/src/utils.ts',
-          type: 'file',
-          language: 'typescript',
-          matches: [
-            {
-              line: 15,
-              column: 0,
-              text: query,
-              context: `export function ${query}Helper(data: any) {`
-            }
-          ]
-        }
-      ];
-    } else {
-      return [
-        {
-          id: 1,
-          name: `${query}Component`,
-          path: '/src/components/App.tsx',
-          type: 'file',
-          matches: [{
-            line: 10,
-            column: 0,
-            text: 'function',
-            context: `export function ${query}Component() {`
-          }]
-        },
-        {
-          id: 2,
-          name: `use${query}`,
-          path: '/src/hooks/useQuery.ts',
-          type: 'file',
-          matches: [{
-            line: 5,
-            column: 0,
-            text: 'hook',
-            context: `export const use${query} = () => {`
-          }]
-        }
-      ];
-    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

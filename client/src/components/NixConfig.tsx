@@ -35,52 +35,25 @@ export function NixConfig({ projectId }: { projectId: number }) {
   const [customConfig, setCustomConfig] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   
-  // Mock data - would come from API
-  const [packages] = useState<NixPackage[]>([
-    {
-      name: 'nodejs',
-      version: '20.11.0',
-      description: 'Event-driven I/O framework for the V8 JavaScript engine',
-      installed: true
-    },
-    {
-      name: 'python3',
-      version: '3.11.7',
-      description: 'A high-level dynamically-typed programming language',
-      installed: true
-    },
-    {
-      name: 'postgresql',
-      version: '15.5',
-      description: 'A powerful, open source object-relational database system',
-      installed: false
-    },
-    {
-      name: 'redis',
-      version: '7.2.4',
-      description: 'An open source, in-memory data structure store',
-      installed: false
-    },
-    {
-      name: 'rustc',
-      version: '1.75.0',
-      description: 'A safe, concurrent, practical language',
-      installed: false
+  // Fetch Nix packages
+  const { data: packages = [] } = useQuery<NixPackage[]>({
+    queryKey: ['/api/projects', projectId, 'nix/packages'],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${projectId}/nix/packages`);
+      if (!response.ok) throw new Error('Failed to fetch packages');
+      return response.json();
     }
-  ]);
+  });
 
-  const [channels] = useState<NixChannel[]>([
-    {
-      name: 'nixpkgs-unstable',
-      url: 'https://nixos.org/channels/nixpkgs-unstable',
-      active: true
-    },
-    {
-      name: 'nixos-23.11',
-      url: 'https://nixos.org/channels/nixos-23.11',
-      active: false
+  // Fetch Nix channels
+  const { data: channels = [] } = useQuery<NixChannel[]>({
+    queryKey: ['/api/projects', projectId, 'nix/channels'],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${projectId}/nix/channels`);
+      if (!response.ok) throw new Error('Failed to fetch channels');
+      return response.json();
     }
-  ]);
+  });
 
   const defaultConfig = `{ pkgs }: {
   deps = [

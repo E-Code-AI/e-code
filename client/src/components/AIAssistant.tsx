@@ -180,57 +180,20 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     } catch (error) {
       console.error('AI chat error:', error);
       
-      // Mock response for demonstration
-      const mockResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: getMockResponse(userMessage.content, quickAction),
-        timestamp: new Date(),
-        type: quickAction?.id === 'explain' ? 'explanation' : 
-               quickAction?.id === 'generate' ? 'code' : 'suggestion'
-      };
-      
-      setMessages(prev => [...prev, mockResponse]);
+      toast({
+        title: "AI service unavailable",
+        description: "Unable to connect to AI service. Please try again later.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getMockResponse = (query: string, action?: QuickAction): string => {
-    if (action?.id === 'explain') {
-      return `This code appears to be a React component that:\n\n1. **State Management**: Uses useState hooks to manage local state\n2. **Side Effects**: Uses useEffect for lifecycle management\n3. **API Integration**: Makes fetch calls to backend endpoints\n4. **Error Handling**: Includes try-catch blocks for error management\n\nThe component follows React best practices and appears to be well-structured.`;
-    } else if (action?.id === 'improve') {
-      return `Here are some suggestions to improve your code:\n\n1. **Add TypeScript types** for better type safety\n2. **Memoize expensive computations** using useMemo\n3. **Debounce API calls** to reduce server load\n4. **Extract custom hooks** for reusable logic\n5. **Add loading states** for better UX`;
-    } else if (action?.id === 'generate') {
-      return `\`\`\`typescript
-// Generated TypeScript interface based on your requirements
-interface UserData {
-  id: number;
-  name: string;
-  email: string;
-  createdAt: Date;
-}
 
-// Custom hook for user management
-export function useUser(userId: number) {
-  const [user, setUser] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    fetchUser(userId)
-      .then(setUser)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [userId]);
 
-  return { user, loading, error };
-}
-\`\`\``;
-    }
-    
-    return "I'm here to help! I can explain code, suggest improvements, help debug issues, and generate new code. What would you like assistance with?";
-  };
+
 
   const handleQuickAction = (action: QuickAction) => {
     if (selectedCode) {

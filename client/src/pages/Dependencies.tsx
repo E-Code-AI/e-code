@@ -75,77 +75,9 @@ export default function Dependencies() {
   const { data: dependencies = [], isLoading: depsLoading } = useQuery<Dependency[]>({
     queryKey: ['/api/dependencies'],
     queryFn: async () => {
-      // Mock data for demonstration
-      return [
-        {
-          name: 'react',
-          version: '^18.2.0',
-          description: 'A JavaScript library for building user interfaces',
-          installedVersion: '18.2.0',
-          latestVersion: '18.3.1',
-          hasUpdate: true,
-          license: 'MIT',
-          size: '316 kB',
-          dependencies: 3,
-          lastUpdated: '2 weeks ago',
-          repository: 'https://github.com/facebook/react',
-          homepage: 'https://react.dev'
-        },
-        {
-          name: 'express',
-          version: '^4.17.1',
-          description: 'Fast, unopinionated, minimalist web framework',
-          installedVersion: '4.17.1',
-          latestVersion: '4.18.3',
-          hasUpdate: true,
-          license: 'MIT',
-          size: '211 kB',
-          dependencies: 30,
-          lastUpdated: '1 month ago',
-          vulnerabilities: {
-            critical: 0,
-            high: 1,
-            medium: 2,
-            low: 0
-          }
-        },
-        {
-          name: 'typescript',
-          version: '^5.3.3',
-          description: 'TypeScript is a language for application scale JavaScript development',
-          installedVersion: '5.3.3',
-          latestVersion: '5.3.3',
-          hasUpdate: false,
-          license: 'Apache-2.0',
-          size: '68.1 MB',
-          dependencies: 0,
-          lastUpdated: '3 days ago'
-        },
-        {
-          name: 'vite',
-          version: '^5.0.8',
-          description: 'Native-ESM powered web dev build tool',
-          installedVersion: '5.0.8',
-          latestVersion: '5.1.3',
-          hasUpdate: true,
-          license: 'MIT',
-          size: '2.7 MB',
-          dependencies: 9,
-          lastUpdated: '1 week ago'
-        },
-        {
-          name: '@tanstack/react-query',
-          version: '^5.17.15',
-          description: 'Powerful asynchronous state management',
-          installedVersion: '5.17.15',
-          latestVersion: '5.17.15',
-          hasUpdate: false,
-          license: 'MIT',
-          size: '2.2 MB',
-          dependencies: 1,
-          lastUpdated: '5 days ago'
-        }
-      ];
+      const response = await fetch('/api/dependencies', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch dependencies');
+      return response.json();
     }
   });
 
@@ -153,13 +85,9 @@ export default function Dependencies() {
   const { data: stats, isLoading: statsLoading } = useQuery<DependencyStats>({
     queryKey: ['/api/dependencies/stats'],
     queryFn: async () => {
-      // Mock data for demonstration
-      return {
-        total: 156,
-        outdated: 23,
-        vulnerabilities: 3,
-        lastUpdated: '2 hours ago'
-      };
+      const response = await fetch('/api/dependencies/stats', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch dependency stats');
+      return response.json();
     }
   });
 
@@ -169,25 +97,9 @@ export default function Dependencies() {
     queryFn: async () => {
       if (!searchQuery) return [];
       
-      // Mock search results
-      return [
-        {
-          name: 'lodash',
-          version: '4.17.21',
-          description: 'Lodash modular utilities',
-          downloads: '45,234,567',
-          stars: '58.5k',
-          license: 'MIT'
-        },
-        {
-          name: 'axios',
-          version: '1.6.7',
-          description: 'Promise based HTTP client for the browser and node.js',
-          downloads: '38,456,789',
-          stars: '103k',
-          license: 'MIT'
-        }
-      ];
+      const response = await fetch(`/api/packages/search?query=${encodeURIComponent(searchQuery)}`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to search packages');
+      return response.json();
     },
     enabled: false
   });

@@ -44,25 +44,7 @@ interface Extension {
 }
 
 
-    lastUpdated: '2024-01-22'
-  },
-  {
-    id: 'react-snippets',
-    name: 'ES7+ React Snippets',
-    description: 'Extensions for React, React-Native and Redux',
-    author: 'dsznajder',
-    version: '4.4.3',
-    downloads: 5600000,
-    rating: 4.7,
-    ratingCount: 890,
-    category: 'snippets',
-    tags: ['react', 'snippets', 'javascript'],
-    icon: '⚛️',
-    installed: false,
-    price: 0,
-    lastUpdated: '2024-01-05'
-  }
-];
+
 
 const CATEGORIES = [
   { value: 'all', label: 'All Categories', icon: Package },
@@ -75,8 +57,8 @@ const CATEGORIES = [
 ];
 
 export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarketplaceProps) {
-  const [extensions, setExtensions] = useState<Extension[]>(MOCK_EXTENSIONS);
-  const [filteredExtensions, setFilteredExtensions] = useState<Extension[]>(MOCK_EXTENSIONS);
+  const [extensions, setExtensions] = useState<Extension[]>([]);
+  const [filteredExtensions, setFilteredExtensions] = useState<Extension[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'recent'>('popular');
@@ -84,11 +66,45 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [installingId, setInstallingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('discover');
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // Fetch extensions from API
+  useEffect(() => {
+    fetchExtensions();
+  }, []);
 
   useEffect(() => {
     filterAndSortExtensions();
   }, [selectedCategory, searchQuery, sortBy, extensions]);
+
+  const fetchExtensions = async () => {
+    setIsLoading(true);
+    try {
+      const [allExtensions, installedExtensions] = await Promise.all([
+        fetch('/api/extensions').then(r => r.json()),
+        fetch('/api/extensions/installed', { credentials: 'include' }).then(r => r.ok ? r.json() : [])
+      ]);
+
+      // Merge installation status
+      const installedIds = new Set(installedExtensions.map((ext: any) => ext.extensionId));
+      const mergedExtensions = allExtensions.map((ext: any) => ({
+        ...ext,
+        installed: installedIds.has(ext.id)
+      }));
+
+      setExtensions(mergedExtensions);
+    } catch (error) {
+      console.error('Failed to fetch extensions:', error);
+      toast({
+        title: "Error loading extensions",
+        description: "Failed to load extensions marketplace",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filterAndSortExtensions = () => {
     let filtered = extensions;
@@ -136,11 +152,10 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
     setInstallingId(extension.id);
     
     try {
-      const response = await fetch(`/api/projects/${projectId}/extensions/install`, {
+      const response = await fetch(`/api/extensions/${extension.id}/install`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ extensionId: extension.id })
       });
 
       if (response.ok) {

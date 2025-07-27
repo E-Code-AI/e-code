@@ -33,82 +33,35 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
-// Mock user profile data
-const mockProfile = {
-  id: 1,
-  username: 'demo',
-  displayName: 'Demo User',
-  email: 'demo@plot.local',
-  bio: 'Full-stack developer passionate about building amazing web applications. Love open source and teaching others to code.',
-  avatarUrl: null,
-  location: 'San Francisco, CA',
-  website: 'https://demo.dev',
-  twitter: '@demo_dev',
-  github: 'demo',
-  joinedDate: '2024-01-15',
-  stats: {
-    repls: 45,
-    followers: 234,
-    following: 89,
-    stars: 567,
-    streak: 12,
-  },
-  badges: [
-    { id: 1, name: 'Early Adopter', icon: Trophy, color: 'text-yellow-500' },
-    { id: 2, name: '100 Day Streak', icon: Zap, color: 'text-orange-500' },
-    { id: 3, name: 'Top Contributor', icon: Award, color: 'text-purple-500' },
-  ],
-  skills: ['JavaScript', 'React', 'Node.js', 'Python', 'TypeScript', 'PostgreSQL'],
-  recentActivity: [
-    { type: 'created', repl: 'AI Chat Bot', time: '2 hours ago' },
-    { type: 'starred', repl: 'Game Engine', time: '5 hours ago' },
-    { type: 'forked', repl: 'Data Visualizer', time: '1 day ago' },
-  ],
-};
-
-// Mock repls data
-const mockRepls = [
-  {
-    id: 1,
-    name: 'AI Chat Assistant',
-    description: 'GPT-powered chat with streaming responses',
-    language: 'Python',
-    stars: 234,
-    forks: 45,
-    lastUpdated: '2 days ago',
-    visibility: 'public',
-  },
-  {
-    id: 2,
-    name: 'Real-time Collaboration',
-    description: 'Multi-user document editing with WebRTC',
-    language: 'TypeScript',
-    stars: 189,
-    forks: 32,
-    lastUpdated: '1 week ago',
-    visibility: 'public',
-  },
-  {
-    id: 3,
-    name: 'Data Dashboard',
-    description: 'Beautiful analytics dashboard with charts',
-    language: 'React',
-    stars: 156,
-    forks: 28,
-    lastUpdated: '2 weeks ago',
-    visibility: 'private',
-  },
-];
-
 export default function Profile() {
   const [, navigate] = useLocation();
   const { username } = useParams() as { username?: string };
   const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // In real app, fetch profile based on username
   const isOwnProfile = !username || username === currentUser?.username;
-  const profile = mockProfile;
+  
+  // Fetch user profile
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['/api/users', username || currentUser?.username],
+    queryFn: async () => {
+      const response = await fetch(`/api/users/${username || currentUser?.username}`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch profile');
+      return response.json();
+    },
+    enabled: !!(username || currentUser?.username),
+  });
+  
+  // Fetch user's projects
+  const { data: projects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ['/api/users', username || currentUser?.username, 'projects'],
+    queryFn: async () => {
+      const response = await fetch(`/api/users/${username || currentUser?.username}/projects`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch projects');
+      return response.json();
+    },
+    enabled: !!(username || currentUser?.username),
+  });
 
   const getLanguageColor = (language: string) => {
     const colors: Record<string, string> = {
@@ -123,11 +76,21 @@ export default function Profile() {
     return colors[language] || 'bg-gray-500';
   };
 
-  // Activity chart data (mock)
-  const activityData = Array.from({ length: 52 }, (_, i) => ({
-    week: i,
-    contributions: Math.floor(Math.random() * 20),
-  }));
+  // Fetch user activity data
+  const { data: activityData = [], isLoading: activityLoading } = useQuery({
+    queryKey: ['/api/users', username || currentUser?.username, 'activity'],
+    queryFn: async () => {
+      const response = await fetch(`/api/users/${username || currentUser?.username}/activity`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch activity');
+      const data = await response.json();
+      // Transform activity data into weekly contributions
+      return Array.from({ length: 52 }, (_, i) => ({
+        week: i,
+        contributions: data[i] || 0,
+      }));
+    },
+    enabled: !!(username || currentUser?.username),
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -297,7 +260,7 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {mockRepls.slice(0, 3).map((repl) => (
+                      {projects.slice(0, 3).map((repl: any) => (
                         <div
                           key={repl.id}
                           className="flex items-start justify-between p-3 hover:bg-accent cursor-pointer"

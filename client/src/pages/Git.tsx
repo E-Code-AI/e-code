@@ -91,93 +91,10 @@ export default function Git() {
     }
   });
 
-  // Mock data for demonstration
-  const mockRepositories = [
-    {
-      id: 1,
-      name: 'my-awesome-project',
-      description: 'A full-stack web application built with React and Node.js',
-      visibility: 'public',
-      language: 'TypeScript',
-      stars: 42,
-      forks: 12,
-      lastUpdated: '2 hours ago',
-      defaultBranch: 'main',
-      url: 'https://github.com/user/my-awesome-project'
-    },
-    {
-      id: 2,
-      name: 'data-analysis-toolkit',
-      description: 'Python scripts for data analysis and visualization',
-      visibility: 'private',
-      language: 'Python',
-      stars: 15,
-      forks: 3,
-      lastUpdated: '1 day ago',
-      defaultBranch: 'main',
-      url: 'https://github.com/user/data-analysis-toolkit'
-    },
-    {
-      id: 3,
-      name: 'mobile-app',
-      description: 'Cross-platform mobile application using React Native',
-      visibility: 'public',
-      language: 'JavaScript',
-      stars: 128,
-      forks: 34,
-      lastUpdated: '3 days ago',
-      defaultBranch: 'develop',
-      url: 'https://github.com/user/mobile-app'
-    }
-  ];
 
-  const mockRepoDetails = {
-    branches: ['main', 'develop', 'feature/new-ui', 'bugfix/login-issue'],
-    commits: [
-      {
-        id: 'abc123',
-        message: 'Add user authentication',
-        author: 'John Doe',
-        date: '2 hours ago',
-        changes: { additions: 156, deletions: 23 }
-      },
-      {
-        id: 'def456',
-        message: 'Update README with installation instructions',
-        author: 'Jane Smith',
-        date: '5 hours ago',
-        changes: { additions: 45, deletions: 10 }
-      },
-      {
-        id: 'ghi789',
-        message: 'Fix responsive layout issues',
-        author: 'Bob Johnson',
-        date: '1 day ago',
-        changes: { additions: 89, deletions: 34 }
-      }
-    ],
-    pullRequests: [
-      {
-        id: 1,
-        title: 'Add dark mode support',
-        author: 'contributor1',
-        status: 'open',
-        created: '2 days ago',
-        comments: 5
-      },
-      {
-        id: 2,
-        title: 'Optimize database queries',
-        author: 'contributor2',
-        status: 'merged',
-        created: '5 days ago',
-        comments: 12
-      }
-    ]
-  };
 
-  const displayRepos = repositories || mockRepositories;
-  const displayDetails = repoDetails || mockRepoDetails;
+  const displayRepos = repositories || [];
+  const displayDetails = repoDetails;
 
   const filteredRepos = Array.isArray(displayRepos) ? displayRepos.filter((repo: any) => 
     repo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

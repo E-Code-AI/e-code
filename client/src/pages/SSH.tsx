@@ -82,61 +82,11 @@ export default function SSH() {
   // Fetch SSH keys
   const { data: sshKeys = [], isLoading: keysLoading } = useQuery<SSHKey[]>({
     queryKey: ['/api/ssh/keys'],
-    queryFn: async () => {
-      // Mock data for demonstration
-      return [
-        {
-          id: '1',
-          name: 'MacBook Pro',
-          fingerprint: 'SHA256:jZaU7Gv8IB3h2kL8XoJvP3nQ1rS5tU2wY9zA7cD4eF8',
-          publicKey: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOogtZy8e5u4FzjJ0D1mYJE0GO1P user@macbook',
-          type: 'ed25519',
-          addedAt: '2024-01-15',
-          lastUsed: '2 hours ago',
-          comment: 'Personal laptop'
-        },
-        {
-          id: '2',
-          name: 'GitHub Actions',
-          fingerprint: 'SHA256:mNaU8Hv9JC4i3lM9YpKwQ4oR2sT6uV3xZ0aB8dE5gG9',
-          publicKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7VaJnj...',
-          type: 'rsa',
-          addedAt: '2024-01-10',
-          lastUsed: '1 day ago',
-          comment: 'CI/CD deployment key'
-        }
-      ];
-    }
   });
 
   // Fetch SSH sessions
   const { data: sshSessions = [], isLoading: sessionsLoading } = useQuery<SSHSession[]>({
     queryKey: ['/api/ssh/sessions'],
-    queryFn: async () => {
-      // Mock data for demonstration
-      return [
-        {
-          id: 's1',
-          host: 'dev-server.ecode.app',
-          user: 'deploy',
-          status: 'active',
-          connectedAt: '10 minutes ago',
-          lastActivity: '2 minutes ago',
-          keyId: '1',
-          keyName: 'MacBook Pro'
-        },
-        {
-          id: 's2',
-          host: 'staging.ecode.app',
-          user: 'admin',
-          status: 'inactive',
-          connectedAt: '2 hours ago',
-          lastActivity: '1 hour ago',
-          keyId: '2',
-          keyName: 'GitHub Actions'
-        }
-      ];
-    }
   });
 
   // Add SSH key mutation

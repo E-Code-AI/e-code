@@ -70,79 +70,48 @@ export default function GitHubImport() {
   const [myRepos, setMyRepos] = useState<GitHubRepo[]>([]);
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
 
-  // Mock search results for demonstration
+  // Search GitHub repositories
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     
     setIsSearching(true);
-    // Simulate API call
-    setTimeout(() => {
-      setSearchResults([
-        {
-          id: 1,
-          name: 'awesome-project',
-          full_name: 'user/awesome-project',
-          description: 'An awesome project built with React and TypeScript',
-          private: false,
-          stars: 1234,
-          forks: 567,
-          language: 'TypeScript',
-          updated_at: new Date().toISOString(),
-          default_branch: 'main',
-          size: 45678
-        },
-        {
-          id: 2,
-          name: 'react-components',
-          full_name: 'org/react-components',
-          description: 'A collection of reusable React components',
-          private: false,
-          stars: 890,
-          forks: 234,
-          language: 'JavaScript',
-          updated_at: new Date().toISOString(),
-          default_branch: 'master',
-          size: 23456
-        }
-      ]);
+    try {
+      const response = await fetch(`/api/github/search?q=${encodeURIComponent(searchQuery)}`);
+      if (!response.ok) throw new Error('Failed to search repositories');
+      const data = await response.json();
+      setSearchResults(data.items || []);
+    } catch (error) {
+      console.error('Search error:', error);
+      toast({
+        title: "Search failed",
+        description: "Unable to search GitHub repositories. Please try again.",
+        variant: "destructive"
+      });
+      setSearchResults([]);
+    } finally {
       setIsSearching(false);
-    }, 1000);
+    }
   };
 
-  // Mock loading user repos
-  const loadMyRepos = () => {
+  // Load user repositories
+  const loadMyRepos = async () => {
     setIsLoadingRepos(true);
-    setTimeout(() => {
-      setMyRepos([
-        {
-          id: 3,
-          name: 'my-portfolio',
-          full_name: 'myusername/my-portfolio',
-          description: 'Personal portfolio website',
-          private: false,
-          stars: 12,
-          forks: 3,
-          language: 'HTML',
-          updated_at: new Date().toISOString(),
-          default_branch: 'main',
-          size: 12345
-        },
-        {
-          id: 4,
-          name: 'private-project',
-          full_name: 'myusername/private-project',
-          description: 'A private project',
-          private: true,
-          stars: 0,
-          forks: 0,
-          language: 'Python',
-          updated_at: new Date().toISOString(),
-          default_branch: 'main',
-          size: 34567
-        }
-      ]);
+    try {
+      const response = await fetch('/api/github/user/repos');
+      if (!response.ok) throw new Error('Failed to load repositories');
+      const data = await response.json();
+      setMyRepos(data);
+    } catch (error) {
+      console.error('Load repos error:', error);
+      toast({
+        title: "Failed to load repositories",
+        description: "Unable to load your GitHub repositories. Please connect your GitHub account.",
+        variant: "destructive"
+      });
+      setMyRepos([]);
+    } finally {
       setIsLoadingRepos(false);
-    }, 1000);
+    }
   };
 
   const handleImport = async () => {
@@ -158,20 +127,25 @@ export default function GitHubImport() {
     setIsImporting(true);
     setImportProgress(0);
 
-    // Simulate import progress
-    const interval = setInterval(() => {
-      setImportProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
-        return prev + 10;
-      });
-    }, 500);
+    try {
+      const body = {
+        repoUrl: selectedRepo ? selectedRepo.full_name : repoUrl,
+        branch,
+        projectName: projectName || (selectedRepo ? selectedRepo.name : ''),
+        visibility,
+        includeHistory,
+        includeLFS
+      };
 
-    // Simulate API call
-    setTimeout(() => {
-      clearInterval(interval);
+      const response = await fetch('/api/github/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) throw new Error('Failed to import repository');
+      
+      const data = await response.json();
       setImportProgress(100);
       
       toast({
@@ -180,10 +154,18 @@ export default function GitHubImport() {
       });
 
       // Navigate to the new project
-      setTimeout(() => {
-        navigate('/~');
-      }, 1000);
-    }, 3000);
+      navigate(`/project/${data.projectId}`);
+    } catch (error) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import failed",
+        description: "Unable to import the repository. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsImporting(false);
+      setImportProgress(0);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
