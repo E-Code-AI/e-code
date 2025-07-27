@@ -50,6 +50,7 @@ import { CodeExecutor } from "./execution/executor";
 import { simpleCodeExecutor } from "./execution/simple-executor";
 // GitManager replaced with simpleGitManager
 import { collaborationServer } from "./realtime/collaboration-server";
+import { CollaborationServer } from "./collaboration/collaboration-server";
 import { replitDB } from "./database/replitdb";
 import { searchEngine } from "./search/search-engine";
 import { extensionManager } from "./extensions/extension-manager";
@@ -1913,8 +1914,8 @@ API will be available at http://localhost:3000
   // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
   
-  // WebSocket for real-time collaboration
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // WebSocket for real-time collaboration using Yjs
+  const collabServer = new CollaborationServer(httpServer);
   
   // WebSocket for terminal connections
   const terminalWss = setupTerminalWebsocket(httpServer);
@@ -1925,191 +1926,7 @@ API will be available at http://localhost:3000
   // WebSocket for shell
   const shellWss = setupShellWebSocket(httpServer);
   
-  // Define WebSocket client interface for collaboration
-  interface CollaborationClient extends WebSocket {
-    userId?: number;
-    username?: string;
-    projectId?: number;
-    fileId?: number;
-    color?: string;
-    isAlive: boolean;
-  }
-  
-  // Message types for collaboration
-  type CollaborationMessage = {
-    type: 'cursor_move' | 'edit' | 'user_joined' | 'user_left' | 'chat_message' | 'pong';
-    data: any;
-    userId: number;
-    username: string;
-    projectId: number;
-    fileId: number;
-    timestamp: number;
-  };
-  
-  // Handle WebSocket connections for real-time collaboration
-  const clients = new Map<WebSocket, any>(); // Map to store clients and their project/file info
-  const projectClients = new Map<number, Set<WebSocket>>(); // Map projects to connected clients
-  
-  // Set up ping interval to keep connections alive
-  const pingInterval = setInterval(() => {
-    wss.clients.forEach((ws) => {
-      const collaborationWs = ws as CollaborationClient;
-      
-      if (collaborationWs.isAlive === false) {
-        collaborationWs.terminate();
-        return;
-      }
-      
-      collaborationWs.isAlive = false;
-      collaborationWs.send(JSON.stringify({ type: 'ping' }));
-    });
-  }, 30000);
-  
-  wss.on('close', () => {
-    clearInterval(pingInterval);
-  });
-  
-  wss.on("connection", (ws: WebSocket) => {
-    const collaborationWs = ws as CollaborationClient;
-    collaborationWs.isAlive = true;
-    
-    let clientInfo = {
-      userId: null,
-      username: null,
-      projectId: null,
-      fileId: null,
-      color: null
-    };
-    
-    // Handle incoming messages from clients
-    collaborationWs.on("message", (message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        
-        // Handle pong responses
-        if (data.type === 'pong') {
-          collaborationWs.isAlive = true;
-          return;
-        }
-        
-        // Update client info for the first message
-        if (data.userId && !clientInfo.userId) {
-          clientInfo = {
-            userId: data.userId,
-            username: data.username,
-            projectId: data.projectId,
-            fileId: data.fileId,
-            color: data.data?.color || null
-          };
-          
-          // Store client info for broadcasting to specific rooms
-          clients.set(collaborationWs, clientInfo);
-          
-          // Add to project clients map
-          if (!projectClients.has(data.projectId)) {
-            projectClients.set(data.projectId, new Set());
-          }
-          projectClients.get(data.projectId)?.add(collaborationWs);
-          
-          // If first join, send list of current collaborators
-          if (data.type === 'user_joined') {
-            // Send current collaborators to new user
-            const currentCollaborators = [];
-            
-            for (const [client, info] of Array.from(clients.entries())) {
-              if (client !== collaborationWs && info.projectId === data.projectId) {
-                currentCollaborators.push({
-                  userId: info.userId,
-                  username: info.username,
-                  color: info.color
-                });
-              }
-            }
-            
-            if (currentCollaborators.length > 0) {
-              collaborationWs.send(JSON.stringify({
-                type: 'current_collaborators',
-                data: { collaborators: currentCollaborators },
-                userId: 0, // System message
-                username: 'System',
-                projectId: data.projectId,
-                fileId: data.fileId,
-                timestamp: Date.now()
-              }));
-            }
-          }
-        }
-        
-        // For chat messages, add timestamp if not present
-        if (data.type === 'chat_message' && !data.data.timestamp) {
-          data.data.timestamp = Date.now();
-        }
-        
-        // Broadcast to all clients in the same project except sender
-        const projectId = data.projectId;
-        const projectWsClients = projectClients.get(projectId);
-        
-        if (projectWsClients) {
-          projectWsClients.forEach((client) => {
-            if (client !== collaborationWs && client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(data));
-            }
-          });
-        }
-        
-        // Log collaboration events (excluding cursor movements to reduce noise)
-        if (data.type !== 'cursor_move') {
-          console.log(`Collaboration event: ${data.type} in project ${data.projectId} from ${data.username}`);
-        }
-      } catch (error) {
-        console.error("WebSocket message error:", error);
-      }
-    });
-    
-    // Handle ping/pong to keep connection alive
-    collaborationWs.on('pong', () => {
-      collaborationWs.isAlive = true;
-    });
-    
-    // Handle disconnection
-    collaborationWs.on("close", () => {
-      if (clientInfo.userId) {
-        // Broadcast user left message to others in the same project
-        const leaveMessage = {
-          type: 'user_left',
-          userId: clientInfo.userId,
-          username: clientInfo.username,
-          projectId: clientInfo.projectId || 0,
-          fileId: clientInfo.fileId || 0,
-          timestamp: Date.now(),
-          data: {}
-        };
-        
-        const projectId = clientInfo.projectId || 0;
-        const projectWsClients = projectClients.get(projectId);
-        
-        if (projectWsClients) {
-          projectWsClients.forEach((client) => {
-            if (client !== collaborationWs && client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(leaveMessage));
-            }
-          });
-          
-          // Remove client from project set
-          projectWsClients.delete(collaborationWs);
-          
-          // If no clients left, remove project from map
-          if (projectWsClients.size === 0) {
-            projectClients.delete(projectId);
-          }
-        }
-        
-        // Remove from clients map
-        clients.delete(collaborationWs);
-        console.log(`User ${clientInfo.username} disconnected from project ${clientInfo.projectId}`);
-      }
-    });
-  });
+  // Old collaboration WebSocket code removed - replaced with CollaborationServer using Yjs
   
   // Debug middleware to trace session and auth info
   app.use((req, res, next) => {

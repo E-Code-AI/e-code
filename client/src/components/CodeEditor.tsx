@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import * as monaco from 'monaco-editor';
 import { setupMonacoTheme, getMonacoEditorOptions } from "@/lib/monaco-setup";
 import { File } from "@shared/schema";
-import { useCollaboration } from "@/hooks/useCollaboration";
-import { RemoteCursor } from "@/components/ui/cursor";
 import { Search, XCircle, Maximize2, Minimize2, Code, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,12 +22,39 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
+interface Collaborator {
+  clientId: number;
+  userId: number;
+  username: string;
+  color: string;
+  cursor?: {
+    position: {
+      lineNumber: number;
+      column: number;
+    };
+    selection?: {
+      startLineNumber: number;
+      startColumn: number;
+      endLineNumber: number;
+      endColumn: number;
+    };
+  };
+}
+
 interface CodeEditorProps {
   file: File;
   onChange: (content: string) => void;
+  collaboration?: {
+    collaborators: Collaborator[];
+    isConnected: boolean;
+    followingUserId: number | null;
+    followUser: (userId: number) => void;
+    setEditor?: (editor: monaco.editor.IStandaloneCodeEditor | null) => void;
+    setModel?: (model: monaco.editor.ITextModel | null) => void;
+  };
 }
 
-const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
+const CodeEditor = ({ file, onChange, collaboration }: CodeEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const monacoEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [editorDimensions, setEditorDimensions] = useState({
@@ -50,12 +75,6 @@ const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
     formatOnType: false,
   });
   const [searchOpen, setSearchOpen] = useState(false);
-  
-  // Use the collaboration hook
-  const { cursors, collaborators, updateCursorPosition, sendEdit } = useCollaboration(
-    file.projectId, 
-    file.id
-  );
   
   // Update editor when settings change
   const updateEditorSettings = () => {
@@ -91,7 +110,10 @@ const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
     if (monacoEditorRef.current) {
       if (!searchOpen) {
         // Open search widget
-        monacoEditorRef.current.getAction('actions.find').run();
+        const findAction = monacoEditorRef.current.getAction('actions.find');
+        if (findAction) {
+          findAction.run();
+        }
       } else {
         // Close search widget
         monacoEditorRef.current.trigger('', 'closeFindWidget', null);
@@ -141,18 +163,15 @@ const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
       monacoEditorRef.current.onDidChangeModelContent((e) => {
         const newValue = monacoEditorRef.current?.getValue() || '';
         onChange(newValue);
-        
-        // Send edit to collaborators
-        sendEdit(e.changes);
       });
       
-      // Listen for cursor position changes
-      monacoEditorRef.current.onDidChangeCursorPosition((e) => {
-        updateCursorPosition({
-          lineNumber: e.position.lineNumber,
-          column: e.position.column,
-        });
-      });
+      // Pass editor instance to collaboration if available
+      if (collaboration?.setEditor) {
+        collaboration.setEditor(monacoEditorRef.current);
+      }
+      if (collaboration?.setModel) {
+        collaboration.setModel(monacoEditorRef.current.getModel());
+      }
       
       // Get dimensions for cursor positioning
       const fontInfo = monacoEditorRef.current.getOption(monaco.editor.EditorOption.fontInfo);
@@ -428,16 +447,16 @@ const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
           className="h-full w-full"
         />
         
-        {/* Collaborators list */}
-        {collaborators.length > 0 && (
+        {/* Collaborators indicator */}
+        {collaboration && collaboration.collaborators.length > 0 && (
           <div className="absolute top-2 right-4 z-10 bg-background/80 backdrop-blur-sm p-2 rounded-md border border-border">
-            <div className="text-xs font-medium mb-1">Collaborators ({collaborators.length})</div>
+            <div className="text-xs font-medium mb-1">Collaborators ({collaboration.collaborators.length})</div>
             <div className="flex flex-col gap-1">
-              {collaborators.map((collaborator) => (
+              {collaboration.collaborators.map((collaborator) => (
                 <div key={collaborator.userId} className="flex items-center gap-1.5 text-xs">
                   <span 
                     className="w-2 h-2 rounded-full" 
-                    style={{ backgroundColor: cursors[collaborator.userId]?.color || '#ccc' }}
+                    style={{ backgroundColor: collaborator.color }}
                   />
                   <span>{collaborator.username}</span>
                 </div>
@@ -445,31 +464,16 @@ const CodeEditor = ({ file, onChange }: CodeEditorProps) => {
             </div>
           </div>
         )}
-        
-        {/* Remote cursors */}
-        {Object.values(cursors).map((cursor) => (
-          cursor.fileId === file.id && (
-            <RemoteCursor
-              key={cursor.userId}
-              position={cursor.position}
-              color={cursor.color}
-              username={cursor.username}
-              editorElement={editorElement}
-              lineHeight={editorDimensions.lineHeight}
-              charWidth={editorDimensions.charWidth}
-            />
-          )
-        ))}
       </div>
       
       {/* Status bar */}
       <div className="h-6 border-t border-border bg-background/50 flex items-center px-2 text-xs text-muted-foreground">
         <div className="flex-1 flex items-center space-x-4">
           <div>
-            Line: {monacoEditorRef.current?.getPosition()?.lineNumber || 1}
+            Line: {monacoEditorRef.current && monacoEditorRef.current.getPosition()?.lineNumber || 1}
           </div>
           <div>
-            Column: {monacoEditorRef.current?.getPosition()?.column || 1}
+            Column: {monacoEditorRef.current && monacoEditorRef.current.getPosition()?.column || 1}
           </div>
           <div>
             Tab Size: {editorSettings.tabSize}

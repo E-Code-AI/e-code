@@ -47,6 +47,10 @@ import {
 import { ReplitSecrets } from '@/components/ReplitSecrets';
 import { ReplitDatabase } from '@/components/ReplitDatabase';
 
+// Import collaboration components
+import { CollaborationPanel } from '@/components/CollaborationPanel';
+import { useYjsCollaboration } from '@/hooks/useYjsCollaboration';
+
 type MobileTab = 'files' | 'secrets' | 'database' | 'auth' | 'agent';
 
 const ReplitProjectPage = () => {
@@ -64,6 +68,13 @@ const ReplitProjectPage = () => {
   const [showAIChat, setShowAIChat] = useState(true); // Show AI chat by default
   const [showTerminal, setShowTerminal] = useState(false); // Hide terminal by default like Replit
   const [mobileTab, setMobileTab] = useState<MobileTab>('files');
+  const [showCollaboration, setShowCollaboration] = useState(false);
+
+  // Initialize collaboration
+  const collaboration = useYjsCollaboration({
+    projectId: projectId || 0,
+    fileId: selectedFile?.id || 0
+  });
 
   // Query for project details
   const { 
@@ -342,6 +353,7 @@ const ReplitProjectPage = () => {
                       content: unsavedChanges[selectedFile.id] || selectedFile.content || ''
                     }}
                     onChange={(content) => handleFileContentChange(selectedFile.id, content)}
+                    collaboration={collaboration}
                   />
                 ) : (
                   <FileExplorer
@@ -411,6 +423,22 @@ const ReplitProjectPage = () => {
             <MessageSquare className="h-4 w-4" />
           </Button>
 
+          {collaboration.collaborators.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowCollaboration(!showCollaboration)}
+              className="h-8 w-8 relative"
+            >
+              <Users className="h-4 w-4" />
+              {collaboration.collaborators.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                  {collaboration.collaborators.length}
+                </span>
+              )}
+            </Button>
+          )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -463,6 +491,7 @@ const ReplitProjectPage = () => {
                         content: unsavedChanges[selectedFile.id] || selectedFile.content || ''
                       }}
                       onChange={(content) => handleFileContentChange(selectedFile.id, content)}
+                      collaboration={collaboration}
                     />
                   ) : (
                     <div className="h-full flex items-center justify-center text-muted-foreground">
@@ -493,6 +522,22 @@ const ReplitProjectPage = () => {
                 <div className="h-full overflow-hidden">
                   <ReplitAgentChat
                     projectId={projectId || 0}
+                  />
+                </div>
+              </ResizablePanel>
+            </>
+          )}
+
+          {/* Collaboration Panel */}
+          {showCollaboration && (
+            <>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                <div className="h-full overflow-hidden">
+                  <CollaborationPanel
+                    collaborators={collaboration.collaborators}
+                    followingUserId={collaboration.followingUserId}
+                    onFollowUser={collaboration.followUser}
                   />
                 </div>
               </ResizablePanel>
