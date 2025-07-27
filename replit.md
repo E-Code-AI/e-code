@@ -47,6 +47,15 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-27: **Navigation Menu Updated to Match Replit Exactly**:
+  * **Main Navigation Bar**: Reorganized to match Replit's exact structure
+    - Create (dropdown) → My Repls → Home → Apps → Deployments
+    - Removed Teams, Community, Shell from main nav
+    - Added Tools dropdown with Workflows, SSH, Security Scanner, Dependencies, Object Storage
+  * **User Dropdown Menu**: Updated to match Replit's exact menu items and order
+    - Added proper icons for each menu item (Gift for referrals, Dollar for bounties, etc.)
+    - Organized with proper separators matching Replit's structure
+  * **Mobile Menu**: Updated to reflect same navigation structure as desktop
 - 2025-07-27: **AI Agent Autonomous Interface Enhanced to Match Replit Exactly**:
   * **Created ReplitAIAgentPage**: New dedicated AI agent page with Replit's exact design and UI
     - Large centered input field with gradient send button
