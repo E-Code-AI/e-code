@@ -122,7 +122,7 @@ export default function ReplitAIAgentPage() {
           </div>
 
           {/* AI Agent Chat */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             <ReplitAgent 
               projectId={projectId} 
               className="h-full"
