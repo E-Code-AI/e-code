@@ -120,7 +120,22 @@ export function ReplitHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* My Repls - Second like Replit */}
+          {/* Home - Second like Replit */}
+          <Link href="/dashboard">
+            <Button
+              variant={isActive("/dashboard") ? "default" : "ghost"}
+              size="sm"
+              className={`replit-transition ${
+                isActive("/dashboard")
+                  ? "bg-[var(--ecode-accent)] text-white"
+                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+              }`}
+            >
+              Home
+            </Button>
+          </Link>
+
+          {/* Apps - Third like Replit */}
           <Link href="/projects">
             <Button
               variant={isActive("/projects") ? "default" : "ghost"}
@@ -131,26 +146,44 @@ export function ReplitHeader() {
                   : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
-              My Repls
+              Apps
             </Button>
           </Link>
 
-          {/* Community - Third like Replit */}
-          <Link href="/community">
+          {/* Deployments - Fourth like Replit */}
+          <Link href="/deployments">
             <Button
-              variant={isActive("/community") ? "default" : "ghost"}
+              variant={isActive("/deployments") ? "default" : "ghost"}
               size="sm"
               className={`replit-transition ${
-                isActive("/community")
+                isActive("/deployments")
                   ? "bg-[var(--ecode-accent)] text-white"
                   : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
-              Community
+              Deployments
             </Button>
           </Link>
 
-          {/* Teams - Fourth like Replit */}
+          {/* Usage - Fifth like Replit */}
+          <Link href="/usage">
+            <Button
+              variant={isActive("/usage") ? "default" : "ghost"}
+              size="sm"
+              className={`replit-transition relative ${
+                isActive("/usage")
+                  ? "bg-[var(--ecode-accent)] text-white"
+                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+              }`}
+            >
+              Usage
+              <span className="absolute -top-1 -right-2 px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white rounded">
+                Action required
+              </span>
+            </Button>
+          </Link>
+
+          {/* Teams - Sixth like Replit */}
           <Link href="/teams">
             <Button
               variant={isActive("/teams") ? "default" : "ghost"}
