@@ -62,7 +62,7 @@ const ReplitProjectPage = () => {
   const [projectRunning, setProjectRunning] = useState(false);
   const [executionId, setExecutionId] = useState<string | undefined>();
   const [showAIChat, setShowAIChat] = useState(true); // Show AI chat by default
-  const [showTerminal, setShowTerminal] = useState(true);
+  const [showTerminal, setShowTerminal] = useState(false); // Hide terminal by default like Replit
   const [mobileTab, setMobileTab] = useState<MobileTab>('files');
 
   // Query for project details
