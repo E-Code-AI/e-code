@@ -1460,6 +1460,68 @@ export class DatabaseStorage implements IStorage {
     return forkedProject;
   }
 
+  // Template methods implementation
+  async getAllTemplates(published?: boolean): Promise<Template[]> {
+    if (published !== undefined) {
+      return await db.select()
+        .from(templates)
+        .where(eq(templates.published, published))
+        .orderBy(desc(templates.uses));
+    }
+    return await db.select()
+      .from(templates)
+      .orderBy(desc(templates.uses));
+  }
+
+  async getTemplateBySlug(slug: string): Promise<Template | undefined> {
+    const [template] = await db.select()
+      .from(templates)
+      .where(eq(templates.slug, slug));
+    return template;
+  }
+
+  async getTemplatesByCategory(category: string): Promise<Template[]> {
+    return await db.select()
+      .from(templates)
+      .where(and(
+        eq(templates.category, category),
+        eq(templates.published, true)
+      ))
+      .orderBy(desc(templates.uses));
+  }
+
+  async getFeaturedTemplates(): Promise<Template[]> {
+    return await db.select()
+      .from(templates)
+      .where(and(
+        eq(templates.isFeatured, true),
+        eq(templates.published, true)
+      ))
+      .orderBy(desc(templates.uses))
+      .limit(6);
+  }
+
+  async createTemplate(template: InsertTemplate): Promise<Template> {
+    const [newTemplate] = await db.insert(templates)
+      .values(template)
+      .returning();
+    return newTemplate;
+  }
+
+  async updateTemplate(id: number, update: Partial<Template>): Promise<Template> {
+    const [updatedTemplate] = await db.update(templates)
+      .set(update)
+      .where(eq(templates.id, id))
+      .returning();
+    return updatedTemplate;
+  }
+
+  async incrementTemplateUses(id: number): Promise<void> {
+    await db.update(templates)
+      .set({ uses: sql`${templates.uses} + 1` })
+      .where(eq(templates.id, id));
+  }
+
   // Team methods implementation
   async createTeam(team: InsertTeam): Promise<Team> {
     const [newTeam] = await db.insert(teams)
