@@ -111,10 +111,7 @@ export default function Bounties() {
   // Submit to bounty mutation
   const submitToBountyMutation = useMutation({
     mutationFn: async ({ bountyId, data }: { bountyId: number; data: any }) => {
-      return apiRequest(`/api/bounties/${bountyId}/submit`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('POST', `/api/bounties/${bountyId}/submit`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/submissions'] });

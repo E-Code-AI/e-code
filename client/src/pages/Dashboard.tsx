@@ -111,51 +111,51 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[var(--ecode-background)]">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-6 py-12">
         {/* Main greeting and AI prompt */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-normal text-[var(--ecode-text)] mb-6">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-normal text-[var(--ecode-text)] mb-8">
             Hi {user?.displayName || user?.username}, what do you want to make?
           </h1>
           
-          {/* AI prompt input - Enhanced to match Replit exactly */}
-          <form onSubmit={handleCreateProject} className="mb-6">
-            <div className="relative max-w-2xl mx-auto">
+          {/* AI prompt input - Replit exact design */}
+          <form onSubmit={handleCreateProject} className="mb-8">
+            <div className="relative max-w-xl mx-auto">
               <Input
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
                 placeholder="Describe an app or site you want to create..."
-                className="w-full h-12 pl-4 pr-24 text-base border-[var(--ecode-border)] focus:border-[var(--ecode-accent)] rounded-lg"
+                className="w-full h-14 pl-5 pr-28 text-base bg-[var(--ecode-surface)] border border-[var(--ecode-border)] focus:border-[var(--ecode-accent)] focus:bg-white rounded-full shadow-sm transition-all"
               />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-10 w-10 hover:bg-[var(--ecode-surface-secondary)] rounded-full"
                 >
-                  <Paperclip className="h-4 w-4" />
+                  <Paperclip className="h-5 w-5 text-[var(--ecode-text-secondary)]" />
                 </Button>
                 <Button
                   type="submit"
                   size="icon"
-                  className="h-8 w-8 bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent)]/90"
+                  className="h-10 w-10 bg-gradient-to-r from-[var(--ecode-accent)] to-[var(--ecode-blue)] hover:opacity-90 rounded-full shadow-sm"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-5 w-5 text-white" />
                 </Button>
               </div>
             </div>
           </form>
 
           {/* Quick actions */}
-          <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="flex items-center justify-center gap-3 mb-10">
             {quickActions.map((action) => (
               <Button
                 key={action.label}
                 variant="outline"
                 size="sm"
                 onClick={() => handleQuickAction(action)}
-                className="gap-2 text-[var(--ecode-text-secondary)]"
+                className="h-9 px-4 gap-2 text-sm font-normal text-[var(--ecode-text-secondary)] border-[var(--ecode-border)] hover:bg-[var(--ecode-surface)] rounded-full"
               >
                 <action.icon className="h-4 w-4" />
                 {action.label}
@@ -166,17 +166,17 @@ export default function Dashboard() {
 
         {/* Beta banner */}
         {showBanner && (
-          <Card className="mb-8 p-4 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+          <Card className="mb-10 p-5 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border border-[var(--ecode-border)] rounded-lg shadow-sm">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
-                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                <span className="px-2.5 py-1 text-xs font-semibold bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-md">
                   Beta
                 </span>
                 <div>
-                  <h3 className="font-semibold text-[var(--ecode-text)] mb-1">
+                  <h3 className="font-medium text-[var(--ecode-text)] mb-1">
                     Purchase domains on E-Code
                   </h3>
-                  <p className="text-sm text-[var(--ecode-text-secondary)]">
+                  <p className="text-sm text-[var(--ecode-text-secondary)] leading-relaxed">
                     Get your dream domain name in just a few clicks.
                   </p>
                 </div>
@@ -185,25 +185,25 @@ export default function Dashboard() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowBanner(false)}
-                className="h-8 w-8"
+                className="h-8 w-8 hover:bg-white/50 dark:hover:bg-black/20 rounded-full"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
               </Button>
             </div>
           </Card>
         )}
 
         {/* Recent Apps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-[var(--ecode-text)]">
-              Your recent Apps
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-medium text-[var(--ecode-text)]">
+              Recent Apps
             </h2>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/projects')}
-              className="text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)]"
+              className="text-sm text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] -mr-2"
             >
               View All
               <ChevronRight className="h-4 w-4 ml-1" />
@@ -211,57 +211,43 @@ export default function Dashboard() {
           </div>
 
           {recentProjects.length === 0 ? (
-            <Card className="p-12 text-center bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
-              <p className="text-[var(--ecode-text-secondary)]">
+            <Card className="p-16 text-center bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-lg">
+              <p className="text-[var(--ecode-text-secondary)] text-base">
                 No apps yet. Create your first one above!
               </p>
             </Card>
           ) : (
-            <div className="space-y-3">
-              {recentProjects.slice(0, 5).map((project) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recentProjects.slice(0, 6).map((project) => (
                 <Card
                   key={project.id}
-                  className="p-4 bg-[var(--ecode-surface)] border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] transition-colors cursor-pointer"
+                  className="group bg-white dark:bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-md transition-all cursor-pointer rounded-lg overflow-hidden"
                   onClick={() => navigate(`/project/${project.id}`)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      {getProjectIcon(project)}
-                      <div>
-                        <h3 className="font-medium text-[var(--ecode-text)]">
-                          {project.name}
-                        </h3>
-                        <p className="text-sm text-[var(--ecode-text-secondary)]">
-                          {getTimeAgo(project.updatedAt)}
+                  <div className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        {getProjectIcon(project)}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-base text-[var(--ecode-text)] truncate">
+                            {project.name}
+                          </h3>
+                          <p className="text-sm text-[var(--ecode-text-secondary)]">
+                            {getTimeAgo(project.updatedAt)}
                         </p>
+                      </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                      {isDeployed(project) && (
-                        <div className="flex items-center gap-2 text-sm text-green-600">
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span>Deployed</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(`https://${project.name.toLowerCase().replace(/\s+/g, '-')}.e-code.app`, '_blank');
-                            }}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                      {!isDeployed(project) && project.visibility === 'private' && (
-                        <span className="text-sm text-[var(--ecode-text-secondary)]">
-                          Failed
-                        </span>
-                      )}
-                      
-                      <DropdownMenu>
+                    {isDeployed(project) && (
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        <span className="text-xs font-medium">Deployed</span>
+                      </div>
+                    )}
+                    </div>
+                    
+                    <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"

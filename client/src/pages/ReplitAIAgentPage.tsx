@@ -138,10 +138,10 @@ export default function ReplitAIAgentPage() {
       <div className="min-h-screen bg-[var(--ecode-background)] flex items-center justify-center px-4">
         <div className="w-full max-w-4xl">
           {/* Hero Section */}
-          <div className="text-center mb-12">
-            <div className="flex justify-center mb-6">
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20">
-                <Sparkles className="h-12 w-12 text-[var(--ecode-accent)]" />
+          <div className="text-center mb-16">
+            <div className="flex justify-center mb-8">
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 dark:from-violet-500/20 dark:to-fuchsia-500/20">
+                <Sparkles className="h-14 w-14 text-[var(--ecode-accent)]" />
               </div>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-[var(--ecode-text)] mb-4">

@@ -160,7 +160,7 @@ const ProjectsPage = () => {
   });
 
   // Fetch folders
-  const { data: folders = [] } = useQuery({
+  const { data: folders = [] } = useQuery<Array<{ id: string; name: string; count: number }>>({
     queryKey: ['/api/folders'],
   });
 
@@ -541,7 +541,7 @@ const ProjectsPage = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <h1 className="text-2xl font-semibold text-[var(--ecode-text)]">My Repls</h1>
+              <h1 className="text-2xl font-medium text-[var(--ecode-text)]">My Repls</h1>
             </div>
             
             <div className="flex items-center gap-2">
@@ -803,7 +803,7 @@ const ProjectsPage = () => {
                 {filteredProjects.map((project) => (
                   <div 
                     key={project.id} 
-                    className="group relative bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-lg transition-all overflow-hidden"
+                    className="group relative bg-white dark:bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-md transition-all overflow-hidden"
                   >
                     {/* Pin Indicator */}
                     {pinnedProjects.includes(project.id) && (

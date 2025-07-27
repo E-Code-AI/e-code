@@ -129,7 +129,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
 
   return (
     <TooltipProvider>
-      <div className="w-64 bg-[var(--ecode-sidebar-bg)] border-r border-[var(--ecode-border)] flex flex-col h-full">
+      <div className="w-60 bg-[var(--ecode-sidebar-bg)] border-r border-[var(--ecode-sidebar-border)] flex flex-col h-full">
         <ScrollArea className="flex-1">
           <div className="p-3 space-y-4">
             {/* Section Explorer de fichiers */}

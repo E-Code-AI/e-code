@@ -56,7 +56,7 @@ export default function Deployments() {
   };
 
   const handleAction = (action: string, deploymentId: number) => {
-    const deployment = deployments.find(d => d.id === deploymentId);
+    const deployment = deployments.find((d: any) => d.id === deploymentId);
     toast({
       title: `${action} deployment`,
       description: `${action} action initiated for ${deployment?.name}`
@@ -87,7 +87,7 @@ export default function Deployments() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Active</p>
-                <p className="text-2xl font-bold">{stats?.active || deployments.filter(d => d.status === 'active').length || 0}</p>
+                <p className="text-2xl font-bold">{stats?.active || deployments.filter((d: any) => d.status === 'active').length || 0}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
@@ -120,7 +120,7 @@ export default function Deployments() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Environments</p>
-                <p className="text-2xl font-bold">{stats?.environments || new Set(deployments.map(d => d.environment)).size || 0}</p>
+                <p className="text-2xl font-bold">{stats?.environments || new Set(deployments.map((d: any) => d.environment)).size || 0}</p>
               </div>
               <Server className="h-8 w-8 text-orange-500" />
             </div>
@@ -130,7 +130,7 @@ export default function Deployments() {
 
       {/* Deployments List */}
       <div className="space-y-4">
-        {deployments.map((deployment) => (
+        {deployments.map((deployment: any) => (
           <Card key={deployment.id} className="overflow-hidden">
             <CardContent className="p-0">
               <div className="p-6">

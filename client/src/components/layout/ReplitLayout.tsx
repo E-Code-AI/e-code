@@ -19,7 +19,7 @@ export function ReplitLayout({
   className = ""
 }: ReplitLayoutProps) {
   return (
-    <div className="h-screen flex flex-col replit-layout-main overflow-hidden">
+    <div className="h-screen flex flex-col bg-[var(--ecode-background)] overflow-hidden">
       <ReplitHeader />
       
       <div className="flex flex-1 overflow-hidden">
