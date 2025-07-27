@@ -3,11 +3,20 @@ import { ReplitLayout } from '@/components/layout/ReplitLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { 
   Globe, RefreshCw, Shield, AlertTriangle, Sparkles, ChevronDown,
   Terminal, Laptop, Database, Activity, Package, MoreVertical,
   ExternalLink, Lock, Clock, Server, History, Eye, EyeOff,
-  X, Edit2
+  X, Edit2, Search, Play, Pause, Calendar, Filter
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +24,16 @@ export default function Deployments() {
   const { toast } = useToast();
   const [showBottomMenu, setShowBottomMenu] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [errorsOnly, setErrorsOnly] = useState(false);
+  const [dateAfter, setDateAfter] = useState('');
+  const [dateBefore, setDateBefore] = useState('');
+  const [logLevel, setLogLevel] = useState('all');
+  const [isLive, setIsLive] = useState(false);
+  const [wrapText, setWrapText] = useState(true);
+  const [showColors, setShowColors] = useState(true);
+  const [expandLogs, setExpandLogs] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleDebugWithAgent = () => {
     toast({
@@ -41,6 +60,28 @@ export default function Deployments() {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
+  const logEntries = [
+    { time: '07-27 15:57:48', level: 'info', message: 'reloading process' },
+    { time: '07-27 15:57:48', level: 'info', message: 'NODE_ENV: development' },
+    { time: '07-27 15:57:50', level: 'info', message: 'Generated icon-144.png' },
+    { time: '07-27 15:57:50', level: 'info', message: 'Generated icon-192.png' },
+    { time: '07-27 15:57:50', level: 'info', message: 'Generated icon-256.png' },
+    { time: '07-27 15:57:50', level: 'info', message: 'Generated icon-512.png' },
+    { time: '07-27 15:57:50', level: 'info', message: 'All favicon files generated successfully' },
+    { time: '07-27 15:57:50', level: 'info', message: '12:57:50 PM [express] Favicons generated' },
+    { time: '07-27 15:57:50', level: 'info', message: 'Using custom JWT authentication for production' },
+    { time: '07-27 15:57:50', level: 'info', message: 'Next automatic backup scheduled for: 2025-06-22' },
+    { time: '07-27 15:57:50', level: 'info', message: '12:57:50 PM [express] serving on port 5000' },
+    { time: '07-27 15:57:50', level: 'info', message: 'Backup service initialized' },
+    { time: '07-27 15:57:50', level: 'info', message: 'Database connection established' },
+  ];
+
+  const filteredLogs = logEntries.filter(log => {
+    if (errorsOnly && log.level !== 'error') return false;
+    if (searchQuery && !log.message.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
   return (
     <ReplitLayout>
       <div className="max-w-6xl mx-auto space-y-6 pb-20">
@@ -50,50 +91,62 @@ export default function Deployments() {
           <h1 className="text-3xl font-bold">Deployments</h1>
         </div>
 
-        {/* Main Deployment Card */}
-        <Card>
-          <CardContent className="pt-6">
-            {/* Deployment Header */}
-            <div className="flex items-start justify-between mb-6">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-semibold">my-awesome-app</h2>
-                  <Badge variant="default" className="bg-green-500">
-                    Production
-                  </Badge>
-                  <Badge variant="outline">
-                    <Eye className="h-3 w-3 mr-1" />
-                    Public
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Globe className="h-3 w-3" />
-                    <a href="#" className="hover:text-primary flex items-center gap-1">
-                      my-awesome-app.e-code.app
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Server className="h-3 w-3" />
-                    <span>Autoscale</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>Deployed 2 hours ago</span>
-                  </div>
-                </div>
-              </div>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="logs">Logs</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="resources">Resources</TabsTrigger>
+          </TabsList>
 
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => setShowBottomMenu(!showBottomMenu)}
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </div>
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6 mt-6">
+
+            {/* Main Deployment Card */}
+            <Card>
+              <CardContent className="pt-6">
+                {/* Deployment Header */}
+                <div className="flex items-start justify-between mb-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-xl font-semibold">my-awesome-app</h2>
+                      <Badge variant="default" className="bg-green-500">
+                        Production
+                      </Badge>
+                      <Badge variant="outline">
+                        <Eye className="h-3 w-3 mr-1" />
+                        Public
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Globe className="h-3 w-3" />
+                        <a href="#" className="hover:text-primary flex items-center gap-1">
+                          my-awesome-app.e-code.app
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Server className="h-3 w-3" />
+                        <span>Autoscale</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>Deployed 2 hours ago</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setShowBottomMenu(!showBottomMenu)}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </div>
 
             {/* Deployment Actions */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -221,9 +274,176 @@ export default function Deployments() {
                   )}
                 </CardContent>
               </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Logs Tab */}
+          <TabsContent value="logs" className="space-y-4 mt-6">
+            {/* Search and Filters */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search"
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              
+              {/* Time Filter */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Clock className="h-4 w-4" />
+                    Time
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Date range</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="date-after">After</Label>
+                        <Input
+                          id="date-after"
+                          placeholder="jj / mm / aaaa — : —"
+                          value={dateAfter}
+                          onChange={(e) => setDateAfter(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="date-before">Before</Label>
+                        <Input
+                          id="date-before"
+                          placeholder="jj / mm / aaaa — : —"
+                          value={dateBefore}
+                          onChange={(e) => setDateBefore(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full"
+                      onClick={() => {
+                        setDateAfter('');
+                        setDateBefore('');
+                      }}
+                    >
+                      Clear all filters
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Log Level Filter */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    Log
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-48">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="errors-only"
+                        checked={errorsOnly}
+                        onCheckedChange={(checked) => setErrorsOnly(checked as boolean)}
+                      />
+                      <Label htmlFor="errors-only">Errors only</Label>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Logs Display */}
+            <Card className="font-mono text-sm">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <div className="min-w-full">
+                    {filteredLogs.map((log, index) => (
+                      <div 
+                        key={index} 
+                        className={`px-4 py-1 hover:bg-muted/50 border-b border-border/50 ${
+                          log.level === 'error' ? 'text-red-500' : ''
+                        }`}
+                      >
+                        <span className="text-muted-foreground mr-4">{log.time}</span>
+                        <span className={showColors ? (log.level === 'error' ? 'text-red-500' : '') : ''}>
+                          {log.message}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Log Controls */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setExpandLogs(!expandLogs)}
+                >
+                  <ChevronDown className={`h-4 w-4 mr-1 transition-transform ${expandLogs ? 'rotate-180' : ''}`} />
+                  Expand
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setWrapText(!wrapText)}
+                  className={wrapText ? '' : 'text-muted-foreground'}
+                >
+                  Wrap
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowColors(!showColors)}
+                  className={showColors ? '' : 'text-muted-foreground'}
+                >
+                  Colors
+                </Button>
+              </div>
+              
+              <Button
+                variant={isLive ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setIsLive(!isLive)}
+              >
+                {isLive ? <Pause className="h-4 w-4 mr-1" /> : <Play className="h-4 w-4 mr-1" />}
+                Live
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="mt-6">
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-muted-foreground">Analytics coming soon...</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Resources Tab */}
+          <TabsContent value="resources" className="mt-6">
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-muted-foreground">Resources management coming soon...</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Bottom action icons */}
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4">
