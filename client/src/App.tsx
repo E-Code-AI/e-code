@@ -54,6 +54,7 @@ const Security = lazy(() => import("@/pages/Security"));
 const Desktop = lazy(() => import("@/pages/Desktop"));
 const Forum = lazy(() => import("@/pages/Forum"));
 const AIAgent = lazy(() => import("@/pages/AIAgent"));
+const ReplitAIAgentPage = lazy(() => import("@/pages/ReplitAIAgentPage"));
 // User area pages
 const Account = lazy(() => import("@/pages/Account"));
 const Cycles = lazy(() => import("@/pages/Cycles"));
@@ -138,6 +139,9 @@ function AppContent() {
           <Route path="/mobile" component={Mobile} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-agent" component={AIAgent} />
+          <ProtectedRoute path="/agent" component={() => (
+            <ReplitAIAgentPage />
+          )} />
           <Route path="/press" component={Press} />
           <Route path="/partners" component={Partners} />
           <Route path="/security" component={Security} />
