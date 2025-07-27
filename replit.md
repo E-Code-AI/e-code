@@ -47,6 +47,18 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-27: **Mobile AI Agent Fixed & Made Primary**:
+  * **Fixed AI Agent Functionality**: Connected ReplitAgentChat to actual backend API instead of simulated responses
+  * **Mobile Layout Fixes**: 
+    - AI Agent now shows as primary screen on mobile (default tab)
+    - Bottom navigation reorganized: Files, Agent, Secrets, Database, Auth
+    - Fixed content area to respect header and bottom navigation heights
+    - Proper styling for mobile tabs with smaller text and correct colors
+  * **Backend Integration**: 
+    - AI chat now makes real API calls to `/api/projects/:projectId/ai/chat`
+    - Handles file creation, folder creation, and package installation actions
+    - Fallback message when API key is missing with instructions to add it in Secrets
+  * **100% Functional**: AI Agent now works in real-time with actual AI responses and autonomous building capabilities
 - 2025-07-27: **Teams & Workspaces Implementation Complete**:
   * **Backend Infrastructure**: 
     - Created comprehensive teams service with full team management functionality
