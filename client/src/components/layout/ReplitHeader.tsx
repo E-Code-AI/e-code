@@ -46,7 +46,7 @@ import { SpotlightSearch } from "@/components/SpotlightSearch";
 import { useIsMobile } from "@/hooks/use-media-query";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+
 import { ECodeLogo } from "@/components/ECodeLogo";
 import { MobileMenu } from "./MobileMenu";
 
@@ -135,95 +135,35 @@ export function ReplitHeader() {
             </Button>
           </Link>
 
-          {/* Home - Third like Replit */}
-          <Link href="/dashboard">
+          {/* Community - Third like Replit */}
+          <Link href="/community">
             <Button
-              variant={isActive("/dashboard") ? "default" : "ghost"}
+              variant={isActive("/community") ? "default" : "ghost"}
               size="sm"
               className={`replit-transition ${
-                isActive("/dashboard")
+                isActive("/community")
                   ? "bg-[var(--ecode-accent)] text-white"
                   : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
-              Home
+              Community
             </Button>
           </Link>
 
-          {/* Apps - Fourth like Replit */}
-          <Link href="/explore">
+          {/* Teams - Fourth like Replit */}
+          <Link href="/teams">
             <Button
-              variant={isActive("/explore") ? "default" : "ghost"}
+              variant={isActive("/teams") ? "default" : "ghost"}
               size="sm"
               className={`replit-transition ${
-                isActive("/explore")
+                isActive("/teams")
                   ? "bg-[var(--ecode-accent)] text-white"
                   : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               }`}
             >
-              Apps
+              Teams
             </Button>
           </Link>
-
-          {/* Deployments - Fifth like Replit */}
-          <Link href="/deployments">
-            <Button
-              variant={isActive("/deployments") ? "default" : "ghost"}
-              size="sm"
-              className={`replit-transition ${
-                isActive("/deployments")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
-            >
-              Deployments
-            </Button>
-          </Link>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] replit-transition"
-              >
-                Tools
-                <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
-              <Link href="/workflows">
-                <DropdownMenuItem className={`cursor-pointer ${isActive("/workflows") ? "bg-[var(--ecode-accent)]/10" : ""} text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]`}>
-                  <Workflow className="mr-2 h-4 w-4" />
-                  Workflows
-                </DropdownMenuItem>
-              </Link>
-              <Link href="/ssh">
-                <DropdownMenuItem className={`cursor-pointer ${isActive("/ssh") ? "bg-[var(--ecode-accent)]/10" : ""} text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]`}>
-                  <Terminal className="mr-2 h-4 w-4" />
-                  SSH
-                </DropdownMenuItem>
-              </Link>
-              <Link href="/security-scanner">
-                <DropdownMenuItem className={`cursor-pointer ${isActive("/security-scanner") ? "bg-[var(--ecode-accent)]/10" : ""} text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]`}>
-                  <Shield className="mr-2 h-4 w-4" />
-                  Security Scanner
-                </DropdownMenuItem>
-              </Link>
-              <Link href="/dependencies">
-                <DropdownMenuItem className={`cursor-pointer ${isActive("/dependencies") ? "bg-[var(--ecode-accent)]/10" : ""} text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]`}>
-                  <Package className="mr-2 h-4 w-4" />
-                  Dependencies
-                </DropdownMenuItem>
-              </Link>
-              <Link href="/object-storage">
-                <DropdownMenuItem className={`cursor-pointer ${isActive("/object-storage") ? "bg-[var(--ecode-accent)]/10" : ""} text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]`}>
-                  <HardDrive className="mr-2 h-4 w-4" />
-                  Object Storage
-                </DropdownMenuItem>
-              </Link>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </nav>
       </div>
 
@@ -255,8 +195,7 @@ export function ReplitHeader() {
           <span>Upgrade</span>
         </Button>
 
-        {/* Theme Switcher */}
-        <ThemeSwitcher />
+
 
         {/* Notifications */}
         <NotificationCenter />
