@@ -64,15 +64,16 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
     - Three-panel desktop layout: file explorer, code editor, AI chat (shown by default)
     - Terminal hidden by default (matching Replit behavior)
     - Mobile view with bottom tabs: Secrets, Database, Auth, New Tab
-  * **Deployments Page Design**: Updated to match Replit's exact deployment interface
-    - Navigation tabs: Overview, Logs, Analytics, Resources
-    - Redeploy button with "Edit commands and secrets" subtitle
-    - Run security scan button
-    - Build failed alerts with detailed error messages
+  * **Deployments Page Design**: Completely rebuilt to match Replit's exact deployment interface
+    - Header shows deployment name, Production badge, visibility status (Public/Private)
+    - Domain display with external link, hosting type (Autoscale), and deployment time
+    - Three dots menu that opens bottom popup with Redeploy and Close Tab options
+    - Action buttons: Redeploy, Edit commands and secrets, Run security scan
+    - Build failed alerts with Monaco Editor-style error messages
     - Agent suggestions section with "Debug with Agent" action
+    - Deployment History expandable section showing version history
     - View all failed builds expandable section
-    - Production deployment status with visibility settings
-    - Bottom navigation icons for quick access to tools
+    - Bottom navigation icons for quick access to tools (Laptop, Terminal, Database, Activity, Package)
 - 2025-07-27: **AI Agent Autonomous Interface Enhanced to Match Replit Exactly**:
   * **Created ReplitAIAgentPage**: New dedicated AI agent page with Replit's exact design and UI
     - Large centered input field with gradient send button

@@ -1,269 +1,229 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ReplitLayout } from '@/components/layout/ReplitLayout';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { 
-  Globe, RefreshCw, Shield, AlertTriangle, 
-  ChevronDown, MoreVertical, Eye, 
-  Sparkles, ExternalLink, FileCode,
-  Terminal, BarChart3, FolderOpen,
-  Play, Laptop, Database, Activity,
-  Package, FileText, CheckCircle, Monitor
+  Globe, RefreshCw, Shield, AlertTriangle, Sparkles, ChevronDown,
+  Terminal, Laptop, Database, Activity, Package, MoreVertical,
+  ExternalLink, Lock, Clock, Server, History, Eye, EyeOff,
+  X, Edit2
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Deployments() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [showAllFailedBuilds, setShowAllFailedBuilds] = useState(false);
+  const [showBottomMenu, setShowBottomMenu] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
-  // Mock deployment data
-  const deployment = {
-    name: 'Production',
-    status: 'failed',
-    lastDeployAt: '6 days ago',
-    failedAt: '6 days ago',
-    environment: 'production',
-    visibility: 'private',
-    buildErrors: [
-      'Monaco Editor worker module resolution failed during Vite build in client/src/lib/monaco-config.ts',
-      'Vite cannot resolve the entry module for monaco-editor/esm/vs/language/json/json.worker',
-      'Build process failed preventing deployment due to missing worker dependencies'
-    ]
+  const handleDebugWithAgent = () => {
+    toast({
+      title: "Starting AI Agent",
+      description: "The AI Agent will help debug your deployment issues.",
+    });
   };
-
-  const agentSuggestions = [
-    {
-      text: 'Install the monaco-editor package dependencies',
-      file: 'package.json',
-      action: 'install'
-    },
-    {
-      text: 'Update the monaco-editor configuration',
-      file: 'client/src/lib/monaco-config.ts',
-      action: 'update'
-    },
-    {
-      text: 'Add Vite configuration to properly handle workers',
-      file: 'vite.config.ts',
-      action: 'config'
-    },
-    {
-      text: 'Consider using the vite-plugin-monaco-editor',
-      file: 'vite.config.ts',
-      action: 'plugin'
-    }
-  ];
 
   const handleRedeploy = () => {
     toast({
-      title: 'Redeploying...',
-      description: 'Your deployment has been queued for redeployment.'
+      title: "Redeploying",
+      description: "Your application is being redeployed...",
     });
   };
 
-  const handleRunSecurityScan = () => {
+  const handleSecurityScan = () => {
     toast({
-      title: 'Security scan started',
-      description: 'Security scan is running on your deployment.'
+      title: "Security Scan Started",
+      description: "Running security analysis on your deployment...",
     });
+  };
+
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5" />
-              <span className="font-medium">Deployments</span>
-            </div>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b">
-        <div className="container mx-auto px-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="h-12 w-full justify-start rounded-none border-0 bg-transparent p-0">
-              <TabsTrigger 
-                value="overview" 
-                className="rounded-none border-b-2 border-transparent px-4 data-[state=active]:border-foreground data-[state=active]:bg-transparent"
-              >
-                <Monitor className="h-4 w-4 mr-2" />
-                Overview
-              </TabsTrigger>
-              <TabsTrigger 
-                value="logs" 
-                className="rounded-none border-b-2 border-transparent px-4 data-[state=active]:border-foreground data-[state=active]:bg-transparent"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Logs
-              </TabsTrigger>
-              <TabsTrigger 
-                value="analytics" 
-                className="rounded-none border-b-2 border-transparent px-4 data-[state=active]:border-foreground data-[state=active]:bg-transparent"
-              >
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger 
-                value="resources" 
-                className="rounded-none border-b-2 border-transparent px-4 data-[state=active]:border-foreground data-[state=active]:bg-transparent"
-              >
-                <FolderOpen className="h-4 w-4 mr-2" />
-                Resources
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="container mx-auto px-4 py-6">
-        {/* Action buttons */}
-        <div className="flex flex-col gap-3 mb-6">
-          <Button 
-            onClick={handleRedeploy}
-            className="w-full justify-start gap-2"
-            variant="outline"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Redeploy
-            <span className="ml-auto text-xs text-muted-foreground">Edit commands and secrets</span>
-          </Button>
-          
-          <Button 
-            onClick={handleRunSecurityScan}
-            className="w-full justify-start gap-2"
-            variant="outline"
-          >
-            <Shield className="h-4 w-4" />
-            Run security scan
-          </Button>
+    <ReplitLayout>
+      <div className="max-w-6xl mx-auto space-y-6 pb-20">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <Globe className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold">Deployments</h1>
         </div>
 
-        {/* Build failed alert */}
-        <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
-          <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-          <AlertTitle className="text-red-900 dark:text-red-100">
-            1 build failed
-            <Button
-              variant="link"
-              className="ml-2 h-auto p-0 text-xs"
-              onClick={() => setShowAllFailedBuilds(!showAllFailedBuilds)}
-            >
-              View logs
-              <ChevronDown className={cn(
-                "ml-1 h-3 w-3 transition-transform",
-                showAllFailedBuilds && "rotate-180"
-              )} />
-            </Button>
-          </AlertTitle>
-          <AlertDescription className="mt-2 text-red-800 dark:text-red-200">
-            Your deployment attempt had the following errors:
-            <ul className="mt-2 list-disc pl-5 space-y-1">
-              {deployment.buildErrors.map((error, index) => (
-                <li key={index} className="text-sm">{error}</li>
-              ))}
-            </ul>
-          </AlertDescription>
-        </Alert>
-
-        {/* Agent suggestions */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-purple-600" />
-                <CardTitle className="text-base">Agent suggestions</CardTitle>
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30"
-              >
-                <Sparkles className="h-3 w-3" />
-                Debug with Agent
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {agentSuggestions.map((suggestion, index) => (
-              <div key={index} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
-                <span className="text-sm">{suggestion.text}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{suggestion.file}</span>
-                  <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
+        {/* Main Deployment Card */}
+        <Card>
+          <CardContent className="pt-6">
+            {/* Deployment Header */}
+            <div className="flex items-start justify-between mb-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-semibold">my-awesome-app</h2>
+                  <Badge variant="default" className="bg-green-500">
+                    Production
+                  </Badge>
+                  <Badge variant="outline">
+                    <Eye className="h-3 w-3 mr-1" />
+                    Public
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Globe className="h-3 w-3" />
+                    <a href="#" className="hover:text-primary flex items-center gap-1">
+                      my-awesome-app.e-code.app
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Server className="h-3 w-3" />
+                    <span>Autoscale</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>Deployed 2 hours ago</span>
+                  </div>
                 </div>
               </div>
-            ))}
+
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setShowBottomMenu(!showBottomMenu)}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Deployment Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <Button size="lg" onClick={handleRedeploy} className="flex-1 sm:flex-initial">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Redeploy
+              </Button>
+              <Button size="lg" variant="outline" className="flex-1 sm:flex-initial">
+                <Edit2 className="mr-2 h-4 w-4" />
+                Edit commands and secrets
+              </Button>
+              <Button size="lg" variant="outline" onClick={handleSecurityScan} className="flex-1 sm:flex-initial">
+                <Shield className="mr-2 h-4 w-4" />
+                Run security scan
+              </Button>
+            </div>
+
+            {/* Build Status Alert */}
+            <Card className="border-red-500 bg-red-50 dark:bg-red-950/20 mb-6">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-900 dark:text-red-100">Build failed</h3>
+                    <pre className="mt-2 text-sm bg-red-100 dark:bg-red-900/20 p-3 rounded-md overflow-x-auto">
+                      <code className="text-red-800 dark:text-red-200">
+{`error: Module not found: Error: Can't resolve './components/NonExistentComponent'
+  --> src/App.tsx:5:8
+   |
+ 5 | import NonExistentComponent from './components/NonExistentComponent';
+   |        ^^^^^^^^^^^^^^^^^^^^
+   |
+   = This component does not exist in the specified path`}
+                      </code>
+                    </pre>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Agent Suggestions */}
+            <Card className="mb-6">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold mb-2">Agent suggestion</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      It looks like there's an import error in your application. The AI Agent can help fix this issue automatically.
+                    </p>
+                    <Button variant="default" size="sm" onClick={handleDebugWithAgent}>
+                      Debug with Agent
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Expandable Sections */}
+            <div className="space-y-3">
+              {/* Deployment History */}
+              <Card>
+                <CardContent className="pt-4 pb-4">
+                  <button 
+                    className="flex items-center justify-between w-full text-left"
+                    onClick={() => toggleSection('history')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <History className="h-4 w-4" />
+                      <span className="text-sm font-medium">Deployment History</span>
+                    </div>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${expandedSection === 'history' ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {expandedSection === 'history' && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                        <div>
+                          <p className="text-sm font-medium">v1.2.3</p>
+                          <p className="text-xs text-muted-foreground">2 hours ago - Build failed</p>
+                        </div>
+                        <Badge variant="destructive">Failed</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                        <div>
+                          <p className="text-sm font-medium">v1.2.2</p>
+                          <p className="text-xs text-muted-foreground">Yesterday - Deployed successfully</p>
+                        </div>
+                        <Badge variant="default">Success</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                        <div>
+                          <p className="text-sm font-medium">v1.2.1</p>
+                          <p className="text-xs text-muted-foreground">3 days ago - Deployed successfully</p>
+                        </div>
+                        <Badge variant="default">Success</Badge>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Failed Builds */}
+              <Card>
+                <CardContent className="pt-4 pb-4">
+                  <button 
+                    className="flex items-center justify-between w-full text-left"
+                    onClick={() => toggleSection('failed')}
+                  >
+                    <span className="text-sm font-medium">View all failed builds</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${expandedSection === 'failed' ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {expandedSection === 'failed' && (
+                    <div className="mt-4 space-y-2">
+                      <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded">
+                        <p className="text-sm font-medium">Build #123 - 2 hours ago</p>
+                        <p className="text-xs text-muted-foreground mt-1">Module not found error</p>
+                      </div>
+                      <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded">
+                        <p className="text-sm font-medium">Build #120 - 5 hours ago</p>
+                        <p className="text-xs text-muted-foreground mt-1">TypeScript compilation error</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </CardContent>
         </Card>
-
-        {/* View all failed builds */}
-        <Button
-          variant="ghost"
-          className="w-full justify-between text-sm"
-          onClick={() => setShowAllFailedBuilds(!showAllFailedBuilds)}
-        >
-          <span>View all failed builds</span>
-          <span className="text-muted-foreground">6 days ago</span>
-          <ChevronDown className={cn(
-            "h-4 w-4 transition-transform",
-            showAllFailedBuilds && "rotate-180"
-          )} />
-        </Button>
-
-        {/* Deployment status */}
-        <div className="mt-6 pt-6 border-t">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-2 w-2 rounded-full bg-foreground" />
-            <h3 className="font-medium">{deployment.name}</h3>
-          </div>
-          
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Status</span>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-red-500" />
-                <span className="text-sm">
-                  Simon failed to deploy {deployment.failedAt}
-                </span>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <MoreVertical className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Visibility</span>
-              <div className="flex items-center gap-2">
-                <Monitor className="h-4 w-4" />
-                <span className="text-sm capitalize">{deployment.visibility}</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Bottom action icons */}
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4">
@@ -287,7 +247,37 @@ export default function Deployments() {
             </div>
           </div>
         </div>
+
+        {/* Bottom Menu Popup */}
+        {showBottomMenu && (
+          <div className="fixed inset-0 z-50" onClick={() => setShowBottomMenu(false)}>
+            <div className="absolute inset-0 bg-black/50" />
+            <div className="absolute bottom-0 left-0 right-0 bg-background border-t animate-slide-up">
+              <div className="p-4 space-y-2">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start"
+                  onClick={handleRedeploy}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Redeploy
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    setShowBottomMenu(false);
+                    toast({ title: "Tab closed" });
+                  }}
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Close Tab
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </ReplitLayout>
   );
 }
