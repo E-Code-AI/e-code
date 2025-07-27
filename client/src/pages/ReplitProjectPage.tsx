@@ -103,60 +103,45 @@ const ReplitProjectPage = () => {
 
   // Mobile bottom navigation matching Replit's design
   const MobileBottomNav = () => (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t h-16 z-50 md:hidden">
+    <div className="bg-background border-t h-16 md:hidden">
       <div className="flex h-full">
         <button
           onClick={() => setMobileTab('secrets')}
           className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-1 transition-colors",
+            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
             mobileTab === 'secrets' 
-              ? 'text-foreground bg-muted/50' 
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'text-primary' 
+              : 'text-muted-foreground'
           )}
         >
-          <div className={cn(
-            "p-2 rounded-lg transition-colors",
-            mobileTab === 'secrets' ? 'bg-muted' : ''
-          )}>
-            <Key className="h-5 w-5" />
-          </div>
-          <span className="text-xs font-medium">Secrets</span>
+          <Key className="h-5 w-5" />
+          <span className="text-[10px] font-medium">Secrets</span>
         </button>
 
         <button
           onClick={() => setMobileTab('database')}
           className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-1 transition-colors",
+            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
             mobileTab === 'database' 
-              ? 'text-foreground bg-muted/50' 
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'text-primary' 
+              : 'text-muted-foreground'
           )}
         >
-          <div className={cn(
-            "p-2 rounded-lg transition-colors",
-            mobileTab === 'database' ? 'bg-muted' : ''
-          )}>
-            <Database className="h-5 w-5" />
-          </div>
-          <span className="text-xs font-medium">Database</span>
+          <Database className="h-5 w-5" />
+          <span className="text-[10px] font-medium">Database</span>
         </button>
 
         <button
           onClick={() => setMobileTab('auth')}
           className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-1 transition-colors",
+            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
             mobileTab === 'auth' 
-              ? 'text-foreground bg-muted/50' 
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'text-primary' 
+              : 'text-muted-foreground'
           )}
         >
-          <div className={cn(
-            "p-2 rounded-lg transition-colors",
-            mobileTab === 'auth' ? 'bg-muted' : ''
-          )}>
-            <UserCheck className="h-5 w-5" />
-          </div>
-          <span className="text-xs font-medium">Auth</span>
+          <UserCheck className="h-5 w-5" />
+          <span className="text-[10px] font-medium">Auth</span>
         </button>
 
         <button
@@ -169,19 +154,14 @@ const ReplitProjectPage = () => {
             });
           }}
           className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-1 transition-colors",
+            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
             mobileTab === 'agent' 
-              ? 'text-foreground bg-muted/50' 
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'text-primary' 
+              : 'text-muted-foreground'
           )}
         >
-          <div className={cn(
-            "p-2 rounded-lg transition-colors",
-            mobileTab === 'agent' ? 'bg-muted' : ''
-          )}>
-            <Plus className="h-5 w-5" />
-          </div>
-          <span className="text-xs font-medium">New Tab</span>
+          <Plus className="h-5 w-5" />
+          <span className="text-[10px] font-medium">New Tab</span>
         </button>
       </div>
     </div>
@@ -293,8 +273,8 @@ const ReplitProjectPage = () => {
     // Mobile layout matching Replit's exact design
     return (
       <div className="h-screen flex flex-col bg-background">
-        {/* Mobile header */}
-        <div className="border-b h-14 flex items-center px-4 gap-3">
+        {/* Mobile header - fixed height */}
+        <div className="border-b h-14 flex items-center px-4 gap-3 flex-shrink-0">
           <Button
             variant="ghost"
             size="sm"
@@ -320,14 +300,18 @@ const ReplitProjectPage = () => {
           </Button>
         </div>
 
-        {/* Mobile content area */}
-        <div className="flex-1 overflow-hidden">
+        {/* Mobile content area - takes remaining space minus bottom nav */}
+        <div className="flex-1 overflow-hidden" style={{ paddingBottom: '64px' }}>
           {mobileTab === 'secrets' && (
-            <ReplitSecrets projectId={projectId} />
+            <div className="h-full overflow-auto">
+              <ReplitSecrets projectId={projectId} />
+            </div>
           )}
           
           {mobileTab === 'database' && (
-            <ReplitDatabase projectId={projectId} />
+            <div className="h-full overflow-auto">
+              <ReplitDatabase projectId={projectId} />
+            </div>
           )}
           
           {mobileTab === 'auth' && (
@@ -343,7 +327,7 @@ const ReplitProjectPage = () => {
           )}
           
           {mobileTab === 'agent' && (
-            <div className="h-full">
+            <div className="h-full overflow-hidden">
               <ReplitAgentChat projectId={projectId || 0} />
             </div>
           )}
@@ -372,8 +356,10 @@ const ReplitProjectPage = () => {
           )}
         </div>
 
-        {/* Mobile bottom navigation */}
-        <MobileBottomNav />
+        {/* Mobile bottom navigation - fixed position */}
+        <div className="fixed bottom-0 left-0 right-0 z-50">
+          <MobileBottomNav />
+        </div>
       </div>
     );
   }
