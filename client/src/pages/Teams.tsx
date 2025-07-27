@@ -1,447 +1,273 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Users, Settings, ChevronRight, MoreVertical, UserPlus, Folder, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Plus,
-  Users,
-  Settings,
-  Crown,
-  Shield,
-  Mail,
-  Link,
-  Code2,
-  GitBranch,
-  Activity,
-  UserPlus,
-  MoreVertical,
-  Trash2,
-  Edit,
-  Copy,
-  ExternalLink,
-} from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+
+interface Team {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  logo?: string;
+  ownerId: number;
+  plan: string;
+  memberLimit: number;
+  storageLimit: number;
+  createdAt: string;
+  updatedAt: string;
+  memberCount?: number;
+  projectCount?: number;
+}
 
 export default function Teams() {
-  const [, navigate] = useLocation();
-  const { user } = useAuth();
-  const [selectedTeam, setSelectedTeam] = useState<any>(null);
-  
-  // Fetch user's teams
-  const { data: teams = [], isLoading: teamsLoading } = useQuery({
-    queryKey: ['/api/user/teams'],
-    queryFn: async () => {
-      const response = await fetch('/api/user/teams', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch teams');
-      return response.json();
-    },
-  });
-  
-  // Fetch team members when a team is selected
-  const { data: teamMembers = [], isLoading: membersLoading } = useQuery({
-    queryKey: ['/api/teams', selectedTeam?.id, 'members'],
-    queryFn: async () => {
-      if (!selectedTeam?.id) return [];
-      const response = await fetch(`/api/teams/${selectedTeam.id}/members`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch team members');
-      return response.json();
-    },
-    enabled: !!selectedTeam?.id,
-  });
-  
-  // Set initial selected team when teams are loaded
-  useEffect(() => {
-    if (teams.length > 0 && !selectedTeam) {
-      setSelectedTeam(teams[0]);
-    }
-  }, [teams, selectedTeam]);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamDescription, setNewTeamDescription] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [teamName, setTeamName] = useState('');
+  const [teamDescription, setTeamDescription] = useState('');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const getRoleBadge = (role: string) => {
-    const variants: Record<string, { icon: any; color: string }> = {
-      owner: { icon: Crown, color: 'bg-yellow-500' },
-      admin: { icon: Shield, color: 'bg-blue-500' },
-      member: { icon: Users, color: 'bg-gray-500' },
-    };
-    const { icon: Icon, color } = variants[role] || variants.member;
-    return (
-      <Badge variant="secondary" className={`gap-1 ${color}`}>
-        <Icon className="h-3 w-3" />
-        {role}
-      </Badge>
-    );
+  // Fetch user's teams
+  const { data: teams, isLoading } = useQuery<Team[]>({
+    queryKey: ['/api/teams'],
+  });
+
+  // Create team mutation
+  const createTeamMutation = useMutation({
+    mutationFn: async (data: { name: string; description?: string }) => {
+      return apiRequest('/api/teams', 'POST', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      setIsCreateDialogOpen(false);
+      setTeamName('');
+      setTeamDescription('');
+      toast({
+        title: 'Team created',
+        description: 'Your new team has been created successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed to create team',
+        description: error.message || 'Something went wrong',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleCreateTeam = () => {
+    if (!teamName.trim()) {
+      toast({
+        title: 'Team name required',
+        description: 'Please enter a name for your team',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    createTeamMutation.mutate({
+      name: teamName,
+      description: teamDescription || undefined,
+    });
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Teams Sidebar */}
-          <div className="w-full lg:w-80 xl:w-96 space-y-4">
-            <div className="flex flex-col sm:flex-row lg:flex-col gap-4 lg:gap-0">
-              <Button
-                onClick={() => setIsCreateOpen(true)}
-                className="w-full gap-2 lg:mb-4"
-              >
-                <Plus className="h-4 w-4" />
-                Create Team
-              </Button>
-            </div>
+  const getPlanBadgeVariant = (plan: string) => {
+    switch (plan) {
+      case 'pro':
+        return 'default';
+      case 'enterprise':
+        return 'secondary';
+      default:
+        return 'outline';
+    }
+  };
 
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground">Your Teams</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
-                {teams.map((team: any) => (
-                  <Card
-                    key={team.id}
-                    className={`cursor-pointer transition-all hover:shadow-md ${
-                      selectedTeam?.id === team.id ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => setSelectedTeam(team)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm truncate">{team.name}</h4>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {team.members} members • {team.projects} projects
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            {getRoleBadge(team.role)}
-                            <Badge variant="outline" className="text-xs">
-                              {team.plan}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </div>
+  const formatStorageLimit = (bytes: number) => {
+    const gb = bytes / (1024 * 1024 * 1024);
+    return `${gb.toFixed(0)} GB`;
+  };
 
-          {/* Main Content */}
-          <div className="flex-1 lg:min-w-0">
-            {selectedTeam ? (
-              <Card>
-                <CardContent className="p-0">
-                  {/* Team Header */}
-                  <div className="border-b p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0">
-                          <AvatarImage src={selectedTeam.avatar || undefined} />
-                          <AvatarFallback className="text-lg sm:text-2xl">
-                            {selectedTeam.name.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <h1 className="text-xl sm:text-2xl font-bold truncate">{selectedTeam.name}</h1>
-                          <p className="text-muted-foreground text-sm sm:text-base mt-1">{selectedTeam.description}</p>
-                          <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              {selectedTeam.members} members
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Code2 className="h-4 w-4" />
-                              {selectedTeam.projects} projects
-                            </span>
-                            <Badge variant="outline" className="text-xs">
-                              {selectedTeam.plan}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-row sm:flex-col gap-2 self-start">
-                        <Button
-                          onClick={() => setIsInviteOpen(true)}
-                          size="sm"
-                          className="gap-2 flex-1 sm:flex-none"
-                        >
-                          <UserPlus className="h-4 w-4" />
-                          <span className="hidden sm:inline">Invite Member</span>
-                          <span className="sm:hidden">Invite</span>
-                        </Button>
-                        <Button variant="outline" size="sm" className="px-3">
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Team Content */}
-                  <div className="p-4 sm:p-6">
-                    <Tabs defaultValue="members">
-                      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
-                        <TabsTrigger value="members" className="text-xs sm:text-sm">Members</TabsTrigger>
-                        <TabsTrigger value="projects" className="text-xs sm:text-sm">Projects</TabsTrigger>
-                        <TabsTrigger value="activity" className="text-xs sm:text-sm">Activity</TabsTrigger>
-                        <TabsTrigger value="settings" className="text-xs sm:text-sm">Settings</TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="members" className="space-y-4 mt-0">
-                        {/* Invite Member Button */}
-                        {(selectedTeam.role === 'owner' || selectedTeam.role === 'admin') && (
-                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
-                            <h3 className="text-lg font-semibold">Team Members</h3>
-                            <Button onClick={() => setIsInviteOpen(true)} size="sm" className="gap-2 w-full sm:w-auto">
-                              <UserPlus className="h-4 w-4" />
-                              Invite Member
-                            </Button>
-                          </div>
-                        )}
-
-                        {/* Members List */}
-                        <div className="space-y-3">
-                          {teamMembers.map((member: any) => (
-                            <Card key={member.id}>
-                              <CardContent className="p-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                                    <Avatar className="flex-shrink-0">
-                                      <AvatarImage src={member.avatar || undefined} />
-                                      <AvatarFallback>
-                                        {member.username[0].toUpperCase()}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                                        <h4 className="font-semibold truncate">{member.username}</h4>
-                                        {getRoleBadge(member.role)}
-                                      </div>
-                                      <p className="text-sm text-muted-foreground truncate">{member.email}</p>
-                                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                                        <span>Joined {member.joinedAt}</span>
-                                        <span>Active {member.lastActive}</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <Badge variant="outline" className="text-xs">
-                                        {member.contributions} contributions
-                                      </Badge>
-                                    </div>
-                                    {(selectedTeam.role === 'owner' || (selectedTeam.role === 'admin' && member.role !== 'owner')) && (
-                                      <Button variant="ghost" size="sm" className="p-2">
-                                        <MoreVertical className="h-4 w-4" />
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="projects" className="space-y-4 mt-0">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <Card key={i} className="cursor-pointer hover:shadow-md transition-shadow">
-                              <CardHeader className="pb-3">
-                                <CardTitle className="text-base">Project {i}</CardTitle>
-                                <CardDescription>A collaborative project</CardDescription>
-                              </CardHeader>
-                              <CardContent className="pt-0">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-muted-foreground">
-                                  <span className="flex items-center gap-1">
-                                    <GitBranch className="h-3 w-3" />
-                                    main
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Activity className="h-3 w-3" />
-                                    Updated 2h ago
-                                  </span>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="activity" className="space-y-4 mt-0">
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>Recent Activity</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-muted-foreground">Activity feed coming soon...</p>
-                          </CardContent>
-                        </Card>
-                      </TabsContent>
-
-                      <TabsContent value="settings" className="space-y-4 mt-0">
-                        {selectedTeam.role === 'owner' ? (
-                          <div className="space-y-6">
-                            <Card>
-                              <CardHeader>
-                                <CardTitle>Team Settings</CardTitle>
-                              </CardHeader>
-                              <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 gap-4">
-                                  <div>
-                                    <Label>Team Name</Label>
-                                    <Input defaultValue={selectedTeam.name} className="mt-1" />
-                                  </div>
-                                  <div>
-                                    <Label>Description</Label>
-                                    <Textarea defaultValue={selectedTeam.description} className="mt-1" />
-                                  </div>
-                                  <Button className="w-full sm:w-auto">Save Changes</Button>
-                                </div>
-                              </CardContent>
-                            </Card>
-
-                            <Card className="border-destructive">
-                              <CardHeader>
-                                <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <Button variant="destructive" className="w-full sm:w-auto">Delete Team</Button>
-                              </CardContent>
-                            </Card>
-                          </div>
-                        ) : (
-                          <Card>
-                            <CardContent className="p-6">
-                              <p className="text-muted-foreground">
-                                Only team owners can access settings.
-                              </p>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="h-64">
-                <CardContent className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No team selected</h3>
-                    <p className="text-muted-foreground text-sm">
-                      Select a team from above or create a new one
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+  if (isLoading) {
+    return (
+      <div className="container max-w-6xl mx-auto p-6">
+        <div className="mb-8">
+          <Skeleton className="h-10 w-48 mb-2" />
+          <Skeleton className="h-5 w-96" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-48" />
+          ))}
         </div>
       </div>
+    );
+  }
 
-      {/* Create Team Dialog */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create a New Team</DialogTitle>
-            <DialogDescription>
-              Teams allow you to collaborate with others on projects.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Team Name</Label>
-              <Input
-                placeholder="My Awesome Team"
-                value={newTeamName}
-                onChange={(e) => setNewTeamName(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label>Description</Label>
-              <Textarea
-                placeholder="What's your team about?"
-                value={newTeamDescription}
-                onChange={(e) => setNewTeamDescription(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="w-full sm:w-auto">
-              Cancel
-            </Button>
-            <Button onClick={() => setIsCreateOpen(false)} className="w-full sm:w-auto">
+  return (
+    <div className="container max-w-6xl mx-auto p-6">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Teams</h1>
+          <p className="text-muted-foreground">
+            Collaborate with your team on projects and share resources
+          </p>
+        </div>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
               Create Team
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Invite Member Dialog */}
-      <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
-            <DialogDescription>
-              Invite someone to join {selectedTeam?.name}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Email Address</Label>
-              <Input
-                type="email"
-                placeholder="colleague@example.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div className="p-3 sm:p-4 border bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                Or share this invite link:
-              </p>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2">
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create a new team</DialogTitle>
+              <DialogDescription>
+                Teams allow you to collaborate with others and share projects.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="team-name">Team name</Label>
                 <Input
-                  readOnly
-                  value={`https://e-code.com/team/invite/${selectedTeam?.id}`}
-                  className="text-xs sm:text-sm"
+                  id="team-name"
+                  placeholder="My Awesome Team"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
                 />
-                <Button size="sm" variant="outline" className="px-3">
-                  <Copy className="h-4 w-4" />
-                </Button>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="team-description">Description (optional)</Label>
+                <Textarea
+                  id="team-description"
+                  placeholder="What's your team about?"
+                  value={teamDescription}
+                  onChange={(e) => setTeamDescription(e.target.value)}
+                  rows={3}
+                />
               </div>
             </div>
-          </div>
-          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setIsInviteOpen(false)} className="w-full sm:w-auto">
-              Cancel
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateTeam} disabled={createTeamMutation.isPending}>
+                {createTeamMutation.isPending ? 'Creating...' : 'Create Team'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {!teams || teams.length === 0 ? (
+        <Card className="text-center py-12">
+          <CardContent>
+            <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No teams yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Create your first team to start collaborating with others.
+            </p>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Your First Team
             </Button>
-            <Button onClick={() => setIsInviteOpen(false)} className="w-full sm:w-auto">
-              Send Invite
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {teams.map((team) => (
+            <Card key={team.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-10 w-10">
+                      {team.logo ? (
+                        <AvatarImage src={team.logo} alt={team.name} />
+                      ) : (
+                        <AvatarFallback className="bg-primary/10">
+                          {team.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-lg">{team.name}</CardTitle>
+                      <Badge variant={getPlanBadgeVariant(team.plan)} className="mt-1">
+                        {team.plan}
+                      </Badge>
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Team Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <Settings className="mr-2 h-4 w-4" />
+                        Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Invite Members
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Folder className="mr-2 h-4 w-4" />
+                        Manage Projects
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Activity className="mr-2 h-4 w-4" />
+                        View Activity
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                {team.description && (
+                  <CardDescription className="mt-2">{team.description}</CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Members</span>
+                    <span className="font-medium">
+                      {team.memberCount || 1} / {team.memberLimit}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Projects</span>
+                    <span className="font-medium">{team.projectCount || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Storage</span>
+                    <span className="font-medium">{formatStorageLimit(team.storageLimit)}</span>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t">
+                  <Button variant="outline" className="w-full" size="sm">
+                    <span>Open Team</span>
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

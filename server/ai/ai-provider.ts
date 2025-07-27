@@ -91,12 +91,10 @@ Generate the requested code following the existing code style and patterns.`;
   
   async analyzeCode(code: string, language: string): Promise<any> {
     const context = await codeAnalyzer.analyzeCode(code, language);
-    const semanticAnalysis = await codeAnalyzer.analyzeSemantics(code, language);
     
     return {
       context,
-      semanticAnalysis,
-      suggestions: await codeAnalyzer.generateSuggestions(context, { line: 0, column: 0 })
+      suggestions: context.suggestions || []
     };
   }
 }
@@ -183,12 +181,10 @@ Generate the requested code following established conventions and patterns.`;
   
   async analyzeCode(code: string, language: string): Promise<any> {
     const context = await codeAnalyzer.analyzeCode(code, language);
-    const semanticAnalysis = await codeAnalyzer.analyzeSemantics(code, language);
     
     return {
       context,
-      semanticAnalysis,
-      suggestions: await codeAnalyzer.generateSuggestions(context, { line: 0, column: 0 })
+      suggestions: context.suggestions || []
     };
   }
 }
@@ -249,7 +245,6 @@ export class ECodeModelProvider implements AIProvider {
   async generateCodeWithUnderstanding(code: string, language: string, instruction: string): Promise<string> {
     // E-Code models have native sophisticated code understanding
     const context = await codeAnalyzer.analyzeCode(code, language);
-    const semanticAnalysis = await codeAnalyzer.analyzeSemantics(code, language);
     
     // Special handling for E-Code Agent model - autonomous building capabilities
     if (this.name === 'E-Code Agent') {
@@ -271,9 +266,6 @@ Create a complete implementation that integrates seamlessly with the existing ar
 ${code}
 \`\`\`
 
-Semantic understanding:
-${JSON.stringify(semanticAnalysis, null, 2)}
-
 Task: ${instruction}
 
 Generate a complete, production-ready implementation.`;
@@ -286,10 +278,9 @@ Generate a complete, production-ready implementation.`;
     const systemPrompt = `You are ${this.name}, with advanced code understanding using AST and semantic analysis.
     
 Code Intelligence:
-- AST Structure: ${JSON.stringify(context.ast?.type || 'parsed', null, 2)}
-- Variable scope: ${context.variables.map(v => `${v.name}: ${v.type}`).join(', ')}
+- Variable scope: ${context.variables.map(v => `${v.name}: ${v.type || 'any'}`).join(', ')}
 - Function signatures: ${context.functions.map(f => `${f.name}(${f.params.map(p => p.name).join(', ')})`).join(', ')}
-- Code patterns: ${context.patterns.map(p => `${p.type} (confidence: ${p.confidence})`).join(', ')}
+- Code patterns: ${context.patterns.map(p => p.type).join(', ')}
 
 Generate code with deep understanding of the existing structure.`;
 
@@ -305,13 +296,11 @@ Instruction: ${instruction}`;
   
   async analyzeCode(code: string, language: string): Promise<any> {
     const context = await codeAnalyzer.analyzeCode(code, language);
-    const semanticAnalysis = await codeAnalyzer.analyzeSemantics(code, language);
-    const patterns = await codeAnalyzer.detectPatterns(code, language);
     
     return {
       context,
-      semanticAnalysis,
-      patterns,
+      patterns: context.patterns || [],
+      suggestions: context.suggestions || [],
       modelCapabilities: {
         name: this.name,
         specialization: this.model,

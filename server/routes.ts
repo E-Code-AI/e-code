@@ -17,6 +17,7 @@ import {
 } from "./ai";
 import { aiProviderManager, type ChatMessage } from "./ai/ai-provider";
 import { CodeAnalyzer } from "./ai/code-analyzer";
+import { AdvancedAIService } from "./ai/advanced-ai-service";
 import { createLogger } from "./utils/logger";
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, getProjectLogs } from "./simple-executor";
@@ -2498,6 +2499,185 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
       res.status(500).json({ error: 'Failed to process AI request' });
     }
   });
+
+  // Advanced AI endpoints
+  const advancedAIService = new AdvancedAIService();
+
+  // Code explanation endpoint
+  app.post('/api/projects/:projectId/ai/explain', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const { code, language } = req.body;
+      const projectId = parseInt(req.params.projectId);
+
+      if (!code) {
+        return res.status(400).json({ error: 'Code is required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const projectLanguage = language || project.language || 'javascript';
+      const explanation = await advancedAIService.explainCode(code, projectLanguage);
+
+      res.json({
+        explanation,
+        language: projectLanguage,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      logger.error('Code explanation error:', error);
+      res.status(500).json({ error: 'Failed to explain code' });
+    }
+  });
+
+  // Bug detection endpoint
+  app.post('/api/projects/:projectId/ai/detect-bugs', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const { code, language } = req.body;
+      const projectId = parseInt(req.params.projectId);
+
+      if (!code) {
+        return res.status(400).json({ error: 'Code is required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const projectLanguage = language || project.language || 'javascript';
+      const bugs = await advancedAIService.detectBugs(code, projectLanguage);
+
+      res.json({
+        bugs,
+        language: projectLanguage,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      logger.error('Bug detection error:', error);
+      res.status(500).json({ error: 'Failed to detect bugs' });
+    }
+  });
+
+  // Test generation endpoint
+  app.post('/api/projects/:projectId/ai/generate-tests', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const { code, framework, language } = req.body;
+      const projectId = parseInt(req.params.projectId);
+
+      if (!code) {
+        return res.status(400).json({ error: 'Code is required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const projectLanguage = language || project.language || 'javascript';
+      const tests = await advancedAIService.generateTests(code, framework || 'jest', projectLanguage);
+
+      res.json({
+        tests,
+        framework: framework || 'jest',
+        language: projectLanguage,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      logger.error('Test generation error:', error);
+      res.status(500).json({ error: 'Failed to generate tests' });
+    }
+  });
+
+  // Refactoring suggestions endpoint
+  app.post('/api/projects/:projectId/ai/refactor', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const { code, language } = req.body;
+      const projectId = parseInt(req.params.projectId);
+
+      if (!code) {
+        return res.status(400).json({ error: 'Code is required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const projectLanguage = language || project.language || 'javascript';
+      const suggestions = await advancedAIService.suggestRefactoring(code, projectLanguage);
+
+      res.json({
+        suggestions,
+        language: projectLanguage,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      logger.error('Refactoring suggestions error:', error);
+      res.status(500).json({ error: 'Failed to suggest refactoring' });
+    }
+  });
+
+  // Documentation generation endpoint
+  app.post('/api/projects/:projectId/ai/generate-docs', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const { code, format, language } = req.body;
+      const projectId = parseInt(req.params.projectId);
+
+      if (!code) {
+        return res.status(400).json({ error: 'Code is required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const projectLanguage = language || project.language || 'javascript';
+      const documentation = await advancedAIService.generateDocumentation(code, format || 'jsdoc', projectLanguage);
+
+      res.json({
+        documentation,
+        format: format || 'jsdoc',
+        language: projectLanguage,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      logger.error('Documentation generation error:', error);
+      res.status(500).json({ error: 'Failed to generate documentation' });
+    }
+  });
+
+  // Code review endpoint
+  app.post('/api/projects/:projectId/ai/review', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const { code, language } = req.body;
+      const projectId = parseInt(req.params.projectId);
+
+      if (!code) {
+        return res.status(400).json({ error: 'Code is required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const projectLanguage = language || project.language || 'javascript';
+      const review = await advancedAIService.reviewCode(code, projectLanguage);
+
+      res.json({
+        review,
+        language: projectLanguage,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      logger.error('Code review error:', error);
+      res.status(500).json({ error: 'Failed to review code' });
+    }
+  });
   
   // Environment variables routes
   
@@ -3616,6 +3796,287 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
     }
   });
   
+  // Team Management Routes
+  
+  // Get user's teams
+  app.get('/api/teams', ensureAuthenticated, async (req, res) => {
+    try {
+      const teams = await teamsService.getUserTeams(req.user!.id);
+      res.json(teams);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      res.status(500).json({ error: 'Failed to fetch teams' });
+    }
+  });
+
+  // Create a new team
+  app.post('/api/teams', ensureAuthenticated, async (req, res) => {
+    try {
+      const { name, description } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ error: 'Team name is required' });
+      }
+      
+      const team = await teamsService.createTeam(req.user!.id, {
+        name,
+        description,
+        ownerId: req.user!.id
+      });
+      
+      res.status(201).json(team);
+    } catch (error) {
+      console.error('Error creating team:', error);
+      res.status(500).json({ error: 'Failed to create team' });
+    }
+  });
+
+  // Get team by ID
+  app.get('/api/teams/:teamId', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const team = await teamsService.getTeam(teamId);
+      
+      if (!team) {
+        return res.status(404).json({ error: 'Team not found' });
+      }
+      
+      // Check if user is a member
+      const member = await storage.getTeamMember(teamId, req.user!.id);
+      if (!member) {
+        return res.status(403).json({ error: 'Not a member of this team' });
+      }
+      
+      res.json(team);
+    } catch (error) {
+      console.error('Error fetching team:', error);
+      res.status(500).json({ error: 'Failed to fetch team' });
+    }
+  });
+
+  // Update team
+  app.patch('/api/teams/:teamId', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const updates = req.body;
+      
+      const team = await teamsService.updateTeam(teamId, req.user!.id, updates);
+      res.json(team);
+    } catch (error) {
+      console.error('Error updating team:', error);
+      res.status(500).json({ error: error.message || 'Failed to update team' });
+    }
+  });
+
+  // Delete team
+  app.delete('/api/teams/:teamId', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      
+      await teamsService.deleteTeam(teamId, req.user!.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting team:', error);
+      res.status(500).json({ error: error.message || 'Failed to delete team' });
+    }
+  });
+
+  // Get team members
+  app.get('/api/teams/:teamId/members', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      
+      // Check if user is a member
+      const member = await storage.getTeamMember(teamId, req.user!.id);
+      if (!member) {
+        return res.status(403).json({ error: 'Not a member of this team' });
+      }
+      
+      const members = await storage.getTeamMembers(teamId);
+      
+      // Fetch user details for each member
+      const membersWithDetails = await Promise.all(
+        members.map(async (m) => {
+          const user = await storage.getUser(m.userId);
+          return {
+            ...m,
+            user: {
+              id: user?.id,
+              username: user?.username,
+              displayName: user?.displayName,
+              avatarUrl: user?.avatarUrl
+            }
+          };
+        })
+      );
+      
+      res.json(membersWithDetails);
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      res.status(500).json({ error: 'Failed to fetch team members' });
+    }
+  });
+
+  // Invite team member
+  app.post('/api/teams/:teamId/invitations', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const { email, role } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+      
+      const invitation = await teamsService.addTeamMember(teamId, req.user!.id, email, role);
+      res.status(201).json(invitation);
+    } catch (error) {
+      console.error('Error inviting team member:', error);
+      res.status(500).json({ error: error.message || 'Failed to invite team member' });
+    }
+  });
+
+  // Accept team invitation
+  app.post('/api/teams/invitations/:token/accept', ensureAuthenticated, async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      const member = await teamsService.acceptInvitation(token, req.user!.id);
+      res.json(member);
+    } catch (error) {
+      console.error('Error accepting invitation:', error);
+      res.status(500).json({ error: error.message || 'Failed to accept invitation' });
+    }
+  });
+
+  // Remove team member
+  app.delete('/api/teams/:teamId/members/:userId', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const userId = parseInt(req.params.userId);
+      
+      await teamsService.removeTeamMember(teamId, req.user!.id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing team member:', error);
+      res.status(500).json({ error: error.message || 'Failed to remove team member' });
+    }
+  });
+
+  // Update member role
+  app.patch('/api/teams/:teamId/members/:userId', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const userId = parseInt(req.params.userId);
+      const { role } = req.body;
+      
+      if (!role) {
+        return res.status(400).json({ error: 'Role is required' });
+      }
+      
+      const member = await teamsService.updateMemberRole(teamId, req.user!.id, userId, role);
+      res.json(member);
+    } catch (error) {
+      console.error('Error updating member role:', error);
+      res.status(500).json({ error: error.message || 'Failed to update member role' });
+    }
+  });
+
+  // Get team projects
+  app.get('/api/teams/:teamId/projects', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      
+      const projects = await teamsService.getTeamProjects(teamId, req.user!.id);
+      res.json(projects);
+    } catch (error) {
+      console.error('Error fetching team projects:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch team projects' });
+    }
+  });
+
+  // Add project to team
+  app.post('/api/teams/:teamId/projects', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const { projectId } = req.body;
+      
+      if (!projectId) {
+        return res.status(400).json({ error: 'Project ID is required' });
+      }
+      
+      const teamProject = await teamsService.addProjectToTeam(teamId, req.user!.id, projectId);
+      res.status(201).json(teamProject);
+    } catch (error) {
+      console.error('Error adding project to team:', error);
+      res.status(500).json({ error: error.message || 'Failed to add project to team' });
+    }
+  });
+
+  // Remove project from team
+  app.delete('/api/teams/:teamId/projects/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const projectId = parseInt(req.params.projectId);
+      
+      await teamsService.removeProjectFromTeam(teamId, req.user!.id, projectId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing project from team:', error);
+      res.status(500).json({ error: error.message || 'Failed to remove project from team' });
+    }
+  });
+
+  // Get team workspaces
+  app.get('/api/teams/:teamId/workspaces', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      
+      const workspaces = await teamsService.getTeamWorkspaces(teamId, req.user!.id);
+      res.json(workspaces);
+    } catch (error) {
+      console.error('Error fetching team workspaces:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch team workspaces' });
+    }
+  });
+
+  // Create team workspace
+  app.post('/api/teams/:teamId/workspaces', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const { name, description } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ error: 'Workspace name is required' });
+      }
+      
+      const workspace = await teamsService.createWorkspace(teamId, req.user!.id, {
+        name,
+        description,
+        teamId,
+        createdBy: req.user!.id
+      });
+      
+      res.status(201).json(workspace);
+    } catch (error) {
+      console.error('Error creating workspace:', error);
+      res.status(500).json({ error: error.message || 'Failed to create workspace' });
+    }
+  });
+
+  // Get team activity
+  app.get('/api/teams/:teamId/activity', ensureAuthenticated, async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const activity = await teamsService.getTeamActivity(teamId, req.user!.id, limit);
+      res.json(activity);
+    } catch (error) {
+      console.error('Error fetching team activity:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch team activity' });
+    }
+  });
+
   // Monitoring routes
   app.use("/api/monitoring", monitoringRouter);
   

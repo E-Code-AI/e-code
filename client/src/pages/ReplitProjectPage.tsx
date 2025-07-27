@@ -13,6 +13,7 @@ import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import Terminal from '@/components/Terminal';
 import { ReplitAgentChat } from '@/components/ReplitAgentChat';
+import AdvancedAIPanel from '@/components/AdvancedAIPanel';
 import { Button } from '@/components/ui/button';
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { 
@@ -33,7 +34,9 @@ import {
   UserCheck,
   Plus,
   FileCode,
-  X
+  X,
+  Sparkles,
+  Bot
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -42,6 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Import components for mobile tabs
 import { ReplitSecrets } from '@/components/ReplitSecrets';
@@ -69,6 +73,7 @@ const ReplitProjectPage = () => {
   const [showTerminal, setShowTerminal] = useState(false); // Hide terminal by default like Replit
   const [mobileTab, setMobileTab] = useState<MobileTab>('files');
   const [showCollaboration, setShowCollaboration] = useState(false);
+  const [aiMode, setAIMode] = useState<'agent' | 'advanced'>('agent'); // Default to agent mode
 
   // Initialize collaboration
   const collaboration = useYjsCollaboration({
@@ -514,15 +519,38 @@ const ReplitProjectPage = () => {
             </ResizablePanelGroup>
           </ResizablePanel>
 
-          {/* AI Chat */}
+          {/* AI Panel */}
           {showAIChat && (
             <>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-                <div className="h-full overflow-hidden">
-                  <ReplitAgentChat
-                    projectId={projectId || 0}
-                  />
+                <div className="h-full overflow-hidden flex flex-col">
+                  <Tabs value={aiMode} onValueChange={(value) => setAIMode(value as 'agent' | 'advanced')} className="h-full flex flex-col">
+                    <div className="border-b px-4 py-2">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="agent" className="text-sm">
+                          <Bot className="h-4 w-4 mr-2" />
+                          AI Agent
+                        </TabsTrigger>
+                        <TabsTrigger value="advanced" className="text-sm">
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Advanced AI
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+                    <TabsContent value="agent" className="flex-1 mt-0">
+                      <ReplitAgentChat
+                        projectId={projectId || 0}
+                      />
+                    </TabsContent>
+                    <TabsContent value="advanced" className="flex-1 mt-0">
+                      <AdvancedAIPanel
+                        projectId={projectId.toString()}
+                        selectedCode={selectedFile?.content || ''}
+                        selectedLanguage={project?.data?.language || 'javascript'}
+                      />
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </ResizablePanel>
             </>

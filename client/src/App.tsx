@@ -24,6 +24,7 @@ const RuntimeTest = lazy(() => import("@/pages/RuntimeTest"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Explore = lazy(() => import("@/pages/Explore"));
 const Teams = lazy(() => import("@/pages/Teams"));
+const TeamPage = lazy(() => import("@/pages/TeamPage"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
@@ -171,8 +172,13 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/teams" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Teams />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/teams/:teamId" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <TeamPage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/settings" component={() => (

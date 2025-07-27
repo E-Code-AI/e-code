@@ -31,12 +31,22 @@ import {
   projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts, secrets, notifications, notificationPreferences,
   templates, communityPosts, communityChallenges, themes, announcements, learningCourses, userLearningProgress, userCycles, cyclesTransactions, objectStorage, extensions, userExtensions
 } from "@shared/schema";
+import {
+  Team, InsertTeam,
+  TeamMember, InsertTeamMember,
+  TeamInvitation, InsertTeamInvitation,
+  TeamProject, InsertTeamProject,
+  TeamWorkspace, InsertTeamWorkspace,
+  TeamActivity, InsertTeamActivity,
+  teams, teamMembers, teamInvitations, teamProjects, teamWorkspaces, teamActivity
+} from "@shared/teams-schema";
 import { eq, and, desc, isNull, sql } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";
 import connectPg from "connect-pg-simple";
 import { client } from "./db";
+import * as crypto from "crypto";
 
 // Storage interface definition
 export interface IStorage {
@@ -241,6 +251,43 @@ export interface IStorage {
   installExtension(userId: number, extensionId: number): Promise<UserExtension>;
   uninstallExtension(userId: number, extensionId: number): Promise<void>;
   checkExtensionInstalled(userId: number, extensionId: number): Promise<boolean>;
+  
+  // Team methods
+  createTeam(team: InsertTeam): Promise<Team>;
+  getTeam(id: number): Promise<Team | null>;
+  getTeamBySlug(slug: string): Promise<Team | null>;
+  getUserTeams(userId: number): Promise<Team[]>;
+  updateTeam(id: number, update: Partial<Team>): Promise<Team>;
+  deleteTeam(id: number): Promise<void>;
+  
+  // Team member methods
+  addTeamMember(member: InsertTeamMember): Promise<TeamMember>;
+  getTeamMember(teamId: number, userId: number): Promise<TeamMember | null>;
+  getTeamMembers(teamId: number): Promise<TeamMember[]>;
+  updateTeamMember(teamId: number, userId: number, update: Partial<TeamMember>): Promise<TeamMember>;
+  removeTeamMember(teamId: number, userId: number): Promise<void>;
+  getTeamMemberCount(teamId: number): Promise<number>;
+  
+  // Team invitation methods
+  createTeamInvitation(invitation: InsertTeamInvitation): Promise<TeamInvitation>;
+  getTeamInvitation(id: number): Promise<TeamInvitation | null>;
+  getTeamInvitationByToken(token: string): Promise<TeamInvitation | null>;
+  acceptTeamInvitation(id: number): Promise<void>;
+  
+  // Team project methods
+  addProjectToTeam(teamProject: InsertTeamProject): Promise<TeamProject>;
+  removeProjectFromTeam(teamId: number, projectId: number): Promise<void>;
+  getTeamProjects(teamId: number): Promise<Project[]>;
+  
+  // Team workspace methods
+  createTeamWorkspace(workspace: InsertTeamWorkspace): Promise<TeamWorkspace>;
+  getWorkspace(id: number): Promise<TeamWorkspace | null>;
+  getTeamWorkspaces(teamId: number): Promise<TeamWorkspace[]>;
+  addProjectToWorkspace(workspaceId: number, projectId: number): Promise<void>;
+  
+  // Team activity methods
+  logTeamActivity(activity: InsertTeamActivity): Promise<void>;
+  getTeamActivity(teamId: number, limit?: number): Promise<TeamActivity[]>;
 }
 
 // Database storage implementation
@@ -1411,6 +1458,238 @@ export class DatabaseStorage implements IStorage {
     });
 
     return forkedProject;
+  }
+
+  // Team methods implementation
+  async createTeam(team: InsertTeam): Promise<Team> {
+    const [newTeam] = await db.insert(teams)
+      .values(team)
+      .returning();
+    return newTeam;
+  }
+
+  async getTeam(id: number): Promise<Team | null> {
+    const [team] = await db.select()
+      .from(teams)
+      .where(eq(teams.id, id));
+    return team || null;
+  }
+
+  async getTeamBySlug(slug: string): Promise<Team | null> {
+    const [team] = await db.select()
+      .from(teams)
+      .where(eq(teams.slug, slug));
+    return team || null;
+  }
+
+  async getUserTeams(userId: number): Promise<Team[]> {
+    return await db.select({
+      id: teams.id,
+      name: teams.name,
+      slug: teams.slug,
+      description: teams.description,
+      logo: teams.logo,
+      ownerId: teams.ownerId,
+      plan: teams.plan,
+      settings: teams.settings,
+      stripeCustomerId: teams.stripeCustomerId,
+      stripeSubscriptionId: teams.stripeSubscriptionId,
+      memberLimit: teams.memberLimit,
+      storageLimit: teams.storageLimit,
+      createdAt: teams.createdAt,
+      updatedAt: teams.updatedAt
+    })
+      .from(teams)
+      .innerJoin(teamMembers, eq(teams.id, teamMembers.teamId))
+      .where(eq(teamMembers.userId, userId));
+  }
+
+  async updateTeam(id: number, update: Partial<Team>): Promise<Team> {
+    const [updated] = await db.update(teams)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(teams.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteTeam(id: number): Promise<void> {
+    // Delete all related data in order
+    await db.delete(teamActivity).where(eq(teamActivity.teamId, id));
+    await db.delete(teamProjects).where(eq(teamProjects.teamId, id));
+    await db.delete(teamWorkspaces).where(eq(teamWorkspaces.teamId, id));
+    await db.delete(teamInvitations).where(eq(teamInvitations.teamId, id));
+    await db.delete(teamMembers).where(eq(teamMembers.teamId, id));
+    await db.delete(teams).where(eq(teams.id, id));
+  }
+
+  // Team member methods
+  async addTeamMember(member: InsertTeamMember): Promise<TeamMember> {
+    const [newMember] = await db.insert(teamMembers)
+      .values(member)
+      .returning();
+    return newMember;
+  }
+
+  async getTeamMember(teamId: number, userId: number): Promise<TeamMember | null> {
+    const [member] = await db.select()
+      .from(teamMembers)
+      .where(and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, userId)
+      ));
+    return member || null;
+  }
+
+  async getTeamMembers(teamId: number): Promise<TeamMember[]> {
+    return await db.select()
+      .from(teamMembers)
+      .where(eq(teamMembers.teamId, teamId));
+  }
+
+  async updateTeamMember(teamId: number, userId: number, update: Partial<TeamMember>): Promise<TeamMember> {
+    const [updated] = await db.update(teamMembers)
+      .set(update)
+      .where(and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, userId)
+      ))
+      .returning();
+    return updated;
+  }
+
+  async removeTeamMember(teamId: number, userId: number): Promise<void> {
+    await db.delete(teamMembers)
+      .where(and(
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, userId)
+      ));
+  }
+
+  async getTeamMemberCount(teamId: number): Promise<number> {
+    const [result] = await db.select({ count: sql`count(*)::int` })
+      .from(teamMembers)
+      .where(eq(teamMembers.teamId, teamId));
+    return result?.count || 0;
+  }
+
+  // Team invitation methods
+  async createTeamInvitation(invitation: InsertTeamInvitation): Promise<TeamInvitation> {
+    const token = crypto.randomBytes(32).toString('hex');
+    const [newInvitation] = await db.insert(teamInvitations)
+      .values({ ...invitation, token })
+      .returning();
+    return newInvitation;
+  }
+
+  async getTeamInvitation(id: number): Promise<TeamInvitation | null> {
+    const [invitation] = await db.select()
+      .from(teamInvitations)
+      .where(eq(teamInvitations.id, id));
+    return invitation || null;
+  }
+
+  async getTeamInvitationByToken(token: string): Promise<TeamInvitation | null> {
+    const [invitation] = await db.select()
+      .from(teamInvitations)
+      .where(eq(teamInvitations.token, token));
+    return invitation || null;
+  }
+
+  async acceptTeamInvitation(id: number): Promise<void> {
+    await db.update(teamInvitations)
+      .set({ acceptedAt: new Date() })
+      .where(eq(teamInvitations.id, id));
+  }
+
+  // Team project methods
+  async addProjectToTeam(teamProject: InsertTeamProject): Promise<TeamProject> {
+    const [newTeamProject] = await db.insert(teamProjects)
+      .values(teamProject)
+      .returning();
+    return newTeamProject;
+  }
+
+  async removeProjectFromTeam(teamId: number, projectId: number): Promise<void> {
+    await db.delete(teamProjects)
+      .where(and(
+        eq(teamProjects.teamId, teamId),
+        eq(teamProjects.projectId, projectId)
+      ));
+  }
+
+  async getTeamProjects(teamId: number): Promise<Project[]> {
+    return await db.select({
+      id: projects.id,
+      name: projects.name,
+      ownerId: projects.ownerId,
+      description: projects.description,
+      visibility: projects.visibility,
+      language: projects.language,
+      createdAt: projects.createdAt,
+      updatedAt: projects.updatedAt,
+      likes: projects.likes,
+      views: projects.views,
+      forks: projects.forks,
+      forkedFromId: projects.forkedFromId,
+      coverImage: projects.coverImage
+    })
+      .from(projects)
+      .innerJoin(teamProjects, eq(projects.id, teamProjects.projectId))
+      .where(eq(teamProjects.teamId, teamId));
+  }
+
+  // Team workspace methods
+  async createTeamWorkspace(workspace: InsertTeamWorkspace): Promise<TeamWorkspace> {
+    const [newWorkspace] = await db.insert(teamWorkspaces)
+      .values(workspace)
+      .returning();
+    return newWorkspace;
+  }
+
+  async getWorkspace(id: number): Promise<TeamWorkspace | null> {
+    const [workspace] = await db.select()
+      .from(teamWorkspaces)
+      .where(eq(teamWorkspaces.id, id));
+    return workspace || null;
+  }
+
+  async getTeamWorkspaces(teamId: number): Promise<TeamWorkspace[]> {
+    return await db.select()
+      .from(teamWorkspaces)
+      .where(eq(teamWorkspaces.teamId, teamId));
+  }
+
+  async addProjectToWorkspace(workspaceId: number, projectId: number): Promise<void> {
+    // Note: This requires a workspace_projects table which doesn't exist in the schema yet
+    // For now, we'll use the team_projects table with a workspace filter in settings
+    const [teamProject] = await db.select()
+      .from(teamProjects)
+      .where(eq(teamProjects.projectId, projectId));
+    
+    if (teamProject) {
+      await db.update(teamProjects)
+        .set({ 
+          permissions: { 
+            ...teamProject.permissions as any, 
+            workspaceId 
+          } 
+        })
+        .where(eq(teamProjects.projectId, projectId));
+    }
+  }
+
+  // Team activity methods
+  async logTeamActivity(activity: InsertTeamActivity): Promise<void> {
+    await db.insert(teamActivity)
+      .values(activity);
+  }
+
+  async getTeamActivity(teamId: number, limit: number = 50): Promise<TeamActivity[]> {
+    return await db.select()
+      .from(teamActivity)
+      .where(eq(teamActivity.teamId, teamId))
+      .orderBy(desc(teamActivity.createdAt))
+      .limit(limit);
   }
 }
 
