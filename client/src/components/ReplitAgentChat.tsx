@@ -8,7 +8,7 @@ import {
   Bot, User, Send, Paperclip, Mic, Image, FileText, 
   Loader2, Sparkles, Code, Terminal, Globe, Database,
   Settings, RotateCcw, Play, Square, CheckCircle,
-  AlertCircle, Clock, Zap, Brain, Search, Upload
+  AlertCircle, Clock, Zap, Brain, Search, Upload, MessageSquare
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -431,25 +431,72 @@ Please make sure you have configured your AI API key in the project settings. Yo
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           {messages.length === 0 && (
-            <div className="text-center py-8">
+            <div className="py-8">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center mx-auto mb-4">
                 <Bot className="h-8 w-8 text-white" />
               </div>
-              <h3 className="font-semibold mb-2">Hi! I'm your E-Code Agent</h3>
-              <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
+              <h3 className="font-semibold mb-2 text-center">Hi! I'm your E-Code Agent</h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto text-center">
                 I can help you build complete applications, debug code, set up databases, and deploy your projects.
               </p>
               
-              <div className="grid grid-cols-2 gap-2 max-w-md mx-auto">
-                {capabilities.slice(0, 4).map((capability) => (
-                  <div key={capability.id} className="p-3 border rounded-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                      {capability.icon}
-                      <span className="text-xs font-medium">{capability.name}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{capability.description}</p>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Try asking me to:</h4>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setInput('Build a todo app with React and TypeScript')}
+                      className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-sm font-medium">Build a todo app</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Create a modern task management app with React
+                      </p>
+                    </button>
+                    
+                    <button
+                      onClick={() => setInput('Create a portfolio website with animations')}
+                      className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium">Portfolio website</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Design a personal portfolio with smooth animations
+                      </p>
+                    </button>
+                    
+                    <button
+                      onClick={() => setInput('Build a real-time chat application')}
+                      className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4 text-purple-500" />
+                        <span className="text-sm font-medium">Chat application</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Create a WebSocket-powered chat with rooms
+                      </p>
+                    </button>
+                    
+                    <button
+                      onClick={() => setInput('Create an expense tracker with charts')}
+                      className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Database className="h-4 w-4 text-orange-500" />
+                        <span className="text-sm font-medium">Expense tracker</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Track expenses with visual charts and reports
+                      </p>
+                    </button>
                   </div>
-                ))}
+                </div>
               </div>
             </div>
           )}
@@ -581,19 +628,19 @@ Please make sure you have configured your AI API key in the project settings. Yo
         </div>
       )}
 
-      {/* Input Section */}
-      <div className="border-t p-4">
+      {/* Input Section - Mobile Optimized */}
+      <div className="border-t p-3 bg-background">
         {/* File Attachments */}
         {attachments.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="mb-2 flex flex-wrap gap-1">
             {attachments.map((file, index) => (
-              <div key={index} className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 text-sm">
-                {file.type.startsWith('image/') ? <Image className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
-                <span className="max-w-32 truncate">{file.name}</span>
+              <div key={index} className="flex items-center gap-1 bg-muted rounded-md px-2 py-1 text-xs">
+                {file.type.startsWith('image/') ? <Image className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                <span className="max-w-24 truncate">{file.name}</span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                  className="h-3 w-3 p-0 hover:bg-destructive hover:text-destructive-foreground"
                   onClick={() => removeAttachment(index)}
                 >
                   ×
@@ -603,14 +650,23 @@ Please make sure you have configured your AI API key in the project settings. Yo
           </div>
         )}
 
-        {/* Message Input */}
-        <div className="flex gap-2">
+        {/* Message Input - Mobile Optimized */}
+        <div className="flex gap-2 items-end">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 flex-shrink-0"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Paperclip className="h-5 w-5" />
+          </Button>
+          
           <div className="flex-1 relative">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Describe what you want to build or ask for help..."
-              className="w-full min-h-[44px] max-h-32 text-sm resize-none border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary bg-background"
+              placeholder="Ask me to build something..."
+              className="w-full min-h-[40px] max-h-24 text-[15px] resize-none border-0 rounded-2xl px-4 py-2.5 pr-12 focus:ring-2 focus:ring-primary focus:outline-none bg-muted placeholder:text-muted-foreground"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -619,41 +675,11 @@ Please make sure you have configured your AI API key in the project settings. Yo
               }}
               disabled={isLoading || isBuilding}
             />
-          </div>
-          
-          <div className="flex items-end gap-1">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              multiple
-              accept="image/*,.txt,.js,.tsx,.html,.css,.py,.json"
-              className="hidden"
-            />
-            
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="p-2"
-              disabled={isLoading || isBuilding}
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="p-2"
-              disabled={isLoading || isBuilding}
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
-            
-            <Button 
+            <Button
               onClick={handleSend}
               disabled={(!input.trim() && attachments.length === 0) || isLoading || isBuilding}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4"
+              size="icon"
+              className="absolute right-1 bottom-1 h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isLoading || isBuilding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -662,6 +688,15 @@ Please make sure you have configured your AI API key in the project settings. Yo
               )}
             </Button>
           </div>
+          
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            multiple
+            accept="image/*,.txt,.js,.tsx,.html,.css,.py,.json"
+            className="hidden"
+          />
         </div>
       </div>
     </div>

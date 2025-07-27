@@ -306,8 +306,8 @@ const ReplitProjectPage = () => {
           </Button>
         </div>
 
-        {/* Mobile content area - takes remaining space minus bottom nav */}
-        <div className="flex-1 overflow-hidden" style={{ paddingBottom: '64px' }}>
+        {/* Mobile content area - properly constrained between header and bottom nav */}
+        <div className="flex-1 overflow-hidden" style={{ height: 'calc(100vh - 3.5rem - 4rem)' }}>
           {mobileTab === 'secrets' && (
             <div className="h-full overflow-auto">
               <ReplitSecrets projectId={projectId} />
