@@ -15,7 +15,10 @@ import {
   X,
   ChevronRight,
   ExternalLink,
-  CheckCircle2
+  CheckCircle2,
+  Edit,
+  Copy,
+  Trash
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -111,15 +114,45 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[var(--ecode-background)]">
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        {/* Main greeting and AI prompt */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-normal text-[var(--ecode-text)] mb-6">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Beta banner */}
+        {showBanner && (
+          <Card className="mb-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border border-[var(--ecode-border)] rounded-lg shadow-sm">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <span className="px-2 py-0.5 text-xs font-semibold bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded">
+                  Beta
+                </span>
+                <div>
+                  <h3 className="font-medium text-[var(--ecode-text)] text-sm mb-0.5">
+                    Purchase domains on E-Code
+                  </h3>
+                  <p className="text-xs text-[var(--ecode-text-secondary)]">
+                    Get your dream domain name in just a few clicks.
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowBanner(false)}
+                className="h-7 w-7 hover:bg-white/50 dark:hover:bg-black/20 rounded"
+              >
+                <X className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)]" />
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {/* Main greeting */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-normal text-[var(--ecode-text)]">
             Hi {user?.displayName || user?.username}, what do you want to make?
           </h1>
+        </div>
           
-          {/* AI prompt input - Replit exact design */}
-          <form onSubmit={handleCreateProject} className="mb-8">
+        {/* AI prompt input - Replit exact design */}
+        <form onSubmit={handleCreateProject} className="mb-8">
             <div className="relative max-w-xl mx-auto">
               <Input
                 value={aiPrompt}
@@ -162,51 +195,21 @@ export default function Dashboard() {
               </Button>
             ))}
           </div>
-        </div>
 
-        {/* Beta banner */}
-        {showBanner && (
-          <Card className="mb-10 p-5 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border border-[var(--ecode-border)] rounded-lg shadow-sm">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <span className="px-2.5 py-1 text-xs font-semibold bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-md">
-                  Beta
-                </span>
-                <div>
-                  <h3 className="font-medium text-[var(--ecode-text)] mb-1">
-                    Purchase domains on E-Code
-                  </h3>
-                  <p className="text-sm text-[var(--ecode-text-secondary)] leading-relaxed">
-                    Get your dream domain name in just a few clicks.
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowBanner(false)}
-                className="h-8 w-8 hover:bg-white/50 dark:hover:bg-black/20 rounded-full"
-              >
-                <X className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Recent Apps */}
+        {/* Your recent Apps */}
         <div>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-medium text-[var(--ecode-text)]">
-              Recent Apps
+            <h2 className="text-xl font-medium text-[var(--ecode-text)]">
+              Your recent Apps
             </h2>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/projects')}
-              className="text-sm text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] -mr-2"
+              className="text-sm text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] -mr-2 flex items-center gap-1"
             >
               View All
-              <ChevronRight className="h-4 w-4 ml-1" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
 
@@ -217,33 +220,38 @@ export default function Dashboard() {
               </p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {recentProjects.slice(0, 6).map((project) => (
-                <Card
+            <div className="space-y-3">
+              {recentProjects.slice(0, 3).map((project) => (
+                <div
                   key={project.id}
-                  className="group bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-md hover:-translate-y-1 transition-all duration-150 cursor-pointer rounded-lg overflow-hidden"
+                  className="group bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[var(--ecode-border-hover)] transition-colors cursor-pointer rounded-lg p-4"
                   onClick={() => navigate(`/project/${project.id}`)}
                 >
-                  <div className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        {getProjectIcon(project)}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-base text-[var(--ecode-text)] truncate">
-                            {project.name}
-                          </h3>
-                          <p className="text-sm text-[var(--ecode-text-secondary)]">
-                            {getTimeAgo(project.updatedAt)}
-                          </p>
+                  <div className="flex items-center gap-3">
+                    {getProjectIcon(project)}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-base text-[var(--ecode-text)]">
+                        {project.name}
+                      </h3>
+                      <p className="text-sm text-[var(--ecode-text-secondary)]">
+                        {getTimeAgo(project.updatedAt)}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      {isDeployed(project) && (
+                        <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span className="text-sm">Deployed</span>
                         </div>
-                      </div>
+                      )}
                       
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
@@ -251,30 +259,27 @@ export default function Dashboard() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => navigate(`/project/${project.id}`)}>
+                            <ExternalLink className="h-4 w-4 mr-2" />
                             Open
                           </DropdownMenuItem>
                           <DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />
                             Rename
                           </DropdownMenuItem>
                           <DropdownMenuItem>
+                            <Copy className="h-4 w-4 mr-2" />
                             Duplicate
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-red-600">
+                            <Trash className="h-4 w-4 mr-2" />
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                    
-                    {isDeployed(project) && (
-                      <div className="mt-3 flex items-center gap-1.5 px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full w-fit">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span className="text-xs font-medium">Deployed</span>
-                      </div>
-                    )}
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
           )}
