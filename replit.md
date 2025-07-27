@@ -47,6 +47,19 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-27: **Deployments Page Fully Responsive & Double Header Fixed**:
+  * **Fixed Double Header Issue**: Removed duplicate header from Deployments page (ReplitLayout already provides main navigation)
+  * **Complete Mobile Responsiveness**:
+    - Responsive container with proper padding (px-4 sm:px-6 lg:px-8)
+    - Tabs with horizontal scrolling on mobile
+    - Deployment header stacks vertically on mobile with wrap support
+    - Action buttons full-width on mobile with shortened text labels
+    - Logs tab filters stack vertically on mobile
+    - Log display with smaller text (text-xs sm:text-sm) and reduced height on mobile
+    - Log controls wrap and stack on mobile with Live button full-width
+    - Bottom navigation only visible on mobile (md:hidden) with adjusted icon sizes
+    - Bottom menu popup responsive with larger touch targets
+  * **100% Mobile-Friendly**: Every element now works perfectly on all screen sizes
 - 2025-07-27: **Navigation Menu Updated to Match Replit Exactly**:
   * **Main Navigation Bar**: Reorganized to match Replit's exact structure
     - Create (dropdown) → Home → Apps → Deployments → Usage (with "Action required" badge) → Teams
