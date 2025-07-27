@@ -63,109 +63,6 @@ const TEMPLATE_CATEGORIES = [
   { id: 'tools', name: 'Dev Tools', icon: Terminal },
 ];
 
-const MOCK_TEMPLATES: Template[] = [
-  {
-    id: 'nextjs-blog',
-    name: 'Next.js Blog Starter',
-    description: 'A modern blog with MDX support, dark mode, and SEO optimization',
-    icon: <FileCode className="h-8 w-8" />,
-    category: 'web',
-    tags: ['nextjs', 'react', 'blog', 'mdx'],
-    author: { name: 'E-Code Team', verified: true },
-    stats: { uses: 15420, stars: 892, forks: 234 },
-    language: 'TypeScript',
-    framework: 'Next.js',
-    difficulty: 'beginner',
-    estimatedTime: '5 mins',
-    features: ['MDX blog posts', 'Dark mode', 'SEO optimized', 'RSS feed'],
-    isFeatured: true,
-    isOfficial: true,
-    createdAt: '2024-01-15'
-  },
-  {
-    id: 'express-api',
-    name: 'Express REST API',
-    description: 'Production-ready REST API with authentication and PostgreSQL',
-    icon: <Server className="h-8 w-8" />,
-    category: 'api',
-    tags: ['express', 'nodejs', 'api', 'postgresql'],
-    author: { name: 'E-Code Team', verified: true },
-    stats: { uses: 23100, stars: 1243, forks: 567 },
-    language: 'JavaScript',
-    framework: 'Express.js',
-    difficulty: 'intermediate',
-    estimatedTime: '10 mins',
-    features: ['JWT auth', 'PostgreSQL', 'API docs', 'Rate limiting'],
-    isFeatured: true,
-    isOfficial: true,
-    createdAt: '2024-01-10'
-  },
-  {
-    id: 'react-dashboard',
-    name: 'React Admin Dashboard',
-    description: 'Beautiful admin dashboard with charts, tables, and real-time data',
-    icon: <BarChart className="h-8 w-8" />,
-    category: 'web',
-    tags: ['react', 'dashboard', 'admin', 'charts'],
-    author: { name: 'johndoe', avatar: 'https://github.com/johndoe.png' },
-    stats: { uses: 8920, stars: 456, forks: 123 },
-    language: 'TypeScript',
-    framework: 'React',
-    difficulty: 'intermediate',
-    estimatedTime: '15 mins',
-    features: ['Real-time charts', 'Data tables', 'User management', 'Dark mode'],
-    createdAt: '2024-01-20'
-  },
-  {
-    id: 'discord-bot',
-    name: 'Discord Bot Starter',
-    description: 'Feature-rich Discord bot with commands, events, and database',
-    icon: <Bot className="h-8 w-8" />,
-    category: 'bot',
-    tags: ['discord', 'bot', 'nodejs'],
-    author: { name: 'E-Code Team', verified: true },
-    stats: { uses: 12500, stars: 678, forks: 234 },
-    language: 'JavaScript',
-    framework: 'Discord.js',
-    difficulty: 'beginner',
-    estimatedTime: '5 mins',
-    features: ['Slash commands', 'Event handling', 'Database integration', 'Moderation tools'],
-    isOfficial: true,
-    createdAt: '2024-01-12'
-  },
-  {
-    id: 'python-ml',
-    name: 'Machine Learning Starter',
-    description: 'Get started with ML using scikit-learn and pandas',
-    icon: <BarChart className="h-8 w-8" />,
-    category: 'data',
-    tags: ['python', 'ml', 'scikit-learn', 'pandas'],
-    author: { name: 'dataexpert', avatar: 'https://github.com/dataexpert.png' },
-    stats: { uses: 5670, stars: 345, forks: 89 },
-    language: 'Python',
-    difficulty: 'intermediate',
-    estimatedTime: '20 mins',
-    features: ['Data preprocessing', 'Model training', 'Visualization', 'Jupyter notebooks'],
-    createdAt: '2024-01-18'
-  },
-  {
-    id: 'phaser-game',
-    name: 'Phaser Game Starter',
-    description: '2D game development with Phaser.js game engine',
-    icon: <Gamepad className="h-8 w-8" />,
-    category: 'game',
-    tags: ['phaser', 'game', 'javascript', '2d'],
-    author: { name: 'gamedev', avatar: 'https://github.com/gamedev.png' },
-    stats: { uses: 3420, stars: 234, forks: 67 },
-    language: 'JavaScript',
-    framework: 'Phaser.js',
-    difficulty: 'intermediate',
-    estimatedTime: '15 mins',
-    features: ['Physics engine', 'Sprite animations', 'Sound effects', 'Mobile support'],
-    createdAt: '2024-01-22'
-  }
-];
-
 interface ProjectTemplatesProps {
   onSelectTemplate?: (template: Template) => void;
   showCreateButton?: boolean;
@@ -768,5 +665,5 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
 }
 
 // Export individual template categories for reuse
-export { TEMPLATE_CATEGORIES, MOCK_TEMPLATES };
+export { TEMPLATE_CATEGORIES };
 export type { Template };

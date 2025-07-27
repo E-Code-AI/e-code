@@ -14,9 +14,22 @@ import {
   Secret, InsertSecret,
   Notification, InsertNotification,
   NotificationPreferences, InsertNotificationPreferences,
+  Template, InsertTemplate,
+  CommunityPost, InsertCommunityPost,
+  CommunityChallenge, InsertCommunityChallenge,
+  Theme, InsertTheme,
+  Announcement, InsertAnnouncement,
+  LearningCourse, InsertLearningCourse,
+  UserLearningProgress, InsertUserLearningProgress,
+  UserCycles, InsertUserCycles,
+  CyclesTransaction, InsertCyclesTransaction,
+  ObjectStorage, InsertObjectStorage,
+  Extension, InsertExtension,
+  UserExtension, InsertUserExtension,
   projectLikes, projectViews, activityLog,
   insertProjectLikeSchema, insertProjectViewSchema, insertActivityLogSchema,
-  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts, secrets, notifications, notificationPreferences
+  projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts, secrets, notifications, notificationPreferences,
+  templates, communityPosts, communityChallenges, themes, announcements, learningCourses, userLearningProgress, userCycles, cyclesTransactions, objectStorage, extensions, userExtensions
 } from "@shared/schema";
 import { eq, and, desc, isNull, sql } from "drizzle-orm";
 import { db } from "./db";
@@ -148,6 +161,86 @@ export interface IStorage {
   
   // Fork methods
   forkProject(sourceProjectId: number, userId: number, newName: string): Promise<Project>;
+  
+  // Template methods
+  getAllTemplates(published?: boolean): Promise<Template[]>;
+  getTemplateBySlug(slug: string): Promise<Template | undefined>;
+  getTemplatesByCategory(category: string): Promise<Template[]>;
+  getFeaturedTemplates(): Promise<Template[]>;
+  createTemplate(template: InsertTemplate): Promise<Template>;
+  updateTemplate(id: number, update: Partial<Template>): Promise<Template>;
+  incrementTemplateUses(id: number): Promise<void>;
+  
+  // Community post methods
+  getAllCommunityPosts(category?: string, search?: string): Promise<CommunityPost[]>;
+  getCommunityPost(id: number): Promise<CommunityPost | undefined>;
+  getCommunityPostsByUser(userId: number): Promise<CommunityPost[]>;
+  createCommunityPost(post: InsertCommunityPost): Promise<CommunityPost>;
+  updateCommunityPost(id: number, update: Partial<CommunityPost>): Promise<CommunityPost>;
+  deleteCommunityPost(id: number): Promise<void>;
+  incrementCommunityPostViews(id: number): Promise<void>;
+  
+  // Community challenge methods
+  getAllCommunityChallenges(status?: string): Promise<CommunityChallenge[]>;
+  getCommunityChallenge(id: number): Promise<CommunityChallenge | undefined>;
+  createCommunityChallenge(challenge: InsertCommunityChallenge): Promise<CommunityChallenge>;
+  updateCommunityChallenge(id: number, update: Partial<CommunityChallenge>): Promise<CommunityChallenge>;
+  
+  // Theme methods
+  getAllThemes(type?: string): Promise<Theme[]>;
+  getThemeBySlug(slug: string): Promise<Theme | undefined>;
+  getThemesByUser(userId: number): Promise<Theme[]>;
+  createTheme(theme: InsertTheme): Promise<Theme>;
+  updateTheme(id: number, update: Partial<Theme>): Promise<Theme>;
+  incrementThemeDownloads(id: number): Promise<void>;
+  
+  // Announcement methods
+  getActiveAnnouncements(targetAudience?: string): Promise<Announcement[]>;
+  getAnnouncement(id: number): Promise<Announcement | undefined>;
+  createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
+  updateAnnouncement(id: number, update: Partial<Announcement>): Promise<Announcement>;
+  deleteAnnouncement(id: number): Promise<void>;
+  
+  // Learning course methods
+  getAllLearningCourses(category?: string): Promise<LearningCourse[]>;
+  getLearningCourseBySlug(slug: string): Promise<LearningCourse | undefined>;
+  createLearningCourse(course: InsertLearningCourse): Promise<LearningCourse>;
+  updateLearningCourse(id: number, update: Partial<LearningCourse>): Promise<LearningCourse>;
+  incrementCourseEnrollments(id: number): Promise<void>;
+  
+  // User learning progress methods
+  getUserLearningProgress(userId: number, courseId: number): Promise<UserLearningProgress | undefined>;
+  getAllUserLearningProgress(userId: number): Promise<UserLearningProgress[]>;
+  createUserLearningProgress(progress: InsertUserLearningProgress): Promise<UserLearningProgress>;
+  updateUserLearningProgress(id: number, update: Partial<UserLearningProgress>): Promise<UserLearningProgress>;
+  
+  // Cycles methods
+  getUserCycles(userId: number): Promise<UserCycles | undefined>;
+  createUserCycles(cycles: InsertUserCycles): Promise<UserCycles>;
+  updateUserCycles(userId: number, update: Partial<UserCycles>): Promise<UserCycles>;
+  addCyclesTransaction(transaction: InsertCyclesTransaction): Promise<CyclesTransaction>;
+  getCyclesTransactions(userId: number, limit?: number): Promise<CyclesTransaction[]>;
+  
+  // Object storage methods
+  getObjectStorageByUser(userId: number, path?: string): Promise<ObjectStorage[]>;
+  getObjectStorageItem(id: number): Promise<ObjectStorage | undefined>;
+  createObjectStorageItem(item: InsertObjectStorage): Promise<ObjectStorage>;
+  updateObjectStorageItem(id: number, update: Partial<ObjectStorage>): Promise<ObjectStorage>;
+  deleteObjectStorageItem(id: number): Promise<void>;
+  getObjectStorageFolders(userId: number, parentId?: number): Promise<ObjectStorage[]>;
+  getObjectStorageFiles(userId: number, parentId?: number): Promise<ObjectStorage[]>;
+  
+  // Extensions methods
+  getAllExtensions(): Promise<Extension[]>;
+  getExtensionsByCategory(category: string): Promise<Extension[]>;
+  getExtension(id: number): Promise<Extension | undefined>;
+  getExtensionByExtensionId(extensionId: string): Promise<Extension | undefined>;
+  createExtension(extension: InsertExtension): Promise<Extension>;
+  updateExtension(id: number, update: Partial<Extension>): Promise<Extension>;
+  getUserExtensions(userId: number): Promise<(UserExtension & { extension: Extension })[]>;
+  installExtension(userId: number, extensionId: number): Promise<UserExtension>;
+  uninstallExtension(userId: number, extensionId: number): Promise<void>;
+  checkExtensionInstalled(userId: number, extensionId: number): Promise<boolean>;
 }
 
 // Database storage implementation

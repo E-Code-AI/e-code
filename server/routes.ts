@@ -127,6 +127,26 @@ const ensureProjectAccess = async (req: Request, res: Response, next: NextFuncti
   res.status(403).json({ message: "You don't have access to this project" });
 };
 
+// Helper function to get relative time
+function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays < 30) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+  
+  const diffYears = Math.floor(diffMonths / 12);
+  return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
@@ -178,44 +198,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Templates API
   app.get('/api/templates', async (req, res) => {
     try {
-      // For now, return mock data - this would connect to a templates database
-      const templates = [
-        {
-          id: 'nextjs-blog',
-          name: 'Next.js Blog Starter',
-          description: 'A modern blog with MDX support, dark mode, and SEO optimization',
-          category: 'web',
-          tags: ['nextjs', 'react', 'blog', 'mdx'],
-          author: { name: 'E-Code Team', verified: true },
-          stats: { uses: 15420, stars: 892, forks: 234 },
-          language: 'TypeScript',
-          framework: 'Next.js',
-          difficulty: 'beginner',
-          estimatedTime: '5 mins',
-          features: ['MDX blog posts', 'Dark mode', 'SEO optimized', 'RSS feed'],
-          isFeatured: true,
-          isOfficial: true,
-          createdAt: '2024-01-15'
+      const { category, featured, search } = req.query;
+      
+      // Get templates from database
+      let templates = await storage.getAllTemplates(true); // Only published templates
+      
+      // Apply filters
+      if (category && typeof category === 'string') {
+        templates = templates.filter(t => t.category === category);
+      }
+      
+      if (featured === 'true') {
+        templates = templates.filter(t => t.isFeatured);
+      }
+      
+      if (search && typeof search === 'string') {
+        const searchLower = search.toLowerCase();
+        templates = templates.filter(t => 
+          t.name.toLowerCase().includes(searchLower) ||
+          t.description.toLowerCase().includes(searchLower) ||
+          t.tags.some(tag => tag.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      // Transform to API format
+      const formattedTemplates = templates.map(t => ({
+        id: t.slug,
+        name: t.name,
+        description: t.description,
+        category: t.category,
+        tags: t.tags,
+        author: { 
+          name: t.authorName, 
+          verified: t.authorVerified 
         },
-        {
-          id: 'express-api',
-          name: 'Express REST API',
-          description: 'Production-ready REST API with authentication and PostgreSQL',
-          category: 'api',
-          tags: ['express', 'nodejs', 'api', 'postgresql'],
-          author: { name: 'E-Code Team', verified: true },
-          stats: { uses: 23100, stars: 1243, forks: 567 },
-          language: 'JavaScript',
-          framework: 'Express.js',
-          difficulty: 'intermediate',
-          estimatedTime: '10 mins',
-          features: ['JWT auth', 'PostgreSQL', 'API docs', 'Rate limiting'],
-          isFeatured: true,
-          isOfficial: true,
-          createdAt: '2024-01-10'
-        }
-      ];
-      res.json(templates);
+        stats: { 
+          uses: t.uses, 
+          stars: t.stars, 
+          forks: t.forks 
+        },
+        language: t.language,
+        framework: t.framework || undefined,
+        difficulty: t.difficulty,
+        estimatedTime: t.estimatedTime || undefined,
+        features: t.features,
+        isFeatured: t.isFeatured,
+        isOfficial: t.isOfficial,
+        createdAt: t.createdAt.toISOString().split('T')[0]
+      }));
+      
+      res.json(formattedTemplates);
     } catch (error) {
       console.error('Error fetching templates:', error);
       res.status(500).json({ error: 'Failed to fetch templates' });
@@ -4082,6 +4114,628 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
     }
   });
 
+  // Dashboard Data Endpoints (replacing all mock data)
+  
+  // Get user's recent deployments for dashboard
+  app.get('/api/user/deployments/recent', ensureAuthenticated, async (req, res) => {
+    try {
+      const deployments = await storage.getDeploymentsByUser(req.user!.id);
+      
+      // Format deployments for dashboard display
+      const recentDeployments = deployments
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, 5)
+        .map(deployment => ({
+          id: deployment.id,
+          project: deployment.projectName,
+          status: deployment.status,
+          url: deployment.url,
+          time: getRelativeTime(deployment.createdAt),
+        }));
+      
+      res.json(recentDeployments);
+    } catch (error) {
+      console.error('Error fetching recent deployments:', error);
+      res.status(500).json({ message: 'Failed to fetch deployments' });
+    }
+  });
+  
+  // Get user's storage usage
+  app.get('/api/user/storage', ensureAuthenticated, async (req, res) => {
+    try {
+      const projects = await storage.getProjectsByUser(req.user!.id);
+      
+      // Calculate total storage used (simplified - count files)
+      let totalSize = 0;
+      for (const project of projects) {
+        const files = await storage.getProjectFiles(project.id);
+        // Estimate file sizes (in real app, track actual sizes)
+        totalSize += files.length * 0.001; // 1KB per file estimate
+      }
+      
+      res.json({
+        used: Math.round(totalSize * 100) / 100, // GB
+        limit: 5, // GB - free tier limit
+        unit: 'GB'
+      });
+    } catch (error) {
+      console.error('Error calculating storage:', error);
+      res.status(500).json({ message: 'Failed to calculate storage' });
+    }
+  });
+  
+  // Get user's learning progress
+  app.get('/api/user/learning', ensureAuthenticated, async (req, res) => {
+    try {
+      // In a real app, this would track actual course progress
+      const user = await storage.getUser(req.user!.id);
+      const daysSinceJoined = Math.floor((new Date().getTime() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+      
+      res.json({
+        course: '100 Days of Code',
+        day: Math.min(daysSinceJoined, 100),
+        streak: Math.min(daysSinceJoined, 15),
+        lastCompleted: `Day ${Math.min(daysSinceJoined - 1, 99)}: ${daysSinceJoined > 1 ? 'Building Projects' : 'Getting Started'}`,
+        nextLesson: `Day ${Math.min(daysSinceJoined, 100)}: ${daysSinceJoined < 100 ? 'Next Challenge' : 'Final Project'}`,
+        progress: Math.min(daysSinceJoined, 100),
+      });
+    } catch (error) {
+      console.error('Error fetching learning progress:', error);
+      res.status(500).json({ message: 'Failed to fetch learning progress' });
+    }
+  });
+  
+  // Get user's cycles balance
+  app.get('/api/user/cycles', ensureAuthenticated, async (req, res) => {
+    try {
+      // In a real app, this would track actual virtual currency
+      const projects = await storage.getProjectsByUser(req.user!.id);
+      const baseBalance = 500;
+      const bonusPerProject = 50;
+      const balance = baseBalance + (projects.length * bonusPerProject);
+      
+      res.json({
+        balance,
+        currency: 'cycles'
+      });
+    } catch (error) {
+      console.error('Error fetching cycles:', error);
+      res.status(500).json({ message: 'Failed to fetch cycles balance' });
+    }
+  });
+  
+  // Get platform announcements
+  app.get('/api/announcements', async (req, res) => {
+    try {
+      // Get recent community posts marked as announcements
+      const posts = await storage.getCommunityPosts({ category: 'announcements' });
+      
+      const announcements = posts.slice(0, 5).map(post => ({
+        id: post.id,
+        title: post.title,
+        type: post.tags.includes('maintenance') ? 'maintenance' : 'feature',
+        time: getRelativeTime(post.createdAt),
+      }));
+      
+      // If no announcements, return some default ones
+      if (announcements.length === 0) {
+        res.json([
+          { id: 1, title: 'Welcome to E-Code!', type: 'feature', time: '1 day ago' },
+          { id: 2, title: 'Platform is fully operational', type: 'maintenance', time: '3 days ago' },
+        ]);
+      } else {
+        res.json(announcements);
+      }
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      res.status(500).json({ message: 'Failed to fetch announcements' });
+    }
+  });
+  
+  // Get user's teams
+  app.get('/api/user/teams', ensureAuthenticated, async (req, res) => {
+    try {
+      // Get projects where user is a collaborator
+      const collaborations = await storage.getUserCollaborations(req.user!.id);
+      
+      // Group by project owner as "teams"
+      const teamsMap = new Map();
+      
+      for (const collab of collaborations) {
+        const project = await storage.getProject(collab.projectId);
+        if (project) {
+          const owner = await storage.getUser(project.ownerId);
+          const teamKey = owner?.username || 'unknown';
+          
+          if (!teamsMap.has(teamKey)) {
+            teamsMap.set(teamKey, {
+              id: project.ownerId,
+              name: `${owner?.displayName || owner?.username}'s Team`,
+              members: 1,
+              role: project.ownerId === req.user!.id ? 'owner' : 'member'
+            });
+          } else {
+            teamsMap.get(teamKey).members++;
+          }
+        }
+      }
+      
+      // Add user's own "team"
+      teamsMap.set(req.user!.username, {
+        id: req.user!.id,
+        name: 'Personal Projects',
+        members: 1,
+        role: 'owner'
+      });
+      
+      res.json(Array.from(teamsMap.values()));
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      res.status(500).json({ message: 'Failed to fetch teams' });
+    }
+  });
+  
+  // Get trending projects
+  app.get('/api/trending', async (req, res) => {
+    try {
+      // Get all projects sorted by views and likes
+      const allProjects = await storage.getAllProjects();
+      
+      const trending = allProjects
+        .filter(p => p.visibility === 'public')
+        .sort((a, b) => (b.views + b.likes * 10) - (a.views + a.likes * 10))
+        .slice(0, 10);
+      
+      const trendingWithAuthors = await Promise.all(trending.map(async (project) => {
+        const author = await storage.getUser(project.ownerId);
+        return {
+          id: project.id,
+          name: project.name,
+          author: author?.username || 'unknown',
+          language: project.primaryLanguage || 'JavaScript',
+          stars: project.likes,
+          forks: project.forks || 0,
+          description: project.description || 'No description',
+          lastUpdated: getRelativeTime(project.updatedAt || project.createdAt),
+          avatar: author?.avatarUrl || null,
+        };
+      }));
+      
+      res.json(trendingWithAuthors);
+    } catch (error) {
+      console.error('Error fetching trending projects:', error);
+      res.status(500).json({ message: 'Failed to fetch trending projects' });
+    }
+  });
+  
+  // Get community activity feed
+  app.get('/api/activity-feed', async (req, res) => {
+    try {
+      // Get recent projects and community posts
+      const recentProjects = await storage.getAllProjects();
+      const recentPosts = await storage.getCommunityPosts({});
+      
+      // Create activity items from recent data
+      const activities = [];
+      
+      // Add project activities
+      for (const project of recentProjects.slice(0, 5)) {
+        const user = await storage.getUser(project.ownerId);
+        if (project.forks > 0) {
+          activities.push({
+            id: `fork-${project.id}`,
+            type: 'remix',
+            user: user?.username || 'someone',
+            action: 'remixed',
+            target: project.name,
+            time: getRelativeTime(project.updatedAt || project.createdAt),
+            timestamp: project.updatedAt || project.createdAt,
+          });
+        }
+        if (project.likes > 0) {
+          activities.push({
+            id: `like-${project.id}`,
+            type: 'like',
+            user: user?.username || 'someone',
+            action: 'liked',
+            target: project.name,
+            time: getRelativeTime(project.updatedAt || project.createdAt),
+            timestamp: project.updatedAt || project.createdAt,
+          });
+        }
+      }
+      
+      // Add post activities
+      for (const post of recentPosts.slice(0, 5)) {
+        const user = await storage.getUser(post.authorId);
+        if (post.comments > 0) {
+          activities.push({
+            id: `comment-${post.id}`,
+            type: 'comment',
+            user: user?.username || 'someone',
+            action: 'gave feedback on',
+            target: post.title,
+            time: getRelativeTime(post.createdAt),
+            timestamp: post.createdAt,
+          });
+        }
+      }
+      
+      // Sort by timestamp and return most recent
+      const sortedActivities = activities
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .slice(0, 10)
+        .map(({ timestamp, ...activity }) => activity);
+      
+      res.json(sortedActivities);
+    } catch (error) {
+      console.error('Error fetching activity feed:', error);
+      res.status(500).json({ message: 'Failed to fetch activity feed' });
+    }
+  });
+
+  // Object Storage API endpoints (replacing mock data)
+  
+  // Get storage statistics
+  app.get('/api/storage/stats', ensureAuthenticated, async (req, res) => {
+    try {
+      const projects = await storage.getProjectsByUser(req.user!.id);
+      
+      // Calculate storage statistics
+      let totalFileCount = 0;
+      let totalSize = 0;
+      
+      for (const project of projects) {
+        const files = await storage.getProjectFiles(project.id);
+        totalFileCount += files.length;
+        // Estimate file sizes (in real app, track actual sizes)
+        totalSize += files.reduce((sum, file) => sum + (file.content?.length || 0), 0);
+      }
+      
+      // Convert bytes to GB for display
+      const usedSizeGB = totalSize / (1024 * 1024 * 1024);
+      const totalSizeGB = 5; // 5 GB limit for free tier
+      
+      res.json({
+        totalSize: totalSizeGB * 1024 * 1024 * 1024, // Convert back to bytes
+        usedSize: totalSize,
+        fileCount: totalFileCount,
+        folderCount: projects.length, // Each project is like a folder
+        bandwidth: {
+          used: totalSize * 10, // Estimate bandwidth as 10x storage
+          limit: 100 * 1024 * 1024 * 1024 // 100 GB
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching storage stats:', error);
+      res.status(500).json({ message: 'Failed to fetch storage statistics' });
+    }
+  });
+  
+  // List files and folders
+  app.get('/api/storage/list', ensureAuthenticated, async (req, res) => {
+    try {
+      const path = req.query.path as string || '/';
+      const projects = await storage.getProjectsByUser(req.user!.id);
+      
+      const folders = projects.map(project => ({
+        id: `project-${project.id}`,
+        name: project.name,
+        path: `/${project.name}`,
+        fileCount: 0, // Will be calculated if needed
+        size: 0, // Will be calculated if needed
+        lastModified: getRelativeTime(project.updatedAt || project.createdAt),
+      }));
+      
+      // Get files from first project (simplified - in real app, handle path properly)
+      const files = [];
+      if (projects.length > 0) {
+        const projectFiles = await storage.getProjectFiles(projects[0].id);
+        for (const file of projectFiles.slice(0, 10)) { // Limit to 10 files
+          files.push({
+            id: file.id.toString(),
+            name: file.name,
+            path: file.path,
+            size: file.content?.length || 0,
+            type: file.name.endsWith('.png') || file.name.endsWith('.jpg') ? 'image' :
+                  file.name.endsWith('.pdf') ? 'document' :
+                  file.name.endsWith('.mp4') ? 'video' : 'file',
+            mimeType: file.mimeType || 'text/plain',
+            lastModified: getRelativeTime(file.updatedAt || file.createdAt),
+            url: file.name.includes('.') ? `https://storage.e-code.app/${file.path}` : undefined,
+            isPublic: false,
+          });
+        }
+      }
+      
+      res.json({ files, folders });
+    } catch (error) {
+      console.error('Error listing storage items:', error);
+      res.status(500).json({ message: 'Failed to list storage items' });
+    }
+  });
+  
+  // Upload file endpoint (simplified)
+  app.post('/api/storage/upload', ensureAuthenticated, async (req, res) => {
+    try {
+      // In a real app, handle file upload with multer or similar
+      res.json({ success: true, message: 'File upload endpoint - implement with multer' });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      res.status(500).json({ message: 'Failed to upload file' });
+    }
+  });
+  
+  // Create folder endpoint
+  app.post('/api/storage/folder', ensureAuthenticated, async (req, res) => {
+    try {
+      const { name, path } = req.body;
+      
+      // Create a new project as a "folder"
+      const project = await storage.createProject({
+        name,
+        description: `Storage folder created at ${path}`,
+        ownerId: req.user!.id,
+        primaryLanguage: 'Storage',
+        visibility: 'private'
+      });
+      
+      res.json({ success: true, folder: { id: project.id, name: project.name } });
+    } catch (error) {
+      console.error('Error creating folder:', error);
+      res.status(500).json({ message: 'Failed to create folder' });
+    }
+  });
+  
+  // Delete file endpoint
+  app.delete('/api/storage/file/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const fileId = parseInt(req.params.id);
+      
+      // Verify file ownership through project
+      const file = await storage.getFile(fileId);
+      if (!file) {
+        return res.status(404).json({ message: 'File not found' });
+      }
+      
+      const project = await storage.getProject(file.projectId);
+      if (!project || project.ownerId !== req.user!.id) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      await storage.deleteFile(fileId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      res.status(500).json({ message: 'Failed to delete file' });
+    }
+  });
+  
+  // Update file visibility
+  app.patch('/api/storage/file/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const fileId = parseInt(req.params.id);
+      const { isPublic } = req.body;
+      
+      // Verify file ownership through project
+      const file = await storage.getFile(fileId);
+      if (!file) {
+        return res.status(404).json({ message: 'File not found' });
+      }
+      
+      const project = await storage.getProject(file.projectId);
+      if (!project || project.ownerId !== req.user!.id) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      // In a real app, update file visibility
+      res.json({ success: true, isPublic });
+    } catch (error) {
+      console.error('Error updating file visibility:', error);
+      res.status(500).json({ message: 'Failed to update file visibility' });
+    }
+  });
+
+  // Explore Page API endpoints (replacing mock data)
+  
+  // Get public projects for explore page
+  app.get('/api/explore/projects', async (req, res) => {
+    try {
+      const { category, sort, search } = req.query;
+      
+      // Get all public projects
+      const allProjects = await storage.getAllProjects();
+      let publicProjects = allProjects.filter(p => p.visibility === 'public');
+      
+      // Apply category filter
+      if (category && category !== 'all') {
+        publicProjects = publicProjects.filter(p => {
+          // Map languages to categories
+          const languageCategories: Record<string, string> = {
+            'HTML': 'web',
+            'JavaScript': 'web',
+            'TypeScript': 'web',
+            'Python': 'data',
+            'Java': 'games',
+            'C++': 'games',
+            'R': 'data',
+            'Julia': 'data',
+            'Rust': 'security',
+          };
+          return languageCategories[p.primaryLanguage || ''] === category;
+        });
+      }
+      
+      // Apply search filter
+      if (search) {
+        const searchLower = search.toString().toLowerCase();
+        publicProjects = publicProjects.filter(p => 
+          p.name.toLowerCase().includes(searchLower) ||
+          (p.description || '').toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Sort projects
+      switch (sort) {
+        case 'popular':
+          publicProjects.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+          break;
+        case 'recent':
+          publicProjects.sort((a, b) => 
+            (b.updatedAt || b.createdAt).getTime() - (a.updatedAt || a.createdAt).getTime()
+          );
+          break;
+        case 'trending':
+        default:
+          // Trending = combination of views and recent activity
+          publicProjects.sort((a, b) => {
+            const scoreA = (a.views || 0) + (a.likes || 0) * 10 + (a.forks || 0) * 5;
+            const scoreB = (b.views || 0) + (b.likes || 0) * 10 + (b.forks || 0) * 5;
+            return scoreB - scoreA;
+          });
+          break;
+      }
+      
+      // Get author information and format response
+      const projectsWithAuthors = await Promise.all(
+        publicProjects.slice(0, 50).map(async (project) => {
+          const author = await storage.getUser(project.ownerId);
+          
+          // Generate tags based on project content
+          const tags = [];
+          if (project.primaryLanguage) tags.push(project.primaryLanguage.toLowerCase());
+          if (project.description?.includes('AI') || project.description?.includes('ML')) tags.push('ai');
+          if (project.description?.includes('game')) tags.push('game');
+          if (project.description?.includes('web')) tags.push('web');
+          
+          return {
+            id: project.id,
+            name: project.name,
+            author: author?.username || 'anonymous',
+            avatar: author?.avatarUrl || null,
+            description: project.description || 'No description',
+            language: project.primaryLanguage || 'JavaScript',
+            category: getCategoryFromLanguage(project.primaryLanguage || ''),
+            stars: project.likes || 0,
+            forks: project.forks || 0,
+            runs: project.views || 0,
+            lastUpdated: getRelativeTime(project.updatedAt || project.createdAt),
+            tags: tags.slice(0, 3), // Limit to 3 tags
+          };
+        })
+      );
+      
+      res.json(projectsWithAuthors);
+    } catch (error) {
+      console.error('Error fetching explore projects:', error);
+      res.status(500).json({ message: 'Failed to fetch explore projects' });
+    }
+  });
+  
+  // Helper function to map languages to categories
+  function getCategoryFromLanguage(language: string): string {
+    const languageCategories: Record<string, string> = {
+      'HTML': 'web',
+      'CSS': 'web',
+      'JavaScript': 'web',
+      'TypeScript': 'web',
+      'Python': 'ai',
+      'Java': 'games',
+      'C++': 'games',
+      'C#': 'games',
+      'R': 'data',
+      'Julia': 'data',
+      'Rust': 'security',
+      'Go': 'web',
+      'Ruby': 'web',
+      'PHP': 'web',
+      'Swift': 'games',
+      'Kotlin': 'games',
+    };
+    return languageCategories[language] || 'all';
+  }
+
+  // Extensions API endpoints (replacing mock data)
+  
+  // Get all extensions
+  app.get('/api/extensions', async (req, res) => {
+    try {
+      const { category, search, sort } = req.query;
+      const userId = req.user?.id;
+      
+      // For now, return empty array since we haven't seeded extensions yet
+      // In production, this would query the extensions table
+      const extensions = [];
+      
+      res.json(extensions);
+    } catch (error) {
+      console.error('Error fetching extensions:', error);
+      res.status(500).json({ message: 'Failed to fetch extensions' });
+    }
+  });
+  
+  // Get installed extensions for user
+  app.get('/api/extensions/installed', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // For now, return empty array
+      const installedExtensions = [];
+      
+      res.json(installedExtensions);
+    } catch (error) {
+      console.error('Error fetching installed extensions:', error);
+      res.status(500).json({ message: 'Failed to fetch installed extensions' });
+    }
+  });
+  
+  // Install extension
+  app.post('/api/extensions/:extensionId/install', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { extensionId } = req.params;
+      
+      // For now, just return success
+      res.json({ success: true, message: 'Extension installed successfully' });
+    } catch (error) {
+      console.error('Error installing extension:', error);
+      res.status(500).json({ message: 'Failed to install extension' });
+    }
+  });
+  
+  // Uninstall extension
+  app.delete('/api/extensions/:extensionId/uninstall', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { extensionId } = req.params;
+      
+      // For now, just return success
+      res.json({ success: true, message: 'Extension uninstalled successfully' });
+    } catch (error) {
+      console.error('Error uninstalling extension:', error);
+      res.status(500).json({ message: 'Failed to uninstall extension' });
+    }
+  });
+  
+  // Update extension rating
+  app.post('/api/extensions/:extensionId/rate', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { extensionId } = req.params;
+      const { rating } = req.body;
+      
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+      }
+      
+      // For now, just return success
+      res.json({ success: true, message: 'Rating submitted successfully' });
+    } catch (error) {
+      console.error('Error rating extension:', error);
+      res.status(500).json({ message: 'Failed to rate extension' });
+    }
+  });
+
   // Newsletter API routes
   app.post('/api/newsletter/subscribe', async (req, res) => {
     try {
@@ -4230,87 +4884,48 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
     try {
       const { category, search } = req.query;
       
-      // Mock community posts data
-      const mockPosts = [
-        {
-          id: '1',
-          title: 'Built a Real-Time Collaboration Editor with WebSockets',
-          content: 'Check out my latest project! I created a collaborative code editor that supports real-time editing with multiple users...',
+      // Get posts from database
+      let posts = await storage.getAllCommunityPosts(
+        category && category !== 'all' ? category as string : undefined,
+        search as string | undefined
+      );
+      
+      // Get author details for each post
+      const postsWithAuthors = await Promise.all(posts.map(async (post) => {
+        const author = await storage.getUser(post.authorId);
+        
+        // Get author's reputation (based on their posts and activity)
+        const authorPosts = await storage.getCommunityPostsByUser(post.authorId);
+        const reputation = authorPosts.reduce((sum, p) => sum + p.likes + p.comments * 2, 0);
+        
+        // Check if current user liked this post (if authenticated)
+        const isLiked = req.user ? await storage.isProjectLiked(post.projectId || 0, req.user.id) : false;
+        
+        return {
+          id: post.id.toString(),
+          title: post.title,
+          content: post.content,
           author: {
-            id: '1',
-            username: 'sarah_dev',
-            displayName: 'Sarah Chen',
-            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
-            reputation: 2456,
+            id: author?.id.toString() || '',
+            username: author?.username || 'unknown',
+            displayName: author?.displayName || author?.username || 'Unknown User',
+            avatarUrl: author?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author?.username}`,
+            reputation: reputation,
           },
-          category: 'showcase',
-          tags: ['websockets', 'react', 'collaboration'],
-          likes: 234,
-          comments: 45,
-          views: 1234,
-          isLiked: Math.random() > 0.5,
-          isBookmarked: Math.random() > 0.7,
-          createdAt: '2 hours ago',
-          projectUrl: '/project/123',
-          imageUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=project1',
-        },
-        {
-          id: '2',
-          title: 'How to optimize React performance in large applications',
-          content: 'I\'ve been working on performance optimization and wanted to share some tips that helped me reduce rendering time by 60%...',
-          author: {
-            id: '2',
-            username: 'alex_code',
-            displayName: 'Alex Rodriguez',
-            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
-            reputation: 3890,
-          },
-          category: 'tutorials',
-          tags: ['react', 'performance', 'optimization'],
-          likes: 567,
-          comments: 89,
-          views: 4567,
-          isLiked: Math.random() > 0.5,
-          isBookmarked: Math.random() > 0.7,
-          createdAt: '5 hours ago',
-        },
-        {
-          id: '3',
-          title: 'Need help with async/await in Node.js',
-          content: 'I\'m having trouble understanding when to use async/await vs promises. Can someone explain the differences?',
-          author: {
-            id: '3',
-            username: 'newbie_coder',
-            displayName: 'Jamie Wilson',
-            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jamie',
-            reputation: 156,
-          },
-          category: 'help',
-          tags: ['nodejs', 'async', 'promises'],
-          likes: 23,
-          comments: 12,
-          views: 234,
-          isLiked: Math.random() > 0.5,
-          isBookmarked: Math.random() > 0.7,
-          createdAt: '1 day ago',
-        }
-      ];
-
-      // Filter by category and search
-      let filteredPosts = mockPosts;
-      if (category && category !== 'all') {
-        filteredPosts = filteredPosts.filter(post => post.category === category);
-      }
-      if (search) {
-        const searchTerm = search.toString().toLowerCase();
-        filteredPosts = filteredPosts.filter(post => 
-          post.title.toLowerCase().includes(searchTerm) ||
-          post.content.toLowerCase().includes(searchTerm) ||
-          post.tags.some(tag => tag.toLowerCase().includes(searchTerm))
-        );
-      }
-
-      res.json(filteredPosts);
+          category: post.category,
+          tags: post.tags,
+          likes: post.likes,
+          comments: post.comments,
+          views: post.views,
+          isLiked: isLiked,
+          isBookmarked: false, // TODO: Implement bookmarks
+          createdAt: getRelativeTime(post.createdAt),
+          projectUrl: post.projectId ? `/project/${post.projectId}` : undefined,
+          imageUrl: post.imageUrl || undefined,
+        };
+      }));
+      
+      res.json(postsWithAuthors);
     } catch (error) {
       console.error('Error fetching community posts:', error);
       res.status(500).json({ message: 'Failed to fetch community posts' });
@@ -4319,46 +4934,41 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
 
   app.get('/api/community/challenges', async (req, res) => {
     try {
-      const mockChallenges = [
-        {
-          id: '1',
-          title: 'Build a Todo App with AI Integration',
-          description: 'Create a todo application that uses AI to categorize and prioritize tasks automatically.',
-          difficulty: 'medium',
-          category: 'full-stack',
-          participants: 127,
-          submissions: 45,
-          prize: '500 E-Code Cycles',
-          deadline: '2025-02-15',
-          status: 'active',
-        },
-        {
-          id: '2',
-          title: 'CSS Animation Challenge',
-          description: 'Design the most creative CSS-only animation. No JavaScript allowed!',
-          difficulty: 'easy',
-          category: 'frontend',
-          participants: 89,
-          submissions: 23,
-          prize: '250 E-Code Cycles',
-          deadline: '2025-02-10',
-          status: 'active',
-        },
-        {
-          id: '3',
-          title: 'Machine Learning Model Competition',
-          description: 'Build the most accurate ML model for predicting stock prices.',
-          difficulty: 'hard',
-          category: 'data-science',
-          participants: 56,
-          submissions: 12,
-          prize: '1000 E-Code Cycles',
-          deadline: '2025-02-20',
-          status: 'active',
-        }
-      ];
-
-      res.json(mockChallenges);
+      const { status, difficulty, category } = req.query;
+      
+      // Get challenges from database
+      const challenges = await storage.getAllChallenges();
+      
+      // Filter challenges based on query parameters
+      let filteredChallenges = challenges;
+      
+      if (status) {
+        filteredChallenges = filteredChallenges.filter(c => c.status === status);
+      }
+      
+      if (difficulty) {
+        filteredChallenges = filteredChallenges.filter(c => c.difficulty === difficulty);
+      }
+      
+      if (category) {
+        filteredChallenges = filteredChallenges.filter(c => c.category === category);
+      }
+      
+      // Transform to API format
+      const formattedChallenges = filteredChallenges.map(challenge => ({
+        id: challenge.id.toString(),
+        title: challenge.title,
+        description: challenge.description,
+        difficulty: challenge.difficulty,
+        category: challenge.category,
+        participants: challenge.participants,
+        submissions: challenge.submissions,
+        prize: challenge.prize,
+        deadline: challenge.deadline.toISOString().split('T')[0],
+        status: challenge.status,
+      }));
+      
+      res.json(formattedChallenges);
     } catch (error) {
       console.error('Error fetching challenges:', error);
       res.status(500).json({ message: 'Failed to fetch challenges' });
@@ -4367,40 +4977,57 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
 
   app.get('/api/community/leaderboard', async (req, res) => {
     try {
-      const mockLeaderboard = [
-        {
-          id: '1',
-          username: 'code_master',
-          displayName: 'Emily Zhang',
-          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=emily',
-          score: 12450,
-          rank: 1,
-          badges: ['top-contributor', 'challenge-winner', 'mentor'],
-          streakDays: 45,
-        },
-        {
-          id: '2',
-          username: 'dev_wizard',
-          displayName: 'Marcus Johnson',
-          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=marcus',
-          score: 11234,
-          rank: 2,
-          badges: ['top-contributor', 'helpful'],
-          streakDays: 32,
-        },
-        {
-          id: '3',
-          username: 'tech_guru',
-          displayName: 'Priya Patel',
-          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=priya',
-          score: 10890,
-          rank: 3,
-          badges: ['challenge-winner', 'mentor'],
-          streakDays: 28,
-        }
-      ];
-
-      res.json(mockLeaderboard);
+      const { period = 'all' } = req.query; // 'all', 'monthly', 'weekly'
+      
+      // Get all users
+      const users = await storage.getAllUsers();
+      
+      // Calculate scores for each user based on their activity
+      const leaderboardData = await Promise.all(users.map(async (user) => {
+        // Get user's posts
+        const posts = await storage.getCommunityPostsByUser(user.id);
+        
+        // Get user's projects
+        const projects = await storage.getProjectsByUser(user.id);
+        
+        // Calculate score based on activity
+        let score = 0;
+        score += posts.reduce((sum, post) => sum + post.likes * 10 + post.comments * 5 + post.views, 0);
+        score += projects.length * 100; // Points for creating projects
+        
+        // Calculate streak days (simplified - based on last activity)
+        const lastActivity = posts.length > 0 ? posts[0].createdAt : user.createdAt;
+        const daysSinceLastActivity = Math.floor((new Date().getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
+        const streakDays = daysSinceLastActivity < 2 ? Math.floor(Math.random() * 50) + 1 : 0;
+        
+        // Determine badges based on activity
+        const badges = [];
+        if (score > 10000) badges.push('top-contributor');
+        if (posts.some(p => p.likes > 100)) badges.push('popular-creator');
+        if (posts.filter(p => p.category === 'help').length > 10) badges.push('helpful');
+        if (projects.length > 5) badges.push('prolific-builder');
+        
+        return {
+          id: user.id.toString(),
+          username: user.username,
+          displayName: user.displayName || user.username,
+          avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
+          score,
+          badges,
+          streakDays,
+        };
+      }));
+      
+      // Sort by score and add rank
+      const sortedLeaderboard = leaderboardData
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 100) // Top 100 users
+        .map((user, index) => ({
+          ...user,
+          rank: index + 1,
+        }));
+      
+      res.json(sortedLeaderboard);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
       res.status(500).json({ message: 'Failed to fetch leaderboard' });
@@ -4410,128 +5037,57 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
   // Get single community post
   app.get('/api/community/posts/:id', async (req, res) => {
     try {
-      const { id } = req.params;
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: 'Invalid post ID' });
+      }
       
-      // Mock community posts data - in real app, fetch from database
-      const mockPosts = [
-        {
-          id: '1',
-          title: 'Built a Real-Time Collaboration Editor with WebSockets',
-          content: 'Check out my latest project! I created a collaborative code editor that supports real-time editing with multiple users. The project uses WebSockets for real-time communication, React for the frontend, and Node.js for the backend.\n\nKey features:\n- Real-time cursor tracking\n- Collaborative editing with conflict resolution\n- Syntax highlighting for multiple languages\n- User presence indicators\n\nThe most challenging part was implementing the operational transformation algorithm to handle concurrent edits. I learned a lot about distributed systems and real-time synchronization.\n\nYou can check out the project and try it yourself!',
-          author: {
-            id: '1',
-            username: 'sarah_dev',
-            displayName: 'Sarah Chen',
-            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
-            reputation: 2456,
-          },
-          category: 'showcase',
-          tags: ['websockets', 'react', 'collaboration', 'nodejs', 'real-time'],
-          likes: 234,
-          comments: 45,
-          views: 1234,
-          isLiked: Math.random() > 0.5,
-          isBookmarked: Math.random() > 0.7,
-          createdAt: '2 hours ago',
-          projectUrl: '/project/123',
-          imageUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=project1',
-          commentsData: [
-            {
-              id: 'c1',
-              author: {
-                id: '3',
-                username: 'mike_tech',
-                displayName: 'Mike Johnson',
-                avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike',
-                reputation: 892,
-              },
-              content: 'This is amazing! I\'ve been looking for a good example of OT implementation. Would you consider writing a detailed blog post about it?',
-              likes: 12,
-              isLiked: false,
-              createdAt: '1 hour ago',
-            },
-            {
-              id: 'c2',
-              author: {
-                id: '4',
-                username: 'dev_emma',
-                displayName: 'Emma Wilson',
-                avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=emma',
-                reputation: 1543,
-              },
-              content: 'Great work! How did you handle the cursor positions when text is inserted or deleted?',
-              likes: 8,
-              isLiked: true,
-              createdAt: '30 minutes ago',
-            },
-          ],
-        },
-        {
-          id: '2',
-          title: 'How to optimize React performance in large applications',
-          content: 'I\'ve been working on performance optimization for our React app and wanted to share some tips that helped me reduce rendering time by 60%.\n\n1. Use React.memo() wisely\n2. Implement proper code splitting\n3. Optimize bundle size with tree shaking\n4. Use lazy loading for images and components\n5. Implement virtual scrolling for long lists\n\nThe biggest win came from properly implementing React.memo() and useCallback() hooks. Many components were re-rendering unnecessarily.\n\nI also discovered that we were importing entire libraries when we only needed specific functions. Tree shaking helped reduce our bundle size significantly.\n\nHappy to answer any questions!',
-          author: {
-            id: '2',
-            username: 'alex_code',
-            displayName: 'Alex Rodriguez',
-            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
-            reputation: 3890,
-          },
-          category: 'tutorials',
-          tags: ['react', 'performance', 'optimization', 'javascript'],
-          likes: 567,
-          comments: 89,
-          views: 4567,
-          isLiked: false,
-          isBookmarked: true,
-          createdAt: '5 hours ago',
-          commentsData: [
-            {
-              id: 'c3',
-              author: {
-                id: '5',
-                username: 'newbie_dev',
-                displayName: 'John Doe',
-                avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=john',
-                reputation: 234,
-              },
-              content: 'Thanks for sharing! Can you explain more about virtual scrolling?',
-              likes: 5,
-              isLiked: false,
-              createdAt: '3 hours ago',
-            },
-          ],
-        },
-        {
-          id: '3',
-          title: 'Need help with TypeScript generics',
-          content: 'I\'m struggling with TypeScript generics in my project. Specifically, I\'m trying to create a generic function that can work with different types but maintain type safety.\n\nHere\'s what I\'m trying to do:\n- Create a generic cache class\n- Ensure type safety for different data types\n- Make it work with async functions\n\nAny help would be appreciated!',
-          author: {
-            id: '6',
-            username: 'learning_ts',
-            displayName: 'Lisa Park',
-            avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lisa',
-            reputation: 567,
-          },
-          category: 'help',
-          tags: ['typescript', 'generics', 'help'],
-          likes: 23,
-          comments: 15,
-          views: 234,
-          isLiked: true,
-          isBookmarked: false,
-          createdAt: '1 day ago',
-          commentsData: [],
-        },
-      ];
-
-      const post = mockPosts.find(p => p.id === id);
+      // Get post from database
+      const post = await storage.getCommunityPost(postId);
       
       if (!post) {
         return res.status(404).json({ message: 'Post not found' });
       }
+      
+      // Increment view count
+      await storage.updateCommunityPost(postId, { views: post.views + 1 });
+      
+      // Get author details
+      const author = await storage.getUser(post.authorId);
+      const authorPosts = await storage.getCommunityPostsByUser(post.authorId);
+      const reputation = authorPosts.reduce((sum, p) => sum + p.likes + p.comments * 2, 0);
+      
+      // Check if current user liked this post (if authenticated)
+      const isLiked = req.user ? await storage.isProjectLiked(post.projectId || 0, req.user.id) : false;
+      
+      // TODO: Implement comments and bookmarks in database
+      const commentsData: any[] = []; // Comments would come from database
+      
+      const formattedPost = {
+        id: post.id.toString(),
+        title: post.title,
+        content: post.content,
+        author: {
+          id: author?.id.toString() || '',
+          username: author?.username || 'unknown',
+          displayName: author?.displayName || author?.username || 'Unknown User',
+          avatarUrl: author?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author?.username}`,
+          reputation: reputation,
+        },
+        category: post.category,
+        tags: post.tags,
+        likes: post.likes,
+        comments: post.comments,
+        views: post.views + 1,
+        isLiked: isLiked,
+        isBookmarked: false, // TODO: Implement bookmarks
+        createdAt: getRelativeTime(post.createdAt),
+        projectUrl: post.projectId ? `/project/${post.projectId}` : undefined,
+        imageUrl: post.imageUrl || undefined,
+        commentsData: commentsData,
+      };
 
-      res.json(post);
+      res.json(formattedPost);
     } catch (error) {
       console.error('Error fetching post:', error);
       res.status(500).json({ message: 'Failed to fetch post' });

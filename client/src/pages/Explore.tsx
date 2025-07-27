@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ECodeLoading } from '@/components/ECodeLoading';
 import {
   Search,
   TrendingUp,
@@ -40,99 +42,27 @@ const categories = [
   { id: 'security', name: 'Security', icon: Shield },
 ];
 
-// Mock data for public repls
-const publicRepls = [
-  {
-    id: 1,
-    name: 'AI Chat Assistant',
-    author: 'ai_master',
-    avatar: null,
-    description: 'GPT-powered chat assistant with streaming responses and memory',
-    language: 'Python',
-    category: 'ai',
-    stars: 1234,
-    forks: 234,
-    runs: 45678,
-    lastUpdated: '2 hours ago',
-    tags: ['openai', 'chatgpt', 'streaming'],
-  },
-  {
-    id: 2,
-    name: '3D Physics Sandbox',
-    author: 'game_dev_pro',
-    avatar: null,
-    description: 'Interactive 3D physics simulation with Three.js',
-    language: 'JavaScript',
-    category: 'games',
-    stars: 890,
-    forks: 156,
-    runs: 23456,
-    lastUpdated: '5 hours ago',
-    tags: ['threejs', 'physics', 'webgl'],
-  },
-  {
-    id: 3,
-    name: 'Real-time Collaborative Whiteboard',
-    author: 'collab_king',
-    avatar: null,
-    description: 'Multi-user whiteboard with WebRTC and Socket.io',
-    language: 'TypeScript',
-    category: 'web',
-    stars: 567,
-    forks: 89,
-    runs: 12345,
-    lastUpdated: '1 day ago',
-    tags: ['webrtc', 'socketio', 'collaboration'],
-  },
-  {
-    id: 4,
-    name: 'Stock Market Analyzer',
-    author: 'data_wizard',
-    avatar: null,
-    description: 'Real-time stock analysis with predictive models',
-    language: 'Python',
-    category: 'data',
-    stars: 789,
-    forks: 167,
-    runs: 34567,
-    lastUpdated: '3 hours ago',
-    tags: ['pandas', 'matplotlib', 'finance'],
-  },
-  {
-    id: 5,
-    name: 'Music Visualizer',
-    author: 'sound_artist',
-    avatar: null,
-    description: 'Audio-reactive visualizations with Web Audio API',
-    language: 'JavaScript',
-    category: 'music',
-    stars: 456,
-    forks: 78,
-    runs: 8901,
-    lastUpdated: '12 hours ago',
-    tags: ['webaudio', 'canvas', 'visualization'],
-  },
-  {
-    id: 6,
-    name: 'Neural Style Transfer',
-    author: 'ml_enthusiast',
-    avatar: null,
-    description: 'Transform images with artistic style transfer',
-    language: 'Python',
-    category: 'art',
-    stars: 678,
-    forks: 123,
-    runs: 15678,
-    lastUpdated: '6 hours ago',
-    tags: ['tensorflow', 'neural-networks', 'art'],
-  },
-];
-
 export default function Explore() {
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('trending');
+  
+  // Fetch public projects from API
+  const { data: publicRepls = [], isLoading } = useQuery<any[]>({
+    queryKey: ['/api/explore/projects', { category: selectedCategory, sort: sortBy, search: searchQuery }],
+    queryFn: async ({ queryKey }) => {
+      const [, params] = queryKey as [string, any];
+      const searchParams = new URLSearchParams();
+      if (params.category && params.category !== 'all') searchParams.append('category', params.category);
+      if (params.sort) searchParams.append('sort', params.sort);
+      if (params.search) searchParams.append('search', params.search);
+      
+      const response = await fetch(`/api/explore/projects?${searchParams}`);
+      if (!response.ok) throw new Error('Failed to fetch projects');
+      return response.json();
+    },
+  });
 
   const getLanguageColor = (language: string) => {
     const colors: Record<string, string> = {
@@ -148,26 +78,7 @@ export default function Explore() {
     return colors[language] || 'bg-gray-500';
   };
 
-  const filteredRepls = publicRepls.filter(repl => {
-    const matchesSearch = repl.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         repl.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         repl.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === 'all' || repl.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
 
-  const sortedRepls = [...filteredRepls].sort((a, b) => {
-    switch (sortBy) {
-      case 'trending':
-        return b.runs - a.runs;
-      case 'popular':
-        return b.stars - a.stars;
-      case 'recent':
-        return 0; // Would use actual date comparison
-      default:
-        return 0;
-    }
-  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -282,8 +193,13 @@ export default function Explore() {
         </div>
 
         {/* Repls Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedRepls.map((repl) => {
+        {isLoading ? (
+          <div className="col-span-full py-12">
+            <ECodeLoading />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {publicRepls.map((repl: any) => {
             const CategoryIcon = categories.find(c => c.id === repl.category)?.icon || Globe;
             return (
               <Card 
@@ -315,7 +231,7 @@ export default function Explore() {
                   
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1">
-                    {repl.tags.map((tag) => (
+                    {repl.tags.map((tag: string) => (
                       <Badge key={tag} variant="outline" className="text-xs">
                         #{tag}
                       </Badge>
@@ -356,8 +272,9 @@ export default function Explore() {
             );
           })}
         </div>
+        )}
 
-        {sortedRepls.length === 0 && (
+        {!isLoading && publicRepls.length === 0 && (
           <div className="text-center py-12">
             <Code2 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No repls found</h3>
