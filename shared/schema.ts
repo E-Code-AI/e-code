@@ -761,7 +761,7 @@ export type InsertCyclesTransaction = z.infer<typeof insertCyclesTransactionSche
 export type CyclesTransaction = typeof cyclesTransactions.$inferSelect;
 
 // Object storage table - for S3-like storage
-export const objectStorage = pgTable('object_storage', {
+export const objectStorage: any = pgTable('object_storage', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id),
   projectId: integer('project_id').references(() => projects.id),
@@ -774,7 +774,7 @@ export const objectStorage = pgTable('object_storage', {
   cdnUrl: varchar('cdn_url', { length: 1000 }),
   isPublic: boolean('is_public').default(false),
   metadata: jsonb('metadata'), // Additional file metadata
-  parentId: integer('parent_id').references(() => objectStorage.id),
+  parentId: integer('parent_id').references((): any => objectStorage.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 }, (table) => ({
