@@ -65,6 +65,7 @@ const Learn = lazy(() => import("@/pages/Learn"));
 const Support = lazy(() => import("@/pages/Support"));
 const Themes = lazy(() => import("@/pages/Themes"));
 const Referrals = lazy(() => import("@/pages/Referrals"));
+const Usage = lazy(() => import("@/pages/Usage"));
 const Subprocessors = lazy(() => import("@/pages/Subprocessors"));
 const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
 const Languages = lazy(() => import("@/pages/Languages"));
@@ -307,6 +308,11 @@ function AppContent() {
           <ProtectedRoute path="/deployments" component={() => (
             <ReplitLayout showSidebar={false}>
               <Deployments />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/usage" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Usage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/learn" component={() => (
