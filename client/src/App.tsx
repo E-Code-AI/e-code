@@ -157,7 +157,7 @@ function AppContent() {
           <Route path="/compare/heroku" component={HerokuComparison} />
           <Route path="/compare/codesandbox" component={CodeSandboxComparison} />
           <ProtectedRoute path="/dashboard" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Dashboard />
             </ReplitLayout>
           )} />
@@ -182,12 +182,12 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/home" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Home />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/projects" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <ProjectsPage />
             </ReplitLayout>
           )} />
@@ -282,37 +282,37 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/account" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Account />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/cycles" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Cycles />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/bounties" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Bounties />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/deployments" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Deployments />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/learn" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Learn />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/support" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Support />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/themes" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Themes />
             </ReplitLayout>
           )} />
