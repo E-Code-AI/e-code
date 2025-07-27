@@ -19,7 +19,7 @@ import { aiProviderManager, type ChatMessage } from "./ai/ai-provider";
 import { CodeAnalyzer } from "./ai/code-analyzer";
 import { createLogger } from "./utils/logger";
 import { setupTerminalWebsocket } from "./terminal";
-import { startProject, stopProject, getProjectStatus, attachToProjectLogs, checkRuntimeDependencies } from "./runtime";
+import { startProject, stopProject, getProjectStatus, getProjectLogs } from "./simple-executor";
 import { setupLogsWebsocket } from "./logs";
 import shellRoutes, { setupShellWebSocket } from "./routes/shell";
 import { notificationRoutes } from "./routes/notifications";
