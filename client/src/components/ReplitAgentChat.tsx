@@ -62,6 +62,8 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
   ]);
   const [activeConversation, setActiveConversation] = useState('1');
   const [selectedProvider, setSelectedProvider] = useState<string>('openai');
+  const [showCapabilities, setShowCapabilities] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -260,7 +262,22 @@ Would you like me to explain any part of the implementation or make adjustments?
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get AI response');
+        const errorData = await response.json().catch(() => ({ message: 'Failed to get AI response' }));
+        
+        // Check if it's an API key error
+        if (errorData.message?.includes('API key') || errorData.message?.includes('credentials')) {
+          const modelName = {
+            openai: 'OpenAI',
+            anthropic: 'Anthropic',
+            gemini: 'Google Gemini',
+            xai: 'xAI',
+            perplexity: 'Perplexity'
+          }[selectedProvider] || selectedProvider.toUpperCase();
+          
+          throw new Error(`${modelName} API key is missing. Please add it in the Secrets tab.`);
+        }
+        
+        throw new Error(errorData.message || 'Failed to get AI response');
       }
 
       const data = await response.json();
@@ -395,6 +412,15 @@ Please make sure you have configured your AI API key in the project settings. Yo
     setConversations(prev => [...prev, newConversation]);
     setActiveConversation(newId);
     setMessages([]);
+    setInput('');
+    setAttachments([]);
+    setBuildProgress(0);
+    setIsBuilding(false);
+    
+    toast({
+      title: "New conversation started",
+      description: "Ready to help with your next project!"
+    });
   };
 
   const rollbackToMessage = (messageId: string) => {
@@ -420,7 +446,7 @@ Please make sure you have configured your AI API key in the project settings. Yo
             <div>
               <h3 className="font-semibold text-sm">E-Code Agent</h3>
               <p className="text-xs text-muted-foreground">
-                {isBuilding ? 'Building your app...' : 'Ready to help'}
+                {isBuilding ? 'Building your app...' : isLoading ? 'Processing...' : 'Ready to help'}
               </p>
             </div>
           </div>
@@ -434,11 +460,35 @@ Please make sure you have configured your AI API key in the project settings. Yo
             >
               <span className="text-lg">+</span>
             </Button>
-            <Button variant="ghost" size="sm" className="h-8 px-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-2"
+              onClick={() => setShowCapabilities(!showCapabilities)}
+            >
               <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
+
+        {/* Conversation Selector */}
+        <Select value={activeConversation} onValueChange={setActiveConversation}>
+          <SelectTrigger className="h-8 text-xs mb-3">
+            <SelectValue placeholder="Select conversation" />
+          </SelectTrigger>
+          <SelectContent>
+            {conversations.map(conv => (
+              <SelectItem key={conv.id} value={conv.id}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium">{conv.title}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(conv.lastMessage).toLocaleDateString()}
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Mode Selector */}
         <Tabs value={activeMode} onValueChange={(value) => setActiveMode(value as any)}>
@@ -496,6 +546,35 @@ Please make sure you have configured your AI API key in the project settings. Yo
           </Select>
         </div>
       </div>
+
+      {/* Capabilities Panel */}
+      {showCapabilities && (
+        <div className="border-b bg-muted/50 p-4">
+          <h4 className="font-medium mb-3 text-sm">AI Agent Capabilities</h4>
+          <div className="grid grid-cols-2 gap-2">
+            {capabilities.map((capability) => (
+              <div
+                key={capability.id}
+                className={`flex items-center gap-2 p-2 rounded-lg border text-xs ${
+                  capability.enabled ? 'bg-green-500/10 border-green-500/20' : 'bg-muted border-border'
+                }`}
+              >
+                {capability.icon}
+                <span className="flex-1">{capability.name}</span>
+                {capability.enabled && <CheckCircle className="h-3 w-3 text-green-500" />}
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <div className={`flex items-center gap-2 text-xs ${isConnected ? 'text-green-500' : 'text-red-500'}`}>
+              <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+              {isConnected ? 'Connected' : 'Disconnected'}
+            </div>
+            <span className="text-xs text-muted-foreground">•</span>
+            <span className="text-xs text-muted-foreground">Model: {selectedProvider.toUpperCase()}</span>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
