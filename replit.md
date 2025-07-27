@@ -47,6 +47,14 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-27: **About Page Team Section Updated**:
+  * Updated leadership team on About page with new names and titles:
+    - CEO: Simon Benarrous (replacing Amjad Masad)
+    - CTO: Avraham Ezra (replacing Faris Masad)
+    - VP of Engineering: Yehzkiel Aboujdid (replacing Sarah Chen)
+    - VP of Product: Avraham Frenkel (replacing Marcus Johnson)
+    - VP of Design: Sabriim Atoudi (replacing Emily Rodriguez)
+    - VP of Growth: Moise Kim (replacing David Kim)
 - 2025-07-27: **Mobile AI Agent Fixed & Made Primary**:
   * **Fixed AI Agent Functionality**: Connected ReplitAgentChat to actual backend API instead of simulated responses
   * **Mobile Layout Fixes**: 
