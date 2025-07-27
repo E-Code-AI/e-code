@@ -23,7 +23,7 @@ While traditional AI coding tools help with snippets and suggestions, our AI Age
 - **Install dependencies** without being asked
 - **Debug and iterate** on its own code
 
-Just tell it what you want to build in plain English, and watch as a fully functional application materializes before your eyes.
+Just tell it what you want to build in any language, and watch as a fully functional application materializes before your eyes.
 
 ## 🚀 What Can It Build?
 

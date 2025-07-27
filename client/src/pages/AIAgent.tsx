@@ -30,7 +30,7 @@ export default function AIAgent() {
   const capabilities = [
     {
       title: 'Natural Language Understanding',
-      description: 'Just tell it what you want in plain English',
+      description: 'Just tell it what you want in any language',
       examples: [
         '"Build a todo app with dark mode"',
         '"Create a portfolio website with animations"',
@@ -163,7 +163,7 @@ export default function AIAgent() {
               </div>
               <h3 className="text-xl font-semibold">1. Describe Your Idea</h3>
               <p className="text-muted-foreground">
-                Type what you want in any language. "Build me a recipe app with search and favorites"
+                Describe what you want in any language. "Build me a recipe app with search and favorites"
               </p>
             </div>
 

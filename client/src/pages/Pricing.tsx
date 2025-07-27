@@ -42,7 +42,7 @@ export default function Pricing() {
       monthlyPrice: 0,
       yearlyPrice: 0,
       features: [
-        { text: 'AI Agent - 10 apps per month', included: true, tooltip: 'Build complete apps by describing them in plain English' },
+        { text: 'AI Agent - 10 apps per month', included: true, tooltip: 'Build complete apps by describing them in any language' },
         { text: 'Unlimited projects to share with friends', included: true },
         { text: '3 private projects for personal work', included: true },
         { text: 'Basic AI code suggestions', included: true },

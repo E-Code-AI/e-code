@@ -259,7 +259,7 @@ export default function Landing() {
               <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent"> AI developer</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Just describe your app idea in plain English. Our AI agent builds complete, working applications 
+              Just describe your app idea in any language. Our AI agent builds complete, working applications 
               from scratch - handling all the files, code, and setup automatically.
             </p>
           </div>
