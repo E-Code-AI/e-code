@@ -208,7 +208,7 @@ export function ReplitMonacoEditor({
       unfoldOnClickAfterEndOfLine: false,
       renderLineHighlight: "all",
       selectionHighlight: true,
-      occurrencesHighlight: true,
+      occurrencesHighlight: "singleFile",
       formatOnType: true,
       formatOnPaste: true,
       suggest: {
@@ -226,8 +226,6 @@ export function ReplitMonacoEditor({
         showConstants: true,
         showEnums: true,
         showEnumMembers: true,
-        showKeywords: true,
-        showText: true,
         showColors: true,
         showFiles: true,
         showReferences: true,
