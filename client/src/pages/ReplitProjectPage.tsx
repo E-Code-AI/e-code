@@ -6,6 +6,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 // Components
 import FileExplorer from '@/components/FileExplorer';
@@ -26,7 +27,13 @@ import {
   Users,
   MessageSquare,
   ChevronLeft,
-  Settings
+  Settings,
+  Key,
+  Database,
+  UserCheck,
+  Plus,
+  FileCode,
+  X
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -36,11 +43,18 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 
+// Import components for mobile tabs
+import { ReplitSecrets } from '@/components/ReplitSecrets';
+import { ReplitDatabase } from '@/components/ReplitDatabase';
+
+type MobileTab = 'files' | 'secrets' | 'database' | 'auth' | 'agent';
+
 const ReplitProjectPage = () => {
   const [, params] = useRoute('/project/:id');
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const projectId = params?.id ? parseInt(params.id) : 0;
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
@@ -49,6 +63,7 @@ const ReplitProjectPage = () => {
   const [executionId, setExecutionId] = useState<string | undefined>();
   const [showAIChat, setShowAIChat] = useState(false);
   const [showTerminal, setShowTerminal] = useState(true);
+  const [mobileTab, setMobileTab] = useState<MobileTab>('files');
 
   // Query for project details
   const { 
@@ -69,6 +84,92 @@ const ReplitProjectPage = () => {
     queryKey: ['/api/projects', projectId, 'files'],
     enabled: !!projectId,
   });
+
+  // Mobile bottom navigation matching Replit's design
+  const MobileBottomNav = () => (
+    <div className="fixed bottom-0 left-0 right-0 bg-background border-t h-16 z-50 md:hidden">
+      <div className="flex h-full">
+        <button
+          onClick={() => setMobileTab('secrets')}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-1 transition-colors",
+            mobileTab === 'secrets' 
+              ? 'text-foreground bg-muted/50' 
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <div className={cn(
+            "p-2 rounded-lg transition-colors",
+            mobileTab === 'secrets' ? 'bg-muted' : ''
+          )}>
+            <Key className="h-5 w-5" />
+          </div>
+          <span className="text-xs font-medium">Secrets</span>
+        </button>
+
+        <button
+          onClick={() => setMobileTab('database')}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-1 transition-colors",
+            mobileTab === 'database' 
+              ? 'text-foreground bg-muted/50' 
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <div className={cn(
+            "p-2 rounded-lg transition-colors",
+            mobileTab === 'database' ? 'bg-muted' : ''
+          )}>
+            <Database className="h-5 w-5" />
+          </div>
+          <span className="text-xs font-medium">Database</span>
+        </button>
+
+        <button
+          onClick={() => setMobileTab('auth')}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-1 transition-colors",
+            mobileTab === 'auth' 
+              ? 'text-foreground bg-muted/50' 
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <div className={cn(
+            "p-2 rounded-lg transition-colors",
+            mobileTab === 'auth' ? 'bg-muted' : ''
+          )}>
+            <UserCheck className="h-5 w-5" />
+          </div>
+          <span className="text-xs font-medium">Auth</span>
+        </button>
+
+        <button
+          onClick={() => {
+            // Create new tab logic
+            setMobileTab('agent');
+            toast({
+              title: "New Tab",
+              description: "Opening AI Agent chat",
+            });
+          }}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-1 transition-colors",
+            mobileTab === 'agent' 
+              ? 'text-foreground bg-muted/50' 
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <div className={cn(
+            "p-2 rounded-lg transition-colors",
+            mobileTab === 'agent' ? 'bg-muted' : ''
+          )}>
+            <Plus className="h-5 w-5" />
+          </div>
+          <span className="text-xs font-medium">New Tab</span>
+        </button>
+      </div>
+    </div>
+  );
 
   // Mutation for saving file
   const saveFileMutation = useMutation({
@@ -172,6 +273,95 @@ const ReplitProjectPage = () => {
     );
   }
 
+  if (isMobile) {
+    // Mobile layout matching Replit's exact design
+    return (
+      <div className="h-screen flex flex-col bg-background">
+        {/* Mobile header */}
+        <div className="border-b h-14 flex items-center px-4 gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => navigate('/projects')}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          
+          <div className="flex-1 flex items-center justify-center">
+            <span className="font-medium">{project?.name || 'ReplitClone'}</span>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => {
+              // Settings or more options
+            }}
+          >
+            <MoreHorizontal className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Mobile content area */}
+        <div className="flex-1 overflow-hidden">
+          {mobileTab === 'secrets' && (
+            <ReplitSecrets projectId={projectId} />
+          )}
+          
+          {mobileTab === 'database' && (
+            <ReplitDatabase projectId={projectId} />
+          )}
+          
+          {mobileTab === 'auth' && (
+            <div className="h-full flex items-center justify-center p-4">
+              <div className="text-center">
+                <UserCheck className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-2">Authentication</h3>
+                <p className="text-sm text-muted-foreground">
+                  Manage authentication settings for your app
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {mobileTab === 'agent' && (
+            <div className="h-full">
+              <ReplitAgentChat projectId={projectId || 0} />
+            </div>
+          )}
+
+          {mobileTab === 'files' && (
+            <div className="h-full flex flex-col">
+              <div className="flex-1 overflow-auto">
+                {selectedFile ? (
+                  <CodeEditor
+                    file={{
+                      ...selectedFile,
+                      content: unsavedChanges[selectedFile.id] || selectedFile.content || ''
+                    }}
+                    onChange={(content) => handleFileContentChange(selectedFile.id, content)}
+                  />
+                ) : (
+                  <FileExplorer
+                    files={files || []}
+                    selectedFile={selectedFile || undefined}
+                    onFileSelect={handleFileSelect}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile bottom navigation */}
+        <MobileBottomNav />
+      </div>
+    );
+  }
+
+  // Desktop layout
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
