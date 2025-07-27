@@ -1,0 +1,49 @@
+/* Collaboration cursor styles */
+.yjs-cursor-head::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: currentColor;
+  animation: cursor-blink 1s infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  50.1%, 100% { opacity: 0; }
+}
+
+/* Collaboration selection styles */
+.yjs-selection {
+  background-color: rgba(100, 100, 250, 0.1);
+}
+
+.yjs-selection-inline {
+  background-color: rgba(100, 100, 250, 0.2);
+}
+
+/* User-specific cursor colors */
+.yjs-cursor-1 { color: #FF6B6B; }
+.yjs-cursor-2 { color: #4ECDC4; }
+.yjs-cursor-3 { color: #45B7D1; }
+.yjs-cursor-4 { color: #F9CA24; }
+.yjs-cursor-5 { color: #6C5CE7; }
+.yjs-cursor-6 { color: #A29BFE; }
+.yjs-cursor-7 { color: #FD79A8; }
+.yjs-cursor-8 { color: #FDCB6E; }
+.yjs-cursor-9 { color: #00B894; }
+.yjs-cursor-10 { color: #E17055; }
+
+/* User-specific selection colors */
+.yjs-selection-1 { background-color: rgba(255, 107, 107, 0.2); }
+.yjs-selection-2 { background-color: rgba(78, 205, 196, 0.2); }
+.yjs-selection-3 { background-color: rgba(69, 183, 209, 0.2); }
+.yjs-selection-4 { background-color: rgba(249, 202, 36, 0.2); }
+.yjs-selection-5 { background-color: rgba(108, 92, 231, 0.2); }
+.yjs-selection-6 { background-color: rgba(162, 155, 254, 0.2); }
+.yjs-selection-7 { background-color: rgba(253, 121, 168, 0.2); }
+.yjs-selection-8 { background-color: rgba(253, 203, 110, 0.2); }
+.yjs-selection-9 { background-color: rgba(0, 184, 148, 0.2); }
+.yjs-selection-10 { background-color: rgba(225, 112, 85, 0.2); }

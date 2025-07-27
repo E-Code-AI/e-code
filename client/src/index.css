@@ -1,5 +1,6 @@
 /* Import Replit theme */
 @import './styles/replit-theme.css';
+@import './styles/collaboration.css';
 
 @tailwind base;
 @tailwind components;
