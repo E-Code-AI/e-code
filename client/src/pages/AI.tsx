@@ -15,7 +15,7 @@ export default function AI() {
     {
       icon: MessageSquare,
       title: 'Natural Language to Code',
-      description: 'Describe what you want in plain English and watch it transform into code',
+      description: 'Describe what you want in any language and watch it transform into code',
     },
     {
       icon: FileCode,

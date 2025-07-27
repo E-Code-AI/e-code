@@ -30,7 +30,7 @@ export default function Features() {
     {
       icon: <Zap className="h-6 w-6" />,
       title: 'AI Agent - Your Personal Developer',
-      description: 'Build complete apps just by describing what you want in plain English',
+      description: 'Build complete apps just by describing what you want in any language',
       details: [
         'Build entire apps from scratch automatically',
         'No coding knowledge required at all',
