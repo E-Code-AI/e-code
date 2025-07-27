@@ -61,7 +61,7 @@ const ReplitProjectPage = () => {
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, string>>({});
   const [projectRunning, setProjectRunning] = useState(false);
   const [executionId, setExecutionId] = useState<string | undefined>();
-  const [showAIChat, setShowAIChat] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(true); // Show AI chat by default
   const [showTerminal, setShowTerminal] = useState(true);
   const [mobileTab, setMobileTab] = useState<MobileTab>('files');
 

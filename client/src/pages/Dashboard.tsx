@@ -91,7 +91,7 @@ export default function Dashboard() {
     e.preventDefault();
     if (aiPrompt.trim()) {
       // Navigate to AI agent chat with the prompt
-      navigate(`/ai-agent?prompt=${encodeURIComponent(aiPrompt)}`);
+      navigate(`/agent?prompt=${encodeURIComponent(aiPrompt)}`);
     }
   };
 
@@ -102,7 +102,7 @@ export default function Dashboard() {
       'Personal blog': 'Create a personal blog website with posts, categories, and comments',
       'Statistics': 'Build a statistics dashboard with charts and data visualization',
     };
-    navigate(`/ai-agent?prompt=${encodeURIComponent(prompts[action.label])}`);
+    navigate(`/agent?prompt=${encodeURIComponent(prompts[action.label])}`);
   };
 
   if (isLoading) {
@@ -118,9 +118,9 @@ export default function Dashboard() {
             Hi {user?.displayName || user?.username}, what do you want to make?
           </h1>
           
-          {/* AI prompt input */}
+          {/* AI prompt input - Enhanced to match Replit exactly */}
           <form onSubmit={handleCreateProject} className="mb-6">
-            <div className="relative">
+            <div className="relative max-w-2xl mx-auto">
               <Input
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
