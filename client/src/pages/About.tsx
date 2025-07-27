@@ -47,12 +47,12 @@ export default function About() {
   ];
 
   const team = [
-    { name: 'Amjad Masad', role: 'CEO & Co-founder', avatar: 'AM' },
-    { name: 'Faris Masad', role: 'CTO & Co-founder', avatar: 'FM' },
-    { name: 'Sarah Chen', role: 'VP of Engineering', avatar: 'SC' },
-    { name: 'Marcus Johnson', role: 'VP of Product', avatar: 'MJ' },
-    { name: 'Emily Rodriguez', role: 'VP of Design', avatar: 'ER' },
-    { name: 'David Kim', role: 'VP of Growth', avatar: 'DK' }
+    { name: 'Simon Benarrous', role: 'CEO', avatar: 'SB' },
+    { name: 'Avraham Ezra', role: 'CTO', avatar: 'AE' },
+    { name: 'Yehzkiel Aboujdid', role: 'VP of Engineering', avatar: 'YA' },
+    { name: 'Avraham Frenkel', role: 'VP of Product', avatar: 'AF' },
+    { name: 'Sabriim Atoudi', role: 'VP of Design', avatar: 'SA' },
+    { name: 'Moise Kim', role: 'VP of Growth', avatar: 'MK' }
   ];
 
   return (
