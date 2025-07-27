@@ -111,10 +111,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[var(--ecode-background)]">
-      <div className="max-w-3xl mx-auto px-6 py-12">
+      <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Main greeting and AI prompt */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-normal text-[var(--ecode-text)] mb-8">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-normal text-[var(--ecode-text)] mb-6">
             Hi {user?.displayName || user?.username}, what do you want to make?
           </h1>
           
@@ -221,7 +221,7 @@ export default function Dashboard() {
               {recentProjects.slice(0, 6).map((project) => (
                 <Card
                   key={project.id}
-                  className="group bg-white dark:bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-md transition-all cursor-pointer rounded-lg overflow-hidden"
+                  className="group bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-md hover:-translate-y-1 transition-all duration-150 cursor-pointer rounded-lg overflow-hidden"
                   onClick={() => navigate(`/project/${project.id}`)}
                 >
                   <div className="p-5">

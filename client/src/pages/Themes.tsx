@@ -145,13 +145,13 @@ export default function Themes() {
   };
 
   return (
-    <div className="container mx-auto max-w-6xl py-8 px-4">
+    <div className="container mx-auto max-w-6xl py-8 px-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Palette className="h-8 w-8 text-primary" />
+        <h1 className="text-3xl font-semibold flex items-center gap-3 text-[var(--ecode-text)]">
+          <Palette className="h-8 w-8 text-purple-500" />
           Themes
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-[var(--ecode-text-secondary)] mt-2 text-base">
           Customize your coding environment with beautiful themes
         </p>
       </div>

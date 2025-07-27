@@ -169,13 +169,13 @@ export default function Bounties() {
   };
 
   return (
-    <div className="container-responsive py-responsive mb-16 md:mb-0">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-responsive-xl font-bold flex items-center gap-2">
-          <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600 dark:text-yellow-400" />
+    <div className="container mx-auto max-w-6xl py-8 px-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-semibold flex items-center gap-3 text-[var(--ecode-text)]">
+          <Trophy className="h-8 w-8 text-yellow-500" />
           Bounties
         </h1>
-        <p className="text-muted-foreground mt-1 sm:mt-2 text-responsive-sm">
+        <p className="text-[var(--ecode-text-secondary)] mt-2 text-base">
           Solve problems, build projects, and earn rewards
         </p>
       </div>
