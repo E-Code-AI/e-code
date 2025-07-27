@@ -34,7 +34,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
   const [newEntry, setNewEntry] = useState({
     key: '',
     value: '',
-    type: 'string' as const
+    type: 'string' as 'string' | 'number' | 'boolean' | 'object' | 'array'
   });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -76,7 +76,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
     }
 
     try {
-      let parsedValue = newEntry.value;
+      let parsedValue: any = newEntry.value;
       
       // Parse value based on type
       switch (newEntry.type) {
@@ -279,7 +279,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
                     <select
                       id="type"
                       value={newEntry.type}
-                      onChange={(e) => setNewEntry(prev => ({ ...prev, type: e.target.value as any }))}
+                      onChange={(e) => setNewEntry(prev => ({ ...prev, type: e.target.value as 'string' | 'number' | 'boolean' | 'object' | 'array' }))}
                       className="w-full p-2 border rounded-md"
                     >
                       <option value="string">String</option>
@@ -476,7 +476,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
               <div># Read a value</div>
               <div>value = db.get('user_settings')</div>
               <div className="mt-2"># Set a value</div>
-              <div>db.set('user_settings', {'theme': 'dark'})</div>
+              <div>{`db.set('user_settings', {'theme': 'dark'})`}</div>
               <div className="mt-2"># Delete a value</div>
               <div>db.delete('user_settings')</div>
             </div>
