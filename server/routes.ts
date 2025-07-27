@@ -633,6 +633,103 @@ API will be available at http://localhost:3000
     }
   });
 
+  // Fork/Remix Routes
+  app.post('/api/projects/:id/fork', ensureAuthenticated, async (req, res) => {
+    try {
+      const sourceProjectId = parseInt(req.params.id);
+      const { name } = req.body;
+      const userId = req.user!.id;
+      
+      if (!name) {
+        return res.status(400).json({ error: 'Project name is required' });
+      }
+      
+      // Fork the project
+      const forkedProject = await storage.forkProject(sourceProjectId, userId, name);
+      
+      res.json(forkedProject);
+    } catch (error) {
+      console.error('Error forking project:', error);
+      res.status(500).json({ error: 'Failed to fork project' });
+    }
+  });
+
+  // Like/Unlike Routes
+  app.post('/api/projects/:id/like', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      await storage.likeProject(projectId, userId);
+      const likes = await storage.getProjectLikes(projectId);
+      
+      res.json({ liked: true, likes });
+    } catch (error) {
+      console.error('Error liking project:', error);
+      res.status(500).json({ error: 'Failed to like project' });
+    }
+  });
+
+  app.delete('/api/projects/:id/like', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      await storage.unlikeProject(projectId, userId);
+      const likes = await storage.getProjectLikes(projectId);
+      
+      res.json({ liked: false, likes });
+    } catch (error) {
+      console.error('Error unliking project:', error);
+      res.status(500).json({ error: 'Failed to unlike project' });
+    }
+  });
+
+  app.get('/api/projects/:id/like-status', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      const liked = await storage.isProjectLiked(projectId, userId);
+      const likes = await storage.getProjectLikes(projectId);
+      
+      res.json({ liked, likes });
+    } catch (error) {
+      console.error('Error getting like status:', error);
+      res.status(500).json({ error: 'Failed to get like status' });
+    }
+  });
+
+  // Project Statistics Routes
+  app.post('/api/projects/:id/view', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const userId = req.user?.id;
+      const ipAddress = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress;
+      
+      await storage.trackProjectView(projectId, userId, ipAddress);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error tracking project view:', error);
+      res.status(500).json({ error: 'Failed to track view' });
+    }
+  });
+
+  app.get('/api/projects/:id/activity', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const activities = await storage.getProjectActivity(projectId, limit);
+      
+      res.json(activities);
+    } catch (error) {
+      console.error('Error getting project activity:', error);
+      res.status(500).json({ error: 'Failed to get project activity' });
+    }
+  });
+
   // API Routes for Project Status and Runtime
   app.get('/api/projects/:id/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
