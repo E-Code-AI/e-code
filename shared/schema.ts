@@ -841,3 +841,35 @@ export const insertUserExtensionSchema = createInsertSchema(userExtensions).omit
 
 export type InsertUserExtension = z.infer<typeof insertUserExtensionSchema>;
 export type UserExtension = typeof userExtensions.$inferSelect;
+
+// Code snippet sharing
+export const codeSnippets = pgTable("code_snippets", {
+  id: serial("id").primaryKey(),
+  shareId: varchar("share_id", { length: 32 }).notNull().unique(),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  filePath: varchar("file_path", { length: 512 }).notNull(),
+  lineStart: integer("line_start").notNull(),
+  lineEnd: integer("line_end").notNull(),
+  code: text("code").notNull(),
+  language: varchar("language", { length: 50 }).notNull(),
+  title: varchar("title", { length: 255 }),
+  description: text("description"),
+  views: integer("views").notNull().default(0),
+  isPublic: boolean("is_public").notNull().default(true),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCodeSnippetSchema = createInsertSchema(codeSnippets).omit({
+  id: true,
+  shareId: true,
+  views: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CodeSnippet = typeof codeSnippets.$inferSelect;
+export type InsertCodeSnippet = z.infer<typeof insertCodeSnippetSchema>;

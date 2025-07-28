@@ -26,10 +26,11 @@ import {
   ObjectStorage, InsertObjectStorage,
   Extension, InsertExtension,
   UserExtension, InsertUserExtension,
+  CodeSnippet, InsertCodeSnippet,
   projectLikes, projectViews, activityLog,
   insertProjectLikeSchema, insertProjectViewSchema, insertActivityLogSchema,
   projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts, secrets, notifications, notificationPreferences,
-  templates, communityPosts, communityChallenges, themes, announcements, learningCourses, userLearningProgress, userCycles, cyclesTransactions, objectStorage, extensions, userExtensions
+  templates, communityPosts, communityChallenges, themes, announcements, learningCourses, userLearningProgress, userCycles, cyclesTransactions, objectStorage, extensions, userExtensions, codeSnippets
 } from "@shared/schema";
 import {
   Team, InsertTeam,
@@ -288,6 +289,15 @@ export interface IStorage {
   // Team activity methods
   logTeamActivity(activity: InsertTeamActivity): Promise<void>;
   getTeamActivity(teamId: number, limit?: number): Promise<TeamActivity[]>;
+  
+  // Code snippet sharing methods
+  createCodeSnippet(snippet: InsertCodeSnippet): Promise<CodeSnippet>;
+  getCodeSnippet(id: number): Promise<CodeSnippet | undefined>;
+  getCodeSnippetByShareId(shareId: string): Promise<CodeSnippet | undefined>;
+  getUserCodeSnippets(userId: number): Promise<CodeSnippet[]>;
+  getProjectCodeSnippets(projectId: number): Promise<CodeSnippet[]>;
+  incrementCodeSnippetViews(shareId: string): Promise<void>;
+  deleteCodeSnippet(id: number): Promise<void>;
 }
 
 // Database storage implementation
@@ -1764,6 +1774,54 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(teamActivity.createdAt))
       .limit(limit);
   }
+  
+  // Code snippet sharing methods
+  async createCodeSnippet(snippet: InsertCodeSnippet): Promise<CodeSnippet> {
+    const shareId = crypto.randomBytes(16).toString('hex');
+    const [newSnippet] = await db.insert(codeSnippets)
+      .values({ ...snippet, shareId })
+      .returning();
+    return newSnippet;
+  }
+  
+  async getCodeSnippet(id: number): Promise<CodeSnippet | undefined> {
+    const [snippet] = await db.select()
+      .from(codeSnippets)
+      .where(eq(codeSnippets.id, id));
+    return snippet;
+  }
+  
+  async getCodeSnippetByShareId(shareId: string): Promise<CodeSnippet | undefined> {
+    const [snippet] = await db.select()
+      .from(codeSnippets)
+      .where(eq(codeSnippets.shareId, shareId));
+    return snippet;
+  }
+  
+  async getUserCodeSnippets(userId: number): Promise<CodeSnippet[]> {
+    return await db.select()
+      .from(codeSnippets)
+      .where(eq(codeSnippets.userId, userId))
+      .orderBy(desc(codeSnippets.createdAt));
+  }
+  
+  async getProjectCodeSnippets(projectId: number): Promise<CodeSnippet[]> {
+    return await db.select()
+      .from(codeSnippets)
+      .where(eq(codeSnippets.projectId, projectId))
+      .orderBy(desc(codeSnippets.createdAt));
+  }
+  
+  async incrementCodeSnippetViews(shareId: string): Promise<void> {
+    await db.update(codeSnippets)
+      .set({ views: sql`${codeSnippets.views} + 1` })
+      .where(eq(codeSnippets.shareId, shareId));
+  }
+  
+  async deleteCodeSnippet(id: number): Promise<void> {
+    await db.delete(codeSnippets)
+      .where(eq(codeSnippets.id, id));
+  }
 
   // Community post methods
   async getAllCommunityPosts(category?: string, search?: string): Promise<CommunityPost[]> {
@@ -3072,6 +3130,70 @@ export class MemStorage implements IStorage {
       post.views++;
       this.blogPosts.set(post.id, post);
     }
+  }
+  
+  // Code snippet sharing methods
+  private codeSnippets: Map<number, CodeSnippet> = new Map();
+  private codeSnippetIdCounter = 1;
+  
+  async createCodeSnippet(snippet: InsertCodeSnippet): Promise<CodeSnippet> {
+    const now = new Date();
+    const shareId = crypto.randomBytes(16).toString('hex');
+    
+    const newSnippet: CodeSnippet = {
+      id: this.codeSnippetIdCounter++,
+      shareId,
+      projectId: snippet.projectId,
+      userId: snippet.userId,
+      fileName: snippet.fileName,
+      filePath: snippet.filePath,
+      lineStart: snippet.lineStart,
+      lineEnd: snippet.lineEnd,
+      code: snippet.code,
+      language: snippet.language,
+      title: snippet.title ?? null,
+      description: snippet.description ?? null,
+      views: 0,
+      isPublic: snippet.isPublic ?? true,
+      expiresAt: snippet.expiresAt ?? null,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.codeSnippets.set(newSnippet.id, newSnippet);
+    return newSnippet;
+  }
+  
+  async getCodeSnippet(id: number): Promise<CodeSnippet | undefined> {
+    return this.codeSnippets.get(id);
+  }
+  
+  async getCodeSnippetByShareId(shareId: string): Promise<CodeSnippet | undefined> {
+    return Array.from(this.codeSnippets.values()).find(s => s.shareId === shareId);
+  }
+  
+  async getUserCodeSnippets(userId: number): Promise<CodeSnippet[]> {
+    return Array.from(this.codeSnippets.values())
+      .filter(snippet => snippet.userId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async getProjectCodeSnippets(projectId: number): Promise<CodeSnippet[]> {
+    return Array.from(this.codeSnippets.values())
+      .filter(snippet => snippet.projectId === projectId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async incrementCodeSnippetViews(shareId: string): Promise<void> {
+    const snippet = Array.from(this.codeSnippets.values()).find(s => s.shareId === shareId);
+    if (snippet) {
+      snippet.views++;
+      this.codeSnippets.set(snippet.id, snippet);
+    }
+  }
+  
+  async deleteCodeSnippet(id: number): Promise<void> {
+    this.codeSnippets.delete(id);
   }
 }
 

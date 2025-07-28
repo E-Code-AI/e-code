@@ -91,6 +91,8 @@ const CodeSandboxComparison = lazy(() => import("@/pages/compare/CodeSandbox"));
 const DPA = lazy(() => import("@/pages/DPA"));
 const CommercialAgreement = lazy(() => import("@/pages/CommercialAgreement"));
 const ReportAbuse = lazy(() => import("@/pages/ReportAbuse"));
+// Shared snippet page
+const SharedSnippet = lazy(() => import("@/pages/SharedSnippet"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -156,6 +158,8 @@ function AppContent() {
           <Route path="/git" component={Git} />
           {/* Newsletter pages */}
           <Route path="/newsletter-confirmed" component={NewsletterConfirmed} />
+          {/* Shared snippet page */}
+          <Route path="/share/:shareId" component={SharedSnippet} />
           {/* Comparison pages */}
           <Route path="/compare/aws-cloud9" component={AWSCloud9Comparison} />
           <Route path="/compare/github-codespaces" component={GitHubCodespacesComparison} />
