@@ -24,6 +24,7 @@ export default function Landing() {
   const [email, setEmail] = useState('');
   const [chatOpen, setChatOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [appDescription, setAppDescription] = useState('');
 
   const features = [
     {
@@ -79,9 +80,7 @@ export default function Landing() {
     }
   ];
 
-  const handleGetStarted = () => {
-    setChatOpen(true);
-  };
+
 
   const handleStartBuilding = (description: string) => {
     console.log('Starting to build:', description);
@@ -175,18 +174,28 @@ export default function Landing() {
                       <input
                         type="text"
                         placeholder="Describe your app idea in any language... (e.g., 'Build a recipe finder app with AI suggestions')"
-                        className="w-full bg-transparent border-none outline-none text-xl placeholder:text-muted-foreground/70 focus:ring-0 font-medium cursor-pointer"
-                        onClick={() => setChatOpen(true)}
-                        readOnly
+                        className="w-full bg-transparent border-none outline-none text-xl placeholder:text-muted-foreground/70 focus:ring-0 font-medium"
+                        value={appDescription}
+                        onChange={(e) => setAppDescription(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && appDescription.trim()) {
+                            handleStartBuilding(appDescription);
+                          }
+                        }}
                       />
                     </div>
                     <Button 
                       size="lg" 
                       className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all text-lg px-6"
-                      onClick={() => setChatOpen(true)}
+                      onClick={() => {
+                        if (appDescription.trim()) {
+                          handleStartBuilding(appDescription);
+                        }
+                      }}
+                      disabled={!appDescription.trim()}
                     >
                       <Zap className="h-5 w-5 mr-2" />
-                      Launch AI
+                      Start Building
                     </Button>
                   </div>
                   <div className="flex items-center gap-6 mt-4 ml-16 text-sm text-muted-foreground">
@@ -215,7 +224,17 @@ export default function Landing() {
             />
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full sm:w-auto px-4 sm:px-0 mt-6">
-              <Button size="lg" onClick={handleGetStarted} className="gap-2 w-full sm:w-auto">
+              <Button 
+                size="lg" 
+                onClick={() => {
+                  // Focus on the AI input field
+                  const aiInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+                  if (aiInput) {
+                    aiInput.focus();
+                  }
+                }} 
+                className="gap-2 w-full sm:w-auto"
+              >
                 Start your journey free
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -314,7 +333,20 @@ export default function Landing() {
               </div>
               
               <div className="flex gap-4">
-                <Button size="lg" onClick={handleGetStarted} className="gap-2">
+                <Button 
+                  size="lg" 
+                  onClick={() => {
+                    // Scroll to top and focus on the AI input field
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setTimeout(() => {
+                      const aiInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+                      if (aiInput) {
+                        aiInput.focus();
+                      }
+                    }, 500);
+                  }} 
+                  className="gap-2"
+                >
                   Start Building
                   <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -657,7 +689,20 @@ export default function Landing() {
           </div>
           
           <div className="mt-8 text-center">
-            <Button size="lg" onClick={handleGetStarted} variant="outline">
+            <Button 
+              size="lg" 
+              onClick={() => {
+                // Scroll to top and focus on the AI input field
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => {
+                  const aiInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+                  if (aiInput) {
+                    aiInput.focus();
+                  }
+                }, 500);
+              }} 
+              variant="outline"
+            >
               Start building with AI
             </Button>
           </div>
