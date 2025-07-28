@@ -80,7 +80,11 @@ export default function Landing() {
   ];
 
   const handleGetStarted = () => {
-    setChatOpen(true);
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      setChatOpen(true);
+    }
   };
 
   const handleStartBuilding = (description: string) => {
@@ -171,14 +175,26 @@ export default function Landing() {
                         type="text"
                         placeholder="Describe your app idea in any language... (e.g., 'Build a recipe finder app with AI suggestions')"
                         className="w-full bg-transparent border-none outline-none text-xl placeholder:text-muted-foreground/70 focus:ring-0 font-medium cursor-pointer"
-                        onClick={() => setChatOpen(true)}
+                        onClick={() => {
+                          if (user) {
+                            navigate('/dashboard');
+                          } else {
+                            setChatOpen(true);
+                          }
+                        }}
                         readOnly
                       />
                     </div>
                     <Button 
                       size="lg" 
                       className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all text-lg px-6"
-                      onClick={() => setChatOpen(true)}
+                      onClick={() => {
+                        if (user) {
+                          navigate('/dashboard');
+                        } else {
+                          setChatOpen(true);
+                        }
+                      }}
                     >
                       <Zap className="h-5 w-5 mr-2" />
                       Launch AI
