@@ -50,11 +50,13 @@ export default function ReplitAIAgentPage() {
   // Get prompt from URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const urlPrompt = urlParams.get('prompt');
+    const urlPrompt = urlParams.get('prompt') || urlParams.get('build');
     if (urlPrompt) {
-      setPrompt(urlPrompt);
+      setPrompt(decodeURIComponent(urlPrompt));
       // Auto-submit if prompt is provided
-      handleSubmit();
+      setTimeout(() => {
+        handleSubmit();
+      }, 100);
     }
   }, []);
 

@@ -21,7 +21,19 @@ export default function Login() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      // Check if there's a pending app description
+      const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
+      const urlParams = new URLSearchParams(window.location.search);
+      const shouldRedirectToAgent = urlParams.get('build') === 'true';
+      
+      if (shouldRedirectToAgent && pendingAppDescription) {
+        // Clear the stored description
+        sessionStorage.removeItem('pendingAppDescription');
+        // Navigate to agent with the app description
+        navigate('/agent?build=' + encodeURIComponent(pendingAppDescription));
+      } else {
+        navigate('/dashboard');
+      }
     }
   }, [user, navigate]);
 

@@ -60,9 +60,21 @@ export default function Register() {
           description: data.message || 'Registration successful! Please check your email to verify your account.',
         });
         
-        // Redirect to login page after successful registration
+        // Check if there's a pending app description
+        const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
+        const urlParams = new URLSearchParams(window.location.search);
+        const shouldRedirectToAgent = urlParams.get('build') === 'true';
+        
+        // Redirect based on context
         setTimeout(() => {
-          navigate('/login');
+          if (shouldRedirectToAgent && pendingAppDescription) {
+            // Clear the stored description
+            sessionStorage.removeItem('pendingAppDescription');
+            // Navigate to agent with the app description
+            navigate('/agent?build=' + encodeURIComponent(pendingAppDescription));
+          } else {
+            navigate('/login');
+          }
         }, 2000);
       } else {
         const error = await response.json();
