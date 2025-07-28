@@ -467,7 +467,9 @@ API will be available at http://localhost:3000
 
   app.post('/api/projects', ensureAuthenticated, async (req, res) => {
     try {
-      const result = insertProjectSchema.safeParse(req.body);
+      // Create a schema that excludes ownerId for validation
+      const projectValidationSchema = insertProjectSchema.omit({ ownerId: true });
+      const result = projectValidationSchema.safeParse(req.body);
       
       if (!result.success) {
         return res.status(400).json({ error: result.error.errors });
