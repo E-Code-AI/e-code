@@ -82,18 +82,39 @@ export default function Landing() {
 
 
 
-  const handleStartBuilding = (description: string) => {
+  const handleStartBuilding = async (description: string) => {
     console.log('Starting to build:', description);
     // Store the app description to persist across authentication
     sessionStorage.setItem('pendingAppDescription', description);
     setChatOpen(false);
     
     if (user) {
-      // If user is logged in, go directly to agent with the description
-      navigate('/agent?build=' + encodeURIComponent(description));
+      // If user is logged in, create project and navigate
+      try {
+        const response = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: description.slice(0, 30),
+            description: description,
+            language: 'javascript',
+            visibility: 'private'
+          }),
+        });
+
+        if (response.ok) {
+          const project = await response.json();
+          // Store prompt in sessionStorage for the AI agent
+          window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
+          navigate(`/project/${project.id}?agent=true&prompt=${encodeURIComponent(description)}`);
+        }
+      } catch (error) {
+        console.error('Failed to create project:', error);
+      }
     } else {
       // If not logged in, go to register and continue after auth
-      navigate('/register?redirect=/agent&build=true');
+      navigate('/register?redirect=dashboard&build=true');
     }
   };
 

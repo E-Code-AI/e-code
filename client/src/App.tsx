@@ -143,9 +143,6 @@ function AppContent() {
           <Route path="/mobile" component={Mobile} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-agent" component={AIAgent} />
-          <ProtectedRoute path="/agent" component={() => (
-            <ReplitAIAgentPage />
-          )} />
           <Route path="/press" component={Press} />
           <Route path="/partners" component={Partners} />
           <Route path="/security" component={Security} />

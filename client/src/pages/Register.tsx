@@ -68,10 +68,9 @@ export default function Register() {
         // Redirect based on context
         setTimeout(() => {
           if (shouldRedirectToAgent && pendingAppDescription) {
-            // Clear the stored description
-            sessionStorage.removeItem('pendingAppDescription');
-            // Navigate to agent with the app description
-            navigate('/agent?build=' + encodeURIComponent(pendingAppDescription));
+            // Keep the stored description for login page to handle
+            // Navigate to login with build parameter so it knows to create project after login
+            navigate('/login?build=true');
           } else {
             navigate('/login');
           }

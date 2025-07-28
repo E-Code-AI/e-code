@@ -96,7 +96,7 @@ export function ReplitHeader() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
-              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" onClick={() => navigate('/agent')}>
+              <DropdownMenuItem className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" onClick={() => navigate('/dashboard')}>
                 <Zap className="mr-2 h-4 w-4" />
                 Build with AI
               </DropdownMenuItem>
@@ -345,7 +345,7 @@ export function ReplitHeader() {
         </DropdownMenu>
       </div>
     </header>
-    <SpotlightSearch open={spotlightOpen} onOpenChange={setSpotlightOpen} />
+    <SpotlightSearch />
     </>
   );
 }

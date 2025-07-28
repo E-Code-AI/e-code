@@ -18,6 +18,33 @@ export default function Login() {
     password: ''
   });
 
+  // Function to create project and navigate
+  const createProjectAndNavigate = async (description: string) => {
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: description.slice(0, 30),
+          description: description,
+          language: 'javascript',
+          visibility: 'private'
+        }),
+      });
+
+      if (response.ok) {
+        const project = await response.json();
+        // Store prompt in sessionStorage for the AI agent
+        window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
+        navigate(`/project/${project.id}?agent=true&prompt=${encodeURIComponent(description)}`);
+      }
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      navigate('/dashboard');
+    }
+  };
+
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
@@ -29,8 +56,8 @@ export default function Login() {
       if (shouldRedirectToAgent && pendingAppDescription) {
         // Clear the stored description
         sessionStorage.removeItem('pendingAppDescription');
-        // Navigate to agent with the app description
-        navigate('/agent?build=' + encodeURIComponent(pendingAppDescription));
+        // Create project and navigate
+        createProjectAndNavigate(pendingAppDescription);
       } else {
         navigate('/dashboard');
       }
