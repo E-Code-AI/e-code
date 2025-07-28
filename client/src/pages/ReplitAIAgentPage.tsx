@@ -47,18 +47,46 @@ export default function ReplitAIAgentPage() {
   const [showAgent, setShowAgent] = useState(false);
   const [projectId, setProjectId] = useState<number | null>(null);
 
-  // Get prompt from URL params
+  // Get prompt from URL params and auto-submit
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const urlPrompt = urlParams.get('prompt') || urlParams.get('build');
     if (urlPrompt) {
-      setPrompt(decodeURIComponent(urlPrompt));
+      const decodedPrompt = decodeURIComponent(urlPrompt);
+      setPrompt(decodedPrompt);
       // Auto-submit if prompt is provided
       setTimeout(() => {
-        handleSubmit();
+        handleAutoSubmit(decodedPrompt);
       }, 100);
     }
   }, []);
+
+  const handleAutoSubmit = async (promptText: string) => {
+    if (!promptText.trim()) return;
+
+    // Create a new project for this AI session
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: promptText.slice(0, 30),
+          description: promptText,
+          language: 'javascript',
+          visibility: 'private',
+        }),
+      });
+
+      if (response.ok) {
+        const project = await response.json();
+        setProjectId(project.id);
+        setShowAgent(true);
+      }
+    } catch (error) {
+      console.error('Failed to create project:', error);
+    }
+  };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -71,7 +99,8 @@ export default function ReplitAIAgentPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          name: prompt.slice(0, 50) + '...',
+          name: prompt.slice(0, 30),
+          description: prompt,
           language: 'javascript',
           visibility: 'private',
         }),
