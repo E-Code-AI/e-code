@@ -80,20 +80,21 @@ export default function Landing() {
   ];
 
   const handleGetStarted = () => {
-    if (user) {
-      navigate('/dashboard');
-    } else {
-      setChatOpen(true);
-    }
+    setChatOpen(true);
   };
 
   const handleStartBuilding = (description: string) => {
     console.log('Starting to build:', description);
+    // Store the app description to persist across authentication
+    sessionStorage.setItem('pendingAppDescription', description);
     setChatOpen(false);
+    
     if (user) {
-      navigate('/dashboard');
+      // If user is logged in, go directly to agent with the description
+      navigate('/agent?build=' + encodeURIComponent(description));
     } else {
-      navigate('/register');
+      // If not logged in, go to register and continue after auth
+      navigate('/register?redirect=/agent&build=true');
     }
   };
 
@@ -175,26 +176,14 @@ export default function Landing() {
                         type="text"
                         placeholder="Describe your app idea in any language... (e.g., 'Build a recipe finder app with AI suggestions')"
                         className="w-full bg-transparent border-none outline-none text-xl placeholder:text-muted-foreground/70 focus:ring-0 font-medium cursor-pointer"
-                        onClick={() => {
-                          if (user) {
-                            navigate('/dashboard');
-                          } else {
-                            setChatOpen(true);
-                          }
-                        }}
+                        onClick={() => setChatOpen(true)}
                         readOnly
                       />
                     </div>
                     <Button 
                       size="lg" 
                       className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all text-lg px-6"
-                      onClick={() => {
-                        if (user) {
-                          navigate('/dashboard');
-                        } else {
-                          setChatOpen(true);
-                        }
-                      }}
+                      onClick={() => setChatOpen(true)}
                     >
                       <Zap className="h-5 w-5 mr-2" />
                       Launch AI
