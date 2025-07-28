@@ -82,6 +82,9 @@ export default function ReplitAIAgentPage() {
         const project = await response.json();
         setProjectId(project.id);
         setShowAgent(true);
+      } else {
+        const error = await response.json();
+        console.error('Failed to create project:', error);
       }
     } catch (error) {
       console.error('Failed to create project:', error);
@@ -92,27 +95,39 @@ export default function ReplitAIAgentPage() {
     e?.preventDefault();
     if (!prompt.trim()) return;
 
+    console.log('Starting to build:', prompt);
+
     // Create a new project for this AI session
     try {
+      const requestBody = {
+        name: prompt.slice(0, 30),
+        description: prompt,
+        language: 'javascript',
+        visibility: 'private',
+      };
+      
+      console.log('Creating project with:', requestBody);
+      
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          name: prompt.slice(0, 30),
-          description: prompt,
-          language: 'javascript',
-          visibility: 'private',
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
         const project = await response.json();
+        console.log('Project created successfully:', project);
         setProjectId(project.id);
         setShowAgent(true);
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to create project:', errorData);
+        alert(`Failed to create project: ${JSON.stringify(errorData)}`);
       }
     } catch (error) {
       console.error('Failed to create project:', error);
+      alert(`Failed to create project: ${error}`);
     }
   };
 
