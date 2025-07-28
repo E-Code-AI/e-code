@@ -47,6 +47,12 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-28: **AI Agent Build Flow Fixed**:
+  * Fixed homepage AI input to allow direct typing without popup
+  * Implemented automatic project creation and AI agent navigation
+  * Fixed project creation API validation error (removed ownerId from frontend)
+  * Fixed OpenAI API parameter error (maxTokens → max_tokens)
+  * Flow now works: Type on homepage → Click "Start Building" → Auto-navigate to AI Agent → Build starts automatically
 - 2025-07-27: **Responsive Design Fixes**:
   * Fixed scrolling issue on `/agent` page by changing overflow-hidden to overflow-y-auto
   * Made Account page tabs responsive with horizontal scrolling on mobile devices
