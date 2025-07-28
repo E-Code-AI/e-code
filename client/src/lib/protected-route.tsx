@@ -3,6 +3,21 @@ import { Loader2 } from "lucide-react";
 import { Redirect, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 
+// Component to handle redirects safely
+function RedirectToLogin({ path }: { path: string }) {
+  useEffect(() => {
+    console.log(`Redirecting to /api/login from ${path} - user not authenticated`);
+    window.location.href = '/api/login';
+  }, [path]);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin text-border" />
+      <div className="ml-2 text-sm text-muted-foreground">Redirecting to login...</div>
+    </div>
+  );
+}
+
 export function ProtectedRoute({
   path,
   component: Component,
@@ -34,10 +49,7 @@ export function ProtectedRoute({
       ) : user ? (
         <Component />
       ) : (
-        <>
-          {console.log(`Redirecting to /api/login from ${path} - user not authenticated`)}
-          {window.location.href = '/api/login'}
-        </>
+        <RedirectToLogin path={path} />
       )}
     </Route>
   );
