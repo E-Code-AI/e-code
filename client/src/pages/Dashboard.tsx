@@ -90,22 +90,63 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  const handleCreateProject = (e: React.FormEvent) => {
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (aiPrompt.trim()) {
-      // Navigate to AI agent chat with the prompt
-      navigate(`/agent?prompt=${encodeURIComponent(aiPrompt)}`);
+    if (!aiPrompt.trim()) return;
+
+    try {
+      // Create a new project immediately
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: aiPrompt.slice(0, 30),
+          description: aiPrompt,
+          language: 'javascript',
+          visibility: 'private'
+        }),
+      });
+
+      if (response.ok) {
+        const project = await response.json();
+        // Navigate directly to the project with AI agent mode
+        navigate(`/project/${project.id}?agent=true&prompt=${encodeURIComponent(aiPrompt)}`);
+      }
+    } catch (error) {
+      console.error('Failed to create project:', error);
     }
   };
 
-  const handleQuickAction = (action: typeof quickActions[0]) => {
-    // Navigate to AI agent with predefined prompt
+  const handleQuickAction = async (action: typeof quickActions[0]) => {
+    // Create project with predefined prompt
     const prompts: Record<string, string> = {
       'Book scanner': 'Build a book scanner app that uses the camera to scan ISBN codes and fetch book details',
       'Personal blog': 'Create a personal blog website with posts, categories, and comments',
       'Statistics': 'Build a statistics dashboard with charts and data visualization',
     };
-    navigate(`/agent?prompt=${encodeURIComponent(prompts[action.label])}`);
+    const prompt = prompts[action.label];
+    
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: action.label,
+          description: prompt,
+          language: 'javascript',
+          visibility: 'private'
+        }),
+      });
+
+      if (response.ok) {
+        const project = await response.json();
+        navigate(`/project/${project.id}?agent=true&prompt=${encodeURIComponent(prompt)}`);
+      }
+    } catch (error) {
+      console.error('Failed to create project:', error);
+    }
   };
 
   if (isLoading) {

@@ -81,6 +81,21 @@ const ReplitProjectPage = () => {
     fileId: selectedFile?.id || 0
   });
 
+  // Check for agent and prompt parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const agentParam = urlParams.get('agent');
+    const promptParam = urlParams.get('prompt');
+    
+    if (agentParam === 'true' && promptParam) {
+      // When coming from dashboard, show AI agent with the prompt
+      setShowAIChat(true);
+      setAIMode('agent');
+      // Store the prompt to pass to ReplitAgentChat
+      window.sessionStorage.setItem(`agent-prompt-${projectId}`, decodeURIComponent(promptParam));
+    }
+  }, [projectId]);
+
   // Query for project details
   const { 
     data: project, 
