@@ -110,6 +110,8 @@ export default function Dashboard() {
 
       if (response.ok) {
         const project = await response.json();
+        // Store prompt in sessionStorage for the AI agent
+        window.sessionStorage.setItem(`agent-prompt-${project.id}`, aiPrompt);
         // Navigate directly to the project with AI agent mode
         navigate(`/project/${project.id}?agent=true&prompt=${encodeURIComponent(aiPrompt)}`);
       }
@@ -142,6 +144,8 @@ export default function Dashboard() {
 
       if (response.ok) {
         const project = await response.json();
+        // Store prompt in sessionStorage for the AI agent
+        window.sessionStorage.setItem(`agent-prompt-${project.id}`, prompt);
         navigate(`/project/${project.id}?agent=true&prompt=${encodeURIComponent(prompt)}`);
       }
     } catch (error) {
