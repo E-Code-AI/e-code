@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import * as monaco from 'monaco-editor';
 import { setupMonacoTheme, getMonacoEditorOptions } from "@/lib/monaco-setup";
 import { File } from "@shared/schema";
-import { Search, XCircle, Maximize2, Minimize2, Code, Settings } from "lucide-react";
+import { Search, XCircle, Maximize2, Minimize2, Code, Settings, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ShareSnippetDialog } from "@/components/ShareSnippetDialog";
 import { 
   Popover, 
   PopoverContent, 
@@ -75,6 +76,12 @@ const CodeEditor = ({ file, onChange, collaboration }: CodeEditorProps) => {
     formatOnType: false,
   });
   const [searchOpen, setSearchOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareData, setShareData] = useState<{
+    code: string;
+    lineStart: number;
+    lineEnd: number;
+  }>({ code: "", lineStart: 1, lineEnd: 1 });
   
   // Update editor when settings change
   const updateEditorSettings = () => {
@@ -131,6 +138,32 @@ const CodeEditor = ({ file, onChange, collaboration }: CodeEditorProps) => {
         monacoEditorRef.current.layout();
       }
     }, 100);
+  };
+
+  // Handle sharing selected code
+  const handleShare = () => {
+    if (!monacoEditorRef.current) return;
+    
+    const selection = monacoEditorRef.current.getSelection();
+    const model = monacoEditorRef.current.getModel();
+    
+    if (!selection || !model) return;
+    
+    // Get selected text or entire file content if nothing selected
+    let code = "";
+    let lineStart = 1;
+    let lineEnd = model.getLineCount();
+    
+    if (!selection.isEmpty()) {
+      code = model.getValueInRange(selection);
+      lineStart = selection.startLineNumber;
+      lineEnd = selection.endLineNumber;
+    } else {
+      code = model.getValue();
+    }
+    
+    setShareData({ code, lineStart, lineEnd });
+    setShareDialogOpen(true);
   };
   
   useEffect(() => {
@@ -415,6 +448,25 @@ const CodeEditor = ({ file, onChange, collaboration }: CodeEditorProps) => {
             </Tooltip>
           </TooltipProvider>
           
+          {/* Share button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleShare}
+                  className="h-8 w-8"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Share Code Snippet</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
           {/* Fullscreen toggle */}
           <TooltipProvider>
             <Tooltip>
@@ -483,6 +535,18 @@ const CodeEditor = ({ file, onChange, collaboration }: CodeEditorProps) => {
           {file.name}
         </div>
       </div>
+      
+      {/* Share snippet dialog */}
+      <ShareSnippetDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        projectId={file.projectId || 0}
+        fileName={file.name}
+        filePath={file.path || file.name}
+        code={shareData.code}
+        lineStart={shareData.lineStart}
+        lineEnd={shareData.lineEnd}
+      />
     </div>
   );
 };

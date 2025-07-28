@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertProjectSchema, insertFileSchema, insertProjectCollaboratorSchema, insertDeploymentSchema, type EnvironmentVariable } from "@shared/schema";
+import { insertProjectSchema, insertFileSchema, insertProjectCollaboratorSchema, insertDeploymentSchema, insertCodeSnippetSchema, type EnvironmentVariable } from "@shared/schema";
 import * as z from "zod";
 import { devAuthBypass, setupAuthBypass } from "./dev-auth-bypass";
 import { WebSocketServer, WebSocket } from "ws";
@@ -5784,6 +5784,107 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
     } catch (error) {
       console.error('Error updating blog post:', error);
       res.status(500).json({ message: 'Failed to update blog post' });
+    }
+  });
+
+  // Code snippet sharing routes
+  app.post("/api/projects/:projectId/snippets", ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const project = await storage.getProject(projectId);
+      
+      if (!project || project.ownerId !== req.user!.id) {
+        return res.status(403).json({ message: "You don't have permission to share snippets from this project" });
+      }
+      
+      const snippetData = {
+        ...req.body,
+        projectId,
+        userId: req.user!.id
+      };
+      
+      const validatedSnippet = insertCodeSnippetSchema.parse(snippetData);
+      const snippet = await storage.createCodeSnippet(validatedSnippet);
+      
+      res.json({ 
+        snippet,
+        shareUrl: `/share/${snippet.shareId}`
+      });
+    } catch (error) {
+      console.error('Error creating code snippet:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid snippet data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create code snippet" });
+    }
+  });
+  
+  app.get("/api/snippets/:shareId", async (req, res) => {
+    try {
+      const snippet = await storage.getCodeSnippetByShareId(req.params.shareId);
+      
+      if (!snippet) {
+        return res.status(404).json({ message: "Snippet not found" });
+      }
+      
+      // Check if snippet has expired
+      if (snippet.expiresAt && new Date(snippet.expiresAt) < new Date()) {
+        return res.status(410).json({ message: "This snippet has expired" });
+      }
+      
+      // Increment views
+      await storage.incrementCodeSnippetViews(req.params.shareId);
+      
+      // Get project and user info for context
+      const project = await storage.getProject(snippet.projectId);
+      const user = await storage.getUser(snippet.userId);
+      
+      res.json({
+        ...snippet,
+        project: project ? { name: project.name, language: project.language } : null,
+        author: user ? { username: user.username, displayName: user.displayName } : null
+      });
+    } catch (error) {
+      console.error('Error fetching code snippet:', error);
+      res.status(500).json({ message: "Failed to fetch code snippet" });
+    }
+  });
+  
+  app.get("/api/users/:userId/snippets", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Users can only view their own snippets
+      if (userId !== req.user!.id) {
+        return res.status(403).json({ message: "You can only view your own snippets" });
+      }
+      
+      const snippets = await storage.getUserCodeSnippets(userId);
+      res.json(snippets);
+    } catch (error) {
+      console.error('Error fetching user snippets:', error);
+      res.status(500).json({ message: "Failed to fetch user snippets" });
+    }
+  });
+  
+  app.delete("/api/snippets/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const snippetId = parseInt(req.params.id);
+      const snippet = await storage.getCodeSnippet(snippetId);
+      
+      if (!snippet) {
+        return res.status(404).json({ message: "Snippet not found" });
+      }
+      
+      if (snippet.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You can only delete your own snippets" });
+      }
+      
+      await storage.deleteCodeSnippet(snippetId);
+      res.json({ message: "Snippet deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting code snippet:', error);
+      res.status(500).json({ message: "Failed to delete code snippet" });
     }
   });
 
