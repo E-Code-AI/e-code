@@ -64,6 +64,7 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
   const [selectedProvider, setSelectedProvider] = useState<string>('openai');
   const [showCapabilities, setShowCapabilities] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  const [initialPrompt, setInitialPrompt] = useState<string>('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -120,6 +121,42 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingMessage, scrollToBottom]);
+
+  // Check for initial prompt from dashboard
+  useEffect(() => {
+    const storedPrompt = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
+    if (storedPrompt && messages.length === 0) {
+      // Clear the stored prompt
+      window.sessionStorage.removeItem(`agent-prompt-${projectId}`);
+      
+      // Add welcome message
+      setMessages([{
+        id: '0',
+        role: 'system',
+        content: 'Starting to build your application...',
+        timestamp: new Date()
+      }]);
+      
+      // Set the initial prompt to trigger automatic send
+      setInitialPrompt(storedPrompt);
+    }
+  }, [projectId]);
+
+  // Send initial prompt when it's set
+  useEffect(() => {
+    if (initialPrompt) {
+      setInput(initialPrompt);
+      // Clear the initial prompt
+      setInitialPrompt('');
+      // Trigger send after a short delay to ensure UI is ready
+      setTimeout(() => {
+        const sendButton = document.querySelector('[data-send-button]') as HTMLButtonElement;
+        if (sendButton) {
+          sendButton.click();
+        }
+      }, 500);
+    }
+  }, [initialPrompt]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -829,6 +866,7 @@ Please make sure you have configured your AI API key in the project settings. Yo
               disabled={(!input.trim() && attachments.length === 0) || isLoading || isBuilding}
               size="icon"
               className="absolute right-1 bottom-1 h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              data-send-button
             >
               {isLoading || isBuilding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
