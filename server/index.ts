@@ -3,9 +3,21 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db-init";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
+import cors from "cors";
 // Monitoring imports are handled in routes.ts
 
 const app = express();
+
+// Configure CORS for development - allow same-origin requests
+if (process.env.NODE_ENV === 'development') {
+  app.use(cors({
+    origin: true,  // Allow all origins in development
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }));
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

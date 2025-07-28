@@ -1187,18 +1187,20 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getNotifications(userId: number, unreadOnly?: boolean): Promise<Notification[]> {
-    let query = db.select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId));
-    
     if (unreadOnly) {
-      query = query.where(and(
-        eq(notifications.userId, userId),
-        eq(notifications.read, false)
-      ));
+      return await db.select()
+        .from(notifications)
+        .where(and(
+          eq(notifications.userId, userId),
+          eq(notifications.read, false)
+        ))
+        .orderBy(desc(notifications.createdAt));
     }
     
-    return await query.orderBy(desc(notifications.createdAt));
+    return await db.select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
   }
   
   async getNotificationById(id: number): Promise<Notification | undefined> {
@@ -1331,14 +1333,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async unlikeProject(projectId: number, userId: number): Promise<void> {
-    const result = await db.delete(projectLikes)
+    // Check if the like exists before deleting
+    const [existingLike] = await db.select()
+      .from(projectLikes)
       .where(and(
         eq(projectLikes.projectId, projectId),
         eq(projectLikes.userId, userId)
       ));
     
-    // Decrement like count only if a like was actually removed
-    if (result.rowsAffected > 0) {
+    if (existingLike) {
+      // Delete the like
+      await db.delete(projectLikes)
+        .where(and(
+          eq(projectLikes.projectId, projectId),
+          eq(projectLikes.userId, userId)
+        ));
+      
+      // Decrement like count
       await db.update(projects)
         .set({ likes: sql`GREATEST(${projects.likes} - 1, 0)` })
         .where(eq(projects.id, projectId));
@@ -1752,6 +1763,476 @@ export class DatabaseStorage implements IStorage {
       .where(eq(teamActivity.teamId, teamId))
       .orderBy(desc(teamActivity.createdAt))
       .limit(limit);
+  }
+
+  // Community post methods
+  async getAllCommunityPosts(category?: string, search?: string): Promise<CommunityPost[]> {
+    let query = db.select().from(communityPosts);
+    
+    if (category) {
+      query = query.where(eq(communityPosts.category, category));
+    }
+    
+    return await query.orderBy(desc(communityPosts.createdAt));
+  }
+
+  async getCommunityPost(id: number): Promise<CommunityPost | undefined> {
+    const [post] = await db.select()
+      .from(communityPosts)
+      .where(eq(communityPosts.id, id));
+    return post;
+  }
+
+  async getCommunityPostsByUser(userId: number): Promise<CommunityPost[]> {
+    return await db.select()
+      .from(communityPosts)
+      .where(eq(communityPosts.authorId, userId))
+      .orderBy(desc(communityPosts.createdAt));
+  }
+
+  async createCommunityPost(post: InsertCommunityPost): Promise<CommunityPost> {
+    const [newPost] = await db.insert(communityPosts)
+      .values(post)
+      .returning();
+    return newPost;
+  }
+
+  async updateCommunityPost(id: number, update: Partial<CommunityPost>): Promise<CommunityPost> {
+    const [updated] = await db.update(communityPosts)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(communityPosts.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCommunityPost(id: number): Promise<void> {
+    await db.delete(communityPosts)
+      .where(eq(communityPosts.id, id));
+  }
+
+  async incrementCommunityPostViews(id: number): Promise<void> {
+    await db.update(communityPosts)
+      .set({ views: sql`${communityPosts.views} + 1` })
+      .where(eq(communityPosts.id, id));
+  }
+
+  // Community challenge methods
+  async getAllCommunityChallenges(status?: string): Promise<CommunityChallenge[]> {
+    if (status) {
+      return await db.select()
+        .from(communityChallenges)
+        .where(eq(communityChallenges.status, status as any))
+        .orderBy(desc(communityChallenges.createdAt));
+    }
+    return await db.select()
+      .from(communityChallenges)
+      .orderBy(desc(communityChallenges.createdAt));
+  }
+
+  async getCommunityChallenge(id: number): Promise<CommunityChallenge | undefined> {
+    const [challenge] = await db.select()
+      .from(communityChallenges)
+      .where(eq(communityChallenges.id, id));
+    return challenge;
+  }
+
+  async createCommunityChallenge(challenge: InsertCommunityChallenge): Promise<CommunityChallenge> {
+    const [newChallenge] = await db.insert(communityChallenges)
+      .values(challenge)
+      .returning();
+    return newChallenge;
+  }
+
+  async updateCommunityChallenge(id: number, update: Partial<CommunityChallenge>): Promise<CommunityChallenge> {
+    const [updated] = await db.update(communityChallenges)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(communityChallenges.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Theme methods
+  async getAllThemes(type?: string): Promise<Theme[]> {
+    if (type) {
+      return await db.select()
+        .from(themes)
+        .where(eq(themes.type, type as any))
+        .orderBy(desc(themes.downloads));
+    }
+    return await db.select()
+      .from(themes)
+      .orderBy(desc(themes.downloads));
+  }
+
+  async getThemeBySlug(slug: string): Promise<Theme | undefined> {
+    const [theme] = await db.select()
+      .from(themes)
+      .where(eq(themes.slug, slug));
+    return theme;
+  }
+
+  async getThemesByUser(userId: number): Promise<Theme[]> {
+    return await db.select()
+      .from(themes)
+      .where(eq(themes.authorId, userId))
+      .orderBy(desc(themes.createdAt));
+  }
+
+  async createTheme(theme: InsertTheme): Promise<Theme> {
+    const [newTheme] = await db.insert(themes)
+      .values(theme)
+      .returning();
+    return newTheme;
+  }
+
+  async updateTheme(id: number, update: Partial<Theme>): Promise<Theme> {
+    const [updated] = await db.update(themes)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(themes.id, id))
+      .returning();
+    return updated;
+  }
+
+  async incrementThemeDownloads(id: number): Promise<void> {
+    await db.update(themes)
+      .set({ downloads: sql`${themes.downloads} + 1` })
+      .where(eq(themes.id, id));
+  }
+
+  // Announcement methods
+  async getActiveAnnouncements(targetAudience?: string): Promise<Announcement[]> {
+    const now = new Date();
+    let query = db.select()
+      .from(announcements)
+      .where(and(
+        eq(announcements.active, true),
+        sql`${announcements.startsAt} <= ${now}`,
+        sql`${announcements.endsAt} IS NULL OR ${announcements.endsAt} > ${now}`
+      ));
+    
+    if (targetAudience) {
+      query = query.where(eq(announcements.targetAudience, targetAudience));
+    }
+    
+    return await query.orderBy(desc(announcements.priority), desc(announcements.createdAt));
+  }
+
+  async getAnnouncement(id: number): Promise<Announcement | undefined> {
+    const [announcement] = await db.select()
+      .from(announcements)
+      .where(eq(announcements.id, id));
+    return announcement;
+  }
+
+  async createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement> {
+    const [newAnnouncement] = await db.insert(announcements)
+      .values(announcement)
+      .returning();
+    return newAnnouncement;
+  }
+
+  async updateAnnouncement(id: number, update: Partial<Announcement>): Promise<Announcement> {
+    const [updated] = await db.update(announcements)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(announcements.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteAnnouncement(id: number): Promise<void> {
+    await db.delete(announcements)
+      .where(eq(announcements.id, id));
+  }
+
+  // Learning course methods
+  async getAllLearningCourses(category?: string): Promise<LearningCourse[]> {
+    if (category) {
+      return await db.select()
+        .from(learningCourses)
+        .where(eq(learningCourses.category, category))
+        .orderBy(desc(learningCourses.enrollments));
+    }
+    return await db.select()
+      .from(learningCourses)
+      .orderBy(desc(learningCourses.enrollments));
+  }
+
+  async getLearningCourseBySlug(slug: string): Promise<LearningCourse | undefined> {
+    const [course] = await db.select()
+      .from(learningCourses)
+      .where(eq(learningCourses.slug, slug));
+    return course;
+  }
+
+  async createLearningCourse(course: InsertLearningCourse): Promise<LearningCourse> {
+    const [newCourse] = await db.insert(learningCourses)
+      .values(course)
+      .returning();
+    return newCourse;
+  }
+
+  async updateLearningCourse(id: number, update: Partial<LearningCourse>): Promise<LearningCourse> {
+    const [updated] = await db.update(learningCourses)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(learningCourses.id, id))
+      .returning();
+    return updated;
+  }
+
+  async incrementCourseEnrollments(id: number): Promise<void> {
+    await db.update(learningCourses)
+      .set({ enrollments: sql`${learningCourses.enrollments} + 1` })
+      .where(eq(learningCourses.id, id));
+  }
+
+  // User learning progress methods
+  async getUserLearningProgress(userId: number, courseId: number): Promise<UserLearningProgress | undefined> {
+    const [progress] = await db.select()
+      .from(userLearningProgress)
+      .where(and(
+        eq(userLearningProgress.userId, userId),
+        eq(userLearningProgress.courseId, courseId)
+      ));
+    return progress;
+  }
+
+  async getAllUserLearningProgress(userId: number): Promise<UserLearningProgress[]> {
+    return await db.select()
+      .from(userLearningProgress)
+      .where(eq(userLearningProgress.userId, userId))
+      .orderBy(desc(userLearningProgress.lastProgressAt));
+  }
+
+  async createUserLearningProgress(progress: InsertUserLearningProgress): Promise<UserLearningProgress> {
+    const [newProgress] = await db.insert(userLearningProgress)
+      .values(progress)
+      .returning();
+    return newProgress;
+  }
+
+  async updateUserLearningProgress(id: number, update: Partial<UserLearningProgress>): Promise<UserLearningProgress> {
+    const [updated] = await db.update(userLearningProgress)
+      .set({ ...update, lastProgressAt: new Date() })
+      .where(eq(userLearningProgress.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Cycles methods
+  async getUserCycles(userId: number): Promise<UserCycles | undefined> {
+    const [cycles] = await db.select()
+      .from(userCycles)
+      .where(eq(userCycles.userId, userId));
+    
+    // If no cycles record exists, create one
+    if (!cycles) {
+      const [newCycles] = await db.insert(userCycles)
+        .values({ userId, balance: 0, totalEarned: 0, totalSpent: 0 })
+        .returning();
+      return newCycles;
+    }
+    
+    return cycles;
+  }
+
+  async createUserCycles(cycles: InsertUserCycles): Promise<UserCycles> {
+    const [newCycles] = await db.insert(userCycles)
+      .values(cycles)
+      .returning();
+    return newCycles;
+  }
+
+  async updateUserCycles(userId: number, update: Partial<UserCycles>): Promise<UserCycles> {
+    const [updated] = await db.update(userCycles)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(userCycles.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  async addCyclesTransaction(transaction: InsertCyclesTransaction): Promise<CyclesTransaction> {
+    const [newTransaction] = await db.insert(cyclesTransactions)
+      .values(transaction)
+      .returning();
+    
+    // Update user cycles balance
+    const userCyclesRecord = await this.getUserCycles(transaction.userId);
+    if (userCyclesRecord) {
+      const newBalance = userCyclesRecord.balance + transaction.amount;
+      const totalEarned = transaction.amount > 0 ? userCyclesRecord.totalEarned + transaction.amount : userCyclesRecord.totalEarned;
+      const totalSpent = transaction.amount < 0 ? userCyclesRecord.totalSpent + Math.abs(transaction.amount) : userCyclesRecord.totalSpent;
+      
+      await this.updateUserCycles(transaction.userId, {
+        balance: newBalance,
+        totalEarned,
+        totalSpent
+      });
+    }
+    
+    return newTransaction;
+  }
+
+  async getCyclesTransactions(userId: number, limit: number = 50): Promise<CyclesTransaction[]> {
+    return await db.select()
+      .from(cyclesTransactions)
+      .where(eq(cyclesTransactions.userId, userId))
+      .orderBy(desc(cyclesTransactions.createdAt))
+      .limit(limit);
+  }
+
+  // Object storage methods
+  async getObjectStorageByUser(userId: number, path?: string): Promise<ObjectStorage[]> {
+    let query = db.select().from(objectStorage).where(eq(objectStorage.userId, userId));
+    
+    if (path) {
+      query = query.where(eq(objectStorage.path, path));
+    }
+    
+    return await query.orderBy(objectStorage.path);
+  }
+
+  async getObjectStorageItem(id: number): Promise<ObjectStorage | undefined> {
+    const [item] = await db.select()
+      .from(objectStorage)
+      .where(eq(objectStorage.id, id));
+    return item;
+  }
+
+  async createObjectStorageItem(item: InsertObjectStorage): Promise<ObjectStorage> {
+    const [newItem] = await db.insert(objectStorage)
+      .values(item)
+      .returning();
+    return newItem;
+  }
+
+  async updateObjectStorageItem(id: number, update: Partial<ObjectStorage>): Promise<ObjectStorage> {
+    const [updated] = await db.update(objectStorage)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(objectStorage.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteObjectStorageItem(id: number): Promise<void> {
+    await db.delete(objectStorage)
+      .where(eq(objectStorage.id, id));
+  }
+
+  async getObjectStorageFolders(userId: number, parentId?: number): Promise<ObjectStorage[]> {
+    return await db.select()
+      .from(objectStorage)
+      .where(and(
+        eq(objectStorage.userId, userId),
+        eq(objectStorage.isFolder, true),
+        parentId ? eq(objectStorage.parentId, parentId) : isNull(objectStorage.parentId)
+      ))
+      .orderBy(objectStorage.name);
+  }
+
+  async getObjectStorageFiles(userId: number, parentId?: number): Promise<ObjectStorage[]> {
+    return await db.select()
+      .from(objectStorage)
+      .where(and(
+        eq(objectStorage.userId, userId),
+        eq(objectStorage.isFolder, false),
+        parentId ? eq(objectStorage.parentId, parentId) : isNull(objectStorage.parentId)
+      ))
+      .orderBy(objectStorage.name);
+  }
+
+  // Extensions methods
+  async getAllExtensions(): Promise<Extension[]> {
+    return await db.select()
+      .from(extensions)
+      .orderBy(desc(extensions.installs));
+  }
+
+  async getExtensionsByCategory(category: string): Promise<Extension[]> {
+    return await db.select()
+      .from(extensions)
+      .where(eq(extensions.category, category))
+      .orderBy(desc(extensions.installs));
+  }
+
+  async getExtension(id: number): Promise<Extension | undefined> {
+    const [extension] = await db.select()
+      .from(extensions)
+      .where(eq(extensions.id, id));
+    return extension;
+  }
+
+  async getExtensionByExtensionId(extensionId: string): Promise<Extension | undefined> {
+    const [extension] = await db.select()
+      .from(extensions)
+      .where(eq(extensions.extensionId, extensionId));
+    return extension;
+  }
+
+  async createExtension(extension: InsertExtension): Promise<Extension> {
+    const [newExtension] = await db.insert(extensions)
+      .values(extension)
+      .returning();
+    return newExtension;
+  }
+
+  async updateExtension(id: number, update: Partial<Extension>): Promise<Extension> {
+    const [updated] = await db.update(extensions)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(extensions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getUserExtensions(userId: number): Promise<(UserExtension & { extension: Extension })[]> {
+    const userExtensionsList = await db.select({
+      id: userExtensions.id,
+      userId: userExtensions.userId,
+      extensionId: userExtensions.extensionId,
+      installedAt: userExtensions.installedAt,
+      settings: userExtensions.settings,
+      extension: extensions
+    })
+      .from(userExtensions)
+      .innerJoin(extensions, eq(userExtensions.extensionId, extensions.id))
+      .where(eq(userExtensions.userId, userId));
+    
+    return userExtensionsList;
+  }
+
+  async installExtension(userId: number, extensionId: number): Promise<UserExtension> {
+    const [installed] = await db.insert(userExtensions)
+      .values({ userId, extensionId })
+      .returning();
+    
+    // Increment install count
+    await db.update(extensions)
+      .set({ installs: sql`${extensions.installs} + 1` })
+      .where(eq(extensions.id, extensionId));
+    
+    return installed;
+  }
+
+  async uninstallExtension(userId: number, extensionId: number): Promise<void> {
+    await db.delete(userExtensions)
+      .where(and(
+        eq(userExtensions.userId, userId),
+        eq(userExtensions.extensionId, extensionId)
+      ));
+    
+    // Decrement install count
+    await db.update(extensions)
+      .set({ installs: sql`GREATEST(${extensions.installs} - 1, 0)` })
+      .where(eq(extensions.id, extensionId));
+  }
+
+  async checkExtensionInstalled(userId: number, extensionId: number): Promise<boolean> {
+    const [installed] = await db.select()
+      .from(userExtensions)
+      .where(and(
+        eq(userExtensions.userId, userId),
+        eq(userExtensions.extensionId, extensionId)
+      ));
+    return !!installed;
   }
 }
 
