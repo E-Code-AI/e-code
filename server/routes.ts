@@ -2529,13 +2529,13 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
                 {
                   language: project.language || 'javascript',
                   systemPrompt: systemMessageAgent.content,
-                  maxTokens: 2000,
+                  max_tokens: 2000,
                   temperature: 0.7
                 }
               );
             } else {
               // Fallback to regular generateChat if no code analysis
-              agentResponse = await provider.generateChat(agentMessages, { maxTokens: 1500, temperature: 0.7 });
+              agentResponse = await provider.generateChat(agentMessages, { max_tokens: 1500, temperature: 0.7 });
             }
             
             responseContent = agentResponse || "I'll help you build that! Let me create the necessary files and structure for your application.";
@@ -2571,7 +2571,7 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
       ];
       
       // Generate response using the selected provider
-      const response = await provider.generateChat(messages, { maxTokens: 1000, temperature: 0.7 });
+      const response = await provider.generateChat(messages, { max_tokens: 1000, temperature: 0.7 });
       
       const assistantMessage = {
         id: `msg_${Date.now()}`,
