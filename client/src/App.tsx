@@ -107,13 +107,13 @@ function PageLoader() {
 }
 
 function AppContent() {
-  const [spotlightOpen, setSpotlightOpen] = useState(false);
+
 
   return (
     <TooltipProvider>
       <div className="min-h-screen replit-layout-main">
         <Toaster />
-        <SpotlightSearch open={spotlightOpen} onOpenChange={setSpotlightOpen} />
+        <SpotlightSearch />
         <CommandPalette />
         <KeyboardShortcuts />
         <Suspense fallback={<PageLoader />}>
