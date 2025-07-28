@@ -348,7 +348,7 @@ const ReplitProjectPage = () => {
           )}
           
           {mobileTab === 'agent' && (
-            <div className="h-full overflow-hidden">
+            <div className="h-full overflow-y-auto">
               <ReplitAgentChat projectId={projectId || 0} />
             </div>
           )}
@@ -531,7 +531,7 @@ const ReplitProjectPage = () => {
             <>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-                <div className="h-full overflow-hidden flex flex-col">
+                <div className="h-full overflow-y-auto flex flex-col">
                   <Tabs value={aiMode} onValueChange={(value) => setAIMode(value as 'agent' | 'advanced')} className="h-full flex flex-col">
                     <div className="border-b px-4 py-2">
                       <TabsList className="grid w-full grid-cols-2">
