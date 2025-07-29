@@ -13,6 +13,7 @@ import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import Terminal from '@/components/Terminal';
 import { ReplitAgentChat } from '@/components/ReplitAgentChat';
+import { MobileAgentInterface } from '@/components/MobileAgentInterface';
 import AdvancedAIPanel from '@/components/AdvancedAIPanel';
 import { Button } from '@/components/ui/button';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -357,8 +358,8 @@ const ReplitProjectPage = () => {
           )}
           
           {mobileTab === 'agent' && (
-            <div className="h-full overflow-y-auto">
-              <ReplitAgentChat projectId={projectId || 0} />
+            <div className="h-full overflow-hidden">
+              <MobileAgentInterface projectId={projectId || 0} />
             </div>
           )}
 
