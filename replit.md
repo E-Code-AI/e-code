@@ -83,6 +83,19 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-29: **Fixed User Profile 404 Error**:
+  * **API Endpoint Created**: Added missing `/api/users/:username` endpoint in auth.ts
+  * **Profile Data**: Returns user profile with stats, projects, badges placeholder
+  * **Follow/Unfollow**: Added endpoints for social features (placeholder implementation)
+  * **Fix**: Resolved 404 error when accessing user profiles like `/@admin`
+- 2025-07-29: **Code Health Radar Implementation Complete**:
+  * **Visual Health Monitoring**: Created CodeHealthRadar component with colorful radar chart visualization
+  * **6 Key Metrics**: Code Quality, Performance, Security, Reliability, Scalability, Database Health
+  * **Color-Coded Status**: Excellent (green), Good (blue), Warning (amber), Critical (red)
+  * **Real-time Updates**: Connected to /api/monitoring/health endpoint with 30-second refresh intervals
+  * **Health Dashboard**: Created dedicated /health route with comprehensive system monitoring
+  * **Integration**: Added CodeHealthRadar to Status page for enhanced visual monitoring
+  * **Features**: Overall health score, trend indicators, system alerts, quick action buttons
 - 2025-07-29: **Account Management System Complete - All API Endpoints Connected**:
   * **Account API Implementation**: Created comprehensive account management endpoints with real database integration
     - PATCH /api/user/profile - Update user profile information (displayName, bio, website, social links)
