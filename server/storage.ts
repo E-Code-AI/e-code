@@ -398,6 +398,13 @@ export interface IStorage {
   // Admin Activity Logs methods
   createAdminActivityLog(log: InsertAdminActivityLog): Promise<AdminActivityLog>;
   getAdminActivityLogs(filter?: { adminId?: number; entityType?: string; limit?: number }): Promise<AdminActivityLog[]>;
+  
+  // Theme Management
+  getUserThemeSettings(userId: number): Promise<any>;
+  updateUserThemeSettings(userId: number, settings: any): Promise<void>;
+  getUserInstalledThemes(userId: number): Promise<string[]>;
+  installThemeForUser(userId: number, themeId: string): Promise<void>;
+  createCustomTheme(userId: number, theme: any): Promise<void>;
 }
 
 // Database storage implementation
@@ -3958,6 +3965,49 @@ export class MemStorage implements IStorage {
     }
     
     return logs;
+  }
+  
+  // Theme Management methods
+  private userThemeSettings: Map<number, any> = new Map();
+  private userInstalledThemes: Map<number, string[]> = new Map();
+  private customThemes: Map<string, any> = new Map();
+  
+  async getUserThemeSettings(userId: number): Promise<any> {
+    return this.userThemeSettings.get(userId) || {
+      activeEditorTheme: 'dark-pro',
+      activeUITheme: 'default',
+      systemTheme: 'dark',
+      syncAcrossDevices: true,
+      enableAnimations: true,
+      highContrast: false,
+      customSettings: {
+        fontSize: '14px',
+        lineHeight: '1.5',
+        tabSize: '2',
+        wordWrap: 'on'
+      }
+    };
+  }
+  
+  async updateUserThemeSettings(userId: number, settings: any): Promise<void> {
+    this.userThemeSettings.set(userId, settings);
+  }
+  
+  async getUserInstalledThemes(userId: number): Promise<string[]> {
+    return this.userInstalledThemes.get(userId) || ['dark-pro', 'light-minimal'];
+  }
+  
+  async installThemeForUser(userId: number, themeId: string): Promise<void> {
+    const installed = await this.getUserInstalledThemes(userId);
+    if (!installed.includes(themeId)) {
+      installed.push(themeId);
+      this.userInstalledThemes.set(userId, installed);
+    }
+  }
+  
+  async createCustomTheme(userId: number, theme: any): Promise<void> {
+    const themeKey = `${userId}-${theme.id}`;
+    this.customThemes.set(themeKey, theme);
   }
 }
 

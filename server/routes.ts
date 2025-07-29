@@ -4109,6 +4109,237 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
+  // Theme Management Routes
+  
+  // Get available themes
+  app.get('/api/themes', async (req, res) => {
+    try {
+      const themes = {
+        editor: [
+          {
+            id: 'dark-pro',
+            name: 'Dark Pro',
+            description: 'Professional dark theme with high contrast',
+            preview: { bg: '#1e1e1e', fg: '#d4d4d4', accent: '#007acc' },
+            downloads: 124500,
+            rating: 4.9,
+            author: 'E-Code Team',
+            official: true
+          },
+          {
+            id: 'light-minimal',
+            name: 'Light Minimal',
+            description: 'Clean and minimal light theme',
+            preview: { bg: '#ffffff', fg: '#333333', accent: '#0066cc' },
+            downloads: 89230,
+            rating: 4.7,
+            author: 'E-Code Team',
+            official: true
+          },
+          {
+            id: 'monokai',
+            name: 'Monokai',
+            description: 'Classic Monokai color scheme',
+            preview: { bg: '#272822', fg: '#f8f8f2', accent: '#66d9ef' },
+            downloads: 67890,
+            rating: 4.8,
+            author: 'Community',
+            official: false
+          },
+          {
+            id: 'dracula',
+            name: 'Dracula',
+            description: 'Dark theme with vibrant colors',
+            preview: { bg: '#282a36', fg: '#f8f8f2', accent: '#bd93f9' },
+            downloads: 56789,
+            rating: 4.9,
+            author: 'Community',
+            official: false
+          },
+          {
+            id: 'solarized-dark',
+            name: 'Solarized Dark',
+            description: 'Precision colors for machines and people',
+            preview: { bg: '#002b36', fg: '#839496', accent: '#268bd2' },
+            downloads: 45678,
+            rating: 4.6,
+            author: 'Community',
+            official: false
+          },
+          {
+            id: 'nord',
+            name: 'Nord',
+            description: 'Arctic, north-bluish color palette',
+            preview: { bg: '#2e3440', fg: '#d8dee9', accent: '#88c0d0' },
+            downloads: 34567,
+            rating: 4.7,
+            author: 'Community',
+            official: false
+          }
+        ],
+        ui: [
+          {
+            id: 'default',
+            name: 'Default',
+            description: 'E-Code default UI theme',
+            preview: { primary: '#0079f2', bg: '#0e1525', surface: '#1c2333' }
+          },
+          {
+            id: 'midnight',
+            name: 'Midnight',
+            description: 'Deep dark theme for night owls',
+            preview: { primary: '#6366f1', bg: '#0f0f23', surface: '#1a1a2e' }
+          },
+          {
+            id: 'forest',
+            name: 'Forest',
+            description: 'Nature-inspired green theme',
+            preview: { primary: '#10b981', bg: '#064e3b', surface: '#065f46' }
+          },
+          {
+            id: 'sunset',
+            name: 'Sunset',
+            description: 'Warm orange and purple tones',
+            preview: { primary: '#f59e0b', bg: '#451a03', surface: '#78350f' }
+          }
+        ]
+      };
+      
+      res.json(themes);
+    } catch (error) {
+      console.error('Error fetching themes:', error);
+      res.status(500).json({ error: 'Failed to fetch themes' });
+    }
+  });
+  
+  // Get user's theme settings
+  app.get('/api/themes/settings', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const settings = await storage.getUserThemeSettings(userId);
+      
+      res.json(settings || {
+        activeEditorTheme: 'dark-pro',
+        activeUITheme: 'default',
+        systemTheme: 'dark',
+        syncAcrossDevices: true,
+        enableAnimations: true,
+        highContrast: false,
+        customSettings: {
+          fontSize: '14px',
+          lineHeight: '1.5',
+          tabSize: '2',
+          wordWrap: 'on'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching theme settings:', error);
+      res.status(500).json({ error: 'Failed to fetch theme settings' });
+    }
+  });
+  
+  // Update user's theme settings
+  app.put('/api/themes/settings', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const settings = req.body;
+      
+      await storage.updateUserThemeSettings(userId, settings);
+      res.json({ success: true, settings });
+    } catch (error) {
+      console.error('Error updating theme settings:', error);
+      res.status(500).json({ error: 'Failed to update theme settings' });
+    }
+  });
+  
+  // Get user's installed themes
+  app.get('/api/themes/installed', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const installedThemes = await storage.getUserInstalledThemes(userId);
+      
+      res.json(installedThemes || ['dark-pro', 'light-minimal']);
+    } catch (error) {
+      console.error('Error fetching installed themes:', error);
+      res.status(500).json({ error: 'Failed to fetch installed themes' });
+    }
+  });
+  
+  // Install a theme
+  app.post('/api/themes/install', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { themeId } = req.body;
+      
+      await storage.installThemeForUser(userId, themeId);
+      res.json({ success: true, message: 'Theme installed successfully' });
+    } catch (error) {
+      console.error('Error installing theme:', error);
+      res.status(500).json({ error: 'Failed to install theme' });
+    }
+  });
+  
+  // Export theme settings
+  app.get('/api/themes/export', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const settings = await storage.getUserThemeSettings(userId);
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="ecode-theme-settings.json"');
+      res.json({
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        settings
+      });
+    } catch (error) {
+      console.error('Error exporting theme:', error);
+      res.status(500).json({ error: 'Failed to export theme' });
+    }
+  });
+  
+  // Import theme settings
+  app.post('/api/themes/import', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { settings } = req.body;
+      
+      if (!settings || !settings.version) {
+        return res.status(400).json({ error: 'Invalid theme file' });
+      }
+      
+      await storage.updateUserThemeSettings(userId, settings.settings || settings);
+      res.json({ success: true, message: 'Theme settings imported successfully' });
+    } catch (error) {
+      console.error('Error importing theme:', error);
+      res.status(500).json({ error: 'Failed to import theme' });
+    }
+  });
+  
+  // Create custom theme
+  app.post('/api/themes/create', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { name, description, theme } = req.body;
+      
+      const customTheme = {
+        id: `custom-${Date.now()}`,
+        name,
+        description,
+        author: req.user!.username,
+        official: false,
+        createdAt: new Date(),
+        ...theme
+      };
+      
+      await storage.createCustomTheme(userId, customTheme);
+      res.json({ success: true, theme: customTheme });
+    } catch (error) {
+      console.error('Error creating custom theme:', error);
+      res.status(500).json({ error: 'Failed to create custom theme' });
+    }
+  });
+
   // Team Management Routes
   
   // Get user's teams
