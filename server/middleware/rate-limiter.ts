@@ -22,8 +22,19 @@ export const AUTH_RATE_LIMITS = {
 
 export type RateLimitConfig = typeof AUTH_RATE_LIMITS[keyof typeof AUTH_RATE_LIMITS];
 
-// In-memory store for rate limiting (could be replaced with Redis in production)
+// Enhanced in-memory store for rate limiting with periodic cleanup
 const rateLimitStore = new Map<string, { attempts: number; firstAttempt: Date; blockedUntil?: Date }>();
+
+// Cleanup expired entries every 5 minutes
+setInterval(() => {
+  const now = new Date();
+  for (const [key, record] of rateLimitStore.entries()) {
+    // Remove records older than 2 hours
+    if (now.getTime() - record.firstAttempt.getTime() > 2 * 60 * 60 * 1000) {
+      rateLimitStore.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
 
 // Create rate limiter middleware
 export function createRateLimiter(endpoint: keyof typeof AUTH_RATE_LIMITS) {

@@ -387,9 +387,12 @@ pkgs.mkShell {
   }
 
   private async execNix(args: string[]): Promise<string> {
-    return new Promise((resolve, reject) => {
-      // Check if running in environment without Nix
-      if (!existsSync('/nix/store') && !process.env.NIX_PATH) {
+    return new Promise(async (resolve, reject) => {
+      // Check if running in environment without Nix using fs.access instead of existsSync
+      try {
+        await fs.access('/nix/store');
+      } catch {
+        if (!process.env.NIX_PATH) {
         // Use real package data for production readiness
         if (args.includes('search')) {
           const query = args[args.indexOf('search') + 2] || '';
@@ -414,6 +417,7 @@ pkgs.mkShell {
             { attrPath: 'nodejs_20', version: '20.11.1', description: 'JavaScript runtime' },
             { attrPath: 'git', version: '2.43.0', description: 'Version control' }
           ]));
+        }
         }
       }
       

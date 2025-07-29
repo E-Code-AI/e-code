@@ -95,11 +95,16 @@ export class CollaborationServer {
         // Clean up empty rooms
         if (room.connections.size === 0) {
           this.rooms.delete(roomName);
+          console.log(`Collaboration room ${roomName} cleaned up - no active connections`);
         }
       });
 
       ws.on('error', (error) => {
         console.error('WebSocket error:', error);
+        room.connections.delete(ws);
+        if (ws.clientId) {
+          this.broadcastUserLeft(room, ws.clientId);
+        }
       });
     });
   }
