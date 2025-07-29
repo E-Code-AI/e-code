@@ -6,6 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { toast } from '@/hooks/use-toast';
 import { 
   GraduationCap, 
   BookOpen, 
@@ -34,8 +37,20 @@ export default function Education() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Mock classroom data
-  const classrooms = [
+  // Fetch real classroom data
+  const { data: classrooms = [], isLoading: classroomsLoading } = useQuery({
+    queryKey: ['/api/education/classrooms'],
+    queryFn: async () => {
+      const response = await fetch('/api/education/classrooms', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch classrooms');
+      return response.json();
+    }
+  });
+
+  // Fallback initial classrooms if API not ready
+  const fallbackClassrooms = [
     {
       id: 1,
       name: 'Introduction to Web Development',
@@ -212,7 +227,7 @@ export default function Education() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {classrooms.map((classroom) => (
+              {(classrooms.length > 0 ? classrooms : fallbackClassrooms).map((classroom: any) => (
                 <div key={classroom.id} className="p-4 border rounded-lg">
                   <div className="flex items-start justify-between mb-2">
                     <div>
@@ -288,7 +303,7 @@ export default function Education() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {classrooms.map((classroom) => (
+        {(classrooms.length > 0 ? classrooms : fallbackClassrooms).map((classroom: any) => (
           <Card key={classroom.id}>
             <CardHeader>
               <div className="flex items-center justify-between">

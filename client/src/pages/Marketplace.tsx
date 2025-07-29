@@ -5,6 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { toast } from '@/hooks/use-toast';
 import { 
   Store, 
   Search, 
@@ -36,8 +39,18 @@ export default function Marketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Mock marketplace data
-  const extensions = [
+  // Fetch real marketplace data
+  const { data: extensions = [], isLoading } = useQuery({
+    queryKey: ['/api/marketplace/extensions'],
+    queryFn: async () => {
+      const response = await fetch('/api/marketplace/extensions');
+      if (!response.ok) throw new Error('Failed to fetch extensions');
+      return response.json();
+    }
+  });
+
+  // Fallback initial extensions if API not ready
+  const fallbackExtensions = [
     {
       id: 1,
       name: 'GitHub Copilot',
@@ -201,10 +214,10 @@ export default function Marketplace() {
     }
   ];
 
-  const filteredExtensions = extensions.filter(ext => {
+  const filteredExtensions = (extensions || fallbackExtensions).filter((ext: any) => {
     const matchesSearch = ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          ext.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ext.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+                         ext.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = selectedCategory === 'all' || ext.category.toLowerCase().includes(selectedCategory);
     return matchesSearch && matchesCategory;
   });
@@ -418,7 +431,7 @@ export default function Marketplace() {
             <div className="space-y-4">
               <h2 className="text-xl font-semibold">Featured Extensions</h2>
               <div className="grid gap-4">
-                {filteredExtensions.filter(ext => ext.featured).map((extension) => (
+                {filteredExtensions.filter((ext: any) => ext.featured).map((extension: any) => (
                   <ExtensionCard key={extension.id} extension={extension} />
                 ))}
               </div>
@@ -428,7 +441,7 @@ export default function Marketplace() {
             <div className="space-y-4">
               <h2 className="text-xl font-semibold">All Extensions</h2>
               <div className="grid gap-4">
-                {filteredExtensions.filter(ext => !ext.featured).map((extension) => (
+                {filteredExtensions.filter((ext: any) => !ext.featured).map((extension: any) => (
                   <ExtensionCard key={extension.id} extension={extension} />
                 ))}
               </div>
