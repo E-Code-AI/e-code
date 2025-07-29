@@ -164,16 +164,22 @@ export default function Login() {
                 )}
               </Button>
               
-              {process.env.NODE_ENV === 'development' && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => navigate('/dev-login')}
-                >
-                  Dev Login (Development Only)
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setFormData({ username: 'admin', password: 'admin' });
+                  // Trigger form submit after setting values
+                  setTimeout(() => {
+                    const form = document.querySelector('form') as HTMLFormElement;
+                    if (form) form.requestSubmit();
+                  }, 100);
+                }}
+              >
+                <Code className="mr-2 h-4 w-4" />
+                Quick Login (admin/admin)
+              </Button>
               
               <div className="text-center text-sm text-muted-foreground">
                 Don't have an account?{' '}

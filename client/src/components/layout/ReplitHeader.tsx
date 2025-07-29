@@ -345,7 +345,6 @@ export function ReplitHeader() {
         </DropdownMenu>
       </div>
     </header>
-    <SpotlightSearch />
     </>
   );
 }
