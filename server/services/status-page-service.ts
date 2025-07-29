@@ -139,8 +139,18 @@ export class StatusPageService {
     
     // Simulate health check
     const startTime = Date.now();
-    const isHealthy = Math.random() > 0.01; // 99% success rate
-    const responseTime = Date.now() - startTime + Math.random() * 100;
+    // Perform real health check
+    let isHealthy = true;
+    try {
+      // Check if service is actually responding
+      const axios = require('axios');
+      const checkUrl = service.endpoint || `http://localhost:5000/api/health`;
+      const response = await axios.get(checkUrl, { timeout: 5000 });
+      isHealthy = response.status === 200;
+    } catch (error) {
+      isHealthy = false;
+    }
+    const responseTime = Date.now() - startTime;
     
     service.lastChecked = new Date();
     service.responseTime = responseTime;

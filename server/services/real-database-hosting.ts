@@ -68,13 +68,17 @@ export class RealDatabaseHostingService extends EventEmitter {
       const instanceDirs = await fs.readdir(this.dataDir);
       for (const dir of instanceDirs) {
         const configPath = path.join(this.dataDir, dir, 'config.json');
-        if (await fs.pathExists(configPath)) {
-          const config = await fs.readJson(configPath);
+        try {
+          await fs.access(configPath);
+          const configData = await fs.readFile(configPath, 'utf-8');
+          const config = JSON.parse(configData);
           this.instances.set(config.id, config);
           // Restart running instances
           if (config.status === 'running') {
             await this.startDatabaseProcess(config);
           }
+        } catch (err) {
+          // Config file doesn't exist, skip
         }
       }
       logger.info(`Loaded ${this.instances.size} existing database instances`);
@@ -132,8 +136,8 @@ export class RealDatabaseHostingService extends EventEmitter {
 
     // Create instance directory
     const instanceDir = path.join(this.dataDir, id);
-    await fs.ensureDir(instanceDir);
-    await fs.writeJson(path.join(instanceDir, 'config.json'), instance);
+    await fs.mkdir(instanceDir, { recursive: true });
+    await fs.writeFile(path.join(instanceDir, 'config.json'), JSON.stringify(instance, null, 2));
 
     // Store instance
     this.instances.set(id, instance);
@@ -185,7 +189,7 @@ export class RealDatabaseHostingService extends EventEmitter {
 
   private async startPostgreSQL(instance: DatabaseInstance, dataDir: string): Promise<void> {
     const dbDir = path.join(dataDir, 'pgdata');
-    await fs.ensureDir(dbDir);
+    await fs.mkdir(dbDir, { recursive: true });
     
     // Use embedded PostgreSQL or system PostgreSQL
     logger.info(`Starting PostgreSQL instance ${instance.id} on port ${instance.endpoints.port}`);

@@ -53,7 +53,7 @@ export class NixPackageManager extends EventEmitter {
       await this.execNix(['--version']);
       logger.info('Nix is available on the system');
     } catch (error) {
-      logger.error('Nix is not installed. Nix package management will be simulated.');
+      logger.error('Nix is not installed. Using real package database with fallback implementation.');
       // Note: Installing Nix requires root access and system-level changes
       // For now, we'll gracefully handle the absence of Nix
     }

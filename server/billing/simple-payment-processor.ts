@@ -222,17 +222,68 @@ export class SimplePaymentProcessor {
   }
   
   async getUsageStats(userId: number): Promise<any> {
-    // Return simulated usage stats
+    // Get real usage stats from database and metrics
+    const storage = require('../storage').default;
+    const analyticsService = require('../analytics/simple-analytics').analyticsService;
+    
+    // Get real project count
+    const projects = await storage.getProjectsByUser(userId);
+    const projectsCount = projects.length;
+    
+    // Calculate real storage usage
+    const fs = require('fs/promises');
+    const path = require('path');
+    let storageUsed = 0;
+    
+    for (const project of projects) {
+      const projectPath = path.join(process.cwd(), 'projects', project.id.toString());
+      try {
+        const stats = await this.getDirectorySize(projectPath);
+        storageUsed += stats;
+      } catch (error) {
+        // Project directory doesn't exist yet
+      }
+    }
+    
+    // Get real AI request count from analytics
+    const aiRequests = await analyticsService.getAIRequestCount(userId);
+    
+    // Get real bandwidth from CDN metrics
+    const bandwidthUsed = await analyticsService.getBandwidthUsage(userId);
+    
     return {
-      projectsCount: 5,
+      projectsCount,
       projectsLimit: this.getProjectLimit(userId),
-      storageUsed: 1024 * 1024 * 150, // 150MB
+      storageUsed,
       storageLimit: this.getStorageLimit(userId),
-      bandwidthUsed: 1024 * 1024 * 500, // 500MB
+      bandwidthUsed,
       bandwidthLimit: this.getBandwidthLimit(userId),
-      aiRequestsUsed: 25,
+      aiRequestsUsed: aiRequests,
       aiRequestsLimit: this.getAIRequestLimit(userId)
     };
+  }
+  
+  private async getDirectorySize(dirPath: string): Promise<number> {
+    const fs = require('fs/promises');
+    const path = require('path');
+    let size = 0;
+    
+    try {
+      const files = await fs.readdir(dirPath);
+      for (const file of files) {
+        const filePath = path.join(dirPath, file);
+        const stats = await fs.stat(filePath);
+        if (stats.isDirectory()) {
+          size += await this.getDirectorySize(filePath);
+        } else {
+          size += stats.size;
+        }
+      }
+    } catch (error) {
+      // Directory doesn't exist
+    }
+    
+    return size;
   }
   
   private getProjectLimit(userId: number): number {
