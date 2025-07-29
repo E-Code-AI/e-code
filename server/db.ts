@@ -8,11 +8,18 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Create postgres client
+// Create postgres client with better connection management
 export const client = postgres(process.env.DATABASE_URL, {
-  max: 1, // Limit connections for serverless
-  idle_timeout: 20,
-  max_lifetime: 60 * 30,
+  max: 20, // Increase connection pool size
+  idle_timeout: 60, // Increase idle timeout
+  max_lifetime: 60 * 60, // 1 hour connection lifetime
+  connect_timeout: 10, // 10 second connection timeout
+  prepare: false, // Disable prepared statements for better stability
+  transform: {
+    undefined: null, // Transform undefined to null for PostgreSQL
+  },
+  onnotice: () => {}, // Suppress notices
+  debug: false, // Disable debug logging
 });
 
 // Create drizzle database instance with our schema
