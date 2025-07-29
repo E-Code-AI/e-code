@@ -2402,29 +2402,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return res.status(404).json({ error: 'Project not found' });
       }
       
-      // Load project-specific secrets into environment variables
-      const projectSecrets = await storage.getProjectSecrets(parseInt(projectId));
-      const originalEnv: Record<string, string | undefined> = {};
-      
-      // Temporarily set project secrets in process.env
-      for (const secret of projectSecrets) {
-        // Store original value to restore later
-        originalEnv[secret.key] = process.env[secret.key];
-        // Set the project-specific secret
-        process.env[secret.key] = secret.value;
-      }
-      
-      // Function to restore original environment variables
-      const restoreEnv = () => {
-        for (const key in originalEnv) {
-          if (originalEnv[key] === undefined) {
-            delete process.env[key];
-          } else {
-            process.env[key] = originalEnv[key];
-          }
-        }
-      };
-      
       // Get recent file content for context
       const files = await storage.getFilesByProject(parseInt(projectId));
       const codeContext = files
@@ -2433,81 +2410,27 @@ document.addEventListener('DOMContentLoaded', function() {
         .map(f => `File: ${f.name}\n\`\`\`${f.name.split('.').pop() || 'txt'}\n${f.content}\n\`\`\``)
         .join('\n\n');
       
-      // Get the AI provider based on environment variables
+      // Get the AI provider based on admin API keys
       let provider;
-      let apiKey;
+      let adminApiKey;
       
-      // Check for available API keys and create provider
+      // Check for available admin API keys and create provider
       if (providerName) {
         // User specified a provider
-        switch (providerName.toLowerCase()) {
-          case 'anthropic':
-            apiKey = process.env.ANTHROPIC_API_KEY;
-            if (apiKey) provider = AIProviderFactory.create('anthropic', apiKey);
-            break;
-          case 'gemini':
-            apiKey = process.env.GEMINI_API_KEY;
-            if (apiKey) provider = AIProviderFactory.create('gemini', apiKey);
-            break;
-          case 'xai':
-            apiKey = process.env.XAI_API_KEY;
-            if (apiKey) provider = AIProviderFactory.create('xai', apiKey);
-            break;
-          case 'perplexity':
-            apiKey = process.env.PERPLEXITY_API_KEY;
-            if (apiKey) provider = AIProviderFactory.create('perplexity', apiKey);
-            break;
-          case 'mixtral':
-            apiKey = process.env.TOGETHER_API_KEY || process.env.MIXTRAL_API_KEY;
-            if (apiKey) provider = AIProviderFactory.create('mixtral', apiKey);
-            break;
-          case 'llama':
-            apiKey = process.env.TOGETHER_API_KEY || process.env.LLAMA_API_KEY;
-            if (apiKey) provider = AIProviderFactory.create('llama', apiKey);
-            break;
-          case 'cohere':
-            apiKey = process.env.COHERE_API_KEY;
-            if (apiKey) provider = AIProviderFactory.create('cohere', apiKey);
-            break;
-          case 'deepseek':
-            apiKey = process.env.DEEPSEEK_API_KEY;
-            if (apiKey) provider = AIProviderFactory.create('deepseek', apiKey);
-            break;
-          case 'mistral':
-            apiKey = process.env.MISTRAL_API_KEY;
-            if (apiKey) provider = AIProviderFactory.create('mistral', apiKey);
-            break;
-          case 'openai':
-          default:
-            apiKey = process.env.OPENAI_API_KEY;
-            if (apiKey) provider = AIProviderFactory.create('openai', apiKey);
-            break;
+        adminApiKey = await storage.getActiveAdminApiKey(providerName.toLowerCase());
+        if (adminApiKey) {
+          provider = AIProviderFactory.create(providerName.toLowerCase(), adminApiKey.apiKey);
         }
       } else {
-        // Auto-select based on available API keys
-        if (process.env.OPENAI_API_KEY) {
-          provider = AIProviderFactory.create('openai', process.env.OPENAI_API_KEY);
-        } else if (process.env.ANTHROPIC_API_KEY) {
-          provider = AIProviderFactory.create('anthropic', process.env.ANTHROPIC_API_KEY);
-        } else if (process.env.GEMINI_API_KEY) {
-          provider = AIProviderFactory.create('gemini', process.env.GEMINI_API_KEY);
-        } else if (process.env.XAI_API_KEY) {
-          provider = AIProviderFactory.create('xai', process.env.XAI_API_KEY);
-        } else if (process.env.PERPLEXITY_API_KEY) {
-          provider = AIProviderFactory.create('perplexity', process.env.PERPLEXITY_API_KEY);
-        } else if (process.env.TOGETHER_API_KEY) {
-          // Together.ai hosts both Mixtral and Llama - prefer Mixtral for general use
-          provider = AIProviderFactory.create('mixtral', process.env.TOGETHER_API_KEY);
-        } else if (process.env.MIXTRAL_API_KEY) {
-          provider = AIProviderFactory.create('mixtral', process.env.MIXTRAL_API_KEY);
-        } else if (process.env.LLAMA_API_KEY) {
-          provider = AIProviderFactory.create('llama', process.env.LLAMA_API_KEY);
-        } else if (process.env.COHERE_API_KEY) {
-          provider = AIProviderFactory.create('cohere', process.env.COHERE_API_KEY);
-        } else if (process.env.DEEPSEEK_API_KEY) {
-          provider = AIProviderFactory.create('deepseek', process.env.DEEPSEEK_API_KEY);
-        } else if (process.env.MISTRAL_API_KEY) {
-          provider = AIProviderFactory.create('mistral', process.env.MISTRAL_API_KEY);
+        // Auto-select based on available admin API keys
+        const providerPriority = ['openai', 'anthropic', 'gemini', 'xai', 'perplexity', 'mixtral', 'llama', 'cohere', 'deepseek', 'mistral'];
+        
+        for (const providerType of providerPriority) {
+          adminApiKey = await storage.getActiveAdminApiKey(providerType);
+          if (adminApiKey) {
+            provider = AIProviderFactory.create(providerType, adminApiKey.apiKey);
+            break;
+          }
         }
       }
       
@@ -2515,7 +2438,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return res.json({
           id: `msg_${Date.now()}`,
           role: 'assistant',
-          content: `No AI provider is configured. Please add one of the following API keys to Secrets:\n\n**Premium Models:**\n• OPENAI_API_KEY - For GPT-4o (latest OpenAI model)\n• ANTHROPIC_API_KEY - For Claude Sonnet 4 (latest Anthropic model)\n• GEMINI_API_KEY - For Gemini 2.5 Flash/Pro\n• XAI_API_KEY - For Grok 2\n• PERPLEXITY_API_KEY - For Perplexity with web search\n\n**Free/Open Source Models:**\n• TOGETHER_API_KEY - For Mixtral & Llama models (Together.ai)\n• MIXTRAL_API_KEY - For Mixtral 8x7B (Mistral AI)\n• LLAMA_API_KEY - For Meta Llama 3 70B\n• COHERE_API_KEY - For Cohere Command\n• DEEPSEEK_API_KEY - For DeepSeek Chat (Chinese AI)\n• MISTRAL_API_KEY - For Mistral Medium\n\nAdd the key in Secrets tab and try again.`,
+          content: `No AI provider is currently available. The platform administrator needs to configure AI services. Please contact support if this persists.`,
           timestamp: Date.now()
         });
       }
@@ -2630,6 +2553,45 @@ Generate a comprehensive application based on the user's request. Include all ne
             responseContentLength: responseContent.length
           });
           
+          // Track AI usage for agent mode
+          if (req.user && adminApiKey) {
+            // Estimate tokens (rough approximation: ~4 chars = 1 token)
+            const promptTokens = Math.ceil(agentMessages.reduce((sum, msg) => sum + msg.content.length, 0) / 4);
+            const completionTokens = Math.ceil(responseContent.length / 4);
+            const totalTokens = promptTokens + completionTokens;
+            
+            // Calculate cost based on provider (prices in USD per 1K tokens)
+            const costPerThousandTokens = {
+              'openai': 0.002,
+              'anthropic': 0.003,
+              'gemini': 0.001,
+              'xai': 0.002,
+              'perplexity': 0.002,
+              'mixtral': 0.0007,
+              'llama': 0.0007,
+              'cohere': 0.001,
+              'deepseek': 0.0005,
+              'mistral': 0.001
+            };
+            
+            const cost = (totalTokens / 1000) * (costPerThousandTokens[provider.name.toLowerCase()] || 0.001);
+            
+            // Save usage record
+            await storage.createAiUsageRecord({
+              userId: req.user.id,
+              provider: provider.name.toLowerCase(),
+              model: provider.name,
+              operation: 'agent',
+              promptTokens,
+              completionTokens,
+              totalTokens,
+              cost
+            });
+            
+            // Update user's subscription token usage
+            await storage.updateUserAiTokens(req.user.id, totalTokens);
+          }
+          
           res.json({
             id: `msg_${Date.now()}`,
             role: 'assistant',
@@ -2657,6 +2619,45 @@ Generate a comprehensive application based on the user's request. Include all ne
       // Generate response using the selected provider
       const response = await provider.generateChat(messages, { max_tokens: 1000, temperature: 0.7 });
       
+      // Track AI usage
+      if (req.user && adminApiKey) {
+        // Estimate tokens (rough approximation: ~4 chars = 1 token)
+        const promptTokens = Math.ceil(messages.reduce((sum, msg) => sum + msg.content.length, 0) / 4);
+        const completionTokens = Math.ceil((response || '').length / 4);
+        const totalTokens = promptTokens + completionTokens;
+        
+        // Calculate cost based on provider (prices in USD per 1K tokens)
+        const costPerThousandTokens = {
+          'openai': 0.002, // GPT-4o
+          'anthropic': 0.003, // Claude Sonnet 4
+          'gemini': 0.001, // Gemini
+          'xai': 0.002,
+          'perplexity': 0.002,
+          'mixtral': 0.0007,
+          'llama': 0.0007,
+          'cohere': 0.001,
+          'deepseek': 0.0005,
+          'mistral': 0.001
+        };
+        
+        const cost = (totalTokens / 1000) * (costPerThousandTokens[provider.name.toLowerCase()] || 0.001);
+        
+        // Save usage record
+        await storage.createAiUsageRecord({
+          userId: req.user.id,
+          provider: provider.name.toLowerCase(),
+          model: provider.name,
+          operation: 'chat',
+          promptTokens,
+          completionTokens,
+          totalTokens,
+          cost
+        });
+        
+        // Update user's subscription token usage
+        await storage.updateUserAiTokens(req.user.id, totalTokens);
+      }
+      
       const assistantMessage = {
         id: `msg_${Date.now()}`,
         role: 'assistant',
@@ -2682,9 +2683,6 @@ Generate a comprehensive application based on the user's request. Include all ne
       }
       
       res.status(500).json({ error: 'Failed to process AI request' });
-    } finally {
-      // Always restore original environment variables
-      restoreEnv();
     }
   });
 

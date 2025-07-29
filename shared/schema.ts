@@ -635,6 +635,81 @@ export const insertThemeSchema = createInsertSchema(themes).omit({
 export type InsertTheme = z.infer<typeof insertThemeSchema>;
 export type Theme = typeof themes.$inferSelect;
 
+// Admin API Keys table - for centralized API key management
+export const adminApiKeys = pgTable('admin_api_keys', {
+  id: serial('id').primaryKey(),
+  provider: varchar('provider', { length: 50 }).notNull(), // anthropic, openai, gemini, etc.
+  keyName: varchar('key_name', { length: 255 }).notNull(), // Display name for the key
+  apiKey: text('api_key').notNull(), // Encrypted API key
+  isActive: boolean('is_active').default(true).notNull(),
+  usageLimit: integer('usage_limit'), // Monthly usage limit in requests
+  currentUsage: integer('current_usage').default(0).notNull(), // Current month usage
+  resetDate: timestamp('reset_date').notNull(), // When to reset usage counter
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertAdminApiKeySchema = createInsertSchema(adminApiKeys).omit({
+  id: true,
+  currentUsage: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertAdminApiKey = z.infer<typeof insertAdminApiKeySchema>;
+export type AdminApiKey = typeof adminApiKeys.$inferSelect;
+
+// AI Usage Tracking table - tracks AI consumption per user
+export const aiUsageTracking = pgTable('ai_usage_tracking', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  provider: varchar('provider', { length: 50 }).notNull(), // anthropic, openai, etc.
+  endpoint: varchar('endpoint', { length: 255 }).notNull(), // /chat, /assistant, /code-explain, etc.
+  requestTokens: integer('request_tokens').notNull(),
+  responseTokens: integer('response_tokens').notNull(),
+  totalTokens: integer('total_tokens').notNull(),
+  cost: real('cost').notNull(), // Cost in USD
+  subscriptionId: integer('subscription_id'), // Link to user's subscription
+  projectId: integer('project_id').references(() => projects.id),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const insertAiUsageTrackingSchema = createInsertSchema(aiUsageTracking).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAiUsageTracking = z.infer<typeof insertAiUsageTrackingSchema>;
+export type AiUsageTracking = typeof aiUsageTracking.$inferSelect;
+
+// User Subscriptions table - tracks user subscription plans
+export const userSubscriptions = pgTable('user_subscriptions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  planId: varchar('plan_id', { length: 50 }).notNull(), // free, hacker, pro, enterprise
+  status: varchar('status', { length: 20 }).notNull(), // active, canceled, past_due
+  monthlyAiTokens: integer('monthly_ai_tokens').notNull(), // Monthly AI token allowance
+  usedAiTokens: integer('used_ai_tokens').default(0).notNull(), // Used tokens this month
+  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+  currentPeriodStart: timestamp('current_period_start'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  cancelAt: timestamp('cancel_at'),
+  cancelledAt: timestamp('cancelled_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
+  id: true,
+  usedAiTokens: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+
 // Announcements table
 export const announcements = pgTable('announcements', {
   id: serial('id').primaryKey(),
