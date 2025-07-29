@@ -36,7 +36,10 @@ import {
   FileCode,
   X,
   Sparkles,
-  Bot
+  Bot,
+  Clock,
+  Package,
+  MessageCircle
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -54,6 +57,11 @@ import { ReplitDatabase } from '@/components/ReplitDatabase';
 // Import collaboration components
 import { CollaborationPanel } from '@/components/CollaborationPanel';
 import { useYjsCollaboration } from '@/hooks/useYjsCollaboration';
+
+// Import new feature components
+import { CommentsPanel } from '@/components/CommentsPanel';
+import { HistoryTimeline } from '@/components/HistoryTimeline';
+import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 
 type MobileTab = 'files' | 'agent' | 'secrets' | 'database' | 'auth';
 
@@ -73,6 +81,7 @@ const ReplitProjectPage = () => {
   const [showTerminal, setShowTerminal] = useState(false); // Hide terminal by default like Replit
   const [mobileTab, setMobileTab] = useState<MobileTab>('agent'); // Default to agent on mobile like Replit
   const [showCollaboration, setShowCollaboration] = useState(false);
+  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions'>('ai');
   const [aiMode, setAIMode] = useState<'agent' | 'advanced'>('agent'); // Default to agent mode
 
   // Initialize collaboration
@@ -427,29 +436,69 @@ const ReplitProjectPage = () => {
           </Button>
 
           <Button
-            variant="ghost"
+            variant={rightPanelMode === 'ai' ? 'default' : 'ghost'}
             size="icon"
-            onClick={() => setShowAIChat(!showAIChat)}
+            onClick={() => {
+              setRightPanelMode('ai');
+              setShowAIChat(true);
+            }}
             className="h-8 w-8"
           >
             <MessageSquare className="h-4 w-4" />
           </Button>
 
-          {collaboration.collaborators.length > 0 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowCollaboration(!showCollaboration)}
-              className="h-8 w-8 relative"
-            >
-              <Users className="h-4 w-4" />
-              {collaboration.collaborators.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                  {collaboration.collaborators.length}
-                </span>
-              )}
-            </Button>
-          )}
+          <Button
+            variant={rightPanelMode === 'collaboration' ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setRightPanelMode('collaboration');
+              setShowAIChat(true);
+            }}
+            className="h-8 w-8 relative"
+          >
+            <Users className="h-4 w-4" />
+            {collaboration.collaborators.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {collaboration.collaborators.length}
+              </span>
+            )}
+          </Button>
+
+          <Button
+            variant={rightPanelMode === 'comments' ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setRightPanelMode('comments');
+              setShowAIChat(true);
+            }}
+            className="h-8 w-8"
+          >
+            <MessageCircle className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant={rightPanelMode === 'history' ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setRightPanelMode('history');
+              setShowAIChat(true);
+            }}
+            className="h-8 w-8"
+          >
+            <Clock className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant={rightPanelMode === 'extensions' ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setRightPanelMode('extensions');
+              setShowAIChat(true);
+            }}
+            className="h-8 w-8"
+          >
+            <Package className="h-4 w-4" />
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -526,54 +575,69 @@ const ReplitProjectPage = () => {
             </ResizablePanelGroup>
           </ResizablePanel>
 
-          {/* AI Panel */}
+          {/* Right Panel */}
           {showAIChat && (
             <>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
                 <div className="h-full overflow-y-auto flex flex-col">
-                  <Tabs value={aiMode} onValueChange={(value) => setAIMode(value as 'agent' | 'advanced')} className="h-full flex flex-col">
-                    <div className="border-b px-4 py-2">
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="agent" className="text-sm">
-                          <Bot className="h-4 w-4 mr-2" />
-                          AI Agent
-                        </TabsTrigger>
-                        <TabsTrigger value="advanced" className="text-sm">
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Advanced AI
-                        </TabsTrigger>
-                      </TabsList>
-                    </div>
-                    <TabsContent value="agent" className="flex-1 mt-0">
-                      <ReplitAgentChat
-                        projectId={projectId || 0}
-                      />
-                    </TabsContent>
-                    <TabsContent value="advanced" className="flex-1 mt-0">
-                      <AdvancedAIPanel
-                        projectId={projectId.toString()}
-                        selectedCode={selectedFile?.content || ''}
-                        selectedLanguage={project?.data?.language || 'javascript'}
-                      />
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              </ResizablePanel>
-            </>
-          )}
+                  {rightPanelMode === 'ai' && (
+                    <Tabs value={aiMode} onValueChange={(value) => setAIMode(value as 'agent' | 'advanced')} className="h-full flex flex-col">
+                      <div className="border-b px-4 py-2">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="agent" className="text-sm">
+                            <Bot className="h-4 w-4 mr-2" />
+                            AI Agent
+                          </TabsTrigger>
+                          <TabsTrigger value="advanced" className="text-sm">
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Advanced AI
+                          </TabsTrigger>
+                        </TabsList>
+                      </div>
+                      <TabsContent value="agent" className="flex-1 mt-0">
+                        <ReplitAgentChat
+                          projectId={projectId || 0}
+                        />
+                      </TabsContent>
+                      <TabsContent value="advanced" className="flex-1 mt-0">
+                        <AdvancedAIPanel
+                          projectId={projectId.toString()}
+                          selectedCode={selectedFile?.content || ''}
+                          selectedLanguage={project?.data?.language || 'javascript'}
+                        />
+                      </TabsContent>
+                    </Tabs>
+                  )}
 
-          {/* Collaboration Panel */}
-          {showCollaboration && (
-            <>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-                <div className="h-full overflow-hidden">
-                  <CollaborationPanel
-                    collaborators={collaboration.collaborators}
-                    followingUserId={collaboration.followingUserId}
-                    onFollowUser={collaboration.followUser}
-                  />
+                  {rightPanelMode === 'collaboration' && (
+                    <CollaborationPanel
+                      collaborators={collaboration.collaborators}
+                      followingUserId={collaboration.followingUserId}
+                      onFollowUser={collaboration.followUser}
+                      projectId={projectId}
+                    />
+                  )}
+
+                  {rightPanelMode === 'comments' && (
+                    <CommentsPanel
+                      projectId={projectId}
+                      selectedFile={selectedFile}
+                      selectedLineNumber={1} // TODO: Get actual selected line
+                    />
+                  )}
+
+                  {rightPanelMode === 'history' && (
+                    <HistoryTimeline
+                      projectId={projectId}
+                    />
+                  )}
+
+                  {rightPanelMode === 'extensions' && (
+                    <ExtensionsMarketplace
+                      projectId={projectId}
+                    />
+                  )}
                 </div>
               </ResizablePanel>
             </>

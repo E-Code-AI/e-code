@@ -1,414 +1,432 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Slider } from '@/components/ui/slider';
-import { 
-  Clock, 
-  GitBranch, 
-  FileEdit, 
-  FolderPlus, 
-  Package,
-  RefreshCw,
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import {
+  GitCommit,
+  GitBranch,
+  GitMerge,
+  GitPullRequest,
+  Clock,
+  RotateCcw,
   Eye,
+  Code2,
+  FileText,
+  Plus,
+  Minus,
+  Edit,
+  ChevronRight,
+  ChevronDown,
+  Calendar,
+  User,
+  Tag,
   Download,
-  CheckCircle,
-  XCircle,
-  PlayCircle,
-  ChevronRight
 } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { toast } from '@/hooks/use-toast';
 
 interface HistoryEntry {
-  id: number;
-  projectId: number;
-  type: 'file_created' | 'file_updated' | 'file_deleted' | 'dependency_added' | 
-         'deployment' | 'execution' | 'rollback';
+  id: string;
+  type: 'commit' | 'branch' | 'merge' | 'tag' | 'restore';
   title: string;
   description?: string;
-  userId: number;
-  username: string;
-  timestamp: string;
-  details?: Record<string, any>;
-  snapshot?: {
-    files: { path: string; content: string }[];
-    dependencies: Record<string, string>;
+  author: {
+    id: string;
+    name: string;
+    avatar?: string;
   };
-}
-
-interface Checkpoint {
-  id: number;
-  projectId: number;
-  name: string;
-  description?: string;
-  automatic: boolean;
-  timestamp: string;
-  snapshot: {
-    files: { path: string; content: string }[];
-    dependencies: Record<string, string>;
-    environmentVariables: Record<string, string>;
+  timestamp: Date;
+  hash: string;
+  changes: {
+    additions: number;
+    deletions: number;
+    files: Array<{
+      name: string;
+      status: 'added' | 'modified' | 'deleted';
+      additions: number;
+      deletions: number;
+    }>;
   };
+  tags?: string[];
+  branch?: string;
+  isRestorePoint?: boolean;
 }
 
 interface HistoryTimelineProps {
   projectId: number;
+  className?: string;
 }
 
-export function HistoryTimeline({ projectId }: HistoryTimelineProps) {
-  const queryClient = useQueryClient();
-  const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
-  const [compareMode, setCompareMode] = useState(false);
-  const [compareEntries, setCompareEntries] = useState<[number?, number?]>([]);
-  const [timeRange, setTimeRange] = useState([0, 100]);
+export function HistoryTimeline({ projectId, className }: HistoryTimelineProps) {
+  const { toast } = useToast();
+  const [history] = useState<HistoryEntry[]>([
+    {
+      id: '1',
+      type: 'commit',
+      title: 'Fix API error handling and add retry logic',
+      description: 'Improved error handling for failed API requests with exponential backoff',
+      author: {
+        id: '1',
+        name: 'Alice Chen',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice',
+      },
+      timestamp: new Date(Date.now() - 3600000),
+      hash: '7f8d9c2',
+      changes: {
+        additions: 42,
+        deletions: 15,
+        files: [
+          { name: 'src/api/client.ts', status: 'modified', additions: 35, deletions: 10 },
+          { name: 'src/utils/retry.ts', status: 'added', additions: 7, deletions: 0 },
+          { name: 'src/old-api.ts', status: 'deleted', additions: 0, deletions: 5 },
+        ],
+      },
+      tags: ['bugfix', 'api'],
+      branch: 'main',
+      isRestorePoint: true,
+    },
+    {
+      id: '2',
+      type: 'tag',
+      title: 'v1.2.0 Release',
+      description: 'New features: Dark mode, improved performance, bug fixes',
+      author: {
+        id: '2',
+        name: 'Bob Smith',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob',
+      },
+      timestamp: new Date(Date.now() - 7200000),
+      hash: '3b5a7f1',
+      changes: {
+        additions: 250,
+        deletions: 120,
+        files: [],
+      },
+      tags: ['release'],
+    },
+    {
+      id: '3',
+      type: 'merge',
+      title: 'Merge pull request #42 from feature/dark-mode',
+      description: 'Add dark mode support',
+      author: {
+        id: '3',
+        name: 'Carol Davis',
+      },
+      timestamp: new Date(Date.now() - 14400000),
+      hash: '9e2f4a8',
+      changes: {
+        additions: 180,
+        deletions: 45,
+        files: [
+          { name: 'src/styles/theme.css', status: 'added', additions: 120, deletions: 0 },
+          { name: 'src/components/ThemeToggle.tsx', status: 'added', additions: 60, deletions: 0 },
+          { name: 'src/index.css', status: 'modified', additions: 0, deletions: 45 },
+        ],
+      },
+      branch: 'feature/dark-mode',
+    },
+  ]);
 
-  // Fetch history
-  const { data: history = [] } = useQuery<HistoryEntry[]>({
-    queryKey: ['/api/projects', projectId, 'history'],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/history`)
-  });
-
-  // Fetch checkpoints
-  const { data: checkpoints = [] } = useQuery<Checkpoint[]>({
-    queryKey: ['/api/projects', projectId, 'checkpoints'],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/checkpoints`)
-  });
-
-  // Create checkpoint mutation
-  const createCheckpointMutation = useMutation({
-    mutationFn: (data: { name: string; description?: string }) =>
-      apiRequest(`/api/projects/${projectId}/checkpoints`, {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'checkpoints'] });
-      toast({
-        title: "Checkpoint created",
-        description: "Your project state has been saved"
-      });
-    }
-  });
-
-  // Rollback mutation
-  const rollbackMutation = useMutation({
-    mutationFn: (entryId: number) =>
-      apiRequest(`/api/projects/${projectId}/rollback/${entryId}`, {
-        method: 'POST'
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
-      toast({
-        title: "Rollback successful",
-        description: "Your project has been restored to the selected state"
-      });
-      setSelectedEntry(null);
-    }
-  });
-
-  // Filter history by time range
-  const filteredHistory = history.filter((entry, index) => {
-    const position = (index / Math.max(history.length - 1, 1)) * 100;
-    return position >= timeRange[0] && position <= timeRange[1];
-  });
+  const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'timeline' | 'graph'>('timeline');
 
   const getEntryIcon = (type: HistoryEntry['type']) => {
     switch (type) {
-      case 'file_created': return <FolderPlus className="h-4 w-4" />;
-      case 'file_updated': return <FileEdit className="h-4 w-4" />;
-      case 'file_deleted': return <XCircle className="h-4 w-4" />;
-      case 'dependency_added': return <Package className="h-4 w-4" />;
-      case 'deployment': return <GitBranch className="h-4 w-4" />;
-      case 'execution': return <PlayCircle className="h-4 w-4" />;
-      case 'rollback': return <RefreshCw className="h-4 w-4" />;
-      default: return <Clock className="h-4 w-4" />;
+      case 'commit':
+        return <GitCommit className="h-4 w-4" />;
+      case 'branch':
+        return <GitBranch className="h-4 w-4" />;
+      case 'merge':
+        return <GitMerge className="h-4 w-4" />;
+      case 'tag':
+        return <Tag className="h-4 w-4" />;
+      case 'restore':
+        return <RotateCcw className="h-4 w-4" />;
     }
   };
 
   const getEntryColor = (type: HistoryEntry['type']) => {
     switch (type) {
-      case 'file_created': return 'text-green-600';
-      case 'file_updated': return 'text-blue-600';
-      case 'file_deleted': return 'text-red-600';
-      case 'dependency_added': return 'text-purple-600';
-      case 'deployment': return 'text-orange-600';
-      case 'execution': return 'text-cyan-600';
-      case 'rollback': return 'text-yellow-600';
-      default: return 'text-gray-600';
+      case 'commit':
+        return 'text-blue-500';
+      case 'branch':
+        return 'text-purple-500';
+      case 'merge':
+        return 'text-green-500';
+      case 'tag':
+        return 'text-yellow-500';
+      case 'restore':
+        return 'text-orange-500';
     }
   };
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'added':
+        return 'text-green-500';
+      case 'modified':
+        return 'text-yellow-500';
+      case 'deleted':
+        return 'text-red-500';
+      default:
+        return 'text-muted-foreground';
+    }
+  };
+
+  const formatTime = (date: Date) => {
+    const diff = Date.now() - date.getTime();
     if (diff < 60000) return 'Just now';
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
     return date.toLocaleDateString();
   };
 
-  const handleCompareSelect = (entryId: number) => {
-    if (!compareMode) return;
-    
-    if (!compareEntries[0]) {
-      setCompareEntries([entryId]);
-    } else if (!compareEntries[1] && compareEntries[0] !== entryId) {
-      setCompareEntries([compareEntries[0], entryId]);
-    } else {
-      setCompareEntries([entryId]);
-    }
+  const handleRestore = (entry: HistoryEntry) => {
+    toast({
+      title: "Restoring to checkpoint",
+      description: `Rolling back to ${entry.title} (${entry.hash})`,
+    });
+  };
+
+  const handleView = (entry: HistoryEntry) => {
+    toast({
+      title: "Viewing checkpoint",
+      description: `Opening ${entry.hash} in read-only mode`,
+    });
+  };
+
+  const handleDownload = (entry: HistoryEntry) => {
+    toast({
+      title: "Downloading snapshot",
+      description: `Preparing download for ${entry.hash}`,
+    });
+  };
+
+  const toggleExpanded = (entryId: string) => {
+    setExpandedEntry(expandedEntry === entryId ? null : entryId);
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Project History</h3>
-          <div className="flex gap-2">
+    <Card className={cn("h-full", className)}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-medium flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            History Timeline
+          </CardTitle>
+          <div className="flex items-center gap-2">
             <Button
               size="sm"
-              variant={compareMode ? "default" : "outline"}
-              onClick={() => {
-                setCompareMode(!compareMode);
-                setCompareEntries([]);
-              }}
+              variant={viewMode === 'timeline' ? 'default' : 'outline'}
+              onClick={() => setViewMode('timeline')}
+              className="h-8"
             >
-              <Eye className="h-3 w-3 mr-1" />
-              Compare
+              Timeline
             </Button>
             <Button
               size="sm"
-              onClick={() => {
-                const name = `Checkpoint ${new Date().toLocaleString()}`;
-                createCheckpointMutation.mutate({ name });
-              }}
+              variant={viewMode === 'graph' ? 'default' : 'outline'}
+              onClick={() => setViewMode('graph')}
+              className="h-8"
             >
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Create Checkpoint
+              Graph
             </Button>
           </div>
         </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <ScrollArea className="h-[calc(100%-4rem)]">
+          <div className="p-4">
+            {viewMode === 'timeline' ? (
+              <div className="space-y-4">
+                {history.map((entry, index) => (
+                  <div key={entry.id} className="relative">
+                    {/* Timeline Line */}
+                    {index < history.length - 1 && (
+                      <div className="absolute left-4 top-12 bottom-0 w-0.5 bg-border" />
+                    )}
 
-        {/* Time range slider */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Time Range</span>
-            <span>{filteredHistory.length} of {history.length} entries</span>
-          </div>
-          <Slider
-            value={timeRange}
-            onValueChange={setTimeRange}
-            max={100}
-            step={1}
-            className="w-full"
-          />
-        </div>
-      </div>
-
-      <Tabs defaultValue="timeline" className="flex-1">
-        <TabsList className="w-full">
-          <TabsTrigger value="timeline" className="flex-1">
-            Timeline
-          </TabsTrigger>
-          <TabsTrigger value="checkpoints" className="flex-1">
-            Checkpoints ({checkpoints.length})
-          </TabsTrigger>
-          <TabsTrigger value="visual" className="flex-1">
-            Visual History
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="timeline" className="flex-1">
-          <ScrollArea className="h-[calc(100vh-300px)]">
-            <div className="p-4 space-y-2">
-              {filteredHistory.map((entry, index) => (
-                <Card 
-                  key={entry.id}
-                  className={cn(
-                    "cursor-pointer transition-colors hover:bg-accent",
-                    selectedEntry?.id === entry.id && "ring-2 ring-primary",
-                    compareMode && compareEntries.includes(entry.id) && "bg-blue-50 dark:bg-blue-950"
-                  )}
-                  onClick={() => {
-                    if (compareMode) {
-                      handleCompareSelect(entry.id);
-                    } else {
-                      setSelectedEntry(entry);
-                    }
-                  }}
-                >
-                  <CardContent className="p-3">
-                    <div className="flex items-start gap-3">
-                      <div className={cn(
-                        "mt-1 p-1.5 rounded-full bg-background border",
-                        getEntryColor(entry.type)
-                      )}>
+                    <div className="flex gap-3">
+                      {/* Timeline Node */}
+                      <div
+                        className={cn(
+                          "relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 bg-background",
+                          getEntryColor(entry.type)
+                        )}
+                      >
                         {getEntryIcon(entry.type)}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <h4 className="font-medium text-sm truncate">
-                            {entry.title}
-                          </h4>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {formatTime(entry.timestamp)}
-                          </span>
-                        </div>
-                        {entry.description && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {entry.description}
-                          </p>
-                        )}
-                        <div className="flex items-center gap-2 mt-2">
-                          <Avatar className="h-5 w-5">
-                            <AvatarFallback className="text-xs">
-                              {entry.username[0].toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs text-muted-foreground">
-                            {entry.username}
-                          </span>
-                          {entry.details?.filesChanged && (
-                            <Badge variant="secondary" className="text-xs">
-                              {entry.details.filesChanged} files
-                            </Badge>
+
+                      {/* Entry Content */}
+                      <div className="flex-1 pb-4">
+                        <div
+                          className="cursor-pointer rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                          onClick={() => toggleExpanded(entry.id)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="text-sm font-medium">
+                                  {entry.title}
+                                </h4>
+                                {entry.isRestorePoint && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Restore Point
+                                  </Badge>
+                                )}
+                              </div>
+                              {entry.description && (
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  {entry.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Avatar className="h-5 w-5">
+                                    <AvatarImage src={entry.author.avatar} />
+                                    <AvatarFallback className="text-xs">
+                                      {entry.author.name.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span>{entry.author.name}</span>
+                                </div>
+                                <span>{formatTime(entry.timestamp)}</span>
+                                <code className="font-mono">{entry.hash}</code>
+                                {entry.branch && (
+                                  <div className="flex items-center gap-1">
+                                    <GitBranch className="h-3 w-3" />
+                                    <span>{entry.branch}</span>
+                                  </div>
+                                )}
+                              </div>
+                              {entry.tags && entry.tags.length > 0 && (
+                                <div className="flex gap-1 mt-2">
+                                  {entry.tags.map((tag) => (
+                                    <Badge key={tag} variant="secondary" className="text-xs">
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                            >
+                              {expandedEntry === entry.id ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+
+                          {/* Expanded Content */}
+                          {expandedEntry === entry.id && (
+                            <>
+                              <Separator className="my-3" />
+                              <div className="space-y-3">
+                                {/* Change Summary */}
+                                <div className="flex items-center gap-4 text-xs">
+                                  <div className="flex items-center gap-1">
+                                    <Plus className="h-3 w-3 text-green-500" />
+                                    <span>{entry.changes.additions} additions</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Minus className="h-3 w-3 text-red-500" />
+                                    <span>{entry.changes.deletions} deletions</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <FileText className="h-3 w-3" />
+                                    <span>{entry.changes.files.length} files changed</span>
+                                  </div>
+                                </div>
+
+                                {/* Changed Files */}
+                                {entry.changes.files.length > 0 && (
+                                  <div className="space-y-1">
+                                    {entry.changes.files.map((file) => (
+                                      <div
+                                        key={file.name}
+                                        className="flex items-center justify-between text-xs"
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <Code2 className={cn("h-3 w-3", getStatusColor(file.status))} />
+                                          <span className="font-mono">{file.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-green-500">+{file.additions}</span>
+                                          <span className="text-red-500">-{file.deletions}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Actions */}
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleView(entry);
+                                    }}
+                                  >
+                                    <Eye className="h-3.5 w-3.5 mr-1" />
+                                    View
+                                  </Button>
+                                  {entry.isRestorePoint && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRestore(entry);
+                                      }}
+                                    >
+                                      <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                                      Restore
+                                    </Button>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDownload(entry);
+                                    }}
+                                  >
+                                    <Download className="h-3.5 w-3.5 mr-1" />
+                                    Download
+                                  </Button>
+                                </div>
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>
-                      {index < filteredHistory.length - 1 && (
-                        <div className="absolute left-7 top-12 w-0.5 h-20 bg-border" />
-                      )}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
-
-          {/* Selected entry details */}
-          {selectedEntry && !compareMode && (
-            <div className="p-4 border-t space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Entry Details</h4>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => rollbackMutation.mutate(selectedEntry.id)}
-                >
-                  <RefreshCw className="h-3 w-3 mr-1" />
-                  Rollback to This Point
-                </Button>
+                  </div>
+                ))}
               </div>
-              {selectedEntry.details && (
-                <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-32">
-                  {JSON.stringify(selectedEntry.details, null, 2)}
-                </pre>
-              )}
-            </div>
-          )}
-
-          {/* Compare mode */}
-          {compareMode && compareEntries.length === 2 && (
-            <div className="p-4 border-t">
-              <Button
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  // Open comparison view
-                  console.log('Compare', compareEntries);
-                }}
-              >
-                Compare Selected Entries
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="checkpoints" className="flex-1 p-4">
-          <ScrollArea className="h-[calc(100vh-300px)]">
-            <div className="space-y-3">
-              {checkpoints.map(checkpoint => (
-                <Card key={checkpoint.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-base flex items-center gap-2">
-                          {checkpoint.name}
-                          {checkpoint.automatic && (
-                            <Badge variant="secondary" className="text-xs">
-                              Auto
-                            </Badge>
-                          )}
-                        </CardTitle>
-                        {checkpoint.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {checkpoint.description}
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(checkpoint.timestamp).toLocaleString()}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => rollbackMutation.mutate(checkpoint.id)}
-                      >
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        Restore
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                      >
-                        <Download className="h-3 w-3 mr-1" />
-                        Download
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        Preview
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
-        </TabsContent>
-
-        <TabsContent value="visual" className="flex-1 p-4">
-          <div className="h-[calc(100vh-300px)] flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-48 h-48 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <Clock className="h-24 w-24 text-white" />
+            ) : (
+              // Graph View Placeholder
+              <div className="flex items-center justify-center h-96 text-muted-foreground">
+                <div className="text-center">
+                  <GitPullRequest className="h-12 w-12 mx-auto mb-2" />
+                  <p className="text-sm">Graph view coming soon</p>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold">Visual Timeline</h3>
-              <p className="text-sm text-muted-foreground max-w-md">
-                Interactive visual representation of your project's history with 
-                branching paths, merge points, and key milestones
-              </p>
-              <Button>
-                <ChevronRight className="h-4 w-4 mr-2" />
-                Launch Visual Explorer
-              </Button>
-            </div>
+            )}
           </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 }

@@ -36,8 +36,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/login", credentials);
       return await res.json();
     },
-    onSuccess: (user: SelectUser) => {
+    onSuccess: async (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Invalidate and refetch all queries that depend on authentication
+      await queryClient.invalidateQueries();
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.username}!`,
