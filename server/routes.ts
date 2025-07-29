@@ -61,6 +61,7 @@ import { apiManager } from "./api/api-manager";
 import { projectExporter } from "./import-export/exporter";
 import { deploymentManager } from "./deployment";
 import { deploymentManager as enterpriseDeploymentManager } from "./services/deployment-manager";
+import { realDeploymentService } from "./deployment/real-deployment-service";
 import * as path from "path";
 import adminRoutes from "./admin/routes";
 import OpenAI from 'openai';
@@ -68,7 +69,6 @@ import { performanceMiddleware } from './monitoring/performance';
 import { monitoringRouter } from './monitoring/routes';
 import { nixPackageManager } from './package-management/nix-package-manager';
 import { nixEnvironmentBuilder } from './package-management/nix-environment-builder';
-import { simplePackageInstaller } from './package-management/simple-package-installer';
 import { simpleDeployer } from './deployment/simple-deployer';
 import { simpleGitManager } from './git/simple-git-manager';
 import { simpleWorkflowRunner } from './workflows/simple-workflow-runner';
@@ -83,6 +83,7 @@ import { simpleBackupManager } from './backup/simple-backup-manager';
 import { edgeManager } from './edge/edge-manager';
 import { cdnService } from './edge/cdn-service';
 import { TeamsService } from './teams/teams-service';
+import { authCompleteRouter } from './routes/auth-complete';
 
 const logger = createLogger('routes');
 const teamsService = new TeamsService();
@@ -873,13 +874,21 @@ API will be available at http://localhost:3000
         return res.status(404).json({ error: 'Project not found' });
       }
       
-      // Use simple deployer for actual deployment
-      const deploymentResult = await simpleDeployer.deploy({
-        projectId: projectId.toString(),
+      // Use real deployment service for actual deployment
+      const deploymentResult = await realDeploymentService.deploy({
+        projectId: projectId,
         projectName: project.name,
-        environment,
-        region,
-        customDomain
+        type: req.body.type || 'autoscale',
+        environment: environment as 'development' | 'staging' | 'production',
+        region: region ? [region] : ['us-east-1'],
+        customDomain,
+        sslEnabled: true,
+        environmentVars: req.body.environmentVars || {},
+        buildCommand: req.body.buildCommand,
+        startCommand: req.body.startCommand,
+        scaling: req.body.scaling,
+        resources: req.body.resources,
+        healthCheck: req.body.healthCheck
       });
       
       // Create deployment record
@@ -887,17 +896,18 @@ API will be available at http://localhost:3000
         projectId,
         status: deploymentResult.status,
         url: deploymentResult.url,
-        logs: deploymentResult.logs.join('\n'),
+        logs: [...deploymentResult.build.logs, ...deploymentResult.deployment.logs].join('\n'),
         version: `v${Date.now()}`
       });
       
       // Monitor deployment status
       const checkDeploymentStatus = setInterval(async () => {
-        const status = await simpleDeployer.getDeploymentStatus(deploymentResult.id);
-        if (status && status.status !== 'deploying') {
+        const status = await realDeploymentService.getDeploymentStatus(deploymentResult.id);
+        if (status && status.status !== 'deploying' && status.status !== 'building') {
+          const logs = await realDeploymentService.getDeploymentLogs(deploymentResult.id);
           await storage.updateDeployment(deployment.id, {
-            status: status.status === 'deployed' ? 'running' : 'failed',
-            logs: status.logs.join('\n'),
+            status: status.status === 'active' ? 'running' : 'failed',
+            logs: [...logs.build, ...logs.deployment].join('\n'),
             updatedAt: new Date()
           });
           clearInterval(checkDeploymentStatus);
@@ -3109,11 +3119,11 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  // Package Management API with simple installer
+  // Package Management API with Nix
   app.get('/api/projects/:id/packages', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = req.params.id;
-      const packages = await simplePackageInstaller.getInstalledPackages(projectId);
+      const packages = await nixPackageManager.getInstalledPackages(projectId.toString());
       res.json(packages);
     } catch (error) {
       console.error('Error fetching packages:', error);
@@ -3130,8 +3140,8 @@ Generate a comprehensive application based on the user's request. Include all ne
         return res.status(400).json({ error: 'Package name is required' });
       }
       
-      // Install package using simple installer
-      await simplePackageInstaller.installPackage(projectId, name, language);
+      // Install package using Nix
+      await nixPackageManager.installPackage(projectId.toString(), name);
       
       res.json({ name, status: 'installed' });
     } catch (error) {
@@ -3145,7 +3155,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       const projectId = req.params.id;
       const packageName = req.params.packageName;
       
-      await simplePackageInstaller.removePackage(projectId, packageName);
+      await nixPackageManager.removePackage(projectId.toString(), packageName);
       res.json({ name: packageName, status: 'removed' });
     } catch (error) {
       console.error('Error uninstalling package:', error);
@@ -3161,8 +3171,8 @@ Generate a comprehensive application based on the user's request. Include all ne
         return res.status(400).json({ error: 'Search query is required' });
       }
       
-      // Search packages using simple installer
-      const results = await simplePackageInstaller.searchPackages(q, language as string);
+      // Search packages using Nix
+      const results = await nixPackageManager.searchPackages(q);
       res.json(results);
     } catch (error) {
       console.error('Error searching packages:', error);
@@ -3170,12 +3180,12 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  // Additional package management endpoints (simplified)
+  // Additional package management endpoints (Nix)
   app.post('/api/projects/:id/packages/update', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = req.params.id;
-      // For now, just return success - in a real implementation this would update all packages
-      res.json({ status: 'updated', message: 'Package update functionality not yet implemented' });
+      await nixPackageManager.updateAllPackages(projectId.toString());
+      res.json({ status: 'updated', message: 'All packages updated to latest versions' });
     } catch (error) {
       console.error('Error updating packages:', error);
       res.status(500).json({ error: 'Failed to update packages' });
@@ -3185,8 +3195,8 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.post('/api/projects/:id/packages/rollback', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = req.params.id;
-      // For now, just return success - rollback would need package history tracking
-      res.json({ status: 'rolled back', message: 'Rollback functionality not yet implemented' });
+      await nixPackageManager.rollbackEnvironment(projectId.toString());
+      res.json({ status: 'rolled back', message: 'Environment rolled back to previous state' });
     } catch (error) {
       console.error('Error rolling back packages:', error);
       res.status(500).json({ error: 'Failed to rollback packages' });
@@ -3196,11 +3206,11 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.get('/api/projects/:id/packages/environment', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = req.params.id;
-      // Return package.json content for Node.js projects
-      const packages = await simplePackageInstaller.getInstalledPackages(projectId);
+      // Export Nix environment as shell.nix
+      const shellNix = await nixPackageManager.exportEnvironment(projectId.toString());
       res.json({ 
-        environment: 'package.json',
-        packages: packages 
+        environment: 'shell.nix',
+        content: shellNix 
       });
     } catch (error) {
       console.error('Error exporting environment:', error);
@@ -4203,6 +4213,9 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   // Monitoring routes
   app.use("/api/monitoring", monitoringRouter);
+  
+  // Authentication complete routes
+  app.use('/api/auth', authCompleteRouter);
   
   // Notification routes
   app.use(notificationRoutes);

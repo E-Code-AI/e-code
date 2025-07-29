@@ -59,6 +59,16 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, update: Partial<User>): Promise<User>;
   
+  // Email verification methods
+  saveEmailVerificationToken(userId: number, token: string): Promise<void>;
+  getEmailVerificationByToken(token: string): Promise<{ userId: number; expiresAt: Date } | undefined>;
+  deleteEmailVerificationToken(token: string): Promise<void>;
+  
+  // Password reset methods
+  savePasswordResetToken(userId: number, token: string): Promise<void>;
+  getPasswordResetByToken(token: string): Promise<{ userId: number; expiresAt: Date } | undefined>;
+  deletePasswordResetToken(token: string): Promise<void>;
+  
   // Project methods
   getAllProjects(): Promise<Project[]>;
   getProjectsByUser(userId: number): Promise<Project[]>;
@@ -371,6 +381,80 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user;
+  }
+  
+  // Email verification methods
+  async saveEmailVerificationToken(userId: number, token: string): Promise<void> {
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    await db.update(users)
+      .set({
+        emailVerificationToken: token,
+        emailVerificationExpiry: expiresAt,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+  
+  async getEmailVerificationByToken(token: string): Promise<{ userId: number; expiresAt: Date } | undefined> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.emailVerificationToken, token));
+    
+    if (!user || !user.emailVerificationExpiry) {
+      return undefined;
+    }
+    
+    return {
+      userId: user.id,
+      expiresAt: new Date(user.emailVerificationExpiry)
+    };
+  }
+  
+  async deleteEmailVerificationToken(token: string): Promise<void> {
+    await db.update(users)
+      .set({
+        emailVerificationToken: null,
+        emailVerificationExpiry: null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.emailVerificationToken, token));
+  }
+  
+  // Password reset methods
+  async savePasswordResetToken(userId: number, token: string): Promise<void> {
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await db.update(users)
+      .set({
+        passwordResetToken: token,
+        passwordResetExpiry: expiresAt,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+  
+  async getPasswordResetByToken(token: string): Promise<{ userId: number; expiresAt: Date } | undefined> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.passwordResetToken, token));
+    
+    if (!user || !user.passwordResetExpiry) {
+      return undefined;
+    }
+    
+    return {
+      userId: user.id,
+      expiresAt: new Date(user.passwordResetExpiry)
+    };
+  }
+  
+  async deletePasswordResetToken(token: string): Promise<void> {
+    await db.update(users)
+      .set({
+        passwordResetToken: null,
+        passwordResetExpiry: null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.passwordResetToken, token));
   }
   
   // Project methods

@@ -63,8 +63,19 @@ app.use((req, res, next) => {
       const { seedDatabase } = await import("./db-seed");
       await seedDatabase();
     }
+    
+    // Initialize Nix package manager
+    try {
+      console.log("Initializing Nix package manager...");
+      const { nixPackageManager } = await import("./package-management/nix-package-manager");
+      await nixPackageManager.initialize();
+      console.log("Nix package manager initialized");
+    } catch (nixError) {
+      console.warn("Warning: Nix package manager initialization failed:", nixError);
+      console.warn("Package management features may be limited");
+    }
   } catch (error) {
-    console.error("Failed to initialize database:", error);
+    console.error("Failed to initialize:", error);
   }
   
   const server = await registerRoutes(app);
