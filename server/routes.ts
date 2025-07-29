@@ -267,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         features: t.features,
         isFeatured: t.isFeatured,
         isOfficial: t.isOfficial,
-        createdAt: t.createdAt.toISOString().split('T')[0]
+        createdAt: t.createdAt ? t.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
       }));
       
       res.json(formattedTemplates);
@@ -413,7 +413,6 @@ API will be available at http://localhost:3000
           projectId: project.id,
           name: file.name,
           content: file.content,
-          path: file.name,
         });
       }
 
@@ -878,13 +877,6 @@ API will be available at http://localhost:3000
         projectId,
         status: deploymentResult.status,
         url: deploymentResult.url,
-        buildLogs: '',
-        config: JSON.stringify({
-          environment,
-          region,
-          customDomain,
-          userId
-        }),
         logs: deploymentResult.logs.join('\n'),
         version: `v${Date.now()}`
       });
@@ -1492,7 +1484,11 @@ API will be available at http://localhost:3000
       await simpleGitManager.initRepository(project.id.toString());
       
       // Create initial commit with README
-      await storage.createFile(project.id, 'README.md', `# ${name}\n\n${description || 'A new E-Code project'}`);
+      await storage.createFile({
+        projectId: project.id,
+        name: 'README.md',
+        content: `# ${name}\n\n${description || 'A new E-Code project'}`
+      });
       await simpleGitManager.commit(project.id.toString(), 'Initial commit');
       
       res.json({
@@ -3982,7 +3978,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       res.json(team);
     } catch (error) {
       console.error('Error updating team:', error);
-      res.status(500).json({ error: error.message || 'Failed to update team' });
+      res.status(500).json({ error: (error as Error).message || 'Failed to update team' });
     }
   });
 
@@ -3995,7 +3991,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting team:', error);
-      res.status(500).json({ error: error.message || 'Failed to delete team' });
+      res.status(500).json({ error: (error as Error).message || 'Failed to delete team' });
     }
   });
 
