@@ -13,7 +13,12 @@ export class OpenAIProvider implements AIProvider {
   private client: OpenAI;
   
   constructor(apiKey: string) {
-    this.client = new OpenAI({ apiKey });
+    this.client = new OpenAI({ 
+      apiKey,
+      // Enhanced configuration for stability
+      maxRetries: 3,
+      timeout: 60000 // 60 second timeout
+    });
   }
   
   async generateChat(messages: any[], options?: any): Promise<string> {
@@ -44,7 +49,12 @@ export class AnthropicProvider implements AIProvider {
   private client: Anthropic;
   
   constructor(apiKey: string) {
-    this.client = new Anthropic({ apiKey });
+    this.client = new Anthropic({ 
+      apiKey,
+      // Enhanced configuration for stability
+      maxRetries: 3,
+      timeout: 60000 // 60 second timeout
+    });
   }
   
   async generateChat(messages: any[], options?: any): Promise<string> {
