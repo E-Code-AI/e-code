@@ -4,6 +4,9 @@
 export interface BuildAction {
   type: 'create_file' | 'create_folder' | 'install_package' | 'deploy' | 'run_command';
   data: any;
+  // For tracking folder IDs when creating nested structures
+  folderRef?: string; // Reference name for created folders
+  parentRef?: string; // Reference to parent folder
 }
 
 export interface AppTemplate {
@@ -40,16 +43,19 @@ export class AutonomousBuilder {
       actions: [
         {
           type: 'create_folder',
-          data: { path: 'src' }
+          data: { name: 'src', isFolder: true },
+          folderRef: 'src'
         },
         {
           type: 'create_folder',
-          data: { path: 'src/components' }
+          data: { name: 'components', isFolder: true },
+          parentRef: 'src',
+          folderRef: 'src/components'
         },
         {
           type: 'create_file',
           data: {
-            path: 'index.html',
+            name: 'index.html',
             content: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,7 +74,7 @@ export class AutonomousBuilder {
         {
           type: 'create_file',
           data: {
-            path: 'package.json',
+            name: 'package.json',
             content: JSON.stringify({
               name: 'todo-app',
               version: '1.0.0',
@@ -94,8 +100,9 @@ export class AutonomousBuilder {
         },
         {
           type: 'create_file',
+          parentRef: 'src',
           data: {
-            path: 'src/App.tsx',
+            name: 'App.tsx',
             content: `import React, { useState } from 'react';
 import './App.css';
 
