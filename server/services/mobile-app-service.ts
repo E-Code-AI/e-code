@@ -71,6 +71,13 @@ export interface TouchGesture {
 }
 
 export class MobileAppService {
+  private mobileSessions = new Map<number, MobileSession>();
+  private pushNotifications = new Map<number, PushNotification>();
+  private offlineSyncs = new Map<number, OfflineSync>();
+  private sessionIdCounter = 1;
+  private notificationIdCounter = 1;
+  private syncIdCounter = 1;
+  
   private defaultGestures: TouchGesture[] = [
     {
       id: 'swipe-right-back',
@@ -123,27 +130,29 @@ export class MobileAppService {
     pushToken?: string;
   }): Promise<MobileSession> {
     // Check if device already registered
-    const existingSession = await this.storage.getMobileSession(data.userId, data.deviceId);
+    const existingSession = Array.from(this.mobileSessions.values()).find(
+      s => s.userId === data.userId && s.deviceId === data.deviceId
+    );
     
     if (existingSession) {
       // Update existing session
-      await this.storage.updateMobileSession(existingSession.id, {
-        pushToken: data.pushToken,
-        lastActiveAt: new Date()
-      });
+      existingSession.pushToken = data.pushToken;
+      existingSession.lastActiveAt = new Date();
       return existingSession;
     }
     
     // Create new session
+    const id = this.sessionIdCounter++;
     const session = {
       ...data,
+      id,
       lastActiveAt: new Date(),
       createdAt: new Date()
     };
     
-    const id = await this.storage.createMobileSession(session);
+    this.mobileSessions.set(id, session);
     
-    return { ...session, id };
+    return session;
   }
 
   async sendPushNotification(data: {
@@ -160,10 +169,12 @@ export class MobileAppService {
       createdAt: new Date()
     };
     
-    const id = await this.storage.createPushNotification(notification);
+    const id = this.notificationIdCounter++;
+    const notificationWithId = { ...notification, id };
+    this.pushNotifications.set(id, notificationWithId);
     
     // Get user's devices
-    const sessions = await this.storage.getUserMobileSessions(data.userId);
+    const sessions = Array.from(this.mobileSessions.values()).filter(s => s.userId === data.userId);
     
     for (const session of sessions) {
       if (session.pushToken) {
