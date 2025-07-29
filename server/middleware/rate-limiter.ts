@@ -1,126 +1,139 @@
-import { Request, Response, NextFunction } from "express";
-import { storage } from "../storage";
-import { AUTH_RATE_LIMITS, RateLimitConfig } from "../utils/auth-utils";
+import { Request, Response, NextFunction } from 'express';
+import { storage } from '../storage.js';
 
-interface RateLimitStore {
-  [key: string]: {
-    attempts: number;
-    resetTime: number;
-  };
-}
-
-// In-memory rate limit store (in production, use Redis)
-const rateLimitStore: RateLimitStore = {};
-
-// Clean up expired entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const key in rateLimitStore) {
-    if (rateLimitStore[key].resetTime < now) {
-      delete rateLimitStore[key];
-    }
+// Rate limit configurations
+export const AUTH_RATE_LIMITS = {
+  login: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxAttempts: 5,
+    blockDurationMs: 30 * 60 * 1000 // 30 minutes
+  },
+  passwordReset: {
+    windowMs: 60 * 60 * 1000, // 1 hour
+    maxAttempts: 3,
+    blockDurationMs: 60 * 60 * 1000 // 1 hour
+  },
+  emailVerification: {
+    windowMs: 60 * 60 * 1000, // 1 hour
+    maxAttempts: 5,
+    blockDurationMs: 60 * 60 * 1000 // 1 hour
   }
-}, 60 * 1000); // Clean up every minute
+};
+
+export type RateLimitConfig = typeof AUTH_RATE_LIMITS[keyof typeof AUTH_RATE_LIMITS];
+
+// In-memory store for rate limiting (could be replaced with Redis in production)
+const rateLimitStore = new Map<string, { attempts: number; firstAttempt: Date; blockedUntil?: Date }>();
 
 // Create rate limiter middleware
-export function createRateLimiter(type: keyof typeof AUTH_RATE_LIMITS) {
-  const config = AUTH_RATE_LIMITS[type];
+export function createRateLimiter(endpoint: keyof typeof AUTH_RATE_LIMITS) {
+  const config = AUTH_RATE_LIMITS[endpoint];
   
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Skip rate limiting in development
-    if (process.env.NODE_ENV === 'development') {
-      return next();
-    }
+    const identifier = `${endpoint}:${req.ip}`;
+    const now = new Date();
     
-    const identifier = req.ip || req.connection.remoteAddress || "unknown";
-    const key = `${type}:${identifier}`;
-    const now = Date.now();
-    
-    // Check if IP is already blocked
-    if (rateLimitStore[key] && rateLimitStore[key].resetTime > now) {
-      const remainingTime = Math.ceil((rateLimitStore[key].resetTime - now) / 1000);
+    // Check if IP is currently blocked
+    const record = rateLimitStore.get(identifier);
+    if (record?.blockedUntil && record.blockedUntil > now) {
+      const remainingTime = Math.ceil((record.blockedUntil.getTime() - now.getTime()) / 1000 / 60);
       return res.status(429).json({
-        message: "Too many attempts. Please try again later.",
-        retryAfter: remainingTime
+        error: 'Too many attempts',
+        retryAfter: remainingTime,
+        message: `Please try again in ${remainingTime} minutes`
       });
     }
     
-    // Initialize or update attempt count
-    if (!rateLimitStore[key] || rateLimitStore[key].resetTime < now) {
-      rateLimitStore[key] = {
-        attempts: 1,
-        resetTime: now + config.windowMs
-      };
+    // Initialize or update rate limit record
+    if (!record) {
+      rateLimitStore.set(identifier, { attempts: 1, firstAttempt: now });
+    } else if (now.getTime() - record.firstAttempt.getTime() > config.windowMs) {
+      // Reset if outside window
+      rateLimitStore.set(identifier, { attempts: 1, firstAttempt: now });
     } else {
-      rateLimitStore[key].attempts++;
-    }
-    
-    // Check if limit exceeded
-    if (rateLimitStore[key].attempts > config.maxAttempts) {
-      rateLimitStore[key].resetTime = now + config.blockDurationMs;
+      // Increment attempts
+      record.attempts++;
       
-      // Log the rate limit event
-      console.log(`Rate limit exceeded for ${key}: ${rateLimitStore[key].attempts} attempts`);
-      
-      return res.status(429).json({
-        message: "Too many attempts. Your access has been temporarily blocked.",
-        retryAfter: Math.ceil(config.blockDurationMs / 1000)
-      });
+      // Block if exceeded max attempts
+      if (record.attempts > config.maxAttempts) {
+        record.blockedUntil = new Date(now.getTime() + config.blockDurationMs);
+        return res.status(429).json({
+          error: 'Too many attempts',
+          message: `Too many ${endpoint} attempts. Please try again later.`
+        });
+      }
     }
     
     next();
   };
 }
 
-// Account lockout middleware
-export async function checkAccountLockout(req: Request, res: Response, next: NextFunction) {
-  const { username } = req.body;
-  
-  if (!username) {
-    return next();
+// Check account lockout status
+export async function checkAccountLockout(userId: number): Promise<{ isLocked: boolean; lockedUntil?: Date }> {
+  const user = await storage.getUser(userId);
+  if (!user) {
+    return { isLocked: false };
   }
   
-  try {
-    const user = await storage.getUserByUsername(username);
-    if (!user) {
-      return next();
-    }
-    
-    // Check if account is locked
-    if (user.accountLockedUntil && new Date(user.accountLockedUntil) > new Date()) {
-      const remainingTime = Math.ceil((new Date(user.accountLockedUntil).getTime() - Date.now()) / 1000);
-      return res.status(423).json({
-        message: "Account is temporarily locked due to multiple failed login attempts.",
-        retryAfter: remainingTime
-      });
-    }
-    
-    next();
-  } catch (error) {
-    console.error("Error checking account lockout:", error);
-    next();
+  if (user.accountLockedUntil && new Date(user.accountLockedUntil) > new Date()) {
+    return { isLocked: true, lockedUntil: new Date(user.accountLockedUntil) };
   }
+  
+  return { isLocked: false };
 }
 
 // Log login attempt
 export async function logLoginAttempt(
-  userId: number | null,
-  ipAddress: string,
-  userAgent: string | undefined,
+  userId: number, 
+  ipAddress: string, 
+  userAgent: string | undefined, 
   successful: boolean,
   failureReason?: string
 ) {
-  try {
-    if (userId) {
-      await storage.createLoginHistory({
-        userId,
-        ipAddress,
-        userAgent: userAgent || null,
-        successful,
-        failureReason: failureReason || null
-      });
+  await storage.createLoginHistory({
+    userId,
+    ipAddress,
+    userAgent: userAgent || null,
+    successful,
+    failureReason: failureReason || null
+  });
+  
+  if (!successful) {
+    // Increment failed attempts
+    const user = await storage.getUser(userId);
+    if (user) {
+      const failedAttempts = (user.failedLoginAttempts || 0) + 1;
+      
+      // Lock account after 5 failed attempts
+      if (failedAttempts >= 5) {
+        const lockedUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        await storage.updateUser(userId, {
+          failedLoginAttempts: failedAttempts,
+          accountLockedUntil: lockedUntil
+        });
+      } else {
+        await storage.updateUser(userId, {
+          failedLoginAttempts: failedAttempts
+        });
+      }
     }
-  } catch (error) {
-    console.error("Error logging login attempt:", error);
+  } else {
+    // Reset failed attempts on successful login
+    await storage.updateUser(userId, {
+      failedLoginAttempts: 0,
+      accountLockedUntil: null,
+      lastLoginAt: new Date(),
+      lastLoginIp: ipAddress
+    });
   }
 }
+
+// Clean up old rate limit records periodically
+setInterval(() => {
+  const now = new Date();
+  for (const [key, record] of rateLimitStore.entries()) {
+    if (record.blockedUntil && record.blockedUntil < now) {
+      rateLimitStore.delete(key);
+    }
+  }
+}, 5 * 60 * 1000); // Clean up every 5 minutes

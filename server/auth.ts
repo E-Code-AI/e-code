@@ -54,14 +54,14 @@ declare global {
 const scryptAsync = promisify(scrypt);
 
 // Password hashing function
-async function hashPassword(password: string) {
+export async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
 
 // Password comparison function
-async function comparePasswords(supplied: string, stored: string) {
+export async function comparePasswords(supplied: string, stored: string) {
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
@@ -231,10 +231,9 @@ export function setupAuth(app: Express) {
   // Login route with enhanced security
   app.post("/api/login", 
     createRateLimiter("login"), 
-    checkAccountLockout,
     async (req, res, next) => {
       const { username, password } = req.body;
-      const ipAddress = req.ip || req.connection.remoteAddress || "unknown";
+      const ipAddress = req.ip || "unknown";
       const userAgent = req.headers["user-agent"];
       
       if (!username || !password) {
@@ -243,6 +242,7 @@ export function setupAuth(app: Express) {
       
       try {
         const user = await storage.getUserByUsername(username);
+        console.log('[Auth Debug] User object:', JSON.stringify(user, null, 2));
         
         passport.authenticate("local", async (err: any, authenticatedUser: UserForAuth | false, info: { message: string }) => {
           if (err) return next(err);
@@ -250,6 +250,9 @@ export function setupAuth(app: Express) {
           if (!authenticatedUser) {
             // Log failed attempt
             if (user) {
+              console.log('[Auth Debug] Before logLoginAttempt - userId:', user.id, 'type:', typeof user.id);
+              console.log('[Auth Debug] ipAddress:', ipAddress, 'type:', typeof ipAddress);
+              console.log('[Auth Debug] userAgent:', userAgent, 'type:', typeof userAgent);
               await logLoginAttempt(user.id, ipAddress, userAgent, false, info?.message);
               
               // Increment failed login attempts

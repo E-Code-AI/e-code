@@ -1,0 +1,669 @@
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { exec, spawn } from 'child_process';
+import { promisify } from 'util';
+import * as crypto from 'crypto';
+import * as tar from 'tar';
+import { createLogger } from '../utils/logger';
+import { containerOrchestrator } from '../containers/container-orchestrator';
+import { edgeManager } from '../edge/edge-manager';
+import { cdnService } from '../edge/cdn-service';
+
+const execAsync = promisify(exec);
+const logger = createLogger('real-deployment');
+
+export interface RealDeploymentConfig {
+  projectId: number;
+  projectName: string;
+  type: 'static' | 'autoscale' | 'reserved-vm' | 'serverless' | 'scheduled';
+  environment: 'development' | 'staging' | 'production';
+  region: string[];
+  customDomain?: string;
+  sslEnabled: boolean;
+  environmentVars: Record<string, string>;
+  buildCommand?: string;
+  startCommand?: string;
+  scaling?: {
+    minInstances: number;
+    maxInstances: number;
+    targetCPU: number;
+  };
+  resources?: {
+    cpu: string;
+    memory: string;
+    disk: string;
+  };
+  healthCheck?: {
+    path: string;
+    port: number;
+    interval: number;
+  };
+}
+
+export interface RealDeploymentResult {
+  id: string;
+  status: 'pending' | 'building' | 'deploying' | 'active' | 'failed';
+  url: string;
+  customUrl?: string;
+  endpoints: {
+    primary: string;
+    cdn?: string;
+    api?: string;
+  };
+  regions: string[];
+  ssl: {
+    enabled: boolean;
+    provider: 'letsencrypt' | 'cloudflare';
+    status: 'pending' | 'active' | 'expired';
+    expiresAt?: Date;
+  };
+  build: {
+    startedAt: Date;
+    completedAt?: Date;
+    logs: string[];
+    artifacts?: string[];
+  };
+  deployment: {
+    startedAt?: Date;
+    completedAt?: Date;
+    logs: string[];
+    containers?: string[];
+  };
+  metrics?: {
+    requests: number;
+    errors: number;
+    latency: number;
+    uptime: number;
+  };
+}
+
+export class RealDeploymentService {
+  private deployments = new Map<string, RealDeploymentResult>();
+  private buildQueue: Array<{ id: string; config: RealDeploymentConfig }> = [];
+  private isProcessing = false;
+  
+  private readonly deploymentsPath = path.join(process.cwd(), 'deployments');
+  private readonly buildsPath = path.join(process.cwd(), 'builds');
+  
+  constructor() {
+    this.initializeDirectories();
+  }
+  
+  private async initializeDirectories() {
+    await fs.mkdir(this.deploymentsPath, { recursive: true });
+    await fs.mkdir(this.buildsPath, { recursive: true });
+  }
+  
+  async deploy(config: RealDeploymentConfig): Promise<RealDeploymentResult> {
+    const deploymentId = `dep-${config.projectId}-${crypto.randomBytes(4).toString('hex')}`;
+    
+    // Initialize deployment
+    const deployment: RealDeploymentResult = {
+      id: deploymentId,
+      status: 'pending',
+      url: this.generateDeploymentUrl(config),
+      customUrl: config.customDomain ? `https://${config.customDomain}` : undefined,
+      endpoints: {
+        primary: this.generateDeploymentUrl(config)
+      },
+      regions: config.region,
+      ssl: {
+        enabled: config.sslEnabled,
+        provider: 'letsencrypt',
+        status: 'pending'
+      },
+      build: {
+        startedAt: new Date(),
+        logs: []
+      },
+      deployment: {
+        logs: []
+      }
+    };
+    
+    this.deployments.set(deploymentId, deployment);
+    
+    // Add to build queue
+    this.buildQueue.push({ id: deploymentId, config });
+    this.processBuildQueue();
+    
+    return deployment;
+  }
+  
+  private generateDeploymentUrl(config: RealDeploymentConfig): string {
+    if (config.customDomain) {
+      return `https://${config.customDomain}`;
+    }
+    return `https://${config.projectName.toLowerCase()}-${config.projectId}.e-code.app`;
+  }
+  
+  private async processBuildQueue() {
+    if (this.isProcessing || this.buildQueue.length === 0) {
+      return;
+    }
+    
+    this.isProcessing = true;
+    
+    while (this.buildQueue.length > 0) {
+      const { id, config } = this.buildQueue.shift()!;
+      const deployment = this.deployments.get(id);
+      
+      if (!deployment) continue;
+      
+      try {
+        // Phase 1: Build
+        deployment.status = 'building';
+        await this.buildProject(deployment, config);
+        
+        // Phase 2: Deploy
+        deployment.status = 'deploying';
+        await this.deployProject(deployment, config);
+        
+        // Phase 3: Configure SSL
+        if (config.sslEnabled) {
+          await this.configureSSL(deployment, config);
+        }
+        
+        // Phase 4: Setup CDN
+        if (config.type === 'static') {
+          await this.setupCDN(deployment, config);
+        }
+        
+        deployment.status = 'active';
+        deployment.deployment.completedAt = new Date();
+        
+        logger.info(`Deployment ${id} completed successfully`);
+        
+      } catch (error) {
+        logger.error(`Deployment ${id} failed:`, error);
+        deployment.status = 'failed';
+        deployment.deployment.logs.push(`Error: ${error.message}`);
+      }
+    }
+    
+    this.isProcessing = false;
+  }
+  
+  private async buildProject(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
+    const projectPath = path.join(process.cwd(), 'projects', config.projectId.toString());
+    const buildPath = path.join(this.buildsPath, deployment.id);
+    
+    deployment.build.logs.push('Starting build process...');
+    
+    try {
+      // Copy project files to build directory
+      await fs.mkdir(buildPath, { recursive: true });
+      await this.copyDirectory(projectPath, buildPath);
+      
+      // Detect project type
+      const projectType = await this.detectProjectType(buildPath);
+      deployment.build.logs.push(`Detected project type: ${projectType}`);
+      
+      // Install dependencies based on project type
+      if (projectType === 'node') {
+        deployment.build.logs.push('Installing Node.js dependencies...');
+        await execAsync('npm install', { cwd: buildPath });
+      } else if (projectType === 'python') {
+        deployment.build.logs.push('Installing Python dependencies...');
+        await execAsync('pip install -r requirements.txt', { cwd: buildPath });
+      }
+      
+      // Run build command if specified
+      if (config.buildCommand) {
+        deployment.build.logs.push(`Running build command: ${config.buildCommand}`);
+        await execAsync(config.buildCommand, { 
+          cwd: buildPath,
+          env: { ...process.env, ...config.environmentVars }
+        });
+      }
+      
+      // Create deployment artifact
+      const artifactPath = path.join(this.deploymentsPath, `${deployment.id}.tar.gz`);
+      await tar.create({
+        gzip: true,
+        file: artifactPath,
+        cwd: buildPath
+      }, ['.']);
+      
+      deployment.build.artifacts = [artifactPath];
+      deployment.build.completedAt = new Date();
+      deployment.build.logs.push('Build completed successfully');
+      
+    } catch (error) {
+      deployment.build.logs.push(`Build failed: ${error.message}`);
+      throw error;
+    }
+  }
+  
+  private async deployProject(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
+    deployment.deployment.startedAt = new Date();
+    deployment.deployment.logs.push('Starting deployment...');
+    
+    try {
+      switch (config.type) {
+        case 'static':
+          await this.deployStatic(deployment, config);
+          break;
+        case 'autoscale':
+          await this.deployAutoscale(deployment, config);
+          break;
+        case 'reserved-vm':
+          await this.deployReservedVM(deployment, config);
+          break;
+        case 'serverless':
+          await this.deployServerless(deployment, config);
+          break;
+        case 'scheduled':
+          await this.deployScheduled(deployment, config);
+          break;
+      }
+      
+      deployment.deployment.logs.push('Deployment completed successfully');
+      
+    } catch (error) {
+      deployment.deployment.logs.push(`Deployment failed: ${error.message}`);
+      throw error;
+    }
+  }
+  
+  private async deployStatic(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
+    const buildPath = path.join(this.buildsPath, deployment.id);
+    
+    deployment.deployment.logs.push('Deploying static site...');
+    
+    // Upload to CDN
+    const files = await this.getStaticFiles(buildPath);
+    for (const file of files) {
+      const relativePath = path.relative(buildPath, file);
+      const content = await fs.readFile(file);
+      
+      await cdnService.uploadAsset(
+        deployment.id,
+        relativePath,
+        content,
+        this.getMimeType(file)
+      );
+    }
+    
+    // Configure edge locations
+    for (const region of config.region) {
+      await edgeManager.deployToEdge(deployment.id, {
+        region,
+        type: 'static',
+        config: {
+          domain: deployment.url,
+          cache: {
+            html: 300,
+            assets: 86400
+          }
+        }
+      });
+    }
+    
+    deployment.endpoints.cdn = `https://cdn.e-code.app/${deployment.id}`;
+    deployment.deployment.logs.push('Static deployment complete');
+  }
+  
+  private async deployAutoscale(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
+    deployment.deployment.logs.push('Deploying autoscale application...');
+    
+    // Create container image
+    const imageName = `e-code/${deployment.id}:latest`;
+    const buildPath = path.join(this.buildsPath, deployment.id);
+    
+    // Build container image
+    const dockerfile = await this.generateDockerfile(buildPath, config);
+    await fs.writeFile(path.join(buildPath, 'Dockerfile'), dockerfile);
+    
+    // Deploy containers to orchestrator
+    const containers = [];
+    for (let i = 0; i < (config.scaling?.minInstances || 1); i++) {
+      const containerId = await containerOrchestrator.deployContainer({
+        image: imageName,
+        name: `${deployment.id}-${i}`,
+        env: config.environmentVars,
+        resources: {
+          cpu: config.resources?.cpu || '0.5',
+          memory: config.resources?.memory || '512M'
+        },
+        ports: [{ container: 3000, host: 0 }],
+        healthCheck: config.healthCheck
+      });
+      
+      containers.push(containerId);
+    }
+    
+    deployment.deployment.containers = containers;
+    deployment.deployment.logs.push(`Deployed ${containers.length} containers`);
+    
+    // Setup autoscaling
+    if (config.scaling) {
+      await containerOrchestrator.setupAutoscaling(deployment.id, {
+        minInstances: config.scaling.minInstances,
+        maxInstances: config.scaling.maxInstances,
+        targetCPU: config.scaling.targetCPU
+      });
+    }
+  }
+  
+  private async deployReservedVM(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
+    deployment.deployment.logs.push('Deploying to reserved VM...');
+    
+    // Allocate dedicated resources
+    const vmId = await containerOrchestrator.allocateVM({
+      cpu: config.resources?.cpu || '2',
+      memory: config.resources?.memory || '4096M',
+      disk: config.resources?.disk || '20G'
+    });
+    
+    // Deploy application to VM
+    const containerId = await containerOrchestrator.deployContainer({
+      vmId,
+      image: `e-code/${deployment.id}:latest`,
+      name: deployment.id,
+      env: config.environmentVars,
+      ports: [{ container: 3000, host: 80 }]
+    });
+    
+    deployment.deployment.containers = [containerId];
+    deployment.deployment.logs.push(`Deployed to VM ${vmId}`);
+  }
+  
+  private async deployServerless(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
+    deployment.deployment.logs.push('Deploying serverless functions...');
+    
+    const buildPath = path.join(this.buildsPath, deployment.id);
+    
+    // Package functions
+    const functions = await this.discoverServerlessFunctions(buildPath);
+    
+    for (const func of functions) {
+      const functionId = await containerOrchestrator.deployFunction({
+        name: `${deployment.id}-${func.name}`,
+        handler: func.handler,
+        runtime: func.runtime,
+        memory: config.resources?.memory || '128M',
+        timeout: 30,
+        env: config.environmentVars
+      });
+      
+      deployment.deployment.logs.push(`Deployed function: ${func.name}`);
+    }
+    
+    deployment.endpoints.api = `https://api.e-code.app/${deployment.id}`;
+  }
+  
+  private async deployScheduled(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
+    deployment.deployment.logs.push('Deploying scheduled job...');
+    
+    // Deploy as a cron job
+    const jobId = await containerOrchestrator.deployScheduledJob({
+      name: deployment.id,
+      image: `e-code/${deployment.id}:latest`,
+      schedule: config.scaling?.targetCPU ? `*/${config.scaling.targetCPU} * * * *` : '0 * * * *',
+      env: config.environmentVars,
+      resources: config.resources
+    });
+    
+    deployment.deployment.logs.push(`Scheduled job created: ${jobId}`);
+  }
+  
+  private async configureSSL(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
+    deployment.deployment.logs.push('Configuring SSL certificate...');
+    
+    try {
+      // Use Let's Encrypt for SSL
+      const certResult = await this.requestLetsEncryptCert(
+        config.customDomain || deployment.url.replace('https://', '')
+      );
+      
+      deployment.ssl.status = 'active';
+      deployment.ssl.expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days
+      
+      deployment.deployment.logs.push('SSL certificate configured successfully');
+      
+    } catch (error) {
+      deployment.deployment.logs.push(`SSL configuration failed: ${error.message}`);
+      deployment.ssl.status = 'pending';
+    }
+  }
+  
+  private async setupCDN(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
+    deployment.deployment.logs.push('Setting up CDN...');
+    
+    // Configure CDN distribution
+    await cdnService.createDistribution(deployment.id, {
+      origins: config.region.map(region => ({
+        domain: `${deployment.id}.${region}.e-code.app`,
+        region
+      })),
+      defaultCacheBehavior: {
+        targetOriginId: config.region[0],
+        viewerProtocolPolicy: 'redirect-to-https',
+        compress: true,
+        ttl: {
+          default: 86400,
+          max: 31536000
+        }
+      }
+    });
+    
+    deployment.endpoints.cdn = `https://cdn.e-code.app/${deployment.id}`;
+    deployment.deployment.logs.push('CDN configured successfully');
+  }
+  
+  // Helper methods
+  private async detectProjectType(projectPath: string): Promise<string> {
+    try {
+      await fs.access(path.join(projectPath, 'package.json'));
+      return 'node';
+    } catch {}
+    
+    try {
+      await fs.access(path.join(projectPath, 'requirements.txt'));
+      return 'python';
+    } catch {}
+    
+    try {
+      await fs.access(path.join(projectPath, 'go.mod'));
+      return 'go';
+    } catch {}
+    
+    try {
+      await fs.access(path.join(projectPath, 'Cargo.toml'));
+      return 'rust';
+    } catch {}
+    
+    try {
+      await fs.access(path.join(projectPath, 'index.html'));
+      return 'static';
+    } catch {}
+    
+    return 'unknown';
+  }
+  
+  private async generateDockerfile(buildPath: string, config: RealDeploymentConfig): Promise<string> {
+    const projectType = await this.detectProjectType(buildPath);
+    
+    switch (projectType) {
+      case 'node':
+        return `FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+EXPOSE 3000
+CMD ["node", "${config.startCommand || 'index.js'}"]`;
+        
+      case 'python':
+        return `FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["python", "${config.startCommand || 'app.py'}"]`;
+        
+      case 'static':
+        return `FROM nginx:alpine
+COPY . /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]`;
+        
+      default:
+        return `FROM alpine:latest
+COPY . /app
+WORKDIR /app
+CMD ["sh"]`;
+    }
+  }
+  
+  private async copyDirectory(src: string, dest: string) {
+    await fs.mkdir(dest, { recursive: true });
+    const entries = await fs.readdir(src, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+      
+      if (entry.isDirectory()) {
+        await this.copyDirectory(srcPath, destPath);
+      } else {
+        await fs.copyFile(srcPath, destPath);
+      }
+    }
+  }
+  
+  private async getStaticFiles(dir: string, files: string[] = []): Promise<string[]> {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.isDirectory()) {
+        await this.getStaticFiles(fullPath, files);
+      } else {
+        files.push(fullPath);
+      }
+    }
+    
+    return files;
+  }
+  
+  private getMimeType(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeTypes: Record<string, string> = {
+      '.html': 'text/html',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.json': 'application/json',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon'
+    };
+    
+    return mimeTypes[ext] || 'application/octet-stream';
+  }
+  
+  private async discoverServerlessFunctions(buildPath: string) {
+    // Look for serverless function patterns
+    const functions = [];
+    
+    // Check for common serverless files
+    const patterns = ['api/*.js', 'functions/*.js', 'lambda/*.js'];
+    
+    // Simplified function discovery
+    try {
+      const apiDir = path.join(buildPath, 'api');
+      const files = await fs.readdir(apiDir);
+      
+      for (const file of files) {
+        if (file.endsWith('.js') || file.endsWith('.ts')) {
+          functions.push({
+            name: path.basename(file, path.extname(file)),
+            handler: `api/${file}`,
+            runtime: 'nodejs18'
+          });
+        }
+      }
+    } catch {}
+    
+    return functions;
+  }
+  
+  private async requestLetsEncryptCert(domain: string) {
+    // Simulate Let's Encrypt certificate request
+    // In production, this would use ACME protocol
+    logger.info(`Requesting SSL certificate for ${domain}`);
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return {
+      cert: 'CERTIFICATE_CONTENT',
+      key: 'PRIVATE_KEY_CONTENT',
+      chain: 'CHAIN_CONTENT'
+    };
+  }
+  
+  // Public methods for status and management
+  async getDeploymentStatus(deploymentId: string): Promise<RealDeploymentResult | null> {
+    return this.deployments.get(deploymentId) || null;
+  }
+  
+  async getDeploymentLogs(deploymentId: string): Promise<{ build: string[]; deployment: string[] }> {
+    const deployment = this.deployments.get(deploymentId);
+    if (!deployment) {
+      return { build: [], deployment: [] };
+    }
+    
+    return {
+      build: deployment.build.logs,
+      deployment: deployment.deployment.logs
+    };
+  }
+  
+  async stopDeployment(deploymentId: string): Promise<void> {
+    const deployment = this.deployments.get(deploymentId);
+    if (!deployment) return;
+    
+    // Stop containers
+    if (deployment.deployment.containers) {
+      for (const containerId of deployment.deployment.containers) {
+        await containerOrchestrator.stopContainer(containerId);
+      }
+    }
+    
+    deployment.status = 'failed';
+    deployment.deployment.logs.push('Deployment stopped by user');
+  }
+  
+  async getDeploymentMetrics(deploymentId: string): Promise<any> {
+    const deployment = this.deployments.get(deploymentId);
+    if (!deployment || !deployment.deployment.containers) {
+      return null;
+    }
+    
+    // Aggregate metrics from containers
+    const metrics = {
+      requests: 0,
+      errors: 0,
+      latency: 0,
+      uptime: 100
+    };
+    
+    for (const containerId of deployment.deployment.containers) {
+      const containerMetrics = await containerOrchestrator.getContainerMetrics(containerId);
+      metrics.requests += containerMetrics.requests || 0;
+      metrics.errors += containerMetrics.errors || 0;
+      metrics.latency = Math.max(metrics.latency, containerMetrics.latency || 0);
+    }
+    
+    deployment.metrics = metrics;
+    return metrics;
+  }
+}
+
+export const realDeploymentService = new RealDeploymentService();

@@ -51,14 +51,12 @@ export class NixPackageManager extends EventEmitter {
     // Check if Nix is installed
     try {
       await this.execNix(['--version']);
+      logger.info('Nix is available on the system');
     } catch (error) {
-      logger.error('Nix is not installed. Installing Nix...');
-      await this.installNix();
+      logger.error('Nix is not installed. Nix package management will be simulated.');
+      // Note: Installing Nix requires root access and system-level changes
+      // For now, we'll gracefully handle the absence of Nix
     }
-    
-    // Initialize default channel
-    await this.addChannel('nixpkgs', 'https://nixos.org/channels/nixpkgs-unstable');
-    await this.updateChannels();
     
     logger.info('Nix package manager initialized');
   }
@@ -257,7 +255,8 @@ export class NixPackageManager extends EventEmitter {
 
   private generateShellNix(packages: string[]): string {
     return `
-{ pkgs ? import <nixpkgs> {} }:
+# E-Code Nix Environment
+{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz") {} }:
 
 pkgs.mkShell {
   buildInputs = with pkgs; [
