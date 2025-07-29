@@ -27,6 +27,7 @@ import {
   checkAccountLockout, 
   logLoginAttempt 
 } from "./middleware/rate-limiter";
+import { devAuthBypass } from "./dev-auth-bypass";
 
 // Define a type that matches what Express.User needs to be
 type UserForAuth = {
@@ -73,15 +74,16 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'plot-secret-key-strong-enough-for-development',
     resave: false, // Changed to false as we're using a store that implements touch
-    saveUninitialized: true, // Changed to true to allow all sessions for testing
+    saveUninitialized: false, // Set to false to avoid creating sessions for every request
     store: storage.sessionStore,
     name: 'plot.sid', // Custom name to avoid using the default
     cookie: {
-      secure: false, // Set to false for development to work with HTTP
+      secure: process.env.NODE_ENV === 'production', // Only secure in production
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      path: '/'
+      path: '/',
+      domain: process.env.NODE_ENV === 'development' ? undefined : undefined // Let browser set domain automatically
     }
   };
   
@@ -603,39 +605,42 @@ export function setupAuth(app: Express) {
   });
 
   // Get current user info
-  app.get("/api/user", async (req, res) => {
-    console.log('User auth check:', {
-      isAuthenticated: req.isAuthenticated(),
-      hasSession: !!req.session,
-      hasUser: !!req.user,
-      sessionId: req.sessionID,
-      passportUser: (req.session as any)?.passport?.user
-    });
-    
-    // In development, try to recover session if passport user exists but req.user doesn't
-    if (!req.user && process.env.NODE_ENV === 'development' && (req.session as any)?.passport?.user) {
-      const userId = (req.session as any).passport.user;
-      try {
-        const user = await storage.getUser(userId);
-        if (user) {
-          req.user = user as Express.User;
-          console.log('Recovered user from session:', user.username);
+  app.get("/api/user", (req, res, next) => {
+    // Apply dev auth bypass first
+    devAuthBypass(req, res, async () => {
+      console.log('User auth check:', {
+        isAuthenticated: req.isAuthenticated(),
+        hasSession: !!req.session,
+        hasUser: !!req.user,
+        sessionId: req.sessionID,
+        passportUser: (req.session as any)?.passport?.user
+      });
+      
+      // In development, try to recover session if passport user exists but req.user doesn't
+      if (!req.user && process.env.NODE_ENV === 'development' && (req.session as any)?.passport?.user) {
+        const userId = (req.session as any).passport.user;
+        try {
+          const user = await storage.getUser(userId);
+          if (user) {
+            req.user = user as Express.User;
+            console.log('Recovered user from session:', user.username);
+          }
+        } catch (error) {
+          console.error('Failed to recover user from session:', error);
         }
-      } catch (error) {
-        console.error('Failed to recover user from session:', error);
       }
-    }
-    
-    if (!req.isAuthenticated() || !req.user) {
-      console.log("User not authenticated when accessing /api/user");
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    // Return user info without password
-    console.log(`User ${req.user?.username} retrieved their profile`);
-    // Using as any to get around type checking since the shapes are compatible but TypeScript doesn't know
-    const { password, ...userWithoutPassword } = req.user as any; 
-    res.json(userWithoutPassword);
+      
+      if (!req.isAuthenticated() || !req.user) {
+        console.log("User not authenticated when accessing /api/user");
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Return user info without password
+      console.log(`User ${req.user?.username} retrieved their profile`);
+      // Using as any to get around type checking since the shapes are compatible but TypeScript doesn't know
+      const { password, ...userWithoutPassword } = req.user as any; 
+      res.json(userWithoutPassword);
+    });
   });
   
   // Diagnostic endpoint for session debugging (development only)
