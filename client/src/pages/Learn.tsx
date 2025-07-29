@@ -11,6 +11,7 @@ import {
   Code, Database, Globe, Smartphone, Bot,
   Lock, CheckCircle, Circle, Play, Users
 } from 'lucide-react';
+import { ReplitLayout } from '@/components/layout/ReplitLayout';
 
 export default function Learn() {
   const [searchQuery, setSearchQuery] = useState('');

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ReplitLayout } from '@/components/layout/ReplitLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -83,8 +82,8 @@ export default function Deployments() {
   });
 
   return (
-    <ReplitLayout>
-      <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl space-y-6 pb-20">
+    <div className="min-h-screen bg-background">
+      <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl space-y-6 py-6 pb-20">
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto">
@@ -502,6 +501,6 @@ export default function Deployments() {
           </div>
         )}
       </div>
-    </ReplitLayout>
+    </div>
   );
 }

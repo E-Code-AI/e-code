@@ -948,3 +948,163 @@ export const insertCodeSnippetSchema = createInsertSchema(codeSnippets).omit({
 
 export type CodeSnippet = typeof codeSnippets.$inferSelect;
 export type InsertCodeSnippet = z.infer<typeof insertCodeSnippetSchema>;
+
+// Learning System Tables
+
+// Courses table
+export const courses = pgTable('courses', {
+  id: serial('id').primaryKey(),
+  slug: varchar('slug', { length: 255 }).unique().notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  category: varchar('category', { length: 50 }).notNull(), // python, javascript, web, mobile, data, ai
+  difficulty: varchar('difficulty', { length: 20 }).notNull(), // beginner, intermediate, advanced
+  duration: varchar('duration', { length: 50 }).notNull(), // e.g., "8 hours"
+  thumbnail: varchar('thumbnail', { length: 10 }).notNull(), // emoji or icon
+  instructorId: integer('instructor_id').references(() => users.id),
+  instructorName: varchar('instructor_name', { length: 255 }).notNull(),
+  instructorAvatar: varchar('instructor_avatar', { length: 500 }),
+  rating: real('rating').default(0).notNull(),
+  studentsCount: integer('students_count').default(0).notNull(),
+  isPublished: boolean('is_published').default(true).notNull(),
+  isFeatured: boolean('is_featured').default(false).notNull(),
+  price: real('price').default(0).notNull(), // 0 = free
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertCourseSchema = createInsertSchema(courses).omit({
+  id: true,
+  rating: true,
+  studentsCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Course = typeof courses.$inferSelect;
+export type InsertCourse = z.infer<typeof insertCourseSchema>;
+
+// Lessons table
+export const lessons = pgTable('lessons', {
+  id: serial('id').primaryKey(),
+  courseId: integer('course_id').notNull().references(() => courses.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  order: integer('order').notNull(),
+  type: varchar('type', { length: 50 }).notNull(), // video, text, quiz, exercise
+  duration: integer('duration').notNull(), // in minutes
+  content: jsonb('content').notNull(), // Rich content (markdown, video URL, quiz questions, etc.)
+  videoUrl: varchar('video_url', { length: 500 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertLessonSchema = createInsertSchema(lessons).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Lesson = typeof lessons.$inferSelect;
+export type InsertLesson = z.infer<typeof insertLessonSchema>;
+
+// User course enrollments
+export const courseEnrollments = pgTable('course_enrollments', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  courseId: integer('course_id').notNull().references(() => courses.id, { onDelete: 'cascade' }),
+  enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+  progress: real('progress').default(0).notNull(), // 0-100
+  lastAccessedAt: timestamp('last_accessed_at').defaultNow().notNull(),
+}, (table) => ({
+  userCourseUnique: uniqueIndex('user_course_unique').on(table.userId, table.courseId),
+}));
+
+export const insertCourseEnrollmentSchema = createInsertSchema(courseEnrollments).omit({
+  id: true,
+  enrolledAt: true,
+  progress: true,
+  lastAccessedAt: true,
+});
+
+export type CourseEnrollment = typeof courseEnrollments.$inferSelect;
+export type InsertCourseEnrollment = z.infer<typeof insertCourseEnrollmentSchema>;
+
+// Lesson progress tracking
+export const lessonProgress = pgTable('lesson_progress', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lessonId: integer('lesson_id').notNull().references(() => lessons.id, { onDelete: 'cascade' }),
+  completed: boolean('completed').default(false).notNull(),
+  completedAt: timestamp('completed_at'),
+  timeSpent: integer('time_spent').default(0).notNull(), // in seconds
+  lastAccessedAt: timestamp('last_accessed_at').defaultNow().notNull(),
+}, (table) => ({
+  userLessonUnique: uniqueIndex('user_lesson_unique').on(table.userId, table.lessonId),
+}));
+
+export const insertLessonProgressSchema = createInsertSchema(lessonProgress).omit({
+  id: true,
+  timeSpent: true,
+  lastAccessedAt: true,
+});
+
+export type LessonProgress = typeof lessonProgress.$inferSelect;
+export type InsertLessonProgress = z.infer<typeof insertLessonProgressSchema>;
+
+// Learning achievements
+export const learningAchievements = pgTable('learning_achievements', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  icon: varchar('icon', { length: 10 }).notNull(), // emoji
+  category: varchar('category', { length: 50 }).notNull(), // streak, completion, skill, special
+  requirement: jsonb('requirement').notNull(), // Flexible requirement definition
+  points: integer('points').default(10).notNull(),
+});
+
+export const insertLearningAchievementSchema = createInsertSchema(learningAchievements).omit({
+  id: true,
+});
+
+export type LearningAchievement = typeof learningAchievements.$inferSelect;
+export type InsertLearningAchievement = z.infer<typeof insertLearningAchievementSchema>;
+
+// User achievements
+export const userAchievements = pgTable('user_achievements', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  achievementId: integer('achievement_id').notNull().references(() => learningAchievements.id),
+  earnedAt: timestamp('earned_at').defaultNow().notNull(),
+}, (table) => ({
+  userAchievementUnique: uniqueIndex('user_achievement_unique').on(table.userId, table.achievementId),
+}));
+
+export const insertUserAchievementSchema = createInsertSchema(userAchievements).omit({
+  id: true,
+  earnedAt: true,
+});
+
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
+
+// Learning streaks
+export const learningStreaks = pgTable('learning_streaks', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  currentStreak: integer('current_streak').default(0).notNull(),
+  longestStreak: integer('longest_streak').default(0).notNull(),
+  lastActivityDate: timestamp('last_activity_date').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertLearningStreakSchema = createInsertSchema(learningStreaks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type LearningStreak = typeof learningStreaks.$inferSelect;
+export type InsertLearningStreak = z.infer<typeof insertLearningStreakSchema>;
