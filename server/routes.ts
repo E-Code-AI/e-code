@@ -7247,5 +7247,110 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
 
+  // Referral System API endpoints
+  app.get('/api/referrals', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const referrals = await storage.getUserReferrals(userId);
+      res.json(referrals);
+    } catch (error) {
+      console.error('Error fetching referrals:', error);
+      res.status(500).json({ message: 'Failed to fetch referrals' });
+    }
+  });
+
+  app.post('/api/referrals/generate-code', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const referralCode = await storage.generateReferralCode(userId);
+      
+      // Create referral record
+      const referral = await storage.createUserReferral({
+        referrerId: userId,
+        referralCode,
+        rewardAmount: 500, // Default reward amount
+        status: 'pending'
+      });
+
+      res.json({ referralCode, referral });
+    } catch (error) {
+      console.error('Error generating referral code:', error);
+      res.status(500).json({ message: 'Failed to generate referral code' });
+    }
+  });
+
+  app.get('/api/referrals/stats', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const stats = await storage.getUserReferralStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching referral stats:', error);
+      res.status(500).json({ message: 'Failed to fetch referral stats' });
+    }
+  });
+
+  app.get('/api/referrals/leaderboard', async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const leaderboard = await storage.getReferralLeaderboard(limit);
+      res.json(leaderboard);
+    } catch (error) {
+      console.error('Error fetching referral leaderboard:', error);
+      res.status(500).json({ message: 'Failed to fetch referral leaderboard' });
+    }
+  });
+
+  app.post('/api/referrals/claim/:code', ensureAuthenticated, async (req, res) => {
+    try {
+      const { code } = req.params;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      // Find referral by code
+      const referral = await storage.getUserReferralByCode(code);
+      if (!referral) {
+        return res.status(404).json({ message: 'Invalid referral code' });
+      }
+
+      // Check if user is trying to use their own referral code
+      if (referral.referrerId === userId) {
+        return res.status(400).json({ message: 'Cannot use your own referral code' });
+      }
+
+      // Check if referral is already used
+      if (referral.status === 'completed') {
+        return res.status(400).json({ message: 'Referral code already used' });
+      }
+
+      // Complete the referral
+      await storage.completeReferral(referral.id, userId);
+
+      res.json({ 
+        success: true, 
+        message: 'Referral claimed successfully',
+        reward: referral.rewardAmount 
+      });
+    } catch (error) {
+      console.error('Error claiming referral:', error);
+      res.status(500).json({ message: 'Failed to claim referral' });
+    }
+  });
+
   return httpServer;
 }

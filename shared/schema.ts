@@ -1108,3 +1108,78 @@ export const insertLearningStreakSchema = createInsertSchema(learningStreaks).om
 
 export type LearningStreak = typeof learningStreaks.$inferSelect;
 export type InsertLearningStreak = z.infer<typeof insertLearningStreakSchema>;
+
+// Referrals System Tables
+
+// User referrals table
+export const userReferrals = pgTable('user_referrals', {
+  id: serial('id').primaryKey(),
+  referrerId: integer('referrer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  refereeId: integer('referee_id').references(() => users.id, { onDelete: 'cascade' }),
+  referralCode: varchar('referral_code', { length: 50 }).notNull(),
+  email: varchar('email', { length: 255 }), // Email if not yet signed up
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, completed, expired
+  rewardAmount: integer('reward_amount').default(500).notNull(),
+  rewardPaid: boolean('reward_paid').default(false).notNull(),
+  rewardPaidAt: timestamp('reward_paid_at'),
+  tier: varchar('tier', { length: 20 }).default('Bronze').notNull(),
+  metadata: jsonb('metadata'), // Additional tracking data
+  expiresAt: timestamp('expires_at'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  referralCodeIdx: uniqueIndex('referral_code_idx').on(table.referralCode),
+  referrerRefereeIdx: uniqueIndex('referrer_referee_idx').on(table.referrerId, table.refereeId),
+}));
+
+export const insertUserReferralSchema = createInsertSchema(userReferrals).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type UserReferral = typeof userReferrals.$inferSelect;
+export type InsertUserReferral = z.infer<typeof insertUserReferralSchema>;
+
+// Referral stats table
+export const referralStats = pgTable('referral_stats', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  totalReferrals: integer('total_referrals').default(0).notNull(),
+  successfulReferrals: integer('successful_referrals').default(0).notNull(),
+  pendingReferrals: integer('pending_referrals').default(0).notNull(),
+  totalCyclesEarned: integer('total_cycles_earned').default(0).notNull(),
+  currentTier: varchar('current_tier', { length: 20 }).default('Bronze').notNull(),
+  tierProgress: integer('tier_progress').default(0).notNull(), // Progress to next tier (0-100)
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertReferralStatsSchema = createInsertSchema(referralStats).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type ReferralStats = typeof referralStats.$inferSelect;
+export type InsertReferralStats = z.infer<typeof insertReferralStatsSchema>;
+
+// Referral leaderboard (for performance)
+export const referralLeaderboard = pgTable('referral_leaderboard', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  username: varchar('username', { length: 255 }).notNull(),
+  displayName: varchar('display_name', { length: 255 }),
+  avatarUrl: varchar('avatar_url', { length: 500 }),
+  totalReferrals: integer('total_referrals').default(0).notNull(),
+  totalCyclesEarned: integer('total_cycles_earned').default(0).notNull(),
+  currentTier: varchar('current_tier', { length: 20 }).default('Bronze').notNull(),
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+}, (table) => ({
+  leaderboardIdx: uniqueIndex('leaderboard_user_idx').on(table.userId),
+}));
+
+export const insertReferralLeaderboardSchema = createInsertSchema(referralLeaderboard).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type ReferralLeaderboard = typeof referralLeaderboard.$inferSelect;
+export type InsertReferralLeaderboard = z.infer<typeof insertReferralLeaderboardSchema>;

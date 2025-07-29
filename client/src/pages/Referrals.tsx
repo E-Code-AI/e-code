@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { 
   Users, Gift, Copy, Share2, Mail, 
   Twitter, Facebook, Link2, TrendingUp,
@@ -17,53 +20,126 @@ import {
 export default function Referrals() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [referralCode] = useState(`REF-${user?.username?.toUpperCase()}-2024`);
+  const queryClient = useQueryClient();
   const [customMessage, setCustomMessage] = useState('');
-  
-  const referralStats = {
-    totalReferrals: 12,
-    successfulSignups: 8,
-    pendingRewards: 3,
-    totalEarned: 4000,
-    currentTier: 'Silver',
-    nextTier: 'Gold',
-    progressToNextTier: 65
-  };
+  const [referralCode, setReferralCode] = useState('');
 
-  const referralHistory = [
+  // Fetch referral stats
+  const { data: referralStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['/api/referrals/stats'],
+    enabled: !!user
+  });
+
+  // Fetch user referrals
+  const { data: referralHistory = [], isLoading: historyLoading } = useQuery({
+    queryKey: ['/api/referrals'],
+    enabled: !!user
+  });
+
+  // Fetch leaderboard
+  const { data: leaderboard = [], isLoading: leaderboardLoading } = useQuery({
+    queryKey: ['/api/referrals/leaderboard'],
+    enabled: !!user
+  });
+
+  // Generate referral code mutation
+  const generateCodeMutation = useMutation({
+    mutationFn: () => apiRequest('/api/referrals/generate-code', {
+      method: 'POST'
+    }),
+    onSuccess: (data) => {
+      setReferralCode(data.referralCode);
+      queryClient.invalidateQueries({ queryKey: ['/api/referrals'] });
+      toast({
+        title: "Success",
+        description: "Referral code generated successfully!"
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate referral code",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Load existing referral code on mount
+  useEffect(() => {
+    if (referralStats?.referralCode) {
+      setReferralCode(referralStats.referralCode);
+    }
+  }, [referralStats]);
+
+  const tiers = [
     {
-      id: 1,
-      username: 'alice_dev',
-      status: 'completed',
-      date: '2024-01-28',
+      name: 'Bronze',
+      referrals: 0,
       reward: 500,
-      avatar: '👩‍💻'
+      perks: ['500 Cycles per referral', 'Basic referral tracking']
     },
     {
-      id: 2,
-      username: 'bob_coder',
-      status: 'completed',
-      date: '2024-01-25',
-      reward: 500,
-      avatar: '👨‍💻'
+      name: 'Silver',
+      referrals: 5,
+      reward: 750,
+      perks: ['750 Cycles per referral', 'Priority support', 'Monthly bonus'],
+      current: (referralStats || defaultStats).currentTier === 'Silver'
     },
     {
-      id: 3,
-      username: 'charlie_hacker',
-      status: 'pending',
-      date: '2024-01-30',
-      reward: 500,
-      avatar: '🧑‍💻'
+      name: 'Gold',
+      referrals: 15,
+      reward: 1000,
+      perks: ['1000 Cycles per referral', 'VIP support', 'Exclusive features'],
+      current: (referralStats || defaultStats).currentTier === 'Gold'
     },
     {
-      id: 4,
-      username: 'diana_engineer',
-      status: 'expired',
-      date: '2024-01-15',
-      reward: 0,
-      avatar: '👩‍🔧'
+      name: 'Platinum',
+      referrals: 30,
+      reward: 1500,
+      perks: ['1500 Cycles per referral', 'Personal account manager', 'Early access'],
+      current: (referralStats || defaultStats).currentTier === 'Platinum'
     }
   ];
+
+  const shareOptions = [
+    { name: 'Copy Link', icon: <Copy />, action: 'copy' },
+    { name: 'Email', icon: <Mail />, action: 'email' },
+    { name: 'Twitter', icon: <Twitter />, action: 'twitter' },
+    { name: 'Facebook', icon: <Facebook />, action: 'facebook' }
+  ];
+
+  const handleShare = (action: string) => {
+    const referralUrl = `https://e-code.com/signup?ref=${referralCode}`;
+    
+    switch (action) {
+      case 'copy':
+        navigator.clipboard.writeText(referralUrl);
+        toast({
+          title: "Link copied!",
+          description: "Your referral link has been copied to clipboard"
+        });
+        break;
+      case 'email':
+        window.open(`mailto:?subject=Join me on E-Code&body=I'm using E-Code to build amazing projects with AI. Join me using this link: ${referralUrl}`);
+        break;
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=I'm building awesome projects with AI on E-Code! Join me: ${referralUrl}`);
+        break;
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralUrl)}`);
+        break;
+    }
+  };
+
+  // Default values for UI
+  const defaultStats = {
+    totalReferrals: 0,
+    successfulReferrals: 0,
+    pendingReferrals: 0,
+    totalCyclesEarned: 0,
+    currentTier: 'Bronze',
+    tierProgress: 0
+  };
 
   const tiers = [
     {
@@ -151,7 +227,9 @@ export default function Referrals() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Referrals</p>
-                <p className="text-2xl font-bold">{referralStats.totalReferrals}</p>
+                <p className="text-2xl font-bold">
+                  {statsLoading ? '...' : (referralStats || defaultStats).totalReferrals}
+                </p>
               </div>
               <Users className="h-8 w-8 text-blue-500" />
             </div>
@@ -162,7 +240,9 @@ export default function Referrals() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Successful</p>
-                <p className="text-2xl font-bold">{referralStats.successfulSignups}</p>
+                <p className="text-2xl font-bold">
+                  {statsLoading ? '...' : (referralStats || defaultStats).successfulReferrals}
+                </p>
               </div>
               <Check className="h-8 w-8 text-green-500" />
             </div>
@@ -173,7 +253,9 @@ export default function Referrals() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Cycles Earned</p>
-                <p className="text-2xl font-bold">{referralStats.totalEarned.toLocaleString()}</p>
+                <p className="text-2xl font-bold">
+                  {statsLoading ? '...' : (referralStats || defaultStats).totalCyclesEarned.toLocaleString()}
+                </p>
               </div>
               <Zap className="h-8 w-8 text-yellow-500" />
             </div>
@@ -184,7 +266,9 @@ export default function Referrals() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Current Tier</p>
-                <p className="text-2xl font-bold">{referralStats.currentTier}</p>
+                <p className="text-2xl font-bold">
+                  {statsLoading ? '...' : (referralStats || defaultStats).currentTier}
+                </p>
               </div>
               <Crown className="h-8 w-8 text-purple-500" />
             </div>
@@ -212,17 +296,27 @@ export default function Referrals() {
             <CardContent className="space-y-4">
               <div className="p-4 bg-muted rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">Your referral code</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 text-lg font-mono bg-background px-3 py-2 rounded border">
-                    {referralCode}
-                  </code>
+                {referralCode ? (
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-lg font-mono bg-background px-3 py-2 rounded border">
+                      {referralCode}
+                    </code>
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleShare('copy')}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
                   <Button 
-                    variant="outline"
-                    onClick={() => handleShare('copy')}
+                    onClick={() => generateCodeMutation.mutate()}
+                    disabled={generateCodeMutation.isPending}
+                    className="w-full"
                   >
-                    <Copy className="h-4 w-4" />
+                    {generateCodeMutation.isPending ? 'Generating...' : 'Generate Referral Code'}
                   </Button>
-                </div>
+                )}
               </div>
 
               <div>
@@ -306,34 +400,59 @@ export default function Referrals() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {referralHistory.map((referral) => (
-                  <div key={referral.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{referral.avatar}</span>
-                      <div>
-                        <p className="font-medium">{referral.username}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Joined {referral.date}
+              {historyLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border rounded-lg animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                        <div>
+                          <div className="w-24 h-4 bg-gray-200 rounded mb-2"></div>
+                          <div className="w-32 h-3 bg-gray-200 rounded"></div>
+                        </div>
+                      </div>
+                      <div className="w-16 h-6 bg-gray-200 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : referralHistory.length > 0 ? (
+                <div className="space-y-3">
+                  {referralHistory.map((referral: any) => (
+                    <div key={referral.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                          {referral.referredUser?.username?.[0]?.toUpperCase() || 'U'}
+                        </div>
+                        <div>
+                          <p className="font-medium">{referral.referredUser?.username || 'Unknown User'}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Joined {new Date(referral.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold ${referral.status === 'completed' ? 'text-green-600' : referral.status === 'pending' ? 'text-yellow-600' : 'text-gray-600'}`}>
+                          {referral.status === 'completed' && `+${referral.cyclesEarned || 500} Cycles`}
+                          {referral.status === 'pending' && 'Pending'}
+                          {referral.status === 'expired' && 'Expired'}
                         </p>
+                        <Badge variant={
+                          referral.status === 'completed' ? 'default' :
+                          referral.status === 'pending' ? 'secondary' : 'outline'
+                        }>
+                          {referral.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-semibold ${getStatusColor(referral.status)}`}>
-                        {referral.status === 'completed' && `+${referral.reward} Cycles`}
-                        {referral.status === 'pending' && 'Pending'}
-                        {referral.status === 'expired' && 'Expired'}
-                      </p>
-                      <Badge variant={
-                        referral.status === 'completed' ? 'default' :
-                        referral.status === 'pending' ? 'secondary' : 'outline'
-                      }>
-                        {referral.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No referrals yet</p>
+                  <p className="text-sm">Share your referral link to get started!</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -350,10 +469,10 @@ export default function Referrals() {
             <CardContent>
               <div className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
-                  <span>Progress to {referralStats.nextTier}</span>
-                  <span>{referralStats.progressToNextTier}%</span>
+                  <span>Progress to next tier</span>
+                  <span>{statsLoading ? '...' : (referralStats || defaultStats).tierProgress}%</span>
                 </div>
-                <Progress value={referralStats.progressToNextTier} className="h-3" />
+                <Progress value={statsLoading ? 0 : (referralStats || defaultStats).tierProgress} className="h-3" />
               </div>
 
               <div className="space-y-4">
@@ -407,38 +526,60 @@ export default function Referrals() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { rank: 1, name: 'CodeMaster', referrals: 156, reward: 156000, avatar: '🏆' },
-                  { rank: 2, name: 'DevGuru', referrals: 132, reward: 132000, avatar: '🥈' },
-                  { rank: 3, name: 'TechNinja', referrals: 98, reward: 98000, avatar: '🥉' },
-                  { rank: 4, name: 'HackerPro', referrals: 87, reward: 87000, avatar: '👨‍💻' },
-                  { rank: 5, name: 'CodingQueen', referrals: 76, reward: 76000, avatar: '👩‍💻' },
-                  { rank: 24, name: 'You', referrals: 12, reward: 4000, avatar: '😊', isUser: true }
-                ].map((user) => (
-                  <div 
-                    key={user.rank} 
-                    className={`flex items-center justify-between p-4 rounded-lg ${
-                      user.isUser ? 'bg-primary/10 border border-primary' : 'bg-muted/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-lg w-8">#{user.rank}</span>
-                      <span className="text-2xl">{user.avatar}</span>
-                      <div>
-                        <p className="font-medium">{user.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {user.referrals} referrals
-                        </p>
+              {leaderboardLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-6 bg-gray-200 rounded"></div>
+                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                        <div>
+                          <div className="w-24 h-4 bg-gray-200 rounded mb-2"></div>
+                          <div className="w-20 h-3 bg-gray-200 rounded"></div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="w-16 h-4 bg-gray-200 rounded mb-2"></div>
+                        <div className="w-20 h-3 bg-gray-200 rounded"></div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{user.reward.toLocaleString()}</p>
-                      <p className="text-sm text-muted-foreground">Cycles earned</p>
+                  ))}
+                </div>
+              ) : leaderboard.length > 0 ? (
+                <div className="space-y-3">
+                  {leaderboard.map((user: any, index: number) => (
+                    <div 
+                      key={user.id || index} 
+                      className={`flex items-center justify-between p-4 rounded-lg ${
+                        user.username === user?.username ? 'bg-primary/10 border border-primary' : 'bg-muted/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-lg w-8">#{index + 1}</span>
+                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                          {user.username?.[0]?.toUpperCase() || 'U'}
+                        </div>
+                        <div>
+                          <p className="font-medium">{user.username || 'Unknown User'}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {user.totalReferrals || 0} referrals
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{(user.totalCyclesEarned || 0).toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">Cycles earned</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No leaderboard data yet</p>
+                  <p className="text-sm">Be the first to start referring friends!</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
