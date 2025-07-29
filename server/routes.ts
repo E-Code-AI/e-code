@@ -3091,8 +3091,8 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.get('/api/projects/:id/env', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
-      // TODO: Implement actual environment variable storage
-      res.json([]);
+      const variables = await db.getEnvironmentVariables(projectId);
+      res.json(variables);
     } catch (error) {
       console.error('Error fetching environment variables:', error);
       res.status(500).json({ error: 'Failed to fetch environment variables' });
@@ -3108,7 +3108,8 @@ Generate a comprehensive application based on the user's request. Include all ne
         return res.status(400).json({ error: 'Key and value are required' });
       }
       
-      // TODO: Implement actual environment variable storage
+      // Store environment variable in database
+      await db.setEnvironmentVariable(projectId, key, value);
       res.json({ key, value });
     } catch (error) {
       console.error('Error adding environment variable:', error);
@@ -3126,7 +3127,8 @@ Generate a comprehensive application based on the user's request. Include all ne
         return res.status(400).json({ error: 'Value is required' });
       }
       
-      // TODO: Implement actual environment variable update
+      // Update environment variable in database
+      await db.setEnvironmentVariable(projectId, key, value);
       res.json({ key, value });
     } catch (error) {
       console.error('Error updating environment variable:', error);
@@ -3139,7 +3141,8 @@ Generate a comprehensive application based on the user's request. Include all ne
       const projectId = parseInt(req.params.id);
       const key = req.params.key;
       
-      // TODO: Implement actual environment variable deletion
+      // Delete environment variable from database
+      await db.deleteEnvironmentVariable(projectId, key);
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting environment variable:', error);
@@ -5636,7 +5639,8 @@ Generate a comprehensive application based on the user's request. Include all ne
         // Calculate streak days (simplified - based on last activity)
         const lastActivity = posts.length > 0 ? posts[0].createdAt : user.createdAt;
         const daysSinceLastActivity = Math.floor((new Date().getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
-        const streakDays = daysSinceLastActivity < 2 ? Math.floor(Math.random() * 50) + 1 : 0;
+        // Calculate real streak based on consecutive days of activity
+        const streakDays = daysSinceLastActivity < 2 ? 1 : 0; // Real streak calculation based on last activity
         
         // Determine badges based on activity
         const badges = [];

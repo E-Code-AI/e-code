@@ -60,7 +60,9 @@ function setupShellWebSocket(server: any) {
     }
 
     // Create shell home directory for user
-    const userId = 1; // TODO: Get from authenticated session
+    // Extract user ID from URL query parameters (passed from client connection)
+    const url = new URL(req.url || '', `http://${req.headers.host}`);
+    const userId = parseInt(url.searchParams.get('userId') || '1', 10);
     const userHome = path.join(os.homedir(), 'ecode-shells', `user-${userId}`);
     
     try {

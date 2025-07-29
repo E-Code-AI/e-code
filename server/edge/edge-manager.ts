@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import * as os from 'os';
 import { createLogger } from '../utils/logger';
 import { ClusterManager } from '../distributed/cluster-manager';
 import { ContainerOrchestrator } from '../orchestration/container-orchestrator';
@@ -24,6 +25,7 @@ export interface EdgeLocation {
     memory: number;
     requests: number;
   };
+  metrics: EdgeMetrics;
   lastHeartbeat: Date;
 }
 
@@ -80,6 +82,7 @@ export class EdgeManager extends EventEmitter {
         status: 'active',
         capacity: { cpu: 1000, memory: 4096, storage: 1000 },
         load: { cpu: 0, memory: 0, requests: 0 },
+        metrics: { locationId: 'us-west-1', timestamp: new Date(), requests: 0, bandwidth: 0, cacheHitRate: 0, avgLatency: 0, errors: 0 },
         lastHeartbeat: new Date()
       },
       {
@@ -90,6 +93,7 @@ export class EdgeManager extends EventEmitter {
         status: 'active',
         capacity: { cpu: 1000, memory: 4096, storage: 1000 },
         load: { cpu: 0, memory: 0, requests: 0 },
+        metrics: { locationId: 'us-east-1', timestamp: new Date(), requests: 0, bandwidth: 0, cacheHitRate: 0, avgLatency: 0, errors: 0 },
         lastHeartbeat: new Date()
       },
       {
@@ -100,6 +104,7 @@ export class EdgeManager extends EventEmitter {
         status: 'active',
         capacity: { cpu: 1000, memory: 4096, storage: 1000 },
         load: { cpu: 0, memory: 0, requests: 0 },
+        metrics: { locationId: 'eu-west-1', timestamp: new Date(), requests: 0, bandwidth: 0, cacheHitRate: 0, avgLatency: 0, errors: 0 },
         lastHeartbeat: new Date()
       },
       {
@@ -110,6 +115,7 @@ export class EdgeManager extends EventEmitter {
         status: 'active',
         capacity: { cpu: 1000, memory: 4096, storage: 1000 },
         load: { cpu: 0, memory: 0, requests: 0 },
+        metrics: { locationId: 'eu-central-1', timestamp: new Date(), requests: 0, bandwidth: 0, cacheHitRate: 0, avgLatency: 0, errors: 0 },
         lastHeartbeat: new Date()
       },
       {
@@ -120,6 +126,7 @@ export class EdgeManager extends EventEmitter {
         status: 'active',
         capacity: { cpu: 1000, memory: 4096, storage: 1000 },
         load: { cpu: 0, memory: 0, requests: 0 },
+        metrics: { locationId: 'ap-southeast-1', timestamp: new Date(), requests: 0, bandwidth: 0, cacheHitRate: 0, avgLatency: 0, errors: 0 },
         lastHeartbeat: new Date()
       },
       {
@@ -130,6 +137,7 @@ export class EdgeManager extends EventEmitter {
         status: 'active',
         capacity: { cpu: 1000, memory: 4096, storage: 1000 },
         load: { cpu: 0, memory: 0, requests: 0 },
+        metrics: { locationId: 'ap-northeast-1', timestamp: new Date(), requests: 0, bandwidth: 0, cacheHitRate: 0, avgLatency: 0, errors: 0 },
         lastHeartbeat: new Date()
       },
       {
@@ -140,6 +148,7 @@ export class EdgeManager extends EventEmitter {
         status: 'active',
         capacity: { cpu: 1000, memory: 4096, storage: 1000 },
         load: { cpu: 0, memory: 0, requests: 0 },
+        metrics: { locationId: 'sa-east-1', timestamp: new Date(), requests: 0, bandwidth: 0, cacheHitRate: 0, avgLatency: 0, errors: 0 },
         lastHeartbeat: new Date()
       },
       {
@@ -150,6 +159,7 @@ export class EdgeManager extends EventEmitter {
         status: 'active',
         capacity: { cpu: 1000, memory: 4096, storage: 1000 },
         load: { cpu: 0, memory: 0, requests: 0 },
+        metrics: { locationId: 'ap-south-1', timestamp: new Date(), requests: 0, bandwidth: 0, cacheHitRate: 0, avgLatency: 0, errors: 0 },
         lastHeartbeat: new Date()
       }
     ];
@@ -173,11 +183,15 @@ export class EdgeManager extends EventEmitter {
           this.emit('location-down', location);
         }
         
-        // Update load metrics (simulated)
+        // Update load metrics with real system data
+        const cpuUsage = process.cpuUsage();
+        const totalCpu = cpuUsage.user + cpuUsage.system;
+        const cpuPercent = Math.min(100, (totalCpu / 1000000) * 100);
+        
         location.load = {
-          cpu: Math.random() * 80,
-          memory: Math.random() * 70,
-          requests: Math.floor(Math.random() * 1000)
+          cpu: cpuPercent,
+          memory: (1 - (os.freemem() / os.totalmem())) * 100,
+          requests: location.metrics.requests || 0
         };
       });
     }, 10000); // Check every 10 seconds

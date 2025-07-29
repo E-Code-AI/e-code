@@ -88,6 +88,10 @@ export class ContainerOrchestrator {
   private scheduledJobs = new Map<string, ScheduledJobConfig>();
   
   private nextPort = 30000;
+  private totalRequests = 0;
+  private totalErrors = 0;
+  private latencySum = 0;
+  private latencyCount = 0;
   
   async deployContainer(config: ContainerConfig): Promise<string> {
     const containerId = `cnt-${crypto.randomBytes(8).toString('hex')}`;
@@ -151,7 +155,8 @@ export class ContainerOrchestrator {
       
       try {
         // Simulate health check
-        const healthy = Math.random() > 0.1; // 90% healthy
+        // Check real container health by verifying PID exists
+        const healthy = container.pid ? await this.checkProcessHealth(container.pid) : false;
         
         if (!healthy) {
           logger.warn(`Container ${containerId} health check failed`);
@@ -183,11 +188,11 @@ export class ContainerOrchestrator {
     
     // Simulate metrics
     return {
-      cpu: Math.random() * 100,
-      memory: Math.random() * 1000,
-      requests: Math.floor(Math.random() * 10000),
-      errors: Math.floor(Math.random() * 100),
-      latency: Math.random() * 200
+      cpu: this.getSystemCPUUsage(),
+      memory: this.getSystemMemoryUsage(),
+      requests: this.getTotalRequests(),
+      errors: this.getTotalErrors(),
+      latency: this.getAverageLatency()
     };
   }
   
@@ -313,6 +318,58 @@ export class ContainerOrchestrator {
       container.startedAt = new Date();
       logger.info(`Restarted container ${containerId}`);
     }
+  }
+  
+  private async checkProcessHealth(pid: number): Promise<boolean> {
+    try {
+      // Check if process exists by sending signal 0
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  
+  private getSystemCPUUsage(): number {
+    const os = require('os');
+    const cpus = os.cpus();
+    let totalUsage = 0;
+    
+    for (const cpu of cpus) {
+      const times = cpu.times;
+      const total = times.user + times.nice + times.sys + times.idle + times.irq;
+      const idle = times.idle;
+      totalUsage += ((total - idle) / total) * 100;
+    }
+    
+    return totalUsage / cpus.length;
+  }
+  
+  private getSystemMemoryUsage(): number {
+    const os = require('os');
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    return Math.round((totalMem - freeMem) / 1024 / 1024); // MB
+  }
+  
+  private getTotalRequests(): number {
+    return this.totalRequests;
+  }
+  
+  private getTotalErrors(): number {
+    return this.totalErrors;
+  }
+  
+  private getAverageLatency(): number {
+    return this.latencyCount > 0 ? this.latencySum / this.latencyCount : 0;
+  }
+  
+  // Method to track requests (called by other parts of the system)
+  recordRequest(latency: number, isError: boolean = false) {
+    this.totalRequests++;
+    if (isError) this.totalErrors++;
+    this.latencySum += latency;
+    this.latencyCount++;
   }
 }
 

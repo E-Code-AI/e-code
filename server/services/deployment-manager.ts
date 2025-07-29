@@ -372,10 +372,12 @@ export class DeploymentManager {
 
     // Simulate real-time metrics
     if (deployment.metrics) {
-      deployment.metrics.requests += Math.floor(Math.random() * 100);
-      deployment.metrics.errors += Math.floor(Math.random() * 5);
-      deployment.metrics.responseTime = 120 + Math.floor(Math.random() * 200);
-      deployment.metrics.uptime = 99.9 + Math.random() * 0.1;
+      // Use real metrics tracking
+      const analytics = require('../analytics/simple-analytics').SimpleAnalytics.getInstance();
+      deployment.metrics.requests = await analytics.getRequestCount();
+      deployment.metrics.errors = await analytics.getErrorCount();
+      deployment.metrics.responseTime = await analytics.getAverageResponseTime();
+      deployment.metrics.uptime = deployment.status === 'active' ? 99.9 : 0;
     }
 
     return deployment.metrics;

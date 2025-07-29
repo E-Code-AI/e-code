@@ -253,6 +253,39 @@ export class SimpleAnalytics {
       growthRate: Math.floor(Math.random() * 50) - 10 // -10% to +40%
     };
   }
+  
+  async getAIRequestCount(userId: number): Promise<number> {
+    // Find AI requests from tracked events
+    let aiRequestCount = 0;
+    this.analytics.forEach((projectAnalytics) => {
+      projectAnalytics.events.forEach((event) => {
+        if (event.userId === userId && 
+            event.path?.includes('/ai/')) {
+          aiRequestCount++;
+        }
+      });
+    });
+    return aiRequestCount;
+  }
+  
+  async getBandwidthUsage(userId: number): Promise<number> {
+    // Calculate bandwidth from tracked events
+    let bandwidth = 0;
+    this.analytics.forEach((projectAnalytics) => {
+      projectAnalytics.events.forEach((event) => {
+        if (event.userId === userId) {
+          // Estimate bandwidth based on page views and API calls
+          if (event.type === 'pageview') {
+            bandwidth += 500 * 1024; // 500KB per page view
+          } else if (event.type === 'click' || event.type === 'conversion') {
+            bandwidth += 50 * 1024; // 50KB per API call
+          }
+        }
+      });
+    });
+    return bandwidth;
+  }
 }
 
 export const simpleAnalytics = new SimpleAnalytics();
+export const analyticsService = simpleAnalytics; // Alias for backward compatibility
