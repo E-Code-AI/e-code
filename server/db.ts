@@ -8,18 +8,31 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Create postgres client with better connection management
+// Enhanced postgres client with enterprise-grade connection management
 export const client = postgres(process.env.DATABASE_URL, {
-  max: 20, // Increase connection pool size
-  idle_timeout: 60, // Increase idle timeout
-  max_lifetime: 60 * 60, // 1 hour connection lifetime
+  max: 20, // Connection pool size optimized for concurrent users
+  idle_timeout: 60, // Keep connections alive for 1 minute when idle
+  max_lifetime: 60 * 60, // 1 hour connection lifetime to prevent stale connections
   connect_timeout: 10, // 10 second connection timeout
   prepare: false, // Disable prepared statements for better stability
   transform: {
-    undefined: null, // Transform undefined to null for PostgreSQL
+    undefined: null, // Transform undefined to null for PostgreSQL compatibility
   },
-  onnotice: () => {}, // Suppress notices
-  debug: false, // Disable debug logging
+  onnotice: () => {}, // Suppress PostgreSQL notices for cleaner logs
+  debug: process.env.NODE_ENV === 'development', // Enable debug only in development
+  // Enhanced connection recovery
+  connection: {
+    application_name: 'e-code-platform',
+  },
+  // Better error handling
+  onclose: () => {
+    console.log('Database connection closed');
+  },
+  onconnect: () => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Database connection established');
+    }
+  },
 });
 
 // Create drizzle database instance with our schema

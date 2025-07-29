@@ -205,9 +205,6 @@ export function setupAuth(app: Express) {
         password: hashedPassword,
         email,
         displayName: displayName || username,
-        emailVerificationToken: token,
-        emailVerificationExpiry: expiry,
-        emailVerified: false,
       });
 
       console.log("User registered successfully:", user.username);
@@ -632,7 +629,7 @@ export function setupAuth(app: Express) {
     };
 
     // Log in the dev user
-    req.login(devUser, (err) => {
+    req.login(devUser as Express.User, (err) => {
       if (err) {
         console.error('Dev login error:', err);
         return res.status(500).json({ message: 'Login failed', error: err.message });
