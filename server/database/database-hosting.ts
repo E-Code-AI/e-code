@@ -72,6 +72,15 @@ export class DatabaseHostingService {
   private migrations: Map<string, DatabaseMigration[]> = new Map();
   private regions = ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'];
 
+  constructor() {
+    this.initializeService();
+  }
+
+  private async initializeService() {
+    // Initialize database hosting service without sample data
+    console.log('Database hosting service initialized - ready for real database instances');
+  }
+
   // Database plans configuration
   private plans = {
     free: {
