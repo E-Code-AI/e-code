@@ -23,10 +23,11 @@ export function getInitials(name: string): string {
 }
 
 /**
- * Generate a random color for user avatar
- * @returns Random color as hex string
+ * Generate a deterministic color for user avatar based on input
+ * @param input String to base color on (e.g., username or user ID)
+ * @returns Color as hex string
  */
-export function getRandomColor(): string {
+export function getRandomColor(input?: string): string {
   // Predefined color palette for better visibility against white text
   const colors = [
     '#D32F2F', // Red
@@ -41,7 +42,18 @@ export function getRandomColor(): string {
     '#616161', // Grey
   ];
   
-  return colors[Math.floor(Math.random() * colors.length)];
+  // If no input provided, use current timestamp for deterministic but changing color
+  const seed = input || new Date().toISOString();
+  
+  // Generate hash from input for deterministic selection
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  return colors[Math.abs(hash) % colors.length];
 }
 
 /**

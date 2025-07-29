@@ -271,7 +271,7 @@ class Sandbox {
     const networkConfig: NetworkSecurityConfig = {
       enableNetworkIsolation: !this.config.networkEnabled,
       allowLoopback: true,
-      allowDNS: this.config.networkEnabled,
+      allowDNS: this.config.networkEnabled || false,
       allowedPorts: this.config.blockedPorts 
         ? Array.from({length: 65535}, (_, i) => i + 1).filter(p => !this.config.blockedPorts?.includes(p))
         : [],
@@ -493,13 +493,19 @@ class Sandbox {
         reject(error);
       });
 
-      // Setup kill timer for timeout
-      setTimeout(() => {
+      // Setup kill timer for timeout with proper cleanup
+      const timeoutMs = (this.config.executionTimeout || 30) * 1000;
+      const killTimer = setTimeout(() => {
         if (this.process && !this.process.killed) {
           this.process.kill('SIGKILL');
           stderr += '\nProcess killed due to timeout';
         }
-      }, this.config.executionTimeout! * 1000);
+      }, timeoutMs);
+      
+      // Clear timeout when process exits normally
+      this.process.on('exit', () => {
+        clearTimeout(killTimer);
+      });
     });
   }
 

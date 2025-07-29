@@ -358,7 +358,7 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
     for (let i = 0; i < words.length; i++) {
       currentContent += (i > 0 ? ' ' : '') + words[i];
       onUpdate(currentContent);
-      await new Promise(resolve => setTimeout(resolve, 30 + Math.random() * 70));
+      await new Promise(resolve => setTimeout(resolve, 50)); // Fixed delay for consistent experience
     }
   };
 

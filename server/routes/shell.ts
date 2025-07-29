@@ -184,7 +184,7 @@ router.get('/api/shell/sessions', ensureAuthenticated, (req, res) => {
 
 // API endpoint to create a new shell session
 router.post('/api/shell/sessions', ensureAuthenticated, (req, res) => {
-  const sessionId = `shell-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const sessionId = `shell-${Date.now()}-${process.hrtime.bigint().toString(36).slice(0, 9)}`;
   res.json({ sessionId });
 });
 

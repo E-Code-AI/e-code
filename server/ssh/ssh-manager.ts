@@ -77,7 +77,8 @@ export class SSHManager {
   private cleanupInactiveSessions() {
     const now = Date.now();
     
-    for (const [sessionId, session] of this.sessions.entries()) {
+    const sessions = Array.from(this.sessions.entries());
+    for (const [sessionId, session] of sessions) {
       const timeSinceActivity = now - session.lastActivity.getTime();
       
       if (timeSinceActivity > this.sessionTimeout) {
@@ -88,7 +89,7 @@ export class SSHManager {
 
   // Generate SSH key pair
   async generateSSHKey(userId: number, name: string, type: 'rsa' | 'ed25519' | 'ecdsa' = 'ed25519'): Promise<SSHKey> {
-    const keyId = `key_${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const keyId = `key_${userId}_${Date.now()}_${process.hrtime.bigint().toString(36).slice(0, 6)}`;
     const keyPath = path.join(this.sshKeysDir, keyId);
     
     try {
@@ -268,16 +269,25 @@ export class SSHManager {
   }
 
   private async initializeSSHConnection(session: SSHSession): Promise<void> {
-    // In a real implementation, this would:
-    // 1. Set up SSH tunnel to the project environment
-    // 2. Configure authorized_keys
-    // 3. Set up project-specific environment
-    // 4. Initialize shell session
+    // Set up SSH connection for the project environment
+    const projectPath = `/projects/${session.projectId}`;
+    const sshConfig = this.getSSHConfig(session.projectId);
     
-    // For now, we'll simulate the setup
-    return new Promise((resolve) => {
-      setTimeout(resolve, 1000);
-    });
+    // Create project directory if it doesn't exist
+    try {
+      const fs = require('fs').promises;
+      await fs.mkdir(projectPath, { recursive: true });
+      
+      // Set up environment variables for the session
+      process.env.E_CODE_PROJECT_ID = session.projectId.toString();
+      process.env.HOME = projectPath;
+      
+      // Mark session as ready
+      session.status = 'connected';
+    } catch (error) {
+      logger.error('Failed to initialize SSH connection:', error);
+      throw error;
+    }
   }
 
   // Get SSH session
@@ -382,33 +392,37 @@ export class SSHManager {
     // Update activity
     this.updateSessionActivity(sessionId);
 
-    // In a real implementation, this would execute the command
-    // in the SSH session and return the result
+    // Execute command in project environment
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
     
-    // For simulation, return mock response
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (command === 'ls') {
-          resolve({
-            stdout: 'main.py\npackage.json\nREADME.md\n',
-            stderr: '',
-            exitCode: 0
-          });
-        } else if (command === 'pwd') {
-          resolve({
-            stdout: `/projects/${session.projectId}\n`,
-            stderr: '',
-            exitCode: 0
-          });
-        } else {
-          resolve({
-            stdout: `Command executed: ${command}\n`,
-            stderr: '',
-            exitCode: 0
-          });
-        }
-      }, 100);
-    });
+    const projectPath = `/projects/${session.projectId}`;
+    const env = {
+      ...process.env,
+      ...this.getSSHConfig(session.projectId).environment
+    };
+
+    try {
+      const { stdout, stderr } = await execAsync(command, {
+        cwd: projectPath,
+        env,
+        timeout: 30000, // 30 second timeout
+        maxBuffer: 1024 * 1024 // 1MB buffer
+      });
+
+      return {
+        stdout: stdout || '',
+        stderr: stderr || '',
+        exitCode: 0
+      };
+    } catch (error: any) {
+      return {
+        stdout: error.stdout || '',
+        stderr: error.stderr || error.message,
+        exitCode: error.code || 1
+      };
+    }
   }
 
   // Get SSH statistics

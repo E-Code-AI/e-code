@@ -41,11 +41,12 @@ export function useCollaboration(projectId: number | undefined, fileId: number |
       '#9381FF', '#B8B8FF', '#FFEEDD', '#FFD8BE', '#FCD7AD'
     ];
     
-    const getRandomColor = () => {
-      return colorMap[Math.floor(Math.random() * colorMap.length)];
+    const getUserColor = (userId: number) => {
+      // Use user ID to deterministically select color
+      return colorMap[userId % colorMap.length];
     };
     
-    const userColor = getRandomColor();
+    const userColor = getUserColor(user.id);
     
     ws.onopen = () => {
       console.log('WebSocket connected');

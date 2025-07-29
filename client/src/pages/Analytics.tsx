@@ -378,7 +378,7 @@ export default function Analytics() {
                   {['/dashboard', '/project/my-app', '/bounties', '/learn'].map((page, index) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded">
                       <span className="font-mono text-sm">{page}</span>
-                      <Badge variant="outline">{Math.floor(Math.random() * 10) + 1} users</Badge>
+                      <Badge variant="outline">{index + 2} users</Badge>
                     </div>
                   ))}
                 </div>

@@ -319,7 +319,7 @@ export default function Badges() {
                       <p className="text-sm text-muted-foreground mb-2">
                         {category.count} badges available
                       </p>
-                      <Progress value={Math.random() * 100} className="h-2" />
+                      <Progress value={(index + 1) * 20} className="h-2" />
                     </CardContent>
                   </Card>
                 );

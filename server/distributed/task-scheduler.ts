@@ -147,7 +147,7 @@ export class DistributedTaskScheduler extends EventEmitter {
   }
 
   private async scheduleRecurringTask(task: ScheduledTask): Promise<string> {
-    const taskId = `recurring-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const taskId = `recurring-${Date.now()}-${process.hrtime.bigint().toString(36).slice(0, 9)}`;
 
     if (task.schedule?.interval) {
       // Interval-based scheduling
@@ -173,7 +173,7 @@ export class DistributedTaskScheduler extends EventEmitter {
   }
 
   private async scheduleWithDependencies(task: ScheduledTask): Promise<string> {
-    const taskId = `dep-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const taskId = `dep-${Date.now()}-${process.hrtime.bigint().toString(36).slice(0, 9)}`;
     
     // Build dependency graph
     this.taskGraph.set(taskId, new Set(task.dependencies));

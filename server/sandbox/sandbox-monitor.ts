@@ -474,7 +474,7 @@ export class SandboxMonitor extends EventEmitter {
    * Generate unique event ID
    */
   private generateEventId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${process.hrtime.bigint().toString(36).slice(0, 9)}`;
   }
 
   /**

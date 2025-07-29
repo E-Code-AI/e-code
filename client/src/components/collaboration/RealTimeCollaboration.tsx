@@ -96,7 +96,9 @@ const generateCollaboratorColor = () => {
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
     '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8C471', '#82E0AA'
   ];
-  return colors[Math.floor(Math.random() * colors.length)];
+  // Use user ID for deterministic color selection
+  const userId = typeof user === 'object' && user.id ? user.id : 0;
+  return colors[userId % colors.length];
 };
 
 export function RealTimeCollaboration({

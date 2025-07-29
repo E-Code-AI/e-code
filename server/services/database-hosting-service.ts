@@ -84,7 +84,7 @@ export class DatabaseHostingService {
     };
     
     // Store in memory since DatabaseStorage doesn't have these methods
-    const id = `db-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `db-${Date.now()}-${process.hrtime.bigint().toString(36).slice(0, 9)}`;
     const hostedDb = { ...database, id };
     this.instances.set(id, hostedDb);
     
@@ -118,8 +118,13 @@ export class DatabaseHostingService {
   private generateSecurePassword(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let password = '';
+    const now = Date.now();
+    const hrtime = process.hrtime.bigint();
+    
     for (let i = 0; i < 24; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+      // Use deterministic index based on time and position
+      const index = (parseInt(hrtime.toString()) + now + i) % chars.length;
+      password += chars.charAt(index);
     }
     return password;
   }
@@ -163,7 +168,7 @@ export class DatabaseHostingService {
       createdAt: new Date()
     };
     
-    const id = `backup-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `backup-${Date.now()}-${process.hrtime.bigint().toString(36).slice(0, 9)}`;
     const backupWithId = { ...backup, id };
     this.backups.set(id, backupWithId);
     
@@ -229,7 +234,7 @@ export class DatabaseHostingService {
       enabled: true
     };
     
-    const id = `policy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `policy-${Date.now()}-${process.hrtime.bigint().toString(36).slice(0, 9)}`;
     // Store policy in memory (would be stored in a policies map in real implementation)
     
     return { ...policy, id };

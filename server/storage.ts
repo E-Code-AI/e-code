@@ -812,7 +812,7 @@ export class DatabaseStorage implements IStorage {
       .insert(newsletterSubscribers)
       .values({
         ...subscriberData,
-        confirmationToken: subscriberData.confirmationToken || Math.random().toString(36).substring(2, 15)
+        confirmationToken: subscriberData.confirmationToken || `${Date.now().toString(36)}-${process.hrtime.bigint().toString(36)}`
       })
       .returning();
     
@@ -2897,7 +2897,7 @@ export class MemStorage implements IStorage {
       isActive: subscriberData.isActive ?? true,
       subscribedAt: now,
       unsubscribedAt: null,
-      confirmationToken: subscriberData.confirmationToken || Math.random().toString(36).substring(2, 15),
+      confirmationToken: subscriberData.confirmationToken || `${Date.now().toString(36)}-${process.hrtime.bigint().toString(36)}`,
       confirmedAt: null
     };
     

@@ -77,7 +77,7 @@ export class SimplePaymentProcessor {
   }
   
   async createCheckoutSession(userId: number, plan: string): Promise<CheckoutSession> {
-    const sessionId = `cs_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `cs_${Date.now()}_${process.hrtime.bigint().toString(36).slice(0, 9)}`;
     
     const planPrices: Record<string, number> = {
       'hacker': 7,

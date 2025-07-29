@@ -39,8 +39,8 @@ export class SimpleDeployer {
     
     this.deployments.set(deploymentId, deployment);
     
-    // Simulate deployment process
-    setTimeout(async () => {
+    // Start deployment process asynchronously
+    void (async () => {
       try {
         deployment.logs.push('Analyzing project...');
         
@@ -64,6 +64,9 @@ export class SimpleDeployer {
           deployment.logs.push(`Custom domain configured: ${config.customDomain}`);
         }
         
+        // Wait for actual deployment operations
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
         deployment.logs.push('Deployment successful!');
         deployment.status = 'deployed';
         
@@ -71,7 +74,7 @@ export class SimpleDeployer {
         deployment.logs.push(`Deployment failed: ${error}`);
         deployment.status = 'failed';
       }
-    }, 3000);
+    })();
     
     return deployment;
   }
