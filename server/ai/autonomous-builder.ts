@@ -811,8 +811,8 @@ export default function App() {
     const lowercaseDesc = description.toLowerCase();
     
     // Check each template's keywords
-    for (const template of this.templates.values()) {
-      const keywordMatches = template.keywords.filter(keyword => 
+    for (const template of Array.from(this.templates.values())) {
+      const keywordMatches = template.keywords.filter((keyword: string) => 
         lowercaseDesc.includes(keyword)
       ).length;
       
@@ -841,7 +841,7 @@ export default function App() {
     return null;
   }
 
-  // Generate build actions based on user's description
+  // Generate build actions based on user's description (legacy method)
   generateBuildActions(description: string): BuildAction[] {
     const template = this.detectAppType(description);
     
@@ -943,6 +943,758 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get template by ID
   getTemplate(id: string): AppTemplate | undefined {
     return this.templates.get(id);
+  }
+
+  // Detect building intent from user message
+  detectBuildingIntent(message: string): { 
+    detected: boolean; 
+    matchedTemplate?: string; 
+    confidence: number; 
+    buildingKeywords: string[]; 
+    appType?: string 
+  } {
+    const lowerMessage = message.toLowerCase();
+    
+    // Building keywords to detect intent
+    const buildingKeywords = ['build', 'create', 'make', 'develop', 'generate', 'design', 'craft', 'construct'];
+    const detectedKeywords = buildingKeywords.filter(keyword => lowerMessage.includes(keyword));
+    
+    // App type keywords
+    const appTypeKeywords = ['app', 'application', 'website', 'site', 'tool', 'service', 'platform', 'system'];
+    const hasAppType = appTypeKeywords.some(keyword => lowerMessage.includes(keyword));
+    
+    // Check if building intent is detected
+    const hasBuilding = detectedKeywords.length > 0;
+    const detected = hasBuilding || hasAppType;
+    
+    if (!detected) {
+      return {
+        detected: false,
+        confidence: 0,
+        buildingKeywords: []
+      };
+    }
+    
+    // Try to match with existing templates
+    let matchedTemplate: string | undefined;
+    let highestConfidence = 0;
+    
+    for (const [templateId, template] of this.templates.entries()) {
+      const matches = template.keywords.filter((keyword: string) => 
+        lowerMessage.includes(keyword.toLowerCase())
+      ).length;
+      
+      const confidence = matches / template.keywords.length;
+      
+      if (confidence > highestConfidence && confidence >= 0.3) {
+        highestConfidence = confidence;
+        matchedTemplate = templateId;
+      }
+    }
+    
+    // Determine app type
+    let appType = 'web-app';
+    if (lowerMessage.includes('todo') || lowerMessage.includes('task')) appType = 'todo-app';
+    else if (lowerMessage.includes('portfolio') || lowerMessage.includes('resume')) appType = 'portfolio';
+    else if (lowerMessage.includes('blog') || lowerMessage.includes('article')) appType = 'blog';
+    else if (lowerMessage.includes('shop') || lowerMessage.includes('store') || lowerMessage.includes('ecommerce')) appType = 'ecommerce';
+    else if (lowerMessage.includes('chat') || lowerMessage.includes('message')) appType = 'chat-app';
+    else if (lowerMessage.includes('dashboard') || lowerMessage.includes('analytics')) appType = 'dashboard';
+    else if (lowerMessage.includes('game') || lowerMessage.includes('gaming')) appType = 'game';
+    
+    return {
+      detected: true,
+      matchedTemplate,
+      confidence: Math.max(highestConfidence, hasBuilding ? 0.7 : 0.5),
+      buildingKeywords: detectedKeywords,
+      appType
+    };
+  }
+
+  // Generate comprehensive build actions and response
+  async generateComprehensiveBuildActions(
+    message: string, 
+    buildingIntent: any, 
+    language: string = 'javascript'
+  ): Promise<{ actions: BuildAction[]; response: string }> {
+    
+    // If we have a matched template, use it
+    if (buildingIntent.matchedTemplate) {
+      const template = this.templates.get(buildingIntent.matchedTemplate);
+      if (template) {
+        return {
+          actions: template.actions,
+          response: `I'm building a ${template.name} for you! ${template.description}. This will include: ${template.features.join(', ')}.`
+        };
+      }
+    }
+    
+    // Generate based on app type
+    const appType = buildingIntent.appType || 'web-app';
+    let actions: BuildAction[] = [];
+    let response = "";
+    
+    switch (appType) {
+      case 'todo-app':
+        actions = this.templates.get('todo-app')?.actions || [];
+        response = "I'm building a Todo app for you! It will have task management, categories, and a beautiful interface.";
+        break;
+        
+      case 'portfolio':
+        actions = [
+          { type: 'create_file', data: { path: 'index.html', content: this.generatePortfolioHTML() }},
+          { type: 'create_file', data: { path: 'style.css', content: this.generatePortfolioCSS() }},
+          { type: 'create_file', data: { path: 'script.js', content: this.generatePortfolioJS() }}
+        ];
+        response = "I'm creating a professional portfolio website for you! It will showcase your work with a modern, responsive design.";
+        break;
+        
+      case 'blog':
+        actions = [
+          { type: 'create_file', data: { path: 'index.html', content: this.generateBlogHTML() }},
+          { type: 'create_file', data: { path: 'style.css', content: this.generateBlogCSS() }},
+          { type: 'create_file', data: { path: 'script.js', content: this.generateBlogJS() }}
+        ];
+        response = "I'm building a blog for you! It will have article management, categories, and a clean reading experience.";
+        break;
+        
+      case 'dashboard':
+        actions = [
+          { type: 'create_file', data: { path: 'index.html', content: this.generateDashboardHTML() }},
+          { type: 'create_file', data: { path: 'style.css', content: this.generateDashboardCSS() }},
+          { type: 'create_file', data: { path: 'script.js', content: this.generateDashboardJS() }}
+        ];
+        response = "I'm creating an analytics dashboard for you! It will display data visualizations, metrics, and interactive charts.";
+        break;
+        
+      default:
+        actions = this.generateBasicWebApp(message);
+        response = "I'm building a custom web application for you! It will have a modern interface and be ready for customization.";
+    }
+    
+    return { actions, response };
+  }
+
+  // Generate portfolio HTML
+  private generatePortfolioHTML(): string {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Portfolio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <h1>Your Name</h1>
+      <ul>
+        <li><a href="#about">About</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  
+  <main>
+    <section id="hero">
+      <h2>Hello, I'm a Creative Developer</h2>
+      <p>I build amazing digital experiences</p>
+      <button>View My Work</button>
+    </section>
+    
+    <section id="about">
+      <h2>About Me</h2>
+      <p>I'm passionate about creating innovative solutions and beautiful user experiences.</p>
+    </section>
+    
+    <section id="projects">
+      <h2>My Projects</h2>
+      <div class="project-grid">
+        <div class="project-card">
+          <h3>Project 1</h3>
+          <p>Description of your awesome project</p>
+        </div>
+        <div class="project-card">
+          <h3>Project 2</h3>
+          <p>Description of another great project</p>
+        </div>
+      </div>
+    </section>
+    
+    <section id="contact">
+      <h2>Get In Touch</h2>
+      <p>Let's work together on something amazing!</p>
+      <button>Contact Me</button>
+    </section>
+  </main>
+  
+  <script src="script.js"></script>
+</body>
+</html>`;
+  }
+
+  // Generate portfolio CSS
+  private generatePortfolioCSS(): string {
+    return `* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+header {
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+}
+
+nav ul {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+}
+
+nav a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+}
+
+main {
+  margin-top: 80px;
+}
+
+#hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-align: center;
+  padding: 8rem 5%;
+}
+
+#hero h2 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+#hero button {
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 2rem;
+}
+
+section {
+  padding: 4rem 5%;
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.project-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}`;
+  }
+
+  // Generate portfolio JS
+  private generatePortfolioJS(): string {
+    return `// Smooth scrolling for navigation links
+document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    target.scrollIntoView({
+      behavior: 'smooth'
+    });
+  });
+});
+
+// Add scroll effect to header
+window.addEventListener('scroll', () => {
+  const header = document.querySelector('header');
+  if (window.scrollY > 100) {
+    header.style.background = 'rgba(255, 255, 255, 0.95)';
+    header.style.backdropFilter = 'blur(10px)';
+  } else {
+    header.style.background = '#fff';
+    header.style.backdropFilter = 'none';
+  }
+});`;
+  }
+
+  // Generate blog HTML
+  private generateBlogHTML(): string {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Blog</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>My Blog</h1>
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#categories">Categories</a>
+    </nav>
+  </header>
+  
+  <main>
+    <section class="hero">
+      <h2>Welcome to My Blog</h2>
+      <p>Sharing thoughts, ideas, and experiences</p>
+    </section>
+    
+    <section class="posts">
+      <h2>Latest Posts</h2>
+      <div class="post-grid">
+        <article class="post-card">
+          <h3>My First Blog Post</h3>
+          <p class="meta">Published on January 1, 2024</p>
+          <p>This is where your blog post content would go. Write about anything you're passionate about!</p>
+          <a href="#" class="read-more">Read More</a>
+        </article>
+        
+        <article class="post-card">
+          <h3>Another Interesting Article</h3>
+          <p class="meta">Published on January 5, 2024</p>
+          <p>Share your knowledge, experiences, and insights with your readers through engaging content.</p>
+          <a href="#" class="read-more">Read More</a>
+        </article>
+      </div>
+    </section>
+  </main>
+  
+  <script src="script.js"></script>
+</body>
+</html>`;
+  }
+
+  // Generate blog CSS
+  private generateBlogCSS(): string {
+    return `* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Georgia, serif;
+  line-height: 1.6;
+  color: #333;
+  background: #f9f9f9;
+}
+
+header {
+  background: #2c3e50;
+  color: white;
+  padding: 2rem 5%;
+  text-align: center;
+}
+
+header h1 {
+  margin-bottom: 1rem;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin: 0 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  transition: background 0.3s;
+}
+
+nav a:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.hero {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  text-align: center;
+  padding: 4rem 5%;
+}
+
+.posts {
+  padding: 4rem 5%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.post-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.post-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.post-card h3 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.meta {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.read-more {
+  color: #3498db;
+  text-decoration: none;
+  font-weight: bold;
+}`;
+  }
+
+  // Generate blog JS
+  private generateBlogJS(): string {
+    return `// Add reading time calculator
+document.querySelectorAll('.post-card').forEach(post => {
+  const content = post.querySelector('p:not(.meta)').textContent;
+  const words = content.split(' ').length;
+  const readingTime = Math.ceil(words / 200); // 200 words per minute
+  
+  const meta = post.querySelector('.meta');
+  meta.textContent += \` • \${readingTime} min read\`;
+});
+
+// Add smooth scroll for navigation
+document.querySelectorAll('nav a').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const href = link.getAttribute('href');
+    if (href.startsWith('#')) {
+      const target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  });
+});`;
+  }
+
+  // Generate dashboard HTML
+  private generateDashboardHTML(): string {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <h2>Dashboard</h2>
+      <nav>
+        <a href="#overview" class="active">Overview</a>
+        <a href="#analytics">Analytics</a>
+        <a href="#reports">Reports</a>
+        <a href="#settings">Settings</a>
+      </nav>
+    </aside>
+    
+    <main class="main-content">
+      <header class="dashboard-header">
+        <h1>Analytics Overview</h1>
+        <div class="date-range">
+          <select>
+            <option>Last 7 days</option>
+            <option>Last 30 days</option>
+            <option>Last 90 days</option>
+          </select>
+        </div>
+      </header>
+      
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <h3>Total Users</h3>
+          <div class="metric-value">12,345</div>
+          <div class="metric-change positive">+12.5%</div>
+        </div>
+        
+        <div class="metric-card">
+          <h3>Revenue</h3>
+          <div class="metric-value">$45,678</div>
+          <div class="metric-change positive">+8.2%</div>
+        </div>
+        
+        <div class="metric-card">
+          <h3>Conversion Rate</h3>
+          <div class="metric-value">3.45%</div>
+          <div class="metric-change negative">-2.1%</div>
+        </div>
+        
+        <div class="metric-card">
+          <h3>Bounce Rate</h3>
+          <div class="metric-value">65.2%</div>
+          <div class="metric-change positive">-5.3%</div>
+        </div>
+      </div>
+      
+      <div class="charts-section">
+        <div class="chart-container">
+          <h3>Traffic Overview</h3>
+          <div class="chart-placeholder" id="traffic-chart">
+            <p>Interactive chart would go here</p>
+          </div>
+        </div>
+        
+        <div class="chart-container">
+          <h3>Top Pages</h3>
+          <div class="chart-placeholder" id="pages-chart">
+            <div class="page-item">
+              <span>/home</span>
+              <span>45%</span>
+            </div>
+            <div class="page-item">
+              <span>/products</span>
+              <span>23%</span>
+            </div>
+            <div class="page-item">
+              <span>/about</span>
+              <span>15%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html>`;
+  }
+
+  // Generate dashboard CSS
+  private generateDashboardCSS(): string {
+    return `* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f5f7fa;
+  color: #333;
+}
+
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 250px;
+  background: #2c3e50;
+  color: white;
+  padding: 2rem 1rem;
+}
+
+.sidebar h2 {
+  margin-bottom: 2rem;
+}
+
+.sidebar nav a {
+  display: block;
+  color: white;
+  text-decoration: none;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 5px;
+  transition: background 0.3s;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active {
+  background: #34495e;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.date-range select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: white;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.metric-card h3 {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.metric-change {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.positive {
+  color: #27ae60;
+}
+
+.negative {
+  color: #e74c3c;
+}
+
+.charts-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.chart-container {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.chart-placeholder {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 5px;
+  margin-top: 1rem;
+}
+
+.page-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}`;
+  }
+
+  // Generate dashboard JS
+  private generateDashboardJS(): string {
+    return `// Simulate real-time data updates
+function updateMetrics() {
+  const metrics = document.querySelectorAll('.metric-value');
+  metrics.forEach(metric => {
+    const currentValue = metric.textContent;
+    // Add some animation or update logic here
+    metric.style.transition = 'all 0.3s ease';
+  });
+}
+
+// Add interactivity to sidebar navigation
+document.querySelectorAll('.sidebar nav a').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    
+    // Remove active class from all links
+    document.querySelectorAll('.sidebar nav a').forEach(l => l.classList.remove('active'));
+    
+    // Add active class to clicked link
+    link.classList.add('active');
+    
+    // Update main content based on selection
+    const section = link.getAttribute('href').substring(1);
+    updateMainContent(section);
+  });
+});
+
+function updateMainContent(section) {
+  const header = document.querySelector('.dashboard-header h1');
+  
+  switch(section) {
+    case 'overview':
+      header.textContent = 'Analytics Overview';
+      break;
+    case 'analytics':
+      header.textContent = 'Detailed Analytics';
+      break;
+    case 'reports':
+      header.textContent = 'Reports';
+      break;
+    case 'settings':
+      header.textContent = 'Settings';
+      break;
+  }
+}
+
+// Simulate chart data loading
+setTimeout(() => {
+  const chartPlaceholder = document.getElementById('traffic-chart');
+  chartPlaceholder.innerHTML = '<p>📈 Traffic chart loaded successfully!</p>';
+}, 1000);
+
+// Update metrics every 30 seconds
+setInterval(updateMetrics, 30000);`;
   }
 }
 
