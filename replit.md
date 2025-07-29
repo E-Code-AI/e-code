@@ -54,6 +54,14 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-29: **Fixed AI Model Configuration for Assistant vs Agent**:
+  * **Assistant Mode**: Now correctly uses Claude 4.0 Sonnet (Anthropic) exclusively
+  * **Agent Mode**: Implemented mixed model approach using multiple AI providers simultaneously
+    - Collects all available providers (OpenAI, Claude, Gemini, xAI, Perplexity, etc.)
+    - Uses up to 3 models in parallel for comprehensive responses
+    - Each model focuses on its strengths (code generation, understanding, analysis, etc.)
+    - Combines responses from multiple models for best results
+  * **Location**: Updated server/routes.ts AI chat endpoint to properly differentiate modes
 - 2025-07-29: **Critical Pages Creation for Complete Platform (100% COMPLETE)**:
   * Created AI/AI Agent dedicated page showcasing platform's key differentiator
   * Fixed Support page - replaced all "Repl" references with proper "E-Code" branding

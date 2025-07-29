@@ -2413,23 +2413,59 @@ document.addEventListener('DOMContentLoaded', function() {
       // Get the AI provider based on admin API keys
       let provider;
       let adminApiKey;
+      let availableProviders: any[] = [];
       
-      // Check for available admin API keys and create provider
-      if (providerName) {
-        // User specified a provider
-        adminApiKey = await storage.getActiveAdminApiKey(providerName.toLowerCase());
+      // For assistant mode, always use Claude (Anthropic)
+      if (context?.mode === 'assistant') {
+        adminApiKey = await storage.getActiveAdminApiKey('anthropic');
         if (adminApiKey) {
-          provider = AIProviderFactory.create(providerName.toLowerCase(), adminApiKey.apiKey);
+          provider = AIProviderFactory.create('anthropic', adminApiKey.apiKey);
         }
-      } else {
-        // Auto-select based on available admin API keys
-        const providerPriority = ['openai', 'anthropic', 'gemini', 'xai', 'perplexity', 'mixtral', 'llama', 'cohere', 'deepseek', 'mistral'];
+      } 
+      // For agent mode, use mixed models
+      else if (context?.mode === 'agent') {
+        // Get all available providers for mixed usage
+        const providerTypes = ['openai', 'anthropic', 'gemini', 'xai', 'perplexity', 'mixtral', 'llama', 'cohere', 'deepseek', 'mistral'];
         
-        for (const providerType of providerPriority) {
-          adminApiKey = await storage.getActiveAdminApiKey(providerType);
+        for (const providerType of providerTypes) {
+          const apiKey = await storage.getActiveAdminApiKey(providerType);
+          if (apiKey) {
+            availableProviders.push({
+              type: providerType,
+              provider: AIProviderFactory.create(providerType, apiKey.apiKey),
+              apiKey: apiKey
+            });
+          }
+        }
+        
+        // If user specified a provider, use it as primary
+        if (providerName && availableProviders.find(p => p.type === providerName.toLowerCase())) {
+          provider = availableProviders.find(p => p.type === providerName.toLowerCase())?.provider;
+          adminApiKey = availableProviders.find(p => p.type === providerName.toLowerCase())?.apiKey;
+        } else if (availableProviders.length > 0) {
+          // Use first available as primary provider
+          provider = availableProviders[0].provider;
+          adminApiKey = availableProviders[0].apiKey;
+        }
+      } 
+      // Default behavior for other modes
+      else {
+        if (providerName) {
+          // User specified a provider
+          adminApiKey = await storage.getActiveAdminApiKey(providerName.toLowerCase());
           if (adminApiKey) {
-            provider = AIProviderFactory.create(providerType, adminApiKey.apiKey);
-            break;
+            provider = AIProviderFactory.create(providerName.toLowerCase(), adminApiKey.apiKey);
+          }
+        } else {
+          // Auto-select based on available admin API keys
+          const providerPriority = ['openai', 'anthropic', 'gemini', 'xai', 'perplexity', 'mixtral', 'llama', 'cohere', 'deepseek', 'mistral'];
+          
+          for (const providerType of providerPriority) {
+            adminApiKey = await storage.getActiveAdminApiKey(providerType);
+            if (adminApiKey) {
+              provider = AIProviderFactory.create(providerType, adminApiKey.apiKey);
+              break;
+            }
           }
         }
       }
@@ -2527,25 +2563,114 @@ Generate a comprehensive application based on the user's request. Include all ne
               { role: 'user' as const, content: message }
             ];
             
-            // Use generateCodeWithUnderstanding if code analysis is available
-            let agentResponse;
-            if (codeAnalysis && provider.generateCodeWithUnderstanding) {
-              agentResponse = await provider.generateCodeWithUnderstanding(
-                agentMessages,
-                codeAnalysis,
-                {
-                  language: project.language || 'javascript',
-                  systemPrompt: systemMessageAgent.content,
-                  max_tokens: 2000,
-                  temperature: 0.7
-                }
-              );
-            } else {
-              // Fallback to regular generateChat if no code analysis
-              agentResponse = await provider.generateChat(agentMessages, { max_tokens: 1500, temperature: 0.7 });
-            }
+            // Use mixed models for agent mode
+            let agentResponse = '';
             
-            responseContent = agentResponse || responseContent;
+            if (availableProviders.length > 1) {
+              // Use different models for different tasks
+              logger.info('Using mixed models for agent response', {
+                availableProviders: availableProviders.map(p => p.type)
+              });
+              
+              // Distribute tasks among available models
+              const taskAssignments = {
+                'openai': 'code generation and implementation',
+                'anthropic': 'understanding context and explanations',
+                'gemini': 'quick responses and suggestions',
+                'xai': 'technical analysis and optimization',
+                'perplexity': 'web search and documentation lookup',
+                'mixtral': 'code refactoring suggestions',
+                'llama': 'natural language understanding',
+                'cohere': 'code documentation',
+                'deepseek': 'deep code analysis',
+                'mistral': 'code completion'
+              };
+              
+              // Generate responses from multiple models
+              const modelResponses = [];
+              
+              // Use up to 3 models for mixed response
+              const modelsToUse = availableProviders.slice(0, 3);
+              
+              for (const providerInfo of modelsToUse) {
+                try {
+                  const taskFocus = taskAssignments[providerInfo.type] || 'general assistance';
+                  const modelSpecificPrompt = {
+                    role: 'system' as const,
+                    content: `${systemMessageAgent.content}\n\nFocus on ${taskFocus} for this response.`
+                  };
+                  
+                  const modelMessages = [
+                    modelSpecificPrompt,
+                    ...conversationHistory.map((msg: any) => ({
+                      role: msg.role as 'user' | 'assistant',
+                      content: msg.content
+                    })),
+                    { role: 'user' as const, content: message }
+                  ];
+                  
+                  const modelResponse = await providerInfo.provider.generateChat(modelMessages, { 
+                    max_tokens: 1000, 
+                    temperature: 0.7 
+                  });
+                  
+                  if (modelResponse) {
+                    modelResponses.push({
+                      provider: providerInfo.type,
+                      response: modelResponse
+                    });
+                  }
+                } catch (error) {
+                  logger.error(`Error with ${providerInfo.type} provider:`, error);
+                }
+              }
+              
+              // Combine responses from multiple models
+              if (modelResponses.length > 0) {
+                agentResponse = `I've analyzed your request using multiple AI models for the best results:\n\n`;
+                
+                modelResponses.forEach((mr, index) => {
+                  if (index > 0) agentResponse += '\n\n---\n\n';
+                  agentResponse += `**${mr.provider.toUpperCase()} Analysis:**\n${mr.response}`;
+                });
+                
+                responseContent = agentResponse;
+              } else {
+                // Fallback to single provider if mixed approach fails
+                if (codeAnalysis && provider.generateCodeWithUnderstanding) {
+                  agentResponse = await provider.generateCodeWithUnderstanding(
+                    agentMessages,
+                    codeAnalysis,
+                    {
+                      language: project.language || 'javascript',
+                      systemPrompt: systemMessageAgent.content,
+                      max_tokens: 2000,
+                      temperature: 0.7
+                    }
+                  );
+                } else {
+                  agentResponse = await provider.generateChat(agentMessages, { max_tokens: 1500, temperature: 0.7 });
+                }
+                responseContent = agentResponse || responseContent;
+              }
+            } else {
+              // Single provider fallback
+              if (codeAnalysis && provider.generateCodeWithUnderstanding) {
+                agentResponse = await provider.generateCodeWithUnderstanding(
+                  agentMessages,
+                  codeAnalysis,
+                  {
+                    language: project.language || 'javascript',
+                    systemPrompt: systemMessageAgent.content,
+                    max_tokens: 2000,
+                    temperature: 0.7
+                  }
+                );
+              } else {
+                agentResponse = await provider.generateChat(agentMessages, { max_tokens: 1500, temperature: 0.7 });
+              }
+              responseContent = agentResponse || responseContent;
+            }
           }
 
           logger.info('Returning agent response with actions:', {
