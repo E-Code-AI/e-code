@@ -38,6 +38,7 @@ export default function Docs() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['getting-started']);
+  const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev =>
@@ -45,6 +46,11 @@ export default function Docs() {
         ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
     );
+  };
+
+  const handleDocClick = (e: React.MouseEvent, title: string) => {
+    e.preventDefault();
+    setSelectedDoc(title);
   };
 
   const docCategories: DocCategory[] = [
@@ -338,8 +344,14 @@ export default function Docs() {
                     {category.items.map(item => (
                       <a
                         key={item.href}
-                        href={item.href}
-                        className="group flex items-center justify-between px-2 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                        href="#"
+                        onClick={(e) => handleDocClick(e, item.title)}
+                        className={cn(
+                          "group flex items-center justify-between px-2 py-1 text-sm rounded-md transition-colors cursor-pointer",
+                          selectedDoc === item.title
+                            ? "bg-accent text-foreground font-medium"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                        )}
                       >
                         <span>{item.title}</span>
                         {item.badge && (
@@ -358,19 +370,101 @@ export default function Docs() {
 
         {/* Main Content */}
         <main className="flex-1">
-          {/* Hero Section */}
-          <section className="px-6 py-12 bg-gradient-to-b from-primary/5 to-transparent">
-            <div className="max-w-4xl mx-auto text-center space-y-6">
-              <Badge variant="secondary" className="mb-4">
-                <BookOpen className="h-3 w-3 mr-1" />
-                Documentation v2.0
-              </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold">
-                Build anything with E-Code
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Learn how to use E-Code's powerful features to create, collaborate, and deploy your projects
-              </p>
+          {selectedDoc ? (
+            // Documentation Content
+            <article className="px-6 py-12 max-w-4xl mx-auto">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedDoc(null)}
+                className="mb-6 -ml-2"
+              >
+                <ChevronRight className="h-4 w-4 mr-1 rotate-180" />
+                Back to docs
+              </Button>
+              
+              <div className="prose prose-gray dark:prose-invert max-w-none">
+                <h1>{selectedDoc}</h1>
+                
+                <div className="mt-8 p-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <h3 className="flex items-center gap-2 text-amber-800 dark:text-amber-200 mt-0">
+                    <Sparkles className="h-5 w-5" />
+                    Documentation Coming Soon
+                  </h3>
+                  <p className="text-amber-700 dark:text-amber-300 mb-0">
+                    We're actively working on completing our documentation. This page will be available soon with comprehensive guides, examples, and best practices for using E-Code.
+                  </p>
+                </div>
+                
+                <div className="mt-8 space-y-6">
+                  <div>
+                    <h2>What you can do now:</h2>
+                    <ul>
+                      <li>
+                        <strong>Use the AI Agent:</strong> Our AI assistant can help you build applications without needing documentation. Just describe what you want to create!
+                      </li>
+                      <li>
+                        <strong>Explore Templates:</strong> Browse our ready-to-use templates to get started quickly with your preferred framework or language.
+                      </li>
+                      <li>
+                        <strong>Join the Community:</strong> Connect with other developers in our forum to share knowledge and get help.
+                      </li>
+                      <li>
+                        <strong>Watch Tutorials:</strong> Check out our video tutorials on the Learn page for visual walkthroughs.
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div className="grid gap-4 sm:grid-cols-2 mt-8">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Start Building</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Button 
+                          className="w-full"
+                          onClick={() => navigate('/agent')}
+                        >
+                          <Bot className="h-4 w-4 mr-2" />
+                          Open AI Agent
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Get Help</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Button 
+                          variant="secondary"
+                          className="w-full"
+                          onClick={() => navigate('/support')}
+                        >
+                          <HelpCircle className="h-4 w-4 mr-2" />
+                          Contact Support
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ) : (
+            <>
+              {/* Hero Section */}
+              <section className="px-6 py-12 bg-gradient-to-b from-primary/5 to-transparent">
+                <div className="max-w-4xl mx-auto text-center space-y-6">
+                  <Badge variant="secondary" className="mb-4">
+                    <BookOpen className="h-3 w-3 mr-1" />
+                    Documentation v2.0
+                  </Badge>
+                  <h1 className="text-4xl md:text-5xl font-bold">
+                    Build anything with E-Code
+                  </h1>
+                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                    Learn how to use E-Code's powerful features to create, collaborate, and deploy your projects
+                  </p>
               
               {/* Search Bar */}
               <div className="max-w-2xl mx-auto relative">
@@ -532,6 +626,8 @@ export default function Docs() {
               </div>
             </div>
           </section>
+            </>
+          )}
         </main>
       </div>
     </div>
