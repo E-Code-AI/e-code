@@ -15,9 +15,10 @@ export class OpenAIProvider implements AIProvider {
   constructor(apiKey: string) {
     this.client = new OpenAI({ 
       apiKey,
-      // Enhanced configuration for stability
+      // Enhanced configuration for production stability
       maxRetries: 3,
-      timeout: 60000 // 60 second timeout
+      timeout: 60000, // 60 second timeout for network stability
+      dangerouslyAllowBrowser: false, // Server-side only
     });
   }
   
@@ -51,9 +52,9 @@ export class AnthropicProvider implements AIProvider {
   constructor(apiKey: string) {
     this.client = new Anthropic({ 
       apiKey,
-      // Enhanced configuration for stability
+      // Enhanced configuration for production stability
       maxRetries: 3,
-      timeout: 60000 // 60 second timeout
+      timeout: 60000, // 60 second timeout for network resilience
     });
   }
   
