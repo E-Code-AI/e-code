@@ -25,6 +25,11 @@ const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Explore = lazy(() => import("@/pages/Explore"));
 const Teams = lazy(() => import("@/pages/Teams"));
 const Notifications = lazy(() => import("@/pages/Notifications"));
+const Analytics = lazy(() => import("@/pages/Analytics"));
+const Badges = lazy(() => import("@/pages/Badges"));
+const Education = lazy(() => import("@/pages/Education"));
+const Marketplace = lazy(() => import("@/pages/Marketplace"));
+const PowerUps = lazy(() => import("@/pages/PowerUps"));
 const TeamPage = lazy(() => import("@/pages/TeamPage"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const Profile = lazy(() => import("@/pages/Profile"));
@@ -187,6 +192,31 @@ function AppContent() {
           <ProtectedRoute path="/notifications" component={() => (
             <ReplitLayout showSidebar={false}>
               <Notifications />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/analytics" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Analytics />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/badges" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Badges />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/education" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Education />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/marketplace" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Marketplace />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/powerups" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <PowerUps />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/settings" component={() => (
