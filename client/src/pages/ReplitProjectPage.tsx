@@ -13,6 +13,7 @@ import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import Terminal from '@/components/Terminal';
 import { ReplitAgentChat } from '@/components/ReplitAgentChat';
+import { ReplitAssistant } from '@/components/ReplitAssistant';
 import { MobileAgentInterface } from '@/components/MobileAgentInterface';
 import AdvancedAIPanel from '@/components/AdvancedAIPanel';
 import { Button } from '@/components/ui/button';
@@ -84,6 +85,7 @@ const ReplitProjectPage = () => {
   const [showCollaboration, setShowCollaboration] = useState(false);
   const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions'>('ai');
   const [aiMode, setAIMode] = useState<'agent' | 'advanced'>('agent'); // Default to agent mode
+  const [selectedCode, setSelectedCode] = useState<string | undefined>();
 
   // Initialize collaboration
   const collaboration = useYjsCollaboration({
@@ -253,6 +255,80 @@ const ReplitProjectPage = () => {
   // Handle file content change
   const handleFileContentChange = (fileId: number, content: string) => {
     setUnsavedChanges(prev => ({ ...prev, [fileId]: content }));
+  };
+
+  // Handle apply code from assistant
+  const handleApplyCode = async (code: string, fileName?: string) => {
+    try {
+      let targetFile = selectedFile;
+      
+      // If a specific file name is provided, find or create it
+      if (fileName && fileName !== selectedFile?.name) {
+        const existingFile = files?.find(f => f.name === fileName);
+        if (existingFile) {
+          targetFile = existingFile;
+          setSelectedFile(existingFile);
+        } else {
+          // Create new file
+          const response = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+            name: fileName,
+            content: code
+          });
+          
+          if (response.ok) {
+            const newFile = await response.json();
+            await queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+            setSelectedFile(newFile);
+            toast({
+              title: 'File Created',
+              description: `Created ${fileName} and applied code`
+            });
+            return;
+          }
+        }
+      }
+      
+      if (!targetFile) {
+        toast({
+          title: 'No File Selected',
+          description: 'Please select a file first',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      // Apply code to the file
+      setUnsavedChanges(prev => ({
+        ...prev,
+        [targetFile.id]: code
+      }));
+      
+      // Auto-save the file
+      const response = await apiRequest('PATCH', `/api/files/${targetFile.id}`, {
+        content: code
+      });
+      
+      if (response.ok) {
+        await queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+        setUnsavedChanges(prev => {
+          const updated = { ...prev };
+          delete updated[targetFile.id];
+          return updated;
+        });
+        
+        toast({
+          title: 'Code Applied',
+          description: `Applied code to ${targetFile.name}`
+        });
+      }
+    } catch (error) {
+      console.error('Error applying code:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to apply code',
+        variant: 'destructive'
+      });
+    }
   };
 
   // Handle file save
@@ -597,8 +673,11 @@ const ReplitProjectPage = () => {
                         </TabsList>
                       </div>
                       <TabsContent value="agent" className="flex-1 mt-0">
-                        <ReplitAgentChat
+                        <ReplitAssistant
                           projectId={projectId || 0}
+                          currentFile={selectedFile?.name}
+                          selectedCode={selectedCode}
+                          onApplyCode={handleApplyCode}
                         />
                       </TabsContent>
                       <TabsContent value="advanced" className="flex-1 mt-0">
