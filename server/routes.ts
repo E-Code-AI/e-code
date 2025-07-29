@@ -3209,8 +3209,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       // Export Nix environment as shell.nix
       const shellNix = await nixPackageManager.exportEnvironment(projectId.toString());
       res.json({ 
-        environment: 'shell.nix',
-        content: shellNix 
+        environment: shellNix
       });
     } catch (error) {
       console.error('Error exporting environment:', error);
