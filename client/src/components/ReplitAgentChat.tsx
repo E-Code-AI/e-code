@@ -144,19 +144,179 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
 
   // Send initial prompt when it's set
   useEffect(() => {
-    if (initialPrompt) {
-      setInput(initialPrompt);
-      // Clear the initial prompt
-      setInitialPrompt('');
-      // Trigger send after a short delay to ensure UI is ready
-      setTimeout(() => {
-        const sendButton = document.querySelector('[data-send-button]') as HTMLButtonElement;
-        if (sendButton) {
-          sendButton.click();
+    if (initialPrompt && !isLoading) {
+      // Automatically send the initial prompt
+      const sendInitialPrompt = async () => {
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          role: 'user',
+          content: initialPrompt,
+          timestamp: new Date(),
+          attachments: [],
+          metadata: {
+            thinking: false,
+            highPower: false,
+            webSearch: false
+          }
+        };
+
+        setMessages(prev => [...prev, userMessage]);
+        setInitialPrompt('');
+        setIsLoading(true);
+
+        try {
+          const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
+            message: initialPrompt,
+            context: {
+              mode: 'agent',
+              thinking: false,
+              highPower: false,
+              webSearch: false
+            },
+            provider: selectedProvider
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Failed to get AI response' }));
+            
+            if (errorData.message?.includes('API key') || errorData.message?.includes('credentials')) {
+              const modelName = {
+                openai: 'OpenAI',
+                anthropic: 'Anthropic',
+                gemini: 'Google Gemini',
+                xai: 'xAI',
+                perplexity: 'Perplexity'
+              }[selectedProvider] || selectedProvider.toUpperCase();
+              
+              throw new Error(`${modelName} API key is missing. Please add it in the Secrets tab.`);
+            }
+            
+            throw new Error(errorData.message || 'Failed to get AI response');
+          }
+
+          const data = await response.json();
+
+          // Handle building actions if returned by backend
+          if (data.actions && data.actions.length > 0) {
+            setIsBuilding(true);
+            setBuildProgress(0);
+
+            // Process actions
+            for (const action of data.actions) {
+              const systemMessage: Message = {
+                id: `system-${Date.now()}-${action.type}`,
+                role: 'system',
+                content: `${action.type === 'create_file' ? '📄 Creating' : action.type === 'create_folder' ? '📁 Creating' : '📦 Installing'} ${action.data.name || action.data.path}...`,
+                timestamp: new Date()
+              };
+              
+              setMessages(prev => [...prev, systemMessage]);
+              setBuildProgress(prev => Math.min(prev + (100 / data.actions.length), 100));
+              
+              // Execute the action
+              if (action.type === 'create_file' && action.data.path && action.data.content) {
+                try {
+                  const fileResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+                    path: action.data.path,
+                    content: action.data.content,
+                    isFolder: false
+                  });
+                  
+                  if (!fileResponse.ok) {
+                    console.error('Failed to create file:', action.data.path, await fileResponse.text());
+                  } else {
+                    console.log('Successfully created file:', action.data.path);
+                    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+                  }
+                } catch (error) {
+                  console.error('Error creating file:', action.data.path, error);
+                }
+              } else if (action.type === 'create_folder' && action.data.path) {
+                try {
+                  const folderResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+                    path: action.data.path,
+                    isFolder: true
+                  });
+                  
+                  if (!folderResponse.ok) {
+                    console.error('Failed to create folder:', action.data.path, await folderResponse.text());
+                  } else {
+                    console.log('Successfully created folder:', action.data.path);
+                    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+                  }
+                } catch (error) {
+                  console.error('Error creating folder:', action.data.path, error);
+                }
+              } else if (action.type === 'install_package' && action.data.packages) {
+                try {
+                  const packageResponse = await apiRequest('POST', `/api/projects/${projectId}/packages`, {
+                    packages: action.data.packages
+                  });
+                  
+                  if (!packageResponse.ok) {
+                    console.error('Failed to install packages:', action.data.packages, await packageResponse.text());
+                  } else {
+                    console.log('Successfully installed packages:', action.data.packages);
+                  }
+                } catch (error) {
+                  console.error('Error installing packages:', action.data.packages, error);
+                }
+              }
+              
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            setIsBuilding(false);
+            setBuildProgress(100);
+            
+            // Refresh file list
+            queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+          }
+
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: data.content || data.response || '',
+            timestamp: new Date(),
+            isStreaming: false,
+            actions: data.actions?.map((action: any) => ({
+              ...action,
+              completed: true
+            })),
+            metadata: {
+              thinking: false,
+              highPower: false
+            }
+          };
+
+          setMessages(prev => [...prev, assistantMessage]);
+
+        } catch (error: any) {
+          console.error('Failed to get AI response:', error);
+          
+          const errorMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: error.message || 'Failed to get AI response. Please check your API key in the Secrets tab.',
+            timestamp: new Date(),
+            isStreaming: false
+          };
+          
+          setMessages(prev => [...prev, errorMessage]);
+          
+          toast({
+            title: "AI Connection Issue",
+            description: error.message || "Please check your AI API key in project secrets.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
         }
-      }, 500);
+      };
+
+      sendInitialPrompt();
     }
-  }, [initialPrompt]);
+  }, [initialPrompt, isLoading, projectId, selectedProvider]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -340,7 +500,7 @@ Would you like me to explain any part of the implementation or make adjustments?
           if (action.type === 'create_file' && action.data.path && action.data.content) {
             try {
               const fileResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
-                name: action.data.path,
+                path: action.data.path,
                 content: action.data.content,
                 isFolder: false
               });
@@ -358,7 +518,7 @@ Would you like me to explain any part of the implementation or make adjustments?
           } else if (action.type === 'create_folder' && action.data.path) {
             try {
               const folderResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
-                name: action.data.path,
+                path: action.data.path,
                 isFolder: true
               });
               
@@ -373,9 +533,19 @@ Would you like me to explain any part of the implementation or make adjustments?
               console.error('Error creating folder:', action.data.path, error);
             }
           } else if (action.type === 'install_package' && action.data.packages) {
-            await apiRequest('POST', `/api/projects/${projectId}/packages`, {
-              packages: action.data.packages
-            });
+            try {
+              const packageResponse = await apiRequest('POST', `/api/projects/${projectId}/packages`, {
+                packages: action.data.packages
+              });
+              
+              if (!packageResponse.ok) {
+                console.error('Failed to install packages:', action.data.packages, await packageResponse.text());
+              } else {
+                console.log('Successfully installed packages:', action.data.packages);
+              }
+            } catch (error) {
+              console.error('Error installing packages:', action.data.packages, error);
+            }
           }
           
           await new Promise(resolve => setTimeout(resolve, 500));
