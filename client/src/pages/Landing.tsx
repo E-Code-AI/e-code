@@ -173,19 +173,19 @@ export default function Landing() {
               <Sparkles className="h-3 w-3 mr-1" />
               Build apps and sites with AI
             </Badge>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold">
-              Build <span className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">software</span> fast
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
+              Build <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">anything</span>
               <br className="hidden sm:block" />
               <span className="sm:ml-2">with AI</span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
-              Code with AI. Deploy instantly. Share with the world. Build and ship software 10x faster.
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0 font-medium">
+              Describe your idea and watch AI build it. From simple websites to complex applications.
             </p>
             
-            {/* AI Chat Input */}
-            <div className="max-w-3xl mx-auto px-4 sm:px-0 mt-10">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-600/30 via-purple-600/30 to-fuchsia-600/30 blur-2xl group-hover:blur-3xl transition-all animate-pulse" />
+            {/* Clean Chat Input - Lovable.dev Style */}
+            <div className="max-w-2xl mx-auto px-4 sm:px-0 mt-12">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-fuchsia-600/20 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
                 <div className="relative bg-card/90 backdrop-blur-sm border-2 border-primary/30 rounded-3xl p-6 shadow-2xl hover:shadow-3xl transition-all hover:border-primary/50">
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-2xl flex-shrink-0 shadow-lg">
