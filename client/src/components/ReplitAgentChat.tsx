@@ -936,10 +936,10 @@ Please make sure you have configured your AI API key in the project settings. Yo
               <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-2' : ''}`}>
                 <div className={`p-3 rounded-lg ${
                   msg.role === 'user' 
-                    ? 'bg-primary text-primary-foreground ml-auto' 
+                    ? 'bg-orange-500 text-white ml-auto' 
                     : msg.role === 'system'
                     ? 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950 dark:text-blue-200'
-                    : 'bg-muted'
+                    : 'bg-gray-800 text-gray-100 dark:bg-gray-800 dark:text-gray-100'
                 }`}>
                   {msg.metadata?.thinking && (
                     <Badge variant="secondary" className="mb-2 text-xs">
@@ -1021,8 +1021,8 @@ Please make sure you have configured your AI API key in the project settings. Yo
               </div>
               
               {msg.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 order-3">
-                  <User className="h-4 w-4 text-primary-foreground" />
+                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 order-3">
+                  <User className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>

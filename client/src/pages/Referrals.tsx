@@ -1,28 +1,61 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
+import { 
+  Gift, Users, Check, Zap, Crown, Copy, Mail, Twitter, Facebook,
+  ChevronRight, Trophy
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { 
-  Users, Gift, Copy, Share2, Mail, 
-  Twitter, Facebook, Link2, TrendingUp,
-  DollarSign, Check, ChevronRight, Star,
-  Trophy, Zap, Crown, MessageSquare
-} from 'lucide-react';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+
+// Default values for UI
+const defaultStats = {
+  totalReferrals: 0,
+  successfulReferrals: 0,
+  pendingReferrals: 0,
+  totalCyclesEarned: 0,
+  currentTier: 'Bronze',
+  tierProgress: 0
+};
+
+const tiers = [
+  {
+    name: 'Bronze',
+    referrals: 0,
+    reward: 500,
+    perks: ['500 Cycles per referral', 'Basic referral tracking']
+  },
+  {
+    name: 'Silver',
+    referrals: 5,
+    reward: 750,
+    perks: ['750 Cycles per referral', 'Priority support', 'Monthly bonus'],
+    current: true
+  },
+  {
+    name: 'Gold',
+    referrals: 15,
+    reward: 1000,
+    perks: ['1000 Cycles per referral', 'VIP support', 'Exclusive features']
+  },
+  {
+    name: 'Platinum',
+    referrals: 30,
+    reward: 1500,
+    perks: ['1500 Cycles per referral', 'Personal account manager', 'Beta access']
+  }
+];
 
 export default function Referrals() {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [customMessage, setCustomMessage] = useState('');
-  const [referralCode, setReferralCode] = useState('');
 
   // Fetch referral stats
   const { data: referralStats, isLoading: statsLoading } = useQuery({
@@ -30,9 +63,9 @@ export default function Referrals() {
     enabled: !!user
   });
 
-  // Fetch user referrals
+  // Fetch referral history
   const { data: referralHistory = [], isLoading: historyLoading } = useQuery({
-    queryKey: ['/api/referrals'],
+    queryKey: ['/api/referrals/history'],
     enabled: !!user
   });
 
@@ -42,64 +75,30 @@ export default function Referrals() {
     enabled: !!user
   });
 
+  // Get referral code
+  const { data: referralCode } = useQuery({
+    queryKey: ['/api/referrals/code'],
+    enabled: !!user
+  });
+
   // Generate referral code mutation
   const generateCodeMutation = useMutation({
-    mutationFn: () => apiRequest('/api/referrals/generate-code', {
-      method: 'POST'
-    }),
-    onSuccess: (data) => {
-      setReferralCode(data.referralCode);
-      queryClient.invalidateQueries({ queryKey: ['/api/referrals'] });
+    mutationFn: () => apiRequest('POST', '/api/referrals/generate-code'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/referrals/code'] });
       toast({
-        title: "Success",
-        description: "Referral code generated successfully!"
+        title: "Referral code generated!",
+        description: "Your unique referral code has been created"
       });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: error.message || "Failed to generate referral code",
+        description: "Failed to generate referral code",
         variant: "destructive"
       });
     }
   });
-
-  // Load existing referral code on mount
-  useEffect(() => {
-    if (referralStats?.referralCode) {
-      setReferralCode(referralStats.referralCode);
-    }
-  }, [referralStats]);
-
-  const tiers = [
-    {
-      name: 'Bronze',
-      referrals: 0,
-      reward: 500,
-      perks: ['500 Cycles per referral', 'Basic referral tracking']
-    },
-    {
-      name: 'Silver',
-      referrals: 5,
-      reward: 750,
-      perks: ['750 Cycles per referral', 'Priority support', 'Monthly bonus'],
-      current: (referralStats || defaultStats).currentTier === 'Silver'
-    },
-    {
-      name: 'Gold',
-      referrals: 15,
-      reward: 1000,
-      perks: ['1000 Cycles per referral', 'VIP support', 'Exclusive features'],
-      current: (referralStats || defaultStats).currentTier === 'Gold'
-    },
-    {
-      name: 'Platinum',
-      referrals: 30,
-      reward: 1500,
-      perks: ['1500 Cycles per referral', 'Personal account manager', 'Early access'],
-      current: (referralStats || defaultStats).currentTier === 'Platinum'
-    }
-  ];
 
   const shareOptions = [
     { name: 'Copy Link', icon: <Copy />, action: 'copy' },
@@ -131,89 +130,22 @@ export default function Referrals() {
     }
   };
 
-  // Default values for UI
-  const defaultStats = {
-    totalReferrals: 0,
-    successfulReferrals: 0,
-    pendingReferrals: 0,
-    totalCyclesEarned: 0,
-    currentTier: 'Bronze',
-    tierProgress: 0
-  };
-
-  const tiers = [
-    {
-      name: 'Bronze',
-      referrals: 0,
-      reward: 500,
-      perks: ['500 Cycles per referral', 'Basic referral tracking']
-    },
-    {
-      name: 'Silver',
-      referrals: 5,
-      reward: 750,
-      perks: ['750 Cycles per referral', 'Priority support', 'Monthly bonus'],
-      current: true
-    },
-    {
-      name: 'Gold',
-      referrals: 15,
-      reward: 1000,
-      perks: ['1000 Cycles per referral', 'VIP support', 'Exclusive features']
-    },
-    {
-      name: 'Platinum',
-      referrals: 30,
-      reward: 1500,
-      perks: ['1500 Cycles per referral', 'Personal account manager', 'Early access']
-    }
-  ];
-
-  const shareOptions = [
-    { name: 'Copy Link', icon: <Copy />, action: 'copy' },
-    { name: 'Email', icon: <Mail />, action: 'email' },
-    { name: 'Twitter', icon: <Twitter />, action: 'twitter' },
-    { name: 'Facebook', icon: <Facebook />, action: 'facebook' }
-  ];
-
-  const handleShare = (action: string) => {
-    const referralUrl = `https://e-code.com/signup?ref=${referralCode}`;
-    
-    switch (action) {
-      case 'copy':
-        navigator.clipboard.writeText(referralUrl);
-        toast({
-          title: "Link copied!",
-          description: "Your referral link has been copied to clipboard"
-        });
-        break;
-      case 'email':
-        window.open(`mailto:?subject=Join me on E-Code&body=${customMessage || 'Check out E-Code!'} ${referralUrl}`);
-        break;
-      case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(customMessage || 'Join me on E-Code!')} ${referralUrl}`);
-        break;
-      case 'facebook':
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${referralUrl}`);
-        break;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'text-green-600';
-      case 'pending': return 'text-yellow-600';
-      case 'expired': return 'text-gray-600';
-      default: return 'text-gray-600';
-    }
-  };
+  if (!user) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center">
+          <p>Please log in to access referrals.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto max-w-6xl py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Users className="h-8 w-8 text-primary" />
-          Refer a Friend
+    <div className="container mx-auto py-8 px-4">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold mb-4">
+          <Gift className="inline mr-3" />
+          Referral Program
         </h1>
         <p className="text-muted-foreground mt-2">
           Invite friends to E-Code and earn rewards together
