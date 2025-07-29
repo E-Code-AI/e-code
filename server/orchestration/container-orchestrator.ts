@@ -454,7 +454,8 @@ export class ContainerOrchestrator extends EventEmitter {
     clusterManager.on('taskUpdate', handleTaskUpdate);
     
     // Set timeout for task monitoring
-    setTimeout(() => {
+    const timeoutMs = (task.timeout || 30) * 1000;
+    const timeoutId = setTimeout(() => {
       const task = this.tasks.get(localTaskId);
       if (task && (task.status === 'scheduled' || task.status === 'running')) {
         task.status = 'failed';
@@ -471,7 +472,10 @@ export class ContainerOrchestrator extends EventEmitter {
         this.emit('task:failed', { taskId: localTaskId, error: new Error('Timeout') });
         clusterManager.removeListener('taskUpdate', handleTaskUpdate);
       }
-    }, (task.timeout || 30) * 1000);
+    }, timeoutMs);
+    
+    // Store timeout ID for cleanup if task completes before timeout
+    (task as any).timeoutId = timeoutId;
   }
   
   /**
@@ -510,7 +514,9 @@ export class ContainerOrchestrator extends EventEmitter {
       case 'random':
       default:
         // Random selection
-        return readyNodes[Math.floor(Math.random() * readyNodes.length)];
+        // Use deterministic selection based on task ID
+        const taskHash = task.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return readyNodes[taskHash % readyNodes.length];
     }
   }
   

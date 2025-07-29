@@ -227,12 +227,31 @@ export class DeploymentManager {
     this.addLog(deploymentId, 'Restarting deployment...');
 
     // Re-deploy with same config
-    // In real implementation, would restart the deployment
-    
-    setTimeout(() => {
-      this.updateDeploymentStatus(deploymentId, 'running');
-      this.addLog(deploymentId, 'Deployment restarted successfully');
-    }, 2000);
+    try {
+      // Stop current deployment process
+      const activeDeployment = activeProjects.get(deployment.projectId);
+      if (activeDeployment?.process) {
+        activeDeployment.process.kill();
+        activeProjects.delete(deployment.projectId);
+      }
+      
+      // Re-start the deployment
+      const files = await storage.getFilesByProject(deployment.projectId);
+      if (files.length > 0) {
+        const result = await startProject(deployment.projectId);
+        if (result.success) {
+          this.updateDeploymentStatus(deploymentId, 'running');
+          this.addLog(deploymentId, 'Deployment restarted successfully');
+          deployment.url = result.url || deployment.url;
+        } else {
+          this.updateDeploymentStatus(deploymentId, 'failed');
+          this.addLog(deploymentId, `Restart failed: ${result.error}`);
+        }
+      }
+    } catch (error) {
+      this.updateDeploymentStatus(deploymentId, 'failed');
+      this.addLog(deploymentId, `Restart error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
 
     return true;
   }

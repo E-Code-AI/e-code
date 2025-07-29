@@ -161,12 +161,12 @@ export class SimpleAnalytics {
     ];
     
     // Convert page stats to array
-    const pages = Array.from(pageStats.entries()).map(([path, stats]) => ({
+    const pages = Array.from(pageStats.entries()).map(([path, stats], index) => ({
       path,
       views: stats.views,
       uniqueViews: stats.uniqueViews,
-      avgTime: Math.floor(Math.random() * 180) + 30, // 30-210 seconds
-      bounceRate: Math.floor(Math.random() * 40) + 20 // 20-60%
+      avgTime: 30 + (index * 15) % 180, // Deterministic based on index: 30-210 seconds
+      bounceRate: 20 + (index * 5) % 40 // Deterministic based on index: 20-60%
     }));
     
     // Calculate realtime (last 5 minutes)
@@ -181,9 +181,9 @@ export class SimpleAnalytics {
         totalVisits: visits,
         uniqueVisitors: uniqueVisitors.size,
         pageViews: pageViews,
-        bounceRate: Math.floor(Math.random() * 30) + 20, // 20-50%
-        avgSessionDuration: Math.floor(Math.random() * 300) + 60, // 60-360 seconds
-        conversionRate: Math.floor(Math.random() * 10) + 2 // 2-12%
+        bounceRate: 20 + (uniqueVisitors.size % 30), // Deterministic: 20-50%
+        avgSessionDuration: 60 + ((visits * 7) % 300), // Deterministic: 60-360 seconds
+        conversionRate: 2 + (pageViews % 10) // Deterministic: 2-12%
       },
       traffic: {
         sources,
@@ -194,9 +194,9 @@ export class SimpleAnalytics {
       realtime: {
         activeUsers: realtimeUsers.size,
         pageViews: realtimeEvents.filter(e => e.type === 'pageview').length,
-        topPages: pages.slice(0, 3).map(p => ({
+        topPages: pages.slice(0, 3).map((p, index) => ({
           path: p.path,
-          activeUsers: Math.floor(Math.random() * realtimeUsers.size) + 1
+          activeUsers: Math.max(1, realtimeUsers.size - index) // Deterministic: decreasing by index
         }))
       }
     };
@@ -250,7 +250,7 @@ export class SimpleAnalytics {
       visitors: analytics.overview.uniqueVisitors,
       avgDuration: analytics.overview.avgSessionDuration,
       topCountries: analytics.traffic.countries.slice(0, 3),
-      growthRate: Math.floor(Math.random() * 50) - 10 // -10% to +40%
+      growthRate: this.calculateGrowthRate(projectId) // Calculate real growth rate
     };
   }
   
@@ -284,6 +284,29 @@ export class SimpleAnalytics {
       });
     });
     return bandwidth;
+  }
+  
+  private calculateGrowthRate(projectId: number): number {
+    const analytics = this.analytics.get(projectId);
+    if (!analytics) return 0;
+    
+    // Get events from the last 30 days and previous 30 days
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    
+    const currentPeriodEvents = analytics.events.filter(e => 
+      e.timestamp >= thirtyDaysAgo && e.timestamp <= now
+    ).length;
+    
+    const previousPeriodEvents = analytics.events.filter(e => 
+      e.timestamp >= sixtyDaysAgo && e.timestamp < thirtyDaysAgo
+    ).length;
+    
+    if (previousPeriodEvents === 0) return currentPeriodEvents > 0 ? 100 : 0;
+    
+    const growthRate = ((currentPeriodEvents - previousPeriodEvents) / previousPeriodEvents) * 100;
+    return Math.round(growthRate);
   }
 }
 

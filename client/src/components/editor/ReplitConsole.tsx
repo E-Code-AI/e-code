@@ -43,7 +43,7 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
       const log = JSON.parse(event.data);
       setLogs(prev => [...prev, {
         ...log,
-        id: Date.now() + Math.random(),
+        id: `${Date.now()}_${performance.now()}`,
         timestamp: new Date(log.timestamp)
       }]);
       

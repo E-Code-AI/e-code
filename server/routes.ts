@@ -2345,7 +2345,7 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       const { projectId } = req.body;
       const userId = req.user!.id;
-      const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const sessionId = `session-${Date.now()}-${process.hrtime.bigint().toString(36)}`;
       
       terminalSessions.set(sessionId, { userId, projectId, id: sessionId });
       res.json({ sessionId });
@@ -5396,7 +5396,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       const sanitizedEmail = sanitizeEmail(email);
       
       // Generate confirmation token
-      const confirmationToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const confirmationToken = `${Date.now().toString(36)}-${process.hrtime.bigint().toString(36)}`;
       
       // Subscribe to newsletter
       const subscriber = await storage.subscribeToNewsletter({

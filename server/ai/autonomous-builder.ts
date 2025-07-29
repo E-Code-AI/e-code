@@ -986,7 +986,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let matchedTemplate: string | undefined;
     let highestConfidence = 0;
     
-    for (const [templateId, template] of this.templates.entries()) {
+    for (const [templateId, template] of Array.from(this.templates.entries())) {
       const matches = template.keywords.filter((keyword: string) => 
         lowerMessage.includes(keyword.toLowerCase())
       ).length;
@@ -1694,11 +1694,13 @@ function updateMainContent(section) {
   }
 }
 
-// Simulate chart data loading
-setTimeout(() => {
+// Initialize chart data loading
+window.addEventListener('load', () => {
   const chartPlaceholder = document.getElementById('traffic-chart');
-  chartPlaceholder.innerHTML = '<p>📈 Traffic chart loaded successfully!</p>';
-}, 1000);
+  if (chartPlaceholder) {
+    chartPlaceholder.innerHTML = '<p>📈 Traffic chart loaded successfully!</p>';
+  }
+});
 
 // Update metrics every 30 seconds
 setInterval(updateMetrics, 30000);`;

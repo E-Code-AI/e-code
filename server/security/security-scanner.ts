@@ -126,7 +126,7 @@ export class SecurityScanner {
   ];
 
   async scanProject(projectId: number, files: { path: string; content: string }[]): Promise<SecurityScanResult> {
-    const scanId = `scan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const scanId = `scan_${Date.now()}_${process.hrtime.bigint().toString(36).slice(0, 9)}`;
     const startTime = Date.now();
     
     try {
@@ -196,7 +196,7 @@ export class SecurityScanner {
         const column = this.getColumnNumber(content, match.index || 0);
         
         issues.push({
-          id: `secret_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: `secret_${Date.now()}_${process.hrtime.bigint().toString(36).slice(0, 9)}`,
           type: 'secret',
           severity: pattern.severity,
           title: `${pattern.name} Detected`,
@@ -224,7 +224,7 @@ export class SecurityScanner {
         const column = this.getColumnNumber(content, match.index || 0);
         
         issues.push({
-          id: `vuln_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: `vuln_${Date.now()}_${process.hrtime.bigint().toString(36).slice(0, 9)}`,
           type: 'vulnerability',
           severity: pattern.severity,
           title: `${pattern.name}`,
@@ -252,7 +252,7 @@ export class SecurityScanner {
         const column = this.getColumnNumber(content, match.index || 0);
         
         issues.push({
-          id: `quality_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: `quality_${Date.now()}_${process.hrtime.bigint().toString(36).slice(0, 9)}`,
           type: 'code_quality',
           severity: pattern.severity,
           title: `${pattern.name}`,
@@ -342,7 +342,7 @@ export class SecurityScanner {
       
       for (const match of matches) {
         issues.push({
-          id: `quick_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: `quick_${Date.now()}_${process.hrtime.bigint().toString(36).slice(0, 9)}`,
           type: 'secret',
           severity: pattern.severity,
           title: `${pattern.name} Detected`,

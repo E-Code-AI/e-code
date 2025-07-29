@@ -174,12 +174,18 @@ export class SimpleCodeExecutor extends EventEmitter {
 
       // Set timeout
       const timer = setTimeout(() => {
+        // Attempt graceful termination
         child.kill('SIGTERM');
-        setTimeout(() => {
-          if (!child.killed) {
+        
+        // Use process.nextTick to check if process needs force kill
+        const forceKillCheck = setInterval(() => {
+          if (child.killed) {
+            clearInterval(forceKillCheck);
+          } else {
             child.kill('SIGKILL');
+            clearInterval(forceKillCheck);
           }
-        }, 1000);
+        }, 100); // Check every 100ms instead of fixed 1s delay
       }, timeout);
 
       // Handle stdin
@@ -240,11 +246,16 @@ export class SimpleCodeExecutor extends EventEmitter {
     }
 
     execution.process.kill('SIGTERM');
-    setTimeout(() => {
-      if (!execution.process.killed) {
+    
+    // Use interval to check if process needs force kill
+    const forceKillCheck = setInterval(() => {
+      if (execution.process.killed) {
+        clearInterval(forceKillCheck);
+      } else {
         execution.process.kill('SIGKILL');
+        clearInterval(forceKillCheck);
       }
-    }, 1000);
+    }, 100); // Check every 100ms for quicker response
 
     this.executingProcesses.delete(executionId);
     return true;

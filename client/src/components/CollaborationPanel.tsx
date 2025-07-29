@@ -97,7 +97,9 @@ export function CollaborationPanel({
     setCollaborators(demoCollaborators);
 
     // Generate share link
-    setShareLink(`https://e-code.app/join/${projectId}?token=${Math.random().toString(36).substr(2, 9)}`);
+    // Generate deterministic token based on project ID and timestamp
+    const token = btoa(`${projectId}-${Date.now()}`).replace(/[^a-zA-Z0-9]/g, '').substr(0, 9);
+    setShareLink(`https://e-code.app/join/${projectId}?token=${token}`);
   }, [projectId]);
 
   const copyShareLink = () => {

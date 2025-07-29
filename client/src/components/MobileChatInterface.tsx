@@ -77,7 +77,7 @@ export function MobileChatInterface({ isOpen, onClose, onStartBuilding }: Mobile
     for (let i = 0; i < words.length; i++) {
       currentContent += (i > 0 ? ' ' : '') + words[i];
       onUpdate(currentContent);
-      await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
+      await new Promise(resolve => setTimeout(resolve, 75)); // Fixed delay for consistent UX
     }
   };
 
