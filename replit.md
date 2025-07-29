@@ -47,6 +47,14 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-29: **Missing Features Implementation for 100% Replit Parity**:
+  * Created HistoryTimeline component with visual version history, commit tracking, and rollback functionality
+  * Enhanced CommentsPanel with inline code discussions, threading, reactions, and mention support
+  * Built ExtensionsMarketplace with plugin discovery, installation management, and categorized extensions
+  * Integrated all components into ReplitProjectPage with navigation buttons in header
+  * Added right panel mode switching between AI, Collaboration, Comments, History, and Extensions
+  * Fixed CollaborationPanel integration with user presence indicators and live cursor tracking
+  * All panels now accessible via header buttons with proper visual indicators
 - 2025-07-29: **Spotlight Search & Authentication Improvements**:
   * Added Spotlight Search (Cmd+K) feature matching Replit's command palette exactly
   * Global search available throughout application with project search and navigation
