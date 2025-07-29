@@ -32,9 +32,10 @@ import {
   Sparkles,
   Zap
 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/useAuth';
 import { apiRequest } from '@/lib/queryClient';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
+import { Link } from 'wouter';
 
 interface Repository {
   id: number;
@@ -72,7 +73,7 @@ const languageColors: Record<string, string> = {
 
 export default function GitHubImport() {
   const { toast } = useToast();
-  const [navigate] = useNavigate();
+  const [, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const [importMethod, setImportMethod] = useState<'url' | 'oauth'>('url');
   const [repoUrl, setRepoUrl] = useState('');
@@ -99,7 +100,7 @@ export default function GitHubImport() {
         description: "Please log in to import repositories",
         variant: "destructive"
       });
-      navigate('/login');
+      setLocation('/login');
       return;
     }
 
@@ -118,10 +119,7 @@ export default function GitHubImport() {
     }, 500);
 
     try {
-      const response = await apiRequest('/api/git/clone', {
-        method: 'POST',
-        body: JSON.stringify({ url: repoUrl })
-      });
+      const response = await apiRequest('POST', '/api/git/clone', { url: repoUrl });
 
       clearInterval(progressInterval);
       setImportProgress(100);
@@ -132,8 +130,9 @@ export default function GitHubImport() {
       });
 
       // Navigate to the new project
+      const result = await response.json();
       setTimeout(() => {
-        navigate(`/project/${response.projectId}`);
+        setLocation(`/project/${result.projectId}`);
       }, 1000);
     } catch (error) {
       clearInterval(progressInterval);
@@ -219,12 +218,9 @@ export default function GitHubImport() {
     }, 500);
 
     try {
-      const response = await apiRequest('/api/git/clone', {
-        method: 'POST',
-        body: JSON.stringify({ 
-          url: repo.html_url,
-          branch: repo.default_branch
-        })
+      const response = await apiRequest('POST', '/api/git/clone', { 
+        url: repo.html_url,
+        branch: repo.default_branch
       });
 
       clearInterval(progressInterval);
@@ -235,8 +231,9 @@ export default function GitHubImport() {
         description: `${repo.name} imported successfully!`
       });
 
+      const result = await response.json();
       setTimeout(() => {
-        navigate(`/project/${response.projectId}`);
+        setLocation(`/project/${result.projectId}`);
       }, 1000);
     } catch (error) {
       clearInterval(progressInterval);

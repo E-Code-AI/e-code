@@ -19,8 +19,13 @@ import {
   CommunityChallenge, InsertCommunityChallenge,
   Theme, InsertTheme,
   Announcement, InsertAnnouncement,
-  LearningCourse, InsertLearningCourse,
-  UserLearningProgress, InsertUserLearningProgress,
+  Course, InsertCourse,
+  Lesson, InsertLesson,
+  CourseEnrollment, InsertCourseEnrollment,
+  LessonProgress, InsertLessonProgress,
+  LearningAchievement, InsertLearningAchievement,
+  UserAchievement, InsertUserAchievement,
+  LearningStreak, InsertLearningStreak,
   UserCycles, InsertUserCycles,
   CyclesTransaction, InsertCyclesTransaction,
   ObjectStorage, InsertObjectStorage,
@@ -33,7 +38,7 @@ import {
   projectLikes, projectViews, activityLog,
   insertProjectLikeSchema, insertProjectViewSchema, insertActivityLogSchema,
   projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts, secrets, notifications, notificationPreferences,
-  templates, communityPosts, communityChallenges, themes, announcements, learningCourses, userLearningProgress, userCycles, cyclesTransactions, objectStorage, extensions, userExtensions, codeSnippets,
+  templates, communityPosts, communityChallenges, themes, announcements, courses, lessons, courseEnrollments, lessonProgress, learningAchievements, userAchievements, learningStreaks, userCycles, cyclesTransactions, objectStorage, extensions, userExtensions, codeSnippets,
   adminApiKeys, aiUsageTracking, userSubscriptions as userSubscriptionsMain
 } from "@shared/schema";
 import {
@@ -261,18 +266,45 @@ export interface IStorage {
   updateAnnouncement(id: number, update: Partial<Announcement>): Promise<Announcement>;
   deleteAnnouncement(id: number): Promise<void>;
   
-  // Learning course methods
-  getAllLearningCourses(category?: string): Promise<LearningCourse[]>;
-  getLearningCourseBySlug(slug: string): Promise<LearningCourse | undefined>;
-  createLearningCourse(course: InsertLearningCourse): Promise<LearningCourse>;
-  updateLearningCourse(id: number, update: Partial<LearningCourse>): Promise<LearningCourse>;
-  incrementCourseEnrollments(id: number): Promise<void>;
+  // Course methods
+  getAllCourses(category?: string, published?: boolean): Promise<Course[]>;
+  getCourseBySlug(slug: string): Promise<Course | undefined>;
+  getCourseById(id: number): Promise<Course | undefined>;
+  getFeaturedCourses(): Promise<Course[]>;
+  createCourse(course: InsertCourse): Promise<Course>;
+  updateCourse(id: number, update: Partial<Course>): Promise<Course>;
+  incrementCourseStudents(id: number): Promise<void>;
   
-  // User learning progress methods
-  getUserLearningProgress(userId: number, courseId: number): Promise<UserLearningProgress | undefined>;
-  getAllUserLearningProgress(userId: number): Promise<UserLearningProgress[]>;
-  createUserLearningProgress(progress: InsertUserLearningProgress): Promise<UserLearningProgress>;
-  updateUserLearningProgress(id: number, update: Partial<UserLearningProgress>): Promise<UserLearningProgress>;
+  // Lesson methods
+  getCourseLessons(courseId: number): Promise<Lesson[]>;
+  getLesson(id: number): Promise<Lesson | undefined>;
+  createLesson(lesson: InsertLesson): Promise<Lesson>;
+  updateLesson(id: number, update: Partial<Lesson>): Promise<Lesson>;
+  deleteLesson(id: number): Promise<void>;
+  
+  // Course enrollment methods
+  enrollUserInCourse(userId: number, courseId: number): Promise<CourseEnrollment>;
+  getUserEnrollment(userId: number, courseId: number): Promise<CourseEnrollment | undefined>;
+  getUserEnrollments(userId: number): Promise<CourseEnrollment[]>;
+  updateEnrollmentProgress(userId: number, courseId: number, progress: number): Promise<CourseEnrollment>;
+  completeCourse(userId: number, courseId: number): Promise<CourseEnrollment>;
+  
+  // Lesson progress methods
+  getLessonProgress(userId: number, lessonId: number): Promise<LessonProgress | undefined>;
+  getUserLessonProgress(userId: number, courseId: number): Promise<LessonProgress[]>;
+  markLessonComplete(userId: number, lessonId: number): Promise<LessonProgress>;
+  updateLessonProgress(userId: number, lessonId: number, timeSpent: number): Promise<LessonProgress>;
+  
+  // Learning achievements methods
+  getAllAchievements(): Promise<LearningAchievement[]>;
+  getUserAchievements(userId: number): Promise<UserAchievement[]>;
+  awardAchievement(userId: number, achievementId: number): Promise<UserAchievement>;
+  checkAndAwardAchievements(userId: number): Promise<UserAchievement[]>;
+  
+  // Learning streak methods
+  getUserStreak(userId: number): Promise<LearningStreak | undefined>;
+  updateUserStreak(userId: number): Promise<LearningStreak>;
+  getTopStreaks(limit?: number): Promise<LearningStreak[]>;
   
   // Cycles methods
   getUserCycles(userId: number): Promise<UserCycles | undefined>;
@@ -2299,78 +2331,330 @@ export class DatabaseStorage implements IStorage {
       .where(eq(announcements.id, id));
   }
 
-  // Learning course methods
-  async getAllLearningCourses(category?: string): Promise<LearningCourse[]> {
+  // Course methods
+  async getAllCourses(category?: string, published?: boolean): Promise<Course[]> {
+    let query = db.select().from(courses);
+    const conditions = [];
+    
     if (category) {
-      return await db.select()
-        .from(learningCourses)
-        .where(eq(learningCourses.category, category))
-        .orderBy(desc(learningCourses.enrollments));
+      conditions.push(eq(courses.category, category));
     }
-    return await db.select()
-      .from(learningCourses)
-      .orderBy(desc(learningCourses.enrollments));
+    if (published !== undefined) {
+      conditions.push(eq(courses.isPublished, published));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(desc(courses.studentsCount));
   }
 
-  async getLearningCourseBySlug(slug: string): Promise<LearningCourse | undefined> {
+  async getCourseBySlug(slug: string): Promise<Course | undefined> {
     const [course] = await db.select()
-      .from(learningCourses)
-      .where(eq(learningCourses.slug, slug));
+      .from(courses)
+      .where(eq(courses.slug, slug));
     return course;
   }
 
-  async createLearningCourse(course: InsertLearningCourse): Promise<LearningCourse> {
-    const [newCourse] = await db.insert(learningCourses)
+  async getCourseById(id: number): Promise<Course | undefined> {
+    const [course] = await db.select()
+      .from(courses)
+      .where(eq(courses.id, id));
+    return course;
+  }
+
+  async getFeaturedCourses(): Promise<Course[]> {
+    return await db.select()
+      .from(courses)
+      .where(and(
+        eq(courses.isFeatured, true),
+        eq(courses.isPublished, true)
+      ))
+      .orderBy(desc(courses.studentsCount))
+      .limit(6);
+  }
+
+  async createCourse(course: InsertCourse): Promise<Course> {
+    const [newCourse] = await db.insert(courses)
       .values(course)
       .returning();
     return newCourse;
   }
 
-  async updateLearningCourse(id: number, update: Partial<LearningCourse>): Promise<LearningCourse> {
-    const [updated] = await db.update(learningCourses)
+  async updateCourse(id: number, update: Partial<Course>): Promise<Course> {
+    const [updated] = await db.update(courses)
       .set({ ...update, updatedAt: new Date() })
-      .where(eq(learningCourses.id, id))
+      .where(eq(courses.id, id))
       .returning();
     return updated;
   }
 
-  async incrementCourseEnrollments(id: number): Promise<void> {
-    await db.update(learningCourses)
-      .set({ enrollments: sql`${learningCourses.enrollments} + 1` })
-      .where(eq(learningCourses.id, id));
+  async incrementCourseStudents(id: number): Promise<void> {
+    await db.update(courses)
+      .set({ studentsCount: sql`${courses.studentsCount} + 1` })
+      .where(eq(courses.id, id));
   }
 
-  // User learning progress methods
-  async getUserLearningProgress(userId: number, courseId: number): Promise<UserLearningProgress | undefined> {
-    const [progress] = await db.select()
-      .from(userLearningProgress)
+  // Lesson methods
+  async getCourseLessons(courseId: number): Promise<Lesson[]> {
+    return await db.select()
+      .from(lessons)
+      .where(eq(lessons.courseId, courseId))
+      .orderBy(lessons.orderIndex);
+  }
+
+  async getLesson(id: number): Promise<Lesson | undefined> {
+    const [lesson] = await db.select()
+      .from(lessons)
+      .where(eq(lessons.id, id));
+    return lesson;
+  }
+
+  async createLesson(lesson: InsertLesson): Promise<Lesson> {
+    const [newLesson] = await db.insert(lessons)
+      .values(lesson)
+      .returning();
+    return newLesson;
+  }
+
+  async updateLesson(id: number, update: Partial<Lesson>): Promise<Lesson> {
+    const [updated] = await db.update(lessons)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(lessons.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteLesson(id: number): Promise<void> {
+    await db.delete(lessons)
+      .where(eq(lessons.id, id));
+  }
+
+  // Course enrollment methods
+  async enrollUserInCourse(userId: number, courseId: number): Promise<CourseEnrollment> {
+    const [enrollment] = await db.insert(courseEnrollments)
+      .values({ userId, courseId })
+      .returning();
+    
+    // Increment course students count
+    await this.incrementCourseStudents(courseId);
+    
+    return enrollment;
+  }
+
+  async getUserEnrollment(userId: number, courseId: number): Promise<CourseEnrollment | undefined> {
+    const [enrollment] = await db.select()
+      .from(courseEnrollments)
       .where(and(
-        eq(userLearningProgress.userId, userId),
-        eq(userLearningProgress.courseId, courseId)
+        eq(courseEnrollments.userId, userId),
+        eq(courseEnrollments.courseId, courseId)
+      ));
+    return enrollment;
+  }
+
+  async getUserEnrollments(userId: number): Promise<CourseEnrollment[]> {
+    return await db.select()
+      .from(courseEnrollments)
+      .where(eq(courseEnrollments.userId, userId))
+      .orderBy(desc(courseEnrollments.enrolledAt));
+  }
+
+  async updateEnrollmentProgress(userId: number, courseId: number, progress: number): Promise<CourseEnrollment> {
+    const [updated] = await db.update(courseEnrollments)
+      .set({ progress, updatedAt: new Date() })
+      .where(and(
+        eq(courseEnrollments.userId, userId),
+        eq(courseEnrollments.courseId, courseId)
+      ))
+      .returning();
+    return updated;
+  }
+
+  async completeCourse(userId: number, courseId: number): Promise<CourseEnrollment> {
+    const [completed] = await db.update(courseEnrollments)
+      .set({ 
+        progress: 100,
+        completedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(courseEnrollments.userId, userId),
+        eq(courseEnrollments.courseId, courseId)
+      ))
+      .returning();
+    return completed;
+  }
+
+  // Lesson progress methods
+  async getLessonProgress(userId: number, lessonId: number): Promise<LessonProgress | undefined> {
+    const [progress] = await db.select()
+      .from(lessonProgress)
+      .where(and(
+        eq(lessonProgress.userId, userId),
+        eq(lessonProgress.lessonId, lessonId)
       ));
     return progress;
   }
 
-  async getAllUserLearningProgress(userId: number): Promise<UserLearningProgress[]> {
+  async getUserLessonProgress(userId: number, courseId: number): Promise<LessonProgress[]> {
     return await db.select()
-      .from(userLearningProgress)
-      .where(eq(userLearningProgress.userId, userId))
-      .orderBy(desc(userLearningProgress.lastProgressAt));
+      .from(lessonProgress)
+      .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+      .where(and(
+        eq(lessonProgress.userId, userId),
+        eq(lessons.courseId, courseId)
+      ))
+      .orderBy(lessons.orderIndex);
   }
 
-  async createUserLearningProgress(progress: InsertUserLearningProgress): Promise<UserLearningProgress> {
-    const [newProgress] = await db.insert(userLearningProgress)
-      .values(progress)
+  async markLessonComplete(userId: number, lessonId: number): Promise<LessonProgress> {
+    const existing = await this.getLessonProgress(userId, lessonId);
+    
+    if (existing) {
+      const [updated] = await db.update(lessonProgress)
+        .set({ 
+          isCompleted: true,
+          completedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(lessonProgress.userId, userId),
+          eq(lessonProgress.lessonId, lessonId)
+        ))
+        .returning();
+      return updated;
+    }
+    
+    const [created] = await db.insert(lessonProgress)
+      .values({
+        userId,
+        lessonId,
+        isCompleted: true,
+        completedAt: new Date(),
+        timeSpent: 0
+      })
       .returning();
-    return newProgress;
+    return created;
   }
 
-  async updateUserLearningProgress(id: number, update: Partial<UserLearningProgress>): Promise<UserLearningProgress> {
-    const [updated] = await db.update(userLearningProgress)
-      .set({ ...update, lastProgressAt: new Date() })
-      .where(eq(userLearningProgress.id, id))
+  async updateLessonProgress(userId: number, lessonId: number, timeSpent: number): Promise<LessonProgress> {
+    const existing = await this.getLessonProgress(userId, lessonId);
+    
+    if (existing) {
+      const [updated] = await db.update(lessonProgress)
+        .set({ 
+          timeSpent: sql`${lessonProgress.timeSpent} + ${timeSpent}`,
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(lessonProgress.userId, userId),
+          eq(lessonProgress.lessonId, lessonId)
+        ))
+        .returning();
+      return updated;
+    }
+    
+    const [created] = await db.insert(lessonProgress)
+      .values({
+        userId,
+        lessonId,
+        timeSpent,
+        isCompleted: false
+      })
       .returning();
-    return updated;
+    return created;
+  }
+
+  // Learning achievements methods
+  async getAllAchievements(): Promise<LearningAchievement[]> {
+    return await db.select()
+      .from(learningAchievements)
+      .orderBy(learningAchievements.requiredValue);
+  }
+
+  async getUserAchievements(userId: number): Promise<UserAchievement[]> {
+    return await db.select()
+      .from(userAchievements)
+      .where(eq(userAchievements.userId, userId))
+      .orderBy(desc(userAchievements.earnedAt));
+  }
+
+  async awardAchievement(userId: number, achievementId: number): Promise<UserAchievement> {
+    const [awarded] = await db.insert(userAchievements)
+      .values({ userId, achievementId })
+      .returning();
+    return awarded;
+  }
+
+  async checkAndAwardAchievements(userId: number): Promise<UserAchievement[]> {
+    // This would check various conditions and award achievements
+    // For now, returning empty array as placeholder
+    return [];
+  }
+
+  // Learning streak methods
+  async getUserStreak(userId: number): Promise<LearningStreak | undefined> {
+    const [streak] = await db.select()
+      .from(learningStreaks)
+      .where(eq(learningStreaks.userId, userId));
+    return streak;
+  }
+
+  async updateUserStreak(userId: number): Promise<LearningStreak> {
+    const existing = await this.getUserStreak(userId);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (existing) {
+      const lastActivity = new Date(existing.lastActivityDate);
+      lastActivity.setHours(0, 0, 0, 0);
+      
+      const daysDiff = Math.floor((today.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
+      
+      let newStreak = existing.currentStreak;
+      if (daysDiff === 0) {
+        // Same day, no change
+        return existing;
+      } else if (daysDiff === 1) {
+        // Consecutive day
+        newStreak = existing.currentStreak + 1;
+      } else {
+        // Streak broken
+        newStreak = 1;
+      }
+      
+      const longestStreak = Math.max(newStreak, existing.longestStreak);
+      
+      const [updated] = await db.update(learningStreaks)
+        .set({
+          currentStreak: newStreak,
+          longestStreak,
+          lastActivityDate: today,
+          updatedAt: new Date()
+        })
+        .where(eq(learningStreaks.userId, userId))
+        .returning();
+      return updated;
+    }
+    
+    // Create new streak
+    const [created] = await db.insert(learningStreaks)
+      .values({
+        userId,
+        currentStreak: 1,
+        longestStreak: 1,
+        lastActivityDate: today
+      })
+      .returning();
+    return created;
+  }
+
+  async getTopStreaks(limit: number = 10): Promise<LearningStreak[]> {
+    return await db.select()
+      .from(learningStreaks)
+      .orderBy(desc(learningStreaks.currentStreak))
+      .limit(limit);
   }
 
   // Cycles methods
