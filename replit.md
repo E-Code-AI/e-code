@@ -54,12 +54,16 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
-- 2025-07-29: **Project-Specific Secrets Loading for AI Assistant**:
-  * Added `getProjectSecrets` method to IStorage interface and DatabaseStorage implementation
-  * Modified AI chat endpoint to load project-specific secrets into environment variables before AI provider initialization
-  * Implemented try-finally block to ensure environment variables are restored after use
-  * This enables AI assistant to use project-specific API keys (like ANTHROPIC_API_KEY) instead of global ones
-  * Prevents environment variable pollution between different projects
+- 2025-07-29: **Centralized Admin API Key Management for SaaS Model**:
+  * Implemented admin-managed API keys for true SaaS consumption model like Replit
+  * Added `adminApiKeys` and `aiUsageTracking` tables to database schema
+  * Created admin API key management methods in IStorage and DatabaseStorage
+  * Updated AI chat endpoint to use centralized admin keys instead of user-provided keys
+  * Implemented comprehensive AI usage tracking with token counting and cost calculation
+  * Added per-user AI consumption tracking for billing and subscription management
+  * Tracks usage separately for regular chat and agent mode operations
+  * Users no longer provide their own API keys - they consume AI through their subscription
+  * Admin provides all API keys centrally, users pay for consumption via subscription or usage fees
 - 2025-07-29: **Replit Assistant Feature Implementation (100% Parity with Replit)**:
   * **Created ReplitAssistant Component**: Exact clone of Replit's assistant with Claude 4.0 Sonnet integration
     - Fixed right panel design matching Replit's exact styling and placement

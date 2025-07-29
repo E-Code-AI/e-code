@@ -27,10 +27,14 @@ import {
   Extension, InsertExtension,
   UserExtension, InsertUserExtension,
   CodeSnippet, InsertCodeSnippet,
+  AdminApiKey, InsertAdminApiKey,
+  AiUsageTracking, InsertAiUsageTracking,
+  UserSubscription, InsertUserSubscription as InsertUserSubscriptionSchema,
   projectLikes, projectViews, activityLog,
   insertProjectLikeSchema, insertProjectViewSchema, insertActivityLogSchema,
   projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts, secrets, notifications, notificationPreferences,
-  templates, communityPosts, communityChallenges, themes, announcements, learningCourses, userLearningProgress, userCycles, cyclesTransactions, objectStorage, extensions, userExtensions, codeSnippets
+  templates, communityPosts, communityChallenges, themes, announcements, learningCourses, userLearningProgress, userCycles, cyclesTransactions, objectStorage, extensions, userExtensions, codeSnippets,
+  adminApiKeys, aiUsageTracking, userSubscriptions
 } from "@shared/schema";
 import {
   ApiKey, InsertApiKey,
@@ -163,6 +167,19 @@ export interface IStorage {
   createSecret(data: InsertSecret): Promise<Secret>;
   updateSecret(id: number, data: Partial<InsertSecret>): Promise<Secret>;
   deleteSecret(id: number): Promise<void>;
+  
+  // Admin API Keys operations
+  createAdminApiKey(apiKey: InsertAdminApiKey): Promise<AdminApiKey>;
+  updateAdminApiKey(id: number, updates: Partial<InsertAdminApiKey>): Promise<AdminApiKey | undefined>;
+  deleteAdminApiKey(id: number): Promise<boolean>;
+  getAdminApiKeys(): Promise<AdminApiKey[]>;
+  getActiveAdminApiKey(provider: string): Promise<AdminApiKey | undefined>;
+  
+  // AI Usage Tracking operations
+  createAiUsageRecord(usage: InsertAiUsageTracking): Promise<AiUsageTracking>;
+  getUserAiUsage(userId: number, startDate?: Date, endDate?: Date): Promise<AiUsageTracking[]>;
+  getUserAiUsageStats(userId: number): Promise<{ totalTokens: number; totalCost: number; byProvider: Record<string, number> }>;
+  updateUserAiTokens(userId: number, tokensUsed: number): Promise<void>;
   
   // Session store for authentication
   sessionStore: Store;
@@ -2447,6 +2464,111 @@ export class DatabaseStorage implements IStorage {
         eq(userExtensions.extensionId, extensionId)
       ));
     return !!installed;
+  }
+
+  // Admin API Keys methods
+  async createAdminApiKey(apiKey: InsertAdminApiKey): Promise<AdminApiKey> {
+    const [newKey] = await db.insert(adminApiKeys)
+      .values(apiKey)
+      .returning();
+    return newKey;
+  }
+
+  async updateAdminApiKey(id: number, updates: Partial<InsertAdminApiKey>): Promise<AdminApiKey | undefined> {
+    const [updated] = await db.update(adminApiKeys)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(adminApiKeys.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteAdminApiKey(id: number): Promise<boolean> {
+    const result = await db.delete(adminApiKeys)
+      .where(eq(adminApiKeys.id, id));
+    return result.count > 0;
+  }
+
+  async getAdminApiKeys(): Promise<AdminApiKey[]> {
+    return await db.select()
+      .from(adminApiKeys)
+      .orderBy(desc(adminApiKeys.createdAt));
+  }
+
+  async getActiveAdminApiKey(provider: string): Promise<AdminApiKey | undefined> {
+    const [key] = await db.select()
+      .from(adminApiKeys)
+      .where(and(
+        eq(adminApiKeys.provider, provider),
+        eq(adminApiKeys.isActive, true)
+      ))
+      .orderBy(desc(adminApiKeys.createdAt))
+      .limit(1);
+    return key;
+  }
+
+  // AI Usage Tracking methods
+  async createAiUsageRecord(usage: InsertAiUsageTracking): Promise<AiUsageTracking> {
+    const [record] = await db.insert(aiUsageTracking)
+      .values(usage)
+      .returning();
+    return record;
+  }
+
+  async getUserAiUsage(userId: number, startDate?: Date, endDate?: Date): Promise<AiUsageTracking[]> {
+    let query = db.select()
+      .from(aiUsageTracking)
+      .where(eq(aiUsageTracking.userId, userId));
+    
+    if (startDate && endDate) {
+      query = query.where(and(
+        eq(aiUsageTracking.userId, userId),
+        sql`${aiUsageTracking.createdAt} >= ${startDate}`,
+        sql`${aiUsageTracking.createdAt} <= ${endDate}`
+      ));
+    }
+    
+    return await query.orderBy(desc(aiUsageTracking.createdAt));
+  }
+
+  async getUserAiUsageStats(userId: number): Promise<{ totalTokens: number; totalCost: number; byProvider: Record<string, number> }> {
+    const usage = await this.getUserAiUsage(userId);
+    
+    const stats = {
+      totalTokens: 0,
+      totalCost: 0,
+      byProvider: {} as Record<string, number>
+    };
+    
+    for (const record of usage) {
+      stats.totalTokens += record.totalTokens;
+      stats.totalCost += record.cost;
+      
+      if (!stats.byProvider[record.provider]) {
+        stats.byProvider[record.provider] = 0;
+      }
+      stats.byProvider[record.provider] += record.totalTokens;
+    }
+    
+    return stats;
+  }
+
+  async updateUserAiTokens(userId: number, tokensUsed: number): Promise<void> {
+    // Update user's subscription token usage
+    const [subscription] = await db.select()
+      .from(userSubscriptions)
+      .where(and(
+        eq(userSubscriptions.userId, userId),
+        eq(userSubscriptions.status, 'active')
+      ))
+      .limit(1);
+    
+    if (subscription) {
+      await db.update(userSubscriptions)
+        .set({ 
+          usedAiTokens: sql`${userSubscriptions.usedAiTokens} + ${tokensUsed}` 
+        })
+        .where(eq(userSubscriptions.id, subscription.id));
+    }
   }
 }
 
