@@ -5,11 +5,14 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { 
   Bot, User, Send, Paperclip, Mic, Image, FileText, 
   Loader2, Sparkles, Code, Terminal, Globe, Database,
   Settings, RotateCcw, Play, Square, CheckCircle,
-  AlertCircle, Clock, Zap, Brain, Search, Upload, MessageSquare
+  AlertCircle, Clock, Zap, Brain, Search, Upload, MessageSquare,
+  Eye, Palette, FileCode, ListPlus, Shield, Cpu, Activity
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -65,6 +68,16 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
   const [showCapabilities, setShowCapabilities] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   const [initialPrompt, setInitialPrompt] = useState<string>('');
+  const [showAgentTools, setShowAgentTools] = useState(false);
+  const [agentTools, setAgentTools] = useState({
+    webSearch: false,
+    dynamicIntelligence: false,
+    visualEditor: false,
+    codeAnalysis: true,
+    securityScan: false,
+    performanceAnalysis: false
+  });
+  const [queueItems, setQueueItems] = useState<string[]>([]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -328,18 +341,33 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
     const validFiles = files.filter(file => 
       file.type.startsWith('image/') || 
       file.type === 'text/plain' ||
+      file.type === 'application/pdf' ||
+      file.type.startsWith('video/') ||
+      file.type === 'application/zip' ||
       file.name.endsWith('.js') ||
+      file.name.endsWith('.jsx') ||
+      file.name.endsWith('.ts') ||
       file.name.endsWith('.tsx') ||
       file.name.endsWith('.html') ||
       file.name.endsWith('.css') ||
+      file.name.endsWith('.scss') ||
       file.name.endsWith('.py') ||
-      file.name.endsWith('.json')
+      file.name.endsWith('.java') ||
+      file.name.endsWith('.cpp') ||
+      file.name.endsWith('.go') ||
+      file.name.endsWith('.rs') ||
+      file.name.endsWith('.json') ||
+      file.name.endsWith('.xml') ||
+      file.name.endsWith('.yaml') ||
+      file.name.endsWith('.yml') ||
+      file.name.endsWith('.md') ||
+      file.name.endsWith('.txt')
     );
     
     if (validFiles.length !== files.length) {
       toast({
         title: "Some files not supported",
-        description: "Only images and code files are allowed",
+        description: "Unsupported file types were excluded",
         variant: "destructive"
       });
     }
@@ -940,7 +968,15 @@ Please make sure you have configured your AI API key in the project settings. Yo
                     <div className="mt-2 flex flex-wrap gap-2">
                       {msg.attachments.map((file, index) => (
                         <div key={index} className="flex items-center gap-1 text-xs bg-background/50 rounded px-2 py-1">
-                          {file.type.startsWith('image/') ? <Image className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                          {file.type.startsWith('image/') ? (
+                            <Image className="h-3 w-3" />
+                          ) : file.type === 'application/pdf' ? (
+                            <FileText className="h-3 w-3 text-red-500" />
+                          ) : file.type.startsWith('video/') ? (
+                            <Upload className="h-3 w-3 text-purple-500" />
+                          ) : (
+                            <FileText className="h-3 w-3" />
+                          )}
                           {file.name}
                         </div>
                       ))}
@@ -1031,7 +1067,17 @@ Please make sure you have configured your AI API key in the project settings. Yo
           <div className="mb-2 flex flex-wrap gap-1">
             {attachments.map((file, index) => (
               <div key={index} className="flex items-center gap-1 bg-muted rounded-md px-2 py-1 text-xs">
-                {file.type.startsWith('image/') ? <Image className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                {file.type.startsWith('image/') ? (
+                  <Image className="h-3 w-3" />
+                ) : file.type === 'application/pdf' ? (
+                  <FileText className="h-3 w-3 text-red-500" />
+                ) : file.type.startsWith('video/') ? (
+                  <Upload className="h-3 w-3 text-purple-500" />
+                ) : file.type === 'application/zip' ? (
+                  <Paperclip className="h-3 w-3 text-blue-500" />
+                ) : (
+                  <FileText className="h-3 w-3" />
+                )}
                 <span className="max-w-24 truncate">{file.name}</span>
                 <Button
                   variant="ghost"
@@ -1046,16 +1092,186 @@ Please make sure you have configured your AI API key in the project settings. Yo
           </div>
         )}
 
+        {/* Agent Tools Bar */}
+        {showAgentTools && (
+          <div className="mb-3 p-3 bg-muted rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium">Agent Tools</h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2"
+                onClick={() => setShowAgentTools(false)}
+              >
+                ×
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="web-search" className="flex items-center gap-2 cursor-pointer">
+                  <Search className="h-4 w-4 text-blue-500" />
+                  <span className="text-xs">Web Search</span>
+                </Label>
+                <Switch
+                  id="web-search"
+                  checked={agentTools.webSearch}
+                  onCheckedChange={(checked) => 
+                    setAgentTools(prev => ({ ...prev, webSearch: checked }))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="dynamic-intelligence" className="flex items-center gap-2 cursor-pointer">
+                  <Brain className="h-4 w-4 text-purple-500" />
+                  <span className="text-xs">Dynamic Intelligence</span>
+                </Label>
+                <Switch
+                  id="dynamic-intelligence"
+                  checked={agentTools.dynamicIntelligence}
+                  onCheckedChange={(checked) => 
+                    setAgentTools(prev => ({ ...prev, dynamicIntelligence: checked }))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="visual-editor" className="flex items-center gap-2 cursor-pointer">
+                  <Palette className="h-4 w-4 text-green-500" />
+                  <span className="text-xs">Visual Editor</span>
+                </Label>
+                <Switch
+                  id="visual-editor"
+                  checked={agentTools.visualEditor}
+                  onCheckedChange={(checked) => 
+                    setAgentTools(prev => ({ ...prev, visualEditor: checked }))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="code-analysis" className="flex items-center gap-2 cursor-pointer">
+                  <FileCode className="h-4 w-4 text-orange-500" />
+                  <span className="text-xs">Code Analysis</span>
+                </Label>
+                <Switch
+                  id="code-analysis"
+                  checked={agentTools.codeAnalysis}
+                  onCheckedChange={(checked) => 
+                    setAgentTools(prev => ({ ...prev, codeAnalysis: checked }))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="security-scan" className="flex items-center gap-2 cursor-pointer">
+                  <Shield className="h-4 w-4 text-red-500" />
+                  <span className="text-xs">Security Scan</span>
+                </Label>
+                <Switch
+                  id="security-scan"
+                  checked={agentTools.securityScan}
+                  onCheckedChange={(checked) => 
+                    setAgentTools(prev => ({ ...prev, securityScan: checked }))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="performance-analysis" className="flex items-center gap-2 cursor-pointer">
+                  <Activity className="h-4 w-4 text-cyan-500" />
+                  <span className="text-xs">Performance</span>
+                </Label>
+                <Switch
+                  id="performance-analysis"
+                  checked={agentTools.performanceAnalysis}
+                  onCheckedChange={(checked) => 
+                    setAgentTools(prev => ({ ...prev, performanceAnalysis: checked }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Active Tools Indicators */}
+        {Object.values(agentTools).some(enabled => enabled) && (
+          <div className="mb-2 flex flex-wrap gap-1">
+            {agentTools.webSearch && (
+              <Badge variant="secondary" className="text-xs">
+                <Search className="h-3 w-3 mr-1" />
+                Web Search
+              </Badge>
+            )}
+            {agentTools.dynamicIntelligence && (
+              <Badge variant="secondary" className="text-xs">
+                <Brain className="h-3 w-3 mr-1" />
+                Dynamic Intelligence
+              </Badge>
+            )}
+            {agentTools.visualEditor && (
+              <Badge variant="secondary" className="text-xs">
+                <Palette className="h-3 w-3 mr-1" />
+                Visual Editor
+              </Badge>
+            )}
+            {agentTools.codeAnalysis && (
+              <Badge variant="secondary" className="text-xs">
+                <FileCode className="h-3 w-3 mr-1" />
+                Code Analysis
+              </Badge>
+            )}
+            {agentTools.securityScan && (
+              <Badge variant="secondary" className="text-xs">
+                <Shield className="h-3 w-3 mr-1" />
+                Security Scan
+              </Badge>
+            )}
+            {agentTools.performanceAnalysis && (
+              <Badge variant="secondary" className="text-xs">
+                <Activity className="h-3 w-3 mr-1" />
+                Performance
+              </Badge>
+            )}
+          </div>
+        )}
+
         {/* Message Input - Mobile Optimized */}
         <div className="flex gap-2 items-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 flex-shrink-0"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Paperclip className="h-5 w-5" />
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 flex-shrink-0"
+              onClick={() => fileInputRef.current?.click()}
+              title="Attach files"
+            >
+              <Paperclip className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 flex-shrink-0"
+              onClick={() => setShowAgentTools(!showAgentTools)}
+              title="Agent tools"
+            >
+              <Cpu className={`h-5 w-5 ${showAgentTools ? 'text-primary' : ''}`} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 flex-shrink-0"
+              onClick={() => {
+                if (input.trim()) {
+                  setQueueItems(prev => [...prev, input]);
+                  setInput('');
+                  toast({
+                    title: "Added to queue",
+                    description: "Your task has been added to the queue",
+                  });
+                }
+              }}
+              title="Add to queue"
+              disabled={!input.trim()}
+            >
+              <ListPlus className="h-5 w-5" />
+            </Button>
+          </div>
           
           <div className="flex-1 relative">
             <textarea
@@ -1086,15 +1302,65 @@ Please make sure you have configured your AI API key in the project settings. Yo
             </Button>
           </div>
           
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 flex-shrink-0"
+            onClick={() => {
+              const mockImage = new Blob(['mock visual editor content'], { type: 'image/png' });
+              const file = new File([mockImage], 'visual-design.png', { type: 'image/png' });
+              setAttachments(prev => [...prev, file]);
+              toast({
+                title: "Visual Editor",
+                description: "Draw or upload a design to convert to code",
+              });
+            }}
+            title="Visual Editor"
+          >
+            <Eye className="h-5 w-5" />
+          </Button>
+          
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleFileUpload}
             multiple
-            accept="image/*,.txt,.js,.tsx,.html,.css,.py,.json"
+            accept="image/*,.pdf,.txt,.js,.jsx,.ts,.tsx,.html,.css,.scss,.py,.java,.cpp,.go,.rs,.json,.xml,.yaml,.yml,.md,.zip,video/*"
             className="hidden"
           />
         </div>
+        
+        {/* Queue Display */}
+        {queueItems.length > 0 && (
+          <div className="mt-3 p-2 bg-muted rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium">Queue ({queueItems.length} items)</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => setQueueItems([])}
+              >
+                Clear
+              </Button>
+            </div>
+            <div className="space-y-1">
+              {queueItems.map((item, index) => (
+                <div key={index} className="flex items-center justify-between text-xs bg-background rounded px-2 py-1">
+                  <span className="truncate flex-1">{item}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 w-5 p-0 ml-2"
+                    onClick={() => setQueueItems(prev => prev.filter((_, i) => i !== index))}
+                  >
+                    ×
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

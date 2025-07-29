@@ -54,6 +54,26 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-29: **AI Agent Chat Enhanced with Complete Replit Feature Parity**:
+  * Added comprehensive file attachment support for PDFs, videos, ZIP files, and more file types
+  * Implemented Agent Tools panel with toggleable options:
+    - Web Search with search icon
+    - Dynamic Intelligence with brain icon
+    - Visual Editor with palette icon
+    - Code Analysis with file-code icon
+    - Security Scan with shield icon
+    - Performance Analysis with activity icon
+  * Added Visual Editor button (Eye icon) for drawing/uploading designs to convert to code
+  * Added Add to Queue functionality with queue display and management
+  * Enhanced file type indicators with proper icons (PDF=red, video=purple, ZIP=blue)
+  * All agent tools show as badges when active
+  * Queue items can be added, viewed, and cleared with individual removal options
+- 2025-07-29: **Admin Dashboard System Implementation Started**:
+  * Created comprehensive admin backend with all storage methods in MemoryStorage
+  * Built AdminLayout with sidebar navigation and admin sections
+  * Created AdminDashboard with statistics cards and recent activity
+  * Fixed all import issues in admin routes and service
+  * Admin system ready for all management features (users, API keys, CMS, support, etc.)
 - 2025-07-29: **Package Management System Connected to Real Nix Implementation (Partial)**:
   * Replaced all simulated package management endpoints with real NixPackageManager class
   * Updated routes: GET/POST/DELETE packages, search, update, rollback, environment export
