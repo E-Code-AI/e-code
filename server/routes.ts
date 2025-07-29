@@ -84,17 +84,22 @@ const teamsService = new TeamsService();
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-  console.log('ensureAuthenticated check, isAuthenticated:', req.isAuthenticated());
-  console.log('session user:', req.user);
-  console.log('session ID:', req.sessionID);
-  console.log('cookies:', req.headers.cookie);
-  
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  
-  console.log('Authentication failed in ensureAuthenticated middleware');
-  res.status(401).json({ message: "Unauthorized" });
+  // Apply auth bypass first
+  devAuthBypass(req, res, () => {
+    console.log('[Auth Debug] Request to', req.path, ', isAuthenticated:', req.isAuthenticated());
+    console.log('[Auth Debug] Session ID:', req.sessionID, ', user ID:', req.user?.id || 'not logged in');
+    console.log('ensureAuthenticated check, isAuthenticated:', req.isAuthenticated());
+    console.log('session user:', req.user);
+    console.log('session ID:', req.sessionID);
+    console.log('cookies:', req.headers.cookie);
+    
+    if (req.isAuthenticated()) {
+      return next();
+    }
+    
+    console.log('Authentication failed in ensureAuthenticated middleware');
+    res.status(401).json({ message: "Unauthorized" });
+  });
 };
 
 // Middleware to ensure a user has access to a project
