@@ -35,11 +35,14 @@ import {
   AdminApiKey, InsertAdminApiKey,
   AiUsageTracking, InsertAiUsageTracking,
   UserSubscription as UserSubscriptionMain, InsertUserSubscription as InsertUserSubscriptionSchema,
+  UserReferral, InsertUserReferral,
+  ReferralStats, InsertReferralStats,
+  ReferralLeaderboard, InsertReferralLeaderboard,
   projectLikes, projectViews, activityLog,
   insertProjectLikeSchema, insertProjectViewSchema, insertActivityLogSchema,
   projects, files, users, projectCollaborators, deployments, environmentVariables, newsletterSubscribers, bounties, bountySubmissions, loginHistory, apiTokens, blogPosts, secrets, notifications, notificationPreferences,
   templates, communityPosts, communityChallenges, themes, announcements, courses, lessons, courseEnrollments, lessonProgress, learningAchievements, userAchievements, learningStreaks, userCycles, cyclesTransactions, objectStorage, extensions, userExtensions, codeSnippets,
-  adminApiKeys, aiUsageTracking, userSubscriptions as userSubscriptionsMain
+  adminApiKeys, aiUsageTracking, userSubscriptions as userSubscriptionsMain, userReferrals, referralStats, referralLeaderboard
 } from "@shared/schema";
 import {
   ApiKey, InsertApiKey,
@@ -439,6 +442,17 @@ export interface IStorage {
   getUserInstalledThemes(userId: number): Promise<string[]>;
   installThemeForUser(userId: number, themeId: string): Promise<void>;
   createCustomTheme(userId: number, theme: any): Promise<void>;
+  
+  // Referrals System methods
+  getUserReferrals(userId: number): Promise<UserReferral[]>;
+  createUserReferral(referral: InsertUserReferral): Promise<UserReferral>;
+  getUserReferralByCode(code: string): Promise<UserReferral | undefined>;
+  getUserReferralStats(userId: number): Promise<ReferralStats>;
+  createOrUpdateReferralStats(stats: InsertReferralStats): Promise<ReferralStats>;
+  getReferralLeaderboard(limit?: number): Promise<ReferralLeaderboard[]>;
+  updateReferralLeaderboard(entry: InsertReferralLeaderboard): Promise<ReferralLeaderboard>;
+  completeReferral(referralId: number, refereeId: number): Promise<void>;
+  generateReferralCode(userId: number): Promise<string>;
 }
 
 // Database storage implementation
@@ -4303,6 +4317,186 @@ export class MemStorage implements IStorage {
   async createCustomTheme(userId: number, theme: any): Promise<void> {
     const themeKey = `${userId}-${theme.id}`;
     this.customThemes.set(themeKey, theme);
+  }
+  
+  // Referrals System methods
+  async getUserReferrals(userId: number): Promise<UserReferral[]> {
+    return await db.select()
+      .from(userReferrals)
+      .where(eq(userReferrals.referrerId, userId))
+      .orderBy(desc(userReferrals.createdAt));
+  }
+
+  async createUserReferral(referral: InsertUserReferral): Promise<UserReferral> {
+    const [newReferral] = await db.insert(userReferrals)
+      .values(referral)
+      .returning();
+    return newReferral;
+  }
+
+  async getUserReferralByCode(code: string): Promise<UserReferral | undefined> {
+    const [referral] = await db.select()
+      .from(userReferrals)
+      .where(eq(userReferrals.referralCode, code));
+    return referral;
+  }
+
+  async getUserReferralStats(userId: number): Promise<ReferralStats> {
+    let [stats] = await db.select()
+      .from(referralStats)
+      .where(eq(referralStats.userId, userId));
+    
+    // If no stats exist, create default ones
+    if (!stats) {
+      const defaultStats: InsertReferralStats = {
+        userId,
+        totalReferrals: 0,
+        successfulReferrals: 0,
+        pendingReferrals: 0,
+        totalCyclesEarned: 0,
+        currentTier: 'Bronze',
+        tierProgress: 0
+      };
+      stats = await this.createOrUpdateReferralStats(defaultStats);
+    }
+    
+    return stats;
+  }
+
+  async createOrUpdateReferralStats(stats: InsertReferralStats): Promise<ReferralStats> {
+    const [result] = await db.insert(referralStats)
+      .values(stats)
+      .onConflictDoUpdate({
+        target: referralStats.userId,
+        set: {
+          ...stats,
+          updatedAt: new Date()
+        }
+      })
+      .returning();
+    return result;
+  }
+
+  async getReferralLeaderboard(limit: number = 10): Promise<ReferralLeaderboard[]> {
+    return await db.select()
+      .from(referralLeaderboard)
+      .orderBy(desc(referralLeaderboard.totalReferrals))
+      .limit(limit);
+  }
+
+  async updateReferralLeaderboard(entry: InsertReferralLeaderboard): Promise<ReferralLeaderboard> {
+    const [result] = await db.insert(referralLeaderboard)
+      .values(entry)
+      .onConflictDoUpdate({
+        target: referralLeaderboard.userId,
+        set: {
+          ...entry,
+          lastUpdated: new Date()
+        }
+      })
+      .returning();
+    return result;
+  }
+
+  async completeReferral(referralId: number, refereeId: number): Promise<void> {
+    // Mark referral as completed
+    await db.update(userReferrals)
+      .set({
+        refereeId,
+        status: 'completed',
+        completedAt: new Date()
+      })
+      .where(eq(userReferrals.id, referralId));
+
+    // Get referral to access referrer info
+    const [referral] = await db.select()
+      .from(userReferrals)
+      .where(eq(userReferrals.id, referralId));
+
+    if (referral) {
+      // Add cycles to referrer
+      await this.addCyclesTransaction({
+        userId: referral.referrerId,
+        amount: referral.rewardAmount,
+        type: 'referral',
+        description: `Referral reward for inviting user`,
+        relatedId: referralId,
+        relatedType: 'referral',
+        balance: 0 // Will be calculated in addCyclesTransaction
+      });
+
+      // Update referral stats
+      const stats = await this.getUserReferralStats(referral.referrerId);
+      await this.createOrUpdateReferralStats({
+        userId: referral.referrerId,
+        totalReferrals: stats.totalReferrals,
+        successfulReferrals: stats.successfulReferrals + 1,
+        pendingReferrals: Math.max(0, stats.pendingReferrals - 1),
+        totalCyclesEarned: stats.totalCyclesEarned + referral.rewardAmount,
+        currentTier: this.calculateTier(stats.successfulReferrals + 1),
+        tierProgress: this.calculateTierProgress(stats.successfulReferrals + 1)
+      });
+
+      // Update leaderboard
+      const user = await this.getUser(referral.referrerId);
+      if (user) {
+        await this.updateReferralLeaderboard({
+          userId: referral.referrerId,
+          username: user.username,
+          displayName: user.displayName || user.username,
+          avatarUrl: user.avatarUrl || null,
+          totalReferrals: stats.successfulReferrals + 1,
+          totalCyclesEarned: stats.totalCyclesEarned + referral.rewardAmount,
+          currentTier: this.calculateTier(stats.successfulReferrals + 1)
+        });
+      }
+    }
+  }
+
+  async generateReferralCode(userId: number): Promise<string> {
+    const user = await this.getUser(userId);
+    if (!user) throw new Error('User not found');
+    
+    // Generate a unique referral code
+    const baseCode = user.username.substring(0, 6).toUpperCase();
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const referralCode = `${baseCode}${randomSuffix}`;
+    
+    // Check if code already exists
+    const existing = await this.getUserReferralByCode(referralCode);
+    if (existing) {
+      // If code exists, try again with different suffix
+      return this.generateReferralCode(userId);
+    }
+    
+    return referralCode;
+  }
+
+  private calculateTier(successfulReferrals: number): string {
+    if (successfulReferrals >= 100) return 'Diamond';
+    if (successfulReferrals >= 50) return 'Platinum';
+    if (successfulReferrals >= 25) return 'Gold';
+    if (successfulReferrals >= 10) return 'Silver';
+    return 'Bronze';
+  }
+
+  private calculateTierProgress(successfulReferrals: number): number {
+    const tiers = [
+      { name: 'Bronze', min: 0, max: 10 },
+      { name: 'Silver', min: 10, max: 25 },
+      { name: 'Gold', min: 25, max: 50 },
+      { name: 'Platinum', min: 50, max: 100 },
+      { name: 'Diamond', min: 100, max: Number.MAX_SAFE_INTEGER }
+    ];
+    
+    const currentTier = tiers.find(tier => 
+      successfulReferrals >= tier.min && successfulReferrals < tier.max
+    );
+    
+    if (!currentTier || currentTier.name === 'Diamond') return 100;
+    
+    const progress = ((successfulReferrals - currentTier.min) / (currentTier.max - currentTier.min)) * 100;
+    return Math.round(progress);
   }
 }
 
