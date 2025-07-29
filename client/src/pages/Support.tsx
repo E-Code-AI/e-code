@@ -26,8 +26,8 @@ export default function Support() {
     {
       id: 1,
       category: 'Getting Started',
-      question: 'How do I create my first Repl?',
-      answer: 'To create your first Repl, click the "Create Repl" button on your dashboard. Choose a language template or start from scratch. Give your Repl a name and click "Create". Your coding environment will be ready in seconds!'
+      question: 'How do I create my first project?',
+      answer: 'To create your first project, click the "Create" button on your dashboard. Choose a language template or start from scratch. Give your project a name and click "Create". Your coding environment will be ready in seconds!'
     },
     {
       id: 2,
@@ -44,22 +44,22 @@ export default function Support() {
     {
       id: 4,
       category: 'Collaboration',
-      question: 'How do I invite collaborators to my Repl?',
-      answer: 'Open your Repl and click the "Invite" button. You can share a link or invite specific users by username or email. Collaborators can edit code in real-time with you.'
+      question: 'How do I invite collaborators to my project?',
+      answer: 'Open your project and click the "Invite" button. You can share a link or invite specific users by username or email. Collaborators can edit code in real-time with you.'
     },
     {
       id: 5,
       category: 'Deployment',
       question: 'How do I deploy my application?',
-      answer: 'Click the "Deploy" button in your Repl. Choose between static hosting or dynamic deployments. Configure your domain settings and click "Deploy". Your app will be live with HTTPS enabled.'
+      answer: 'Click the "Deploy" button in your project. Choose between static hosting or dynamic deployments. Configure your domain settings and click "Deploy". Your app will be live with HTTPS enabled.'
     }
   ];
 
   const commonIssues = [
     {
-      title: 'Repl not running',
+      title: 'Project not running',
       icon: <AlertCircle className="h-5 w-5" />,
-      solutions: ['Check console for errors', 'Restart the Repl', 'Verify package installations']
+      solutions: ['Check console for errors', 'Restart the project', 'Verify package installations']
     },
     {
       title: 'Cannot connect to database',
