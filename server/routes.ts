@@ -2493,56 +2493,39 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
           });
         }
         
-        // Detect building intent
-        if (lowerMessage.includes('build') || lowerMessage.includes('create') || lowerMessage.includes('make')) {
-          logger.info('Building intent detected:', {
-            hasBuild: lowerMessage.includes('build'),
-            hasCreate: lowerMessage.includes('create'),
-            hasMake: lowerMessage.includes('make'),
-            hasCounter: lowerMessage.includes('counter')
+        // Use comprehensive autonomous builder for building detection and generation
+        const buildingIntent = autonomousBuilder.detectBuildingIntent(message);
+        
+        if (buildingIntent.detected) {
+          logger.info('Building intent detected by autonomous builder:', {
+            matchedTemplate: buildingIntent.matchedTemplate,
+            confidence: buildingIntent.confidence,
+            buildingKeywords: buildingIntent.buildingKeywords,
+            appType: buildingIntent.appType
           });
-          const actions = [];
-          let responseContent = '';
-
-          // Different patterns for different app types
-          if (lowerMessage.includes('todo') || lowerMessage.includes('task')) {
-            // Building a todo app
-            actions.push(
-              { type: 'create_folder', data: { path: 'src' }},
-              { type: 'create_folder', data: { path: 'src/components' }},
-              { type: 'create_file', data: { path: 'index.html', content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>Todo App</title>\n  <link rel="stylesheet" href="src/style.css">\n</head>\n<body>\n  <div id="app"></div>\n  <script src="src/app.js"></script>\n</body>\n</html>' }},
-              { type: 'create_file', data: { path: 'src/style.css', content: 'body { font-family: Arial; margin: 0; padding: 20px; background: #f0f0f0; }\n.todo-item { background: white; padding: 10px; margin: 5px 0; border-radius: 5px; }' }},
-              { type: 'create_file', data: { path: 'src/app.js', content: 'const app = document.getElementById("app");\napp.innerHTML = "<h1>My Todo App</h1><input id=\'newTodo\' placeholder=\'Add todo...\'><button onclick=\'addTodo()\'>Add</button><div id=\'todos\'></div>";\n\nlet todos = [];\n\nfunction addTodo() {\n  const input = document.getElementById("newTodo");\n  todos.push(input.value);\n  input.value = "";\n  renderTodos();\n}\n\nfunction renderTodos() {\n  document.getElementById("todos").innerHTML = todos.map(t => `<div class="todo-item">${t}</div>`).join("");\n}' }}
-            );
-            responseContent = "I'm building a Todo app for you! I'll create the HTML structure, styling, and JavaScript functionality. The app will let you add and display todo items.";
-          } else if (lowerMessage.includes('api') || lowerMessage.includes('rest')) {
-            // Building a REST API
-            actions.push(
-              { type: 'create_file', path: 'server.js', content: 'const express = require("express");\nconst app = express();\n\napp.use(express.json());\n\nlet items = [];\n\napp.get("/api/items", (req, res) => {\n  res.json(items);\n});\n\napp.post("/api/items", (req, res) => {\n  const item = { id: Date.now(), ...req.body };\n  items.push(item);\n  res.json(item);\n});\n\napp.listen(3000, () => console.log("API running on port 3000"));' },
-              { type: 'create_file', path: 'package.json', content: '{\n  "name": "rest-api",\n  "version": "1.0.0",\n  "main": "server.js",\n  "scripts": {\n    "start": "node server.js"\n  },\n  "dependencies": {\n    "express": "^4.18.0"\n  }\n}' },
-              { type: 'install_package', package: 'express' }
-            );
-            responseContent = "I'm creating a REST API with Express! It will have endpoints for GET and POST operations. The API will handle JSON data and include basic CRUD functionality.";
-          } else if (lowerMessage.includes('website') || lowerMessage.includes('portfolio')) {
-            // Building a website
-            actions.push(
-              { type: 'create_file', path: 'index.html', content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>My Portfolio</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <header>\n    <h1>Welcome to My Portfolio</h1>\n    <nav>\n      <a href="#about">About</a>\n      <a href="#projects">Projects</a>\n      <a href="#contact">Contact</a>\n    </nav>\n  </header>\n  <main>\n    <section id="about">\n      <h2>About Me</h2>\n      <p>I am a creative developer passionate about building amazing things.</p>\n    </section>\n    <section id="projects">\n      <h2>My Projects</h2>\n      <div class="project-grid">\n        <div class="project">Project 1</div>\n        <div class="project">Project 2</div>\n      </div>\n    </section>\n  </main>\n</body>\n</html>' },
-              { type: 'create_file', path: 'style.css', content: 'body { margin: 0; font-family: -apple-system, sans-serif; }\nheader { background: #333; color: white; padding: 2rem; }\nnav a { color: white; margin: 0 1rem; text-decoration: none; }\n.project-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 2rem; }\n.project { background: #f0f0f0; padding: 2rem; border-radius: 8px; }' }
-            );
-            responseContent = "I'm building a portfolio website for you! It will have a modern design with sections for About, Projects, and Contact. The layout will be responsive and professional.";
-          } else if (lowerMessage.includes('counter')) {
-            // Building a counter app
-            actions.push(
-              { type: 'create_file', data: { path: 'index.html', content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Counter App</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <div class="counter-container">\n    <h1>Counter App</h1>\n    <div class="counter-display" id="counter">0</div>\n    <div class="button-group">\n      <button class="btn btn-increment" id="increment">+</button>\n      <button class="btn btn-decrement" id="decrement">-</button>\n      <button class="btn btn-reset" id="reset">Reset</button>\n    </div>\n  </div>\n  <script src="script.js"></script>\n</body>\n</html>' }},
-              { type: 'create_file', data: { path: 'style.css', content: 'body {\n  font-family: -apple-system, BlinkMacSystemFont, sans-serif;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n  margin: 0;\n  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n}\n\n.counter-container {\n  background: white;\n  padding: 2rem;\n  border-radius: 20px;\n  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);\n  text-align: center;\n  min-width: 300px;\n}\n\nh1 {\n  color: #333;\n  margin-bottom: 1.5rem;\n}\n\n.counter-display {\n  font-size: 4rem;\n  font-weight: bold;\n  color: #667eea;\n  margin: 2rem 0;\n}\n\n.button-group {\n  display: flex;\n  gap: 1rem;\n  justify-content: center;\n}\n\n.btn {\n  padding: 0.75rem 1.5rem;\n  font-size: 1.2rem;\n  border: none;\n  border-radius: 10px;\n  cursor: pointer;\n  transition: transform 0.2s;\n}\n\n.btn:hover {\n  transform: translateY(-2px);\n}\n\n.btn-increment {\n  background: #4caf50;\n  color: white;\n}\n\n.btn-decrement {\n  background: #f44336;\n  color: white;\n}\n\n.btn-reset {\n  background: #ff9800;\n  color: white;\n}' }},
-              { type: 'create_file', data: { path: 'script.js', content: 'let counterValue = 0;\n\nconst counterElement = document.getElementById("counter");\nconst incrementBtn = document.getElementById("increment");\nconst decrementBtn = document.getElementById("decrement");\nconst resetBtn = document.getElementById("reset");\n\nfunction updateCounter() {\n  counterElement.textContent = counterValue;\n  counterElement.style.transform = "scale(1.2)";\n  setTimeout(() => {\n    counterElement.style.transform = "scale(1)";\n  }, 200);\n}\n\nincrementBtn.addEventListener("click", () => {\n  counterValue++;\n  updateCounter();\n});\n\ndecrementBtn.addEventListener("click", () => {\n  counterValue--;\n  updateCounter();\n});\n\nresetBtn.addEventListener("click", () => {\n  counterValue = 0;\n  updateCounter();\n});\n\n// Initialize\nupdateCounter();' }}
-            );
-            responseContent = "I'm building a beautiful counter app for you! It will have increment, decrement, and reset buttons with a modern gradient design and smooth animations.";
-          } else {
-            // Use sophisticated code understanding for complex requests
+          
+          // Generate comprehensive build actions and response
+          const buildResult = await autonomousBuilder.generateBuildActions(
+            message,
+            buildingIntent,
+            project.language || 'javascript'
+          );
+          
+          const actions = buildResult.actions;
+          let responseContent = buildResult.response;
+          
+          // If no specific template matched, use AI to generate custom build
+          if (!buildingIntent.matchedTemplate) {
             const systemMessageAgent = {
               role: 'system' as const,
-              content: `You are E-Code AI Agent, an autonomous coding assistant that can build entire applications. You can create files, install packages, and set up complete projects. When a user asks you to build something, respond with specific actions and code.`
+              content: `You are E-Code AI Agent, an autonomous coding assistant that can build entire applications. You can create files, install packages, and set up complete projects. When a user asks you to build something, respond with specific actions and code. 
+              
+Available action types:
+- create_folder: { type: 'create_folder', data: { path: 'folder/path' }}
+- create_file: { type: 'create_file', data: { path: 'file.ext', content: 'file content' }}
+- install_package: { type: 'install_package', package: 'package-name' }
+
+Generate a comprehensive application based on the user's request. Include all necessary files, folders, and packages.`
             };
             
             const agentMessages: ChatMessage[] = [
@@ -2572,7 +2555,7 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
               agentResponse = await provider.generateChat(agentMessages, { max_tokens: 1500, temperature: 0.7 });
             }
             
-            responseContent = agentResponse || "I'll help you build that! Let me create the necessary files and structure for your application.";
+            responseContent = agentResponse || responseContent;
           }
 
           logger.info('Returning agent response with actions:', {
