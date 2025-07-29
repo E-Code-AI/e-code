@@ -304,18 +304,26 @@ export function setupAuth(app: Express) {
             
             console.log(`User ${authenticatedUser.username} logged in successfully`);
             
-            // Generate JWT tokens
-            const accessToken = generateAccessToken(authenticatedUser.id);
-            const refreshToken = generateRefreshToken(authenticatedUser.id);
-            
-            // Return user info without password
-            const { password, ...userWithoutPassword } = authenticatedUser;
-            res.json({
-              ...userWithoutPassword,
-              tokens: {
-                access: accessToken,
-                refresh: refreshToken
+            // Ensure session is saved before sending response
+            req.session.save((sessionErr) => {
+              if (sessionErr) {
+                console.error('Session save error:', sessionErr);
+                return next(sessionErr);
               }
+              
+              // Generate JWT tokens
+              const accessToken = generateAccessToken(authenticatedUser.id);
+              const refreshToken = generateRefreshToken(authenticatedUser.id);
+              
+              // Return user info without password
+              const { password, ...userWithoutPassword } = authenticatedUser;
+              res.json({
+                ...userWithoutPassword,
+                tokens: {
+                  access: accessToken,
+                  refresh: refreshToken
+                }
+              });
             });
           });
         })(req, res, next);

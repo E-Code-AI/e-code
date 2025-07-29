@@ -27,6 +27,11 @@ export function createRateLimiter(type: keyof typeof AUTH_RATE_LIMITS) {
   const config = AUTH_RATE_LIMITS[type];
   
   return async (req: Request, res: Response, next: NextFunction) => {
+    // Skip rate limiting in development
+    if (process.env.NODE_ENV === 'development') {
+      return next();
+    }
+    
     const identifier = req.ip || req.connection.remoteAddress || "unknown";
     const key = `${type}:${identifier}`;
     const now = Date.now();
