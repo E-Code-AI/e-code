@@ -569,7 +569,7 @@ export default function Landing() {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="group hover:shadow-lg transition-all cursor-pointer">
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
@@ -682,6 +682,50 @@ export default function Landing() {
                       <span className="text-yellow-600 dark:text-yellow-400">updateTimer</span>();
                     </div>
                     <div>{'}'}, 1000);</div>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
+                  onClick={() => window.location.href = '/templates'}
+                >
+                  View Project
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card className="group hover:shadow-lg transition-all cursor-pointer">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Badge variant="secondary">Built with AI</Badge>
+                  <span className="text-sm text-muted-foreground">15 min ago</span>
+                </div>
+                <CardTitle className="text-lg">CRM System</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  "Build a customer relationship management system with contacts and sales pipeline"
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted rounded-lg p-3 mb-3 font-mono text-xs">
+                  <div className="space-y-1">
+                    <div>
+                      <span className="text-purple-600 dark:text-purple-400">class</span> {' '}
+                      <span className="text-blue-600 dark:text-blue-400">Customer</span> {"{"}
+                    </div>
+                    <div className="ml-2">
+                      <span className="text-blue-600 dark:text-blue-400">name</span>: string;
+                    </div>
+                    <div className="ml-2">
+                      <span className="text-blue-600 dark:text-blue-400">email</span>: string;
+                    </div>
+                    <div className="ml-2">
+                      <span className="text-blue-600 dark:text-blue-400">dealValue</span>: number;
+                    </div>
+                    <div>{"}"}</div>
+                    <div className="mt-2 text-green-600 dark:text-green-400">
+                      // Pipeline: Lead → Qualified → Proposal → Closed
+                    </div>
                   </div>
                 </div>
                 <Button 
