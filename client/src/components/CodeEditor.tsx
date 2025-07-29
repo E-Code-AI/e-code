@@ -45,6 +45,7 @@ interface Collaborator {
 interface CodeEditorProps {
   file: File;
   onChange: (content: string) => void;
+  onSelectionChange?: (selectedText: string | undefined) => void;
   collaboration?: {
     collaborators: Collaborator[];
     isConnected: boolean;
@@ -55,7 +56,7 @@ interface CodeEditorProps {
   };
 }
 
-const CodeEditor = ({ file, onChange, collaboration }: CodeEditorProps) => {
+const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const monacoEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [editorDimensions, setEditorDimensions] = useState({
@@ -196,6 +197,21 @@ const CodeEditor = ({ file, onChange, collaboration }: CodeEditorProps) => {
       monacoEditorRef.current.onDidChangeModelContent((e) => {
         const newValue = monacoEditorRef.current?.getValue() || '';
         onChange(newValue);
+      });
+      
+      // Add event listener for selection changes
+      monacoEditorRef.current.onDidChangeCursorSelection((e) => {
+        if (onSelectionChange && monacoEditorRef.current) {
+          const selection = monacoEditorRef.current.getSelection();
+          const model = monacoEditorRef.current.getModel();
+          
+          if (selection && model && !selection.isEmpty()) {
+            const selectedText = model.getValueInRange(selection);
+            onSelectionChange(selectedText);
+          } else {
+            onSelectionChange(undefined);
+          }
+        }
       });
       
       // Pass editor instance to collaboration if available

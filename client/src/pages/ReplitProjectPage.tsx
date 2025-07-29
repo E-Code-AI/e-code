@@ -629,6 +629,7 @@ const ReplitProjectPage = () => {
                         content: unsavedChanges[selectedFile.id] || selectedFile.content || ''
                       }}
                       onChange={(content) => handleFileContentChange(selectedFile.id, content)}
+                      onSelectionChange={(selection) => setSelectedCode(selection)}
                       collaboration={collaboration}
                     />
                   ) : (
