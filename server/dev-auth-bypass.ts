@@ -24,7 +24,7 @@ export const devAuthBypass = (req: Request, res: Response, next: NextFunction) =
     }
     
     // Simuler l'authentification pour le développement
-    req.isAuthenticated = () => true;
+    req.isAuthenticated = (() => true) as any;
     
     // Simuler un utilisateur administrateur
     req.user = {
