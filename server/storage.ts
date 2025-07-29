@@ -158,6 +158,7 @@ export interface IStorage {
   
   // Secrets methods
   getSecretsByUser(userId: number): Promise<Secret[]>;
+  getProjectSecrets(projectId: number): Promise<Secret[]>;
   getSecret(id: number): Promise<Secret | undefined>;
   createSecret(data: InsertSecret): Promise<Secret>;
   updateSecret(id: number, data: Partial<InsertSecret>): Promise<Secret>;
@@ -1291,6 +1292,13 @@ export class DatabaseStorage implements IStorage {
     return await db.select()
       .from(secrets)
       .where(eq(secrets.userId, userId))
+      .orderBy(desc(secrets.createdAt));
+  }
+  
+  async getProjectSecrets(projectId: number): Promise<Secret[]> {
+    return await db.select()
+      .from(secrets)
+      .where(eq(secrets.projectId, projectId))
       .orderBy(desc(secrets.createdAt));
   }
   
