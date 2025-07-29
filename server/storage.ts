@@ -73,6 +73,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, update: Partial<User>): Promise<User>;
+  deleteUser(id: number): Promise<void>;
   
   // Email verification methods
   saveEmailVerificationToken(userId: number, token: string): Promise<void>;
@@ -89,6 +90,7 @@ export interface IStorage {
   // Project methods
   getAllProjects(): Promise<Project[]>;
   getProjectsByUser(userId: number): Promise<Project[]>;
+  getProjectsByUserId(userId: number): Promise<Project[]>;
   getProject(id: number): Promise<Project | undefined>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: number, update: Partial<Project>): Promise<Project>;
@@ -480,6 +482,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
   
+  async deleteUser(id: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+  
   // Email verification methods
   async saveEmailVerificationToken(userId: number, token: string): Promise<void> {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
@@ -696,6 +702,11 @@ export class DatabaseStorage implements IStorage {
     });
     
     return Array.from(projectMap.values());
+  }
+
+  // Alias for getProjectsByUser
+  async getProjectsByUserId(userId: number): Promise<Project[]> {
+    return this.getProjectsByUser(userId);
   }
   
   async getProject(id: number): Promise<Project | undefined> {

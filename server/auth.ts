@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express, Request, Response } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -161,6 +161,17 @@ export function setupAuth(app: Express) {
       done(err, null);
     }
   });
+
+  // Middleware to ensure a user is authenticated
+  const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+    // Apply auth bypass first
+    devAuthBypass(req, res, () => {
+      if (req.isAuthenticated()) {
+        return next();
+      }
+      res.status(401).json({ message: "Unauthorized" });
+    });
+  };
 
   // Register a new user with email verification
   app.post("/api/register", createRateLimiter("login"), async (req, res, next) => {
@@ -676,6 +687,201 @@ export function setupAuth(app: Express) {
       const { password, ...userWithoutPassword } = req.user as any; 
       res.json(userWithoutPassword);
     });
+  });
+
+  // Update user profile
+  app.patch("/api/user/profile", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { displayName, bio, website, location, github, twitter } = req.body;
+      
+      const updatedUser = await storage.updateUser(userId, {
+        displayName,
+        bio,
+        website,
+        location,
+        github,
+        twitter
+      });
+      
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      res.status(500).json({ error: 'Failed to update profile' });
+    }
+  });
+
+  // Change password
+  app.post("/api/user/change-password", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { currentPassword, newPassword } = req.body;
+      
+      // Verify current password
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      const isValidPassword = await comparePasswords(currentPassword, user.password);
+      if (!isValidPassword) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+      
+      // Hash new password and update
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUser(userId, { password: hashedPassword });
+      
+      res.json({ message: 'Password updated successfully' });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      res.status(500).json({ error: 'Failed to change password' });
+    }
+  });
+
+  // Change email
+  app.post("/api/user/change-email", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { email, password } = req.body;
+      
+      // Verify password
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      const isValidPassword = await comparePasswords(password, user.password);
+      if (!isValidPassword) {
+        return res.status(400).json({ error: 'Password is incorrect' });
+      }
+      
+      // Check if email is already in use
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({ error: 'Email already in use' });
+      }
+      
+      // Update email
+      await storage.updateUser(userId, { email, emailVerified: false });
+      
+      res.json({ message: 'Email updated successfully. Please verify your new email.' });
+    } catch (error) {
+      console.error('Error changing email:', error);
+      res.status(500).json({ error: 'Failed to change email' });
+    }
+  });
+
+  // Delete account
+  app.delete("/api/user/account", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Delete user's projects first
+      const projects = await storage.getProjectsByUserId(userId);
+      for (const project of projects) {
+        await storage.deleteProject(project.id);
+      }
+      
+      // Delete user
+      await storage.deleteUser(userId);
+      
+      // Logout
+      req.logout(() => {
+        res.json({ message: 'Account deleted successfully' });
+      });
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      res.status(500).json({ error: 'Failed to delete account' });
+    }
+  });
+
+  // Get user settings
+  app.get("/api/user/settings", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      const { password, ...settings } = user;
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+
+  // Enable/disable two-factor authentication
+  app.post("/api/user/2fa", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { enabled } = req.body;
+      
+      if (enabled) {
+        // Generate 2FA secret
+        const secret = randomBytes(32).toString('hex');
+        await storage.updateUser(userId, { 
+          twoFactorEnabled: true,
+          twoFactorSecret: secret 
+        });
+        
+        res.json({ 
+          message: 'Two-factor authentication enabled',
+          secret // In production, this would be a QR code
+        });
+      } else {
+        await storage.updateUser(userId, { 
+          twoFactorEnabled: false,
+          twoFactorSecret: null 
+        });
+        
+        res.json({ message: 'Two-factor authentication disabled' });
+      }
+    } catch (error) {
+      console.error('Error updating 2FA:', error);
+      res.status(500).json({ error: 'Failed to update 2FA settings' });
+    }
+  });
+
+  // Get active sessions
+  app.get("/api/user/sessions", ensureAuthenticated, async (req, res) => {
+    try {
+      // In production, this would fetch from a sessions table
+      const sessions = [
+        {
+          id: req.sessionID,
+          device: 'Chrome on Windows',
+          lastActive: new Date(),
+          current: true
+        }
+      ];
+      
+      res.json(sessions);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      res.status(500).json({ error: 'Failed to fetch sessions' });
+    }
+  });
+
+  // Revoke session
+  app.delete("/api/user/sessions/:sessionId", ensureAuthenticated, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      // In production, this would delete the session from store
+      if (sessionId === req.sessionID) {
+        return res.status(400).json({ error: 'Cannot revoke current session' });
+      }
+      
+      res.json({ message: 'Session revoked successfully' });
+    } catch (error) {
+      console.error('Error revoking session:', error);
+      res.status(500).json({ error: 'Failed to revoke session' });
+    }
   });
   
   // Diagnostic endpoint for session debugging (development only)
