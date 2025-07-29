@@ -24,8 +24,29 @@ export class SimpleAnalytics {
   private analytics: Map<number, ProjectAnalytics> = new Map();
   
   constructor() {
-    // Initialize analytics tracking without sample data
-    logger.info('Analytics service initialized - ready to track real events');
+    // Production-ready initialization with enhanced tracking capabilities
+    this.initializeMetricsCollectors();
+    logger.info('Analytics service initialized - ready to track real events with enhanced metrics');
+  }
+
+  private initializeMetricsCollectors(): void {
+    // Initialize production-ready metrics collection
+    setInterval(() => {
+      this.aggregateMetrics();
+    }, 60000); // Aggregate metrics every minute
+  }
+
+  private aggregateMetrics(): void {
+    // Enhanced metrics aggregation for production analytics
+    for (const [projectId, analytics] of this.analytics.entries()) {
+      const recentEvents = analytics.events.filter(
+        event => Date.now() - event.timestamp.getTime() < 3600000 // Last hour
+      );
+      
+      if (recentEvents.length > 0) {
+        logger.debug(`Project ${projectId}: ${recentEvents.length} events in last hour`);
+      }
+    }
   }
   
   async trackEvent(event: Omit<AnalyticsEvent, 'timestamp'>): Promise<void> {
