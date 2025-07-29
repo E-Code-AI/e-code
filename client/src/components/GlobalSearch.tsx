@@ -141,21 +141,6 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
     } finally {
       setIsSearching(false);
     }
-          language: 'typescript',
-          matches: [
-            {
-              line: 42,
-              column: 15,
-              text: query,
-              context: `function ${query}Component() { return <div>${query}</div>; }`
-            },
-            {
-              line: 78,
-              column: 8,
-              text: query,
-              context: `const ${query} = useState('');`
-            }
-          ]
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
