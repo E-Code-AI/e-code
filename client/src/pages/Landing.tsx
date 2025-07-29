@@ -182,20 +182,17 @@ export default function Landing() {
               Describe your idea and watch AI build it. From simple websites to complex applications.
             </p>
             
-            {/* Clean Chat Input - Lovable.dev Style */}
-            <div className="max-w-2xl mx-auto px-4 sm:px-0 mt-12">
+            {/* Lovable.dev Style Clean Chat Input */}
+            <div className="max-w-4xl mx-auto px-4 sm:px-0 mt-12">
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-fuchsia-600/20 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
-                <div className="relative bg-card/90 backdrop-blur-sm border-2 border-primary/30 rounded-3xl p-6 shadow-2xl hover:shadow-3xl transition-all hover:border-primary/50">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-2xl flex-shrink-0 shadow-lg">
-                      <Sparkles className="h-6 w-6 text-white animate-pulse" />
-                    </div>
+                {/* Simple, clean input container */}
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-2 shadow-lg hover:shadow-xl transition-all duration-200 focus-within:ring-2 focus-within:ring-violet-500/20 focus-within:border-violet-500/50">
+                  <div className="flex items-center gap-3">
                     <div className="flex-1">
                       <input
                         type="text"
-                        placeholder="Describe your app idea in any language... (e.g., 'Build a recipe finder app with AI suggestions')"
-                        className="w-full bg-transparent border-none outline-none text-xl placeholder:text-muted-foreground/70 focus:ring-0 font-medium"
+                        placeholder="What would you like to build? Describe your idea..."
+                        className="w-full bg-transparent border-none outline-none text-lg md:text-xl placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-0 px-4 py-3 font-normal"
                         value={appDescription}
                         onChange={(e) => setAppDescription(e.target.value)}
                         onKeyDown={(e) => {
@@ -207,7 +204,7 @@ export default function Landing() {
                     </div>
                     <Button 
                       size="lg" 
-                      className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all text-lg px-6"
+                      className="bg-violet-600 hover:bg-violet-700 text-white shadow-sm hover:shadow-md transition-all duration-200 rounded-xl px-6 py-3 text-base font-medium"
                       onClick={() => {
                         if (appDescription.trim()) {
                           handleStartBuilding(appDescription);
@@ -215,24 +212,26 @@ export default function Landing() {
                       }}
                       disabled={!appDescription.trim()}
                     >
-                      <Zap className="h-5 w-5 mr-2" />
-                      Start Building
+                      Build it
+                      <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
-                  <div className="flex items-center gap-6 mt-4 ml-16 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Free to start
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      No credit card
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      AI builds instantly
-                    </span>
-                  </div>
+                </div>
+                
+                {/* Simple feature indicators */}
+                <div className="flex items-center justify-center gap-8 mt-4 text-sm text-gray-500 dark:text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Free to start
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Check className="h-4 w-4 text-green-500" />
+                    No setup required
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Deploy instantly
+                  </span>
                 </div>
               </div>
             </div>
