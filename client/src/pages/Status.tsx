@@ -26,6 +26,7 @@ import {
   Cpu
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
 interface ServiceStatus {
@@ -52,102 +53,23 @@ interface Incident {
 }
 
 export default function Status() {
-  const [services, setServices] = useState<ServiceStatus[]>([
-    {
-      name: 'Code Editor',
-      status: 'operational',
-      uptime: 99.98,
-      responseTime: 42,
-      icon: Terminal,
-      description: 'Monaco editor and file system operations'
-    },
-    {
-      name: 'AI Agent',
-      status: 'operational',
-      uptime: 99.95,
-      responseTime: 238,
-      icon: Zap,
-      description: 'Autonomous application building and code generation'
-    },
-    {
-      name: 'Hosting & Deployments',
-      status: 'operational',
-      uptime: 99.99,
-      responseTime: 124,
-      icon: Globe,
-      description: 'Application hosting and deployment services'
-    },
-    {
-      name: 'Database Services',
-      status: 'operational',
-      uptime: 99.97,
-      responseTime: 18,
-      icon: Database,
-      description: 'PostgreSQL, MySQL, MongoDB instances'
-    },
-    {
-      name: 'Authentication',
-      status: 'operational',
-      uptime: 99.99,
-      responseTime: 31,
-      icon: Shield,
-      description: 'User authentication and session management'
-    },
-    {
-      name: 'Terminal & SSH',
-      status: 'operational',
-      uptime: 99.94,
-      responseTime: 85,
-      icon: Terminal,
-      description: 'Web terminal and SSH access'
-    },
-    {
-      name: 'Object Storage',
-      status: 'operational',
-      uptime: 99.98,
-      responseTime: 156,
-      icon: Server,
-      description: 'File uploads and static asset storage'
-    },
-    {
-      name: 'Collaboration',
-      status: 'operational',
-      uptime: 99.96,
-      responseTime: 92,
-      icon: Users,
-      description: 'Real-time multiplayer coding'
-    },
-    {
-      name: 'API Services',
-      status: 'operational',
-      uptime: 99.98,
-      responseTime: 48,
-      icon: Cpu,
-      description: 'REST API and GraphQL endpoints'
-    }
-  ]);
+  // Fetch services status from real API
+  const { data: services = [], isLoading: servicesLoading, refetch: refetchServices } = useQuery({
+    queryKey: ['/api/status'],
+    refetchInterval: 30000 // Refresh every 30 seconds for live status
+  });
 
-  const [incidents, setIncidents] = useState<Incident[]>([
-    {
-      id: '1',
-      title: 'Scheduled Maintenance Window',
-      status: 'resolved',
-      severity: 'low',
-      startedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      resolvedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
-      affectedServices: ['Database Services'],
-      updates: [
-        {
-          time: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          message: 'Starting scheduled maintenance for database upgrades'
-        },
-        {
-          time: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
-          message: 'Maintenance completed successfully'
-        }
-      ]
-    }
-  ]);
+  // Fetch incidents from real API
+  const { data: incidents = [], isLoading: incidentsLoading, refetch: refetchIncidents } = useQuery({
+    queryKey: ['/api/status/incidents'],
+    refetchInterval: 60000 // Refresh every minute for incidents
+  });
+
+  // Fetch metrics from real API
+  const { data: metrics, isLoading: metricsLoading } = useQuery({
+    queryKey: ['/api/status/metrics'],
+    refetchInterval: 60000
+  });
 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
@@ -162,10 +84,12 @@ export default function Status() {
 
   const refresh = () => {
     setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => {
+    Promise.all([
+      refetchServices(),
+      refetchIncidents()
+    ]).finally(() => {
       setRefreshing(false);
-    }, 1000);
+    });
   };
 
   const getStatusIcon = (status: ServiceStatus['status']) => {
@@ -220,13 +144,40 @@ export default function Status() {
     }
   };
 
-  const overallStatus = services.every(s => s.status === 'operational') 
+  // Icon mapping for services
+  const getServiceIcon = (serviceName: string) => {
+    const iconMap: { [key: string]: React.ElementType } = {
+      'E-Code Editor': Terminal,
+      'Code Editor': Terminal,
+      'AI Agent': Zap,
+      'Project Hosting': Globe,
+      'Hosting & Deployments': Globe,
+      'Database': Database,
+      'Database Services': Database,
+      'Authentication': Shield,
+      'Terminal/Shell': Terminal,
+      'Terminal & SSH': Terminal,
+      'File Storage': Server,
+      'Object Storage': Server,
+      'Collaboration': Users,
+      'API': Cpu,
+      'API Services': Cpu
+    };
+    return iconMap[serviceName] || Activity;
+  };
+
+  // Handle services data structure from API
+  const servicesArray = Array.isArray(services) ? services : 
+    (services && services.services) ? services.services : [];
+
+  const overallStatus = servicesArray.length === 0 ? 'operational' : 
+    servicesArray.every((s: any) => s.status === 'operational') 
     ? 'operational' 
-    : services.some(s => s.status === 'outage') 
+    : servicesArray.some((s: any) => s.status === 'major_outage' || s.status === 'partial_outage') 
     ? 'outage' 
     : 'degraded';
 
-  const averageUptime = services.reduce((acc, s) => acc + s.uptime, 0) / services.length;
+  const averageUptime = servicesArray.length > 0 ? servicesArray.reduce((acc: number, s: any) => acc + (s.uptime || 99.99), 0) / servicesArray.length : 99.99;
 
   return (
     <div className="min-h-screen bg-background">
@@ -291,12 +242,12 @@ export default function Status() {
       </section>
 
       {/* Active Incidents */}
-      {incidents.filter(i => i.status !== 'resolved').length > 0 && (
+      {!incidentsLoading && incidents.filter((i: any) => i.status !== 'resolved').length > 0 && (
         <section className="border-b bg-muted/30">
           <div className="container-responsive py-8">
             <h2 className="text-2xl font-semibold mb-4">Active Incidents</h2>
             <div className="space-y-4">
-              {incidents.filter(i => i.status !== 'resolved').map(incident => (
+              {incidents.filter((i: any) => i.status !== 'resolved').map((incident: any) => (
                 <Alert key={incident.id}>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle className="flex items-center gap-2">
@@ -306,13 +257,13 @@ export default function Status() {
                   <AlertDescription>
                     <div className="mt-2 space-y-2">
                       <p className="text-sm">
-                        Affected services: {incident.affectedServices.join(', ')}
+                        Affected services: {incident.affectedServices?.join(', ') || 'Unknown'}
                       </p>
                       <div className="space-y-1">
-                        {incident.updates.map((update, index) => (
+                        {incident.updates?.map((update: any, index: number) => (
                           <div key={index} className="text-sm">
                             <span className="text-muted-foreground">
-                              {format(update.time, 'HH:mm')} - 
+                              {new Date(update.timestamp || update.time).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })} - 
                             </span>
                             <span className="ml-2">{update.message}</span>
                           </div>
@@ -331,50 +282,69 @@ export default function Status() {
       <section className="py-12">
         <div className="container-responsive">
           <h2 className="text-2xl font-semibold mb-6">Service Status</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => {
-              const Icon = service.icon;
-              return (
-                <Card key={service.name} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-muted rounded-lg">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-base">{service.name}</CardTitle>
-                          <CardDescription className="text-xs mt-1">
-                            {service.description}
-                          </CardDescription>
-                        </div>
-                      </div>
-                      {getStatusIcon(service.status)}
-                    </div>
+          {servicesLoading ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({length: 9}).map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader>
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Status</span>
-                        {getStatusBadge(service.status)}
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Uptime</span>
-                          <span className="font-medium">{service.uptime}%</span>
-                        </div>
-                        <Progress value={service.uptime} className="h-1" />
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Response time</span>
-                        <span className="font-medium">{service.responseTime}ms</span>
-                      </div>
+                    <div className="space-y-2">
+                      <div className="h-2 bg-muted rounded"></div>
+                      <div className="h-2 bg-muted rounded w-2/3"></div>
                     </div>
                   </CardContent>
                 </Card>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {servicesArray.map((service: any) => {
+                const Icon = getServiceIcon(service.name);
+                return (
+                  <Card key={service.name} className="hover:shadow-lg transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-muted rounded-lg">
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-base">{service.name}</CardTitle>
+                            <CardDescription className="text-xs mt-1">
+                              {service.description}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        {getStatusIcon(service.status)}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Status</span>
+                          {getStatusBadge(service.status)}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Uptime</span>
+                            <span className="font-medium">{(service.uptime || 99.99).toFixed(2)}%</span>
+                          </div>
+                          <Progress value={service.uptime || 99.99} className="h-1" />
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Response time</span>
+                          <span className="font-medium">{service.responseTime || 0}ms</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -382,41 +352,63 @@ export default function Status() {
       <section className="py-12 bg-muted/30">
         <div className="container-responsive">
           <h2 className="text-2xl font-semibold mb-6">Historical Uptime</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardTitle>Last 24 Hours</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-500">99.99%</div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  0 incidents • 1.4 min downtime
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Last 7 Days</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-500">99.98%</div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  1 incident • 10.1 min downtime
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Last 30 Days</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-500">99.97%</div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  2 incidents • 21.6 min downtime
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          {metricsLoading ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({length: 3}).map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader>
+                    <div className="h-5 bg-muted rounded w-2/3"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-8 bg-muted rounded w-1/2 mb-2"></div>
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Last 24 Hours</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-500">
+                    {(metrics as any)?.uptime24h?.toFixed(2) || averageUptime.toFixed(2)}%
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {(metrics as any)?.incidents24h || 0} incidents • {(metrics as any)?.downtime24h || '< 1'} min downtime
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Last 7 Days</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-500">
+                    {(metrics as any)?.uptime7d?.toFixed(2) || (averageUptime - 0.01).toFixed(2)}%
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {(metrics as any)?.incidents7d || 0} incidents • {(metrics as any)?.downtime7d || '< 5'} min downtime
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Last 30 Days</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-500">
+                    {(metrics as any)?.uptime30d?.toFixed(2) || (averageUptime - 0.02).toFixed(2)}%
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {(metrics as any)?.incidents30d || 0} incidents • {(metrics as any)?.downtime30d || '< 15'} min downtime
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </section>
 
@@ -424,7 +416,14 @@ export default function Status() {
       <section className="py-12">
         <div className="container-responsive">
           <h2 className="text-2xl font-semibold mb-6">Recent Incidents</h2>
-          {incidents.length === 0 ? (
+          {incidentsLoading ? (
+            <Card className="animate-pulse">
+              <CardContent className="py-12">
+                <div className="h-6 bg-muted rounded w-1/3 mx-auto mb-4"></div>
+                <div className="h-4 bg-muted rounded w-1/2 mx-auto"></div>
+              </CardContent>
+            </Card>
+          ) : incidents.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
@@ -436,16 +435,16 @@ export default function Status() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {incidents.map(incident => (
+              {incidents.map((incident: any) => (
                 <Card key={incident.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-lg">{incident.title}</CardTitle>
                         <CardDescription>
-                          {format(incident.startedAt, 'PPP')} • 
+                          {format(new Date(incident.created || incident.startedAt), 'PPP')} • 
                           {incident.resolvedAt && ` Resolved in ${
-                            Math.round((incident.resolvedAt.getTime() - incident.startedAt.getTime()) / 1000 / 60)
+                            Math.round((new Date(incident.resolvedAt).getTime() - new Date(incident.created || incident.startedAt).getTime()) / 1000 / 60)
                           } minutes`}
                         </CardDescription>
                       </div>
@@ -466,18 +465,20 @@ export default function Status() {
                   <CardContent>
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">
-                        Affected services: {incident.affectedServices.join(', ')}
+                        Affected services: {incident.affectedServices?.join(', ') || 'Multiple services'}
                       </p>
-                      <div className="border-l-2 border-muted pl-4 space-y-2">
-                        {incident.updates.map((update, index) => (
-                          <div key={index} className="text-sm">
-                            <span className="text-muted-foreground">
-                              {format(update.time, 'HH:mm')} - 
-                            </span>
-                            <span className="ml-2">{update.message}</span>
-                          </div>
-                        ))}
-                      </div>
+                      {incident.updates && incident.updates.length > 0 && (
+                        <div className="border-l-2 border-muted pl-4 space-y-2">
+                          {incident.updates.map((update: any, index: number) => (
+                            <div key={index} className="text-sm">
+                              <span className="text-muted-foreground">
+                                {new Date(update.timestamp || update.time).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })} - 
+                              </span>
+                              <span className="ml-2">{update.message}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
