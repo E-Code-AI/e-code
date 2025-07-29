@@ -78,11 +78,13 @@ export interface IStorage {
   saveEmailVerificationToken(userId: number, token: string): Promise<void>;
   getEmailVerificationByToken(token: string): Promise<{ userId: number; expiresAt: Date } | undefined>;
   deleteEmailVerificationToken(token: string): Promise<void>;
+  getUserByEmailVerificationToken(token: string): Promise<User | undefined>;
   
   // Password reset methods
   savePasswordResetToken(userId: number, token: string): Promise<void>;
   getPasswordResetByToken(token: string): Promise<{ userId: number; expiresAt: Date } | undefined>;
   deletePasswordResetToken(token: string): Promise<void>;
+  getUserByPasswordResetToken(token: string): Promise<User | undefined>;
   
   // Project methods
   getAllProjects(): Promise<Project[]>;
@@ -537,6 +539,20 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(users.passwordResetToken, token));
+  }
+
+  async getUserByEmailVerificationToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.emailVerificationToken, token));
+    return user;
+  }
+
+  async getUserByPasswordResetToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.passwordResetToken, token));
+    return user;
   }
   
   // Project methods

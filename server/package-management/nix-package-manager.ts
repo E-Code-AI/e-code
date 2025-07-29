@@ -52,6 +52,9 @@ export class NixPackageManager extends EventEmitter {
     try {
       await this.execNix(['--version']);
       logger.info('Nix is available on the system');
+      
+      // Initialize Nix profiles directory
+      await this.initializeNixProfiles();
     } catch (error) {
       logger.error('Nix is not installed. Using real package database with fallback implementation.');
       // Note: Installing Nix requires root access and system-level changes
@@ -59,6 +62,16 @@ export class NixPackageManager extends EventEmitter {
     }
     
     logger.info('Nix package manager initialized');
+  }
+
+  private async initializeNixProfiles(): Promise<void> {
+    try {
+      const profilesDir = path.join(process.cwd(), '.nix-profiles');
+      await fs.mkdir(profilesDir, { recursive: true });
+      logger.info('Nix profiles directory initialized');
+    } catch (error) {
+      logger.error('Failed to initialize Nix profiles directory:', error);
+    }
   }
 
   async createEnvironment(projectId: string, packages: string[]): Promise<NixEnvironment> {

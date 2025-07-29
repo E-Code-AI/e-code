@@ -109,10 +109,16 @@ export class CollaborationServer {
       const project = await storage.getProject(projectId);
       if (!project) return false;
       
-      // Check if user owns the project or is a collaborator
+      // Check if user owns the project
       if (project.ownerId === userId) return true;
       
-      // TODO: Check team/collaboration permissions when implemented
+      // Check if user is a collaborator
+      const isCollaborator = await storage.isProjectCollaborator(projectId, userId);
+      if (isCollaborator) return true;
+      
+      // Check if project is public
+      if (project.visibility === 'public') return true;
+      
       return false;
     } catch (error) {
       console.error('Error verifying project access:', error);

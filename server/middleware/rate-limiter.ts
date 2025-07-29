@@ -86,14 +86,13 @@ export async function checkAccountLockout(userId: number): Promise<{ isLocked: b
 export async function logLoginAttempt(
   userId: number, 
   ipAddress: string, 
-  userAgent: string | undefined, 
   successful: boolean,
   failureReason?: string
 ) {
   await storage.createLoginHistory({
     userId,
     ipAddress,
-    userAgent: userAgent || null,
+    userAgent: null,
     successful,
     failureReason: failureReason || null
   });
@@ -131,9 +130,11 @@ export async function logLoginAttempt(
 // Clean up old rate limit records periodically
 setInterval(() => {
   const now = new Date();
-  for (const [key, record] of rateLimitStore.entries()) {
+  const keysToDelete: string[] = [];
+  rateLimitStore.forEach((record, key) => {
     if (record.blockedUntil && record.blockedUntil < now) {
-      rateLimitStore.delete(key);
+      keysToDelete.push(key);
     }
-  }
+  });
+  keysToDelete.forEach(key => rateLimitStore.delete(key));
 }, 5 * 60 * 1000); // Clean up every 5 minutes
