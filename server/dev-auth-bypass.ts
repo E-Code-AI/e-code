@@ -6,7 +6,8 @@
 import { Request, Response, NextFunction } from "express";
 
 // Variable pour activer/désactiver le contournement d'auth
-let bypassAuth = false;
+// En développement, activé par défaut pour éviter les problèmes d'authentification
+let bypassAuth = process.env.NODE_ENV === 'development';
 
 // Middleware qui peut contourner l'authentification
 export const devAuthBypass = (req: Request, res: Response, next: NextFunction) => {
@@ -71,4 +72,8 @@ export function setupAuthBypass(app: any) {
   });
   
   console.log('🔧 Auth Bypass: Points de terminaison de débogage initialisés pour le développement');
+  
+  if (bypassAuth) {
+    console.log('⚠️ Auth Bypass: ACTIVÉ par défaut en développement');
+  }
 }
