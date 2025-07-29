@@ -16,7 +16,7 @@ const DEMO_STEPS: DemoStep[] = [
   {
     id: 'ai-prompt',
     title: 'AI understands your idea',
-    duration: 2000,
+    duration: 4000, // Doubled from 2000ms to 4000ms
     code: [
       '// E-Code AI Agent is analyzing your request:',
       '// "Build a todo app with dark mode and categories"',
@@ -41,7 +41,7 @@ const DEMO_STEPS: DemoStep[] = [
   {
     id: 'start',
     title: 'AI generates the foundation',
-    duration: 2000,
+    duration: 4000, // Doubled from 2000ms to 4000ms
     code: [
       '// E-Code AI Agent is building your app',
       '',
@@ -67,7 +67,7 @@ const DEMO_STEPS: DemoStep[] = [
   {
     id: 'code',
     title: 'AI writing the code',
-    duration: 3000,
+    duration: 5000, // Increased from 3000ms to 5000ms
     code: [
       '// Welcome to E-Code!',
       '// Let\'s build a todo app with AI',
@@ -102,7 +102,7 @@ const DEMO_STEPS: DemoStep[] = [
   {
     id: 'features',
     title: 'AI adds advanced features',
-    duration: 3000,
+    duration: 5000, // Increased from 3000ms to 5000ms
     code: [
       '// E-Code AI Agent is building your app',
       '',
@@ -147,7 +147,7 @@ const DEMO_STEPS: DemoStep[] = [
   {
     id: 'complete',
     title: 'App deployed instantly',
-    duration: 2000,
+    duration: 4000, // Doubled from 2000ms to 4000ms
     code: [
       '// E-Code AI Agent completed your app!',
       '',
@@ -259,11 +259,11 @@ export function AnimatedPlatformDemo() {
               setDisplayedCode([]);
               setDisplayedTerminal([]);
               setHasCompleted(false);
-            }, 3000);
+            }, 6000); // Increased from 3000ms to 6000ms for longer pause before restart
           }
-        }, 1500);
+        }, 3000); // Increased from 1500ms to 3000ms for longer pause between steps
       }
-    }, 200);
+    }, 400); // Increased from 200ms to 400ms for slower typing speed
 
     return () => clearInterval(interval);
   }, [isPlaying, currentStep, currentLine]);
