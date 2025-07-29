@@ -73,6 +73,11 @@ import { simpleDeployer } from './deployment/simple-deployer';
 import { simpleGitManager } from './git/simple-git-manager';
 import { simpleWorkflowRunner } from './workflows/simple-workflow-runner';
 import { simplePaymentProcessor } from './billing/simple-payment-processor';
+import { securityScanner } from './security/security-scanner';
+import { exportManager } from './export/export-manager';
+import { statusPageService } from './status/status-page-service';
+import { sshManager } from './ssh/ssh-manager';
+import { databaseHostingService } from './database/database-hosting';
 import { simpleAnalytics } from './analytics/simple-analytics';
 import { simpleBackupManager } from './backup/simple-backup-manager';
 import { edgeManager } from './edge/edge-manager';
@@ -5903,6 +5908,596 @@ Generate a comprehensive application based on the user's request. Include all ne
     } catch (error) {
       console.error('Error deleting code snippet:', error);
       res.status(500).json({ message: "Failed to delete code snippet" });
+    }
+  });
+
+  // Security Scanner API endpoints
+  app.post('/api/projects/:id/security/scan', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      
+      // Get project files
+      const files = await storage.getProjectFiles(projectId);
+      const fileContents = await Promise.all(
+        files.map(async (file) => ({
+          path: file.path,
+          content: file.content || ''
+        }))
+      );
+      
+      const scanResult = await securityScanner.scanProject(projectId, fileContents);
+      res.json(scanResult);
+    } catch (error) {
+      console.error('Security scan error:', error);
+      res.status(500).json({ message: 'Security scan failed' });
+    }
+  });
+
+  app.get('/api/projects/:id/security/recommendations', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const recommendations = await securityScanner.getSecurityRecommendations(projectId);
+      res.json(recommendations);
+    } catch (error) {
+      console.error('Error getting security recommendations:', error);
+      res.status(500).json({ message: 'Failed to get security recommendations' });
+    }
+  });
+
+  app.post('/api/security/quick-scan', ensureAuthenticated, async (req, res) => {
+    try {
+      const { code } = req.body;
+      const issues = await securityScanner.quickScan(code);
+      res.json(issues);
+    } catch (error) {
+      console.error('Quick scan error:', error);
+      res.status(500).json({ message: 'Quick scan failed' });
+    }
+  });
+
+  // Export Manager API endpoints
+  app.post('/api/projects/:id/export', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const options = req.body;
+      
+      const result = await exportManager.exportProject(projectId, options);
+      res.json(result);
+    } catch (error) {
+      console.error('Export error:', error);
+      res.status(500).json({ message: 'Export failed' });
+    }
+  });
+
+  app.get('/api/exports/:exportId', async (req, res) => {
+    try {
+      const exportId = req.params.exportId;
+      const status = await exportManager.getExportStatus(exportId);
+      
+      if (!status) {
+        return res.status(404).json({ message: 'Export not found' });
+      }
+      
+      res.json(status);
+    } catch (error) {
+      console.error('Error getting export status:', error);
+      res.status(500).json({ message: 'Failed to get export status' });
+    }
+  });
+
+  app.get('/api/exports/:exportId.zip', async (req, res) => {
+    try {
+      const exportId = req.params.exportId;
+      const zipPath = `./temp/exports/${exportId}.zip`;
+      
+      res.download(zipPath, `${exportId}.zip`);
+    } catch (error) {
+      console.error('Error downloading export:', error);
+      res.status(404).json({ message: 'Export file not found' });
+    }
+  });
+
+  app.delete('/api/exports/:exportId', ensureAuthenticated, async (req, res) => {
+    try {
+      const exportId = req.params.exportId;
+      const success = await exportManager.deleteExport(exportId);
+      
+      if (success) {
+        res.json({ message: 'Export deleted successfully' });
+      } else {
+        res.status(404).json({ message: 'Export not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting export:', error);
+      res.status(500).json({ message: 'Failed to delete export' });
+    }
+  });
+
+  // Status Page API endpoints
+  app.get('/api/status', async (req, res) => {
+    try {
+      const status = statusPageService.getSystemStatus();
+      res.json(status);
+    } catch (error) {
+      console.error('Error getting system status:', error);
+      res.status(500).json({ message: 'Failed to get system status' });
+    }
+  });
+
+  app.get('/api/status/summary', async (req, res) => {
+    try {
+      const summary = statusPageService.getStatusSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error('Error getting status summary:', error);
+      res.status(500).json({ message: 'Failed to get status summary' });
+    }
+  });
+
+  app.get('/api/status/metrics', async (req, res) => {
+    try {
+      const hours = parseInt(req.query.hours as string) || 24;
+      const metrics = statusPageService.getMetrics(hours);
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error getting status metrics:', error);
+      res.status(500).json({ message: 'Failed to get status metrics' });
+    }
+  });
+
+  app.get('/api/status/incidents', async (req, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      const incidents = statusPageService.getIncidentHistory(days);
+      res.json(incidents);
+    } catch (error) {
+      console.error('Error getting incident history:', error);
+      res.status(500).json({ message: 'Failed to get incident history' });
+    }
+  });
+
+  app.post('/api/status/incidents', ensureAuthenticated, async (req, res) => {
+    try {
+      const { title, description, severity, affectedServices } = req.body;
+      const incidentId = statusPageService.createIncident(title, description, severity, affectedServices);
+      res.json({ incidentId });
+    } catch (error) {
+      console.error('Error creating incident:', error);
+      res.status(500).json({ message: 'Failed to create incident' });
+    }
+  });
+
+  app.patch('/api/status/incidents/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const incidentId = req.params.id;
+      const { message, status } = req.body;
+      const success = statusPageService.updateIncident(incidentId, message, status);
+      
+      if (success) {
+        res.json({ message: 'Incident updated successfully' });
+      } else {
+        res.status(404).json({ message: 'Incident not found' });
+      }
+    } catch (error) {
+      console.error('Error updating incident:', error);
+      res.status(500).json({ message: 'Failed to update incident' });
+    }
+  });
+
+  // SSH Manager API endpoints
+  app.get('/api/ssh/keys', ensureAuthenticated, async (req, res) => {
+    try {
+      const keys = sshManager.getUserSSHKeys(req.user!.id);
+      res.json(keys);
+    } catch (error) {
+      console.error('Error getting SSH keys:', error);
+      res.status(500).json({ message: 'Failed to get SSH keys' });
+    }
+  });
+
+  app.post('/api/ssh/keys', ensureAuthenticated, async (req, res) => {
+    try {
+      const { name, type } = req.body;
+      const key = await sshManager.generateSSHKey(req.user!.id, name, type);
+      res.json(key);
+    } catch (error) {
+      console.error('Error generating SSH key:', error);
+      res.status(500).json({ message: 'Failed to generate SSH key' });
+    }
+  });
+
+  app.delete('/api/ssh/keys/:keyId', ensureAuthenticated, async (req, res) => {
+    try {
+      const keyId = req.params.keyId;
+      const success = await sshManager.deleteSSHKey(req.user!.id, keyId);
+      
+      if (success) {
+        res.json({ message: 'SSH key deleted successfully' });
+      } else {
+        res.status(404).json({ message: 'SSH key not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting SSH key:', error);
+      res.status(500).json({ message: 'Failed to delete SSH key' });
+    }
+  });
+
+  app.patch('/api/ssh/keys/:keyId/toggle', ensureAuthenticated, async (req, res) => {
+    try {
+      const keyId = req.params.keyId;
+      const { isActive } = req.body;
+      const success = await sshManager.toggleSSHKey(req.user!.id, keyId, isActive);
+      
+      if (success) {
+        res.json({ message: 'SSH key status updated' });
+      } else {
+        res.status(404).json({ message: 'SSH key not found' });
+      }
+    } catch (error) {
+      console.error('Error toggling SSH key:', error);
+      res.status(500).json({ message: 'Failed to toggle SSH key' });
+    }
+  });
+
+  app.post('/api/projects/:id/ssh/session', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { keyId } = req.body;
+      const clientInfo = {
+        ip: req.ip || '127.0.0.1',
+        userAgent: req.get('User-Agent'),
+        terminal: req.get('Terminal-Type')
+      };
+      
+      const sessionId = await sshManager.createSSHSession(req.user!.id, projectId, keyId, clientInfo);
+      res.json({ sessionId });
+    } catch (error) {
+      console.error('Error creating SSH session:', error);
+      res.status(500).json({ message: 'Failed to create SSH session' });
+    }
+  });
+
+  app.get('/api/ssh/sessions', ensureAuthenticated, async (req, res) => {
+    try {
+      const sessions = sshManager.getUserSessions(req.user!.id);
+      res.json(sessions);
+    } catch (error) {
+      console.error('Error getting SSH sessions:', error);
+      res.status(500).json({ message: 'Failed to get SSH sessions' });
+    }
+  });
+
+  app.delete('/api/ssh/sessions/:sessionId', ensureAuthenticated, async (req, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const success = await sshManager.terminateSession(sessionId);
+      
+      if (success) {
+        res.json({ message: 'SSH session terminated' });
+      } else {
+        res.status(404).json({ message: 'SSH session not found' });
+      }
+    } catch (error) {
+      console.error('Error terminating SSH session:', error);
+      res.status(500).json({ message: 'Failed to terminate SSH session' });
+    }
+  });
+
+  app.get('/api/projects/:id/ssh/config', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const config = sshManager.getSSHConfig(projectId);
+      res.json(config);
+    } catch (error) {
+      console.error('Error getting SSH config:', error);
+      res.status(500).json({ message: 'Failed to get SSH config' });
+    }
+  });
+
+  app.get('/api/projects/:id/ssh/instructions/:keyId', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const keyId = req.params.keyId;
+      const instructions = sshManager.getSSHInstructions(projectId, keyId);
+      res.json(instructions);
+    } catch (error) {
+      console.error('Error getting SSH instructions:', error);
+      res.status(500).json({ message: 'Failed to get SSH instructions' });
+    }
+  });
+
+  app.post('/api/ssh/sessions/:sessionId/execute', ensureAuthenticated, async (req, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const { command } = req.body;
+      
+      const result = await sshManager.executeSSHCommand(sessionId, command);
+      res.json(result);
+    } catch (error) {
+      console.error('Error executing SSH command:', error);
+      res.status(500).json({ message: 'Failed to execute SSH command' });
+    }
+  });
+
+  app.get('/api/ssh/stats', ensureAuthenticated, async (req, res) => {
+    try {
+      const stats = sshManager.getSSHStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error getting SSH stats:', error);
+      res.status(500).json({ message: 'Failed to get SSH stats' });
+    }
+  });
+
+  // Database Hosting API endpoints
+  app.get('/api/database/types', async (req, res) => {
+    try {
+      const types = databaseHostingService.getAvailableTypes();
+      res.json(types);
+    } catch (error) {
+      console.error('Error getting database types:', error);
+      res.status(500).json({ message: 'Failed to get database types' });
+    }
+  });
+
+  app.get('/api/database/regions', async (req, res) => {
+    try {
+      const regions = databaseHostingService.getAvailableRegions();
+      res.json(regions);
+    } catch (error) {
+      console.error('Error getting database regions:', error);
+      res.status(500).json({ message: 'Failed to get database regions' });
+    }
+  });
+
+  app.get('/api/database/plans', async (req, res) => {
+    try {
+      const plans = databaseHostingService.getAvailablePlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error getting database plans:', error);
+      res.status(500).json({ message: 'Failed to get database plans' });
+    }
+  });
+
+  app.post('/api/database/create', ensureAuthenticated, async (req, res) => {
+    try {
+      const { name, type, version, plan, region, projectId } = req.body;
+      const instance = await databaseHostingService.createDatabase(req.user!.id, projectId, {
+        name, type, version, plan, region
+      });
+      res.json(instance);
+    } catch (error) {
+      console.error('Error creating database:', error);
+      res.status(500).json({ message: 'Failed to create database' });
+    }
+  });
+
+  app.get('/api/database/instances', ensureAuthenticated, async (req, res) => {
+    try {
+      const instances = databaseHostingService.getUserDatabases(req.user!.id);
+      res.json(instances);
+    } catch (error) {
+      console.error('Error getting database instances:', error);
+      res.status(500).json({ message: 'Failed to get database instances' });
+    }
+  });
+
+  app.get('/api/projects/:id/databases', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const instances = databaseHostingService.getProjectDatabases(projectId);
+      res.json(instances);
+    } catch (error) {
+      console.error('Error getting project databases:', error);
+      res.status(500).json({ message: 'Failed to get project databases' });
+    }
+  });
+
+  app.get('/api/database/:instanceId', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const instance = databaseHostingService.getDatabaseInstance(instanceId);
+      
+      if (!instance) {
+        return res.status(404).json({ message: 'Database instance not found' });
+      }
+      
+      res.json(instance);
+    } catch (error) {
+      console.error('Error getting database instance:', error);
+      res.status(500).json({ message: 'Failed to get database instance' });
+    }
+  });
+
+  app.patch('/api/database/:instanceId', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const updates = req.body;
+      
+      const instance = await databaseHostingService.updateDatabase(instanceId, updates);
+      
+      if (!instance) {
+        return res.status(404).json({ message: 'Database instance not found' });
+      }
+      
+      res.json(instance);
+    } catch (error) {
+      console.error('Error updating database instance:', error);
+      res.status(500).json({ message: 'Failed to update database instance' });
+    }
+  });
+
+  app.delete('/api/database/:instanceId', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const success = await databaseHostingService.deleteDatabase(instanceId);
+      
+      if (success) {
+        res.json({ message: 'Database instance deleted successfully' });
+      } else {
+        res.status(404).json({ message: 'Database instance not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting database instance:', error);
+      res.status(500).json({ message: 'Failed to delete database instance' });
+    }
+  });
+
+  app.post('/api/database/:instanceId/control', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const { action } = req.body;
+      
+      const success = await databaseHostingService.controlDatabase(instanceId, action);
+      
+      if (success) {
+        res.json({ message: `Database ${action} completed successfully` });
+      } else {
+        res.status(404).json({ message: 'Database instance not found' });
+      }
+    } catch (error) {
+      console.error('Error controlling database instance:', error);
+      res.status(500).json({ message: 'Failed to control database instance' });
+    }
+  });
+
+  app.post('/api/database/:instanceId/backup', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const { name } = req.body;
+      
+      const backup = await databaseHostingService.createBackup(instanceId, name, 'manual');
+      
+      if (backup) {
+        res.json(backup);
+      } else {
+        res.status(404).json({ message: 'Database instance not found' });
+      }
+    } catch (error) {
+      console.error('Error creating database backup:', error);
+      res.status(500).json({ message: 'Failed to create database backup' });
+    }
+  });
+
+  app.get('/api/database/:instanceId/backups', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const backups = databaseHostingService.getDatabaseBackups(instanceId);
+      res.json(backups);
+    } catch (error) {
+      console.error('Error getting database backups:', error);
+      res.status(500).json({ message: 'Failed to get database backups' });
+    }
+  });
+
+  app.post('/api/database/:instanceId/restore', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const { backupId } = req.body;
+      
+      const success = await databaseHostingService.restoreFromBackup(instanceId, backupId);
+      
+      if (success) {
+        res.json({ message: 'Database restore initiated successfully' });
+      } else {
+        res.status(400).json({ message: 'Failed to restore database' });
+      }
+    } catch (error) {
+      console.error('Error restoring database:', error);
+      res.status(500).json({ message: 'Failed to restore database' });
+    }
+  });
+
+  app.get('/api/database/:instanceId/connection', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const includePassword = req.query.includePassword === 'true';
+      
+      const connectionString = databaseHostingService.getConnectionString(instanceId, includePassword);
+      
+      if (connectionString) {
+        res.json({ connectionString });
+      } else {
+        res.status(404).json({ message: 'Database instance not found' });
+      }
+    } catch (error) {
+      console.error('Error getting database connection:', error);
+      res.status(500).json({ message: 'Failed to get database connection' });
+    }
+  });
+
+  app.get('/api/database/:instanceId/usage', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const usage = databaseHostingService.getDatabaseUsage(instanceId);
+      
+      if (usage) {
+        res.json(usage);
+      } else {
+        res.status(404).json({ message: 'Database instance not found' });
+      }
+    } catch (error) {
+      console.error('Error getting database usage:', error);
+      res.status(500).json({ message: 'Failed to get database usage' });
+    }
+  });
+
+  app.post('/api/database/:instanceId/scale', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const { plan } = req.body;
+      
+      const success = await databaseHostingService.scaleDatabase(instanceId, plan);
+      
+      if (success) {
+        res.json({ message: 'Database scaling initiated successfully' });
+      } else {
+        res.status(404).json({ message: 'Database instance not found' });
+      }
+    } catch (error) {
+      console.error('Error scaling database:', error);
+      res.status(500).json({ message: 'Failed to scale database' });
+    }
+  });
+
+  app.post('/api/database/:instanceId/migrate', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const migrationData = req.body;
+      
+      const migration = await databaseHostingService.executeMigration(instanceId, migrationData);
+      
+      if (migration) {
+        res.json(migration);
+      } else {
+        res.status(404).json({ message: 'Database instance not found' });
+      }
+    } catch (error) {
+      console.error('Error executing database migration:', error);
+      res.status(500).json({ message: 'Failed to execute database migration' });
+    }
+  });
+
+  app.get('/api/database/:instanceId/migrations', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const migrations = databaseHostingService.getDatabaseMigrations(instanceId);
+      res.json(migrations);
+    } catch (error) {
+      console.error('Error getting database migrations:', error);
+      res.status(500).json({ message: 'Failed to get database migrations' });
+    }
+  });
+
+  app.get('/api/database/:instanceId/health', ensureAuthenticated, async (req, res) => {
+    try {
+      const instanceId = req.params.instanceId;
+      const health = await databaseHostingService.healthCheck(instanceId);
+      res.json(health);
+    } catch (error) {
+      console.error('Error checking database health:', error);
+      res.status(500).json({ message: 'Failed to check database health' });
     }
   });
 
