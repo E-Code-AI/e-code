@@ -2402,6 +2402,29 @@ document.addEventListener('DOMContentLoaded', function() {
         return res.status(404).json({ error: 'Project not found' });
       }
       
+      // Load project-specific secrets into environment variables
+      const projectSecrets = await storage.getProjectSecrets(parseInt(projectId));
+      const originalEnv: Record<string, string | undefined> = {};
+      
+      // Temporarily set project secrets in process.env
+      for (const secret of projectSecrets) {
+        // Store original value to restore later
+        originalEnv[secret.key] = process.env[secret.key];
+        // Set the project-specific secret
+        process.env[secret.key] = secret.value;
+      }
+      
+      // Function to restore original environment variables
+      const restoreEnv = () => {
+        for (const key in originalEnv) {
+          if (originalEnv[key] === undefined) {
+            delete process.env[key];
+          } else {
+            process.env[key] = originalEnv[key];
+          }
+        }
+      };
+      
       // Get recent file content for context
       const files = await storage.getFilesByProject(parseInt(projectId));
       const codeContext = files
@@ -2659,6 +2682,9 @@ Generate a comprehensive application based on the user's request. Include all ne
       }
       
       res.status(500).json({ error: 'Failed to process AI request' });
+    } finally {
+      // Always restore original environment variables
+      restoreEnv();
     }
   });
 
@@ -4323,6 +4349,125 @@ Generate a comprehensive application based on the user's request. Include all ne
     } catch (error) {
       console.error('Error fetching secrets:', error);
       res.status(500).json({ error: 'Failed to fetch secrets' });
+    }
+  });
+
+  // Project Secrets Routes
+  app.get('/api/projects/:projectId/secrets', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const projectId = parseInt(req.params.projectId);
+      
+      // Verify project access
+      const project = await storage.getProject(projectId);
+      if (!project || project.ownerId !== userId) {
+        const isCollaborator = await storage.isProjectCollaborator(projectId, userId);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      // Get secrets for this project
+      const secrets = await storage.getProjectSecrets(projectId);
+      
+      // Don't send the actual values for security
+      const sanitizedSecrets = secrets.map(secret => ({
+        id: secret.id,
+        key: secret.key,
+        description: secret.description,
+        category: secret.description?.toLowerCase().includes('api') ? 'api' :
+                  secret.description?.toLowerCase().includes('database') ? 'database' :
+                  secret.description?.toLowerCase().includes('auth') ? 'auth' :
+                  secret.description?.toLowerCase().includes('service') ? 'service' : 'other',
+        isVisible: false,
+        projectId: secret.projectId,
+        createdAt: secret.createdAt,
+        updatedAt: secret.updatedAt
+      }));
+      
+      res.json({ secrets: sanitizedSecrets });
+    } catch (error) {
+      console.error('Error fetching project secrets:', error);
+      res.status(500).json({ error: 'Failed to fetch project secrets' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/secrets', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const projectId = parseInt(req.params.projectId);
+      const { key, value, description } = req.body;
+      
+      // Verify project access
+      const project = await storage.getProject(projectId);
+      if (!project || project.ownerId !== userId) {
+        const isCollaborator = await storage.isProjectCollaborator(projectId, userId);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      if (!key || !value) {
+        return res.status(400).json({ error: 'Key and value are required' });
+      }
+      
+      // Validate key format (uppercase, underscores only)
+      if (!/^[A-Z_]+$/.test(key)) {
+        return res.status(400).json({ error: 'Key must contain only uppercase letters and underscores' });
+      }
+      
+      const secret = await storage.createSecret({
+        userId,
+        key,
+        value,
+        description,
+        projectId
+      });
+      
+      // Return without the value for security
+      res.json({
+        id: secret.id,
+        key: secret.key,
+        description: secret.description,
+        projectId: secret.projectId,
+        createdAt: secret.createdAt,
+        updatedAt: secret.updatedAt
+      });
+    } catch (error: any) {
+      if (error.message?.includes('duplicate key')) {
+        return res.status(409).json({ error: 'A secret with this key already exists' });
+      }
+      console.error('Error creating project secret:', error);
+      res.status(500).json({ error: 'Failed to create secret' });
+    }
+  });
+
+  app.delete('/api/projects/:projectId/secrets/:secretId', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const projectId = parseInt(req.params.projectId);
+      const secretId = parseInt(req.params.secretId);
+      
+      // Verify project access
+      const project = await storage.getProject(projectId);
+      if (!project || project.ownerId !== userId) {
+        const isCollaborator = await storage.isProjectCollaborator(projectId, userId);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      // Verify secret belongs to project
+      const secret = await storage.getSecret(secretId);
+      if (!secret || secret.projectId !== projectId) {
+        return res.status(404).json({ error: 'Secret not found' });
+      }
+      
+      await storage.deleteSecret(secretId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting project secret:', error);
+      res.status(500).json({ error: 'Failed to delete secret' });
     }
   });
   
