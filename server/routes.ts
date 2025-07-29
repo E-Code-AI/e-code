@@ -63,7 +63,7 @@ import { deploymentManager } from "./deployment";
 import { deploymentManager as enterpriseDeploymentManager } from "./services/deployment-manager";
 import { realDeploymentService } from "./deployment/real-deployment-service";
 import * as path from "path";
-import adminRoutes from "./admin/routes";
+import adminRoutes from "./routes/admin";
 import OpenAI from 'openai';
 import { performanceMiddleware } from './monitoring/performance';
 import { monitoringRouter } from './monitoring/routes';

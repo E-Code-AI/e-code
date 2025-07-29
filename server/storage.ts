@@ -33,6 +33,17 @@ import {
   templates, communityPosts, communityChallenges, themes, announcements, learningCourses, userLearningProgress, userCycles, cyclesTransactions, objectStorage, extensions, userExtensions, codeSnippets
 } from "@shared/schema";
 import {
+  ApiKey, InsertApiKey,
+  CmsPage, InsertCmsPage,
+  Documentation, InsertDocumentation,
+  DocCategory, InsertDocCategory,
+  SupportTicket, InsertSupportTicket,
+  TicketReply, InsertTicketReply,
+  UserSubscription, InsertUserSubscription,
+  AdminActivityLog, InsertAdminActivityLog,
+  apiKeys, cmsPages, documentation, docCategories, supportTickets, ticketReplies, userSubscriptions, adminActivityLogs
+} from "@shared/admin-schema";
+import {
   Team, InsertTeam,
   TeamMember, InsertTeamMember,
   TeamInvitation, InsertTeamInvitation,
@@ -308,6 +319,59 @@ export interface IStorage {
   getProjectCodeSnippets(projectId: number): Promise<CodeSnippet[]>;
   incrementCodeSnippetViews(shareId: string): Promise<void>;
   deleteCodeSnippet(id: number): Promise<void>;
+
+  // Admin API Keys methods
+  getApiKeys(): Promise<ApiKey[]>;
+  getApiKey(id: number): Promise<ApiKey | undefined>;
+  getApiKeyByProvider(provider: string): Promise<ApiKey | undefined>;
+  createApiKey(apiKey: InsertApiKey): Promise<ApiKey>;
+  updateApiKey(id: number, update: Partial<ApiKey>): Promise<ApiKey | undefined>;
+  deleteApiKey(id: number): Promise<void>;
+
+  // Admin CMS methods
+  getCmsPages(): Promise<CmsPage[]>;
+  getCmsPage(id: number): Promise<CmsPage | undefined>;
+  getCmsPageBySlug(slug: string): Promise<CmsPage | undefined>;
+  createCmsPage(page: InsertCmsPage): Promise<CmsPage>;
+  updateCmsPage(id: number, update: Partial<CmsPage>): Promise<CmsPage | undefined>;
+  deleteCmsPage(id: number): Promise<void>;
+
+  // Admin Documentation methods
+  getDocumentation(): Promise<Documentation[]>;
+  getDocumentationByCategory(categoryId: number): Promise<Documentation[]>;
+  getDocumentationItem(id: number): Promise<Documentation | undefined>;
+  getDocumentationBySlug(slug: string): Promise<Documentation | undefined>;
+  createDocumentation(doc: InsertDocumentation): Promise<Documentation>;
+  updateDocumentation(id: number, update: Partial<Documentation>): Promise<Documentation | undefined>;
+  deleteDocumentation(id: number): Promise<void>;
+
+  // Admin Doc Categories methods
+  getDocCategories(): Promise<DocCategory[]>;
+  getDocCategory(id: number): Promise<DocCategory | undefined>;
+  createDocCategory(category: InsertDocCategory): Promise<DocCategory>;
+  updateDocCategory(id: number, update: Partial<DocCategory>): Promise<DocCategory | undefined>;
+  deleteDocCategory(id: number): Promise<void>;
+
+  // Admin Support Tickets methods
+  getSupportTickets(filter?: { status?: string; userId?: number; assignedTo?: number }): Promise<SupportTicket[]>;
+  getSupportTicket(id: number): Promise<SupportTicket | undefined>;
+  createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
+  updateSupportTicket(id: number, update: Partial<SupportTicket>): Promise<SupportTicket | undefined>;
+  
+  // Admin Ticket Replies methods
+  getTicketReplies(ticketId: number): Promise<TicketReply[]>;
+  createTicketReply(reply: InsertTicketReply): Promise<TicketReply>;
+
+  // Admin User Subscriptions methods
+  getUserSubscriptions(filter?: { userId?: number; status?: string }): Promise<UserSubscription[]>;
+  getUserSubscription(id: number): Promise<UserSubscription | undefined>;
+  getUserActiveSubscription(userId: number): Promise<UserSubscription | undefined>;
+  createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription>;
+  updateUserSubscription(id: number, update: Partial<UserSubscription>): Promise<UserSubscription | undefined>;
+
+  // Admin Activity Logs methods
+  createAdminActivityLog(log: InsertAdminActivityLog): Promise<AdminActivityLog>;
+  getAdminActivityLogs(filter?: { adminId?: number; entityType?: string; limit?: number }): Promise<AdminActivityLog[]>;
 }
 
 // Database storage implementation
@@ -3278,6 +3342,386 @@ export class MemStorage implements IStorage {
   
   async deleteCodeSnippet(id: number): Promise<void> {
     this.codeSnippets.delete(id);
+  }
+
+  // Admin API Keys methods
+  private apiKeys: Map<number, ApiKey> = new Map();
+  private apiKeyIdCounter = 1;
+
+  async getApiKeys(): Promise<ApiKey[]> {
+    return Array.from(this.apiKeys.values());
+  }
+
+  async getApiKey(id: number): Promise<ApiKey | undefined> {
+    return this.apiKeys.get(id);
+  }
+
+  async getApiKeyByProvider(provider: string): Promise<ApiKey | undefined> {
+    return Array.from(this.apiKeys.values()).find(key => key.provider === provider && key.isActive);
+  }
+
+  async createApiKey(apiKey: InsertApiKey): Promise<ApiKey> {
+    const now = new Date();
+    const newApiKey: ApiKey = {
+      id: this.apiKeyIdCounter++,
+      provider: apiKey.provider,
+      key: apiKey.key,
+      name: apiKey.name ?? null,
+      description: apiKey.description ?? null,
+      isActive: apiKey.isActive ?? true,
+      usageLimit: apiKey.usageLimit ?? null,
+      currentUsage: apiKey.currentUsage ?? 0,
+      lastUsedAt: apiKey.lastUsedAt ?? null,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.apiKeys.set(newApiKey.id, newApiKey);
+    return newApiKey;
+  }
+
+  async updateApiKey(id: number, update: Partial<ApiKey>): Promise<ApiKey | undefined> {
+    const apiKey = this.apiKeys.get(id);
+    if (!apiKey) return undefined;
+    
+    const updated = { ...apiKey, ...update, updatedAt: new Date() };
+    this.apiKeys.set(id, updated);
+    return updated;
+  }
+
+  async deleteApiKey(id: number): Promise<void> {
+    this.apiKeys.delete(id);
+  }
+
+  // Admin CMS methods
+  private cmsPages: Map<number, CmsPage> = new Map();
+  private cmsPageIdCounter = 1;
+
+  async getCmsPages(): Promise<CmsPage[]> {
+    return Array.from(this.cmsPages.values());
+  }
+
+  async getCmsPage(id: number): Promise<CmsPage | undefined> {
+    return this.cmsPages.get(id);
+  }
+
+  async getCmsPageBySlug(slug: string): Promise<CmsPage | undefined> {
+    return Array.from(this.cmsPages.values()).find(page => page.slug === slug);
+  }
+
+  async createCmsPage(page: InsertCmsPage): Promise<CmsPage> {
+    const now = new Date();
+    const newPage: CmsPage = {
+      id: this.cmsPageIdCounter++,
+      slug: page.slug,
+      title: page.title,
+      content: page.content,
+      metaTitle: page.metaTitle ?? null,
+      metaDescription: page.metaDescription ?? null,
+      metaKeywords: page.metaKeywords ?? null,
+      status: page.status ?? 'draft',
+      publishedAt: page.publishedAt ?? null,
+      authorId: page.authorId ?? null,
+      template: page.template ?? 'default',
+      customCss: page.customCss ?? null,
+      customJs: page.customJs ?? null,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.cmsPages.set(newPage.id, newPage);
+    return newPage;
+  }
+
+  async updateCmsPage(id: number, update: Partial<CmsPage>): Promise<CmsPage | undefined> {
+    const page = this.cmsPages.get(id);
+    if (!page) return undefined;
+    
+    const updated = { ...page, ...update, updatedAt: new Date() };
+    this.cmsPages.set(id, updated);
+    return updated;
+  }
+
+  async deleteCmsPage(id: number): Promise<void> {
+    this.cmsPages.delete(id);
+  }
+
+  // Admin Documentation methods
+  private documentation: Map<number, Documentation> = new Map();
+  private documentationIdCounter = 1;
+
+  async getDocumentation(): Promise<Documentation[]> {
+    return Array.from(this.documentation.values());
+  }
+
+  async getDocumentationByCategory(categoryId: number): Promise<Documentation[]> {
+    return Array.from(this.documentation.values()).filter(doc => doc.categoryId === categoryId);
+  }
+
+  async getDocumentationItem(id: number): Promise<Documentation | undefined> {
+    return this.documentation.get(id);
+  }
+
+  async getDocumentationBySlug(slug: string): Promise<Documentation | undefined> {
+    return Array.from(this.documentation.values()).find(doc => doc.slug === slug);
+  }
+
+  async createDocumentation(doc: InsertDocumentation): Promise<Documentation> {
+    const now = new Date();
+    const newDoc: Documentation = {
+      id: this.documentationIdCounter++,
+      categoryId: doc.categoryId ?? null,
+      slug: doc.slug,
+      title: doc.title,
+      content: doc.content,
+      excerpt: doc.excerpt ?? null,
+      order: doc.order ?? 0,
+      status: doc.status ?? 'draft',
+      version: doc.version ?? null,
+      tags: doc.tags ?? [],
+      relatedDocs: doc.relatedDocs ?? [],
+      authorId: doc.authorId ?? null,
+      publishedAt: doc.publishedAt ?? null,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.documentation.set(newDoc.id, newDoc);
+    return newDoc;
+  }
+
+  async updateDocumentation(id: number, update: Partial<Documentation>): Promise<Documentation | undefined> {
+    const doc = this.documentation.get(id);
+    if (!doc) return undefined;
+    
+    const updated = { ...doc, ...update, updatedAt: new Date() };
+    this.documentation.set(id, updated);
+    return updated;
+  }
+
+  async deleteDocumentation(id: number): Promise<void> {
+    this.documentation.delete(id);
+  }
+
+  // Admin Doc Categories methods
+  private docCategories: Map<number, DocCategory> = new Map();
+  private docCategoryIdCounter = 1;
+
+  async getDocCategories(): Promise<DocCategory[]> {
+    return Array.from(this.docCategories.values());
+  }
+
+  async getDocCategory(id: number): Promise<DocCategory | undefined> {
+    return this.docCategories.get(id);
+  }
+
+  async createDocCategory(category: InsertDocCategory): Promise<DocCategory> {
+    const now = new Date();
+    const newCategory: DocCategory = {
+      id: this.docCategoryIdCounter++,
+      parentId: category.parentId ?? null,
+      name: category.name,
+      slug: category.slug,
+      description: category.description ?? null,
+      icon: category.icon ?? null,
+      order: category.order ?? 0,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.docCategories.set(newCategory.id, newCategory);
+    return newCategory;
+  }
+
+  async updateDocCategory(id: number, update: Partial<DocCategory>): Promise<DocCategory | undefined> {
+    const category = this.docCategories.get(id);
+    if (!category) return undefined;
+    
+    const updated = { ...category, ...update, updatedAt: new Date() };
+    this.docCategories.set(id, updated);
+    return updated;
+  }
+
+  async deleteDocCategory(id: number): Promise<void> {
+    this.docCategories.delete(id);
+  }
+
+  // Admin Support Tickets methods
+  private supportTickets: Map<number, SupportTicket> = new Map();
+  private supportTicketIdCounter = 1;
+
+  async getSupportTickets(filter?: { status?: string; userId?: number; assignedTo?: number }): Promise<SupportTicket[]> {
+    let tickets = Array.from(this.supportTickets.values());
+    
+    if (filter?.status) {
+      tickets = tickets.filter(t => t.status === filter.status);
+    }
+    if (filter?.userId) {
+      tickets = tickets.filter(t => t.userId === filter.userId);
+    }
+    if (filter?.assignedTo) {
+      tickets = tickets.filter(t => t.assignedTo === filter.assignedTo);
+    }
+    
+    return tickets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getSupportTicket(id: number): Promise<SupportTicket | undefined> {
+    return this.supportTickets.get(id);
+  }
+
+  async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
+    const now = new Date();
+    const ticketNumber = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    
+    const newTicket: SupportTicket = {
+      id: this.supportTicketIdCounter++,
+      userId: ticket.userId,
+      ticketNumber,
+      subject: ticket.subject,
+      description: ticket.description,
+      category: ticket.category ?? null,
+      priority: ticket.priority ?? 'normal',
+      status: ticket.status ?? 'open',
+      assignedTo: ticket.assignedTo ?? null,
+      tags: ticket.tags ?? [],
+      attachments: ticket.attachments ?? [],
+      resolvedAt: ticket.resolvedAt ?? null,
+      closedAt: ticket.closedAt ?? null,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.supportTickets.set(newTicket.id, newTicket);
+    return newTicket;
+  }
+
+  async updateSupportTicket(id: number, update: Partial<SupportTicket>): Promise<SupportTicket | undefined> {
+    const ticket = this.supportTickets.get(id);
+    if (!ticket) return undefined;
+    
+    const updated = { ...ticket, ...update, updatedAt: new Date() };
+    this.supportTickets.set(id, updated);
+    return updated;
+  }
+
+  // Admin Ticket Replies methods
+  private ticketReplies: Map<number, TicketReply> = new Map();
+  private ticketReplyIdCounter = 1;
+
+  async getTicketReplies(ticketId: number): Promise<TicketReply[]> {
+    return Array.from(this.ticketReplies.values())
+      .filter(reply => reply.ticketId === ticketId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  async createTicketReply(reply: InsertTicketReply): Promise<TicketReply> {
+    const now = new Date();
+    const newReply: TicketReply = {
+      id: this.ticketReplyIdCounter++,
+      ticketId: reply.ticketId,
+      userId: reply.userId,
+      message: reply.message,
+      isInternal: reply.isInternal ?? false,
+      attachments: reply.attachments ?? [],
+      createdAt: now,
+      updatedAt: now
+    };
+    this.ticketReplies.set(newReply.id, newReply);
+    return newReply;
+  }
+
+  // Admin User Subscriptions methods
+  private userSubscriptions: Map<number, UserSubscription> = new Map();
+  private userSubscriptionIdCounter = 1;
+
+  async getUserSubscriptions(filter?: { userId?: number; status?: string }): Promise<UserSubscription[]> {
+    let subscriptions = Array.from(this.userSubscriptions.values());
+    
+    if (filter?.userId) {
+      subscriptions = subscriptions.filter(s => s.userId === filter.userId);
+    }
+    if (filter?.status) {
+      subscriptions = subscriptions.filter(s => s.status === filter.status);
+    }
+    
+    return subscriptions;
+  }
+
+  async getUserSubscription(id: number): Promise<UserSubscription | undefined> {
+    return this.userSubscriptions.get(id);
+  }
+
+  async getUserActiveSubscription(userId: number): Promise<UserSubscription | undefined> {
+    return Array.from(this.userSubscriptions.values()).find(
+      sub => sub.userId === userId && sub.status === 'active'
+    );
+  }
+
+  async createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription> {
+    const now = new Date();
+    const newSubscription: UserSubscription = {
+      id: this.userSubscriptionIdCounter++,
+      userId: subscription.userId,
+      planId: subscription.planId,
+      status: subscription.status ?? 'active',
+      stripeSubscriptionId: subscription.stripeSubscriptionId ?? null,
+      stripeCustomerId: subscription.stripeCustomerId ?? null,
+      currentPeriodStart: subscription.currentPeriodStart ?? null,
+      currentPeriodEnd: subscription.currentPeriodEnd ?? null,
+      cancelAt: subscription.cancelAt ?? null,
+      cancelledAt: subscription.cancelledAt ?? null,
+      features: subscription.features ?? {},
+      metadata: subscription.metadata ?? {},
+      createdAt: now,
+      updatedAt: now
+    };
+    this.userSubscriptions.set(newSubscription.id, newSubscription);
+    return newSubscription;
+  }
+
+  async updateUserSubscription(id: number, update: Partial<UserSubscription>): Promise<UserSubscription | undefined> {
+    const subscription = this.userSubscriptions.get(id);
+    if (!subscription) return undefined;
+    
+    const updated = { ...subscription, ...update, updatedAt: new Date() };
+    this.userSubscriptions.set(id, updated);
+    return updated;
+  }
+
+  // Admin Activity Logs methods
+  private adminActivityLogs: Map<number, AdminActivityLog> = new Map();
+  private adminActivityLogIdCounter = 1;
+
+  async createAdminActivityLog(log: InsertAdminActivityLog): Promise<AdminActivityLog> {
+    const now = new Date();
+    const newLog: AdminActivityLog = {
+      id: this.adminActivityLogIdCounter++,
+      adminId: log.adminId,
+      action: log.action,
+      entityType: log.entityType ?? null,
+      entityId: log.entityId ?? null,
+      details: log.details ?? {},
+      ipAddress: log.ipAddress ?? null,
+      userAgent: log.userAgent ?? null,
+      createdAt: now
+    };
+    this.adminActivityLogs.set(newLog.id, newLog);
+    return newLog;
+  }
+
+  async getAdminActivityLogs(filter?: { adminId?: number; entityType?: string; limit?: number }): Promise<AdminActivityLog[]> {
+    let logs = Array.from(this.adminActivityLogs.values());
+    
+    if (filter?.adminId) {
+      logs = logs.filter(l => l.adminId === filter.adminId);
+    }
+    if (filter?.entityType) {
+      logs = logs.filter(l => l.entityType === filter.entityType);
+    }
+    
+    logs = logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    if (filter?.limit) {
+      logs = logs.slice(0, filter.limit);
+    }
+    
+    return logs;
   }
 }
 
