@@ -24,35 +24,8 @@ export class SimpleAnalytics {
   private analytics: Map<number, ProjectAnalytics> = new Map();
   
   constructor() {
-    // Initialize with some sample data
-    this.initializeSampleData();
-  }
-  
-  private initializeSampleData() {
-    // Add some sample analytics for testing
-    const sampleProjectId = 1;
-    const sampleAnalytics: ProjectAnalytics = {
-      totalVisits: 150,
-      uniqueVisitors: new Set(['user1', 'user2', 'user3', 'user4', 'user5']),
-      pageViews: 450,
-      events: [],
-      sessions: new Map()
-    };
-    
-    // Generate some sample events
-    const now = new Date();
-    for (let i = 0; i < 20; i++) {
-      const event: AnalyticsEvent = {
-        projectId: sampleProjectId,
-        type: i % 3 === 0 ? 'pageview' : 'visit',
-        path: ['/', '/about', '/features', '/pricing'][i % 4],
-        sessionId: `session${i % 5}`,
-        timestamp: new Date(now.getTime() - i * 60 * 60 * 1000) // Past hours
-      };
-      sampleAnalytics.events.push(event);
-    }
-    
-    this.analytics.set(sampleProjectId, sampleAnalytics);
+    // Initialize analytics tracking without sample data
+    logger.info('Analytics service initialized - ready to track real events');
   }
   
   async trackEvent(event: Omit<AnalyticsEvent, 'timestamp'>): Promise<void> {

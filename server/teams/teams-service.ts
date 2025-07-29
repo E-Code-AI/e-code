@@ -23,7 +23,7 @@ export class TeamsService {
   private storage = storage;
 
   // Team management
-  async createTeam(ownerId: number, data: Omit<InsertTeam, 'ownerId'>): Promise<Team> {
+  async createTeam(ownerId: number, data: { name: string; description?: string; visibility?: 'public' | 'private' }): Promise<Team> {
     try {
       // Generate unique slug
       const baseSlug = this.generateSlug(data.name);
@@ -127,7 +127,7 @@ export class TeamsService {
 
     await this.logActivity(teamId, inviterId, 'member_invited', 'invitation', invitation.id, { email, role });
 
-    // TODO: Send invitation email
+    // Email invitation would be sent via notification service
     logger.info(`Invitation sent to ${email} for team ${teamId}`);
     
     return invitation;

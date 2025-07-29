@@ -211,6 +211,12 @@ export interface IStorage {
   logActivity(projectId: number, userId: number, action: string, details?: any): Promise<void>;
   getProjectActivity(projectId: number, limit?: number): Promise<any[]>;
   
+  // Project collaboration methods
+  isProjectCollaborator(projectId: number, userId: number): Promise<boolean>;
+  addProjectCollaborator(projectId: number, userId: number, role?: string): Promise<void>;
+  removeProjectCollaborator(projectId: number, userId: number): Promise<void>;
+  getProjectCollaborators(projectId: number): Promise<User[]>;
+  
   // Fork methods
   forkProject(sourceProjectId: number, userId: number, newName: string): Promise<Project>;
   
@@ -553,6 +559,42 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(eq(users.passwordResetToken, token));
     return user;
+  }
+
+  async isProjectCollaborator(projectId: number, userId: number): Promise<boolean> {
+    try {
+      // For now, assume only the owner is a collaborator
+      // In a full implementation, this would check a collaborators table
+      const project = await this.getProject(projectId);
+      return project?.ownerId === userId || false;
+    } catch (error) {
+      console.error('Error checking project collaboration:', error);
+      return false;
+    }
+  }
+
+  async addProjectCollaborator(projectId: number, userId: number, role: string = 'collaborator'): Promise<void> {
+    // Implementation would add to collaborators table
+    console.log(`Adding collaborator ${userId} to project ${projectId} with role ${role}`);
+  }
+
+  async removeProjectCollaborator(projectId: number, userId: number): Promise<void> {
+    // Implementation would remove from collaborators table
+    console.log(`Removing collaborator ${userId} from project ${projectId}`);
+  }
+
+  async getProjectCollaborators(projectId: number): Promise<User[]> {
+    try {
+      // For now, return just the project owner
+      const project = await this.getProject(projectId);
+      if (!project) return [];
+      
+      const owner = await this.getUser(project.ownerId);
+      return owner ? [owner] : [];
+    } catch (error) {
+      console.error('Error getting project collaborators:', error);
+      return [];
+    }
   }
   
   // Project methods

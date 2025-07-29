@@ -57,6 +57,7 @@ export class SSHManager {
   constructor() {
     this.ensureSSHKeysDir();
     this.startSessionCleanup();
+    console.log('SSH Manager initialized - ready for real SSH connections');
   }
 
   private async ensureSSHKeysDir() {
