@@ -199,20 +199,20 @@ export default function Dashboard() {
           </p>
         </div>
           
-        {/* Lovable.dev Style Clean AI prompt input */}
+        {/* Lovable.dev Exact Style AI prompt input */}
         <form onSubmit={handleCreateProject} className="mb-10">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             <div className="relative">
-              {/* Clean, minimal input container like Lovable */}
-              <div className="bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-2xl p-2 shadow-lg hover:shadow-xl transition-all duration-200 focus-within:ring-2 focus-within:ring-violet-500/20 focus-within:border-violet-500/50">
-                <div className="flex items-center gap-3">
+              {/* Exact Lovable.dev style input */}
+              <div className="bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-xl p-1 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-2">
                   <div className="flex-1">
                     <input
                       type="text"
                       value={aiPrompt}
                       onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder="What would you like to build? Describe your idea..."
-                      className="w-full bg-transparent border-none outline-none text-lg md:text-xl placeholder:text-[var(--ecode-text-secondary)]/60 focus:ring-0 px-4 py-3 font-normal text-[var(--ecode-text)]"
+                      placeholder="What would you like to build?"
+                      className="w-full bg-transparent border-none outline-none text-base placeholder:text-[var(--ecode-text-secondary)]/70 focus:ring-0 px-3 py-3 font-normal text-[var(--ecode-text)]"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && aiPrompt.trim()) {
                           handleCreateProject(e);
@@ -220,43 +220,31 @@ export default function Dashboard() {
                       }}
                     />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 hover:bg-[var(--ecode-surface-secondary)] rounded-xl opacity-60 hover:opacity-100 transition-opacity"
+                      className="h-8 w-8 hover:bg-[var(--ecode-surface-secondary)] rounded-md opacity-60 hover:opacity-100 transition-opacity"
                     >
                       <Paperclip className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
                     </Button>
                     <Button
                       type="submit"
-                      size="lg"
+                      size="sm"
                       disabled={!aiPrompt.trim()}
-                      className="bg-violet-600 hover:bg-violet-700 text-white shadow-sm hover:shadow-md transition-all duration-200 rounded-xl px-6 py-3 text-base font-medium"
+                      className="bg-violet-600 hover:bg-violet-700 text-white shadow-none border-0 rounded-lg px-4 py-2 text-sm font-medium h-auto"
                     >
-                      Build it
-                      <ChevronRight className="h-4 w-4 ml-1" />
+                      Build
                     </Button>
                   </div>
                 </div>
               </div>
               
-              {/* Simple feature indicators */}
-              <div className="flex items-center justify-center gap-8 mt-4 text-sm text-[var(--ecode-text-secondary)]">
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  Free to use
-                </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  No setup required
-                </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  Deploy instantly
-                </span>
-              </div>
+              {/* Clean feature text */}
+              <p className="text-center mt-3 text-sm text-[var(--ecode-text-secondary)] font-normal">
+                Free to use • No setup required • Deploy instantly
+              </p>
             </div>
           </div>
         </form>

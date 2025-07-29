@@ -182,17 +182,17 @@ export default function Landing() {
               Describe your idea and watch AI build it. From simple websites to complex applications.
             </p>
             
-            {/* Lovable.dev Style Clean Chat Input */}
-            <div className="max-w-4xl mx-auto px-4 sm:px-0 mt-12">
+            {/* Lovable.dev Exact Style Chat Input */}
+            <div className="max-w-3xl mx-auto px-4 sm:px-0 mt-12">
               <div className="relative">
-                {/* Simple, clean input container */}
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-2 shadow-lg hover:shadow-xl transition-all duration-200 focus-within:ring-2 focus-within:ring-violet-500/20 focus-within:border-violet-500/50">
-                  <div className="flex items-center gap-3">
+                {/* Exact Lovable.dev style input */}
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-1 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <div className="flex items-center gap-2">
                     <div className="flex-1">
                       <input
                         type="text"
-                        placeholder="What would you like to build? Describe your idea..."
-                        className="w-full bg-transparent border-none outline-none text-lg md:text-xl placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-0 px-4 py-3 font-normal"
+                        placeholder="What would you like to build?"
+                        className="w-full bg-transparent border-none outline-none text-base placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-0 px-3 py-3 font-normal text-zinc-900 dark:text-zinc-100"
                         value={appDescription}
                         onChange={(e) => setAppDescription(e.target.value)}
                         onKeyDown={(e) => {
@@ -203,8 +203,8 @@ export default function Landing() {
                       />
                     </div>
                     <Button 
-                      size="lg" 
-                      className="bg-violet-600 hover:bg-violet-700 text-white shadow-sm hover:shadow-md transition-all duration-200 rounded-xl px-6 py-3 text-base font-medium"
+                      size="sm"
+                      className="bg-violet-600 hover:bg-violet-700 text-white shadow-none border-0 rounded-lg px-4 py-2 text-sm font-medium h-auto"
                       onClick={() => {
                         if (appDescription.trim()) {
                           handleStartBuilding(appDescription);
@@ -212,27 +212,15 @@ export default function Landing() {
                       }}
                       disabled={!appDescription.trim()}
                     >
-                      Build it
-                      <ArrowRight className="h-4 w-4 ml-2" />
+                      Build
                     </Button>
                   </div>
                 </div>
                 
-                {/* Simple feature indicators */}
-                <div className="flex items-center justify-center gap-8 mt-4 text-sm text-gray-500 dark:text-gray-400">
-                  <span className="flex items-center gap-1">
-                    <Check className="h-4 w-4 text-green-500" />
-                    Free to start
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Check className="h-4 w-4 text-green-500" />
-                    No setup required
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Check className="h-4 w-4 text-green-500" />
-                    Deploy instantly
-                  </span>
-                </div>
+                {/* Clean feature text */}
+                <p className="text-center mt-3 text-sm text-zinc-500 dark:text-zinc-400 font-normal">
+                  Free to start • No setup required • Deploy instantly
+                </p>
               </div>
             </div>
 
