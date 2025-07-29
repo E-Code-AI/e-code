@@ -395,6 +395,58 @@ const ProjectsPage = () => {
     }
   });
 
+  // Mutation for pinning a project
+  const pinProjectMutation = useMutation({
+    mutationFn: async (projectId: number) => {
+      const res = await apiRequest('POST', `/api/projects/${projectId}/pin`);
+      if (!res.ok) {
+        throw new Error('Failed to pin project');
+      }
+      return res.json();
+    },
+    onSuccess: (_, projectId) => {
+      setPinnedProjects(prev => [...prev, projectId]);
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      toast({
+        title: "Project pinned",
+        description: "Project has been pinned to your favorites.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to pin project",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation for unpinning a project
+  const unpinProjectMutation = useMutation({
+    mutationFn: async (projectId: number) => {
+      const res = await apiRequest('DELETE', `/api/projects/${projectId}/pin`);
+      if (!res.ok) {
+        throw new Error('Failed to unpin project');
+      }
+      return res.json();
+    },
+    onSuccess: (_, projectId) => {
+      setPinnedProjects(prev => prev.filter(id => id !== projectId));
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      toast({
+        title: "Project unpinned",
+        description: "Project has been removed from your favorites.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to unpin project",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
   // Handle fork project
   const handleFork = () => {
     if (forkProjectId && forkProjectName.trim()) {
@@ -409,6 +461,16 @@ const ProjectsPage = () => {
       unlikeProjectMutation.mutate(projectId);
     } else {
       likeProjectMutation.mutate(projectId);
+    }
+  };
+
+  // Handle pin/unpin
+  const handlePinToggle = (e: React.MouseEvent, projectId: number) => {
+    e.stopPropagation();
+    if (pinnedProjects.includes(projectId)) {
+      unpinProjectMutation.mutate(projectId);
+    } else {
+      pinProjectMutation.mutate(projectId);
     }
   };
 
@@ -900,7 +962,7 @@ const ProjectsPage = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => handlePinToggle(e, project.id)}>
                             {pinnedProjects.includes(project.id) ? (
                               <>
                                 <PinOff className="h-4 w-4 mr-2" />
@@ -1012,6 +1074,19 @@ const ProjectsPage = () => {
                             }}>
                               <GitFork className="h-4 w-4 mr-2" />
                               Fork
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => handlePinToggle(e, project.id)}>
+                              {pinnedProjects.includes(project.id) ? (
+                                <>
+                                  <PinOff className="h-4 w-4 mr-2" />
+                                  Unpin
+                                </>
+                              ) : (
+                                <>
+                                  <Pin className="h-4 w-4 mr-2" />
+                                  Pin
+                                </>
+                              )}
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Share2 className="h-4 w-4 mr-2" />

@@ -103,6 +103,8 @@ export interface IStorage {
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: number, update: Partial<Project>): Promise<Project>;
   deleteProject(id: number): Promise<void>;
+  pinProject(projectId: number, userId: number): Promise<void>;
+  unpinProject(projectId: number, userId: number): Promise<void>;
   
   // File methods
   getFile(id: number): Promise<File | undefined>;
@@ -791,6 +793,20 @@ export class DatabaseStorage implements IStorage {
     
     // Delete the project
     await db.delete(projects).where(eq(projects.id, id));
+  }
+
+  async pinProject(projectId: number, userId: number): Promise<void> {
+    await db
+      .update(projects)
+      .set({ isPinned: true, updatedAt: new Date() })
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
+  }
+
+  async unpinProject(projectId: number, userId: number): Promise<void> {
+    await db
+      .update(projects)
+      .set({ isPinned: false, updatedAt: new Date() })
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
   }
   
   // File methods
