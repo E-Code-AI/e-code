@@ -2505,7 +2505,7 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
           });
           
           // Generate comprehensive build actions and response
-          const buildResult = await autonomousBuilder.generateBuildActions(
+          const buildResult = await autonomousBuilder.generateComprehensiveBuildActions(
             message,
             buildingIntent,
             project.language || 'javascript'
