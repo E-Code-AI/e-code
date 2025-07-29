@@ -269,9 +269,9 @@ export default function Landing() {
           </div>
 
           {/* Animated Platform Demo */}
-          <div className="mt-8 relative px-4 sm:px-0">
+          <div className="mt-8 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-amber-500/20 blur-3xl" />
-            <div className="relative">
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <AnimatedPlatformDemo />
             </div>
           </div>
