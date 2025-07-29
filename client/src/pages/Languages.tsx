@@ -246,6 +246,182 @@ const languages = [
     templates: 3,
     version: '1.15',
     color: 'bg-purple-600'
+  },
+  {
+    name: 'C',
+    icon: <Cpu className="h-8 w-8 text-gray-700" />,
+    category: 'systems',
+    popularity: 'Essential',
+    description: 'Low-level systems programming',
+    features: ['Operating Systems', 'Embedded', 'Performance', 'Hardware'],
+    templates: 4,
+    version: 'C23',
+    color: 'bg-gray-700'
+  },
+  {
+    name: 'Scala',
+    icon: <Code className="h-8 w-8 text-red-700" />,
+    category: 'general',
+    popularity: 'Stable',
+    description: 'JVM language for scalable applications',
+    features: ['Spark', 'Functional', 'Big Data', 'Akka'],
+    templates: 3,
+    version: '3.3',
+    color: 'bg-red-700'
+  },
+  {
+    name: 'Julia',
+    icon: <BarChart className="h-8 w-8 text-purple-500" />,
+    category: 'data',
+    popularity: 'Growing',
+    description: 'High-performance scientific computing',
+    features: ['Scientific Computing', 'Machine Learning', 'Data Science', 'Performance'],
+    templates: 3,
+    version: '1.10',
+    color: 'bg-purple-500'
+  },
+  {
+    name: 'Perl',
+    icon: <Terminal className="h-8 w-8 text-blue-800" />,
+    category: 'scripting',
+    popularity: 'Stable',
+    description: 'Text processing and system administration',
+    features: ['Text Processing', 'System Admin', 'Web Dev', 'Bioinformatics'],
+    templates: 2,
+    version: '5.38',
+    color: 'bg-blue-800'
+  },
+  {
+    name: 'Clojure',
+    icon: <Code className="h-8 w-8 text-green-700" />,
+    category: 'functional',
+    popularity: 'Niche',
+    description: 'Functional programming on the JVM',
+    features: ['JVM', 'Functional', 'LISP', 'Concurrent'],
+    templates: 2,
+    version: '1.11',
+    color: 'bg-green-700'
+  },
+  {
+    name: 'F#',
+    icon: <Code className="h-8 w-8 text-blue-900" />,
+    category: 'functional',
+    popularity: 'Niche',
+    description: 'Functional-first .NET language',
+    features: ['.NET', 'Functional', 'Type Inference', 'Data Science'],
+    templates: 2,
+    version: '8.0',
+    color: 'bg-blue-900'
+  },
+  {
+    name: 'OCaml',
+    icon: <Code className="h-8 w-8 text-orange-700" />,
+    category: 'functional',
+    popularity: 'Niche',
+    description: 'Industrial-strength functional language',
+    features: ['Functional', 'Type Safety', 'Performance', 'Compiler'],
+    templates: 2,
+    version: '5.1',
+    color: 'bg-orange-700'
+  },
+  {
+    name: 'Assembly',
+    icon: <Cpu className="h-8 w-8 text-red-900" />,
+    category: 'systems',
+    popularity: 'Specialized',
+    description: 'Machine-level programming',
+    features: ['Low Level', 'Hardware', 'Optimization', 'Reverse Engineering'],
+    templates: 1,
+    version: 'x86-64',
+    color: 'bg-red-900'
+  },
+  {
+    name: 'MATLAB',
+    icon: <BarChart className="h-8 w-8 text-orange-600" />,
+    category: 'data',
+    popularity: 'Specialized',
+    description: 'Numerical computing and engineering',
+    features: ['Engineering', 'Simulation', 'Signal Processing', 'Control Systems'],
+    templates: 2,
+    version: 'R2024a',
+    color: 'bg-orange-600'
+  },
+  {
+    name: 'Processing',
+    icon: <Gamepad2 className="h-8 w-8 text-teal-600" />,
+    category: 'creative',
+    popularity: 'Specialized',
+    description: 'Creative coding and visual arts',
+    features: ['Graphics', 'Animation', 'Interactive Art', 'Education'],
+    templates: 3,
+    version: '4.3',
+    color: 'bg-teal-600'
+  },
+  {
+    name: 'Fortran',
+    icon: <Cpu className="h-8 w-8 text-blue-700" />,
+    category: 'scientific',
+    popularity: 'Specialized',
+    description: 'High-performance scientific computing',
+    features: ['Scientific', 'HPC', 'Numerical', 'Engineering'],
+    templates: 2,
+    version: 'Fortran 2023',
+    color: 'bg-blue-700'
+  },
+  {
+    name: 'COBOL',
+    icon: <Database className="h-8 w-8 text-green-800" />,
+    category: 'legacy',
+    popularity: 'Legacy',
+    description: 'Business and financial systems',
+    features: ['Banking', 'Enterprise', 'Mainframe', 'Legacy Systems'],
+    templates: 1,
+    version: 'COBOL 2023',
+    color: 'bg-green-800'
+  },
+  {
+    name: 'Erlang',
+    icon: <Cloud className="h-8 w-8 text-red-600" />,
+    category: 'backend',
+    popularity: 'Specialized',
+    description: 'Concurrent and distributed systems',
+    features: ['Telecom', 'WhatsApp', 'Fault-tolerant', 'Distributed'],
+    templates: 2,
+    version: 'OTP 26',
+    color: 'bg-red-600'
+  },
+  {
+    name: 'Nim',
+    icon: <Zap className="h-8 w-8 text-yellow-600" />,
+    category: 'systems',
+    popularity: 'Growing',
+    description: 'Efficient and expressive systems language',
+    features: ['Compiled', 'Python-like', 'Performance', 'Metaprogramming'],
+    templates: 2,
+    version: '2.0',
+    color: 'bg-yellow-600'
+  },
+  {
+    name: 'Crystal',
+    icon: <Sparkles className="h-8 w-8 text-black" />,
+    category: 'web',
+    popularity: 'Growing',
+    description: 'Ruby-like syntax with C performance',
+    features: ['Ruby-like', 'Compiled', 'Type Safe', 'Web Apps'],
+    templates: 2,
+    version: '1.11',
+    color: 'bg-black'
+  },
+  {
+    name: 'Zig',
+    icon: <Cpu className="h-8 w-8 text-orange-500" />,
+    category: 'systems',
+    popularity: 'Growing',
+    description: 'Modern systems programming',
+    features: ['No Hidden Control Flow', 'Comptime', 'C Interop', 'Performance'],
+    templates: 2,
+    version: '0.12',
+    color: 'bg-orange-500'
   }
 ];
 
@@ -258,7 +434,10 @@ const categories = [
   { id: 'systems', name: 'Systems', count: languages.filter(l => l.category === 'systems').length },
   { id: 'scripting', name: 'Scripting', count: languages.filter(l => l.category === 'scripting').length },
   { id: 'functional', name: 'Functional', count: languages.filter(l => l.category === 'functional').length },
-  { id: 'general', name: 'General Purpose', count: languages.filter(l => l.category === 'general').length }
+  { id: 'general', name: 'General Purpose', count: languages.filter(l => l.category === 'general').length },
+  { id: 'creative', name: 'Creative Coding', count: languages.filter(l => l.category === 'creative').length },
+  { id: 'scientific', name: 'Scientific', count: languages.filter(l => l.category === 'scientific').length },
+  { id: 'legacy', name: 'Legacy', count: languages.filter(l => l.category === 'legacy').length }
 ];
 
 export default function Languages() {
