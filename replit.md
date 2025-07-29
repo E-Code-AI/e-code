@@ -47,6 +47,14 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-29: **AI Agent 100% Functional Completion**:
+  * Fixed file/folder creation API calls to use correct `path` parameter instead of `name`
+  * Implemented automatic execution of AI agent actions (create_file, create_folder, install_package)
+  * Improved initial prompt auto-sending from dashboard - now reliably triggers AI building
+  * Added comprehensive error handling for missing API keys with clear user guidance
+  * Package installation now properly handled with error logging
+  * AI agent can now autonomously build complete applications with real file creation
+  * Build progress tracking shows actual operations being performed
 - 2025-07-28: **AI Agent Build Flow Fixed**:
   * Fixed homepage AI input to allow direct typing without popup
   * Implemented automatic project creation and AI agent navigation
