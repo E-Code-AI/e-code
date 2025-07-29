@@ -68,6 +68,8 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Package Management Enhancement**: Improved Nix timeout handling and permission management
 - **AI Provider Stability**: Enhanced with retry logic and timeout configuration
 - **Code Quality**: Zero LSP errors maintained across entire codebase
+- **Languages Page Enhancement**: Expanded from 20 to 36 programming languages for complete Replit parity
+- **Homepage Enhancement**: Added fourth CRM System container to "See what people are building" section
 
 ## User Preferences - Public Website Messaging
 - **IMPORTANT**: The public website should emphasize that E-Code is NOT just for developers
