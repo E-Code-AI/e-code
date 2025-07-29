@@ -28,6 +28,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { CodeHealthRadar } from '@/components/CodeHealthRadar';
 
 interface ServiceStatus {
   name: string;
@@ -348,8 +349,15 @@ export default function Status() {
         </div>
       </section>
 
-      {/* Historical Uptime */}
+      {/* Code Health Radar */}
       <section className="py-12 bg-muted/30">
+        <div className="container-responsive">
+          <CodeHealthRadar />
+        </div>
+      </section>
+
+      {/* Historical Uptime */}
+      <section className="py-12">
         <div className="container-responsive">
           <h2 className="text-2xl font-semibold mb-6">Historical Uptime</h2>
           {metricsLoading ? (

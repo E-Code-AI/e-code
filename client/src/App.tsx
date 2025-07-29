@@ -73,6 +73,7 @@ const Themes = lazy(() => import("@/pages/Themes"));
 const Referrals = lazy(() => import("@/pages/Referrals"));
 const Usage = lazy(() => import("@/pages/Usage"));
 const Subprocessors = lazy(() => import("@/pages/Subprocessors"));
+const HealthDashboard = lazy(() => import("@/pages/HealthDashboard"));
 const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
 const Languages = lazy(() => import("@/pages/Languages"));
 const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
@@ -365,6 +366,11 @@ function AppContent() {
           <ProtectedRoute path="/themes" component={() => (
             <ReplitLayout showSidebar={false}>
               <Themes />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/health" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <HealthDashboard />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/referrals" component={() => (
