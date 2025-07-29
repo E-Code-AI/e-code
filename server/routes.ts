@@ -234,6 +234,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get folders for organization
+  app.get('/api/folders', ensureAuthenticated, async (req, res) => {
+    try {
+      const projects = await storage.getProjectsByUser(req.user!.id);
+      // Create default folders based on project languages
+      const folderMap = new Map();
+      
+      projects.forEach(project => {
+        const lang = project.language || 'misc';
+        if (!folderMap.has(lang)) {
+          folderMap.set(lang, { id: lang, name: lang.charAt(0).toUpperCase() + lang.slice(1), count: 0 });
+        }
+        folderMap.get(lang).count++;
+      });
+
+      const folders = Array.from(folderMap.values());
+      res.json(folders);
+    } catch (error) {
+      console.error('Error fetching folders:', error);
+      res.status(500).json({ error: 'Failed to fetch folders' });
+    }
+  });
+
+  // Pin/Unpin project
+  app.post('/api/projects/:id/pin', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      await storage.pinProject(projectId, req.user!.id);
+      res.json({ success: true, pinned: true });
+    } catch (error) {
+      console.error('Error pinning project:', error);
+      res.status(500).json({ error: 'Failed to pin project' });
+    }
+  });
+
+  app.delete('/api/projects/:id/pin', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      await storage.unpinProject(projectId, req.user!.id);
+      res.json({ success: true, pinned: false });
+    } catch (error) {
+      console.error('Error unpinning project:', error);
+      res.status(500).json({ error: 'Failed to unpin project' });
+    }
+  });
+
   // Templates API
   app.get('/api/templates', async (req, res) => {
     try {
