@@ -135,14 +135,22 @@ export class DeploymentManager {
       const baseUrl = process.env.DEPLOYMENT_BASE_URL || 'https://e-code.app';
       const deploymentUrl = `${baseUrl}/${project.name}-${deploymentId.substring(0, 8)}`;
 
-      // In a real implementation, this would:
-      // 1. Create container/serverless function
-      // 2. Configure routing
-      // 3. Set up SSL
-      // 4. Configure custom domain if provided
-
-      // Simulate deployment
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Deploy to actual infrastructure
+      const deploymentService = await import('./deployment/real-deployment-service').then(m => m.realDeploymentService);
+      
+      const deploymentResult = await deploymentService.deployApplication({
+        projectId: config.projectId,
+        deploymentId,
+        environment: config.environment,
+        startCommand: config.startCommand || project.startCommand,
+        port: config.port || 3000,
+        envVars: config.envVars,
+        customDomain: config.customDomain
+      });
+      
+      if (!deploymentResult.success) {
+        throw new Error(`Deployment failed: ${deploymentResult.error}`);
+      }
 
       // Handle edge deployment if enabled
       if (config.edgeEnabled) {

@@ -118,14 +118,42 @@ export class AdvancedDeploymentService {
   }
 
   private async startDNSVerification(domainId: number): Promise<void> {
-    // Simulate DNS verification
-    setTimeout(async () => {
+    // Perform real DNS verification
+    try {
+      const dns = require('dns').promises;
+      const domain = await this.storage.getCustomDomain(domainId);
+      
+      if (!domain) return;
+      
+      // Verify DNS records
+      const verifiedRecords: any[] = [];
+      for (const record of domain.dnsRecords) {
+        try {
+          if (record.type === 'A') {
+            const addresses = await dns.resolve4(domain.domain);
+            record.verified = addresses.includes(record.value);
+          } else if (record.type === 'CNAME') {
+            const cname = await dns.resolveCname(domain.domain);
+            record.verified = cname.includes(record.value);
+          }
+          verifiedRecords.push(record);
+        } catch (error) {
+          record.verified = false;
+          verifiedRecords.push(record);
+        }
+      }
+      
+      const allVerified = verifiedRecords.every(r => r.verified);
+      
       await this.storage.updateCustomDomain(domainId, {
-        status: 'active',
-        sslStatus: 'active',
+        status: allVerified ? 'active' : 'pending',
+        sslStatus: allVerified ? 'active' : 'pending',
+        dnsRecords: verifiedRecords,
         updatedAt: new Date()
       });
-    }, 5000);
+    } catch (error) {
+      logger.error('DNS verification failed:', error);
+    }
   }
 
   async createCronJob(data: {

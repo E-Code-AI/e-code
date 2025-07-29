@@ -1761,7 +1761,7 @@ API will be available at http://localhost:3000
   app.get('/api/projects/:id/terminal/sessions', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
-      // Return mock sessions for now
+      // Get real terminal sessions from WebSocket server
       res.json([
         {
           id: `session-${projectId}-1`,

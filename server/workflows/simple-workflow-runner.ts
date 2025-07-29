@@ -142,8 +142,8 @@ export class SimpleWorkflowRunner {
             run.logs.push(`✓ Script executed: ${step.name}`);
           }
           
-          // Simulate some processing time
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Log step completion
+          logger.info(`Workflow step completed: ${step.name}`);
           
         } catch (stepError: any) {
           run.logs.push(`✗ Step failed: ${step.name}`);

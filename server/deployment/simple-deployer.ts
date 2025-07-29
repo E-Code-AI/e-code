@@ -64,8 +64,16 @@ export class SimpleDeployer {
           deployment.logs.push(`Custom domain configured: ${config.customDomain}`);
         }
         
-        // Wait for actual deployment operations
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Perform actual deployment operations
+        const realDeploymentService = await import('./real-deployment-service').then(m => m.realDeploymentService);
+        await realDeploymentService.deployApplication({
+          projectId: parseInt(projectId),
+          deploymentId,
+          environment: config.environment,
+          customDomain: config.customDomain,
+          region: [config.region],
+          type: projectType === 'node.js' ? 'autoscale' : 'static'
+        });
         
         deployment.logs.push('Deployment successful!');
         deployment.status = 'deployed';

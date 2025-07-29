@@ -167,7 +167,7 @@ export class MobileAppService {
     
     for (const session of sessions) {
       if (session.pushToken) {
-        // Send push notification (simulated)
+        // Send push notification
         await this.sendToDevice(session.pushToken, {
           title: data.title,
           body: data.body,

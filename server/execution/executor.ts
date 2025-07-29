@@ -118,12 +118,11 @@ export class CodeExecutor extends EventEmitter {
       this.taskToExecution.set(taskId, executionId);
       this.executionToTask.set(executionId, taskId);
       
-      // Wait for task completion
-      let task = await containerOrchestrator.getTaskStatus(taskId);
-      while (task && ['pending', 'scheduled', 'preparing', 'running'].includes(task.status)) {
-        await new Promise(resolve => setTimeout(resolve, 100)); // Poll every 100ms
-        task = await containerOrchestrator.getTaskStatus(taskId);
-      }
+      // Wait for task completion using event-based monitoring
+      const task = await containerOrchestrator.waitForTaskCompletion(taskId, {
+        pollInterval: 100,
+        timeout: config.timeout || 30000
+      });
       
       if (!task || !task.result) {
         throw new Error('Task execution failed or was cancelled');
