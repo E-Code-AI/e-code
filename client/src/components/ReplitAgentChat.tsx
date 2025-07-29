@@ -185,7 +185,12 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
                 anthropic: 'Anthropic',
                 gemini: 'Google Gemini',
                 xai: 'xAI',
-                perplexity: 'Perplexity'
+                perplexity: 'Perplexity',
+                mixtral: 'Mixtral (Together.ai)',
+                llama: 'Meta Llama (Together.ai)',
+                cohere: 'Cohere',
+                deepseek: 'DeepSeek',
+                mistral: 'Mistral'
               }[selectedProvider] || selectedProvider.toUpperCase();
               
               throw new Error(`${modelName} API key is missing. Please add it in the Secrets tab.`);
@@ -468,7 +473,12 @@ Would you like me to explain any part of the implementation or make adjustments?
             anthropic: 'Anthropic',
             gemini: 'Google Gemini',
             xai: 'xAI',
-            perplexity: 'Perplexity'
+            perplexity: 'Perplexity',
+            mixtral: 'Mixtral (Together.ai)',
+            llama: 'Meta Llama (Together.ai)',
+            cohere: 'Cohere',
+            deepseek: 'DeepSeek',
+            mistral: 'Mistral'
           }[selectedProvider] || selectedProvider.toUpperCase();
           
           throw new Error(`${modelName} API key is missing. Please add it in the Secrets tab.`);
@@ -747,6 +757,36 @@ Please make sure you have configured your AI API key in the project settings. Yo
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Perplexity</span>
                   <span className="text-xs text-muted-foreground">(Web Search)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="mixtral">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Mixtral 8x7B</span>
+                  <span className="text-xs text-muted-foreground">(Open Source)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="llama">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Meta Llama 3</span>
+                  <span className="text-xs text-muted-foreground">(70B Model)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="cohere">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Cohere Command</span>
+                  <span className="text-xs text-muted-foreground">(Enterprise)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="deepseek">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">DeepSeek Chat</span>
+                  <span className="text-xs text-muted-foreground">(Chinese AI)</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="mistral">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Mistral Medium</span>
+                  <span className="text-xs text-muted-foreground">(French AI)</span>
                 </div>
               </SelectItem>
             </SelectContent>

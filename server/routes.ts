@@ -19,6 +19,7 @@ import { aiProviderManager, type ChatMessage } from "./ai/ai-provider";
 import { CodeAnalyzer } from "./ai/code-analyzer";
 import { AdvancedAIService } from "./ai/advanced-ai-service";
 import { AIProviderFactory } from "./ai/ai-providers";
+import { autonomousBuilder } from "./ai/autonomous-builder";
 import { createLogger } from "./utils/logger";
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, getProjectLogs } from "./simple-executor";
@@ -2389,6 +2390,26 @@ document.addEventListener('DOMContentLoaded', function() {
             apiKey = process.env.PERPLEXITY_API_KEY;
             if (apiKey) provider = AIProviderFactory.create('perplexity', apiKey);
             break;
+          case 'mixtral':
+            apiKey = process.env.TOGETHER_API_KEY || process.env.MIXTRAL_API_KEY;
+            if (apiKey) provider = AIProviderFactory.create('mixtral', apiKey);
+            break;
+          case 'llama':
+            apiKey = process.env.TOGETHER_API_KEY || process.env.LLAMA_API_KEY;
+            if (apiKey) provider = AIProviderFactory.create('llama', apiKey);
+            break;
+          case 'cohere':
+            apiKey = process.env.COHERE_API_KEY;
+            if (apiKey) provider = AIProviderFactory.create('cohere', apiKey);
+            break;
+          case 'deepseek':
+            apiKey = process.env.DEEPSEEK_API_KEY;
+            if (apiKey) provider = AIProviderFactory.create('deepseek', apiKey);
+            break;
+          case 'mistral':
+            apiKey = process.env.MISTRAL_API_KEY;
+            if (apiKey) provider = AIProviderFactory.create('mistral', apiKey);
+            break;
           case 'openai':
           default:
             apiKey = process.env.OPENAI_API_KEY;
@@ -2407,6 +2428,19 @@ document.addEventListener('DOMContentLoaded', function() {
           provider = AIProviderFactory.create('xai', process.env.XAI_API_KEY);
         } else if (process.env.PERPLEXITY_API_KEY) {
           provider = AIProviderFactory.create('perplexity', process.env.PERPLEXITY_API_KEY);
+        } else if (process.env.TOGETHER_API_KEY) {
+          // Together.ai hosts both Mixtral and Llama - prefer Mixtral for general use
+          provider = AIProviderFactory.create('mixtral', process.env.TOGETHER_API_KEY);
+        } else if (process.env.MIXTRAL_API_KEY) {
+          provider = AIProviderFactory.create('mixtral', process.env.MIXTRAL_API_KEY);
+        } else if (process.env.LLAMA_API_KEY) {
+          provider = AIProviderFactory.create('llama', process.env.LLAMA_API_KEY);
+        } else if (process.env.COHERE_API_KEY) {
+          provider = AIProviderFactory.create('cohere', process.env.COHERE_API_KEY);
+        } else if (process.env.DEEPSEEK_API_KEY) {
+          provider = AIProviderFactory.create('deepseek', process.env.DEEPSEEK_API_KEY);
+        } else if (process.env.MISTRAL_API_KEY) {
+          provider = AIProviderFactory.create('mistral', process.env.MISTRAL_API_KEY);
         }
       }
       
@@ -2414,7 +2448,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return res.json({
           id: `msg_${Date.now()}`,
           role: 'assistant',
-          content: `No AI provider is configured. Please add one of the following API keys to Secrets:\n\n• OPENAI_API_KEY - For GPT-4o (latest OpenAI model)\n• ANTHROPIC_API_KEY - For Claude Sonnet 4 (latest Anthropic model)\n• GEMINI_API_KEY - For Gemini 2.5 Flash/Pro\n• XAI_API_KEY - For Grok 2\n• PERPLEXITY_API_KEY - For Perplexity with web search\n\nAdd the key in Secrets tab and try again.`,
+          content: `No AI provider is configured. Please add one of the following API keys to Secrets:\n\n**Premium Models:**\n• OPENAI_API_KEY - For GPT-4o (latest OpenAI model)\n• ANTHROPIC_API_KEY - For Claude Sonnet 4 (latest Anthropic model)\n• GEMINI_API_KEY - For Gemini 2.5 Flash/Pro\n• XAI_API_KEY - For Grok 2\n• PERPLEXITY_API_KEY - For Perplexity with web search\n\n**Free/Open Source Models:**\n• TOGETHER_API_KEY - For Mixtral & Llama models (Together.ai)\n• MIXTRAL_API_KEY - For Mixtral 8x7B (Mistral AI)\n• LLAMA_API_KEY - For Meta Llama 3 70B\n• COHERE_API_KEY - For Cohere Command\n• DEEPSEEK_API_KEY - For DeepSeek Chat (Chinese AI)\n• MISTRAL_API_KEY - For Mistral Medium\n\nAdd the key in Secrets tab and try again.`,
           timestamp: Date.now()
         });
       }
