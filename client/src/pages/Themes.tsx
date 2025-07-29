@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,102 +11,68 @@ import {
   Star, Download, Upload, Code, Sparkles,
   Brush, Eye, Settings, ChevronRight
 } from 'lucide-react';
+import { useQuery, useMutation, queryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function Themes() {
   const { toast } = useToast();
   const [selectedTheme, setSelectedTheme] = useState('dark-pro');
   const [systemTheme, setSystemTheme] = useState('dark');
+  const [themeSettings, setThemeSettings] = useState<any>(null);
 
-  const themes = {
-    editor: [
-      {
-        id: 'dark-pro',
-        name: 'Dark Pro',
-        description: 'Professional dark theme with high contrast',
-        preview: { bg: '#1e1e1e', fg: '#d4d4d4', accent: '#007acc' },
-        downloads: 124500,
-        rating: 4.9,
-        author: 'E-Code Team',
-        official: true
-      },
-      {
-        id: 'light-minimal',
-        name: 'Light Minimal',
-        description: 'Clean and minimal light theme',
-        preview: { bg: '#ffffff', fg: '#333333', accent: '#0066cc' },
-        downloads: 89230,
-        rating: 4.7,
-        author: 'E-Code Team',
-        official: true
-      },
-      {
-        id: 'monokai',
-        name: 'Monokai',
-        description: 'Classic Monokai color scheme',
-        preview: { bg: '#272822', fg: '#f8f8f2', accent: '#66d9ef' },
-        downloads: 67890,
-        rating: 4.8,
-        author: 'Community',
-        official: false
-      },
-      {
-        id: 'dracula',
-        name: 'Dracula',
-        description: 'Dark theme with vibrant colors',
-        preview: { bg: '#282a36', fg: '#f8f8f2', accent: '#bd93f9' },
-        downloads: 56789,
-        rating: 4.9,
-        author: 'Community',
-        official: false
-      },
-      {
-        id: 'solarized-dark',
-        name: 'Solarized Dark',
-        description: 'Precision colors for machines and people',
-        preview: { bg: '#002b36', fg: '#839496', accent: '#268bd2' },
-        downloads: 45678,
-        rating: 4.6,
-        author: 'Community',
-        official: false
-      },
-      {
-        id: 'nord',
-        name: 'Nord',
-        description: 'Arctic, north-bluish color palette',
-        preview: { bg: '#2e3440', fg: '#d8dee9', accent: '#88c0d0' },
-        downloads: 34567,
-        rating: 4.7,
-        author: 'Community',
-        official: false
-      }
-    ],
-    ui: [
-      {
-        id: 'default',
-        name: 'Default',
-        description: 'E-Code default UI theme',
-        preview: { primary: '#0079f2', bg: '#0e1525', surface: '#1c2333' }
-      },
-      {
-        id: 'midnight',
-        name: 'Midnight',
-        description: 'Deep dark theme for night owls',
-        preview: { primary: '#6366f1', bg: '#0f0f23', surface: '#1a1a2e' }
-      },
-      {
-        id: 'forest',
-        name: 'Forest',
-        description: 'Nature-inspired green theme',
-        preview: { primary: '#10b981', bg: '#064e3b', surface: '#065f46' }
-      },
-      {
-        id: 'sunset',
-        name: 'Sunset',
-        description: 'Warm orange and purple tones',
-        preview: { primary: '#f59e0b', bg: '#451a03', surface: '#78350f' }
-      }
-    ]
-  };
+  // Fetch available themes
+  const { data: themes, isLoading: themesLoading } = useQuery({
+    queryKey: ['/api/themes']
+  });
+  
+  // Fetch user theme settings
+  const { data: userSettings } = useQuery({
+    queryKey: ['/api/themes/settings']
+  });
+  
+  // Fetch installed themes
+  const { data: installedThemes } = useQuery({
+    queryKey: ['/api/themes/installed']
+  });
+  
+  // Update theme settings mutation
+  const updateSettingsMutation = useMutation({
+    mutationFn: (settings: any) => apiRequest('/api/themes/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings)
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/themes/settings'] });
+      toast({
+        title: "Settings saved",
+        description: "Your theme settings have been updated"
+      });
+    }
+  });
+  
+  // Install theme mutation
+  const installThemeMutation = useMutation({
+    mutationFn: (themeId: string) => apiRequest('/api/themes/install', {
+      method: 'POST',
+      body: JSON.stringify({ themeId })
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/themes/installed'] });
+      toast({
+        title: "Theme installed",
+        description: "The theme has been added to your collection"
+      });
+    }
+  });
+  
+  // Initialize theme settings from user data
+  useEffect(() => {
+    if (userSettings) {
+      setSelectedTheme(userSettings.activeEditorTheme || 'dark-pro');
+      setSystemTheme(userSettings.systemTheme || 'dark');
+      setThemeSettings(userSettings);
+    }
+  }, [userSettings]);
 
   const customThemeSettings = [
     { id: 'font-size', label: 'Font Size', value: '14px' },
@@ -115,34 +81,141 @@ export default function Themes() {
     { id: 'word-wrap', label: 'Word Wrap', value: 'on' }
   ];
 
-  const handleThemeChange = (themeId: string) => {
+  const handleThemeChange = async (themeId: string) => {
     setSelectedTheme(themeId);
+    
+    // Update theme settings on the server
+    const updatedSettings = {
+      ...themeSettings,
+      activeEditorTheme: themeId
+    };
+    
+    updateSettingsMutation.mutate(updatedSettings);
+    
+    const themeName = themes?.editor?.find((t: any) => t.id === themeId)?.name || themeId;
     toast({
       title: "Theme applied",
-      description: `Successfully switched to ${themes.editor.find(t => t.id === themeId)?.name} theme`
+      description: `Successfully switched to ${themeName} theme`
     });
   };
 
-  const handleCreateTheme = () => {
-    toast({
-      title: "Theme editor opened",
-      description: "Customize your theme in the editor panel"
-    });
+  const handleCreateTheme = async () => {
+    // Create custom theme API call
+    const customTheme = {
+      name: 'My Custom Theme',
+      description: 'A personalized theme',
+      preview: { bg: '#1e1e1e', fg: '#d4d4d4', accent: '#007acc' }
+    };
+    
+    try {
+      await apiRequest('/api/themes/create', {
+        method: 'POST',
+        body: JSON.stringify(customTheme)
+      });
+      
+      toast({
+        title: "Theme created",
+        description: "Your custom theme has been created"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create theme",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleExportTheme = () => {
-    toast({
-      title: "Theme exported",
-      description: "Your theme settings have been downloaded"
-    });
+  const handleExportTheme = async () => {
+    try {
+      const response = await fetch('/api/themes/export', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ecode-theme-settings.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Theme exported",
+          description: "Your theme settings have been downloaded"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to export theme",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleImportTheme = () => {
-    toast({
-      title: "Import theme",
-      description: "Select a theme file to import"
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const settings = JSON.parse(event.target?.result as string);
+            await apiRequest('/api/themes/import', {
+              method: 'POST',
+              body: JSON.stringify({ settings })
+            });
+            
+            queryClient.invalidateQueries({ queryKey: ['/api/themes/settings'] });
+            
+            toast({
+              title: "Theme imported",
+              description: "Your theme settings have been imported successfully"
+            });
+          } catch (error) {
+            toast({
+              title: "Error",
+              description: "Failed to import theme file",
+              variant: "destructive"
+            });
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  };
+  
+  const handleSaveSettings = () => {
+    updateSettingsMutation.mutate({
+      ...themeSettings,
+      systemTheme,
+      customSettings: {
+        fontSize: (document.getElementById('font-size') as HTMLInputElement)?.value || '14px',
+        lineHeight: (document.getElementById('line-height') as HTMLInputElement)?.value || '1.5',
+        tabSize: (document.getElementById('tab-size') as HTMLInputElement)?.value || '2',
+        wordWrap: (document.getElementById('word-wrap') as HTMLInputElement)?.value || 'on'
+      }
     });
   };
+  
+  if (themesLoading) {
+    return (
+      <div className="container mx-auto max-w-6xl py-8 px-6">
+        <div className="text-center">Loading themes...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-6xl py-8 px-6">
@@ -176,7 +249,7 @@ export default function Themes() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
-                {themes.editor.map((theme) => (
+                {themes?.editor?.map((theme: any) => (
                   <Card 
                     key={theme.id} 
                     className={`cursor-pointer transition-all ${
@@ -233,9 +306,24 @@ export default function Themes() {
                             {theme.rating}
                           </span>
                         </div>
-                        <Button size="sm" variant="outline">
-                          Preview
-                        </Button>
+                        <div className="flex gap-2">
+                          {!installedThemes?.includes(theme.id) && (
+                            <Button 
+                              size="sm" 
+                              variant="secondary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                installThemeMutation.mutate(theme.id);
+                              }}
+                              disabled={installThemeMutation.isPending}
+                            >
+                              Install
+                            </Button>
+                          )}
+                          <Button size="sm" variant="outline">
+                            Preview
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -254,7 +342,7 @@ export default function Themes() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
-                {themes.ui.map((theme) => (
+                {themes?.ui?.map((theme: any) => (
                   <Card key={theme.id} className="cursor-pointer">
                     <CardContent className="pt-6">
                       <h3 className="font-semibold mb-2">{theme.name}</h3>
@@ -300,7 +388,7 @@ export default function Themes() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {themes.editor.filter(t => ['dark-pro', 'light-minimal'].includes(t.id)).map((theme) => (
+                {themes?.editor?.filter((t: any) => installedThemes?.includes(t.id)).map((theme: any) => (
                   <div key={theme.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <div className="flex gap-1">
@@ -488,7 +576,7 @@ export default function Themes() {
                 </div>
               </div>
 
-              <Button className="w-full">
+              <Button className="w-full" onClick={handleSaveSettings}>
                 Save Settings
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
