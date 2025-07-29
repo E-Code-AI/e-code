@@ -338,9 +338,28 @@ export function setupAuth(app: Express) {
 
   // Logout route
   app.post("/api/logout", (req, res, next) => {
+    // First logout using Passport
     req.logout((err) => {
       if (err) return next(err);
-      res.sendStatus(200);
+      
+      // Then destroy the session completely
+      req.session.destroy((sessionErr) => {
+        if (sessionErr) {
+          console.error('Session destroy error:', sessionErr);
+          return next(sessionErr);
+        }
+        
+        // Clear the session cookie
+        res.clearCookie('plot.sid', {
+          path: '/',
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+        });
+        
+        console.log('User logged out successfully');
+        res.sendStatus(200);
+      });
     });
   });
 

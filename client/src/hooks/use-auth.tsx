@@ -80,11 +80,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
+      // Clear all cached data
+      queryClient.clear();
+      // Set user to null
       queryClient.setQueryData(["/api/user"], null);
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
+      // Navigate to login page after a short delay
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 500);
     },
     onError: (error: Error) => {
       toast({

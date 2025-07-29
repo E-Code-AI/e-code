@@ -11,6 +11,11 @@ let bypassAuth = process.env.NODE_ENV === 'development';
 
 // Middleware qui peut contourner l'authentification
 export const devAuthBypass = (req: Request, res: Response, next: NextFunction) => {
+  // Skip auth bypass for logout requests
+  if (req.path === '/api/logout' || req.path === '/api/login' || req.path === '/api/register') {
+    return next();
+  }
+  
   // Si le contournement est activé, nous simulons un utilisateur authentifié
   if (bypassAuth && process.env.NODE_ENV === 'development') {
     // Si isAuthenticated() est déjà true, continuez normalement
