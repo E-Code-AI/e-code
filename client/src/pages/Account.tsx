@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { 
   User, Mail, Key, Shield, CreditCard, Bell, 
   Globe, Download, Trash2, AlertTriangle, Check,
@@ -28,6 +29,7 @@ export default function Account() {
     displayName: user?.displayName || '',
     bio: user?.bio || '',
     website: '',
+    location: '',
     twitter: '',
     github: ''
   });
@@ -44,39 +46,158 @@ export default function Account() {
     sessions: []
   });
 
+  // Load user data when component mounts
+  useEffect(() => {
+    if (user) {
+      setProfile({
+        username: user.username || '',
+        email: user.email || '',
+        displayName: user.displayName || '',
+        bio: user.bio || '',
+        website: user.website || '',
+        location: user.location || '',
+        twitter: user.twitter || '',
+        github: user.github || ''
+      });
+      
+      // Set 2FA status if available
+      if (user.twoFactorEnabled !== undefined) {
+        setSecurity(prev => ({ ...prev, twoFactor: user.twoFactorEnabled }));
+      }
+    }
+  }, [user]);
+
   const handleSaveProfile = async () => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await apiRequest('/api/user/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          displayName: profile.displayName,
+          bio: profile.bio,
+          website: profile.website,
+          location: profile.location,
+          github: profile.github,
+          twitter: profile.twitter
+        })
+      });
+      
       toast({
         title: "Profile updated",
         description: "Your profile has been successfully updated."
       });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleChangePassword = () => {
-    toast({
-      title: "Password reset email sent",
-      description: "Check your email for instructions to reset your password."
-    });
+  const handleChangePassword = async () => {
+    const currentPassword = prompt("Enter your current password:");
+    const newPassword = prompt("Enter your new password:");
+    
+    if (!currentPassword || !newPassword) {
+      return;
+    }
+    
+    try {
+      await apiRequest('/api/user/change-password', {
+        method: 'POST',
+        body: JSON.stringify({
+          currentPassword,
+          newPassword
+        })
+      });
+      
+      toast({
+        title: "Password changed",
+        description: "Your password has been updated successfully."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to change password. Please check your current password.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleEnable2FA = () => {
-    setSecurity({ ...security, twoFactor: true });
-    toast({
-      title: "Two-factor authentication enabled",
-      description: "Your account is now more secure."
-    });
+  const handleEnable2FA = async () => {
+    try {
+      const response = await apiRequest('/api/user/2fa', {
+        method: 'POST',
+        body: JSON.stringify({ enabled: !security.twoFactor })
+      });
+      
+      setSecurity({ ...security, twoFactor: !security.twoFactor });
+      
+      toast({
+        title: security.twoFactor ? "Two-factor authentication disabled" : "Two-factor authentication enabled",
+        description: security.twoFactor ? "2FA has been disabled." : "Your account is now more secure."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update 2FA settings.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeleteAccount = () => {
-    toast({
-      title: "Account deletion requested",
-      description: "We've sent you an email to confirm account deletion.",
-      variant: "destructive"
-    });
+  const handleUpdateEmail = async () => {
+    try {
+      await apiRequest('/api/user/email', {
+        method: 'PATCH',
+        body: JSON.stringify({ email: profile.email })
+      });
+      
+      toast({
+        title: "Email updated",
+        description: "Your email address has been updated successfully."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update email. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = confirm("Are you sure you want to delete your account? This action cannot be undone.");
+    
+    if (!confirmed) {
+      return;
+    }
+    
+    try {
+      await apiRequest('/api/user/account', {
+        method: 'DELETE'
+      });
+      
+      toast({
+        title: "Account deleted",
+        description: "Your account has been successfully deleted.",
+        variant: "destructive"
+      });
+      
+      // Redirect to homepage after deletion
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete account. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -199,12 +320,22 @@ export default function Account() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profile.email}
+                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                    className="flex-1"
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={handleUpdateEmail}
+                    disabled={profile.email === user?.email}
+                  >
+                    Update Email
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   We'll send important notifications to this email
                 </p>
