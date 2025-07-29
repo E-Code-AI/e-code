@@ -271,27 +271,27 @@ export function AnimatedPlatformDemo() {
   const currentStepData = DEMO_STEPS[currentStep];
 
   return (
-    <Card className="relative overflow-hidden border-2 mx-auto max-w-6xl bg-gray-900">
+    <Card className="relative overflow-hidden border-2 mx-auto w-full bg-gray-900 shadow-2xl">
       {/* Window Controls */}
-      <div className="bg-gray-800 p-3 flex items-center justify-between border-b border-gray-700">
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <div className="w-3 h-3 rounded-full bg-green-500" />
+      <div className="bg-gray-800 p-4 flex items-center justify-between border-b border-gray-700">
+        <div className="flex items-center gap-3">
+          <div className="flex gap-2">
+            <div className="w-3.5 h-3.5 rounded-full bg-red-500" />
+            <div className="w-3.5 h-3.5 rounded-full bg-yellow-500" />
+            <div className="w-3.5 h-3.5 rounded-full bg-green-500" />
           </div>
-          <span className="text-gray-300 text-sm ml-3">todo-app - E-Code</span>
+          <span className="text-gray-300 text-base font-medium ml-3">todo-app - E-Code</span>
         </div>
         
         {/* Demo Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={togglePlay}
             className="text-gray-300 hover:text-white"
           >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
           </Button>
           <Button
             variant="ghost"
@@ -299,21 +299,21 @@ export function AnimatedPlatformDemo() {
             onClick={resetDemo}
             className="text-gray-300 hover:text-white"
           >
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-5 w-5" />
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[400px]">
+      <div className="grid grid-cols-1 xl:grid-cols-2 min-h-[600px]">
         {/* Left Side - Code Editor */}
-        <div className="bg-gray-900 p-4 border-r border-gray-700">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gray-700 px-3 py-1 rounded-t text-sm text-gray-300">
+        <div className="bg-gray-900 p-6 xl:border-r border-gray-700">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="bg-gray-700 px-4 py-2 rounded-t text-base text-gray-300 font-medium">
               App.jsx
             </div>
           </div>
           
-          <div className="font-mono text-sm">
+          <div className="font-mono text-base">
             {displayedCode.map((line, index) => (
               <div key={index} className="flex">
                 <span className="text-gray-500 w-8 text-right mr-3 select-none">
@@ -353,8 +353,8 @@ export function AnimatedPlatformDemo() {
         {/* Right Side - Split between Terminal and Preview */}
         <div className="flex flex-col">
           {/* Terminal */}
-          <div className="bg-black p-4 flex-1 border-b border-gray-700">
-            <div className="text-green-400 font-mono text-sm">
+          <div className="bg-black p-6 flex-1 border-b border-gray-700">
+            <div className="text-green-400 font-mono text-base">
               {displayedTerminal.map((line, index) => (
                 <div key={index} className="mb-1">
                   {line.startsWith('$') ? (
@@ -371,13 +371,13 @@ export function AnimatedPlatformDemo() {
           </div>
 
           {/* Live Preview */}
-          <div className="bg-white p-4 flex-1">
-            <div className="text-xs text-gray-500 mb-2 flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          <div className="bg-white p-6 flex-1 min-h-[250px]">
+            <div className="text-sm text-gray-600 mb-3 flex items-center gap-2 font-medium">
+              <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
               Live Preview
             </div>
             <div 
-              className="border rounded-lg p-4 h-full"
+              className="border-2 rounded-lg p-6 h-full bg-gray-50"
               dangerouslySetInnerHTML={{ __html: currentStepData?.preview || '' }}
             />
           </div>
