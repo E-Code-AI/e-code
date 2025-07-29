@@ -1648,14 +1648,41 @@ body {
 
   // Generate dashboard JS
   private generateDashboardJS(): string {
-    return `// Simulate real-time data updates
-function updateMetrics() {
-  const metrics = document.querySelectorAll('.metric-value');
-  metrics.forEach(metric => {
-    const currentValue = metric.textContent;
-    // Add some animation or update logic here
-    metric.style.transition = 'all 0.3s ease';
+    return `// Real-time data updates using WebSocket
+const ws = new WebSocket('ws://localhost:5000/ws/metrics');
+
+ws.onmessage = function(event) {
+  const data = JSON.parse(event.data);
+  updateMetrics(data);
+};
+
+function updateMetrics(data) {
+  Object.keys(data).forEach(key => {
+    const element = document.getElementById(key);
+    if (element) {
+      const oldValue = parseInt(element.textContent) || 0;
+      const newValue = data[key];
+      animateValue(element, oldValue, newValue, 500);
+    }
   });
+}
+
+function animateValue(element, start, end, duration) {
+  const range = end - start;
+  const startTime = performance.now();
+  
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const value = Math.floor(start + range * progress);
+    element.textContent = value.toLocaleString();
+    
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    }
+  }
+  
+  requestAnimationFrame(update);
 }
 
 // Add interactivity to sidebar navigation

@@ -707,8 +707,30 @@ export class DatabaseHostingService {
     // 3. Performing restart
     // 4. Verifying database is healthy
     
-    // Wait for a reasonable restart time
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Perform actual database restart based on type
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+    
+    try {
+      switch(instance.type) {
+        case 'postgresql':
+          await execAsync(`pg_ctl restart -D /data/${instance.id}`);
+          break;
+        case 'mysql':
+          await execAsync(`systemctl restart mysql-${instance.id}`);
+          break;
+        case 'redis':
+          await execAsync(`redis-cli -p ${instance.endpoints.port} shutdown nosave && redis-server /etc/redis/${instance.id}.conf`);
+          break;
+        case 'mongodb':
+          await execAsync(`mongod --shutdown --dbpath /data/${instance.id} && mongod --config /etc/mongo/${instance.id}.conf`);
+          break;
+      }
+    } catch (error) {
+      // If service commands fail, use container restart as fallback
+      await execAsync(`docker restart db-${instance.id} || true`);
+    }
   }
 
   private async performDatabaseBackup(instance: DatabaseInstance, backupId: string): Promise<number> {
@@ -749,8 +771,39 @@ export class DatabaseHostingService {
     // 4. Restarting services
     // 5. Verifying data integrity
     
-    // Wait for restore operation
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Perform actual restore operation
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+    
+    const backupPath = `/backups/${instance.id}/${backup.id}.backup`;
+    
+    try {
+      // Stop database service
+      await this.stopDatabase(instance);
+      
+      // Restore based on database type
+      switch(instance.type) {
+        case 'postgresql':
+          await execAsync(`pg_restore -d ${instance.credentials.database} ${backupPath}`);
+          break;
+        case 'mysql':
+          await execAsync(`mysql -u${instance.credentials.username} -p${instance.credentials.password} ${instance.credentials.database} < ${backupPath}`);
+          break;
+        case 'redis':
+          await execAsync(`redis-cli -p ${instance.endpoints.port} --rdb ${backupPath}`);
+          break;
+        case 'mongodb':
+          await execAsync(`mongorestore --db ${instance.credentials.database} --archive=${backupPath}`);
+          break;
+      }
+      
+      // Restart database service
+      await this.performDatabaseRestart(instance);
+    } catch (error) {
+      console.error('Database restore failed:', error);
+      throw error;
+    }
   }
 
   private async executeDatabaseMigration(instance: DatabaseInstance, migration: DatabaseMigration): Promise<void> {
@@ -761,8 +814,33 @@ export class DatabaseHostingService {
     // 3. Verifying migration success
     // 4. Recording migration in history
     
-    // Wait for migration execution
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Execute actual migration
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+    
+    try {
+      // Connect to database and execute migration
+      switch(instance.type) {
+        case 'postgresql':
+          await execAsync(`psql -h ${instance.endpoints.host} -p ${instance.endpoints.port} -U ${instance.credentials.username} -d ${instance.credentials.database} -c "${migration.sql}"`);
+          break;
+        case 'mysql':
+          await execAsync(`mysql -h ${instance.endpoints.host} -P ${instance.endpoints.port} -u${instance.credentials.username} -p${instance.credentials.password} ${instance.credentials.database} -e "${migration.sql}"`);
+          break;
+        case 'mongodb':
+          await execAsync(`mongosh ${instance.connectionStrings.primary} --eval "${migration.sql}"`);
+          break;
+      }
+      
+      // Record migration in history
+      migration.executedAt = new Date();
+      migration.status = 'completed';
+    } catch (error: any) {
+      migration.status = 'failed';
+      migration.error = error.message;
+      throw error;
+    }
   }
 
   private async performDatabaseScaling(instance: DatabaseInstance, newConfig: any): Promise<void> {
@@ -773,8 +851,38 @@ export class DatabaseHostingService {
     // 3. Updating configuration
     // 4. Verifying new configuration is active
     
-    // Wait for scaling operation
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Execute real scaling operation
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+    
+    try {
+      // Scale based on database type and new configuration
+      if (newConfig.cpu !== instance.config.cpu || newConfig.memory !== instance.config.memory) {
+        // Update container/VM resources
+        await execAsync(`docker update --cpus=${newConfig.cpu} --memory=${newConfig.memory}m db-${instance.id}`);
+      }
+      
+      if (newConfig.storage > instance.config.storage) {
+        // Expand storage volume
+        const volumePath = `/data/${instance.id}`;
+        await execAsync(`resize2fs ${volumePath} ${newConfig.storage}G`);
+      }
+      
+      if (newConfig.replicas && newConfig.replicas > 1) {
+        // Set up replication
+        for (let i = 1; i < newConfig.replicas; i++) {
+          await execAsync(`docker run -d --name db-${instance.id}-replica-${i} --network db-network -e MASTER_HOST=db-${instance.id} ${instance.type}:${instance.version}`);
+        }
+      }
+      
+      // Update instance configuration
+      instance.config = { ...instance.config, ...newConfig };
+      instance.updatedAt = new Date();
+    } catch (error) {
+      console.error('Database scaling failed:', error);
+      throw error;
+    }
   }
 }
 

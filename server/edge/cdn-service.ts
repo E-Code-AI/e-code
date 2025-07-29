@@ -291,8 +291,30 @@ export class CDNService extends EventEmitter {
   }
 
   private async purgeFromLocation(asset: CDNAsset, locationId: string): Promise<void> {
-    // In production, this would purge from actual edge cache
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Perform actual cache purge at edge location
+    const location = edgeManager.getLocation(locationId);
+    if (!location) {
+      throw new Error(`Unknown location: ${locationId}`);
+    }
+    
+    // Send purge request to edge node
+    const response = await fetch(`${location.endpoint}/api/cache/purge`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.EDGE_API_KEY || 'edge-api-key'}`
+      },
+      body: JSON.stringify({
+        assetId: asset.id,
+        path: asset.path,
+        immediate: true
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to purge asset ${asset.id} from ${locationId}: ${response.statusText}`);
+    }
+    
     logger.info(`Purged ${asset.id} from location ${locationId}`);
   }
 

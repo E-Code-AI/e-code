@@ -370,22 +370,30 @@ export class SubscriptionManager {
   }
 
   private async getUserSubscription(userId: number): Promise<any> {
-    // In real implementation, this would fetch from a subscriptions table
-    // For now, returning mock data structure
-    return {
-      userId,
-      planId: 'free',
-      stripeCustomerId: null,
-      stripeSubscriptionId: null,
-      status: 'active',
-      currentPeriodEnd: null,
-      cancelAtPeriodEnd: false
-    };
+    // Fetch subscription from database
+    const subscription = await storage.getUserSubscription(userId);
+    
+    if (!subscription) {
+      // Create default free subscription for new users
+      const newSubscription = {
+        userId,
+        planId: 'free',
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        status: 'active',
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false
+      };
+      await storage.createUserSubscription(newSubscription);
+      return newSubscription;
+    }
+    
+    return subscription;
   }
 
   private async updateUserSubscription(userId: number, data: any): Promise<void> {
-    // In real implementation, this would update the subscriptions table
-    console.log('Updating user subscription:', userId, data);
+    // Update subscription in database
+    await storage.updateUserSubscription(userId, data);
   }
 
   private async calculateUserStorage(userId: number): Promise<number> {

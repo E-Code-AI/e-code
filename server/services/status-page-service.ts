@@ -137,9 +137,8 @@ export class StatusPageService {
     const service = this.services.find(s => s.id === serviceId);
     if (!service) return;
     
-    // Simulate health check
-    const startTime = Date.now();
     // Perform real health check
+    const startTime = Date.now();
     let isHealthy = true;
     try {
       // Check if service is actually responding
