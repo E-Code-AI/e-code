@@ -189,57 +189,98 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Main greeting */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-normal text-[var(--ecode-text)]">
-            Hi {user?.displayName || user?.username}, what do you want to make?
+        {/* Main greeting - Lovable.dev style */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-[var(--ecode-text)] mb-2">
+            Hi {user?.displayName || user?.username}, what do you want to build?
           </h1>
+          <p className="text-lg text-[var(--ecode-text-secondary)] font-medium">
+            Describe your idea and watch AI build it instantly
+          </p>
         </div>
           
-        {/* AI prompt input - Replit exact design */}
-        <form onSubmit={handleCreateProject} className="mb-8">
-            <div className="relative max-w-xl mx-auto">
-              <Input
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="Describe an app or site you want to create..."
-                className="w-full h-14 pl-5 pr-28 text-base bg-[var(--ecode-surface)] border border-[var(--ecode-border)] focus:border-[var(--ecode-accent)] focus:bg-white rounded-full shadow-sm transition-all"
-              />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 hover:bg-[var(--ecode-surface-secondary)] rounded-full"
-                >
-                  <Paperclip className="h-5 w-5 text-[var(--ecode-text-secondary)]" />
-                </Button>
-                <Button
-                  type="submit"
-                  size="icon"
-                  className="h-10 w-10 bg-gradient-to-r from-[var(--ecode-accent)] to-[var(--ecode-blue)] hover:opacity-90 rounded-full shadow-sm"
-                >
-                  <Send className="h-5 w-5 text-white" />
-                </Button>
+        {/* Clean AI prompt input - Lovable.dev inspired */}
+        <form onSubmit={handleCreateProject} className="mb-10">
+          <div className="max-w-3xl mx-auto">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-fuchsia-600/20 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative bg-[var(--ecode-surface)]/90 backdrop-blur-sm border-2 border-[var(--ecode-border)] rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all hover:border-[var(--ecode-accent)]/50">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl flex-shrink-0 shadow-lg">
+                    <Send className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder="Describe your app idea... (e.g., 'Build a task manager with calendar integration')"
+                      className="w-full bg-transparent border-none outline-none text-lg placeholder:text-[var(--ecode-text-secondary)]/70 focus:ring-0 font-medium text-[var(--ecode-text)]"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && aiPrompt.trim()) {
+                          handleCreateProject(e);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 hover:bg-[var(--ecode-surface-secondary)] rounded-xl"
+                    >
+                      <Paperclip className="h-5 w-5 text-[var(--ecode-text-secondary)]" />
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="lg"
+                      disabled={!aiPrompt.trim()}
+                      className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all text-lg px-6 rounded-xl"
+                    >
+                      Build App
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6 mt-3 ml-16 text-sm text-[var(--ecode-text-secondary)]">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    Free to use
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    AI builds instantly
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    Deploy anywhere
+                  </span>
+                </div>
               </div>
             </div>
-          </form>
+          </div>
+        </form>
 
-          {/* Quick actions */}
-          <div className="flex items-center justify-center gap-3 mb-10">
+        {/* Quick actions - Enhanced design */}
+        <div className="text-center mb-12">
+          <p className="text-sm text-[var(--ecode-text-secondary)] mb-4 font-medium">
+            Or try these popular examples:
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
             {quickActions.map((action) => (
               <Button
                 key={action.label}
                 variant="outline"
                 size="sm"
                 onClick={() => handleQuickAction(action)}
-                className="h-9 px-4 gap-2 text-sm font-normal text-[var(--ecode-text-secondary)] border-[var(--ecode-border)] hover:bg-[var(--ecode-surface)] rounded-full"
+                className="h-10 px-5 gap-2 text-sm font-medium text-[var(--ecode-text-secondary)] border-[var(--ecode-border)] hover:bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/50 rounded-xl transition-all shadow-sm hover:shadow-md"
               >
                 <action.icon className="h-4 w-4" />
                 {action.label}
               </Button>
             ))}
           </div>
+        </div>
 
         {/* Your recent Apps */}
         <div>
