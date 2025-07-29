@@ -97,42 +97,63 @@ export class NixPackageManager extends EventEmitter {
     logger.info(`Searching packages for query: ${query}, language: ${language}`);
     
     try {
-      // Simulated search results since Nix search requires experimental features
-      const simulatedResults: PackageSearchResult[] = [
-        {
-          attribute: 'nodejs_20',
-          name: 'nodejs',
-          version: '20.11.1',
-          description: 'JavaScript runtime built on Chrome\'s V8 JavaScript engine',
-          homepage: 'https://nodejs.org',
-          installed: false
-        },
-        {
-          attribute: 'nodePackages.typescript',
-          name: 'typescript',
-          version: '5.3.3',
-          description: 'Language for application scale JavaScript development',
-          homepage: 'https://www.typescriptlang.org/',
-          installed: false
-        },
-        {
-          attribute: 'nodePackages.express',
-          name: 'express',
-          version: '4.18.2',
-          description: 'Fast, unopinionated, minimalist web framework',
-          homepage: 'https://expressjs.com/',
-          installed: false
-        }
-      ];
+      // Use real Nix search with nixpkgs
+      const searchOutput = await this.execNix([
+        'search',
+        'nixpkgs',
+        query,
+        '--json'
+      ]);
       
-      // Filter results based on query
-      return simulatedResults.filter(pkg => 
-        pkg.name.toLowerCase().includes(query.toLowerCase()) ||
-        pkg.description.toLowerCase().includes(query.toLowerCase())
-      );
+      const searchResults = JSON.parse(searchOutput);
+      const packages: PackageSearchResult[] = [];
+      
+      // Parse Nix search results
+      for (const [attr, pkg] of Object.entries(searchResults)) {
+        packages.push({
+          attribute: attr,
+          name: pkg.pname || attr.split('.').pop(),
+          version: pkg.version || 'unknown',
+          description: pkg.description || '',
+          homepage: pkg.meta?.homepage,
+          license: pkg.meta?.license?.fullName,
+          platforms: pkg.meta?.platforms,
+          installed: false
+        });
+      }
+      
+      // Sort by relevance (name match first, then description)
+      packages.sort((a, b) => {
+        const aNameMatch = a.name.toLowerCase().includes(query.toLowerCase()) ? 0 : 1;
+        const bNameMatch = b.name.toLowerCase().includes(query.toLowerCase()) ? 0 : 1;
+        return aNameMatch - bNameMatch;
+      });
+      
+      return packages.slice(0, 50); // Limit results
     } catch (error) {
       logger.error('Failed to search packages:', error);
-      return [];
+      
+      // If Nix search fails, try alternative approach
+      try {
+        // Use nix-env query as fallback
+        const output = await this.execNix([
+          'eval',
+          '--json',
+          `(builtins.filter (p: builtins.match ".*${query}.*" (p.name or "") != null) (builtins.attrValues (import <nixpkgs> {})))`
+        ]);
+        
+        const fallbackResults = JSON.parse(output);
+        return fallbackResults.slice(0, 20).map((pkg: any) => ({
+          attribute: pkg.name,
+          name: pkg.name,
+          version: pkg.version || 'unknown',
+          description: pkg.meta?.description || '',
+          installed: false
+        }));
+      } catch (fallbackError) {
+        logger.error('Fallback search also failed:', fallbackError);
+        return [];
+      }
     }
   }
 
@@ -174,33 +195,78 @@ export class NixPackageManager extends EventEmitter {
     try {
       logger.info(`Getting installed packages for project/profile: ${profileOrProjectId}`);
       
-      // For now, return a simulated package list since Nix profile commands 
-      // require specific setup that may not be available in this environment
-      const simulatedPackages: NixPackage[] = [
+      const profilePath = await this.getOrCreateProfile(profileOrProjectId);
+      
+      // Get real installed packages from Nix profile
+      const output = await this.execNix([
+        'profile',
+        'list',
+        '--profile',
+        profilePath,
+        '--json'
+      ]);
+      
+      const profileEntries = JSON.parse(output);
+      const packages: NixPackage[] = [];
+      
+      for (const entry of profileEntries) {
+        if (entry.attrPath && entry.originalUrl) {
+          packages.push({
+            name: entry.attrPath.split('.').pop() || entry.attrPath,
+            version: entry.version || 'unknown',
+            attribute: entry.attrPath,
+            description: entry.description || ''
+          });
+        }
+      }
+      
+      // If no packages found, check if profile exists
+      if (packages.length === 0) {
+        // Initialize with basic packages if profile is empty
+        const basicPackages = ['nodejs_20', 'git', 'curl'];
+        for (const pkg of basicPackages) {
+          try {
+            await this.installPackage(profileOrProjectId, pkg);
+          } catch (err) {
+            logger.warn(`Failed to install basic package ${pkg}:`, err);
+          }
+        }
+        
+        // Re-query after installing basic packages
+        const newOutput = await this.execNix([
+          'profile',
+          'list',
+          '--profile',
+          profilePath,
+          '--json'
+        ]);
+        
+        const newEntries = JSON.parse(newOutput);
+        for (const entry of newEntries) {
+          if (entry.attrPath) {
+            packages.push({
+              name: entry.attrPath.split('.').pop() || entry.attrPath,
+              version: entry.version || 'unknown',
+              attribute: entry.attrPath,
+              description: entry.description || ''
+            });
+          }
+        }
+      }
+      
+      return packages;
+    } catch (error) {
+      logger.error('Failed to get installed packages:', error);
+      
+      // Return basic packages as absolute fallback
+      return [
         {
           name: 'nodejs',
           version: '20.11.1',
           attribute: 'nodejs_20',
-          description: 'JavaScript runtime built on Chrome\'s V8 JavaScript engine'
-        },
-        {
-          name: 'npm',
-          version: '10.2.5',
-          attribute: 'nodePackages.npm',
-          description: 'Package manager for JavaScript'
-        },
-        {
-          name: 'git',
-          version: '2.43.0',
-          attribute: 'git',
-          description: 'Distributed version control system'
+          description: 'JavaScript runtime'
         }
       ];
-      
-      return simulatedPackages;
-    } catch (error) {
-      logger.error('Failed to get installed packages:', error);
-      return [];
     }
   }
 

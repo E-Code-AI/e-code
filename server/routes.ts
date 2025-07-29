@@ -558,11 +558,34 @@ API will be available at http://localhost:3000
         return res.status(400).json({ error: 'File name contains invalid characters' });
       }
       
+      // Handle parentPath (from AI agent) by resolving it to parentId
+      let parentId = req.body.parentId || null;
+      if (req.body.parentPath && !req.body.parentId) {
+        const existingFiles = await storage.getFilesByProject(projectId);
+        const parentFolder = existingFiles.find(f => 
+          f.isFolder && f.name === req.body.parentPath && !f.parentId
+        );
+        if (parentFolder) {
+          parentId = parentFolder.id;
+        } else if (req.body.parentPath !== '/' && req.body.parentPath !== '') {
+          // Create parent folder if it doesn't exist
+          const parentFolderData = {
+            name: req.body.parentPath,
+            projectId: projectId,
+            content: '',
+            isFolder: true,
+            parentId: null
+          };
+          const newParentFolder = await storage.createFile(parentFolderData);
+          parentId = newParentFolder.id;
+        }
+      }
+      
       // Check for duplicate file names in the same directory
       const existingFiles = await storage.getFilesByProject(projectId);
       const duplicate = existingFiles.find(f => 
         f.name === req.body.name && 
-        f.parentId === (req.body.parentId || null)
+        f.parentId === parentId
       );
       
       if (duplicate) {
@@ -574,7 +597,7 @@ API will be available at http://localhost:3000
         projectId: projectId,
         content: req.body.content || '',
         isFolder: req.body.isFolder || false,
-        parentId: req.body.parentId || null
+        parentId: parentId
       };
       
       const result = insertFileSchema.safeParse(fileData);
