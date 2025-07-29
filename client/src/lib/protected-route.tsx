@@ -6,8 +6,8 @@ import { useEffect } from "react";
 // Component to handle redirects safely
 function RedirectToLogin({ path }: { path: string }) {
   useEffect(() => {
-    console.log(`Redirecting to /api/login from ${path} - user not authenticated`);
-    window.location.href = '/api/login';
+    console.log(`Redirecting to /login from ${path} - user not authenticated`);
+    window.location.href = '/login';
   }, [path]);
 
   return (
