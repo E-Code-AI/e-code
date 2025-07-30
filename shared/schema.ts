@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, uniqueIndex, json, jsonb, varchar, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, uniqueIndex, index, json, jsonb, varchar, real, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -1184,3 +1184,197 @@ export const insertReferralLeaderboardSchema = createInsertSchema(referralLeader
 
 export type ReferralLeaderboard = typeof referralLeaderboard.$inferSelect;
 export type InsertReferralLeaderboard = z.infer<typeof insertReferralLeaderboardSchema>;
+
+// Voice/Video Collaboration tables
+export const voiceVideoSessions = pgTable('voice_video_sessions', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').references(() => projects.id).notNull(),
+  roomId: varchar('room_id', { length: 100 }).notNull().unique(),
+  hostUserId: integer('host_user_id').references(() => users.id).notNull(),
+  sessionType: varchar('session_type', { length: 20 }).notNull(), // 'voice', 'video', 'screen'
+  status: varchar('status', { length: 20 }).notNull().default('active'), // 'active', 'ended'
+  maxParticipants: integer('max_participants').default(10),
+  recordingEnabled: boolean('recording_enabled').default(false),
+  recordingUrl: text('recording_url'),
+  startedAt: timestamp('started_at').defaultNow(),
+  endedAt: timestamp('ended_at'),
+  metadata: jsonb('metadata'),
+});
+
+export const voiceVideoParticipants = pgTable('voice_video_participants', {
+  id: serial('id').primaryKey(),
+  sessionId: integer('session_id').references(() => voiceVideoSessions.id).notNull(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  joinedAt: timestamp('joined_at').defaultNow(),
+  leftAt: timestamp('left_at'),
+  role: varchar('role', { length: 20 }).default('participant'), // 'host', 'participant'
+  audioEnabled: boolean('audio_enabled').default(true),
+  videoEnabled: boolean('video_enabled').default(true),
+  screenSharing: boolean('screen_sharing').default(false),
+});
+
+// GPU Instance tables
+export const gpuInstances = pgTable('gpu_instances', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').references(() => projects.id).notNull(),
+  instanceType: varchar('instance_type', { length: 50 }).notNull(), // 'T4', 'V100', 'A100', 'RTX4090'
+  gpuCount: integer('gpu_count').notNull().default(1),
+  vram: integer('vram').notNull(), // in GB
+  cudaVersion: varchar('cuda_version', { length: 20 }),
+  status: varchar('status', { length: 20 }).notNull().default('provisioning'),
+  provider: varchar('provider', { length: 50 }).notNull(), // 'aws', 'gcp', 'azure'
+  region: varchar('region', { length: 50 }).notNull(),
+  costPerHour: decimal('cost_per_hour', { precision: 10, scale: 4 }),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  sshKey: text('ssh_key'),
+  startedAt: timestamp('started_at').defaultNow(),
+  stoppedAt: timestamp('stopped_at'),
+  metadata: jsonb('metadata'),
+});
+
+export const gpuUsage = pgTable('gpu_usage', {
+  id: serial('id').primaryKey(),
+  instanceId: integer('instance_id').references(() => gpuInstances.id).notNull(),
+  timestamp: timestamp('timestamp').defaultNow(),
+  gpuUtilization: integer('gpu_utilization'), // percentage
+  memoryUsed: integer('memory_used'), // in MB
+  temperature: integer('temperature'), // celsius
+  powerDraw: integer('power_draw'), // watts
+  processes: jsonb('processes'),
+});
+
+// Enterprise SSO tables
+export const ssoProviders = pgTable('sso_providers', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').notNull(),
+  providerType: varchar('provider_type', { length: 50 }).notNull(), // 'saml', 'oidc', 'oauth2'
+  providerName: varchar('provider_name', { length: 100 }).notNull(),
+  entityId: varchar('entity_id', { length: 255 }),
+  ssoUrl: text('sso_url'),
+  certificateData: text('certificate_data'),
+  metadata: jsonb('metadata'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const auditLogs = pgTable('audit_logs', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id'),
+  userId: integer('user_id').references(() => users.id),
+  action: varchar('action', { length: 100 }).notNull(),
+  resourceType: varchar('resource_type', { length: 50 }).notNull(),
+  resourceId: varchar('resource_id', { length: 100 }),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  details: jsonb('details'),
+  status: varchar('status', { length: 20 }).notNull(), // 'success', 'failure'
+  timestamp: timestamp('timestamp').defaultNow(),
+}, (table) => ({
+  timestampIdx: index('audit_logs_timestamp_idx').on(table.timestamp),
+  userIdx: index('audit_logs_user_idx').on(table.userId),
+  actionIdx: index('audit_logs_action_idx').on(table.action),
+}));
+
+// CLI Authentication tokens
+export const cliTokens = pgTable('cli_tokens', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  token: varchar('token', { length: 255 }).notNull().unique(),
+  deviceName: varchar('device_name', { length: 100 }),
+  lastUsedAt: timestamp('last_used_at'),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  isActive: boolean('is_active').default(true),
+});
+
+// Auto-grading tables
+export const assignments = pgTable('assignments', {
+  id: serial('id').primaryKey(),
+  courseId: integer('course_id').notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  projectTemplateId: integer('project_template_id'),
+  dueDate: timestamp('due_date'),
+  totalPoints: integer('total_points').notNull().default(100),
+  testCases: jsonb('test_cases'),
+  rubric: jsonb('rubric'),
+  autoGradeEnabled: boolean('auto_grade_enabled').default(true),
+  createdBy: integer('created_by').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const submissions = pgTable('submissions', {
+  id: serial('id').primaryKey(),
+  assignmentId: integer('assignment_id').references(() => assignments.id).notNull(),
+  studentId: integer('student_id').references(() => users.id).notNull(),
+  projectId: integer('project_id').references(() => projects.id),
+  submittedAt: timestamp('submitted_at').defaultNow(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // 'pending', 'grading', 'graded'
+  autoGradeScore: integer('auto_grade_score'),
+  manualGradeScore: integer('manual_grade_score'),
+  finalScore: integer('final_score'),
+  feedback: text('feedback'),
+  testResults: jsonb('test_results'),
+  gradedBy: integer('graded_by').references(() => users.id),
+  gradedAt: timestamp('graded_at'),
+});
+
+// Blue-green deployment tables
+export const deploymentEnvironments = pgTable('deployment_environments', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').references(() => projects.id).notNull(),
+  environmentName: varchar('environment_name', { length: 50 }).notNull(), // 'blue', 'green'
+  version: varchar('version', { length: 50 }).notNull(),
+  status: varchar('status', { length: 20 }).notNull(), // 'active', 'inactive', 'deploying'
+  trafficPercentage: integer('traffic_percentage').notNull().default(0),
+  healthCheckUrl: text('health_check_url'),
+  deploymentUrl: text('deployment_url'),
+  containerIds: jsonb('container_ids'),
+  createdAt: timestamp('created_at').defaultNow(),
+  activatedAt: timestamp('activated_at'),
+  deactivatedAt: timestamp('deactivated_at'),
+});
+
+export const deploymentStrategies = pgTable('deployment_strategies', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').references(() => projects.id).notNull(),
+  strategyType: varchar('strategy_type', { length: 50 }).notNull(), // 'blue-green', 'canary', 'rolling'
+  autoPromote: boolean('auto_promote').default(false),
+  promotionDelay: integer('promotion_delay'), // minutes
+  rollbackOnFailure: boolean('rollback_on_failure').default(true),
+  healthCheckInterval: integer('health_check_interval').default(30), // seconds
+  successThreshold: integer('success_threshold').default(3),
+  failureThreshold: integer('failure_threshold').default(3),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Voice command settings
+export const voiceCommandSettings = pgTable('voice_command_settings', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull().unique(),
+  enabled: boolean('enabled').default(false),
+  wakeWord: varchar('wake_word', { length: 50 }).default('Hey E-Code'),
+  language: varchar('language', { length: 10 }).default('en-US'),
+  voiceModel: varchar('voice_model', { length: 50 }).default('whisper-large'),
+  hotkeys: jsonb('hotkeys'),
+  customCommands: jsonb('custom_commands'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Mobile app sessions
+export const mobileAppSessions = pgTable('mobile_app_sessions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  deviceId: varchar('device_id', { length: 255 }).notNull(),
+  platform: varchar('platform', { length: 20 }).notNull(), // 'ios', 'android'
+  appVersion: varchar('app_version', { length: 20 }).notNull(),
+  osVersion: varchar('os_version', { length: 20 }),
+  deviceModel: varchar('device_model', { length: 100 }),
+  pushToken: text('push_token'),
+  lastActiveAt: timestamp('last_active_at').defaultNow(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
