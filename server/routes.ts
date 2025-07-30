@@ -6607,6 +6607,16 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
 
+  app.get('/api/user/bounty-stats', ensureAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getUserBountyStats(req.user!.id);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching user bounty stats:', error);
+      res.status(500).json({ message: 'Failed to fetch user bounty stats' });
+    }
+  });
+
   app.post('/api/bounties/:id/submit', ensureAuthenticated, async (req, res) => {
     try {
       const bountyId = parseInt(req.params.id);
