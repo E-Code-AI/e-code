@@ -4549,6 +4549,19 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
 
+  // Decline team invitation
+  app.post('/api/teams/invitations/:token/decline', ensureAuthenticated, async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      await teamsService.declineInvitation(token, req.user!.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error declining invitation:', error);
+      res.status(500).json({ error: error.message || 'Failed to decline invitation' });
+    }
+  });
+
   // Remove team member
   app.delete('/api/teams/:teamId/members/:userId', ensureAuthenticated, async (req, res) => {
     try {
