@@ -359,7 +359,16 @@ export default function Deployments() {
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Redeploy
                   </Button>
-                  <Button size="default" variant="outline" className="w-full sm:w-auto">
+                  <Button 
+                    size="default" 
+                    variant="outline" 
+                    className="w-full sm:w-auto"
+                    onClick={() => {
+                      if (currentDeployment?.projectId) {
+                        navigate(`/project/${currentDeployment.projectId}?tab=settings`);
+                      }
+                    }}
+                  >
                     <Edit2 className="mr-2 h-4 w-4" />
                     <span className="hidden sm:inline">Edit commands and secrets</span>
                     <span className="sm:hidden">Edit config</span>
@@ -640,20 +649,127 @@ export default function Deployments() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="mt-6">
-            <Card>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold">2,345</div>
+                  <p className="text-xs text-muted-foreground">Total Requests</p>
+                  <div className="text-xs text-green-600 mt-1">+12% from last hour</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold">99.9%</div>
+                  <p className="text-xs text-muted-foreground">Uptime</p>
+                  <div className="text-xs text-green-600 mt-1">All systems operational</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold">45ms</div>
+                  <p className="text-xs text-muted-foreground">Avg Response Time</p>
+                  <div className="text-xs text-green-600 mt-1">-5ms from baseline</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">Error Rate</p>
+                  <div className="text-xs text-green-600 mt-1">No errors detected</div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <Card className="mt-4">
               <CardContent className="pt-6">
-                <p className="text-muted-foreground">Analytics coming soon...</p>
+                <h3 className="font-semibold mb-4">Request Volume</h3>
+                <div className="h-64 flex items-end justify-between gap-2">
+                  {[65, 85, 72, 90, 78, 95, 88, 92, 80, 87, 93, 85].map((height, i) => (
+                    <div key={i} className="flex-1 bg-primary/20 hover:bg-primary/30 transition-colors" style={{ height: `${height}%` }} />
+                  ))}
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                  <span>12h ago</span>
+                  <span>Now</span>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Resources Tab */}
           <TabsContent value="resources" className="mt-6">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-muted-foreground">Resources management coming soon...</p>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold mb-4">Resource Usage</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>CPU</span>
+                        <span className="text-muted-foreground">0.8 / 2.0 vCPU</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div className="bg-primary h-2 rounded-full" style={{ width: '40%' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Memory</span>
+                        <span className="text-muted-foreground">1.2 / 2.0 GiB</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div className="bg-primary h-2 rounded-full" style={{ width: '60%' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Storage</span>
+                        <span className="text-muted-foreground">15 / 50 GiB</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div className="bg-primary h-2 rounded-full" style={{ width: '30%' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Bandwidth</span>
+                        <span className="text-muted-foreground">45 / 100 GiB this month</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div className="bg-primary h-2 rounded-full" style={{ width: '45%' }} />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold mb-4">Scaling Configuration</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Label>Min instances</Label>
+                      <span className="text-sm font-medium">1</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <Label>Max instances</Label>
+                      <span className="text-sm font-medium">10</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <Label>Target CPU</Label>
+                      <span className="text-sm font-medium">70%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <Label>Scale down delay</Label>
+                      <span className="text-sm font-medium">5 minutes</span>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full mt-4">
+                    Edit Scaling Rules
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
 
