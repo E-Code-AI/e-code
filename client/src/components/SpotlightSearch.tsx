@@ -307,7 +307,7 @@ export function SpotlightSearch() {
               {recentProjects.slice(0, 5).map((project) => (
                 <CommandItem
                   key={project.id}
-                  onSelect={() => handleSelect(() => navigate(`/@${project.owner?.username || 'admin'}/${project.slug}`))}
+                  onSelect={() => handleSelect(() => navigate(`/${project.slug}`))}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   <span>{project.name}</span>
