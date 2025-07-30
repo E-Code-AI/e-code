@@ -90,6 +90,7 @@ export const insertApiTokenSchema = createInsertSchema(apiTokens).pick({
 export const projects: any = pgTable("projects", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  slug: text("slug").notNull().unique(), // Format: @username/projectname
   description: text("description"),
   visibility: visibilityEnum("visibility").default("private").notNull(),
   language: languageEnum("language").default("nodejs"),

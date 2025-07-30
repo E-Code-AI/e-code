@@ -762,8 +762,43 @@ export class DatabaseStorage implements IStorage {
     return project;
   }
   
+  async getProjectBySlug(slug: string): Promise<Project | undefined> {
+    const [project] = await db.select().from(projects).where(eq(projects.slug, slug));
+    return project;
+  }
+  
   async createProject(projectData: InsertProject): Promise<Project> {
-    const [project] = await db.insert(projects).values(projectData).returning();
+    // Get the owner's username for slug generation
+    const owner = await this.getUser(projectData.ownerId);
+    if (!owner) {
+      throw new Error('Owner not found');
+    }
+    
+    // Generate slug format: @username/projectname
+    const baseSlug = `@${owner.username}/${projectData.name.toLowerCase().replace(/[^a-z0-9-]/g, '-')}`;
+    let slug = baseSlug;
+    let counter = 1;
+    
+    // Check for duplicate slugs and append number if necessary
+    while (true) {
+      const existing = await db.select()
+        .from(projects)
+        .where(eq(projects.slug, slug));
+      
+      if (existing.length === 0) break;
+      
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    
+    // Create project with slug
+    const [project] = await db.insert(projects)
+      .values({
+        ...projectData,
+        slug
+      })
+      .returning();
+    
     return project;
   }
   
@@ -3154,16 +3189,46 @@ export class MemStorage implements IStorage {
   async getProject(id: number): Promise<Project | undefined> {
     return this.projects.get(id);
   }
+  
+  async getProjectBySlug(slug: string): Promise<Project | undefined> {
+    return Array.from(this.projects.values()).find(p => p.slug === slug);
+  }
 
   async createProject(projectData: InsertProject): Promise<Project> {
+    // Get the owner's username for slug generation
+    const owner = this.users.get(projectData.ownerId);
+    if (!owner) {
+      throw new Error('Owner not found');
+    }
+    
+    // Generate slug format: @username/projectname
+    const baseSlug = `@${owner.username}/${projectData.name.toLowerCase().replace(/[^a-z0-9-]/g, '-')}`;
+    let slug = baseSlug;
+    let counter = 1;
+    
+    // Check for duplicate slugs and append number if necessary
+    const existingSlugs = Array.from(this.projects.values()).map(p => p.slug);
+    while (existingSlugs.includes(slug)) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    
     const now = new Date();
     const project: Project = {
       id: this.projectIdCounter++,
       name: projectData.name,
+      slug: slug,
       ownerId: projectData.ownerId,
       description: projectData.description ?? null,
       visibility: projectData.visibility ?? 'private',
       language: projectData.language ?? null,
+      views: 0,
+      likes: 0,
+      forks: 0,
+      runs: 0,
+      coverImage: projectData.coverImage ?? null,
+      isPinned: false,
+      forkedFromId: projectData.forkedFromId ?? null,
       createdAt: now,
       updatedAt: now
     };
