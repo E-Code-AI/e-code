@@ -223,6 +223,7 @@ export function ReplitHeader() {
           variant="outline"
           size="sm"
           className="hidden sm:flex items-center space-x-1 border-[var(--ecode-warning)] text-[var(--ecode-warning)] hover:bg-[var(--ecode-warning)]/10 replit-transition"
+          onClick={() => navigate('/pricing')}
         >
           <Crown className="h-4 w-4" />
           <span>Upgrade</span>
