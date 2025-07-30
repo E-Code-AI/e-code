@@ -49,6 +49,11 @@ export default function Bounties() {
     queryKey: ['/api/user/submissions'],
   });
   
+  // Fetch user stats
+  const { data: userStats } = useQuery({
+    queryKey: ['/api/user/bounty-stats'],
+  });
+  
   // Count submissions for each bounty
   const bountiesWithCounts = (bounties as any[]).map((bounty: any) => {
     const submissionsCount = (userSubmissions as any[]).filter((sub: any) => sub.bountyId === bounty.id).length;
@@ -187,7 +192,7 @@ export default function Bounties() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Earned</p>
-                <p className="text-2xl font-bold">$1,250</p>
+                <p className="text-2xl font-bold">${userStats?.totalEarned || 0}</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
@@ -198,7 +203,7 @@ export default function Bounties() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Completed</p>
-                <p className="text-2xl font-bold">8</p>
+                <p className="text-2xl font-bold">{userStats?.completedCount || 0}</p>
               </div>
               <Trophy className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
             </div>
@@ -209,7 +214,7 @@ export default function Bounties() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">In Progress</p>
-                <p className="text-2xl font-bold">3</p>
+                <p className="text-2xl font-bold">{userStats?.inProgressCount || 0}</p>
               </div>
               <Clock className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
@@ -220,7 +225,7 @@ export default function Bounties() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Success Rate</p>
-                <p className="text-2xl font-bold">87%</p>
+                <p className="text-2xl font-bold">{userStats?.successRate || 0}%</p>
               </div>
               <TrendingUp className="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
@@ -346,9 +351,9 @@ export default function Bounties() {
                           Apply
                           <ChevronRight className="ml-1 h-4 w-4" />
                         </Button>
-                      ) : bounty.status === 'completed' && bounty.winnerId ? (
+                      ) : bounty.status === 'completed' && bounty.winnerName ? (
                         <Badge variant="secondary">
-                          Won by user#{bounty.winnerId}
+                          Won by {bounty.winnerName}
                         </Badge>
                       ) : (
                         <Badge variant="secondary">
@@ -399,7 +404,12 @@ export default function Bounties() {
                       </div>
                       <div className="text-right">
                         <p className="text-xl font-bold">${bounty.reward}</p>
-                        <Button size="sm" variant="outline" className="mt-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="mt-2"
+                          onClick={() => window.location.href = `/bounties/${bounty.id}/manage`}
+                        >
                           Manage
                         </Button>
                       </div>

@@ -152,6 +152,12 @@ export interface IStorage {
   getUserBountySubmissions(userId: number): Promise<BountySubmission[]>;
   createBountySubmission(submission: InsertBountySubmission): Promise<BountySubmission>;
   updateBountySubmission(id: number, update: Partial<BountySubmission>): Promise<BountySubmission>;
+  getUserBountyStats(userId: number): Promise<{
+    totalEarned: number;
+    completedCount: number;
+    inProgressCount: number;
+    successRate: number;
+  }>;
   
   // Login history methods
   createLoginHistory(loginHistory: InsertLoginHistory): Promise<LoginHistory>;
@@ -1154,9 +1160,29 @@ export class DatabaseStorage implements IStorage {
   // Bounty methods
   async getAllBounties(): Promise<Bounty[]> {
     try {
-      return await db.select()
+      const bountiesWithWinners = await db.select({
+        id: bounties.id,
+        title: bounties.title,
+        description: bounties.description,
+        reward: bounties.reward,
+        status: bounties.status,
+        difficulty: bounties.difficulty,
+        deadline: bounties.deadline,
+        tags: bounties.tags,
+        authorId: bounties.authorId,
+        authorName: bounties.authorName,
+        authorAvatar: bounties.authorAvatar,
+        authorVerified: bounties.authorVerified,
+        winnerId: bounties.winnerId,
+        winnerName: users.username,
+        createdAt: bounties.createdAt,
+        updatedAt: bounties.updatedAt
+      })
         .from(bounties)
+        .leftJoin(users, eq(bounties.winnerId, users.id))
         .orderBy(desc(bounties.createdAt));
+        
+      return bountiesWithWinners;
     } catch (error: any) {
       if (error.message?.includes('relation "bounties" does not exist')) {
         console.log('Bounties table does not exist yet');
@@ -1313,6 +1339,50 @@ export class DatabaseStorage implements IStorage {
         return undefined;
       }
       throw error;
+    }
+  }
+
+  async getUserBountyStats(userId: number): Promise<{
+    totalEarned: number;
+    completedCount: number;
+    inProgressCount: number;
+    successRate: number;
+  }> {
+    try {
+      // Get all user submissions
+      const submissions = await this.getUserBountySubmissions(userId);
+      
+      // Get accepted submissions with bounty details
+      const acceptedSubmissions = await db.select({
+        reward: bounties.reward
+      })
+        .from(bountySubmissions)
+        .innerJoin(bounties, eq(bountySubmissions.bountyId, bounties.id))
+        .where(and(
+          eq(bountySubmissions.userId, userId),
+          eq(bountySubmissions.status, 'accepted')
+        ));
+      
+      const totalEarned = acceptedSubmissions.reduce((sum, sub) => sum + sub.reward, 0);
+      const completedCount = acceptedSubmissions.length;
+      const inProgressCount = submissions.filter(s => s.status === 'submitted').length;
+      const totalSubmissions = submissions.length;
+      const successRate = totalSubmissions > 0 ? Math.round((completedCount / totalSubmissions) * 100) : 0;
+      
+      return {
+        totalEarned,
+        completedCount,
+        inProgressCount,
+        successRate
+      };
+    } catch (error: any) {
+      console.error('Error calculating bounty stats:', error);
+      return {
+        totalEarned: 0,
+        completedCount: 0,
+        inProgressCount: 0,
+        successRate: 0
+      };
     }
   }
   
