@@ -5264,6 +5264,117 @@ Generate a comprehensive application based on the user's request. Include all ne
       res.status(500).json({ message: 'Failed to fetch teams' });
     }
   });
+
+  // Get user usage data
+  app.get('/api/user/usage', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Get user's projects for counting
+      const projects = await storage.getProjectsByUser(userId);
+      const privateProjects = projects.filter(p => p.visibility === 'private');
+      
+      // Get active deployments
+      const deployments = [];
+      for (const project of projects) {
+        const projectDeployments = await storage.getDeployments(project.id);
+        deployments.push(...projectDeployments.filter(d => d.status === 'running'));
+      }
+      
+      // Get AI usage
+      const aiUsage = await storage.getAIUsageByUser(userId, 30); // Last 30 days
+      const totalTokens = aiUsage.reduce((sum, usage) => sum + usage.tokensUsed, 0);
+      
+      // Get collaborators count
+      const collaboratorProjects = await storage.getProjectCollaboratorsByUser(userId);
+      const uniqueCollaborators = new Set(collaboratorProjects.map(c => c.userId)).size;
+      
+      // Calculate usage stats
+      const usage = {
+        compute: {
+          used: Math.round(totalTokens / 1000), // Convert tokens to hours (rough estimate)
+          limit: 100,
+          unit: 'hours',
+          percentage: Math.min(Math.round((totalTokens / 1000 / 100) * 100), 100)
+        },
+        storage: {
+          used: Number((projects.length * 0.1).toFixed(1)), // Estimate 100MB per project
+          limit: 10,
+          unit: 'GB',
+          percentage: Math.min((projects.length * 0.1 / 10) * 100, 100)
+        },
+        bandwidth: {
+          used: Number((deployments.length * 2).toFixed(1)), // Estimate 2GB per deployment
+          limit: 100,
+          unit: 'GB',
+          percentage: Math.min((deployments.length * 2 / 100) * 100, 100)
+        },
+        privateProjects: {
+          used: privateProjects.length,
+          limit: 5,
+          unit: 'projects',
+          percentage: Math.min((privateProjects.length / 5) * 100, 100)
+        },
+        deployments: {
+          used: deployments.length,
+          limit: 10,
+          unit: 'deployments',
+          percentage: Math.min((deployments.length / 10) * 100, 100)
+        },
+        collaborators: {
+          used: uniqueCollaborators,
+          limit: 3,
+          unit: 'users',
+          percentage: Math.min((uniqueCollaborators / 3) * 100, 100)
+        }
+      };
+      
+      res.json(usage);
+    } catch (error) {
+      console.error('Error fetching usage data:', error);
+      res.status(500).json({ error: 'Failed to fetch usage data' });
+    }
+  });
+  
+  // Get user billing data
+  app.get('/api/user/billing', ensureAuthenticated, async (req, res) => {
+    try {
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const daysInMonth = endOfMonth.getDate();
+      const currentDay = today.getDate();
+      const daysRemaining = daysInMonth - currentDay + 1;
+      
+      const billingData = {
+        currentCycle: {
+          start: startOfMonth,
+          end: endOfMonth,
+          daysRemaining
+        },
+        plan: 'Pro', // In real app, fetch from user subscription
+        previousCycles: [
+          {
+            month: 'June 2025',
+            period: 'Jun 1 - Jun 30, 2025',
+            amount: '$19.00',
+            plan: 'Pro Plan'
+          },
+          {
+            month: 'May 2025',
+            period: 'May 1 - May 31, 2025',
+            amount: '$19.00',
+            plan: 'Pro Plan'
+          }
+        ]
+      };
+      
+      res.json(billingData);
+    } catch (error) {
+      console.error('Error fetching billing data:', error);
+      res.status(500).json({ error: 'Failed to fetch billing data' });
+    }
+  });
   
   // Get trending projects
   app.get('/api/trending', async (req, res) => {
