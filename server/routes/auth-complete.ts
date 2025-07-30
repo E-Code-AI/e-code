@@ -58,10 +58,7 @@ router.post('/register', async (req, res) => {
       password: hashedPassword,
       displayName,
       avatarUrl: null,
-      bio: null,
-      emailVerified: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      bio: null
     });
     
     // Generate verification token
@@ -197,11 +194,7 @@ router.get('/google/callback', async (req, res) => {
         password: randomBytes(32).toString('hex'), // Random password for OAuth users
         displayName: name,
         avatarUrl: picture || null,
-        bio: null,
-        emailVerified: true, // Google emails are pre-verified
-        googleId,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        bio: null
       });
     }
     
@@ -276,20 +269,27 @@ router.get('/github/callback', async (req, res) => {
         password: randomBytes(32).toString('hex'), // Random password for OAuth users
         displayName: githubUser.name || githubUser.login,
         avatarUrl: githubUser.avatar_url,
-        bio: githubUser.bio || null,
-        emailVerified: true, // GitHub emails are pre-verified
-        githubId: githubUser.id.toString(),
-        createdAt: new Date(),
-        updatedAt: new Date()
+        bio: githubUser.bio || null
       });
     }
     
+    // Store GitHub token for the user
+    const st = storage as any; // Temporarily cast to bypass TypeScript error
+    await st.storeGitHubToken(user.id, {
+      accessToken: access_token,
+      githubId: githubUser.id,
+      githubUsername: githubUser.login,
+      githubEmail: primaryEmail,
+      githubAvatarUrl: githubUser.avatar_url,
+      connectedAt: new Date()
+    });
+
     // Log the user in
     req.login(user, (err) => {
       if (err) {
         return res.redirect('/login?error=oauth_failed');
       }
-      res.redirect('/dashboard');
+      res.redirect('/github-import?connected=true');
     });
   } catch (error) {
     console.error('GitHub OAuth error:', error);

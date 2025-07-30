@@ -462,6 +462,25 @@ export interface IStorage {
   updateReferralLeaderboard(entry: InsertReferralLeaderboard): Promise<ReferralLeaderboard>;
   completeReferral(referralId: number, refereeId: number): Promise<void>;
   generateReferralCode(userId: number): Promise<string>;
+  
+  // GitHub OAuth methods
+  storeGitHubToken(userId: number, tokenData: {
+    accessToken: string;
+    githubId: number;
+    githubUsername: string;
+    githubEmail: string;
+    githubAvatarUrl: string;
+    connectedAt: Date;
+  }): Promise<void>;
+  getGitHubToken(userId: number): Promise<{
+    accessToken: string;
+    githubId: number;
+    githubUsername: string;
+    githubEmail: string;
+    githubAvatarUrl: string;
+    connectedAt: Date;
+  } | null>;
+  removeGitHubToken(userId: number): Promise<void>;
 }
 
 // Database storage implementation
@@ -4711,6 +4730,74 @@ export class MemStorage implements IStorage {
     }
     
     return referralCode;
+  }
+
+  // GitHub OAuth methods
+  async storeGitHubToken(userId: number, tokenData: {
+    accessToken: string;
+    githubId: number;
+    githubUsername: string;
+    githubEmail: string;
+    githubAvatarUrl: string;
+    connectedAt: Date;
+  }): Promise<void> {
+    // Store in user's metadata or a separate table
+    // For now, we'll store it in memory for development
+    const user = await this.getUser(userId);
+    if (!user) throw new Error('User not found');
+    
+    // Store token data associated with user
+    // In production, this would be stored in a proper database table
+    await this.updateUser(userId, {
+      // Store GitHub connection info in user metadata
+      bio: JSON.stringify({
+        ...(user.bio ? JSON.parse(user.bio) : {}),
+        githubConnected: true,
+        githubData: tokenData
+      })
+    });
+  }
+
+  async getGitHubToken(userId: number): Promise<{
+    accessToken: string;
+    githubId: number;
+    githubUsername: string;
+    githubEmail: string;
+    githubAvatarUrl: string;
+    connectedAt: Date;
+  } | null> {
+    const user = await this.getUser(userId);
+    if (!user || !user.bio) return null;
+    
+    try {
+      const metadata = JSON.parse(user.bio);
+      if (metadata.githubConnected && metadata.githubData) {
+        return metadata.githubData;
+      }
+    } catch (e) {
+      // Bio is not JSON, ignore
+    }
+    
+    return null;
+  }
+
+  async removeGitHubToken(userId: number): Promise<void> {
+    const user = await this.getUser(userId);
+    if (!user) throw new Error('User not found');
+    
+    // Remove GitHub connection from user metadata
+    if (user.bio) {
+      try {
+        const metadata = JSON.parse(user.bio);
+        delete metadata.githubConnected;
+        delete metadata.githubData;
+        await this.updateUser(userId, {
+          bio: JSON.stringify(metadata)
+        });
+      } catch (e) {
+        // Bio is not JSON, ignore
+      }
+    }
   }
 
   private calculateTier(successfulReferrals: number): string {
