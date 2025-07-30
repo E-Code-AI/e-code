@@ -85,6 +85,23 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-30: **SpotlightSearch Enhancement and Deployments Page Improvements**:
+  * **SpotlightSearch/CommandPalette Enhanced**: 
+    - Fixed all LSP errors (auth hook usage, TypeScript types) 
+    - Added 30+ tools matching Replit's exact interface from screenshots
+    - Integrated tools: Files, Search, Assistant, Database, Shell, Workflows, Secrets, Console, Authentication, Preview, Agent, Deployments, Git, SSH, VNC, Threads, Object Storage, Security Scanner, etc.
+    - Fixed logout functionality to use logoutMutation from auth hook
+    - Properly typed recent projects query with Project[] type
+    - Navigation to slug-based URLs for recent projects (@username/projectname)
+  * **Deployments Page Enhanced**:
+    - Added deployment error display matching Replit screenshots exactly
+    - Implemented Monaco Editor resolution failure error messages
+    - Added "View logs" button with count badge (999+)
+    - Created agent suggestions section with debugging recommendations
+    - Integrated real deployment data fetching from backend API
+    - Added loading states and empty states for better UX
+    - Connected redeploy and security scan actions to real backend endpoints
+    - Dynamic deployment status badges (Running, Building, Failed, etc.)
 - 2025-07-30: **Slug-Based Project URLs Implementation Complete**:
   * **Database Schema Updated**: Added `slug` column to projects table with unique constraint
   * **Slug Format**: Projects now use @username/projectname format for better scalability

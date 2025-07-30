@@ -41,7 +41,10 @@ import {
   Bot,
   Clock,
   Package,
-  MessageCircle
+  MessageCircle,
+  Terminal as TerminalIcon,
+  Globe,
+  MoreVertical
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -64,8 +67,10 @@ import { useYjsCollaboration } from '@/hooks/useYjsCollaboration';
 import { CommentsPanel } from '@/components/CommentsPanel';
 import { HistoryTimeline } from '@/components/HistoryTimeline';
 import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
+import { ConsolePanel } from '@/components/ConsolePanel';
+import { PreviewPanel } from '@/components/PreviewPanel';
 
-type MobileTab = 'files' | 'agent' | 'secrets' | 'database' | 'auth';
+type MobileTab = 'files' | 'agent' | 'console' | 'preview' | 'secrets' | 'database' | 'auth';
 
 const ReplitProjectPage = () => {
   const [, params] = useRoute('/project/:id');
@@ -129,76 +134,121 @@ const ReplitProjectPage = () => {
   });
 
   // Mobile bottom navigation matching Replit's design
-  const MobileBottomNav = () => (
-    <div className="bg-background border-t h-16 md:hidden">
-      <div className="flex h-full">
-        <button
-          onClick={() => setMobileTab('files')}
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
-            mobileTab === 'files' 
-              ? 'text-primary' 
-              : 'text-muted-foreground'
-          )}
-        >
-          <FileCode className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Files</span>
-        </button>
+  const MobileBottomNav = () => {
+    // Split tabs into primary and secondary for better mobile UX
+    const primaryTabs = ['files', 'agent', 'console', 'preview'];
+    const secondaryTabs = ['secrets', 'database', 'auth'];
+    const [showMoreMenu, setShowMoreMenu] = useState(false);
+    
+    return (
+      <>
+        <div className="bg-background border-t h-16 md:hidden">
+          <div className="flex h-full">
+            <button
+              onClick={() => setMobileTab('files')}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
+                mobileTab === 'files' 
+                  ? 'text-primary' 
+                  : 'text-muted-foreground'
+              )}
+            >
+              <FileCode className="h-5 w-5" />
+              <span className="text-[10px] font-medium">Files</span>
+            </button>
 
-        <button
-          onClick={() => setMobileTab('agent')}
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
-            mobileTab === 'agent' 
-              ? 'text-primary' 
-              : 'text-muted-foreground'
-          )}
-        >
-          <Bot className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Agent</span>
-        </button>
+            <button
+              onClick={() => setMobileTab('agent')}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
+                mobileTab === 'agent' 
+                  ? 'text-primary' 
+                  : 'text-muted-foreground'
+              )}
+            >
+              <Bot className="h-5 w-5" />
+              <span className="text-[10px] font-medium">Agent</span>
+            </button>
 
-        <button
-          onClick={() => setMobileTab('secrets')}
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
-            mobileTab === 'secrets' 
-              ? 'text-primary' 
-              : 'text-muted-foreground'
-          )}
-        >
-          <Key className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Secrets</span>
-        </button>
+            <button
+              onClick={() => setMobileTab('console')}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
+                mobileTab === 'console' 
+                  ? 'text-primary' 
+                  : 'text-muted-foreground'
+              )}
+            >
+              <Terminal className="h-5 w-5" />
+              <span className="text-[10px] font-medium">Console</span>
+            </button>
 
-        <button
-          onClick={() => setMobileTab('database')}
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
-            mobileTab === 'database' 
-              ? 'text-primary' 
-              : 'text-muted-foreground'
-          )}
-        >
-          <Database className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Database</span>
-        </button>
+            <button
+              onClick={() => setMobileTab('preview')}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
+                mobileTab === 'preview' 
+                  ? 'text-primary' 
+                  : 'text-muted-foreground'
+              )}
+            >
+              <Globe className="h-5 w-5" />
+              <span className="text-[10px] font-medium">Preview</span>
+            </button>
 
-        <button
-          onClick={() => setMobileTab('auth')}
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
-            mobileTab === 'auth' 
-              ? 'text-primary' 
-              : 'text-muted-foreground'
-          )}
-        >
-          <UserCheck className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Auth</span>
-        </button>
-      </div>
-    </div>
-  );
+            <button
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors py-2",
+                (secondaryTabs.includes(mobileTab as string) || showMoreMenu)
+                  ? 'text-primary' 
+                  : 'text-muted-foreground'
+              )}
+            >
+              <MoreVertical className="h-5 w-5" />
+              <span className="text-[10px] font-medium">More</span>
+            </button>
+          </div>
+        </div>
+
+        {/* More menu popup */}
+        {showMoreMenu && (
+          <div className="absolute bottom-16 right-0 bg-background border rounded-lg shadow-lg p-2 m-2">
+            <button
+              onClick={() => {
+                setMobileTab('secrets');
+                setShowMoreMenu(false);
+              }}
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+            >
+              <Key className="h-4 w-4" />
+              <span className="text-sm">Secrets</span>
+            </button>
+            <button
+              onClick={() => {
+                setMobileTab('database');
+                setShowMoreMenu(false);
+              }}
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+            >
+              <Database className="h-4 w-4" />
+              <span className="text-sm">Database</span>
+            </button>
+            <button
+              onClick={() => {
+                setMobileTab('auth');
+                setShowMoreMenu(false);
+              }}
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+            >
+              <UserCheck className="h-4 w-4" />
+              <span className="text-sm">Auth</span>
+            </button>
+          </div>
+        )}
+      </>
+    );
+  };
 
   // Mutation for saving file
   const saveFileMutation = useMutation({
@@ -461,6 +511,21 @@ const ReplitProjectPage = () => {
               </div>
             </div>
           )}
+
+          {mobileTab === 'console' && (
+            <div className="h-full overflow-hidden">
+              <ConsolePanel projectId={projectId || 0} />
+            </div>
+          )}
+
+          {mobileTab === 'preview' && (
+            <div className="h-full overflow-hidden">
+              <PreviewPanel 
+                projectId={projectId || 0} 
+                projectUrl={executionId ? `https://localhost:5000/preview/${executionId}` : undefined}
+              />
+            </div>
+          )}
         </div>
 
         {/* Mobile bottom navigation - fixed position */}
@@ -695,7 +760,7 @@ const ReplitProjectPage = () => {
                     <CollaborationPanel
                       collaborators={collaboration.collaborators}
                       followingUserId={collaboration.followingUserId}
-                      onFollowUser={collaboration.followUser}
+                      onFollowUser={(userId) => collaboration.followUser(userId.toString())}
                       projectId={projectId}
                     />
                   )}
@@ -703,7 +768,6 @@ const ReplitProjectPage = () => {
                   {rightPanelMode === 'comments' && (
                     <CommentsPanel
                       projectId={projectId}
-                      selectedFile={selectedFile}
                       selectedLineNumber={1} // TODO: Get actual selected line
                     />
                   )}

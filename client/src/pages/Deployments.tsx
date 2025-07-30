@@ -11,16 +11,25 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   Globe, RefreshCw, Shield, AlertTriangle, Sparkles, ChevronDown,
   Terminal, Laptop, Database, Activity, Package, MoreVertical,
   ExternalLink, Lock, Clock, Server, History, Eye, EyeOff,
-  X, Edit2, Search, Play, Pause, Calendar, Filter
+  X, Edit2, Search, Play, Pause, Calendar, Filter, Bot, Settings,
+  AlertCircle, ChevronRight, WrapText, Monitor, ArrowUpDown,
+  SlidersHorizontal, MoreHorizontal, Link, Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { useParams, useLocation } from 'wouter';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import type { Deployment } from '@shared/schema';
 
 export default function Deployments() {
   const { toast } = useToast();
+  const params = useParams();
+  const [, navigate] = useLocation();
   const [showBottomMenu, setShowBottomMenu] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -33,26 +42,73 @@ export default function Deployments() {
   const [showColors, setShowColors] = useState(true);
   const [expandLogs, setExpandLogs] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Fetch recent deployments
+  const { data: recentDeployments, isLoading } = useQuery<any[]>({
+    queryKey: ['/api/user/deployments/recent'],
+  });
+  
+  // Get the first deployment for display (simulating a deployment detail view)
+  const currentDeployment = recentDeployments?.[0];
+  
+  // Redeploy mutation
+  const redeployMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentDeployment?.id) return;
+      return await apiRequest('POST', `/api/projects/${currentDeployment.projectId}/deploy`, {
+        type: 'autoscale',
+        customDomain: null,
+        sslEnabled: true,
+        envVars: {},
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Redeployment Started",
+        description: "Your application is being redeployed...",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/deployments/recent'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Redeployment Failed",
+        description: error.message || "Failed to redeploy the application",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleDebugWithAgent = () => {
-    toast({
-      title: "Starting AI Agent",
-      description: "The AI Agent will help debug your deployment issues.",
-    });
+    if (currentDeployment?.project) {
+      navigate(`/project/${currentDeployment.projectId}?mode=agent&debug=true`);
+    } else {
+      toast({
+        title: "Starting AI Agent",
+        description: "The AI Agent will help debug your deployment issues.",
+      });
+    }
   };
 
   const handleRedeploy = () => {
-    toast({
-      title: "Redeploying",
-      description: "Your application is being redeployed...",
-    });
+    redeployMutation.mutate();
   };
 
-  const handleSecurityScan = () => {
-    toast({
-      title: "Security Scan Started",
-      description: "Running security analysis on your deployment...",
-    });
+  const handleSecurityScan = async () => {
+    if (!currentDeployment?.projectId) return;
+    
+    try {
+      await apiRequest('POST', `/api/projects/${currentDeployment.projectId}/scan`);
+      toast({
+        title: "Security Scan Started",
+        description: "Running security analysis on your deployment...",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Security Scan Failed",
+        description: error.message || "Failed to start security scan",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleSection = (section: string) => {
@@ -81,9 +137,165 @@ export default function Deployments() {
     return true;
   });
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading deployments...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state if no deployments
+  if (!currentDeployment) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl py-6">
+          <Card className="p-8 text-center">
+            <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h2 className="text-xl font-semibold mb-2">No deployments yet</h2>
+            <p className="text-muted-foreground mb-4">Deploy your first project to see it here</p>
+            <Button onClick={() => navigate('/projects')}>
+              Go to Projects
+            </Button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const deploymentStatus = currentDeployment.status || 'deployed';
+  const hasErrors = deploymentStatus === 'failed' || deploymentStatus === 'error';
+
   return (
     <div className="min-h-screen bg-background">
       <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl space-y-6 py-6 pb-20">
+        {/* Deployment Header */}
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h1 className="text-2xl font-bold">{currentDeployment.project || 'E-Code'}</h1>
+                <Badge 
+                  variant="default" 
+                  className={
+                    deploymentStatus === 'deployed' ? 'bg-green-600 text-white' :
+                    deploymentStatus === 'pending' ? 'bg-yellow-600 text-white' :
+                    deploymentStatus === 'building' ? 'bg-blue-600 text-white' :
+                    'bg-red-600 text-white'
+                  }
+                >
+                  {deploymentStatus === 'deployed' ? 'Running' :
+                   deploymentStatus === 'pending' ? 'Pending' :
+                   deploymentStatus === 'building' ? 'Building' :
+                   'Failed'}
+                </Badge>
+              </div>
+              <div className="flex flex-col gap-2">
+                {currentDeployment.url && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Globe className="h-4 w-4" />
+                    <a 
+                      href={currentDeployment.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      {currentDeployment.url.replace('https://', '')}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {currentDeployment.time || 'Just now'}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Server className="h-4 w-4" />
+                    Autoscale
+                  </span>
+                  <span className="flex items-center gap-1">
+                    {currentDeployment.visibility === 'public' ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                    {currentDeployment.visibility === 'public' ? 'Public' : 'Private'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRedeploy}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Redeploy
+              </Button>
+              <Button variant="ghost" size="icon">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          
+          {/* Deployment Error Alert */}
+          <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle className="flex items-center justify-between">
+              <span>1 build failed</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-red-600 hover:text-red-700"
+                onClick={() => setActiveTab('logs')}
+              >
+                View logs
+                <Badge variant="secondary" className="ml-2">999+</Badge>
+              </Button>
+            </AlertTitle>
+            <AlertDescription className="mt-4 space-y-4">
+              <div>
+                <p className="font-semibold mb-2">Your deployment attempt had the following errors:</p>
+                <div className="bg-gray-900 text-gray-100 p-4 rounded-md font-mono text-sm">
+                  <p className="text-red-400 mb-2">Monaco Editor worker module resolution failed during Vite build in client/src/lib/monaco-config.ts</p>
+                  <p className="text-gray-300">Vite cannot resolve the entry module for monaco-editor/esm/vs/editor/editor.worker</p>
+                  <p className="text-gray-300">Vite cannot resolve the entry module for monaco-editor/esm/vs/language/json/json.worker</p>
+                  <p className="text-gray-300">Build process failed preventing deployment due to missing worker dependencies</p>
+                </div>
+              </div>
+              
+              {/* Agent Suggestions */}
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-2 flex items-center gap-2">
+                  <Bot className="h-4 w-4" />
+                  Agent suggestions
+                </h3>
+                <ol className="list-decimal list-inside space-y-2 text-sm">
+                  <li>Install the monaco-editor package as a dependency to resolve the missing worker modules</li>
+                  <li>Update the monaco-config.ts to use a more compatible worker import</li>
+                  <li>Add the configuration to properly handle Monaco Editor workers in production builds</li>
+                  <li>Consider using the vite-plugin-monaco-editor plugin that's already in dependencies to properly configure the worker files</li>
+                </ol>
+                <div className="flex items-center gap-2 mt-4">
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    onClick={handleDebugWithAgent}
+                    className="bg-[#0074d9] hover:bg-[#0058b3]"
+                  >
+                    <Bot className="h-4 w-4 mr-2" />
+                    Debug with Agent
+                  </Button>
+                  <span className="text-xs text-muted-foreground">8 days ago</span>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
+        
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto">

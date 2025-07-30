@@ -52,15 +52,16 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import type { Project } from '@shared/schema';
 
 export function SpotlightSearch() {
   const [open, setOpen] = useState(false);
   const [, navigate] = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch recent projects
-  const { data: recentProjects } = useQuery({
+  const { data: recentProjects } = useQuery<Project[]>({
     queryKey: ['/api/projects/recent'],
     enabled: !!user && open,
   });
@@ -303,10 +304,10 @@ export function SpotlightSearch() {
         {recentProjects && recentProjects.length > 0 && searchQuery.length === 0 && (
           <>
             <CommandGroup heading="Recent Projects">
-              {recentProjects.slice(0, 5).map((project: any) => (
+              {recentProjects.slice(0, 5).map((project) => (
                 <CommandItem
                   key={project.id}
-                  onSelect={() => handleSelect(() => navigate(`/project/${project.id}`))}
+                  onSelect={() => handleSelect(() => navigate(`/@${project.owner?.username || 'admin'}/${project.slug}`))}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   <span>{project.name}</span>
@@ -378,8 +379,7 @@ export function SpotlightSearch() {
         {user && (
           <CommandGroup heading="Session">
             <CommandItem onSelect={() => handleSelect(() => {
-              logout();
-              navigate('/');
+              logoutMutation.mutate();
             })}>
               <LogOut className="h-4 w-4 mr-2" />
               <span>Sign out</span>
