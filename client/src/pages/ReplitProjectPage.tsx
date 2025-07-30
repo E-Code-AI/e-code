@@ -739,11 +739,8 @@ const ReplitProjectPage = () => {
                         </TabsList>
                       </div>
                       <TabsContent value="agent" className="flex-1 mt-0">
-                        <ReplitAssistant
+                        <ReplitAgentChat
                           projectId={projectId || 0}
-                          currentFile={selectedFile?.name}
-                          selectedCode={selectedCode}
-                          onApplyCode={handleApplyCode}
                         />
                       </TabsContent>
                       <TabsContent value="advanced" className="flex-1 mt-0">
