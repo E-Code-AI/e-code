@@ -4398,6 +4398,17 @@ Generate a comprehensive application based on the user's request. Include all ne
       res.status(500).json({ error: 'Failed to fetch teams' });
     }
   });
+  
+  // Get user's team invitations
+  app.get('/api/teams/invitations', ensureAuthenticated, async (req, res) => {
+    try {
+      const invitations = await teamsService.getUserInvitations(req.user!.id);
+      res.json(invitations);
+    } catch (error) {
+      console.error('Error fetching team invitations:', error);
+      res.status(500).json({ error: 'Failed to fetch invitations' });
+    }
+  });
 
   // Create a new team
   app.post('/api/teams', ensureAuthenticated, async (req, res) => {
