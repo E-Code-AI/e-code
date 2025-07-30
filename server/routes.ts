@@ -4784,6 +4784,66 @@ Generate a comprehensive application based on the user's request. Include all ne
   
   // Authentication complete routes
   app.use('/api/auth', authCompleteRouter);
+
+  // GitHub API routes for authenticated users
+  app.get('/api/github/repos', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const githubToken = await storage.getGitHubToken(userId);
+      
+      if (!githubToken) {
+        return res.status(401).json({ 
+          error: 'GitHub not connected',
+          message: 'Please connect your GitHub account first'
+        });
+      }
+
+      // Use Octokit to fetch repositories
+      const { Octokit } = await import('@octokit/rest');
+      const octokit = new Octokit({ auth: githubToken.accessToken });
+      
+      const { data: repos } = await octokit.repos.listForAuthenticatedUser({
+        per_page: 100,
+        sort: 'updated',
+        direction: 'desc'
+      });
+
+      res.json(repos);
+    } catch (error) {
+      console.error('Error fetching GitHub repos:', error);
+      res.status(500).json({ error: 'Failed to fetch repositories' });
+    }
+  });
+
+  // Check GitHub connection status
+  app.get('/api/github/status', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const githubToken = await storage.getGitHubToken(userId);
+      
+      res.json({ 
+        connected: !!githubToken,
+        username: githubToken?.githubUsername,
+        connectedAt: githubToken?.connectedAt
+      });
+    } catch (error) {
+      console.error('Error checking GitHub status:', error);
+      res.status(500).json({ error: 'Failed to check GitHub connection status' });
+    }
+  });
+
+  // Disconnect GitHub
+  app.delete('/api/github/disconnect', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      await storage.removeGitHubToken(userId);
+      
+      res.json({ message: 'GitHub disconnected successfully' });
+    } catch (error) {
+      console.error('Error disconnecting GitHub:', error);
+      res.status(500).json({ error: 'Failed to disconnect GitHub' });
+    }
+  });
   
   // Notification routes
   app.use(notificationRoutes);
