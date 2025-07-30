@@ -69,6 +69,8 @@ import { HistoryTimeline } from '@/components/HistoryTimeline';
 import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 import { ConsolePanel } from '@/components/ConsolePanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
+import { DeploymentPanel } from '@/components/DeploymentPanel';
+import { ToolsDropdown } from '@/components/ToolsDropdown';
 
 type MobileTab = 'files' | 'agent' | 'console' | 'preview' | 'secrets' | 'database' | 'auth';
 
@@ -88,9 +90,10 @@ const ReplitProjectPage = () => {
   const [showTerminal, setShowTerminal] = useState(false); // Hide terminal by default like Replit
   const [mobileTab, setMobileTab] = useState<MobileTab>('agent'); // Default to agent on mobile like Replit
   const [showCollaboration, setShowCollaboration] = useState(false);
-  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions'>('ai');
+  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions' | 'deployments' | 'shell' | 'database' | 'secrets' | 'workflows' | 'console' | 'authentication' | 'preview' | 'git' | 'ssh' | 'vnc' | 'threads' | 'object-storage' | 'problems' | 'security-scanner' | 'networking' | 'integrations' | 'user-settings'>('ai');
   const [aiMode, setAIMode] = useState<'agent' | 'advanced'>('agent'); // Default to agent mode
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
+  const [openTools, setOpenTools] = useState<string[]>(['ai']);
 
   // Initialize collaboration
   const collaboration = useYjsCollaboration({
@@ -642,6 +645,17 @@ const ReplitProjectPage = () => {
             <Package className="h-4 w-4" />
           </Button>
 
+          <ToolsDropdown 
+            onSelectTool={(tool) => {
+              setRightPanelMode(tool as any);
+              setShowAIChat(true);
+              if (!openTools.includes(tool)) {
+                setOpenTools([...openTools, tool]);
+              }
+            }}
+            currentTools={openTools}
+          />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -779,6 +793,51 @@ const ReplitProjectPage = () => {
                     <ExtensionsMarketplace
                       projectId={projectId}
                     />
+                  )}
+
+                  {rightPanelMode === 'deployments' && (
+                    <DeploymentPanel
+                      projectId={projectId}
+                    />
+                  )}
+
+                  {rightPanelMode === 'shell' && (
+                    <Terminal 
+                      projectId={projectId || undefined}
+                    />
+                  )}
+
+                  {rightPanelMode === 'database' && (
+                    <ReplitDatabase 
+                      projectId={projectId}
+                    />
+                  )}
+
+                  {rightPanelMode === 'secrets' && (
+                    <ReplitSecrets 
+                      projectId={projectId}
+                    />
+                  )}
+
+                  {rightPanelMode === 'console' && (
+                    <ConsolePanel 
+                      projectId={projectId}
+                    />
+                  )}
+
+                  {rightPanelMode === 'preview' && (
+                    <PreviewPanel 
+                      projectId={projectId} 
+                      projectUrl={executionId ? `https://localhost:5000/preview/${executionId}` : undefined}
+                    />
+                  )}
+
+                  {/* Placeholder panels for other tools */}
+                  {['git', 'ssh', 'vnc', 'threads', 'object-storage', 'problems', 'security-scanner', 'networking', 'integrations', 'user-settings', 'authentication', 'workflows'].includes(rightPanelMode) && (
+                    <div className="p-4 text-center text-muted-foreground">
+                      <div className="text-lg font-medium mb-2 capitalize">{rightPanelMode.replace('-', ' ')}</div>
+                      <div className="text-sm">This tool is coming soon!</div>
+                    </div>
                   )}
                 </div>
               </ResizablePanel>
