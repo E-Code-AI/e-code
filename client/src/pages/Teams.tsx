@@ -120,11 +120,22 @@ export default function Teams() {
     joinTeamMutation.mutate(invitation);
   };
 
-  const handleDeclineInvitation = (invitationId: number) => {
-    toast({
-      title: "Invitation declined",
-      description: "You've declined the team invitation.",
-    });
+  // Decline invitation mutation
+  const declineInvitationMutation = useMutation({
+    mutationFn: async (invitation: TeamInvitation) => {
+      return apiRequest('POST', `/api/teams/invitations/${invitation.id}/decline`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams/invitations'] });
+      toast({
+        title: "Invitation declined",
+        description: "You've declined the team invitation.",
+      });
+    }
+  });
+
+  const handleDeclineInvitation = (invitation: TeamInvitation) => {
+    declineInvitationMutation.mutate(invitation);
   };
 
   const getRoleIcon = (role: string) => {
@@ -218,7 +229,8 @@ export default function Teams() {
                   <Button 
                     size="sm" 
                     variant="outline"
-                    onClick={() => handleDeclineInvitation(invitation.id)}
+                    onClick={() => handleDeclineInvitation(invitation)}
+                    disabled={declineInvitationMutation.isPending}
                   >
                     Decline
                   </Button>
