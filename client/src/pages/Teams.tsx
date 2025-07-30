@@ -92,8 +92,9 @@ export default function Teams() {
 
   // Join team mutation
   const joinTeamMutation = useMutation({
-    mutationFn: async (invitationId: number) => {
-      return apiRequest('POST', `/api/teams/invitations/${invitationId}/accept`);
+    mutationFn: async (invitation: TeamInvitation) => {
+      // For now, use invitation ID as token - in production, this should be a secure token
+      return apiRequest('POST', `/api/teams/invitations/${invitation.id}/accept`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
@@ -115,8 +116,8 @@ export default function Teams() {
     });
   };
 
-  const handleJoinTeam = (invitationId: number) => {
-    joinTeamMutation.mutate(invitationId);
+  const handleJoinTeam = (invitation: TeamInvitation) => {
+    joinTeamMutation.mutate(invitation);
   };
 
   const handleDeclineInvitation = (invitationId: number) => {
@@ -209,7 +210,7 @@ export default function Teams() {
                 <div className="flex gap-2">
                   <Button 
                     size="sm" 
-                    onClick={() => handleJoinTeam(invitation.id)}
+                    onClick={() => handleJoinTeam(invitation)}
                     disabled={joinTeamMutation.isPending}
                   >
                     Accept
@@ -385,12 +386,20 @@ export default function Teams() {
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <Button size="sm" className="flex-1">
+                  <Button 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => window.location.href = `/teams/${team.id}`}
+                  >
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Open
                   </Button>
                   {(team.role === 'owner' || team.role === 'admin') && (
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => window.location.href = `/teams/${team.id}/settings`}
+                    >
                       <Settings className="h-4 w-4" />
                     </Button>
                   )}
