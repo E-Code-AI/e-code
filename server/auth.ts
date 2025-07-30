@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User } from "@shared/schema";
+import { client } from "./db";
 import { 
   generateEmailVerificationToken, 
   generatePasswordResetToken, 
@@ -110,6 +111,16 @@ export function setupAuth(app: Express) {
   // Setup session middleware and passport
   app.set("trust proxy", 1);
   app.use(session(sessionSettings));
+  
+  // Middleware to store user agent and IP in session
+  app.use((req, res, next) => {
+    if (req.session) {
+      req.session.userAgent = req.headers['user-agent'] || 'Unknown';
+      req.session.ipAddress = req.ip || 'Unknown';
+    }
+    next();
+  });
+  
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -939,15 +950,44 @@ export function setupAuth(app: Express) {
   // Get active sessions
   app.get("/api/user/sessions", ensureAuthenticated, async (req, res) => {
     try {
-      // In production, this would fetch from a sessions table
-      const sessions = [
-        {
-          id: req.sessionID,
-          device: 'Chrome on Windows',
-          lastActive: new Date(),
-          current: true
-        }
-      ];
+      const userId = req.user!.id;
+      
+      // Query all sessions for this user from the database
+      const query = `
+        SELECT sid, sess, expire 
+        FROM sessions 
+        WHERE sess::jsonb->'passport'->'user' = $1
+        ORDER BY expire DESC
+      `;
+      
+      const result = await client.query(query, [userId.toString()]);
+      
+      const sessions = result.rows.map((row: any) => {
+        const sessionData = row.sess;
+        const userAgent = sessionData.userAgent || 'Unknown Device';
+        const ipAddress = sessionData.ipAddress || 'Unknown';
+        
+        // Parse user agent to get device info
+        let device = 'Unknown Device';
+        if (userAgent.includes('Chrome')) device = 'Chrome';
+        if (userAgent.includes('Firefox')) device = 'Firefox';
+        if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) device = 'Safari';
+        if (userAgent.includes('Edge')) device = 'Edge';
+        
+        if (userAgent.includes('Windows')) device += ' on Windows';
+        else if (userAgent.includes('Mac')) device += ' on Mac';
+        else if (userAgent.includes('Linux')) device += ' on Linux';
+        else if (userAgent.includes('Android')) device += ' on Android';
+        else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) device += ' on iOS';
+        
+        return {
+          id: row.sid,
+          device,
+          ipAddress,
+          lastActive: row.expire,
+          current: row.sid === req.sessionID
+        };
+      });
       
       res.json(sessions);
     } catch (error) {

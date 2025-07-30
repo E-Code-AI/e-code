@@ -131,28 +131,56 @@ export class SimpleAnalytics {
       }
     });
     
-    // Calculate traffic sources (simulated)
-    const sources = [
-      { name: 'Direct', visitors: Math.floor(uniqueVisitors.size * 0.4), percentage: 40 },
-      { name: 'Search', visitors: Math.floor(uniqueVisitors.size * 0.3), percentage: 30 },
-      { name: 'Social', visitors: Math.floor(uniqueVisitors.size * 0.2), percentage: 20 },
-      { name: 'Referral', visitors: Math.floor(uniqueVisitors.size * 0.1), percentage: 10 }
-    ];
+    // Calculate real traffic sources from event metadata
+    const sourceCount = new Map<string, number>();
+    recentEvents.forEach(event => {
+      const source = event.metadata?.referrer || 'Direct';
+      sourceCount.set(source, (sourceCount.get(source) || 0) + 1);
+    });
     
-    // Calculate countries (simulated)
-    const countries = [
-      { name: 'United States', visitors: Math.floor(uniqueVisitors.size * 0.5), percentage: 50 },
-      { name: 'United Kingdom', visitors: Math.floor(uniqueVisitors.size * 0.2), percentage: 20 },
-      { name: 'Canada', visitors: Math.floor(uniqueVisitors.size * 0.15), percentage: 15 },
-      { name: 'Other', visitors: Math.floor(uniqueVisitors.size * 0.15), percentage: 15 }
-    ];
+    const totalSourceVisits = Array.from(sourceCount.values()).reduce((a, b) => a + b, 0) || 1;
+    const sources = Array.from(sourceCount.entries())
+      .map(([name, count]) => ({
+        name,
+        visitors: count,
+        percentage: Math.round((count / totalSourceVisits) * 100)
+      }))
+      .sort((a, b) => b.visitors - a.visitors)
+      .slice(0, 5); // Top 5 sources
     
-    // Calculate devices (simulated)
-    const devices = [
-      { name: 'Desktop', visitors: Math.floor(uniqueVisitors.size * 0.6), percentage: 60 },
-      { name: 'Mobile', visitors: Math.floor(uniqueVisitors.size * 0.35), percentage: 35 },
-      { name: 'Tablet', visitors: Math.floor(uniqueVisitors.size * 0.05), percentage: 5 }
-    ];
+    // Calculate real countries from event metadata
+    const countryCount = new Map<string, number>();
+    recentEvents.forEach(event => {
+      const country = event.metadata?.country || 'Unknown';
+      countryCount.set(country, (countryCount.get(country) || 0) + 1);
+    });
+    
+    const totalCountryVisits = Array.from(countryCount.values()).reduce((a, b) => a + b, 0) || 1;
+    const countries = Array.from(countryCount.entries())
+      .map(([name, count]) => ({
+        name,
+        visitors: count,
+        percentage: Math.round((count / totalCountryVisits) * 100)
+      }))
+      .sort((a, b) => b.visitors - a.visitors)
+      .slice(0, 10); // Top 10 countries
+    
+    // Calculate real devices from event metadata
+    const deviceCount = new Map<string, number>();
+    recentEvents.forEach(event => {
+      const userAgent = event.metadata?.userAgent || '';
+      const device = this.parseDeviceFromUserAgent(userAgent);
+      deviceCount.set(device, (deviceCount.get(device) || 0) + 1);
+    });
+    
+    const totalDeviceVisits = Array.from(deviceCount.values()).reduce((a, b) => a + b, 0) || 1;
+    const devices = Array.from(deviceCount.entries())
+      .map(([name, count]) => ({
+        name,
+        visitors: count,
+        percentage: Math.round((count / totalDeviceVisits) * 100)
+      }))
+      .sort((a, b) => b.visitors - a.visitors);
     
     // Convert page stats to array
     const pages = Array.from(pageStats.entries()).map(([path, stats], index) => ({
@@ -175,9 +203,9 @@ export class SimpleAnalytics {
         totalVisits: visits,
         uniqueVisitors: uniqueVisitors.size,
         pageViews: pageViews,
-        bounceRate: 20 + (uniqueVisitors.size % 30), // Deterministic: 20-50%
-        avgSessionDuration: 60 + ((visits * 7) % 300), // Deterministic: 60-360 seconds
-        conversionRate: 2 + (pageViews % 10) // Deterministic: 2-12%
+        bounceRate: this.calculateRealBounceRate(projectAnalytics, recentEvents),
+        avgSessionDuration: this.calculateRealAvgSessionDuration(projectAnalytics, recentEvents),
+        conversionRate: this.calculateRealConversionRate(recentEvents)
       },
       traffic: {
         sources,
@@ -301,6 +329,64 @@ export class SimpleAnalytics {
     
     const growthRate = ((currentPeriodEvents - previousPeriodEvents) / previousPeriodEvents) * 100;
     return Math.round(growthRate);
+  }
+  
+  private parseDeviceFromUserAgent(userAgent: string): string {
+    const ua = userAgent.toLowerCase();
+    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+      return 'Mobile';
+    } else if (ua.includes('tablet') || ua.includes('ipad')) {
+      return 'Tablet';
+    } else {
+      return 'Desktop';
+    }
+  }
+  
+  private calculateRealBounceRate(projectAnalytics: ProjectAnalytics, recentEvents: AnalyticsEvent[]): number {
+    // Calculate bounce rate based on sessions with only one page view
+    const sessionPageCounts = new Map<string, number>();
+    
+    recentEvents.forEach(event => {
+      if (event.sessionId && event.type === 'pageview') {
+        sessionPageCounts.set(event.sessionId, (sessionPageCounts.get(event.sessionId) || 0) + 1);
+      }
+    });
+    
+    const totalSessions = sessionPageCounts.size;
+    if (totalSessions === 0) return 0;
+    
+    const bouncedSessions = Array.from(sessionPageCounts.values()).filter(count => count === 1).length;
+    return Math.round((bouncedSessions / totalSessions) * 100);
+  }
+  
+  private calculateRealAvgSessionDuration(projectAnalytics: ProjectAnalytics, recentEvents: AnalyticsEvent[]): number {
+    // Calculate average session duration from actual session data
+    let totalDuration = 0;
+    let sessionCount = 0;
+    
+    projectAnalytics.sessions.forEach((session, sessionId) => {
+      // Only count sessions that are in the recent events
+      const sessionInRange = recentEvents.some(e => e.sessionId === sessionId);
+      if (sessionInRange && session.end && session.start) {
+        const duration = session.end.getTime() - session.start.getTime();
+        if (duration > 0 && duration < 3600000) { // Less than 1 hour to filter out stuck sessions
+          totalDuration += duration;
+          sessionCount++;
+        }
+      }
+    });
+    
+    if (sessionCount === 0) return 0;
+    return Math.round(totalDuration / sessionCount / 1000); // Return in seconds
+  }
+  
+  private calculateRealConversionRate(recentEvents: AnalyticsEvent[]): number {
+    // Calculate conversion rate based on conversion events vs total visits
+    const conversions = recentEvents.filter(e => e.type === 'conversion').length;
+    const visits = recentEvents.filter(e => e.type === 'visit').length;
+    
+    if (visits === 0) return 0;
+    return Math.round((conversions / visits) * 100);
   }
 }
 
