@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +32,7 @@ import {
   Sparkles,
   Zap
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/use-auth';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
 import { Link } from 'wouter';
@@ -74,7 +74,8 @@ const languageColors: Record<string, string> = {
 export default function GitHubImport() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const [importMethod, setImportMethod] = useState<'url' | 'oauth'>('url');
   const [repoUrl, setRepoUrl] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -148,59 +149,46 @@ export default function GitHubImport() {
   };
 
   const handleOAuthConnect = () => {
-    // In a real app, this would initiate OAuth flow
-    toast({
-      title: "GitHub Connection",
-      description: "Connecting to GitHub...",
-    });
-    
-    // Simulate loading repos
-    setIsLoading(true);
-    setTimeout(() => {
-      setUserRepos([
-        {
-          id: 1,
-          name: 'awesome-project',
-          full_name: 'user/awesome-project',
-          description: 'An awesome full-stack web application',
-          private: false,
-          stargazers_count: 342,
-          forks_count: 56,
-          language: 'TypeScript',
-          updated_at: new Date().toISOString(),
-          html_url: 'https://github.com/user/awesome-project',
-          default_branch: 'main'
-        },
-        {
-          id: 2,
-          name: 'react-components',
-          full_name: 'user/react-components',
-          description: 'Reusable React component library',
-          private: false,
-          stargazers_count: 128,
-          forks_count: 23,
-          language: 'JavaScript',
-          updated_at: new Date(Date.now() - 86400000).toISOString(),
-          html_url: 'https://github.com/user/react-components',
-          default_branch: 'main'
-        },
-        {
-          id: 3,
-          name: 'python-api',
-          full_name: 'user/python-api',
-          description: 'RESTful API built with FastAPI',
-          private: true,
-          stargazers_count: 45,
-          forks_count: 12,
-          language: 'Python',
-          updated_at: new Date(Date.now() - 172800000).toISOString(),
-          html_url: 'https://github.com/user/python-api',
-          default_branch: 'develop'
-        }
-      ]);
-      setIsLoading(false);
-    }, 2000);
+    // Redirect to GitHub OAuth flow
+    window.location.href = '/api/auth/github';
   };
+
+  const fetchUserRepos = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('GET', '/api/github/repos');
+      const repos = await response.json();
+      setUserRepos(repos);
+    } catch (error) {
+      toast({
+        title: "Failed to fetch repositories",
+        description: error instanceof Error ? error.message : "Could not load your GitHub repositories",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Check if user has GitHub connected and fetch repos
+  useEffect(() => {
+    const checkGitHubConnection = async () => {
+      try {
+        const response = await apiRequest('GET', '/api/github/status');
+        const status = await response.json();
+        if (status.connected) {
+          fetchUserRepos();
+        }
+      } catch (error) {
+        // User hasn't connected GitHub yet
+        console.log('GitHub not connected');
+      }
+    };
+
+    if (isAuthenticated && importMethod === 'oauth') {
+      checkGitHubConnection();
+    }
+  }, [isAuthenticated, importMethod]);
 
   const handleRepoSelect = async (repo: Repository) => {
     setSelectedRepo(repo);
