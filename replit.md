@@ -91,6 +91,7 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-30: **Fixed User Profile Route**: Added missing `/@:username` route to display user profiles (like `/@admin`). The route was missing from App.tsx routing configuration.
 - 2025-07-30: **Slug-Based Project URLs Implementation Complete**:
   * **Database Schema Updated**: Added `slug` column to projects table with unique constraint
   * **Slug Format**: Projects now use @username/projectname format for better scalability
