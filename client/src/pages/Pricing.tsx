@@ -37,93 +37,92 @@ export default function Pricing() {
 
   const tiers: PricingTier[] = [
     {
-      name: 'Starter',
-      description: 'Perfect for beginners and learning to code',
+      name: 'Free',
+      description: 'For students, hobbyists, and anyone learning to code',
       monthlyPrice: 0,
       yearlyPrice: 0,
       features: [
-        { text: 'AI Agent - 10 apps per month', included: true, tooltip: 'Build complete apps by describing them in any language' },
-        { text: 'Unlimited projects to share with friends', included: true },
-        { text: '3 private projects for personal work', included: true },
-        { text: 'Basic AI code suggestions', included: true },
-        { text: 'Enough space for your creations', included: true },
-        { text: 'Works great for learning', included: true },
-        { text: 'Friendly community help', included: true },
-        { text: 'Your projects are secure', included: true },
-        { text: 'Advanced AI features', included: false },
-        { text: 'Your own web address', included: false },
-        { text: 'Work with friends', included: false },
-        { text: 'Fast help when stuck', included: false }
+        { text: '0.5 vCPU + 512 MB RAM', included: true },
+        { text: '10 GiB storage', included: true },
+        { text: '10 GiB egress/month', included: true },
+        { text: 'Limited AI interactions', included: true },
+        { text: 'Unlimited public projects', included: true },
+        { text: 'Access to basic templates', included: true },
+        { text: 'Community support', included: true },
+        { text: 'Basic AI assistance', included: false },
+        { text: 'Private projects', included: false },
+        { text: 'Custom domains', included: false },
+        { text: 'Always-on projects', included: false },
+        { text: 'SSH access', included: false }
       ],
-      cta: 'Start free',
+      cta: 'Sign up free',
       ctaVariant: 'outline'
     },
     {
-      name: 'Creator',
-      description: 'For hobbyists and serious learners',
-      monthlyPrice: 7,
-      yearlyPrice: 70,
+      name: 'Core',
+      description: 'For developers and creators who want more power',
+      monthlyPrice: 25,
+      yearlyPrice: 220,
       popular: true,
       features: [
-        { text: 'AI Agent - Unlimited apps', included: true, tooltip: 'Build as many apps as you want with our AI' },
-        { text: 'Everything in Starter', included: true },
-        { text: 'Priority AI processing', included: true, tooltip: 'Faster AI response times' },
-        { text: 'Advanced AI code refactoring', included: true },
-        { text: 'Keep all projects private', included: true },
-        { text: 'Lots more space for bigger projects', included: true },
-        { text: 'Your own custom web address', included: true },
-        { text: 'Collaborate with 5 friends', included: true },
-        { text: 'Share projects privately', included: true },
-        { text: 'Get help by email', included: true },
-        { text: 'Advanced tools when ready', included: true },
-        { text: 'Personal AI tutor', included: false }
+        { text: 'AI Agent - Unlimited apps', included: true, tooltip: 'Build unlimited apps with our AI Agent' },
+        { text: '2 vCPUs + 2 GiB RAM', included: true },
+        { text: '50 GiB storage', included: true },
+        { text: '100 GiB egress/month', included: true },
+        { text: 'Unlimited private projects', included: true },
+        { text: '5 always-on projects', included: true },
+        { text: 'SSH access to projects', included: true },
+        { text: 'Custom domains', included: true },
+        { text: 'Priority support', included: true },
+        { text: 'Advanced AI features', included: true },
+        { text: 'Ghostwriter AI assistant', included: true },
+        { text: 'Priority builds', included: true },
+        { text: 'Dev tools (debugger, profiler)', included: true }
       ],
-      cta: 'Become a Creator',
+      cta: 'Get Core',
       ctaVariant: 'default'
     },
     {
-      name: 'Pro',
-      description: 'For educators, teams, and professionals',
-      monthlyPrice: 25,
-      yearlyPrice: 250,
+      name: 'Teams',
+      description: 'For teams collaborating on projects',
+      monthlyPrice: 40,
+      yearlyPrice: 400,
       features: [
-        { text: 'AI Agent - Priority access & custom models', included: true, tooltip: 'Use custom AI models trained on your code style' },
-        { text: 'Everything in Creator', included: true },
-        { text: 'AI code reviews & optimization', included: true },
-        { text: 'AI-powered debugging assistant', included: true },
-        { text: 'Massive storage for all your work', included: true },
-        { text: 'Super fast performance', included: true },
-        { text: 'Unlimited team collaboration', included: true },
-        { text: 'See how your projects are used', included: true },
-        { text: 'Get help immediately when needed', included: true },
-        { text: 'Guaranteed uptime', included: true },
-        { text: 'Extra security for sensitive work', included: true },
-        { text: 'Connect with your tools', included: true },
-        { text: 'Personal success manager', included: false }
+        { text: 'Everything in Core', included: true },
+        { text: '4 vCPUs + 4 GiB RAM per user', included: true },
+        { text: '500 GiB shared storage', included: true },
+        { text: '1 TiB egress/month', included: true },
+        { text: 'Unlimited team members', included: true },
+        { text: 'Centralized billing', included: true },
+        { text: 'Team management dashboard', included: true },
+        { text: 'Role-based permissions', included: true },
+        { text: 'Shared projects & resources', included: true },
+        { text: 'SSO/SAML authentication', included: true },
+        { text: 'Priority support', included: true },
+        { text: 'Advanced analytics', included: true }
       ],
-      cta: 'Go Pro',
+      cta: 'Start with Teams',
       ctaVariant: 'default'
     },
     {
       name: 'Enterprise',
-      description: 'For schools, businesses, and organizations',
+      description: 'For organizations with advanced needs',
       monthlyPrice: -1,
       yearlyPrice: -1,
       enterprise: true,
       features: [
-        { text: 'AI Agent - Dedicated instances & custom training', included: true, tooltip: 'Train AI on your organization\'s codebase and standards' },
-        { text: 'Everything in Pro', included: true },
-        { text: 'Private AI deployment option', included: true },
-        { text: 'Custom AI guardrails & policies', included: true },
+        { text: 'Everything in Teams', included: true },
+        { text: 'Custom AI model training', included: true },
+        { text: 'Dedicated compute resources', included: true },
         { text: 'Unlimited storage', included: true },
-        { text: 'Custom compute resources', included: true },
-        { text: 'Enterprise SSO', included: true },
-        { text: 'Advanced compliance (SOC2, HIPAA)', included: true },
-        { text: 'Dedicated infrastructure', included: true },
+        { text: 'VPC & private cloud options', included: true },
+        { text: 'Air-gapped deployments', included: true },
+        { text: 'SOC2 Type II compliance', included: true },
+        { text: 'HIPAA compliance options', included: true },
+        { text: '99.9% uptime SLA', included: true },
         { text: '24/7 phone support', included: true },
-        { text: 'Custom SLA', included: true },
-        { text: 'On-premise deployment option', included: true },
-        { text: 'Dedicated success team', included: true }
+        { text: 'Dedicated account manager', included: true },
+        { text: 'Custom contracts & invoicing', included: true }
       ],
       cta: 'Contact Sales',
       ctaVariant: 'outline'
@@ -170,7 +169,7 @@ export default function Pricing() {
               />
               <span className={billingPeriod === 'yearly' ? 'font-semibold' : 'text-muted-foreground'}>
                 Yearly
-                <Badge variant="secondary" className="ml-2">Save 20%</Badge>
+                <Badge variant="secondary" className="ml-2">Save 12%</Badge>
               </span>
             </div>
           </div>
@@ -310,6 +309,87 @@ export default function Pricing() {
               </table>
             </div>
           </Card>
+        </div>
+      </section>
+
+      {/* Resource Comparison */}
+      <section className="py-20 bg-muted/50">
+        <div className="container-responsive max-w-6xl">
+          <h2 className="text-3xl font-bold text-center mb-12">Compare resources</h2>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-4 px-4">Feature</th>
+                  <th className="text-center py-4 px-4">Free</th>
+                  <th className="text-center py-4 px-4">
+                    <span className="text-primary font-semibold">Core</span>
+                  </th>
+                  <th className="text-center py-4 px-4">Teams</th>
+                  <th className="text-center py-4 px-4">Enterprise</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b">
+                  <td className="py-4 px-4 font-medium">vCPU</td>
+                  <td className="text-center py-4 px-4">0.5</td>
+                  <td className="text-center py-4 px-4 text-primary font-semibold">2</td>
+                  <td className="text-center py-4 px-4">4 per user</td>
+                  <td className="text-center py-4 px-4">Custom</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4 px-4 font-medium">RAM</td>
+                  <td className="text-center py-4 px-4">512 MB</td>
+                  <td className="text-center py-4 px-4 text-primary font-semibold">2 GiB</td>
+                  <td className="text-center py-4 px-4">4 GiB per user</td>
+                  <td className="text-center py-4 px-4">Custom</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4 px-4 font-medium">Storage</td>
+                  <td className="text-center py-4 px-4">10 GiB</td>
+                  <td className="text-center py-4 px-4 text-primary font-semibold">50 GiB</td>
+                  <td className="text-center py-4 px-4">500 GiB shared</td>
+                  <td className="text-center py-4 px-4">Unlimited</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4 px-4 font-medium">Bandwidth</td>
+                  <td className="text-center py-4 px-4">10 GiB/month</td>
+                  <td className="text-center py-4 px-4 text-primary font-semibold">100 GiB/month</td>
+                  <td className="text-center py-4 px-4">1 TiB/month</td>
+                  <td className="text-center py-4 px-4">Unlimited</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4 px-4 font-medium">Always-on projects</td>
+                  <td className="text-center py-4 px-4">-</td>
+                  <td className="text-center py-4 px-4 text-primary font-semibold">5</td>
+                  <td className="text-center py-4 px-4">Unlimited</td>
+                  <td className="text-center py-4 px-4">Unlimited</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4 px-4 font-medium">Private projects</td>
+                  <td className="text-center py-4 px-4">-</td>
+                  <td className="text-center py-4 px-4 text-primary font-semibold">Unlimited</td>
+                  <td className="text-center py-4 px-4">Unlimited</td>
+                  <td className="text-center py-4 px-4">Unlimited</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4 px-4 font-medium">AI interactions</td>
+                  <td className="text-center py-4 px-4">Limited</td>
+                  <td className="text-center py-4 px-4 text-primary font-semibold">Unlimited</td>
+                  <td className="text-center py-4 px-4">Unlimited</td>
+                  <td className="text-center py-4 px-4">Custom limits</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4 px-4 font-medium">Support</td>
+                  <td className="text-center py-4 px-4">Community</td>
+                  <td className="text-center py-4 px-4 text-primary font-semibold">Priority email</td>
+                  <td className="text-center py-4 px-4">Priority email + chat</td>
+                  <td className="text-center py-4 px-4">24/7 phone + dedicated</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
