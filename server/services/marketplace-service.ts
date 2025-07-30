@@ -1,5 +1,7 @@
 import EventEmitter from 'events';
 import { createLogger } from '../utils/logger';
+import { db } from '../db';
+import { templates as templatesTable } from '@shared/schema';
 
 const logger = createLogger('marketplace-service');
 
@@ -345,7 +347,23 @@ export class MarketplaceService extends EventEmitter {
     language?: string;
     search?: string;
   }): Promise<MarketplaceTemplate[]> {
-    let templates = Array.from(this.templates.values());
+    // Fetch templates from database
+    let dbTemplates = await db.select().from(templatesTable);
+
+    // Transform database templates to MarketplaceTemplate format
+    let templates = dbTemplates.map(t => ({
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      framework: t.framework || '',
+      language: t.language,
+      author: t.authorName,
+      stars: t.stars,
+      forks: t.forks,
+      lastUpdated: '2 days ago', // Can be calculated from updatedAt
+      tags: t.tags,
+      featured: t.isFeatured
+    }));
 
     if (filters) {
       if (filters.framework) {

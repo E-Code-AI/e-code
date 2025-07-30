@@ -17,6 +17,7 @@ import { PublicFooter } from '@/components/layout/PublicFooter';
 import { MobileChatInterface } from '@/components/MobileChatInterface';
 import { AnimatedPlatformDemo } from '@/components/AnimatedPlatformDemo';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Landing() {
   const [, navigate] = useLocation();
@@ -25,6 +26,12 @@ export default function Landing() {
   const [chatOpen, setChatOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [appDescription, setAppDescription] = useState('');
+
+  // Fetch real templates from database
+  const { data: templates = [], isLoading: templatesLoading } = useQuery<any[]>({
+    queryKey: ['/api/templates'],
+    enabled: true
+  });
 
   const features = [
     {
@@ -570,174 +577,110 @@ export default function Landing() {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="group hover:shadow-lg transition-all cursor-pointer">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="secondary">Built with AI</Badge>
-                  <span className="text-sm text-muted-foreground">2 min ago</span>
-                </div>
-                <CardTitle className="text-lg">Recipe Finder</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  "Build an app that finds recipes based on ingredients I have at home"
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-muted rounded-lg p-3 mb-3 font-mono text-xs">
-                  <div className="space-y-1">
-                    <div>
-                      <span className="text-purple-600 dark:text-purple-400">const</span> {' '}
-                      <span className="text-blue-600 dark:text-blue-400">ingredients</span> = [
-                      <span className="text-green-600 dark:text-green-400">'carrot'</span>,
-                      <span className="text-green-600 dark:text-green-400">'potato'</span>];
+            {templatesLoading ? (
+              // Loading state
+              [...Array(4)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader>
+                    <div className="h-6 bg-muted rounded w-20 mb-2"></div>
+                    <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-muted rounded w-full"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-32 bg-muted rounded mb-3"></div>
+                    <div className="h-9 bg-muted rounded"></div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              // Display real templates from database
+              templates.slice(0, 4).map((template, index) => (
+                <Card key={template.id} className="group hover:shadow-lg transition-all cursor-pointer">
+                  <CardHeader>
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="secondary">Built with AI</Badge>
+                      <span className="text-sm text-muted-foreground">{index + 2} min ago</span>
                     </div>
-                    <div>
-                      <span className="text-purple-600 dark:text-purple-400">const</span> {' '}
-                      <span className="text-blue-600 dark:text-blue-400">recipes</span> = 
-                      <span className="text-yellow-600 dark:text-yellow-400">findRecipes</span>(ingredients);
+                    <CardTitle className="text-lg">{template.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {template.description}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-muted rounded-lg p-3 mb-3 font-mono text-xs">
+                      <div className="space-y-1">
+                        {/* Show code snippet based on template category */}
+                        {template.category === 'web' && (
+                          <>
+                            <div>
+                              <span className="text-purple-600 dark:text-purple-400">const</span> {' '}
+                              <span className="text-blue-600 dark:text-blue-400">App</span> = () =&gt; {'{'}
+                            </div>
+                            <div className="ml-2">
+                              <span className="text-purple-600 dark:text-purple-400">return</span> {' '}
+                              <span className="text-green-600 dark:text-green-400">&lt;div&gt;{template.name}&lt;/div&gt;</span>
+                            </div>
+                            <div>{'}'}</div>
+                          </>
+                        )}
+                        {template.category === 'api' && (
+                          <>
+                            <div>
+                              <span className="text-purple-600 dark:text-purple-400">app</span>.
+                              <span className="text-yellow-600 dark:text-yellow-400">get</span>(
+                              <span className="text-green-600 dark:text-green-400">'/api'</span>, 
+                            </div>
+                            <div className="ml-2">
+                              <span className="text-blue-600 dark:text-blue-400">(req, res)</span> =&gt; {'{'}
+                            </div>
+                            <div className="ml-4">
+                              res.<span className="text-yellow-600 dark:text-yellow-400">json</span>({'{'}...{'}'})
+                            </div>
+                            <div className="ml-2">{'}'});</div>
+                          </>
+                        )}
+                        {template.category === 'data' && (
+                          <>
+                            <div>
+                              <span className="text-purple-600 dark:text-purple-400">const</span> {' '}
+                              <span className="text-blue-600 dark:text-blue-400">data</span> = 
+                              <span className="text-yellow-600 dark:text-yellow-400">analyze</span>();
+                            </div>
+                            <div>
+                              <span className="text-yellow-600 dark:text-yellow-400">visualize</span>(data);
+                            </div>
+                          </>
+                        )}
+                        {/* Default code snippet for other categories */}
+                        {!['web', 'api', 'data'].includes(template.category) && (
+                          <>
+                            <div>
+                              <span className="text-purple-600 dark:text-purple-400">function</span> {' '}
+                              <span className="text-blue-600 dark:text-blue-400">main</span>() {'{'}
+                            </div>
+                            <div className="ml-2">
+                              <span className="text-green-600 dark:text-green-400">// {template.name}</span>
+                            </div>
+                            <div>{'}'}</div>
+                          </>
+                        )}
+                        <div className="mt-2 text-green-600 dark:text-green-400">
+                          // Ready to customize!
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-2 text-green-600 dark:text-green-400">
-                      // Found 12 matching recipes!
-                    </div>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
-                  onClick={() => window.location.href = '/templates'}
-                >
-                  View Project
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card className="group hover:shadow-lg transition-all cursor-pointer">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="secondary">Built with AI</Badge>
-                  <span className="text-sm text-muted-foreground">5 min ago</span>
-                </div>
-                <CardTitle className="text-lg">Budget Tracker</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  "I need a simple app to track my monthly expenses with charts"
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-muted rounded-lg p-3 mb-3 font-mono text-xs">
-                  <div className="space-y-1">
-                    <div>
-                      <span className="text-purple-600 dark:text-purple-400">interface</span> {' '}
-                      <span className="text-blue-600 dark:text-blue-400">Expense</span> {'{'}
-                    </div>
-                    <div className="ml-2">
-                      <span className="text-blue-600 dark:text-blue-400">amount</span>: number;
-                    </div>
-                    <div className="ml-2">
-                      <span className="text-blue-600 dark:text-blue-400">category</span>: string;
-                    </div>
-                    <div>{'}'}</div>
-                    <div className="mt-2">
-                      <span className="text-yellow-600 dark:text-yellow-400">Chart</span>.
-                      <span className="text-yellow-600 dark:text-yellow-400">render</span>(expenses);
-                    </div>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
-                  onClick={() => window.location.href = '/templates'}
-                >
-                  View Project
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card className="group hover:shadow-lg transition-all cursor-pointer">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="secondary">Built with AI</Badge>
-                  <span className="text-sm text-muted-foreground">10 min ago</span>
-                </div>
-                <CardTitle className="text-lg">Study Timer</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  "Create a pomodoro timer with relaxing sounds and break reminders"
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-muted rounded-lg p-3 mb-3 font-mono text-xs">
-                  <div className="space-y-1">
-                    <div>
-                      <span className="text-purple-600 dark:text-purple-400">let</span> {' '}
-                      <span className="text-blue-600 dark:text-blue-400">minutes</span> = 25;
-                    </div>
-                    <div>
-                      <span className="text-purple-600 dark:text-purple-400">let</span> {' '}
-                      <span className="text-blue-600 dark:text-blue-400">seconds</span> = 0;
-                    </div>
-                    <div className="mt-2">
-                      <span className="text-yellow-600 dark:text-yellow-400">setInterval</span>(() =&gt; {"{"}
-                    </div>
-                    <div className="ml-2">
-                      <span className="text-yellow-600 dark:text-yellow-400">updateTimer</span>();
-                    </div>
-                    <div>{'}'}, 1000);</div>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
-                  onClick={() => window.location.href = '/templates'}
-                >
-                  View Project
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card className="group hover:shadow-lg transition-all cursor-pointer">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="secondary">Built with AI</Badge>
-                  <span className="text-sm text-muted-foreground">15 min ago</span>
-                </div>
-                <CardTitle className="text-lg">CRM System</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  "Build a customer relationship management system with contacts and sales pipeline"
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-muted rounded-lg p-3 mb-3 font-mono text-xs">
-                  <div className="space-y-1">
-                    <div>
-                      <span className="text-purple-600 dark:text-purple-400">class</span> {' '}
-                      <span className="text-blue-600 dark:text-blue-400">Customer</span> {"{"}
-                    </div>
-                    <div className="ml-2">
-                      <span className="text-blue-600 dark:text-blue-400">name</span>: string;
-                    </div>
-                    <div className="ml-2">
-                      <span className="text-blue-600 dark:text-blue-400">email</span>: string;
-                    </div>
-                    <div className="ml-2">
-                      <span className="text-blue-600 dark:text-blue-400">dealValue</span>: number;
-                    </div>
-                    <div>{"}"}</div>
-                    <div className="mt-2 text-green-600 dark:text-green-400">
-                      // Pipeline: Lead → Qualified → Proposal → Closed
-                    </div>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
-                  onClick={() => window.location.href = '/templates'}
-                >
-                  View Project
-                </Button>
-              </CardContent>
-            </Card>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
+                      onClick={() => navigate('/templates')}
+                    >
+                      View Template
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
           
           <div className="mt-8 text-center">
