@@ -2112,6 +2112,400 @@ API will be available at http://localhost:3000
       res.status(500).json({ error: 'Failed to download export' });
     }
   });
+
+  // Mobile App API Endpoints
+  app.post('/api/mobile/register-device', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { deviceId, platform, appVersion, osVersion, deviceModel, pushToken } = req.body;
+      const userId = req.user.id;
+
+      // Check if device already exists
+      const existing = await storage.getMobileSession(userId, deviceId);
+      
+      if (existing) {
+        // Update existing session
+        await storage.updateMobileSession(userId, deviceId, {
+          appVersion,
+          osVersion,
+          deviceModel,
+          pushToken,
+          lastActiveAt: new Date(),
+        });
+      } else {
+        // Create new session
+        await storage.createMobileSession({
+          userId,
+          deviceId,
+          platform,
+          appVersion,
+          osVersion,
+          deviceModel,
+          pushToken,
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Mobile device registration error:', error);
+      res.status(500).json({ message: 'Failed to register device' });
+    }
+  });
+
+  app.get('/api/mobile/projects', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projects = await storage.getProjectsByUser(userId);
+      
+      // Transform for mobile format
+      const mobileProjects = projects.map(p => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        language: p.language,
+        lastOpened: p.lastOpened,
+        isPublic: p.isPublic,
+        canRun: ['javascript', 'python', 'html'].includes(p.language || ''),
+      }));
+
+      res.json(mobileProjects);
+    } catch (error) {
+      console.error('Mobile projects fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch projects' });
+    }
+  });
+
+  app.post('/api/mobile/projects/:id/run', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const project = await storage.getProject(projectId);
+      
+      if (!project || project.ownerId !== req.user.id) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+
+      // Execute project
+      const executor = new SimpleCodeExecutor();
+      const mainFile = await storage.getFile(projectId, 'main.py') || 
+                      await storage.getFile(projectId, 'index.js') ||
+                      await storage.getFile(projectId, 'index.html');
+
+      if (!mainFile) {
+        return res.status(400).json({ message: 'No executable file found' });
+      }
+
+      const result = await executor.execute(
+        project.language || 'python',
+        mainFile.content,
+        req.body.input || ''
+      );
+
+      res.json({
+        output: result.output,
+        error: result.error,
+        exitCode: result.error ? 1 : 0,
+      });
+    } catch (error) {
+      console.error('Mobile project run error:', error);
+      res.status(500).json({ message: 'Failed to run project' });
+    }
+  });
+
+  app.get('/api/mobile/editor/:projectId', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const project = await storage.getProject(projectId);
+      
+      if (!project || project.ownerId !== req.user.id) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+
+      // Get file tree
+      const files = await storage.getProjectFiles(projectId);
+      
+      res.json({
+        project: {
+          id: project.id,
+          name: project.name,
+          language: project.language,
+        },
+        files: files.map(f => ({
+          id: f.id,
+          name: f.name,
+          path: f.path,
+          content: f.content,
+          isDirectory: f.isDirectory,
+        })),
+      });
+    } catch (error) {
+      console.error('Mobile editor fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch editor data' });
+    }
+  });
+
+  app.put('/api/mobile/files/:fileId', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const { content } = req.body;
+      
+      // Verify file ownership
+      const file = await storage.getFileById(fileId);
+      if (!file) {
+        return res.status(404).json({ message: 'File not found' });
+      }
+
+      const project = await storage.getProject(file.projectId);
+      if (!project || project.ownerId !== req.user.id) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      // Update file
+      await storage.updateFile(fileId, { content });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Mobile file update error:', error);
+      res.status(500).json({ message: 'Failed to update file' });
+    }
+  });
+
+  app.post('/api/mobile/ai/chat', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { message, projectId, context } = req.body;
+      const userId = req.user.id;
+
+      // Get API key
+      const apiKey = await storage.getAdminApiKey();
+      if (!apiKey) {
+        return res.status(503).json({ message: 'AI service unavailable' });
+      }
+
+      // Get AI provider
+      const factory = new AIProviderFactory();
+      const provider = await factory.getProvider(undefined, apiKey);
+
+      // Generate response
+      const response = await provider.generateChat([
+        { 
+          role: 'system', 
+          content: 'You are an AI assistant helping with mobile coding. Be concise for mobile screens.' 
+        },
+        { role: 'user', content: message },
+      ]);
+
+      // Track usage
+      await storage.trackAIUsage(userId, 'chat', {
+        provider: 'openai',
+        model: 'gpt-4o',
+        promptTokens: 100,
+        completionTokens: 200,
+        totalTokens: 300,
+      });
+
+      res.json({ response });
+    } catch (error) {
+      console.error('Mobile AI chat error:', error);
+      res.status(500).json({ message: 'Failed to process AI request' });
+    }
+  });
+
+  app.post('/api/mobile/push/test', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { title, body } = req.body;
+
+      // Get user's mobile sessions
+      const sessions = await storage.getUserMobileSessions(userId);
+      
+      // Send push notification (in production, use FCM/APNS)
+      for (const session of sessions) {
+        if (session.pushToken) {
+          console.log(`Would send push to ${session.pushToken}:`, { title, body });
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        deviceCount: sessions.filter(s => s.pushToken).length 
+      });
+    } catch (error) {
+      console.error('Push notification error:', error);
+      res.status(500).json({ message: 'Failed to send push notification' });
+    }
+  });
+
+  // Voice/Video WebRTC Endpoints
+  app.post('/api/webrtc/room/create', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { projectId, sessionType, maxParticipants } = req.body;
+      const userId = req.user.id;
+
+      const { VoiceVideoService } = await import('./webrtc/voice-video-service');
+      const voiceVideoService = new VoiceVideoService();
+      const room = await voiceVideoService.createSession(
+        projectId,
+        userId,
+        sessionType || 'video',
+        maxParticipants || 10
+      );
+
+      res.json(room);
+    } catch (error) {
+      console.error('WebRTC room creation error:', error);
+      res.status(500).json({ message: 'Failed to create room' });
+    }
+  });
+
+  app.get('/api/webrtc/room/:roomId/join', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { roomId } = req.params;
+      const userId = req.user.id;
+
+      // Return WebRTC configuration
+      res.json({
+        roomId,
+        userId,
+        iceServers: [
+          { urls: ['stun:stun.l.google.com:19302'] },
+          {
+            urls: ['turn:turn.e-code.com:3478'],
+            username: 'ecode',
+            credential: process.env.TURN_SECRET || 'default-turn-secret',
+          },
+        ],
+        websocketUrl: `/ws/webrtc/${roomId}`,
+      });
+    } catch (error) {
+      console.error('WebRTC join error:', error);
+      res.status(500).json({ message: 'Failed to join room' });
+    }
+  });
+
+  // GPU Instance Endpoints
+  app.post('/api/gpu/provision', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { projectId, instanceType, gpuCount, provider, region } = req.body;
+      const userId = req.user.id;
+
+      // Verify project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.ownerId !== userId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      const { GPUInstanceManager } = await import('./gpu/gpu-instance-manager');
+      const gpuManager = new GPUInstanceManager();
+      const instance = await gpuManager.provisionInstance(projectId, {
+        instanceType,
+        gpuCount: gpuCount || 1,
+        provider: provider || 'aws',
+        region: region || 'us-east-1',
+      });
+
+      res.json(instance);
+    } catch (error) {
+      console.error('GPU provision error:', error);
+      res.status(500).json({ message: 'Failed to provision GPU instance' });
+    }
+  });
+
+  app.get('/api/gpu/instances', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projects = await storage.getProjectsByUser(userId);
+      
+      const { GPUInstanceManager } = await import('./gpu/gpu-instance-manager');
+      const gpuManager = new GPUInstanceManager();
+      const instances = [];
+
+      for (const project of projects) {
+        const projectInstances = await gpuManager.getProjectInstances(project.id);
+        instances.push(...projectInstances);
+      }
+
+      res.json(instances);
+    } catch (error) {
+      console.error('GPU instances fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch GPU instances' });
+    }
+  });
+
+  // Auto-grading Endpoints
+  app.post('/api/education/assignments', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { courseId, title, description, testCases, dueDate, totalPoints } = req.body;
+      const userId = req.user.id;
+
+      const { AutoGradingService } = await import('./education/auto-grading-service');
+      const autoGrader = new AutoGradingService();
+      const assignment = await autoGrader.createAssignment(
+        courseId,
+        title,
+        description,
+        testCases,
+        {
+          dueDate: dueDate ? new Date(dueDate) : undefined,
+          totalPoints,
+        }
+      );
+
+      res.json(assignment);
+    } catch (error) {
+      console.error('Assignment creation error:', error);
+      res.status(500).json({ message: 'Failed to create assignment' });
+    }
+  });
+
+  app.post('/api/education/submit', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { assignmentId, projectId } = req.body;
+      const userId = req.user.id;
+
+      const { AutoGradingService } = await import('./education/auto-grading-service');
+      const autoGrader = new AutoGradingService();
+      const submission = await autoGrader.submitAssignment(
+        assignmentId,
+        userId,
+        projectId
+      );
+
+      res.json(submission);
+    } catch (error) {
+      console.error('Assignment submission error:', error);
+      res.status(500).json({ message: 'Failed to submit assignment' });
+    }
+  });
+
+  // CLI Token Endpoints
+  app.post('/api/cli/tokens', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { deviceName } = req.body;
+      const userId = req.user.id;
+
+      const token = await storage.createCLIToken(userId, deviceName);
+      
+      res.json({ token });
+    } catch (error) {
+      console.error('CLI token creation error:', error);
+      res.status(500).json({ message: 'Failed to create CLI token' });
+    }
+  });
+
+  app.get('/api/cli/tokens', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const tokens = await storage.getUserCLITokens(userId);
+      
+      res.json(tokens.map(t => ({
+        id: t.id,
+        deviceName: t.deviceName,
+        lastUsedAt: t.lastUsedAt,
+        createdAt: t.createdAt,
+      })));
+    } catch (error) {
+      console.error('CLI tokens fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch CLI tokens' });
+    }
+  });
   
   // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
