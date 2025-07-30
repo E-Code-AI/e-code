@@ -2729,9 +2729,89 @@ export class DatabaseStorage implements IStorage {
   }
 
   async checkAndAwardAchievements(userId: number): Promise<UserAchievement[]> {
-    // This would check various conditions and award achievements
-    // For now, returning empty array as placeholder
-    return [];
+    const newAchievements: UserAchievement[] = [];
+    
+    try {
+      // Get all available achievements
+      const allAchievements = await this.getAllAchievements();
+      
+      // Get user's existing achievements
+      const existingAchievements = await this.getUserAchievements(userId);
+      const existingIds = new Set(existingAchievements.map(a => a.achievementId));
+      
+      // Check each achievement condition
+      for (const achievement of allAchievements) {
+        if (existingIds.has(achievement.id)) continue; // Already has this achievement
+        
+        let shouldAward = false;
+        
+        switch (achievement.type) {
+          case 'projects':
+            const projectCount = await db.select({ count: sql<number>`count(*)` })
+              .from(projects)
+              .where(eq(projects.ownerId, userId));
+            shouldAward = projectCount[0].count >= achievement.requiredValue;
+            break;
+            
+          case 'commits':
+            // Count commits across all user's projects
+            const commitCount = await db.select({ count: sql<number>`count(*)` })
+              .from(gitCommits)
+              .innerJoin(projects, eq(gitCommits.projectId, projects.id))
+              .where(eq(projects.ownerId, userId));
+            shouldAward = commitCount[0].count >= achievement.requiredValue;
+            break;
+            
+          case 'ai_usage':
+            // Count AI interactions
+            const aiUsage = await db.select({ count: sql<number>`count(*)` })
+              .from(aiUsageTracking)
+              .where(eq(aiUsageTracking.userId, userId));
+            shouldAward = aiUsage[0].count >= achievement.requiredValue;
+            break;
+            
+          case 'collaborations':
+            // Count unique collaborators
+            const collaborators = await db.selectDistinct({ collaboratorId: projectCollaborators.userId })
+              .from(projectCollaborators)
+              .innerJoin(projects, eq(projectCollaborators.projectId, projects.id))
+              .where(and(
+                eq(projects.ownerId, userId),
+                ne(projectCollaborators.userId, userId)
+              ));
+            shouldAward = collaborators.length >= achievement.requiredValue;
+            break;
+            
+          case 'deployments':
+            // Count successful deployments
+            const deployments = await db.select({ count: sql<number>`count(*)` })
+              .from(deployments)
+              .innerJoin(projects, eq(deployments.projectId, projects.id))
+              .where(and(
+                eq(projects.ownerId, userId),
+                eq(deployments.status, 'active')
+              ));
+            shouldAward = deployments[0].count >= achievement.requiredValue;
+            break;
+            
+          case 'login_streak':
+            // Check user's login streak
+            const streak = await this.getUserStreak(userId);
+            shouldAward = streak ? streak.currentStreak >= achievement.requiredValue : false;
+            break;
+        }
+        
+        if (shouldAward) {
+          const awarded = await this.awardAchievement(userId, achievement.id);
+          newAchievements.push(awarded);
+        }
+      }
+      
+      return newAchievements;
+    } catch (error) {
+      console.error('Error checking achievements:', error);
+      return [];
+    }
   }
 
   // Learning streak methods
