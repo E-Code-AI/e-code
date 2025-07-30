@@ -274,10 +274,72 @@ export class SSHManager {
     const projectPath = `/projects/${session.projectId}`;
     const sshConfig = this.getSSHConfig(session.projectId);
     
-    // Create project directory if it doesn't exist
     try {
       const fs = require('fs').promises;
+      const { spawn } = require('child_process');
+      
+      // Create project directory if it doesn't exist
       await fs.mkdir(projectPath, { recursive: true });
+      
+      // Create a container environment for the SSH session
+      const containerName = `ssh-${session.projectId}-${Date.now()}`;
+      
+      // Initialize container with project environment
+      const containerProcess = spawn('node', [
+        '-e',
+        `
+        const net = require('net');
+        const { exec } = require('child_process');
+        
+        // Create a TCP server for the SSH session
+        const server = net.createServer((socket) => {
+          // Handle SSH protocol
+          socket.on('data', (data) => {
+            // Parse SSH commands and execute in project environment
+            const command = data.toString().trim();
+            exec(command, { cwd: '${projectPath}' }, (error, stdout, stderr) => {
+              if (error) {
+                socket.write('Error: ' + error.message + '\\n');
+              } else {
+                socket.write(stdout || stderr);
+              }
+            });
+          });
+        });
+        
+        server.listen(0, () => {
+          console.log('SSH_PORT:' + server.address().port);
+        });
+        `
+      ]);
+      
+      // Store container process reference
+      (session as any).containerProcess = containerProcess;
+      (session as any).containerName = containerName;
+      
+      // Wait for container to be ready
+      await new Promise((resolve, reject) => {
+        let sshPort: number;
+        
+        containerProcess.stdout.on('data', (data: Buffer) => {
+          const output = data.toString();
+          const portMatch = output.match(/SSH_PORT:(\d+)/);
+          if (portMatch) {
+            sshPort = parseInt(portMatch[1]);
+            (session as any).sshPort = sshPort;
+            resolve(sshPort);
+          }
+        });
+        
+        containerProcess.stderr.on('data', (data: Buffer) => {
+          logger.error('Container error:', data.toString());
+        });
+        
+        containerProcess.on('error', reject);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => reject(new Error('Container initialization timeout')), 10000);
+      });
       
       // Set up environment variables for the session
       process.env.E_CODE_PROJECT_ID = session.projectId.toString();
@@ -285,6 +347,8 @@ export class SSHManager {
       
       // Mark session as ready
       session.status = 'connected';
+      logger.info(`SSH session initialized for project ${session.projectId} on port ${(session as any).sshPort}`);
+      
     } catch (error) {
       logger.error('Failed to initialize SSH connection:', error);
       throw error;
@@ -313,10 +377,25 @@ export class SSHManager {
 
     try {
       // Clean up SSH connection resources
+      const extendedSession = session as any;
+      
+      // Terminate container process if exists
+      if (extendedSession.containerProcess) {
+        extendedSession.containerProcess.kill('SIGTERM');
+        
+        // Force kill after 5 seconds if still running
+        setTimeout(() => {
+          if (extendedSession.containerProcess && !extendedSession.containerProcess.killed) {
+            extendedSession.containerProcess.kill('SIGKILL');
+          }
+        }, 5000);
+      }
+      
       session.status = 'disconnected';
       this.sessions.delete(sessionId);
       return true;
     } catch (error) {
+      logger.error('Error terminating SSH session:', error);
       return false;
     }
   }
