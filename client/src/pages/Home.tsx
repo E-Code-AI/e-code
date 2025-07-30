@@ -64,7 +64,7 @@ export default function Home() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setIsCreateModalOpen(false);
-      navigate(`/project/${data.id}`);
+      navigate(`/${data.slug}`);
       toast({
         title: "Project created!",
         description: `${data.name} has been created successfully.`,

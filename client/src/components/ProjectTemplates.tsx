@@ -106,12 +106,9 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
   // Create project from template mutation
   const createProjectMutation = useMutation({
     mutationFn: async ({ template, name }: { template: Template; name: string }) => {
-      const response = await apiRequest('/api/projects/from-template', {
-        method: 'POST',
-        body: JSON.stringify({
-          templateId: template.id,
-          name: name || `My ${template.name}`,
-        }),
+      const response = await apiRequest('POST', '/api/projects/from-template', {
+        templateId: template.id,
+        name: name || `My ${template.name}`,
       });
       if (!response.ok) {
         const error = await response.json();
@@ -124,7 +121,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
         title: 'Project created!',
         description: `"${project.name}" has been created successfully.`,
       });
-      navigate(`/editor/${project.id}`);
+      navigate(`/${project.slug}`);
       setShowCreateDialog(false);
       setShowPreviewDialog(false);
       setProjectName('');
@@ -384,7 +381,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                       className="w-full h-8 sm:h-9 text-xs sm:text-sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        createProjectMutation.mutate(template);
+                        createProjectMutation.mutate({ template, name: `My ${template.name}` });
                       }}
                       disabled={createProjectMutation.isPending}
                     >

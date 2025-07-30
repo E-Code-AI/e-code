@@ -75,13 +75,17 @@ import { ToolsDropdown } from '@/components/ToolsDropdown';
 type MobileTab = 'files' | 'agent' | 'console' | 'preview' | 'secrets' | 'database' | 'auth';
 
 const ReplitProjectPage = () => {
-  const [, params] = useRoute('/project/:id');
+  const [matchProject, paramsProject] = useRoute('/project/:id');
+  const [matchSlug, paramsSlug] = useRoute('/@:username/:projectname');
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  const projectId = params?.id ? parseInt(params.id) : 0;
+  const projectId = matchProject && paramsProject?.id ? parseInt(paramsProject.id) : 0;
+  const projectSlug = matchSlug && paramsSlug?.username && paramsSlug?.projectname 
+    ? `@${paramsSlug.username}/${paramsSlug.projectname}` 
+    : undefined;
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, string>>({});
   const [projectRunning, setProjectRunning] = useState(false);
@@ -122,8 +126,25 @@ const ReplitProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: ['/api/projects', projectId],
-    enabled: !!projectId,
+    queryKey: ['/api/projects', projectId || projectSlug],
+    queryFn: async () => {
+      if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
+      
+      const url = projectSlug 
+        ? `/api/projects/by-slug/${encodeURIComponent(projectSlug)}`
+        : `/api/projects/${projectId}`;
+      
+      const res = await apiRequest('GET', url);
+      if (!res.ok) {
+        const error = await res.text();
+        if (res.status === 401) {
+          throw new Error('You need to log in to access this project');
+        }
+        throw new Error(error || 'Failed to fetch project');
+      }
+      return res.json();
+    },
+    enabled: !!projectId || !!projectSlug,
   });
 
   // Query for project files
@@ -132,8 +153,8 @@ const ReplitProjectPage = () => {
     isLoading: filesLoading, 
     error: filesError 
   } = useQuery<File[]>({
-    queryKey: ['/api/projects', projectId, 'files'],
-    enabled: !!projectId,
+    queryKey: ['/api/projects', project?.id || projectId, 'files'],
+    enabled: !!project?.id || !!projectId,
   });
 
   // Mobile bottom navigation matching Replit's design

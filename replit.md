@@ -91,6 +91,16 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - **Default Test User**: Username: `admin`, Password: `admin` (for development)
 
 ## Recent Changes
+- 2025-07-30: **Slug-Based Project URLs Implementation Complete**:
+  * **Database Schema Updated**: Added `slug` column to projects table with unique constraint
+  * **Slug Format**: Projects now use @username/projectname format for better scalability
+  * **Automatic Generation**: Slugs are automatically generated when creating new projects
+  * **Duplicate Handling**: System appends numbers to handle duplicate project names (e.g., project-2)
+  * **Frontend Routing**: Added /@:username/:projectname route to App.tsx for slug-based access
+  * **ProjectPage Enhanced**: Component now supports both /project/:id and /@:username/:projectname routes
+  * **Backend API**: Existing /api/projects/by-slug/:slug endpoint properly handles slug-based queries
+  * **Migration Complete**: All 19 existing projects have been assigned unique slugs
+  * **Benefits**: System can now handle millions of projects without naming conflicts, matching Replit's approach
 - 2025-07-30: **SpotlightSearch Enhancement and Deployments Page Improvements**:
   * **SpotlightSearch/CommandPalette Enhanced**: 
     - Fixed all LSP errors (auth hook usage, TypeScript types) 

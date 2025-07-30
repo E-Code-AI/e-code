@@ -299,7 +299,7 @@ export default function Dashboard() {
                 <div
                   key={project.id}
                   className="group bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[var(--ecode-border-hover)] transition-colors cursor-pointer rounded-lg p-4"
-                  onClick={() => navigate(`/project/${project.id}`)}
+                  onClick={() => navigate(`/${project.slug}`)}
                 >
                   <div className="flex items-center gap-3">
                     {getProjectIcon(project)}
@@ -332,7 +332,7 @@ export default function Dashboard() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => navigate(`/project/${project.id}`)}>
+                          <DropdownMenuItem onClick={() => navigate(`/${project.slug}`)}>
                             <ExternalLink className="h-4 w-4 mr-2" />
                             Open
                           </DropdownMenuItem>
