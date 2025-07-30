@@ -72,15 +72,6 @@ export class DatabaseHostingService {
   private migrations: Map<string, DatabaseMigration[]> = new Map();
   private regions = ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'];
 
-  constructor() {
-    this.initializeService();
-  }
-
-  private async initializeService() {
-    // Initialize database hosting service without sample data
-    console.log('Database hosting service initialized - ready for real database instances');
-  }
-
   // Database plans configuration
   private plans = {
     free: {
@@ -122,8 +113,14 @@ export class DatabaseHostingService {
   };
 
   constructor() {
+    this.initializeService();
     this.startMetricsCollection();
     this.startMaintenanceScheduler();
+  }
+
+  private async initializeService() {
+    // Initialize database hosting service without sample data
+    console.log('Database hosting service initialized - ready for real database instances');
   }
 
   private startMetricsCollection() {
@@ -730,7 +727,7 @@ export class DatabaseHostingService {
           await execAsync(`systemctl restart mysql-${instance.id}`);
           break;
         case 'redis':
-          await execAsync(`redis-cli -p ${instance.endpoints.port} shutdown nosave && redis-server /etc/redis/${instance.id}.conf`);
+          await execAsync(`redis-cli -p ${instance.connection.port} shutdown nosave && redis-server /etc/redis/${instance.id}.conf`);
           break;
         case 'mongodb':
           await execAsync(`mongod --shutdown --dbpath /data/${instance.id} && mongod --config /etc/mongo/${instance.id}.conf`);
@@ -759,12 +756,53 @@ export class DatabaseHostingService {
     // Create backup directory
     await execAsync(`mkdir -p /backups/${instance.id}`);
     
-    // Create a placeholder backup file
-    await fs.writeFile(backupPath, JSON.stringify({
-      instance,
-      timestamp: new Date(),
-      backupId
-    }));
+    // Get password from secure storage (environment variable pattern)
+    const passwordEnvKey = `DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`;
+    const dbPassword = process.env[passwordEnvKey] || 'defaultpass';
+    
+    // Perform actual database backup based on type
+    switch (instance.type) {
+      case 'postgresql':
+        // Use pg_dump to create a PostgreSQL backup
+        const pgDumpCmd = `PGPASSWORD=${dbPassword} pg_dump -h ${instance.connection.host} -p ${instance.connection.port} -U ${instance.connection.username} -d ${instance.connection.database} -f ${backupPath}`;
+        await execAsync(pgDumpCmd);
+        break;
+        
+      case 'mysql':
+        // Use mysqldump to create a MySQL backup
+        const mysqlDumpCmd = `mysqldump -h ${instance.connection.host} -P ${instance.connection.port} -u ${instance.connection.username} -p${dbPassword} ${instance.connection.database} > ${backupPath}`;
+        await execAsync(mysqlDumpCmd);
+        break;
+        
+      case 'mongodb':
+        // Use mongodump to create a MongoDB backup
+        const mongoUri = `mongodb://${instance.connection.username}:${dbPassword}@${instance.connection.host}:${instance.connection.port}/${instance.connection.database}`;
+        const mongoDumpCmd = `mongodump --uri="${mongoUri}" --archive=${backupPath} --gzip`;
+        await execAsync(mongoDumpCmd);
+        break;
+        
+      case 'redis':
+        // Use redis-cli to create a Redis backup (RDB snapshot)
+        const redisCmd = `redis-cli -h ${instance.connection.host} -p ${instance.connection.port} -a ${dbPassword} --rdb ${backupPath}`;
+        await execAsync(redisCmd);
+        break;
+        
+      case 'sqlite':
+        // Use sqlite3 .backup command - SQLite typically uses file path
+        const sqlitePath = `/databases/${instance.id}/${instance.connection.database}`;
+        const sqliteCmd = `sqlite3 ${sqlitePath} ".backup '${backupPath}'"`;
+        await execAsync(sqliteCmd);
+        break;
+        
+      default:
+        // Fallback: Create a metadata file if database type is unknown
+        await fs.writeFile(backupPath + '.metadata.json', JSON.stringify({
+          instance,
+          timestamp: new Date(),
+          backupId,
+          error: 'Unknown database type for backup'
+        }));
+    }
     
     // Get file size
     const stats = await fs.stat(backupPath);
@@ -789,21 +827,25 @@ export class DatabaseHostingService {
     
     try {
       // Stop database service
-      await this.stopDatabase(instance);
+      // Stop database process
+      await execAsync(`systemctl stop ${instance.type}-${instance.id}`);
       
       // Restore based on database type
       switch(instance.type) {
         case 'postgresql':
-          await execAsync(`pg_restore -d ${instance.credentials.database} ${backupPath}`);
+          await execAsync(`PGPASSWORD=${process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass'} pg_restore -h ${instance.connection.host} -p ${instance.connection.port} -U ${instance.connection.username} -d ${instance.connection.database} ${backupPath}`);
           break;
         case 'mysql':
-          await execAsync(`mysql -u${instance.credentials.username} -p${instance.credentials.password} ${instance.credentials.database} < ${backupPath}`);
+          const mysqlPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
+          await execAsync(`mysql -h ${instance.connection.host} -P ${instance.connection.port} -u${instance.connection.username} -p${mysqlPassword} ${instance.connection.database} < ${backupPath}`);
           break;
         case 'redis':
-          await execAsync(`redis-cli -p ${instance.endpoints.port} --rdb ${backupPath}`);
+          const redisPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
+          await execAsync(`redis-cli -h ${instance.connection.host} -p ${instance.connection.port} -a ${redisPassword} --rdb ${backupPath}`);
           break;
         case 'mongodb':
-          await execAsync(`mongorestore --db ${instance.credentials.database} --archive=${backupPath}`);
+          const mongoPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
+          await execAsync(`mongorestore --host ${instance.connection.host}:${instance.connection.port} --username ${instance.connection.username} --password ${mongoPassword} --db ${instance.connection.database} --archive=${backupPath}`);
           break;
       }
       
@@ -830,20 +872,23 @@ export class DatabaseHostingService {
     
     try {
       // Connect to database and execute migration
+      const dbPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
+      
       switch(instance.type) {
         case 'postgresql':
-          await execAsync(`psql -h ${instance.endpoints.host} -p ${instance.endpoints.port} -U ${instance.credentials.username} -d ${instance.credentials.database} -c "${migration.sql}"`);
+          await execAsync(`PGPASSWORD=${dbPassword} psql -h ${instance.connection.host} -p ${instance.connection.port} -U ${instance.connection.username} -d ${instance.connection.database} -c "${migration.sql}"`);
           break;
         case 'mysql':
-          await execAsync(`mysql -h ${instance.endpoints.host} -P ${instance.endpoints.port} -u${instance.credentials.username} -p${instance.credentials.password} ${instance.credentials.database} -e "${migration.sql}"`);
+          await execAsync(`mysql -h ${instance.connection.host} -P ${instance.connection.port} -u${instance.connection.username} -p${dbPassword} ${instance.connection.database} -e "${migration.sql}"`);
           break;
         case 'mongodb':
-          await execAsync(`mongosh ${instance.connectionStrings.primary} --eval "${migration.sql}"`);
+          const mongoUri = `mongodb://${instance.connection.username}:${dbPassword}@${instance.connection.host}:${instance.connection.port}/${instance.connection.database}`;
+          await execAsync(`mongosh ${mongoUri} --eval "${migration.sql}"`);
           break;
       }
       
       // Record migration in history
-      migration.executedAt = new Date();
+      migration.executed = new Date();
       migration.status = 'completed';
     } catch (error: any) {
       migration.status = 'failed';
@@ -887,7 +932,6 @@ export class DatabaseHostingService {
       
       // Update instance configuration
       instance.config = { ...instance.config, ...newConfig };
-      instance.updatedAt = new Date();
     } catch (error) {
       console.error('Database scaling failed:', error);
       throw error;

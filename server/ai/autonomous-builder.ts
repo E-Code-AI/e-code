@@ -382,19 +382,42 @@ h1 {
       <h2>My Projects</h2>
       <div class="project-grid">
         <div class="project-card">
-          <img src="https://via.placeholder.com/300x200" alt="Project 1">
+          <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="200" fill="#1e293b"/>
+            <rect x="20" y="20" width="260" height="40" rx="4" fill="#334155"/>
+            <rect x="20" y="80" width="180" height="100" rx="4" fill="#475569"/>
+            <rect x="220" y="80" width="60" height="100" rx="4" fill="#64748b"/>
+            <circle cx="40" cy="40" r="8" fill="#10b981"/>
+            <circle cx="60" cy="40" r="8" fill="#f59e0b"/>
+            <circle cx="80" cy="40" r="8" fill="#ef4444"/>
+          </svg>
           <h3>Project One</h3>
           <p>A brief description of your first project and the technologies used.</p>
           <a href="#" class="project-link">View Project</a>
         </div>
         <div class="project-card">
-          <img src="https://via.placeholder.com/300x200" alt="Project 2">
+          <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="200" fill="#0ea5e9"/>
+            <rect x="100" y="40" width="100" height="120" rx="12" fill="#ffffff"/>
+            <rect x="110" y="50" width="80" height="20" rx="2" fill="#e5e7eb"/>
+            <rect x="110" y="80" width="80" height="10" rx="2" fill="#e5e7eb"/>
+            <rect x="110" y="100" width="60" height="10" rx="2" fill="#e5e7eb"/>
+            <rect x="110" y="120" width="80" height="30" rx="4" fill="#3b82f6"/>
+          </svg>
           <h3>Project Two</h3>
           <p>A brief description of your second project and what makes it special.</p>
           <a href="#" class="project-link">View Project</a>
         </div>
         <div class="project-card">
-          <img src="https://via.placeholder.com/300x200" alt="Project 3">
+          <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="200" fill="#7c3aed"/>
+            <rect x="40" y="40" width="220" height="120" rx="8" fill="#ffffff"/>
+            <rect x="50" y="50" width="200" height="30" rx="4" fill="#e5e7eb"/>
+            <rect x="50" y="90" width="150" height="20" rx="2" fill="#f3f4f6"/>
+            <rect x="50" y="120" width="180" height="20" rx="2" fill="#f3f4f6"/>
+            <circle cx="225" cy="100" r="20" fill="#7c3aed"/>
+            <path d="M 215 100 L 235 100 M 225 90 L 225 110" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+          </svg>
           <h3>Project Three</h3>
           <p>A brief description of your third project and its key features.</p>
           <a href="#" class="project-link">View Project</a>
