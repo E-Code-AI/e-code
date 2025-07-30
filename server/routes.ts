@@ -2506,6 +2506,121 @@ API will be available at http://localhost:3000
       res.status(500).json({ message: 'Failed to fetch CLI tokens' });
     }
   });
+
+  // Edge Functions endpoints
+  app.post('/api/edge-functions/deploy', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { projectId, name, code, runtime, triggers, env, regions, timeout, memory } = req.body;
+      
+      // Verify project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.ownerId !== req.user.id) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      const { edgeFunctionsService } = await import('./edge/edge-functions');
+      const edgeFunction = await edgeFunctionsService.deployFunction(
+        projectId,
+        name,
+        code,
+        { runtime, triggers, env, regions, timeout, memory }
+      );
+
+      res.json(edgeFunction);
+    } catch (error) {
+      console.error('Edge function deployment error:', error);
+      res.status(500).json({ message: 'Failed to deploy edge function' });
+    }
+  });
+
+  app.post('/api/edge-functions/:id/invoke', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { method, path, headers, body, query } = req.body;
+
+      const { edgeFunctionsService } = await import('./edge/edge-functions');
+      const result = await edgeFunctionsService.invokeFunction(id, {
+        method,
+        path,
+        headers,
+        body,
+        query,
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('Edge function invocation error:', error);
+      res.status(500).json({ message: 'Failed to invoke edge function' });
+    }
+  });
+
+  app.get('/api/edge-functions', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const projectId = req.query.projectId ? parseInt(req.query.projectId) : undefined;
+      
+      const { edgeFunctionsService } = await import('./edge/edge-functions');
+      const functions = await edgeFunctionsService.getFunctions(projectId);
+
+      res.json(functions);
+    } catch (error) {
+      console.error('Edge functions fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch edge functions' });
+    }
+  });
+
+  app.get('/api/edge-functions/:id/metrics', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const { edgeFunctionsService } = await import('./edge/edge-functions');
+      const metrics = await edgeFunctionsService.getFunctionMetrics(id);
+
+      res.json(metrics);
+    } catch (error) {
+      console.error('Edge function metrics error:', error);
+      res.status(500).json({ message: 'Failed to fetch edge function metrics' });
+    }
+  });
+
+  app.put('/api/edge-functions/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const { edgeFunctionsService } = await import('./edge/edge-functions');
+      const updatedFunction = await edgeFunctionsService.updateFunction(id, updates);
+
+      res.json(updatedFunction);
+    } catch (error) {
+      console.error('Edge function update error:', error);
+      res.status(500).json({ message: 'Failed to update edge function' });
+    }
+  });
+
+  app.delete('/api/edge-functions/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const { edgeFunctionsService } = await import('./edge/edge-functions');
+      await edgeFunctionsService.deleteFunction(id);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Edge function deletion error:', error);
+      res.status(500).json({ message: 'Failed to delete edge function' });
+    }
+  });
+
+  // Edge deployment endpoints
+  app.get('/api/edge/locations', async (req, res) => {
+    try {
+      const locations = edgeManager.getLocations();
+      res.json(locations);
+    } catch (error) {
+      console.error('Error fetching edge locations:', error);
+      res.status(500).json({ error: 'Failed to fetch edge locations' });
+    }
+  });
   
   // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
