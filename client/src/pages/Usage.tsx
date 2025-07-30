@@ -10,16 +10,45 @@ import {
   AlertTriangle, Check, X, Info, Clock, Cpu, HardDrive
 } from "lucide-react";
 import { ECodeLoading } from "@/components/ECodeLoading";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Usage() {
-  const [isLoading] = useState(false);
+  const [, navigate] = useLocation();
+  const { user } = useAuth();
+  
+  // Fetch real usage data
+  const { data: usageData, isLoading } = useQuery({
+    queryKey: ['/api/user/usage'],
+    enabled: !!user
+  });
+
+  // Fetch billing info
+  const { data: billingData } = useQuery<{
+    currentCycle: {
+      start: Date;
+      end: Date;
+      daysRemaining: number;
+    };
+    plan: string;
+    previousCycles: Array<{
+      month: string;
+      period: string;
+      amount: string;
+      plan: string;
+    }>;
+  }>({
+    queryKey: ['/api/user/billing'],
+    enabled: !!user
+  });
 
   if (isLoading) {
     return <ECodeLoading fullScreen text="Loading usage data..." />;
   }
 
-  // Mock usage data - would come from API in real implementation
-  const usage = {
+  // Use real data from API or fallback to default structure
+  const usage = usageData || {
     compute: {
       used: 72,
       limit: 100,
@@ -88,10 +117,39 @@ export default function Usage() {
     return 'text-green-600';
   };
 
-  const billingCycle = {
-    start: new Date('2025-07-01'),
-    end: new Date('2025-07-31'),
-    daysRemaining: 4
+  // Calculate real billing cycle
+  const today = new Date();
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const daysInMonth = endOfMonth.getDate();
+  const currentDay = today.getDate();
+  const daysRemaining = daysInMonth - currentDay + 1;
+  
+  const billingCycle = billingData?.currentCycle || {
+    start: startOfMonth,
+    end: endOfMonth,
+    daysRemaining
+  };
+  
+  // Action handlers
+  const handleUpgradePlan = () => {
+    navigate('/pricing');
+  };
+  
+  const handleBuyPowerUps = () => {
+    navigate('/powerups');
+  };
+  
+  const handleManageStorage = () => {
+    navigate('/settings/storage');
+  };
+  
+  const handleComparePlans = () => {
+    navigate('/pricing');
+  };
+  
+  const handleContactSales = () => {
+    navigate('/support?topic=sales');
   };
 
   return (
@@ -190,15 +248,15 @@ export default function Usage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              <Button>
+              <Button onClick={handleUpgradePlan}>
                 <TrendingUp className="mr-2 h-4 w-4" />
                 Upgrade Plan
               </Button>
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleBuyPowerUps}>
                 <Zap className="mr-2 h-4 w-4" />
                 Buy Power Ups
               </Button>
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleManageStorage}>
                 <Database className="mr-2 h-4 w-4" />
                 Manage Storage
               </Button>
@@ -381,11 +439,11 @@ export default function Usage() {
         <Info className="h-4 w-4" />
         <AlertDescription>
           Usage resets at the beginning of each billing cycle. Need more resources? 
-          <Button variant="link" className="px-1 h-auto">
+          <Button variant="link" className="px-1 h-auto" onClick={handleComparePlans}>
             Compare plans
           </Button>
           or
-          <Button variant="link" className="px-1 h-auto">
+          <Button variant="link" className="px-1 h-auto" onClick={handleContactSales}>
             contact sales
           </Button>
           for custom enterprise limits.
