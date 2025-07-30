@@ -1596,6 +1596,68 @@ API will be available at http://localhost:3000
     }
   });
   
+  // GitHub Integration Routes
+  app.get('/api/github/status', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check if user has GitHub token stored in their account
+      const user = await storage.getUser(req.user!.id);
+      const hasGitHubToken = !!(user && (user as any).githubToken);
+      
+      res.json({
+        connected: hasGitHubToken,
+        username: hasGitHubToken ? (user as any).githubUsername : null
+      });
+    } catch (error) {
+      console.error('Error checking GitHub status:', error);
+      res.status(500).json({ error: 'Failed to check GitHub status' });
+    }
+  });
+  
+  app.get('/api/github/repos', ensureAuthenticated, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      const githubToken = (user as any)?.githubToken;
+      
+      if (!githubToken) {
+        return res.status(401).json({ error: 'GitHub not connected' });
+      }
+      
+      // Fetch repositories from GitHub API
+      const response = await fetch('https://api.github.com/user/repos?per_page=100', {
+        headers: {
+          'Authorization': `token ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch GitHub repositories');
+      }
+      
+      const repos = await response.json();
+      
+      // Transform GitHub API response to match our interface
+      const transformedRepos = repos.map((repo: any) => ({
+        id: repo.id,
+        name: repo.name,
+        full_name: repo.full_name,
+        description: repo.description,
+        private: repo.private,
+        stargazers_count: repo.stargazers_count,
+        forks_count: repo.forks_count,
+        language: repo.language,
+        updated_at: repo.updated_at,
+        html_url: repo.html_url,
+        default_branch: repo.default_branch || 'main'
+      }));
+      
+      res.json(transformedRepos);
+    } catch (error) {
+      console.error('Error fetching GitHub repositories:', error);
+      res.status(500).json({ error: 'Failed to fetch GitHub repositories' });
+    }
+  });
+  
   app.get('/api/projects/:id/git/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = req.params.id;
