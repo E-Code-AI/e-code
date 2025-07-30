@@ -526,6 +526,32 @@ API will be available at http://localhost:3000
       res.status(500).json({ error: 'Failed to fetch project' });
     }
   });
+  
+  // Get project by slug (format: @username/projectname)
+  app.get('/api/projects/by-slug/:slug', ensureAuthenticated, async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      const project = await storage.getProjectBySlug(slug);
+      
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      
+      // Check if user has access to the project
+      const hasAccess = project.ownerId === req.user!.id || 
+        project.visibility === 'public' || 
+        await storage.isProjectCollaborator(project.id, req.user!.id);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      res.json(project);
+    } catch (error) {
+      console.error('Error fetching project by slug:', error);
+      res.status(500).json({ error: 'Failed to fetch project' });
+    }
+  });
 
   app.post('/api/projects', ensureAuthenticated, async (req, res) => {
     try {

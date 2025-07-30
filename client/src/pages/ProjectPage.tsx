@@ -61,13 +61,18 @@ import {
   Sparkles,
   KeyRound
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 const ProjectPage = () => {
-  const [, params] = useRoute('/project/:id');
+  const [matchId, paramsId] = useRoute('/project/:id');
+  const [matchSlug, paramsSlug] = useRoute('/@:username/:projectname');
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
-  const projectId = params?.id ? parseInt(params.id) : null;
+  // Determine if we're using ID or slug route
+  const isSlugRoute = !!matchSlug && paramsSlug?.username && paramsSlug?.projectname;
+  const projectId = matchId && paramsId?.id ? parseInt(paramsId.id) : null;
+  const projectSlug = isSlugRoute ? `@${paramsSlug.username}/${paramsSlug.projectname}` : null;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, string>>({});
   const [terminalVisible, setTerminalVisible] = useState(true);
@@ -87,11 +92,15 @@ const ProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: ['/api/projects', projectId],
+    queryKey: ['/api/projects', projectId || projectSlug],
     queryFn: async () => {
-      if (!projectId) return Promise.reject(new Error('No project ID provided'));
+      if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
       
-      const res = await apiRequest('GET', `/api/projects/${projectId}`);
+      const url = projectSlug 
+        ? `/api/projects/by-slug/${encodeURIComponent(projectSlug)}`
+        : `/api/projects/${projectId}`;
+      
+      const res = await apiRequest('GET', url);
       if (!res.ok) {
         const error = await res.text();
         if (res.status === 401) {
@@ -101,7 +110,7 @@ const ProjectPage = () => {
       }
       return res.json();
     },
-    enabled: !!projectId,
+    enabled: !!projectId || !!projectSlug,
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error.message.includes('log in')) {
@@ -770,21 +779,6 @@ const ProjectPage = () => {
           <div className="w-[400px] border-l border-border overflow-hidden flex flex-col">
             <ReplitAgentChat 
               projectId={projectId}
-              currentFile={selectedFile ? {
-                name: selectedFile.name,
-                content: selectedFile.content || '',
-                language: project?.language || 'javascript'
-              } : undefined}
-              onApplyCode={(code) => {
-                if (selectedFile) {
-                  handleFileChange(code);
-                }
-              }}
-              onRunCode={() => {
-                if (!projectRunning) {
-                  toggleProjectRunning();
-                }
-              }}
             />
           </div>
         )}

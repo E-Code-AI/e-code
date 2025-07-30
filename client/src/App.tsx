@@ -249,6 +249,9 @@ function AppContent() {
           <ProtectedRoute path="/project/:id" component={() => (
             <ProjectPage />
           )} />
+          <ProtectedRoute path="/@:username/:projectname" component={() => (
+            <ProjectPage />
+          )} />
           <ProtectedRoute path="/editor/:id" component={() => (
             <ReplitLayout showSidebar={true}>
               <Editor />
