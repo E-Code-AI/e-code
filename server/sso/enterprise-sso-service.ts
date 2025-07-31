@@ -8,7 +8,7 @@ import { ssoProviders, auditLogs, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import * as crypto from 'crypto';
 import * as saml from 'samlify';
-import { Issuer } from 'openid-client';
+import openidClient from 'openid-client';
 import * as jwt from 'jsonwebtoken';
 
 interface SSOConfig {
@@ -144,11 +144,11 @@ export class EnterpriseSSOService {
     providerId: number,
     config: SSOConfig
   ): Promise<void> {
-    const issuer = await Issuer.discover(config.discoveryUrl || config.ssoUrl!);
+    const issuer = await openidClient.Issuer.discover(config.discoveryUrl || config.ssoUrl!);
     
     const client = new issuer.Client({
-      client_id: config.metadata.clientId,
-      client_secret: config.metadata.clientSecret,
+      client_id: config.metadata?.clientId,
+      client_secret: config.metadata?.clientSecret,
       redirect_uris: [`https://e-code.com/api/sso/oidc/${providerId}/callback`],
       response_types: ['code'],
     });
@@ -206,7 +206,7 @@ export class EnterpriseSSOService {
     } catch (error) {
       await this.logAuditEvent(null, null, 'sso_login_failed', {
         providerId,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
     }
@@ -264,7 +264,7 @@ export class EnterpriseSSOService {
     } catch (error) {
       await this.logAuditEvent(null, null, 'sso_login_failed', {
         providerId,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
     }
@@ -406,14 +406,17 @@ MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDN...
         
         case 'oidc':
           // Test OIDC discovery
-          const issuer = await Issuer.discover(provider.metadata.discoveryUrl);
+          const issuer = await openidClient.Issuer.discover((provider.metadata as any)?.discoveryUrl);
           return { success: true, issuer: issuer.metadata };
         
         default:
           return { success: true };
       }
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 }
+
+// Export singleton instance
+export const enterpriseSSOService = new EnterpriseSSOService();
