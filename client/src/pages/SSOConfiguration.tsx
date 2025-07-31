@@ -348,3 +348,5 @@ export function SSOConfiguration() {
     </div>
   );
 }
+
+export default SSOConfiguration;
