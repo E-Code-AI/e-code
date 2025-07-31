@@ -57,6 +57,13 @@ A comprehensive web-based IDE inspired by Replit, with additional unique feature
 - Platform ready for millions of users
 
 ## Recent Accomplishments
+- 2025-07-31: **PREVIEW ROUTING FIXED**: Fixed "Cannot Get" error in preview system with auto-start functionality!
+  * **Auto-Start Preview**: Preview now automatically starts when accessed via `/preview/:projectId`
+  * **Loading Page**: Shows spinner and "Starting preview server..." message while preview initializes
+  * **Auto-Refresh**: Loading page refreshes every 2 seconds until preview is ready
+  * **Error Handling**: User-friendly error page with refresh button if preview fails
+  * **No Manual Start**: Preview no longer requires manual start - works immediately when accessed
+  * **Root Path Fix**: Fixed issue where accessing preview root path showed "Cannot Get"
 - 2025-07-31: **ENHANCED TAB SWITCHING UX**: Implemented Replit-style tab interface for seamless panel navigation!
   * **Visible Tab Bar**: Added tab bar at top of right panel showing all open tabs with icons and labels
   * **Active Tab Indicator**: Current tab highlighted with background color and bottom border
