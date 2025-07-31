@@ -627,25 +627,33 @@ const ReplitProjectPage = () => {
           </Button>
 
           <Button
-            variant={rightPanelMode === 'ai' ? 'default' : 'ghost'}
+            variant={openTools.includes('ai') && rightPanelMode === 'ai' ? 'default' : 'ghost'}
             size="icon"
             onClick={() => {
+              if (!openTools.includes('ai')) {
+                setOpenTools([...openTools, 'ai']);
+              }
               setRightPanelMode('ai');
               setShowAIChat(true);
             }}
             className="h-8 w-8"
+            title="AI Chat"
           >
             <MessageSquare className="h-4 w-4" />
           </Button>
 
           <Button
-            variant={rightPanelMode === 'collaboration' ? 'default' : 'ghost'}
+            variant={openTools.includes('collaboration') && rightPanelMode === 'collaboration' ? 'default' : 'ghost'}
             size="icon"
             onClick={() => {
+              if (!openTools.includes('collaboration')) {
+                setOpenTools([...openTools, 'collaboration']);
+              }
               setRightPanelMode('collaboration');
               setShowAIChat(true);
             }}
             className="h-8 w-8 relative"
+            title="Collaboration"
           >
             <Users className="h-4 w-4" />
             {collaboration.collaborators.length > 0 && (
@@ -656,46 +664,61 @@ const ReplitProjectPage = () => {
           </Button>
 
           <Button
-            variant={rightPanelMode === 'comments' ? 'default' : 'ghost'}
+            variant={openTools.includes('comments') && rightPanelMode === 'comments' ? 'default' : 'ghost'}
             size="icon"
             onClick={() => {
+              if (!openTools.includes('comments')) {
+                setOpenTools([...openTools, 'comments']);
+              }
               setRightPanelMode('comments');
               setShowAIChat(true);
             }}
             className="h-8 w-8"
+            title="Comments"
           >
             <MessageCircle className="h-4 w-4" />
           </Button>
 
           <Button
-            variant={rightPanelMode === 'history' ? 'default' : 'ghost'}
+            variant={openTools.includes('history') && rightPanelMode === 'history' ? 'default' : 'ghost'}
             size="icon"
             onClick={() => {
+              if (!openTools.includes('history')) {
+                setOpenTools([...openTools, 'history']);
+              }
               setRightPanelMode('history');
               setShowAIChat(true);
             }}
             className="h-8 w-8"
+            title="History"
           >
             <Clock className="h-4 w-4" />
           </Button>
 
           <Button
-            variant={rightPanelMode === 'extensions' ? 'default' : 'ghost'}
+            variant={openTools.includes('extensions') && rightPanelMode === 'extensions' ? 'default' : 'ghost'}
             size="icon"
             onClick={() => {
+              if (!openTools.includes('extensions')) {
+                setOpenTools([...openTools, 'extensions']);
+              }
               setRightPanelMode('extensions');
               setShowAIChat(true);
             }}
             className="h-8 w-8"
+            title="Extensions"
           >
             <Package className="h-4 w-4" />
           </Button>
 
           {/* Quick access buttons for advanced UI components */}
           <Button
-            variant={rightPanelMode === 'resource-monitor' ? 'default' : 'ghost'}
+            variant={openTools.includes('resource-monitor') && rightPanelMode === 'resource-monitor' ? 'default' : 'ghost'}
             size="icon"
             onClick={() => {
+              if (!openTools.includes('resource-monitor')) {
+                setOpenTools([...openTools, 'resource-monitor']);
+              }
               setRightPanelMode('resource-monitor');
               setShowAIChat(true);
             }}
@@ -706,9 +729,12 @@ const ReplitProjectPage = () => {
           </Button>
 
           <Button
-            variant={rightPanelMode === 'deployment-pipeline' ? 'default' : 'ghost'}
+            variant={openTools.includes('deployment-pipeline') && rightPanelMode === 'deployment-pipeline' ? 'default' : 'ghost'}
             size="icon"
             onClick={() => {
+              if (!openTools.includes('deployment-pipeline')) {
+                setOpenTools([...openTools, 'deployment-pipeline']);
+              }
               setRightPanelMode('deployment-pipeline');
               setShowAIChat(true);
             }}
@@ -810,29 +836,157 @@ const ReplitProjectPage = () => {
             <>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-                <div className="h-full overflow-y-auto flex flex-col">
-                  {rightPanelMode === 'ai' && (
-                    <Tabs value={aiMode} onValueChange={(value) => setAIMode(value as 'agent' | 'advanced')} className="h-full flex flex-col">
-                      <div className="border-b px-4 py-2">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="agent" className="text-sm">
-                            <Bot className="h-4 w-4 mr-2" />
-                            AI Agent
-                          </TabsTrigger>
-                          <TabsTrigger value="advanced" className="text-sm">
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            Advanced AI
-                          </TabsTrigger>
-                        </TabsList>
-                      </div>
-                      <TabsContent value="agent" className="flex-1 mt-0">
-                        <ReplitAgentChat
-                          projectId={projectId || 0}
-                        />
-                      </TabsContent>
-                      <TabsContent value="advanced" className="flex-1 mt-0">
-                        <AdvancedAIPanel
-                          projectId={projectId.toString()}
+                <div className="h-full flex flex-col">
+                  {/* Tab Bar - Shows all open tabs */}
+                  <div className="flex items-center border-b bg-background overflow-x-auto">
+                    <div className="flex items-center min-w-0">
+                      {openTools.map((tool) => {
+                        const getTabIcon = (toolName: string) => {
+                          switch (toolName) {
+                            case 'ai': return <MessageSquare className="h-3 w-3" />;
+                            case 'collaboration': return <Users className="h-3 w-3" />;
+                            case 'comments': return <MessageCircle className="h-3 w-3" />;
+                            case 'history': return <Clock className="h-3 w-3" />;
+                            case 'extensions': return <Package className="h-3 w-3" />;
+                            case 'console': return <TerminalIcon className="h-3 w-3" />;
+                            case 'preview': return <Globe className="h-3 w-3" />;
+                            case 'shell': return <TerminalIcon className="h-3 w-3" />;
+                            case 'database': return <Database className="h-3 w-3" />;
+                            case 'secrets': return <Key className="h-3 w-3" />;
+                            case 'resource-monitor': return <Activity className="h-3 w-3" />;
+                            case 'deployment-pipeline': return <Rocket className="h-3 w-3" />;
+                            default: return <FileCode className="h-3 w-3" />;
+                          }
+                        };
+
+                        const getTabLabel = (toolName: string) => {
+                          switch (toolName) {
+                            case 'ai': return 'AI';
+                            case 'deployment-pipeline': return 'Deploy';
+                            case 'resource-monitor': return 'Resources';
+                            default: return toolName.charAt(0).toUpperCase() + toolName.slice(1).replace('-', ' ');
+                          }
+                        };
+
+                        return (
+                          <div
+                            key={tool}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-2 cursor-pointer border-r transition-colors relative min-w-0",
+                              rightPanelMode === tool
+                                ? "bg-accent text-accent-foreground"
+                                : "hover:bg-accent/50 text-muted-foreground"
+                            )}
+                            onClick={() => setRightPanelMode(tool as any)}
+                          >
+                            {getTabIcon(tool)}
+                            <span className="text-xs font-medium truncate">{getTabLabel(tool)}</span>
+                            <button
+                              className="ml-1 hover:bg-accent rounded p-0.5"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const newTools = openTools.filter(t => t !== tool);
+                                setOpenTools(newTools.length > 0 ? newTools : ['ai']);
+                                if (rightPanelMode === tool) {
+                                  setRightPanelMode(newTools[0] as any || 'ai');
+                                }
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                            {rightPanelMode === tool && (
+                              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Add new tab button */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="px-2 py-2 hover:bg-accent/50 transition-colors">
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onClick={() => {
+                          if (!openTools.includes('ai')) setOpenTools([...openTools, 'ai']);
+                          setRightPanelMode('ai');
+                        }}>
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          AI Chat
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          if (!openTools.includes('console')) setOpenTools([...openTools, 'console']);
+                          setRightPanelMode('console');
+                        }}>
+                          <TerminalIcon className="h-4 w-4 mr-2" />
+                          Console
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          if (!openTools.includes('preview')) setOpenTools([...openTools, 'preview']);
+                          setRightPanelMode('preview');
+                        }}>
+                          <Globe className="h-4 w-4 mr-2" />
+                          Preview
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          if (!openTools.includes('database')) setOpenTools([...openTools, 'database']);
+                          setRightPanelMode('database');
+                        }}>
+                          <Database className="h-4 w-4 mr-2" />
+                          Database
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          if (!openTools.includes('secrets')) setOpenTools([...openTools, 'secrets']);
+                          setRightPanelMode('secrets');
+                        }}>
+                          <Key className="h-4 w-4 mr-2" />
+                          Secrets
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => {
+                          if (!openTools.includes('collaboration')) setOpenTools([...openTools, 'collaboration']);
+                          setRightPanelMode('collaboration');
+                        }}>
+                          <Users className="h-4 w-4 mr-2" />
+                          Collaboration
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          if (!openTools.includes('history')) setOpenTools([...openTools, 'history']);
+                          setRightPanelMode('history');
+                        }}>
+                          <Clock className="h-4 w-4 mr-2" />
+                          History
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="flex-1 overflow-y-auto">
+                    {rightPanelMode === 'ai' && (
+                      <Tabs value={aiMode} onValueChange={(value) => setAIMode(value as 'agent' | 'advanced')} className="h-full flex flex-col">
+                        <div className="border-b px-4 py-2">
+                          <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="agent" className="text-sm">
+                              <Bot className="h-4 w-4 mr-2" />
+                              AI Agent
+                            </TabsTrigger>
+                            <TabsTrigger value="advanced" className="text-sm">
+                              <Sparkles className="h-4 w-4 mr-2" />
+                              Advanced AI
+                            </TabsTrigger>
+                          </TabsList>
+                        </div>
+                        <TabsContent value="agent" className="flex-1 mt-0">
+                          <ReplitAgentChat
+                            projectId={projectId || 0}
+                          />
+                        </TabsContent>
+                        <TabsContent value="advanced" className="flex-1 mt-0">
+                          <AdvancedAIPanel
+                            projectId={projectId.toString()}
                           selectedCode={selectedFile?.content || ''}
                           selectedLanguage={project?.language || 'javascript'}
                         />
