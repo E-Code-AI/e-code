@@ -1,0 +1,47 @@
+{
+  "name": "@ecode/cli",
+  "version": "1.0.0",
+  "description": "E-Code CLI - Build and deploy from your terminal",
+  "main": "dist/index.js",
+  "bin": {
+    "ecode": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "prepublish": "npm run build"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "inquirer": "^9.2.12",
+    "ora": "^7.0.1",
+    "open": "^9.1.0",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.16.0",
+    "tar": "^6.2.0",
+    "archiver": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/inquirer": "^9.0.7",
+    "@types/ws": "^8.5.10",
+    "@types/tar": "^6.1.11",
+    "@types/archiver": "^6.0.2",
+    "typescript": "^5.3.3",
+    "tsx": "^4.6.2"
+  },
+  "keywords": [
+    "ecode",
+    "cli",
+    "ide",
+    "development",
+    "deploy"
+  ],
+  "author": "E-Code",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
