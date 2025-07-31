@@ -27,111 +27,25 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+
 export default function Badges() {
   const [activeTab, setActiveTab] = useState('earned');
 
-  // Mock badge data
-  const earnedBadges = [
-    {
-      id: 1,
-      name: 'First Project',
-      description: 'Created your first project on E-Code',
-      icon: Rocket,
-      color: 'bg-blue-500',
-      earnedDate: '2025-01-15',
-      rarity: 'common'
-    },
-    {
-      id: 2,
-      name: 'Code Explorer',
-      description: 'Completed 10 coding projects',
-      icon: Code,
-      color: 'bg-green-500',
-      earnedDate: '2025-02-20',
-      rarity: 'uncommon'
-    },
-    {
-      id: 3,
-      name: 'Community Helper',
-      description: 'Helped 5 other developers in the community',
-      icon: Users,
-      color: 'bg-purple-500',
-      earnedDate: '2025-03-10',
-      rarity: 'rare'
-    },
-    {
-      id: 4,
-      name: 'AI Enthusiast',
-      description: 'Used AI Agent to build 25 projects',
-      icon: Zap,
-      color: 'bg-yellow-500',
-      earnedDate: '2025-03-25',
-      rarity: 'epic'
-    }
-  ];
+  // Fetch earned badges from API
+  const { data: earnedBadges = [] } = useQuery<any[]>({
+    queryKey: ['/api/badges/earned'],
+  });
 
-  const availableBadges = [
-    {
-      id: 5,
-      name: 'Master Builder',
-      description: 'Create 100 projects on E-Code',
-      icon: Crown,
-      color: 'bg-orange-500',
-      requirement: '42/100 projects',
-      progress: 42,
-      rarity: 'legendary'
-    },
-    {
-      id: 6,
-      name: 'Team Player',
-      description: 'Collaborate on 20 different projects',
-      icon: Users,
-      color: 'bg-blue-500',
-      requirement: '7/20 collaborations',
-      progress: 35,
-      rarity: 'rare'
-    },
-    {
-      id: 7,
-      name: 'Git Guru',
-      description: 'Make 500 commits across all projects',
-      icon: GitBranch,
-      color: 'bg-green-500',
-      requirement: '234/500 commits',
-      progress: 47,
-      rarity: 'epic'
-    },
-    {
-      id: 8,
-      name: 'Speed Demon',
-      description: 'Deploy a project in under 5 minutes',
-      icon: Flame,
-      color: 'bg-red-500',
-      requirement: 'Not achieved yet',
-      progress: 0,
-      rarity: 'rare'
-    },
-    {
-      id: 9,
-      name: 'Learning Machine',
-      description: 'Complete all E-Code tutorials',
-      icon: BookOpen,
-      color: 'bg-indigo-500',
-      requirement: '8/12 tutorials',
-      progress: 67,
-      rarity: 'uncommon'
-    },
-    {
-      id: 10,
-      name: 'Security Expert',
-      description: 'Scan and fix 50 security vulnerabilities',
-      icon: Shield,
-      color: 'bg-emerald-500',
-      requirement: '12/50 vulnerabilities',
-      progress: 24,
-      rarity: 'epic'
-    }
-  ];
+
+
+  // Fetch available badges from API
+  const { data: availableBadges = [] } = useQuery<any[]>({
+    queryKey: ['/api/badges/available'],
+  });
+
+
 
   const categories = [
     { name: 'Building', icon: Code, count: 15 },
@@ -153,7 +67,18 @@ export default function Badges() {
   };
 
   const BadgeCard = ({ badge, isEarned = false }: { badge: any; isEarned?: boolean }) => {
-    const IconComponent = badge.icon;
+    const iconMap: Record<string, any> = {
+      Rocket,
+      Code,
+      Users,
+      Zap,
+      Crown,
+      GitBranch,
+      Flame,
+      BookOpen,
+      Shield
+    };
+    const IconComponent = iconMap[badge.icon] || Award;
     
     return (
       <Card className={`relative overflow-hidden ${!isEarned ? 'opacity-75' : ''}`}>

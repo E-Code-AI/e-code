@@ -85,130 +85,27 @@ export function Gamification({ userId }: GamificationProps) {
 
   // Fetch user stats
   const { data: userStats } = useQuery<UserStats>({
-    queryKey: ['/api/gamification/stats', userId],
-    queryFn: () => apiRequest(`/api/gamification/stats${userId ? `?userId=${userId}` : ''}`),
-    initialData: {
-      level: 42,
-      experience: 8750,
-      experienceToNextLevel: 10000,
-      streak: 15,
-      totalPoints: 125000,
-      rank: 'Code Master',
-      percentile: 95
-    }
+    queryKey: userId ? [`/api/gamification/stats?userId=${userId}`] : ['/api/gamification/stats']
   });
 
   // Fetch achievements
   const { data: achievements = [] } = useQuery<Achievement[]>({
-    queryKey: ['/api/gamification/achievements', userId],
-    queryFn: () => apiRequest(`/api/gamification/achievements${userId ? `?userId=${userId}` : ''}`),
-    initialData: [
-      {
-        id: 'first-project',
-        name: 'Hello World',
-        description: 'Create your first project',
-        icon: <Star className="h-5 w-5" />,
-        category: 'coding',
-        points: 100,
-        unlockedAt: new Date('2024-01-15'),
-        rarity: 'common'
-      },
-      {
-        id: 'speed-coder',
-        name: 'Speed Coder',
-        description: 'Complete 10 projects in a week',
-        icon: <Zap className="h-5 w-5" />,
-        category: 'coding',
-        points: 500,
-        progress: 7,
-        maxProgress: 10,
-        rarity: 'rare'
-      },
-      {
-        id: 'team-player',
-        name: 'Team Player',
-        description: 'Collaborate on 5 team projects',
-        icon: <Users className="h-5 w-5" />,
-        category: 'collaboration',
-        points: 300,
-        unlockedAt: new Date('2024-02-20'),
-        rarity: 'rare'
-      },
-      {
-        id: 'knowledge-seeker',
-        name: 'Knowledge Seeker',
-        description: 'Complete 20 tutorials',
-        icon: <Award className="h-5 w-5" />,
-        category: 'learning',
-        points: 250,
-        progress: 18,
-        maxProgress: 20,
-        rarity: 'common'
-      }
-    ]
+    queryKey: userId ? [`/api/gamification/achievements?userId=${userId}`] : ['/api/gamification/achievements']
   });
 
   // Fetch badges
   const { data: badges = [] } = useQuery<Badge[]>({
-    queryKey: ['/api/gamification/badges', userId],
-    queryFn: () => apiRequest(`/api/gamification/badges${userId ? `?userId=${userId}` : ''}`),
-    initialData: [
-      {
-        id: 'python-master',
-        name: 'Python Master',
-        description: 'Master Python programming',
-        icon: <Medal className="h-5 w-5" />,
-        earnedAt: new Date('2024-03-10'),
-        level: 'gold'
-      },
-      {
-        id: 'react-wizard',
-        name: 'React Wizard',
-        description: 'Build 10 React applications',
-        icon: <Crown className="h-5 w-5" />,
-        earnedAt: new Date('2024-04-05'),
-        level: 'silver'
-      }
-    ]
+    queryKey: userId ? [`/api/gamification/badges?userId=${userId}`] : ['/api/gamification/badges']
   });
 
   // Fetch leaderboard
   const { data: leaderboard = [] } = useQuery<Leaderboard[]>({
-    queryKey: ['/api/gamification/leaderboard'],
-    queryFn: () => apiRequest('/api/gamification/leaderboard'),
-    initialData: [
-      { userId: 1, username: 'admin', level: 42, points: 125000, streak: 15, rank: 1 },
-      { userId: 2, username: 'coder123', level: 38, points: 98500, streak: 22, rank: 2 },
-      { userId: 3, username: 'devmaster', level: 35, points: 87000, streak: 10, rank: 3 }
-    ]
+    queryKey: ['/api/gamification/leaderboard']
   });
 
   // Fetch challenges
   const { data: challenges = [] } = useQuery<Challenge[]>({
-    queryKey: ['/api/gamification/challenges'],
-    queryFn: () => apiRequest('/api/gamification/challenges'),
-    initialData: [
-      {
-        id: 'daily-code',
-        name: 'Daily Coder',
-        description: 'Write code for 30 minutes',
-        type: 'daily',
-        points: 50,
-        progress: 15,
-        target: 30,
-        expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000)
-      },
-      {
-        id: 'weekly-deploy',
-        name: 'Deployment Week',
-        description: 'Deploy 3 projects this week',
-        type: 'weekly',
-        points: 200,
-        progress: 2,
-        target: 3,
-        expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
-      }
-    ]
+    queryKey: ['/api/gamification/challenges']
   });
 
   const getRarityColor = (rarity: Achievement['rarity']) => {

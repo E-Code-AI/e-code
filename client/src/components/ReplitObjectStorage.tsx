@@ -63,6 +63,7 @@ import {
   ChevronRight,
   HardDrive,
   AlertCircle,
+  Activity,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -125,10 +126,7 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
   // Create bucket mutation
   const createBucketMutation = useMutation({
     mutationFn: async (data: { name: string; region: string; isPublic: boolean }) => {
-      return apiRequest(`/api/projects/${projectId}/storage/buckets`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('POST', `/api/projects/${projectId}/storage/buckets`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/storage/buckets`] });
@@ -151,9 +149,7 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
   // Delete object mutation
   const deleteObjectMutation = useMutation({
     mutationFn: async (objectKey: string) => {
-      return apiRequest(`/api/projects/${projectId}/storage/buckets/${selectedBucket?.id}/objects/${objectKey}`, {
-        method: 'DELETE',
-      });
+      return apiRequest('DELETE', `/api/projects/${projectId}/storage/buckets/${selectedBucket?.id}/objects/${objectKey}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/storage/buckets/${selectedBucket?.id}/objects`] });
@@ -171,77 +167,13 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
     },
   });
 
-  // Simulated data for demo
-  const mockBuckets: StorageBucket[] = [
-    {
-      id: 'assets',
-      name: 'project-assets',
-      region: 'us-east-1',
-      created: new Date('2024-01-15'),
-      isPublic: true,
-      objectCount: 156,
-      totalSize: 524288000, // 500MB
-    },
-    {
-      id: 'uploads',
-      name: 'user-uploads',
-      region: 'us-west-2',
-      created: new Date('2024-02-01'),
-      isPublic: false,
-      objectCount: 89,
-      totalSize: 209715200, // 200MB
-    },
-    {
-      id: 'backups',
-      name: 'project-backups',
-      region: 'eu-west-1',
-      created: new Date('2024-03-10'),
-      isPublic: false,
-      objectCount: 12,
-      totalSize: 1073741824, // 1GB
-    },
-  ];
 
-  const mockObjects: StorageObject[] = [
-    {
-      id: '1',
-      name: 'logo.png',
-      key: 'images/logo.png',
-      size: 45056,
-      type: 'image/png',
-      lastModified: new Date('2024-03-15'),
-      etag: 'abc123',
-      isPublic: true,
-      folder: 'images/',
-      url: 'https://storage.e-code.app/project-assets/images/logo.png',
-    },
-    {
-      id: '2',
-      name: 'styles.css',
-      key: 'css/styles.css',
-      size: 12288,
-      type: 'text/css',
-      lastModified: new Date('2024-03-14'),
-      etag: 'def456',
-      isPublic: true,
-      folder: 'css/',
-    },
-    {
-      id: '3',
-      name: 'data.json',
-      key: 'data/data.json',
-      size: 8192,
-      type: 'application/json',
-      lastModified: new Date('2024-03-13'),
-      etag: 'ghi789',
-      isPublic: false,
-      folder: 'data/',
-    },
-  ];
 
-  // Use mock data if no real data
-  const displayBuckets = buckets.length > 0 ? buckets : mockBuckets;
-  const displayObjects = objects.length > 0 ? objects : (selectedBucket ? mockObjects : []);
+
+
+  // Use real data from API
+  const displayBuckets = buckets as StorageBucket[];
+  const displayObjects = objects as StorageObject[];
 
   const handleFileUpload = async (files: FileList) => {
     if (!selectedBucket) return;

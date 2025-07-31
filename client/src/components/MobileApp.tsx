@@ -88,55 +88,22 @@ export function MobileApp({ userId }: MobileAppProps) {
 
   // Fetch devices
   const { data: devices = [] } = useQuery<MobileDevice[]>({
-    queryKey: ['/api/mobile/devices', userId],
-    queryFn: () => apiRequest(`/api/mobile/devices${userId ? `?userId=${userId}` : ''}`),
-    initialData: [
-      {
-        id: 'device-1',
-        name: 'John\'s iPhone',
-        type: 'ios',
-        model: 'iPhone 14 Pro',
-        osVersion: '17.2',
-        appVersion: '3.2.1',
-        lastSync: new Date(Date.now() - 5 * 60 * 1000),
-        isOnline: true,
-        batteryLevel: 85,
-        storageUsed: 2.3,
-        storageTotal: 128,
-        pushToken: 'token-123'
-      },
-      {
-        id: 'device-2',
-        name: 'Dev Tablet',
-        type: 'android',
-        model: 'Samsung Galaxy Tab S9',
-        osVersion: '14',
-        appVersion: '3.2.0',
-        lastSync: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        isOnline: false,
-        batteryLevel: 45,
-        storageUsed: 15.7,
-        storageTotal: 256
-      }
-    ]
+    queryKey: userId ? [`/api/mobile/devices?userId=${userId}`] : ['/api/mobile/devices']
   });
 
   // Fetch sessions
   const { data: sessions = [] } = useQuery<MobileSession[]>({
-    queryKey: ['/api/mobile/sessions', userId],
-    queryFn: () => apiRequest(`/api/mobile/sessions${userId ? `?userId=${userId}` : ''}`)
+    queryKey: userId ? [`/api/mobile/sessions?userId=${userId}`] : ['/api/mobile/sessions']
   });
 
   // Fetch offline syncs
   const { data: offlineSyncs = [] } = useQuery<OfflineSync[]>({
-    queryKey: ['/api/mobile/offline-syncs'],
-    queryFn: () => apiRequest('/api/mobile/offline-syncs')
+    queryKey: ['/api/mobile/offline-syncs']
   });
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery<MobileNotification[]>({
-    queryKey: ['/api/mobile/notifications', userId],
-    queryFn: () => apiRequest(`/api/mobile/notifications${userId ? `?userId=${userId}` : ''}`)
+    queryKey: userId ? [`/api/mobile/notifications?userId=${userId}`] : ['/api/mobile/notifications']
   });
 
   // Send push notification

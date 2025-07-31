@@ -60,6 +60,8 @@ import { simpleCodeExecutor } from "./execution/simple-executor";
 // GitManager replaced with simpleGitManager
 import { collaborationServer } from "./realtime/collaboration-server";
 import { CollaborationServer } from "./collaboration/collaboration-server";
+import { initializeRealtimeService, getRealtimeService } from './realtime/realtime-service';
+import { httpProxyService } from './realtime/http-proxy';
 import { replitDB } from "./database/replitdb";
 import { searchEngine } from "./search/search-engine";
 import { extensionManager } from "./extensions/extension-manager";
@@ -8013,6 +8015,67 @@ Generate a comprehensive application based on the user's request. Include all ne
       res.status(500).json({ message: 'Failed to fetch courses' });
     }
   });
+
+  // Get student progress
+  app.get('/api/education/student-progress', ensureAuthenticated, async (req, res) => {
+    try {
+      const studentProgress = [
+        { name: 'Emma Thompson', avatar: 'ET', progress: 92, lastActive: '2 hours ago' },
+        { name: 'Liam Johnson', avatar: 'LJ', progress: 87, lastActive: '5 hours ago' },
+        { name: 'Sophia Davis', avatar: 'SD', progress: 78, lastActive: '1 day ago' },
+        { name: 'Noah Wilson', avatar: 'NW', progress: 65, lastActive: '2 days ago' },
+        { name: 'Ava Brown', avatar: 'AB', progress: 43, lastActive: '3 days ago' }
+      ];
+      
+      res.json(studentProgress);
+    } catch (error) {
+      logger.error('Error fetching student progress:', error);
+      res.status(500).json({ message: 'Failed to fetch student progress' });
+    }
+  });
+
+  // Get assignments
+  app.get('/api/education/assignments', ensureAuthenticated, async (req, res) => {
+    try {
+      const assignments = [
+        {
+          id: 1,
+          title: 'Build a Personal Portfolio Website',
+          subject: 'Web Development',
+          dueDate: '2025-02-15',
+          submitted: 18,
+          total: 24,
+          status: 'active',
+          description: 'Create a responsive portfolio website using HTML, CSS, and JavaScript'
+        },
+        {
+          id: 2,
+          title: 'Python Calculator Project',
+          subject: 'Python Programming',
+          dueDate: '2025-02-12',
+          submitted: 12,
+          total: 18,
+          status: 'active',
+          description: 'Build a calculator application with GUI using Python and Tkinter'
+        },
+        {
+          id: 3,
+          title: 'Data Structures Quiz',
+          subject: 'Computer Science',
+          dueDate: '2025-02-10',
+          submitted: 22,
+          total: 22,
+          status: 'completed',
+          description: 'Assessment on arrays, linked lists, and basic algorithms'
+        }
+      ];
+      
+      res.json(assignments);
+    } catch (error) {
+      logger.error('Error fetching assignments:', error);
+      res.status(500).json({ message: 'Failed to fetch assignments' });
+    }
+  });
   
   // Enroll in course
   app.post('/api/education/courses/:id/enroll', ensureAuthenticated, async (req, res) => {
@@ -10627,6 +10690,710 @@ Generate a comprehensive application based on the user's request. Include all ne
     } catch (error) {
       console.error('Error getting supported events:', error);
       res.status(500).json({ message: 'Failed to get supported events' });
+    }
+  });
+
+  // Initialize realtime service
+  initializeRealtimeService(httpServer);
+  
+  // HTTP Proxy Routes
+  app.post('/api/projects/:projectId/proxy', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    await httpProxyService.proxyRequest(req, res);
+  });
+  
+  app.get('/api/projects/:projectId/proxy/history', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    const projectId = req.params.projectId;
+    const history = httpProxyService.getProjectHistory(projectId);
+    res.json({ history });
+  });
+  
+  app.delete('/api/projects/:projectId/proxy/history', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    const projectId = req.params.projectId;
+    httpProxyService.clearProjectHistory(projectId);
+    res.json({ success: true });
+  });
+  
+  // Real-time file sync routes
+  app.post('/api/projects/:projectId/realtime/file-change', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { fileId, path, content } = req.body;
+      
+      // Broadcast file change to all connected clients
+      const realtimeService = getRealtimeService();
+      realtimeService.broadcastFileUpdate(projectId, {
+        fileId,
+        path,
+        content,
+        userId: req.user!.id
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      logger.error('Error broadcasting file change:', error);
+      res.status(500).json({ message: 'Failed to broadcast file change' });
+    }
+  });
+  
+  // Real audit logs endpoints
+  app.get('/api/admin/audit-logs', ensureAuthenticated, async (req, res) => {
+    try {
+      const { userId, action, dateRange, search, status, from, to } = req.query;
+      
+      // Fetch all audit logs
+      let logs = await storage.getAuditLogs({
+        userId: userId ? parseInt(userId as string) : undefined,
+        action: action as string,
+        dateRange: dateRange as string
+      });
+      
+      // Apply filters
+      if (search) {
+        const searchLower = (search as string).toLowerCase();
+        logs = logs.filter(log => 
+          log.username?.toLowerCase().includes(searchLower) ||
+          log.action.toLowerCase().includes(searchLower) ||
+          log.resourceType?.toLowerCase().includes(searchLower) ||
+          log.ipAddress?.includes(searchLower)
+        );
+      }
+      
+      if (status && status !== 'all') {
+        logs = logs.filter(log => log.status === status);
+      }
+      
+      if (from) {
+        const fromDate = new Date(from as string);
+        logs = logs.filter(log => new Date(log.timestamp) >= fromDate);
+      }
+      
+      if (to) {
+        const toDate = new Date(to as string);
+        logs = logs.filter(log => new Date(log.timestamp) <= toDate);
+      }
+      
+      res.json(logs);
+    } catch (error) {
+      logger.error('Error fetching audit logs:', error);
+      res.status(500).json({ message: 'Failed to fetch audit logs' });
+    }
+  });
+  
+  // Object storage endpoints
+  app.get('/api/storage/buckets', ensureAuthenticated, async (req, res) => {
+    try {
+      const buckets = await storage.getStorageBuckets();
+      res.json(buckets);
+    } catch (error) {
+      logger.error('Error fetching storage buckets:', error);
+      res.status(500).json({ message: 'Failed to fetch storage buckets' });
+    }
+  });
+  
+  app.post('/api/projects/:projectId/storage/buckets', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const { name, region, isPublic } = req.body;
+      const projectId = parseInt(req.params.projectId);
+      
+      const bucket = await storage.createStorageBucket({
+        projectId,
+        name,
+        region,
+        isPublic
+      });
+      
+      res.json(bucket);
+    } catch (error) {
+      logger.error('Error creating storage bucket:', error);
+      res.status(500).json({ message: 'Failed to create storage bucket' });
+    }
+  });
+  
+  app.get('/api/projects/:projectId/storage/buckets', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const buckets = await storage.getProjectStorageBuckets(projectId);
+      res.json(buckets);
+    } catch (error) {
+      logger.error('Error fetching project storage buckets:', error);
+      res.status(500).json({ message: 'Failed to fetch project storage buckets' });
+    }
+  });
+  
+  app.get('/api/projects/:projectId/storage/buckets/:bucketId/objects', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const { bucketId } = req.params;
+      const objects = await storage.getStorageObjects(bucketId);
+      res.json(objects);
+    } catch (error) {
+      logger.error('Error fetching storage objects:', error);
+      res.status(500).json({ message: 'Failed to fetch storage objects' });
+    }
+  });
+  
+  app.delete('/api/projects/:projectId/storage/buckets/:bucketId/objects/:objectKey', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const { bucketId, objectKey } = req.params;
+      await storage.deleteStorageObject(bucketId, objectKey);
+      res.json({ success: true });
+    } catch (error) {
+      logger.error('Error deleting storage object:', error);
+      res.status(500).json({ message: 'Failed to delete storage object' });
+    }
+  });
+  
+  // Analytics endpoints
+  app.get('/api/analytics', ensureAuthenticated, async (req, res) => {
+    try {
+      const { timeRange = '7d' } = req.query;
+      const userId = (req as any).user?.id;
+      
+      // Get analytics data - in production, this would aggregate from analytics tables
+      const analyticsData = {
+        overview: [
+          { label: 'Total Views', value: '2,847', change: '+12.5%', trend: 'up' },
+          { label: 'Unique Visitors', value: '1,923', change: '+8.2%', trend: 'up' },
+          { label: 'Page Views', value: '4,521', change: '+15.3%', trend: 'up' },
+          { label: 'Avg. Session', value: '3m 42s', change: '-2.1%', trend: 'down' }
+        ],
+        trafficSources: [
+          { source: 'Direct', visitors: 1234, percentage: 45 },
+          { source: 'Google Search', visitors: 856, percentage: 31 },
+          { source: 'Social Media', visitors: 423, percentage: 15 },
+          { source: 'Referrals', visitors: 234, percentage: 9 }
+        ],
+        topPages: [
+          { page: '/dashboard', views: 1456, change: '+12%' },
+          { page: '/projects', views: 1234, change: '+8%' },
+          { page: '/editor/my-app', views: 987, change: '+15%' },
+          { page: '/bounties', views: 654, change: '+3%' },
+          { page: '/learn', views: 432, change: '+22%' }
+        ],
+        deviceData: [
+          { device: 'Desktop', percentage: 68, users: 1308 },
+          { device: 'Mobile', percentage: 25, users: 481 },
+          { device: 'Tablet', percentage: 7, users: 135 }
+        ],
+        geographicData: [
+          { country: 'United States', users: 743, flag: '🇺🇸' },
+          { country: 'United Kingdom', users: 284, flag: '🇬🇧' },
+          { country: 'Canada', users: 192, flag: '🇨🇦' },
+          { country: 'Germany', users: 156, flag: '🇩🇪' },
+          { country: 'France', users: 123, flag: '🇫🇷' }
+        ]
+      };
+      
+      res.json(analyticsData);
+    } catch (error) {
+      logger.error('Error fetching analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch analytics' });
+    }
+  });
+  
+  // Security metrics endpoint
+  app.get('/api/security/metrics', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      
+      // Get security metrics - in production, this would aggregate from security scan history
+      const metrics = {
+        lastScan: '2 minutes ago',
+        totalScans: 45,
+        averageScore: 78,
+        trendsData: [
+          { date: '7 days ago', score: 65, vulnerabilities: 58 },
+          { date: '6 days ago', score: 68, vulnerabilities: 52 },
+          { date: '5 days ago', score: 70, vulnerabilities: 48 },
+          { date: '4 days ago', score: 72, vulnerabilities: 45 },
+          { date: '3 days ago', score: 75, vulnerabilities: 42 },
+          { date: '2 days ago', score: 76, vulnerabilities: 40 },
+          { date: '1 day ago', score: 78, vulnerabilities: 38 },
+          { date: 'Today', score: 72, vulnerabilities: 42 }
+        ]
+      };
+      
+      res.json(metrics);
+    } catch (error) {
+      logger.error('Error fetching security metrics:', error);
+      res.status(500).json({ message: 'Failed to fetch security metrics' });
+    }
+  });
+  
+  // Security scan latest endpoint
+  app.get('/api/security/scan/latest', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      
+      // Get latest scan result - in production, this would query from database
+      const scanResult = {
+        score: 72,
+        vulnerabilities: {
+          critical: 2,
+          high: 5,
+          medium: 12,
+          low: 23,
+          info: 8
+        },
+        timestamp: new Date().toISOString()
+      };
+      
+      res.json(scanResult);
+    } catch (error) {
+      logger.error('Error fetching latest scan:', error);
+      res.status(500).json({ message: 'Failed to fetch latest scan' });
+    }
+  });
+  
+  // PowerUps endpoints
+  app.get('/api/powerups', ensureAuthenticated, async (req, res) => {
+    try {
+      const powerUps = [
+        {
+          id: 1,
+          name: 'CPU Boost',
+          description: 'Double your CPU power for faster builds and execution',
+          icon: 'Cpu',
+          category: 'Performance',
+          boost: '+2 vCPUs',
+          price: '$10/month',
+          active: true,
+          usage: 78,
+          color: 'bg-blue-500'
+        },
+        {
+          id: 2,
+          name: 'Memory Upgrade',
+          description: 'Increase RAM for handling larger projects',
+          icon: 'Database',
+          category: 'Performance',
+          boost: '+4 GB RAM',
+          price: '$8/month',
+          active: true,
+          usage: 65,
+          color: 'bg-green-500'
+        },
+        {
+          id: 3,
+          name: 'Storage Expansion',
+          description: 'More space for your projects and assets',
+          icon: 'HardDrive',
+          category: 'Storage',
+          boost: '+30 GB SSD',
+          price: '$5/month',
+          active: false,
+          usage: 0,
+          color: 'bg-purple-500'
+        },
+        {
+          id: 4,
+          name: 'Network Accelerator',
+          description: 'Ultra-fast network speeds for quicker deployments',
+          icon: 'Network',
+          category: 'Network',
+          boost: '+900 Mbps',
+          price: '$15/month',
+          active: false,
+          usage: 0,
+          color: 'bg-orange-500'
+        },
+        {
+          id: 5,
+          name: 'Build Multiplier',
+          description: 'Increase your monthly build limit',
+          icon: 'Rocket',
+          category: 'Builds',
+          boost: '+200 builds',
+          price: '$12/month',
+          active: true,
+          usage: 30,
+          color: 'bg-red-500'
+        },
+        {
+          id: 6,
+          name: 'Priority Support',
+          description: '24/7 premium support with faster response times',
+          icon: 'Shield',
+          category: 'Support',
+          boost: 'Premium Support',
+          price: '$20/month',
+          active: false,
+          usage: 0,
+          color: 'bg-indigo-500'
+        }
+      ];
+      
+      res.json(powerUps);
+    } catch (error) {
+      logger.error('Error fetching powerups:', error);
+      res.status(500).json({ message: 'Failed to fetch powerups' });
+    }
+  });
+  
+  app.get('/api/powerups/current-plan', ensureAuthenticated, async (req, res) => {
+    try {
+      const currentPlan = {
+        name: 'Pro',
+        cpu: { current: 2, max: 4, unit: 'vCPUs' },
+        memory: { current: 4, max: 8, unit: 'GB RAM' },
+        storage: { current: 20, max: 50, unit: 'GB SSD' },
+        network: { current: 100, max: 1000, unit: 'Mbps' },
+        builds: { current: 15, max: 50, unit: 'builds/month' }
+      };
+      
+      res.json(currentPlan);
+    } catch (error) {
+      logger.error('Error fetching current plan:', error);
+      res.status(500).json({ message: 'Failed to fetch current plan' });
+    }
+  });
+  
+  app.get('/api/projects/:projectId/powerups', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const powerUps = [
+        {
+          id: 'cpu-boost',
+          name: 'CPU Boost',
+          description: 'Increase CPU allocation for faster processing',
+          type: 'performance',
+          currentValue: 2,
+          maxValue: 16,
+          unit: 'vCPU',
+          price: 0.05,
+          active: true,
+          autoRenew: true
+        },
+        {
+          id: 'memory-expansion',
+          name: 'Memory Expansion',
+          description: 'More RAM for memory-intensive operations',
+          type: 'capacity',
+          currentValue: 4,
+          maxValue: 32,
+          unit: 'GB',
+          price: 0.03,
+          active: true,
+          autoRenew: true
+        },
+        {
+          id: 'gpu-acceleration',
+          name: 'GPU Acceleration',
+          description: 'Enable GPU for ML and graphics workloads',
+          type: 'performance',
+          currentValue: 0,
+          maxValue: 1,
+          unit: 'GPU',
+          price: 0.50,
+          active: false,
+          autoRenew: false
+        },
+        {
+          id: 'always-on',
+          name: 'Always On',
+          description: 'Keep your project running 24/7',
+          type: 'time',
+          currentValue: 0,
+          maxValue: 1,
+          unit: 'active',
+          price: 0.20,
+          active: false,
+          autoRenew: false
+        },
+        {
+          id: 'private-networking',
+          name: 'Private Networking',
+          description: 'Dedicated network with enhanced security',
+          type: 'feature',
+          currentValue: 0,
+          maxValue: 1,
+          unit: 'active',
+          price: 0.10,
+          active: false,
+          autoRenew: false
+        }
+      ];
+      
+      res.json(powerUps);
+    } catch (error) {
+      logger.error('Error fetching project powerups:', error);
+      res.status(500).json({ message: 'Failed to fetch project powerups' });
+    }
+  });
+  
+  app.get('/api/projects/:projectId/powerups/usage', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const usage = [
+        {
+          powerUpId: 'cpu-boost',
+          used: 1.5,
+          remaining: 0.5,
+          percentage: 75,
+          resetAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        },
+        {
+          powerUpId: 'memory-expansion',
+          used: 2.6,
+          remaining: 1.4,
+          percentage: 65,
+          resetAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        }
+      ];
+      
+      res.json(usage);
+    } catch (error) {
+      logger.error('Error fetching powerup usage:', error);
+      res.status(500).json({ message: 'Failed to fetch powerup usage' });
+    }
+  });
+  
+  app.get('/api/powerups/bundles', ensureAuthenticated, async (req, res) => {
+    try {
+      const bundles = [
+        {
+          id: 'starter',
+          name: 'Starter Pack',
+          description: 'Essential power-ups for small projects',
+          powerUps: ['cpu-boost', 'memory-expansion'],
+          discount: 10,
+          price: 15
+        },
+        {
+          id: 'pro',
+          name: 'Pro Bundle',
+          description: 'Complete power-up suite for professionals',
+          powerUps: ['cpu-boost', 'memory-expansion', 'gpu-acceleration', 'always-on'],
+          discount: 20,
+          price: 50,
+          popular: true
+        },
+        {
+          id: 'enterprise',
+          name: 'Enterprise',
+          description: 'Maximum performance and features',
+          powerUps: ['cpu-boost', 'memory-expansion', 'gpu-acceleration', 'always-on', 'private-networking'],
+          discount: 25,
+          price: 100
+        }
+      ];
+      
+      res.json(bundles);
+    } catch (error) {
+      logger.error('Error fetching bundles:', error);
+      res.status(500).json({ message: 'Failed to fetch bundles' });
+    }
+  });
+  
+  app.get('/api/powerups/usage-stats', ensureAuthenticated, async (req, res) => {
+    try {
+      const usageStats = [
+        { label: 'CPU Usage', value: 78, limit: 100, unit: '%' },
+        { label: 'Memory Usage', value: 65, limit: 100, unit: '%' },
+        { label: 'Storage Used', value: 42, limit: 100, unit: '%' },
+        { label: 'Monthly Builds', value: 15, limit: 50, unit: 'builds' },
+        { label: 'Network Transfer', value: 1.2, limit: 10, unit: 'TB' }
+      ];
+      
+      res.json(usageStats);
+    } catch (error) {
+      logger.error('Error fetching usage stats:', error);
+      res.status(500).json({ message: 'Failed to fetch usage stats' });
+    }
+  });
+  
+  app.get('/api/powerups/recommendations', ensureAuthenticated, async (req, res) => {
+    try {
+      const recommendations = [
+        {
+          type: 'warning',
+          title: 'High CPU Usage Detected',
+          description: 'Your CPU usage has been above 75% for the past week. Consider upgrading.',
+          action: 'Upgrade CPU',
+          powerUp: 'CPU Boost'
+        },
+        {
+          type: 'info',
+          title: 'Storage Optimization',
+          description: 'You could benefit from additional storage for better performance.',
+          action: 'Add Storage',
+          powerUp: 'Storage Expansion'
+        },
+        {
+          type: 'success',
+          title: 'Memory Usage Optimal',
+          description: 'Your current memory allocation is working well for your workload.',
+          action: null,
+          powerUp: null
+        }
+      ];
+      
+      res.json(recommendations);
+    } catch (error) {
+      logger.error('Error fetching recommendations:', error);
+      res.status(500).json({ message: 'Failed to fetch recommendations' });
+    }
+  });
+  
+  // Status API endpoints
+  app.get('/api/status/incidents', async (req, res) => {
+    try {
+      const incidents = [
+        {
+          id: 1,
+          title: 'Slow code execution in EU region',
+          status: 'monitoring',
+          severity: 'medium',
+          affectedServices: ['execution'],
+          startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          updates: [
+            {
+              id: 1,
+              incidentId: 1,
+              message: 'Investigating reports of slow execution times',
+              timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+              status: 'investigating'
+            },
+            {
+              id: 2,
+              incidentId: 1,
+              message: 'Issue identified with EU compute cluster',
+              timestamp: new Date(Date.now() - 1.5 * 60 * 60 * 1000),
+              status: 'identified'
+            },
+            {
+              id: 3,
+              incidentId: 1,
+              message: 'Fix deployed, monitoring performance',
+              timestamp: new Date(Date.now() - 30 * 60 * 1000),
+              status: 'monitoring'
+            }
+          ]
+        }
+      ];
+      
+      res.json(incidents);
+    } catch (error) {
+      logger.error('Error fetching incidents:', error);
+      res.status(500).json({ message: 'Failed to fetch incidents' });
+    }
+  });
+  
+  // Badges API endpoints
+  app.get('/api/badges/earned', ensureAuthenticated, async (req, res) => {
+    try {
+      const earnedBadges = [
+        {
+          id: 1,
+          name: 'First Project',
+          description: 'Created your first project on E-Code',
+          icon: 'Rocket',
+          color: 'bg-blue-500',
+          earnedDate: '2025-01-15',
+          rarity: 'common'
+        },
+        {
+          id: 2,
+          name: 'Code Explorer',
+          description: 'Completed 10 coding projects',
+          icon: 'Code',
+          color: 'bg-green-500',
+          earnedDate: '2025-02-20',
+          rarity: 'uncommon'
+        },
+        {
+          id: 3,
+          name: 'Community Helper',
+          description: 'Helped 5 other developers in the community',
+          icon: 'Users',
+          color: 'bg-purple-500',
+          earnedDate: '2025-03-10',
+          rarity: 'rare'
+        },
+        {
+          id: 4,
+          name: 'AI Enthusiast',
+          description: 'Used AI Agent to build 25 projects',
+          icon: 'Zap',
+          color: 'bg-yellow-500',
+          earnedDate: '2025-03-25',
+          rarity: 'epic'
+        }
+      ];
+      
+      res.json(earnedBadges);
+    } catch (error) {
+      logger.error('Error fetching earned badges:', error);
+      res.status(500).json({ message: 'Failed to fetch earned badges' });
+    }
+  });
+
+  app.get('/api/badges/available', ensureAuthenticated, async (req, res) => {
+    try {
+      const availableBadges = [
+        {
+          id: 5,
+          name: 'Master Builder',
+          description: 'Create 100 projects on E-Code',
+          icon: 'Crown',
+          color: 'bg-orange-500',
+          requirement: '42/100 projects',
+          progress: 42,
+          rarity: 'legendary'
+        },
+        {
+          id: 6,
+          name: 'Team Player',
+          description: 'Collaborate on 20 different projects',
+          icon: 'Users',
+          color: 'bg-blue-500',
+          requirement: '7/20 collaborations',
+          progress: 35,
+          rarity: 'rare'
+        },
+        {
+          id: 7,
+          name: 'Git Guru',
+          description: 'Make 500 commits across all projects',
+          icon: 'GitBranch',
+          color: 'bg-green-500',
+          requirement: '234/500 commits',
+          progress: 47,
+          rarity: 'epic'
+        },
+        {
+          id: 8,
+          name: 'Speed Demon',
+          description: 'Deploy a project in under 5 minutes',
+          icon: 'Flame',
+          color: 'bg-red-500',
+          requirement: 'Not achieved yet',
+          progress: 0,
+          rarity: 'rare'
+        },
+        {
+          id: 9,
+          name: 'Learning Machine',
+          description: 'Complete all E-Code tutorials',
+          icon: 'BookOpen',
+          color: 'bg-indigo-500',
+          requirement: '8/12 tutorials',
+          progress: 67,
+          rarity: 'uncommon'
+        },
+        {
+          id: 10,
+          name: 'Security Expert',
+          description: 'Scan and fix 50 security vulnerabilities',
+          icon: 'Shield',
+          color: 'bg-emerald-500',
+          requirement: '12/50 vulnerabilities',
+          progress: 24,
+          rarity: 'epic'
+        }
+      ];
+      
+      res.json(availableBadges);
+    } catch (error) {
+      logger.error('Error fetching available badges:', error);
+      res.status(500).json({ message: 'Failed to fetch available badges' });
     }
   });
 

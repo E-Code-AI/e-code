@@ -37,7 +37,7 @@ export function AuditLogs() {
 
   // Fetch audit logs
   const { data: logs, isLoading } = useQuery({
-    queryKey: ['/api/audit-logs', searchTerm, filterAction, filterStatus, dateRange],
+    queryKey: ['/api/admin/audit-logs', searchTerm, filterAction, filterStatus, dateRange],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
@@ -46,8 +46,8 @@ export function AuditLogs() {
       if (dateRange.from) params.append('from', dateRange.from.toISOString());
       if (dateRange.to) params.append('to', dateRange.to.toISOString());
       
-      // For now, return mock data since the endpoint might not exist
-      return mockAuditLogs;
+      const response = await apiRequest(`/api/admin/audit-logs?${params.toString()}`);
+      return response;
     }
   });
 

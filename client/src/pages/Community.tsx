@@ -91,36 +91,24 @@ export default function Community() {
 
   // Fetch community posts
   const { data: posts = [], isLoading: postsLoading } = useQuery({
-    queryKey: ['/api/community/posts', activeCategory, searchQuery],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (activeCategory !== 'all') params.append('category', activeCategory);
-      if (searchQuery) params.append('search', searchQuery);
-      
-      const response = await fetch(`/api/community/posts?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch posts');
-      return response.json();
-    },
+    queryKey: activeCategory !== 'all' || searchQuery 
+      ? [`/api/community/posts?${new URLSearchParams(
+          Object.assign(
+            activeCategory !== 'all' ? { category: activeCategory } : {},
+            searchQuery ? { search: searchQuery } : {}
+          )
+        )}`]
+      : ['/api/community/posts']
   });
 
   // Fetch challenges
   const { data: challenges = [] } = useQuery<Challenge[]>({
-    queryKey: ['/api/community/challenges'],
-    queryFn: async () => {
-      const response = await fetch('/api/community/challenges');
-      if (!response.ok) throw new Error('Failed to fetch challenges');
-      return response.json();
-    },
+    queryKey: ['/api/community/challenges']
   });
 
   // Fetch leaderboard
   const { data: leaderboard = [] } = useQuery<LeaderboardUser[]>({
-    queryKey: ['/api/community/leaderboard'],
-    queryFn: async () => {
-      const response = await fetch('/api/community/leaderboard');
-      if (!response.ok) throw new Error('Failed to fetch leaderboard');
-      return response.json();
-    },
+    queryKey: ['/api/community/leaderboard']
   });
 
   // Like post mutation

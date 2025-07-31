@@ -49,113 +49,22 @@ export default function Education() {
     }
   });
 
-  // Fallback initial classrooms if API not ready
-  const fallbackClassrooms = [
-    {
-      id: 1,
-      name: 'Introduction to Web Development',
-      description: 'Learn HTML, CSS, and JavaScript fundamentals',
-      students: 24,
-      assignments: 8,
-      progress: 67,
-      teacher: 'Ms. Johnson',
-      code: 'WEB101',
-      nextAssignment: 'CSS Flexbox Project',
-      dueDate: '2025-02-15'
-    },
-    {
-      id: 2,
-      name: 'Python Programming Basics',
-      description: 'Master Python syntax and basic programming concepts',
-      students: 18,
-      assignments: 12,
-      progress: 45,
-      teacher: 'Mr. Chen',
-      code: 'PY101',
-      nextAssignment: 'Functions and Loops',
-      dueDate: '2025-02-12'
-    }
-  ];
 
-  const assignments = [
-    {
-      id: 1,
-      title: 'Build a Personal Portfolio Website',
-      subject: 'Web Development',
-      dueDate: '2025-02-15',
-      submitted: 18,
-      total: 24,
-      status: 'active',
-      description: 'Create a responsive portfolio website using HTML, CSS, and JavaScript'
-    },
-    {
-      id: 2,
-      title: 'Python Calculator Project',
-      subject: 'Python Programming',
-      dueDate: '2025-02-12',
-      submitted: 12,
-      total: 18,
-      status: 'active',
-      description: 'Build a calculator application with GUI using Python and Tkinter'
-    },
-    {
-      id: 3,
-      title: 'Data Structures Quiz',
-      subject: 'Computer Science',
-      dueDate: '2025-02-10',
-      submitted: 22,
-      total: 22,
-      status: 'completed',
-      description: 'Assessment on arrays, linked lists, and basic algorithms'
-    }
-  ];
 
-  const courses = [
-    {
-      id: 1,
-      title: 'Complete Web Development Bootcamp',
-      instructor: 'Sarah Wilson',
-      students: 1247,
-      rating: 4.8,
-      duration: '40 hours',
-      level: 'Beginner',
-      topics: ['HTML', 'CSS', 'JavaScript', 'React'],
-      progress: 0,
-      price: 'Free'
-    },
-    {
-      id: 2,
-      title: 'Python for Data Science',
-      instructor: 'Dr. Michael Chen',
-      students: 856,
-      rating: 4.9,
-      duration: '35 hours',
-      level: 'Intermediate',
-      topics: ['Python', 'NumPy', 'Pandas', 'Matplotlib'],
-      progress: 23,
-      price: '$49'
-    },
-    {
-      id: 3,
-      title: 'Mobile App Development with React Native',
-      instructor: 'Alex Rodriguez',
-      students: 634,
-      rating: 4.7,
-      duration: '50 hours',
-      level: 'Advanced',
-      topics: ['React Native', 'JavaScript', 'Mobile UI'],
-      progress: 0,
-      price: '$79'
-    }
-  ];
+  // Fetch assignments from API
+  const { data: assignments = [] } = useQuery({
+    queryKey: ['/api/education/assignments'],
+  });
 
-  const studentProgress = [
-    { name: 'Emma Thompson', avatar: 'ET', progress: 92, lastActive: '2 hours ago' },
-    { name: 'Liam Johnson', avatar: 'LJ', progress: 87, lastActive: '5 hours ago' },
-    { name: 'Sophia Davis', avatar: 'SD', progress: 78, lastActive: '1 day ago' },
-    { name: 'Noah Wilson', avatar: 'NW', progress: 65, lastActive: '2 days ago' },
-    { name: 'Ava Brown', avatar: 'AB', progress: 43, lastActive: '3 days ago' }
-  ];
+  // Fetch courses from API
+  const { data: courses = [] } = useQuery({
+    queryKey: ['/api/education/courses'],
+  });
+
+  // Fetch student progress from API
+  const { data: studentProgress = [] } = useQuery({
+    queryKey: ['/api/education/student-progress'],
+  });
 
   const EducationDashboard = () => (
     <div className="space-y-6">

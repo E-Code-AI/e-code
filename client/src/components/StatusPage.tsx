@@ -75,127 +75,22 @@ export function StatusPage() {
   // Fetch service status
   const { data: services = [] } = useQuery<ServiceStatus[]>({
     queryKey: ['/api/status/services'],
-    queryFn: () => apiRequest('/api/status/services'),
-    refetchInterval: 30000, // Refresh every 30 seconds
-    initialData: [
-      {
-        id: 'api',
-        name: 'API',
-        category: 'core',
-        status: 'operational',
-        uptime: 99.99,
-        responseTime: 45,
-        lastChecked: new Date()
-      },
-      {
-        id: 'editor',
-        name: 'Code Editor',
-        category: 'core',
-        status: 'operational',
-        uptime: 99.95,
-        responseTime: 120,
-        lastChecked: new Date()
-      },
-      {
-        id: 'execution',
-        name: 'Code Execution',
-        category: 'core',
-        status: 'degraded',
-        uptime: 98.5,
-        responseTime: 850,
-        lastChecked: new Date(),
-        description: 'Experiencing slower execution times'
-      },
-      {
-        id: 'database',
-        name: 'Database',
-        category: 'infrastructure',
-        status: 'operational',
-        uptime: 99.97,
-        responseTime: 25,
-        lastChecked: new Date()
-      },
-      {
-        id: 'cdn',
-        name: 'CDN',
-        category: 'infrastructure',
-        status: 'operational',
-        uptime: 100,
-        responseTime: 15,
-        lastChecked: new Date()
-      },
-      {
-        id: 'auth',
-        name: 'Authentication',
-        category: 'features',
-        status: 'operational',
-        uptime: 99.99,
-        responseTime: 55,
-        lastChecked: new Date()
-      }
-    ]
+    refetchInterval: 30000 // Refresh every 30 seconds
   });
 
   // Fetch incidents
   const { data: incidents = [] } = useQuery<Incident[]>({
-    queryKey: ['/api/status/incidents'],
-    queryFn: () => apiRequest('/api/status/incidents'),
-    initialData: [
-      {
-        id: 1,
-        title: 'Slow code execution in EU region',
-        status: 'monitoring',
-        severity: 'medium',
-        affectedServices: ['execution'],
-        startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        updates: [
-          {
-            id: 1,
-            incidentId: 1,
-            message: 'Investigating reports of slow execution times',
-            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            status: 'investigating'
-          },
-          {
-            id: 2,
-            incidentId: 1,
-            message: 'Issue identified with EU compute cluster',
-            timestamp: new Date(Date.now() - 1.5 * 60 * 60 * 1000),
-            status: 'identified'
-          },
-          {
-            id: 3,
-            incidentId: 1,
-            message: 'Fix deployed, monitoring performance',
-            timestamp: new Date(Date.now() - 30 * 60 * 1000),
-            status: 'monitoring'
-          }
-        ]
-      }
-    ]
+    queryKey: ['/api/status/incidents']
   });
 
   // Fetch maintenance windows
   const { data: maintenance = [] } = useQuery<MaintenanceWindow[]>({
-    queryKey: ['/api/status/maintenance'],
-    queryFn: () => apiRequest('/api/status/maintenance'),
-    initialData: [
-      {
-        id: 1,
-        title: 'Database upgrade',
-        description: 'Upgrading to PostgreSQL 15 for improved performance',
-        scheduledFor: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        duration: 60,
-        affectedServices: ['database', 'api'],
-        status: 'scheduled'
-      }
-    ]
+    queryKey: ['/api/status/maintenance']
   });
 
   // Fetch uptime metrics
   const { data: uptimeMetrics = [] } = useQuery<Metric[]>({
-    queryKey: ['/api/status/uptime', selectedTimeRange],
-    queryFn: () => apiRequest(`/api/status/uptime?range=${selectedTimeRange}`)
+    queryKey: [`/api/status/uptime?range=${selectedTimeRange}`]
   });
 
   const getStatusIcon = (status: ServiceStatus['status']) => {

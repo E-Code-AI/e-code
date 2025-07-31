@@ -197,6 +197,19 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       monacoEditorRef.current.onDidChangeModelContent((e) => {
         const newValue = monacoEditorRef.current?.getValue() || '';
         onChange(newValue);
+        
+        // Broadcast file change to real-time service
+        fetch(`/api/projects/${file.projectId}/realtime/file-change`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fileId: file.id,
+            path: file.path,
+            content: newValue
+          })
+        }).catch(console.error);
       });
       
       // Add event listener for selection changes

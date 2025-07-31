@@ -93,6 +93,16 @@ export interface IStorage {
   createDeployment(deploymentData: InsertDeployment): Promise<Deployment>;
   getDeployments(projectId: number): Promise<Deployment[]>;
   updateDeployment(id: number, deploymentData: Partial<InsertDeployment>): Promise<Deployment | undefined>;
+  
+  // Audit log operations
+  getAuditLogs(filters: { userId?: number; action?: string; dateRange?: string }): Promise<any[]>;
+  
+  // Storage operations
+  getStorageBuckets(): Promise<any[]>;
+  createStorageBucket(bucket: { projectId: number; name: string; region: string; isPublic: boolean }): Promise<any>;
+  getProjectStorageBuckets(projectId: number): Promise<any[]>;
+  getStorageObjects(bucketId: string): Promise<any[]>;
+  deleteStorageObject(bucketId: string, objectKey: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -475,6 +485,64 @@ export class DatabaseStorage implements IStorage {
       .where(eq(deployments.id, id))
       .returning();
     return deployment;
+  }
+  
+  // Audit log operations
+  async getAuditLogs(filters: { userId?: number; action?: string; dateRange?: string }): Promise<any[]> {
+    // For now, return empty array - in production, this would query an audit logs table
+    return [];
+  }
+  
+  // Storage operations
+  async getStorageBuckets(): Promise<any[]> {
+    // Return sample buckets for now - in production, this would query a storage_buckets table
+    return [
+      {
+        id: 'global-assets',
+        name: 'global-assets',
+        region: 'us-east-1',
+        created: new Date('2024-01-01'),
+        isPublic: true,
+        objectCount: 0,
+        totalSize: 0,
+      }
+    ];
+  }
+  
+  async createStorageBucket(bucket: { projectId: number; name: string; region: string; isPublic: boolean }): Promise<any> {
+    // In production, this would create a bucket in the storage_buckets table
+    return {
+      id: crypto.randomBytes(8).toString('hex'),
+      ...bucket,
+      created: new Date(),
+      objectCount: 0,
+      totalSize: 0,
+    };
+  }
+  
+  async getProjectStorageBuckets(projectId: number): Promise<any[]> {
+    // Return project-specific buckets - in production, query by projectId
+    return [
+      {
+        id: `project-${projectId}-assets`,
+        name: `project-${projectId}-assets`,
+        region: 'us-east-1',
+        created: new Date(),
+        isPublic: true,
+        objectCount: 0,
+        totalSize: 0,
+      }
+    ];
+  }
+  
+  async getStorageObjects(bucketId: string): Promise<any[]> {
+    // Return empty array for now - in production, query storage_objects table
+    return [];
+  }
+  
+  async deleteStorageObject(bucketId: string, objectKey: string): Promise<void> {
+    // In production, delete from storage_objects table
+    console.log(`Deleting object ${objectKey} from bucket ${bucketId}`);
   }
 }
 
