@@ -119,15 +119,14 @@ export function ReplitNetworking({ projectId, className }: ReplitNetworkingProps
     };
 
     try {
-      // In production, this would make a real request through a proxy
-      // For now, simulate the request
-      const response = await simulateHttpRequest(newRequest);
+      // Make real request through proxy
+      const response = await proxyHttpRequest.mutateAsync(newRequest);
       
       newRequest.status = response.status;
       newRequest.statusText = response.statusText;
       newRequest.responseHeaders = response.headers;
       newRequest.responseBody = response.body;
-      newRequest.responseTime = Date.now() - startTime;
+      newRequest.responseTime = response.responseTime || Date.now() - startTime;
       
       setRequests(prev => [newRequest, ...prev]);
       setSelectedRequest(newRequest);
@@ -164,31 +163,31 @@ export function ReplitNetworking({ projectId, className }: ReplitNetworkingProps
     return headers;
   };
 
-  // Simulate HTTP request (in production, this would use a real proxy)
-  const simulateHttpRequest = async (request: NetworkRequest) => {
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-    
-    // Simulate different responses based on URL
-    if (request.url.includes('error')) {
-      throw new Error('Simulated network error');
+  // Real HTTP proxy request
+  const proxyHttpRequest = useMutation({
+    mutationFn: async (request: NetworkRequest) => {
+      const response = await apiRequest(`/api/projects/${projectId}/proxy`, {
+        method: 'POST',
+        body: JSON.stringify({
+          method: request.method,
+          url: request.url,
+          headers: request.headers,
+          body: request.body,
+          projectId
+        })
+      });
+      
+      return {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        body: typeof response.data === 'object' 
+          ? JSON.stringify(response.data, null, 2) 
+          : response.data,
+        responseTime: response.responseTime
+      };
     }
-    
-    return {
-      status: 200,
-      statusText: 'OK',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Response-Time': '123ms',
-        'X-Rate-Limit-Remaining': '999',
-      },
-      body: JSON.stringify({
-        message: 'Success',
-        method: request.method,
-        timestamp: new Date().toISOString(),
-        data: { example: 'response data' },
-      }, null, 2),
-    };
-  };
+  });
 
   // WebSocket Connection
   const connectWebSocket = () => {

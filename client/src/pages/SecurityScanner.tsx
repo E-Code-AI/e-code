@@ -89,24 +89,6 @@ export default function SecurityScanner() {
   // Fetch security metrics
   const { data: metrics, isLoading: metricsLoading } = useQuery<SecurityMetrics>({
     queryKey: ['/api/security/metrics'],
-    queryFn: async () => {
-      // Mock data for demonstration
-      return {
-        lastScan: '2 minutes ago',
-        totalScans: 45,
-        averageScore: 78,
-        trendsData: [
-          { date: '7 days ago', score: 65, vulnerabilities: 58 },
-          { date: '6 days ago', score: 68, vulnerabilities: 52 },
-          { date: '5 days ago', score: 70, vulnerabilities: 48 },
-          { date: '4 days ago', score: 72, vulnerabilities: 45 },
-          { date: '3 days ago', score: 75, vulnerabilities: 42 },
-          { date: '2 days ago', score: 76, vulnerabilities: 40 },
-          { date: '1 day ago', score: 78, vulnerabilities: 38 },
-          { date: 'Today', score: 72, vulnerabilities: 42 }
-        ]
-      };
-    }
   });
 
   // Start scan mutation

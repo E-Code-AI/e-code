@@ -27,126 +27,55 @@ import {
   Globe,
   Lock
 } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+
+interface CurrentPlan {
+  name: string;
+  cpu: { current: number; max: number; unit: string };
+  memory: { current: number; max: number; unit: string };
+  storage: { current: number; max: number; unit: string };
+  network: { current: number; max: number; unit: string };
+  builds: { current: number; max: number; unit: string };
+}
+
+interface PowerUp {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+  boost: string;
+  price: string;
+  active: boolean;
+  usage: number;
+  color: string;
+}
 
 export default function PowerUps() {
   const [activeTab, setActiveTab] = useState('overview');
+  const { toast } = useToast();
 
-  // Mock power-ups data
-  const currentPlan = {
-    name: 'Pro',
-    cpu: { current: 2, max: 4, unit: 'vCPUs' },
-    memory: { current: 4, max: 8, unit: 'GB RAM' },
-    storage: { current: 20, max: 50, unit: 'GB SSD' },
-    network: { current: 100, max: 1000, unit: 'Mbps' },
-    builds: { current: 15, max: 50, unit: 'builds/month' }
-  };
+  // Fetch current plan from API
+  const { data: currentPlan, isLoading: planLoading } = useQuery<CurrentPlan>({
+    queryKey: ['/api/powerups/current-plan'],
+  });
 
-  const powerUps = [
-    {
-      id: 1,
-      name: 'CPU Boost',
-      description: 'Double your CPU power for faster builds and execution',
-      icon: Cpu,
-      category: 'Performance',
-      boost: '+2 vCPUs',
-      price: '$10/month',
-      active: true,
-      usage: 78,
-      color: 'bg-blue-500'
-    },
-    {
-      id: 2,
-      name: 'Memory Upgrade',
-      description: 'Increase RAM for handling larger projects',
-      icon: Database,
-      category: 'Performance',
-      boost: '+4 GB RAM',
-      price: '$8/month',
-      active: true,
-      usage: 65,
-      color: 'bg-green-500'
-    },
-    {
-      id: 3,
-      name: 'Storage Expansion',
-      description: 'More space for your projects and assets',
-      icon: HardDrive,
-      category: 'Storage',
-      boost: '+30 GB SSD',
-      price: '$5/month',
-      active: false,
-      usage: 0,
-      color: 'bg-purple-500'
-    },
-    {
-      id: 4,
-      name: 'Network Accelerator',
-      description: 'Ultra-fast network speeds for quicker deployments',
-      icon: Network,
-      category: 'Network',
-      boost: '+900 Mbps',
-      price: '$15/month',
-      active: false,
-      usage: 0,
-      color: 'bg-orange-500'
-    },
-    {
-      id: 5,
-      name: 'Build Multiplier',
-      description: 'Increase your monthly build limit',
-      icon: Rocket,
-      category: 'Builds',
-      boost: '+200 builds',
-      price: '$12/month',
-      active: true,
-      usage: 30,
-      color: 'bg-red-500'
-    },
-    {
-      id: 6,
-      name: 'Priority Support',
-      description: '24/7 premium support with faster response times',
-      icon: Shield,
-      category: 'Support',
-      boost: 'Premium Support',
-      price: '$20/month',
-      active: false,
-      usage: 0,
-      color: 'bg-indigo-500'
-    }
-  ];
+  // Fetch power-ups from API
+  const { data: powerUps = [], isLoading: powerUpsLoading } = useQuery<PowerUp[]>({
+    queryKey: ['/api/powerups'],
+  });
 
-  const usageStats = [
-    { label: 'CPU Usage', value: 78, limit: 100, unit: '%' },
-    { label: 'Memory Usage', value: 65, limit: 100, unit: '%' },
-    { label: 'Storage Used', value: 42, limit: 100, unit: '%' },
-    { label: 'Monthly Builds', value: 15, limit: 50, unit: 'builds' },
-    { label: 'Network Transfer', value: 1.2, limit: 10, unit: 'TB' }
-  ];
+  // Fetch usage stats from API
+  const { data: usageStats = [] } = useQuery<any[]>({
+    queryKey: ['/api/powerups/usage-stats'],
+  });
 
-  const recommendations = [
-    {
-      type: 'warning',
-      title: 'High CPU Usage Detected',
-      description: 'Your CPU usage has been above 75% for the past week. Consider upgrading.',
-      action: 'Upgrade CPU',
-      powerUp: 'CPU Boost'
-    },
-    {
-      type: 'info',
-      title: 'Storage Optimization',
-      description: 'You could benefit from additional storage for better performance.',
-      action: 'Add Storage',
-      powerUp: 'Storage Expansion'
-    },
-    {
-      type: 'success',
-      title: 'Memory Usage Optimal',
-      description: 'Your current memory allocation is working well for your workload.',
-      action: null,
-      powerUp: null
-    }
-  ];
+  // Fetch recommendations from API
+  const { data: recommendations = [] } = useQuery<any[]>({
+    queryKey: ['/api/powerups/recommendations'],
+  });
 
   const getUsageColor = (percentage: number) => {
     if (percentage >= 80) return 'text-red-600';
@@ -160,8 +89,16 @@ export default function PowerUps() {
     return 'bg-green-500';
   };
 
-  const PowerUpCard = ({ powerUp }: { powerUp: any }) => {
-    const IconComponent = powerUp.icon;
+  const PowerUpCard = ({ powerUp }: { powerUp: PowerUp }) => {
+    const iconMap: Record<string, any> = {
+      Cpu,
+      Database,
+      HardDrive,
+      Network,
+      Rocket,
+      Shield
+    };
+    const IconComponent = iconMap[powerUp.icon] || Zap;
     
     return (
       <Card className={`relative overflow-hidden ${powerUp.active ? 'ring-2 ring-primary' : ''}`}>
@@ -228,7 +165,7 @@ export default function PowerUps() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-yellow-500" />
-                {currentPlan.name} Plan
+                {currentPlan?.name || 'Current'} Plan
               </CardTitle>
               <CardDescription>Your current resource allocation and usage</CardDescription>
             </div>
@@ -242,8 +179,8 @@ export default function PowerUps() {
                 <Cpu className="h-4 w-4 text-blue-500" />
                 <span className="text-sm font-medium">CPU</span>
               </div>
-              <p className="text-2xl font-bold">{currentPlan.cpu.current}/{currentPlan.cpu.max}</p>
-              <p className="text-xs text-muted-foreground">{currentPlan.cpu.unit}</p>
+              <p className="text-2xl font-bold">{currentPlan?.cpu.current || 0}/{currentPlan?.cpu.max || 0}</p>
+              <p className="text-xs text-muted-foreground">{currentPlan?.cpu.unit || ''}</p>
             </div>
             
             <div className="space-y-2">
@@ -251,8 +188,8 @@ export default function PowerUps() {
                 <Database className="h-4 w-4 text-green-500" />
                 <span className="text-sm font-medium">Memory</span>
               </div>
-              <p className="text-2xl font-bold">{currentPlan.memory.current}/{currentPlan.memory.max}</p>
-              <p className="text-xs text-muted-foreground">{currentPlan.memory.unit}</p>
+              <p className="text-2xl font-bold">{currentPlan?.memory.current || 0}/{currentPlan?.memory.max || 0}</p>
+              <p className="text-xs text-muted-foreground">{currentPlan?.memory.unit || ''}</p>
             </div>
             
             <div className="space-y-2">
@@ -260,8 +197,8 @@ export default function PowerUps() {
                 <HardDrive className="h-4 w-4 text-purple-500" />
                 <span className="text-sm font-medium">Storage</span>
               </div>
-              <p className="text-2xl font-bold">{currentPlan.storage.current}/{currentPlan.storage.max}</p>
-              <p className="text-xs text-muted-foreground">{currentPlan.storage.unit}</p>
+              <p className="text-2xl font-bold">{currentPlan?.storage.current || 0}/{currentPlan?.storage.max || 0}</p>
+              <p className="text-xs text-muted-foreground">{currentPlan?.storage.unit || ''}</p>
             </div>
             
             <div className="space-y-2">
@@ -269,8 +206,8 @@ export default function PowerUps() {
                 <Network className="h-4 w-4 text-orange-500" />
                 <span className="text-sm font-medium">Network</span>
               </div>
-              <p className="text-2xl font-bold">{currentPlan.network.current}/{currentPlan.network.max}</p>
-              <p className="text-xs text-muted-foreground">{currentPlan.network.unit}</p>
+              <p className="text-2xl font-bold">{currentPlan?.network.current || 0}/{currentPlan?.network.max || 0}</p>
+              <p className="text-xs text-muted-foreground">{currentPlan?.network.unit || ''}</p>
             </div>
             
             <div className="space-y-2">
@@ -278,8 +215,8 @@ export default function PowerUps() {
                 <Rocket className="h-4 w-4 text-red-500" />
                 <span className="text-sm font-medium">Builds</span>
               </div>
-              <p className="text-2xl font-bold">{currentPlan.builds.current}/{currentPlan.builds.max}</p>
-              <p className="text-xs text-muted-foreground">{currentPlan.builds.unit}</p>
+              <p className="text-2xl font-bold">{currentPlan?.builds.current || 0}/{currentPlan?.builds.max || 0}</p>
+              <p className="text-xs text-muted-foreground">{currentPlan?.builds.unit || ''}</p>
             </div>
           </div>
         </CardContent>

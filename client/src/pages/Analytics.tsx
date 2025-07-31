@@ -24,46 +24,32 @@ import {
   Settings
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState('7d');
-
-  // Mock analytics data
-  const overviewStats = [
-    { label: 'Total Views', value: '2,847', change: '+12.5%', trend: 'up' },
-    { label: 'Unique Visitors', value: '1,923', change: '+8.2%', trend: 'up' },
-    { label: 'Page Views', value: '4,521', change: '+15.3%', trend: 'up' },
-    { label: 'Avg. Session', value: '3m 42s', change: '-2.1%', trend: 'down' }
+  
+  // Fetch real analytics data from API
+  const { data: analyticsData, isLoading } = useQuery({
+    queryKey: ['/api/analytics', timeRange],
+    queryFn: async () => {
+      const response = await apiRequest(`/api/analytics?timeRange=${timeRange}`);
+      return response;
+    }
+  });
+  
+  const overviewStats = analyticsData?.overview || [
+    { label: 'Total Views', value: '0', change: '0%', trend: 'up' },
+    { label: 'Unique Visitors', value: '0', change: '0%', trend: 'up' },
+    { label: 'Page Views', value: '0', change: '0%', trend: 'up' },
+    { label: 'Avg. Session', value: '0s', change: '0%', trend: 'up' }
   ];
 
-  const trafficSources = [
-    { source: 'Direct', visitors: 1234, percentage: 45 },
-    { source: 'Google Search', visitors: 856, percentage: 31 },
-    { source: 'Social Media', visitors: 423, percentage: 15 },
-    { source: 'Referrals', visitors: 234, percentage: 9 }
-  ];
-
-  const topPages = [
-    { page: '/dashboard', views: 1456, change: '+12%' },
-    { page: '/projects', views: 1234, change: '+8%' },
-    { page: '/editor/my-app', views: 987, change: '+15%' },
-    { page: '/bounties', views: 654, change: '+3%' },
-    { page: '/learn', views: 432, change: '+22%' }
-  ];
-
-  const deviceData = [
-    { device: 'Desktop', percentage: 68, users: 1308 },
-    { device: 'Mobile', percentage: 25, users: 481 },
-    { device: 'Tablet', percentage: 7, users: 135 }
-  ];
-
-  const geographicData = [
-    { country: 'United States', users: 743, flag: '🇺🇸' },
-    { country: 'United Kingdom', users: 284, flag: '🇬🇧' },
-    { country: 'Canada', users: 192, flag: '🇨🇦' },
-    { country: 'Germany', users: 156, flag: '🇩🇪' },
-    { country: 'France', users: 123, flag: '🇫🇷' }
-  ];
+  const trafficSources = analyticsData?.trafficSources || [];
+  const topPages = analyticsData?.topPages || [];
+  const deviceData = analyticsData?.deviceData || [];
+  const geographicData = analyticsData?.geographicData || [];
 
   return (
     <div className="min-h-screen bg-background">

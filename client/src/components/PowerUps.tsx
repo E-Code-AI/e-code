@@ -70,74 +70,7 @@ export function PowerUps({ projectId }: PowerUpsProps) {
   // Fetch power-ups
   const { data: powerUps = [] } = useQuery<PowerUp[]>({
     queryKey: ['/api/projects', projectId, 'powerups'],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/powerups`),
-    initialData: [
-      {
-        id: 'cpu-boost',
-        name: 'CPU Boost',
-        description: 'Increase CPU allocation for faster processing',
-        icon: <Cpu className="h-5 w-5" />,
-        type: 'performance',
-        currentValue: 2,
-        maxValue: 16,
-        unit: 'vCPU',
-        price: 0.05,
-        active: true,
-        autoRenew: true
-      },
-      {
-        id: 'memory-expansion',
-        name: 'Memory Expansion',
-        description: 'More RAM for memory-intensive operations',
-        icon: <HardDrive className="h-5 w-5" />,
-        type: 'capacity',
-        currentValue: 4,
-        maxValue: 32,
-        unit: 'GB',
-        price: 0.03,
-        active: true,
-        autoRenew: true
-      },
-      {
-        id: 'gpu-acceleration',
-        name: 'GPU Acceleration',
-        description: 'Enable GPU for ML and graphics workloads',
-        icon: <Zap className="h-5 w-5" />,
-        type: 'performance',
-        currentValue: 0,
-        maxValue: 1,
-        unit: 'GPU',
-        price: 0.50,
-        active: false,
-        autoRenew: false
-      },
-      {
-        id: 'always-on',
-        name: 'Always On',
-        description: 'Keep your project running 24/7',
-        icon: <Timer className="h-5 w-5" />,
-        type: 'time',
-        currentValue: 0,
-        maxValue: 1,
-        unit: 'active',
-        price: 0.20,
-        active: false,
-        autoRenew: false
-      },
-      {
-        id: 'private-networking',
-        name: 'Private Networking',
-        description: 'Dedicated network with enhanced security',
-        icon: <Shield className="h-5 w-5" />,
-        type: 'feature',
-        currentValue: 0,
-        maxValue: 1,
-        unit: 'active',
-        price: 0.10,
-        active: false,
-        autoRenew: false
-      }
-    ]
+    queryFn: () => apiRequest(`/api/projects/${projectId}/powerups`)
   });
 
   // Fetch usage
@@ -149,34 +82,7 @@ export function PowerUps({ projectId }: PowerUpsProps) {
   // Fetch bundles
   const { data: bundles = [] } = useQuery<PowerUpBundle[]>({
     queryKey: ['/api/powerups/bundles'],
-    queryFn: () => apiRequest('/api/powerups/bundles'),
-    initialData: [
-      {
-        id: 'starter',
-        name: 'Starter Pack',
-        description: 'Essential power-ups for small projects',
-        powerUps: ['cpu-boost', 'memory-expansion'],
-        discount: 10,
-        price: 15
-      },
-      {
-        id: 'pro',
-        name: 'Pro Bundle',
-        description: 'Complete power-up suite for professionals',
-        powerUps: ['cpu-boost', 'memory-expansion', 'gpu-acceleration', 'always-on'],
-        discount: 20,
-        price: 50,
-        popular: true
-      },
-      {
-        id: 'enterprise',
-        name: 'Enterprise',
-        description: 'Maximum performance and features',
-        powerUps: ['cpu-boost', 'memory-expansion', 'gpu-acceleration', 'always-on', 'private-networking'],
-        discount: 25,
-        price: 100
-      }
-    ]
+    queryFn: () => apiRequest('/api/powerups/bundles')
   });
 
   // Activate power-up
