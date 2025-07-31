@@ -83,7 +83,7 @@ const formSchema = z.object({
 
 export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentManagerProps) {
   const [variables, setVariables] = useState<EnvVariable[]>([
-    { id: 1, key: "PORT", value: "3000", isSecret: false },
+    { id: 1, key: "PORT", value: "5000", isSecret: false },
     { id: 2, key: "NODE_ENV", value: "development", isSecret: false },
     { id: 3, key: "API_KEY", value: "sk_test_123456789", isSecret: true },
     { id: 4, key: "DATABASE_URL", value: "postgres://user:password@localhost:5432/db", isSecret: true },
