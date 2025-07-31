@@ -9,7 +9,7 @@ import {
   Zap, Globe, Users, Shield, Code, Terminal, GitBranch, 
   Rocket, Package, Database, Cpu, Cloud, Lock, Star,
   ChevronRight, ArrowRight, CheckCircle, PlayCircle,
-  Sparkles, Check, Loader2, MessageSquare, Bot
+  Sparkles, Check, Loader2, MessageSquare, Bot, ShoppingCart
 } from 'lucide-react';
 import { useState } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
@@ -442,121 +442,604 @@ export default function Landing() {
 
           {/* Example Apps Built with AI */}
           <div className="mt-20">
-            <h3 className="text-2xl font-bold text-center mb-12">
-              Apps our users built in minutes
-            </h3>
+            <div className="text-center mb-12">
+              <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0">
+                No Coding Knowledge Required
+              </Badge>
+              <h3 className="text-3xl font-bold mb-3">
+                Real Apps Built in Under 60 Seconds
+              </h3>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Join thousands who transformed their ideas into working apps by simply describing what they want
+              </p>
+            </div>
             <div className="grid md:grid-cols-3 gap-6">
-              <Card className="group hover:shadow-xl transition-all">
-                <CardHeader>
-                  <Badge className="mb-2 w-fit">Built in 45 seconds</Badge>
-                  <CardTitle>Personal Finance Tracker</CardTitle>
-                  <CardDescription>
-                    "Build an expense tracker with graphs and monthly budgets"
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-500/10 to-blue-500/10 rounded-bl-full" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                      ⚡ 25 seconds
+                    </Badge>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Live</span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">Personal Finance Tracker</CardTitle>
+                  <CardDescription className="italic">
+                    "Create a dashboard to track my expenses with charts and budget alerts"
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-video bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg mb-4 overflow-hidden relative group flex items-center justify-center">
-                    <div className="text-center space-y-4 p-6">
-                      <div className="relative">
-                        <div className="w-16 h-16 mx-auto bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl flex items-center justify-center animate-pulse">
-                          <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-                            <div className="w-4 h-4 bg-green-500 rounded animate-bounce"></div>
+                  <div className="aspect-video bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 rounded-xl mb-4 overflow-hidden relative shadow-inner">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+                    <div className="relative h-full flex items-center justify-center p-6">
+                      <div className="w-full max-w-sm">
+                        {/* Dashboard Preview */}
+                        <div className="bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-xl p-4 backdrop-blur">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-semibold">Monthly Overview</h4>
+                            <Badge variant="secondary" className="text-xs">$2,450</Badge>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-green-500 rounded" />
+                              <span className="text-xs flex-1">Income</span>
+                              <span className="text-xs font-mono">$4,200</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-red-500 rounded" />
+                              <span className="text-xs flex-1">Expenses</span>
+                              <span className="text-xs font-mono">$1,750</span>
+                            </div>
+                            <div className="h-20 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded flex items-end p-2 gap-1">
+                              {[40, 65, 45, 70, 55, 80, 60].map((height, i) => (
+                                <div key={i} className="flex-1 bg-gradient-to-t from-green-500 to-blue-500 rounded-t" style={{ height: `${height}%` }} />
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="h-2 bg-gradient-to-r from-green-400 to-blue-400 rounded-full animate-pulse w-20 mx-auto" />
-                        <div className="h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse delay-100 w-16 mx-auto" />
-                        <div className="h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse delay-200 w-24 mx-auto" />
-                      </div>
-                      <div className="text-xs text-muted-foreground">💰 Building dashboard</div>
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="absolute bottom-4 left-4 text-white font-mono text-xs space-y-1">
-                        <div className="animate-pulse delay-100">✓ Dashboard created</div>
-                        <div className="animate-pulse delay-200">✓ Charts integrated</div>
-                        <div className="animate-pulse delay-300">✓ Budget alerts ready</div>
-                      </div>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Try this template
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="group hover:shadow-xl transition-all">
-                <CardHeader>
-                  <Badge className="mb-2 w-fit">Built in 30 seconds</Badge>
-                  <CardTitle>Team Chat App</CardTitle>
-                  <CardDescription>
-                    "Create a real-time chat with channels and direct messages"
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="aspect-video bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg mb-4 overflow-hidden relative group flex items-center justify-center">
-                    <div className="text-center space-y-4 p-6">
-                      <div className="relative">
-                        <div className="w-16 h-16 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center animate-pulse">
-                          <MessageSquare className="h-8 w-8 text-white animate-bounce" />
-                        </div>
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-ping" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse w-16 mx-auto" />
-                        <div className="h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse delay-100 w-20 mx-auto" />
-                      </div>
-                      <div className="text-xs text-muted-foreground">💬 Building chat</div>
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="absolute bottom-4 left-4 text-white font-mono text-xs space-y-1">
-                        <div className="animate-pulse delay-100">✓ Real-time chat ready</div>
-                        <div className="animate-pulse delay-200">✓ Channels configured</div>
-                        <div className="animate-pulse delay-300">✓ WebSocket connected</div>
-                      </div>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Try this template
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="group hover:shadow-xl transition-all">
-                <CardHeader>
-                  <Badge className="mb-2 w-fit">Built in 60 seconds</Badge>
-                  <CardTitle>E-commerce Store</CardTitle>
-                  <CardDescription>
-                    "Make an online store with products, cart, and checkout"
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="aspect-video bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg mb-4 overflow-hidden relative group flex items-center justify-center">
-                    <div className="text-center space-y-4 p-6">
-                      <div className="relative">
-                        <div className="w-16 h-16 mx-auto bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center animate-pulse">
-                          <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-                            <div className="w-4 h-4 bg-orange-500 rounded animate-spin"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="bg-black/80 backdrop-blur rounded-lg p-3">
+                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Complete dashboard UI</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Real-time calculations</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Data visualization</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="h-2 bg-gradient-to-r from-orange-400 to-red-400 rounded-full animate-pulse w-24 mx-auto" />
-                        <div className="h-2 bg-gradient-to-r from-red-400 to-pink-400 rounded-full animate-pulse delay-100 w-20 mx-auto" />
-                      </div>
-                      <div className="text-xs text-muted-foreground">🛒 Building store</div>
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="absolute bottom-4 left-4 text-white font-mono text-xs space-y-1">
-                        <div className="animate-pulse delay-100">✓ Product catalog ready</div>
-                        <div className="animate-pulse delay-200">✓ Shopping cart working</div>
-                        <div className="animate-pulse delay-300">✓ Payment integrated</div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Tech Stack:</span>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs">React</Badge>
+                        <Badge variant="outline" className="text-xs">Chart.js</Badge>
+                        <Badge variant="outline" className="text-xs">Tailwind</Badge>
+                      </div>
+                    </div>
+                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Build Similar App
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-bl-full" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20">
+                      ⚡ 18 seconds
+                    </Badge>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Live</span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">Team Chat App</CardTitle>
+                  <CardDescription className="italic">
+                    "Build a Slack-like chat app with channels and real-time messaging"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-xl mb-4 overflow-hidden relative shadow-inner">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+                    <div className="relative h-full flex items-center justify-center p-6">
+                      <div className="w-full max-w-sm">
+                        {/* Chat Preview */}
+                        <div className="bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-xl overflow-hidden backdrop-blur">
+                          <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-2 text-white">
+                            <p className="text-xs font-medium"># general</p>
+                          </div>
+                          <div className="p-3 space-y-2">
+                            <div className="flex gap-2">
+                              <div className="w-6 h-6 bg-blue-500 rounded-full flex-shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-xs font-medium">Sarah</p>
+                                <p className="text-xs text-muted-foreground">Hey team! The new feature is ready 🚀</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="w-6 h-6 bg-purple-500 rounded-full flex-shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-xs font-medium">Mike</p>
+                                <p className="text-xs text-muted-foreground">Awesome! Let's deploy it</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 items-center">
+                              <div className="w-6 h-6 bg-green-500 rounded-full flex-shrink-0" />
+                              <div className="flex gap-1">
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="border-t p-2">
+                            <input className="w-full text-xs bg-gray-100 dark:bg-gray-800 rounded px-2 py-1" placeholder="Type a message..." />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="bg-black/80 backdrop-blur rounded-lg p-3">
+                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Real-time WebSocket chat</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Channel management</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>User authentication</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Try this template
-                  </Button>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Tech Stack:</span>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs">Next.js</Badge>
+                        <Badge variant="outline" className="text-xs">Socket.io</Badge>
+                        <Badge variant="outline" className="text-xs">Prisma</Badge>
+                      </div>
+                    </div>
+                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Build Similar App
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-bl-full" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20">
+                      ⚡ 35 seconds
+                    </Badge>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Live</span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">E-commerce Store</CardTitle>
+                  <CardDescription className="italic">
+                    "Create an online store with product catalog, cart, and Stripe checkout"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 rounded-xl mb-4 overflow-hidden relative shadow-inner">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+                    <div className="relative h-full flex items-center justify-center p-6">
+                      <div className="w-full max-w-sm">
+                        {/* Store Preview */}
+                        <div className="bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-xl overflow-hidden backdrop-blur">
+                          <div className="p-3">
+                            <div className="flex justify-between items-center mb-3">
+                              <h4 className="text-sm font-semibold">TechStore</h4>
+                              <div className="flex items-center gap-1">
+                                <ShoppingCart className="h-4 w-4" />
+                                <Badge variant="destructive" className="text-xs h-5 w-5 p-0 flex items-center justify-center">3</Badge>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
+                                <div className="aspect-square bg-gradient-to-br from-blue-200 to-purple-200 dark:from-blue-800 dark:to-purple-800 rounded mb-2" />
+                                <p className="text-xs font-medium truncate">Laptop Pro</p>
+                                <p className="text-xs text-muted-foreground">$1,299</p>
+                              </div>
+                              <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
+                                <div className="aspect-square bg-gradient-to-br from-green-200 to-blue-200 dark:from-green-800 dark:to-blue-800 rounded mb-2" />
+                                <p className="text-xs font-medium truncate">Wireless Mouse</p>
+                                <p className="text-xs text-muted-foreground">$49</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="bg-gradient-to-r from-orange-500 to-red-500 p-2">
+                            <button className="w-full text-white text-xs font-medium">Checkout - $1,348</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="bg-black/80 backdrop-blur rounded-lg p-3">
+                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Full product catalog</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Shopping cart logic</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Stripe integration</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Tech Stack:</span>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs">Next.js</Badge>
+                        <Badge variant="outline" className="text-xs">Stripe</Badge>
+                        <Badge variant="outline" className="text-xs">Tailwind</Badge>
+                      </div>
+                    </div>
+                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Build Similar App
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* New App 1: AI Writing Assistant */}
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-bl-full" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20">
+                      ⚡ 22 seconds
+                    </Badge>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Live</span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">AI Writing Assistant</CardTitle>
+                  <CardDescription className="italic">
+                    "Make an AI-powered writing tool with grammar check and style suggestions"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-xl mb-4 overflow-hidden relative shadow-inner">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+                    <div className="relative h-full flex items-center justify-center p-6">
+                      <div className="w-full max-w-sm">
+                        {/* Writing Assistant Preview */}
+                        <div className="bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-xl p-4 backdrop-blur">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-semibold">AI Editor</h4>
+                            <div className="flex gap-1">
+                              <Badge variant="secondary" className="text-xs">✨ AI Active</Badge>
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded p-2 text-xs">
+                              <p className="mb-1">Your text:</p>
+                              <p className="text-muted-foreground">"Let's <span className="underline decoration-red-500 decoration-wavy">discus</span> the project details..."</p>
+                            </div>
+                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded p-2">
+                              <p className="text-xs font-medium mb-1">AI Suggestions:</p>
+                              <div className="space-y-1">
+                                <div className="flex items-start gap-1">
+                                  <div className="w-3 h-3 bg-red-500 rounded-full flex-shrink-0 mt-0.5" />
+                                  <p className="text-xs">Change "discus" to "discuss"</p>
+                                </div>
+                                <div className="flex items-start gap-1">
+                                  <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0 mt-0.5" />
+                                  <p className="text-xs">Consider more formal tone</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="bg-black/80 backdrop-blur rounded-lg p-3">
+                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>OpenAI integration</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Real-time suggestions</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Grammar & style check</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Tech Stack:</span>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs">React</Badge>
+                        <Badge variant="outline" className="text-xs">OpenAI</Badge>
+                        <Badge variant="outline" className="text-xs">TipTap</Badge>
+                      </div>
+                    </div>
+                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Build Similar App
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* New App 2: Task Management App */}
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 rounded-bl-full" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20">
+                      ⚡ 15 seconds
+                    </Badge>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Live</span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">Task Management App</CardTitle>
+                  <CardDescription className="italic">
+                    "Build a Kanban board for project management with drag and drop"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl mb-4 overflow-hidden relative shadow-inner">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+                    <div className="relative h-full flex items-center justify-center p-6">
+                      <div className="w-full max-w-sm">
+                        {/* Kanban Board Preview */}
+                        <div className="bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-xl p-3 backdrop-blur">
+                          <h4 className="text-sm font-semibold mb-2">Project Board</h4>
+                          <div className="grid grid-cols-3 gap-2 text-xs">
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
+                              <p className="font-medium mb-2 text-gray-600 dark:text-gray-400">To Do</p>
+                              <div className="space-y-1">
+                                <div className="bg-white dark:bg-gray-700 p-1.5 rounded shadow-sm">
+                                  <p className="font-medium">Design UI</p>
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <div className="w-4 h-4 bg-blue-500 rounded-full" />
+                                    <span className="text-[10px] text-muted-foreground">High</span>
+                                  </div>
+                                </div>
+                                <div className="bg-white dark:bg-gray-700 p-1.5 rounded shadow-sm opacity-60">
+                                  <p className="font-medium">API Setup</p>
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <div className="w-4 h-4 bg-yellow-500 rounded-full" />
+                                    <span className="text-[10px] text-muted-foreground">Med</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
+                              <p className="font-medium mb-2 text-blue-600 dark:text-blue-400">In Progress</p>
+                              <div className="bg-white dark:bg-gray-700 p-1.5 rounded shadow-sm border-2 border-blue-500 border-dashed">
+                                <p className="font-medium">User Auth</p>
+                                <div className="flex items-center gap-1 mt-1">
+                                  <div className="w-4 h-4 bg-orange-500 rounded-full" />
+                                  <span className="text-[10px] text-muted-foreground">High</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
+                              <p className="font-medium mb-2 text-green-600 dark:text-green-400">Done</p>
+                              <div className="bg-white dark:bg-gray-700 p-1.5 rounded shadow-sm opacity-75">
+                                <p className="font-medium line-through">Setup DB</p>
+                                <div className="flex items-center gap-1 mt-1">
+                                  <Check className="h-3 w-3 text-green-500" />
+                                  <span className="text-[10px] text-muted-foreground">Complete</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="bg-black/80 backdrop-blur rounded-lg p-3">
+                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Drag & drop boards</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Task management</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Team collaboration</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Tech Stack:</span>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs">React</Badge>
+                        <Badge variant="outline" className="text-xs">DnD Kit</Badge>
+                        <Badge variant="outline" className="text-xs">Zustand</Badge>
+                      </div>
+                    </div>
+                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Build Similar App
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* New App 3: Weather Dashboard */}
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-sky-500/10 to-cyan-500/10 rounded-bl-full" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/20">
+                      ⚡ 28 seconds
+                    </Badge>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Live</span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">Weather Dashboard</CardTitle>
+                  <CardDescription className="italic">
+                    "Create a weather app with forecasts, maps, and location search"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-gradient-to-br from-sky-50 to-cyan-50 dark:from-sky-950/20 dark:to-cyan-950/20 rounded-xl mb-4 overflow-hidden relative shadow-inner">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+                    <div className="relative h-full flex items-center justify-center p-6">
+                      <div className="w-full max-w-sm">
+                        {/* Weather Dashboard Preview */}
+                        <div className="bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-xl overflow-hidden backdrop-blur">
+                          <div className="bg-gradient-to-r from-sky-500 to-cyan-500 p-3 text-white">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="text-xs opacity-80">San Francisco</p>
+                                <p className="text-2xl font-bold">72°F</p>
+                                <p className="text-xs opacity-80">Partly Cloudy</p>
+                              </div>
+                              <div className="text-4xl">☀️</div>
+                            </div>
+                          </div>
+                          <div className="p-3">
+                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                              <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
+                                <p className="text-muted-foreground">Wind</p>
+                                <p className="font-medium">12 mph</p>
+                              </div>
+                              <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
+                                <p className="text-muted-foreground">Humidity</p>
+                                <p className="font-medium">65%</p>
+                              </div>
+                              <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
+                                <p className="text-muted-foreground">UV Index</p>
+                                <p className="font-medium">6</p>
+                              </div>
+                            </div>
+                            <div className="mt-2 flex justify-between text-xs">
+                              <div className="text-center">
+                                <p className="text-muted-foreground">Mon</p>
+                                <p>🌤️</p>
+                                <p className="font-medium">68°</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-muted-foreground">Tue</p>
+                                <p>☀️</p>
+                                <p className="font-medium">75°</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-muted-foreground">Wed</p>
+                                <p>🌧️</p>
+                                <p className="font-medium">62°</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-muted-foreground">Thu</p>
+                                <p>⛅</p>
+                                <p className="font-medium">70°</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="bg-black/80 backdrop-blur rounded-lg p-3">
+                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Weather API integration</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Location services</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>5-day forecast</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Tech Stack:</span>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs">React</Badge>
+                        <Badge variant="outline" className="text-xs">OpenWeather</Badge>
+                        <Badge variant="outline" className="text-xs">Recharts</Badge>
+                      </div>
+                    </div>
+                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Build Similar App
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
