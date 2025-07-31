@@ -60,6 +60,7 @@ export const users = pgTable("users", {
   linkedinUsername: varchar("linkedin_username"),
   reputation: integer("reputation").default(0),
   isMentor: boolean("is_mentor").default(false),
+  emailVerified: boolean("email_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -78,6 +78,9 @@ export interface IStorage {
   getAllTemplates(publishedOnly?: boolean): Promise<any[]>;
   pinProject(projectId: number, userId: number): Promise<void>;
   unpinProject(projectId: number, userId: number): Promise<void>;
+
+  // Login history operations
+  createLoginHistory(history: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -382,6 +385,12 @@ export class DatabaseStorage implements IStorage {
       .update(projects)
       .set({ isPinned: false })
       .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
+  }
+
+  async createLoginHistory(history: any): Promise<any> {
+    // Simple implementation - just log for now since we don't have a login_history table
+    console.log('Login attempt logged:', history);
+    return { id: Date.now(), ...history };
   }
 }
 

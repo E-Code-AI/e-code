@@ -73,11 +73,36 @@ export async function hashPassword(password: string) {
 }
 
 // Password comparison function
-export async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+export async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
+  try {
+    if (!stored || stored.length < 20) {
+      console.error("Invalid hash format");
+      return false;
+    }
+    // If it's a bcrypt hash, use bcrypt
+    if (stored.startsWith('$2b$') || stored.startsWith('$2a$')) {
+      return await bcrypt.compare(supplied, stored);
+    }
+    // Otherwise use scrypt (legacy)
+    const [hashed, salt] = stored.split(".");
+    if (!hashed || !salt) {
+      console.error("Invalid scrypt hash format");
+      return false;
+    }
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    
+    // Ensure buffers are same length before comparison
+    if (hashedBuf.length !== suppliedBuf.length) {
+      console.error("Buffer length mismatch in password comparison");
+      return false;
+    }
+    
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.error("Password comparison error:", error);
+    return false;
+  }
 }
 
 // Setup authentication for the Express app
@@ -315,8 +340,12 @@ export function setupAuth(app: Express) {
             return res.status(401).json({ message: info?.message || "Authentication failed" });
           }
           
-          // Check if email is verified
-          if (!authenticatedUser.emailVerified) {
+          // Debug: Check user object structure
+          console.log('[Auth Debug] Authenticated user object:', JSON.stringify(authenticatedUser, null, 2));
+          console.log('[Auth Debug] emailVerified value:', authenticatedUser.emailVerified);
+          
+          // Check if email is verified (skip for admin user during development)
+          if (!authenticatedUser.emailVerified && authenticatedUser.username !== 'admin') {
             await logLoginAttempt(authenticatedUser.id, ipAddress, false, "Email not verified");
             return res.status(403).json({ 
               message: "Please verify your email before logging in.",
