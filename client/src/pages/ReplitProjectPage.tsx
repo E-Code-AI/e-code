@@ -46,7 +46,14 @@ import {
   Globe,
   MoreVertical,
   Activity,
-  Rocket
+  Rocket,
+  Home,
+  Upload,
+  Download,
+  EyeOff,
+  FileIcon,
+  FolderIcon,
+  Puzzle
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -106,7 +113,9 @@ const ReplitProjectPage = () => {
   const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions' | 'deployments' | 'shell' | 'database' | 'secrets' | 'workflows' | 'console' | 'authentication' | 'preview' | 'git' | 'ssh' | 'vnc' | 'threads' | 'object-storage' | 'problems' | 'security-scanner' | 'networking' | 'integrations' | 'user-settings' | 'fork-graph' | 'version-control' | 'package-explorer' | 'resource-monitor' | 'deployment-pipeline'>('ai');
   const [aiMode, setAIMode] = useState<'agent' | 'advanced'>('agent'); // Default to agent mode
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
-  const [openTools, setOpenTools] = useState<string[]>(['ai']);
+  const [openTools, setOpenTools] = useState<string[]>(['agent', 'preview']);
+  const [leftPanelMode, setLeftPanelMode] = useState<'agent' | 'assistant'>('agent');
+  const [showFileExplorer, setShowFileExplorer] = useState(true);
 
   // Initialize collaboration
   const collaboration = useYjsCollaboration({
@@ -585,25 +594,271 @@ const ReplitProjectPage = () => {
     );
   }
 
-  // Desktop layout
+  // Desktop layout - Replit-style 4-column layout
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
-      <div className="h-12 border-b flex items-center px-4 gap-4">
+    <div className="h-screen flex bg-background">
+      {/* Column 1: Left Sidebar - Icon Navigation (max 52px = ~1.3cm) */}
+      <div className="w-[52px] border-r bg-background flex flex-col items-center py-2">
+        {/* Home Button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => navigate('/projects')}
-          className="h-8 w-8"
+          className="h-10 w-10 mb-2"
+          title="Home"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <Home className="h-5 w-5" />
         </Button>
         
-        <div className="flex-1 flex items-center gap-2">
-          <h1 className="text-sm font-medium truncate">{project.name}</h1>
+        {/* Toggle Files Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowFileExplorer(!showFileExplorer)}
+          className="h-10 w-10 mb-4"
+          title={showFileExplorer ? "Hide Files" : "Show Files"}
+        >
+          <FileCode className="h-5 w-5" />
+        </Button>
+        
+        <div className="h-px w-8 bg-border mb-4" />
+        
+        {/* Main Tools - Always visible in sidebar */}
+        <Button
+          variant={leftPanelMode === 'agent' ? 'secondary' : 'ghost'}
+          size="icon"
+          onClick={() => setLeftPanelMode('agent')}
+          className="h-10 w-10 mb-2"
+          title="AI Agent"
+        >
+          <Bot className="h-5 w-5" />
+        </Button>
+        
+        <Button
+          variant={leftPanelMode === 'assistant' ? 'secondary' : 'ghost'}
+          size="icon"
+          onClick={() => setLeftPanelMode('assistant')}
+          className="h-10 w-10 mb-2"
+          title="AI Assistant"
+        >
+          <Sparkles className="h-5 w-5" />
+        </Button>
+        
+        <Button
+          variant={openTools.includes('preview') ? 'secondary' : 'ghost'}
+          size="icon"
+          onClick={() => {
+            if (!openTools.includes('preview')) {
+              setOpenTools([...openTools, 'preview']);
+            }
+            setRightPanelMode('preview');
+          }}
+          className="h-10 w-10 mb-2"
+          title="Preview"
+        >
+          <Globe className="h-5 w-5" />
+        </Button>
+        
+        {/* Other open tabs as icons */}
+        <div className="flex-1 flex flex-col items-center">
+          {openTools.filter(tool => !['preview', 'agent', 'assistant'].includes(tool)).slice(0, 5).map((tool) => {
+            const getIcon = (toolName: string) => {
+              switch (toolName) {
+                case 'console': return <TerminalIcon className="h-5 w-5" />;
+                case 'database': return <Database className="h-5 w-5" />;
+                case 'secrets': return <Key className="h-5 w-5" />;
+                case 'deployment': return <Rocket className="h-5 w-5" />;
+                case 'shell': return <TerminalIcon className="h-5 w-5" />;
+                default: return <FileCode className="h-5 w-5" />;
+              }
+            };
+            
+            return (
+              <Button
+                key={tool}
+                variant={rightPanelMode === tool ? 'secondary' : 'ghost'}
+                size="icon"
+                onClick={() => setRightPanelMode(tool as any)}
+                className="h-10 w-10 mb-2"
+                title={tool}
+              >
+                {getIcon(tool)}
+              </Button>
+            );
+          })}
         </div>
+        
+        {/* More Tools Dropdown */}
+        {openTools.length > 8 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <MoreHorizontal className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="end">
+              <DropdownMenuItem onClick={() => {
+                if (!openTools.includes('console')) setOpenTools([...openTools, 'console']);
+                setRightPanelMode('console');
+              }}>
+                <TerminalIcon className="h-4 w-4 mr-2" />
+                Console
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                if (!openTools.includes('database')) setOpenTools([...openTools, 'database']);
+                setRightPanelMode('database');
+              }}>
+                <Database className="h-4 w-4 mr-2" />
+                Database
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                if (!openTools.includes('secrets')) setOpenTools([...openTools, 'secrets']);
+                setRightPanelMode('secrets');
+              }}>
+                <Key className="h-4 w-4 mr-2" />
+                Secrets
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                if (!openTools.includes('deployment')) setOpenTools([...openTools, 'deployment']);
+                setRightPanelMode('deployment');
+              }}>
+                <Rocket className="h-4 w-4 mr-2" />
+                Deployments
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
 
-        <div className="flex items-center gap-2">
+      {/* Column 2: File Explorer (max 160px = ~4cm) */}
+      {showFileExplorer && (
+        <div className="w-[160px] border-r flex flex-col">
+          <div className="h-12 border-b flex items-center justify-between px-2">
+            <span className="text-sm font-medium">Files</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <MoreHorizontal className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => {
+                  const fileName = prompt('Enter file name:');
+                  if (fileName && projectId) {
+                    createFileMutation.mutate({
+                      projectId,
+                      name: fileName,
+                      content: '',
+                      isFolder: false,
+                      parentId: null
+                    });
+                  }
+                }}>
+                  <FileIcon className="h-4 w-4 mr-2" />
+                  New file
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  const folderName = prompt('Enter folder name:');
+                  if (folderName && projectId) {
+                    createFileMutation.mutate({
+                      projectId,
+                      name: folderName,
+                      content: '',
+                      isFolder: true,
+                      parentId: null
+                    });
+                  }
+                }}>
+                  <FolderIcon className="h-4 w-4 mr-2" />
+                  New folder
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.multiple = true;
+                  input.onchange = async (e) => {
+                    const files = (e.target as HTMLInputElement).files;
+                    if (files && projectId) {
+                      for (const file of Array.from(files)) {
+                        const content = await file.text();
+                        createFileMutation.mutate({
+                          projectId,
+                          name: file.name,
+                          content,
+                          isFolder: false,
+                          parentId: null
+                        });
+                      }
+                    }
+                  };
+                  input.click();
+                }}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload files
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  toast({
+                    title: "Upload folder",
+                    description: "Folder upload is not yet implemented"
+                  });
+                }}>
+                  <FolderIcon className="h-4 w-4 mr-2" />
+                  Upload folder
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => {
+                  if (project) {
+                    window.open(`/api/projects/${projectId}/export/zip`, '_blank');
+                  }
+                }}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download as zip
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => {
+                  toast({
+                    title: "Hidden files",
+                    description: "Hidden file toggling coming soon"
+                  });
+                }}>
+                  <EyeOff className="h-4 w-4 mr-2" />
+                  Hide hidden files
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowFileExplorer(false)}>
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Collapse all
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => {
+                  setSelectedFile(undefined);
+                  toast({
+                    title: "Files closed",
+                    description: "All open files have been closed"
+                  });
+                }}>
+                  <X className="h-4 w-4 mr-2" />
+                  Close files
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <FileExplorer
+              files={files || []}
+              selectedFile={selectedFile || undefined}
+              onFileSelect={handleFileSelect}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Column 3: AI Agent/Assistant Panel */}
+      <div className="w-[400px] border-r flex flex-col">
+        <div className="h-12 border-b flex items-center px-4 gap-2">
+          <h2 className="text-sm font-medium flex-1">
+            {leftPanelMode === 'agent' ? 'AI Agent' : 'AI Assistant'}
+          </h2>
           <Button
             onClick={() => projectRunning ? stopProjectMutation.mutate() : runProjectMutation.mutate()}
             disabled={runProjectMutation.isPending || stopProjectMutation.isPending}
@@ -625,6 +880,211 @@ const ReplitProjectPage = () => {
               </>
             )}
           </Button>
+        </div>
+        <div className="flex-1 overflow-hidden">
+          {leftPanelMode === 'agent' ? (
+            <ReplitAgentChat projectId={projectId} />
+          ) : (
+            <ReplitAssistant 
+              projectId={projectId}
+              selectedFile={selectedFile}
+              selectedCode={selectedCode}
+              onApplyCode={handleApplyCode}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Column 4: Main Content Area (Preview, Console, Database, etc.) */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Tab Bar */}
+        <div className="h-12 border-b flex items-center">
+          <div className="flex-1 flex items-center min-w-0">
+            <div className="flex items-center overflow-x-auto scrollbar-thin">
+              {openTools.filter(tool => tool !== 'agent' && tool !== 'assistant').map((tool) => {
+                const getIcon = (toolName: string) => {
+                  switch (toolName) {
+                    case 'preview': return <Globe className="h-4 w-4" />;
+                    case 'console': return <TerminalIcon className="h-4 w-4" />;
+                    case 'database': return <Database className="h-4 w-4" />;
+                    case 'deployments': return <Rocket className="h-4 w-4" />;
+                    case 'secrets': return <Key className="h-4 w-4" />;
+                    case 'shell': return <TerminalIcon className="h-4 w-4" />;
+                    case 'collaboration': return <Users className="h-4 w-4" />;
+                    case 'comments': return <MessageSquare className="h-4 w-4" />;
+                    case 'history': return <Clock className="h-4 w-4" />;
+                    case 'extensions': return <Puzzle className="h-4 w-4" />;
+                    default: return <FileCode className="h-4 w-4" />;
+                  }
+                };
+                
+                const getLabel = (toolName: string) => {
+                  return toolName.charAt(0).toUpperCase() + toolName.slice(1);
+                };
+                
+                return (
+                  <div
+                    key={tool}
+                    className={cn(
+                      "relative flex items-center gap-2 px-3 py-2 cursor-pointer border-b-2 transition-colors",
+                      rightPanelMode === tool
+                        ? "bg-accent text-accent-foreground border-primary"
+                        : "border-transparent hover:bg-accent/50"
+                    )}
+                    onClick={() => setRightPanelMode(tool as any)}
+                  >
+                    {getIcon(tool)}
+                    <span className="text-sm">{getLabel(tool)}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4 p-0 ml-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenTools(openTools.filter(t => t !== tool));
+                        if (rightPanelMode === tool && openTools.length > 1) {
+                          const nextTool = openTools.find(t => t !== tool && t !== 'agent' && t !== 'assistant');
+                          if (nextTool) setRightPanelMode(nextTool as any);
+                        }
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                );
+              })}
+              
+              {/* Add new tab button */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 ml-2">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('preview')) {
+                      setOpenTools([...openTools, 'preview']);
+                      setRightPanelMode('preview');
+                    } else {
+                      setRightPanelMode('preview');
+                    }
+                  }}>
+                    <Globe className="h-4 w-4 mr-2" />
+                    Preview
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('console')) {
+                      setOpenTools([...openTools, 'console']);
+                      setRightPanelMode('console');
+                    } else {
+                      setRightPanelMode('console');
+                    }
+                  }}>
+                    <TerminalIcon className="h-4 w-4 mr-2" />
+                    Console
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('database')) {
+                      setOpenTools([...openTools, 'database']);
+                      setRightPanelMode('database');
+                    } else {
+                      setRightPanelMode('database');
+                    }
+                  }}>
+                    <Database className="h-4 w-4 mr-2" />
+                    Database
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('deployments')) {
+                      setOpenTools([...openTools, 'deployments']);
+                      setRightPanelMode('deployments');
+                    } else {
+                      setRightPanelMode('deployments');
+                    }
+                  }}>
+                    <Rocket className="h-4 w-4 mr-2" />
+                    Deployments
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('secrets')) {
+                      setOpenTools([...openTools, 'secrets']);
+                      setRightPanelMode('secrets');
+                    } else {
+                      setRightPanelMode('secrets');
+                    }
+                  }}>
+                    <Key className="h-4 w-4 mr-2" />
+                    Secrets
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+        
+        {/* Content Area */}
+        <div className="flex-1 overflow-hidden">
+          {rightPanelMode === 'preview' && (
+            <LivePreview projectId={projectId} />
+          )}
+          {rightPanelMode === 'console' && (
+            <ConsolePanel
+              projectId={projectId}
+              executionResults={executionResults}
+              projectRunning={projectRunning}
+            />
+          )}
+          {rightPanelMode === 'database' && (
+            <ReplitDatabase projectId={projectId} />
+          )}
+          {rightPanelMode === 'deployments' && (
+            <DeploymentPanel projectId={projectId} />
+          )}
+          {rightPanelMode === 'secrets' && (
+            <ReplitSecrets projectId={projectId} />
+          )}
+          {rightPanelMode === 'shell' && (
+            <Terminal projectId={projectId} />
+          )}
+          {rightPanelMode === 'collaboration' && (
+            <CollaborationPanel 
+              projectId={projectId}
+              users={collaboration.users}
+              onFollowUser={collaboration.followUser}
+            />
+          )}
+          {rightPanelMode === 'comments' && (
+            <CommentsPanel projectId={projectId} />
+          )}
+          {rightPanelMode === 'history' && (
+            <HistoryTimeline projectId={projectId} />
+          )}
+          {rightPanelMode === 'extensions' && (
+            <ExtensionsMarketplace projectId={projectId} />
+          )}
+          {rightPanelMode === 'fork-graph' && (
+            <ReplitForkGraph projectId={projectId} />
+          )}
+          {rightPanelMode === 'version-control' && (
+            <ReplitVersionControl projectId={projectId} />
+          )}
+          {rightPanelMode === 'package-explorer' && (
+            <ReplitPackageExplorer projectId={projectId} />
+          )}
+          {rightPanelMode === 'resource-monitor' && (
+            <ReplitResourceMonitor projectId={projectId} />
+          )}
+          {rightPanelMode === 'deployment-pipeline' && (
+            <ReplitDeploymentPipeline projectId={projectId} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ReplitProjectPage;
 
           <Button
             variant={openTools.includes('ai') && rightPanelMode === 'ai' ? 'default' : 'ghost'}
