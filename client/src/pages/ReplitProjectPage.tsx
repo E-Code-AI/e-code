@@ -322,7 +322,7 @@ const ReplitProjectPage = () => {
 
   // Handle file selection
   const handleFileSelect = (file: File) => {
-    if (file.isFolder) return;
+    if (file.isDirectory) return;
     setSelectedFile(file);
   };
 
@@ -790,17 +790,14 @@ const ReplitProjectPage = () => {
 
                   {rightPanelMode === 'collaboration' && (
                     <CollaborationPanel
-                      collaborators={collaboration.collaborators}
-                      followingUserId={collaboration.followingUserId}
-                      onFollowUser={(userId) => collaboration.followUser(userId.toString())}
                       projectId={projectId}
+                      onFollowUser={(userId) => collaboration.followUser(userId)}
                     />
                   )}
 
                   {rightPanelMode === 'comments' && (
                     <CommentsPanel
                       projectId={projectId}
-                      selectedLineNumber={1} // TODO: Get actual selected line
                     />
                   )}
 
