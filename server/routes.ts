@@ -4622,12 +4622,71 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   
   // Preview proxy route (must be before API routes)
-  app.use('/preview/:projectId', (req, res, next) => {
-    const projectId = req.params.projectId;
-    const preview = previewService.getPreview(parseInt(projectId));
+  app.use('/preview/:projectId', async (req, res, next) => {
+    const projectId = parseInt(req.params.projectId);
+    let preview = previewService.getPreview(projectId);
     
-    if (!preview || preview.status !== 'running') {
+    // Auto-start preview if not running
+    if (!preview || preview.status === 'stopped') {
+      try {
+        preview = await previewService.startPreview(projectId);
+        // Wait a bit for the preview to be ready
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } catch (error) {
+        console.error('Error auto-starting preview:', error);
+        return res.status(500).json({ error: 'Failed to start preview' });
+      }
+    }
+    
+    if (!preview || preview.status === 'error') {
       return res.status(404).json({ error: 'Preview not available' });
+    }
+    
+    if (preview.status === 'starting') {
+      // Show a loading page while preview is starting
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Preview Loading...</title>
+          <meta http-equiv="refresh" content="2">
+          <style>
+            body {
+              font-family: system-ui, -apple-system, sans-serif;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              margin: 0;
+              background: #0a0a0a;
+              color: #e0e0e0;
+            }
+            .loader {
+              text-align: center;
+            }
+            .spinner {
+              width: 40px;
+              height: 40px;
+              border: 3px solid #333;
+              border-top-color: #007bff;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+              margin: 0 auto 20px;
+            }
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="loader">
+            <div class="spinner"></div>
+            <h2>Starting preview server...</h2>
+            <p>This page will refresh automatically</p>
+          </div>
+        </body>
+        </html>
+      `);
     }
     
     const proxy = createProxyMiddleware({
@@ -4638,7 +4697,52 @@ Generate a comprehensive application based on the user's request. Include all ne
       },
       onError: (err: any, req: any, res: any) => {
         logger.error(`Preview proxy error for project ${projectId}:`, err);
-        res.status(502).json({ error: 'Preview server error' });
+        res.status(502).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Preview Error</title>
+            <style>
+              body {
+                font-family: system-ui, -apple-system, sans-serif;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                margin: 0;
+                background: #0a0a0a;
+                color: #e0e0e0;
+              }
+              .error {
+                text-align: center;
+                max-width: 500px;
+              }
+              .error h2 {
+                color: #ff6b6b;
+              }
+              button {
+                background: #007bff;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-top: 20px;
+              }
+              button:hover {
+                background: #0056b3;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="error">
+              <h2>Preview Server Error</h2>
+              <p>The preview server encountered an error. Please try refreshing the page.</p>
+              <button onclick="location.reload()">Refresh</button>
+            </div>
+          </body>
+          </html>
+        `);
       }
     });
     
