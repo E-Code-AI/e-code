@@ -5,149 +5,166 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { toast } from '@/hooks/use-toast';
 import { 
   Zap, 
-  Cpu, 
-  Database, 
-  Network,
-  HardDrive,
-  Clock,
+  Rocket, 
+  Crown, 
+  Star, 
+  Infinity,
+  Timer,
   Shield,
-  Gauge,
-  TrendingUp,
-  Activity,
-  BarChart3,
-  Settings,
-  Crown,
-  Star,
-  CheckCircle2,
-  AlertTriangle,
-  Info,
-  Rocket,
+  Code,
+  Users,
+  Database,
   Globe,
-  Lock
+  Cpu,
+  HardDrive,
+  Lock,
+  CheckCircle2,
+  AlertCircle,
+  TrendingUp,
+  Package,
+  Settings,
+  CreditCard,
+  RefreshCw,
+  Info
 } from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-
-interface CurrentPlan {
-  name: string;
-  cpu: { current: number; max: number; unit: string };
-  memory: { current: number; max: number; unit: string };
-  storage: { current: number; max: number; unit: string };
-  network: { current: number; max: number; unit: string };
-  builds: { current: number; max: number; unit: string };
-}
 
 interface PowerUp {
-  id: number;
+  id: string;
   name: string;
   description: string;
   icon: string;
-  category: string;
-  boost: string;
-  price: string;
+  price: number;
+  duration?: string;
+  features: string[];
   active: boolean;
-  usage: number;
-  color: string;
+  expiresAt?: string;
+  category: string;
 }
 
 export default function PowerUps() {
-  const [activeTab, setActiveTab] = useState('overview');
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('available');
 
-  // Fetch current plan from API
-  const { data: currentPlan, isLoading: planLoading } = useQuery<CurrentPlan>({
-    queryKey: ['/api/powerups/current-plan'],
+  // Fetch power-ups data
+  const { data: powerUps = [], isLoading } = useQuery<PowerUp[]>({
+    queryKey: ['/api/powerups']
   });
 
-  // Fetch power-ups from API
-  const { data: powerUps = [], isLoading: powerUpsLoading } = useQuery<PowerUp[]>({
-    queryKey: ['/api/powerups'],
+  // Fetch user's active power-ups
+  const { data: activePowerUps = [] } = useQuery<PowerUp[]>({
+    queryKey: ['/api/powerups/active']
   });
 
-  // Fetch usage stats from API
-  const { data: usageStats = [] } = useQuery<any[]>({
-    queryKey: ['/api/powerups/usage-stats'],
+  // Purchase power-up mutation
+  const purchaseMutation = useMutation({
+    mutationFn: async (powerUpId: string) => {
+      const response = await fetch(`/api/powerups/${powerUpId}/purchase`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to purchase power-up');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/powerups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/powerups/active'] });
+      toast({
+        title: "Power-Up Activated!",
+        description: "Your power-up has been successfully activated.",
+      });
+    }
   });
 
-  // Fetch recommendations from API
-  const { data: recommendations = [] } = useQuery<any[]>({
-    queryKey: ['/api/powerups/recommendations'],
-  });
+  const categories = [
+    { id: 'compute', name: 'Compute Power', icon: Cpu, color: 'bg-blue-500' },
+    { id: 'storage', name: 'Storage', icon: HardDrive, color: 'bg-green-500' },
+    { id: 'collaboration', name: 'Collaboration', icon: Users, color: 'bg-purple-500' },
+    { id: 'ai', name: 'AI Features', icon: Rocket, color: 'bg-orange-500' },
+    { id: 'security', name: 'Security', icon: Shield, color: 'bg-red-500' }
+  ];
 
-  const getUsageColor = (percentage: number) => {
-    if (percentage >= 80) return 'text-red-600';
-    if (percentage >= 60) return 'text-yellow-600';
-    return 'text-green-600';
-  };
-
-  const getUsageProgressColor = (percentage: number) => {
-    if (percentage >= 80) return 'bg-red-500';
-    if (percentage >= 60) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
-  const PowerUpCard = ({ powerUp }: { powerUp: PowerUp }) => {
+  const PowerUpCard = ({ powerUp, isActive = false }: { powerUp: PowerUp; isActive?: boolean }) => {
     const iconMap: Record<string, any> = {
-      Cpu,
-      Database,
-      HardDrive,
-      Network,
-      Rocket,
-      Shield
+      Zap, Rocket, Crown, Star, Infinity, Timer, Shield, Code, Users, Database, Globe, Cpu, HardDrive, Lock
     };
     const IconComponent = iconMap[powerUp.icon] || Zap;
-    
+    const categoryInfo = categories.find(c => c.id === powerUp.category);
+
     return (
-      <Card className={`relative overflow-hidden ${powerUp.active ? 'ring-2 ring-primary' : ''}`}>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-full ${powerUp.color}`}>
-              <IconComponent className="h-6 w-6 text-white" />
-            </div>
-            
-            <div className="flex-1">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h3 className="font-semibold text-lg">{powerUp.name}</h3>
-                  <p className="text-sm text-muted-foreground">{powerUp.category}</p>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{powerUp.boost}</Badge>
-                  {powerUp.active && (
-                    <Badge className="bg-green-100 text-green-800">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Active
-                    </Badge>
-                  )}
-                </div>
+      <Card className={`relative overflow-hidden ${isActive ? 'border-primary' : ''}`}>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-full ${categoryInfo?.color || 'bg-primary'} bg-opacity-10`}>
+                <IconComponent className={`h-6 w-6 ${categoryInfo?.color?.replace('bg-', 'text-') || 'text-primary'}`} />
               </div>
-              
-              <p className="text-sm text-muted-foreground mb-4">
-                {powerUp.description}
-              </p>
-              
-              {powerUp.active && (
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Usage</span>
-                    <span className={getUsageColor(powerUp.usage)}>{powerUp.usage}%</span>
-                  </div>
-                  <Progress value={powerUp.usage} className="h-2" />
-                </div>
-              )}
-              
+              <div>
+                <CardTitle className="text-lg">{powerUp.name}</CardTitle>
+                <CardDescription className="text-sm">{powerUp.description}</CardDescription>
+              </div>
+            </div>
+            {isActive && (
+              <Badge variant="default" className="bg-green-500">
+                Active
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Features:</h4>
+              <ul className="space-y-1">
+                {powerUp.features.map((feature, index) => (
+                  <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="pt-3 border-t">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-lg">{powerUp.price}</span>
-                <div className="flex items-center gap-2">
-                  <Switch checked={powerUp.active} />
-                  <Button size="sm" variant={powerUp.active ? "outline" : "default"}>
-                    {powerUp.active ? 'Manage' : 'Activate'}
-                  </Button>
+                <div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold">${powerUp.price}</span>
+                    {powerUp.duration && (
+                      <span className="text-sm text-muted-foreground">/{powerUp.duration}</span>
+                    )}
+                  </div>
                 </div>
+                {isActive ? (
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Expires</p>
+                    <p className="text-sm font-medium">
+                      {powerUp.expiresAt ? new Date(powerUp.expiresAt).toLocaleDateString() : 'Never'}
+                    </p>
+                  </div>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    onClick={() => purchaseMutation.mutate(powerUp.id)}
+                    disabled={purchaseMutation.isPending}
+                  >
+                    {purchaseMutation.isPending ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Activating...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4 mr-2" />
+                        Activate
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -156,284 +173,195 @@ export default function PowerUps() {
     );
   };
 
-  const OverviewTab = () => (
-    <div className="space-y-6">
-      {/* Current Plan Overview */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-yellow-500" />
-                {currentPlan?.name || 'Current'} Plan
-              </CardTitle>
-              <CardDescription>Your current resource allocation and usage</CardDescription>
-            </div>
-            <Button variant="outline">Upgrade Plan</Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Cpu className="h-4 w-4 text-blue-500" />
-                <span className="text-sm font-medium">CPU</span>
-              </div>
-              <p className="text-2xl font-bold">{currentPlan?.cpu.current || 0}/{currentPlan?.cpu.max || 0}</p>
-              <p className="text-xs text-muted-foreground">{currentPlan?.cpu.unit || ''}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Database className="h-4 w-4 text-green-500" />
-                <span className="text-sm font-medium">Memory</span>
-              </div>
-              <p className="text-2xl font-bold">{currentPlan?.memory.current || 0}/{currentPlan?.memory.max || 0}</p>
-              <p className="text-xs text-muted-foreground">{currentPlan?.memory.unit || ''}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <HardDrive className="h-4 w-4 text-purple-500" />
-                <span className="text-sm font-medium">Storage</span>
-              </div>
-              <p className="text-2xl font-bold">{currentPlan?.storage.current || 0}/{currentPlan?.storage.max || 0}</p>
-              <p className="text-xs text-muted-foreground">{currentPlan?.storage.unit || ''}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Network className="h-4 w-4 text-orange-500" />
-                <span className="text-sm font-medium">Network</span>
-              </div>
-              <p className="text-2xl font-bold">{currentPlan?.network.current || 0}/{currentPlan?.network.max || 0}</p>
-              <p className="text-xs text-muted-foreground">{currentPlan?.network.unit || ''}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Rocket className="h-4 w-4 text-red-500" />
-                <span className="text-sm font-medium">Builds</span>
-              </div>
-              <p className="text-2xl font-bold">{currentPlan?.builds.current || 0}/{currentPlan?.builds.max || 0}</p>
-              <p className="text-xs text-muted-foreground">{currentPlan?.builds.unit || ''}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Active Power-Ups */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Power-Ups</CardTitle>
-          <CardDescription>Currently enabled performance boosters</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {powerUps.filter(p => p.active).map((powerUp) => (
-              <div key={powerUp.id} className="p-4 border rounded-lg">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`p-2 rounded-full ${powerUp.color}`}>
-                    <powerUp.icon className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{powerUp.name}</h3>
-                    <p className="text-sm text-muted-foreground">{powerUp.price}</p>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span>Usage</span>
-                    <span className={getUsageColor(powerUp.usage)}>{powerUp.usage}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${getUsageProgressColor(powerUp.usage)}`}
-                      style={{ width: `${powerUp.usage}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recommendations</CardTitle>
-          <CardDescription>Optimize your performance based on usage patterns</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recommendations.map((rec, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
-                <div className="mt-0.5">
-                  {rec.type === 'warning' && <AlertTriangle className="h-5 w-5 text-yellow-500" />}
-                  {rec.type === 'info' && <Info className="h-5 w-5 text-blue-500" />}
-                  {rec.type === 'success' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">{rec.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{rec.description}</p>
-                  {rec.action && (
-                    <Button size="sm" variant="outline">
-                      {rec.action}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Zap className="h-6 w-6 text-yellow-500" />
-              Power-Ups
-            </h1>
-            <p className="text-muted-foreground">Boost your development performance with premium resources</p>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Manage Billing
-            </Button>
-            <Button size="sm">
-              <Crown className="h-4 w-4 mr-2" />
-              Upgrade Plan
-            </Button>
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Rocket className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Power Ups</h1>
+              <p className="text-muted-foreground">Supercharge your development with premium features</p>
+            </div>
           </div>
         </div>
 
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-green-100 rounded-full">
+                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{activePowerUps.length}</p>
+                  <p className="text-sm text-muted-foreground">Active Power-Ups</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <Zap className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">∞</p>
+                  <p className="text-sm text-muted-foreground">Compute Hours</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-100 rounded-full">
+                  <Users className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">50</p>
+                  <p className="text-sm text-muted-foreground">Team Members</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-orange-100 rounded-full">
+                  <TrendingUp className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">+40%</p>
+                  <p className="text-sm text-muted-foreground">Performance Boost</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="powerups">All Power-Ups</TabsTrigger>
-            <TabsTrigger value="usage">Usage Analytics</TabsTrigger>
-            <TabsTrigger value="billing">Billing</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="available">Available Power-Ups</TabsTrigger>
+            <TabsTrigger value="active">My Power-Ups</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview">
-            <OverviewTab />
-          </TabsContent>
+          <TabsContent value="available" className="space-y-6">
+            {/* Category Filter */}
+            <div className="flex items-center gap-4 overflow-x-auto pb-2">
+              <Button variant="outline" size="sm" className="whitespace-nowrap">
+                <Package className="h-4 w-4 mr-2" />
+                All Categories
+              </Button>
+              {categories.map((category) => {
+                const IconComponent = category.icon;
+                return (
+                  <Button key={category.id} variant="ghost" size="sm" className="whitespace-nowrap">
+                    <IconComponent className="h-4 w-4 mr-2" />
+                    {category.name}
+                  </Button>
+                );
+              })}
+            </div>
 
-          <TabsContent value="powerups" className="space-y-6">
-            <div className="grid gap-4">
-              {powerUps.map((powerUp) => (
+            {/* Power-Up Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {powerUps.filter(p => !p.active).map((powerUp) => (
                 <PowerUpCard key={powerUp.id} powerUp={powerUp} />
               ))}
             </div>
           </TabsContent>
 
-          <TabsContent value="usage" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {usageStats.map((stat, index) => (
-                <Card key={index}>
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium">{stat.label}</h3>
-                        <Activity className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-end">
-                          <span className="text-2xl font-bold">{stat.value}</span>
-                          <span className="text-sm text-muted-foreground">/ {stat.limit} {stat.unit}</span>
-                        </div>
-                        <Progress value={(stat.value / stat.limit) * 100} />
-                        <p className="text-xs text-muted-foreground">
-                          {((stat.value / stat.limit) * 100).toFixed(1)}% of limit used
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Usage Chart Placeholder */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Resource Usage Over Time</CardTitle>
-                <CardDescription>Track your resource consumption patterns</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-                  <div className="text-center">
-                    <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500">Usage analytics chart would appear here</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="active" className="space-y-6">
+            {activePowerUps.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Rocket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Active Power-Ups</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Activate power-ups to unlock premium features and boost your productivity
+                  </p>
+                  <Button onClick={() => setActiveTab('available')}>
+                    Browse Power-Ups
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {activePowerUps.map((powerUp) => (
+                  <PowerUpCard key={powerUp.id} powerUp={powerUp} isActive />
+                ))}
+              </div>
+            )}
           </TabsContent>
 
-          <TabsContent value="billing" className="space-y-6">
+          <TabsContent value="settings" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Billing Summary</CardTitle>
-                <CardDescription>Current month charges and usage</CardDescription>
+                <CardTitle>Power-Up Settings</CardTitle>
+                <CardDescription>Manage your power-up preferences and notifications</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">Pro Plan</p>
-                      <p className="text-sm text-muted-foreground">Base subscription</p>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label htmlFor="auto-renew">Auto-Renew Power-Ups</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Automatically renew power-ups when they expire
+                      </p>
                     </div>
-                    <span className="font-semibold">$29.00</span>
+                    <Switch id="auto-renew" />
                   </div>
-                  
-                  {powerUps.filter(p => p.active).map((powerUp) => (
-                    <div key={powerUp.id} className="flex justify-between items-center p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{powerUp.name}</p>
-                        <p className="text-sm text-muted-foreground">Power-up subscription</p>
-                      </div>
-                      <span className="font-semibold">{powerUp.price}</span>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label htmlFor="notifications">Expiration Notifications</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Get notified before power-ups expire
+                      </p>
                     </div>
-                  ))}
-                  
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-semibold">Total this month</span>
-                      <span className="text-xl font-bold">$59.00</span>
+                    <Switch id="notifications" defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label htmlFor="usage-alerts">Usage Alerts</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Alert when reaching power-up limits
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">Next billing date: February 15, 2025</p>
+                    <Switch id="usage-alerts" defaultChecked />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Method</CardTitle>
-                <CardDescription>Manage your billing information</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
-                      VISA
-                    </div>
-                    <div>
+                <div className="pt-4 border-t">
+                  <h3 className="font-medium mb-3">Payment Method</h3>
+                  <div className="flex items-center gap-4 p-4 border rounded-lg">
+                    <CreditCard className="h-8 w-8 text-muted-foreground" />
+                    <div className="flex-1">
                       <p className="font-medium">•••• •••• •••• 4242</p>
-                      <p className="text-sm text-muted-foreground">Expires 12/26</p>
+                      <p className="text-sm text-muted-foreground">Expires 12/25</p>
                     </div>
+                    <Button variant="outline" size="sm">
+                      Update
+                    </Button>
                   </div>
-                  <Button variant="outline" size="sm">Update</Button>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <h3 className="font-medium mb-3">Billing History</h3>
+                  <Button variant="outline" className="w-full">
+                    View Billing History
+                  </Button>
                 </div>
               </CardContent>
             </Card>

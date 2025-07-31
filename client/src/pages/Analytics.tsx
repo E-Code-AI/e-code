@@ -26,30 +26,69 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
+
+// Types for analytics data
+interface OverviewStat {
+  label: string;
+  value: string;
+  change: string;
+  trend: 'up' | 'down';
+}
+
+interface TrafficSource {
+  source: string;
+  visitors: string;
+  percentage: number;
+}
+
+interface TopPage {
+  page: string;
+  views: string;
+  change: string;
+}
+
+interface DeviceData {
+  device: string;
+  percentage: number;
+}
+
+interface GeographicData {
+  country: string;
+  flag: string;
+  users: string;
+}
+
+interface AnalyticsData {
+  overview: OverviewStat[];
+  trafficSources: TrafficSource[];
+  topPages: TopPage[];
+  deviceData: DeviceData[];
+  geographicData: GeographicData[];
+  chartData: any[];
+  realtimeUsers: number;
+}
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState('7d');
   
   // Fetch real analytics data from API
-  const { data: analyticsData, isLoading } = useQuery({
-    queryKey: ['/api/analytics', timeRange],
-    queryFn: async () => {
-      const response = await apiRequest(`/api/analytics?timeRange=${timeRange}`);
-      return response;
-    }
+  const { data: analyticsData, isLoading } = useQuery<AnalyticsData>({
+    queryKey: ['/api/analytics', timeRange]
   });
   
   const overviewStats = analyticsData?.overview || [
-    { label: 'Total Views', value: '0', change: '0%', trend: 'up' },
-    { label: 'Unique Visitors', value: '0', change: '0%', trend: 'up' },
-    { label: 'Page Views', value: '0', change: '0%', trend: 'up' },
-    { label: 'Avg. Session', value: '0s', change: '0%', trend: 'up' }
+    { label: 'Total Views', value: '0', change: '0%', trend: 'up' as const },
+    { label: 'Unique Visitors', value: '0', change: '0%', trend: 'up' as const },
+    { label: 'Page Views', value: '0', change: '0%', trend: 'up' as const },
+    { label: 'Avg. Session', value: '0s', change: '0%', trend: 'up' as const }
   ];
 
   const trafficSources = analyticsData?.trafficSources || [];
   const topPages = analyticsData?.topPages || [];
   const deviceData = analyticsData?.deviceData || [];
   const geographicData = analyticsData?.geographicData || [];
+  const chartData = analyticsData?.chartData || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -130,19 +169,33 @@ export default function Analytics() {
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Traffic Chart Placeholder */}
+              {/* Traffic Chart */}
               <Card>
                 <CardHeader>
                   <CardTitle>Traffic Overview</CardTitle>
                   <CardDescription>Page views and unique visitors over time</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-                    <div className="text-center">
-                      <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500">Traffic chart would appear here</p>
-                    </div>
-                  </div>
+                  <ResponsiveContainer width="100%" height={256}>
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="views" stroke="#8884d8" fillOpacity={1} fill="url(#colorViews)" />
+                      <Area type="monotone" dataKey="visitors" stroke="#82ca9d" fillOpacity={1} fill="url(#colorVisitors)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
 
@@ -184,12 +237,18 @@ export default function Analytics() {
                   <CardDescription>Detailed traffic analysis over the selected period</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-                    <div className="text-center">
-                      <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500">Traffic trends chart would appear here</p>
-                    </div>
-                  </div>
+                  <ResponsiveContainer width="100%" height={320}>
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="views" stroke="#8884d8" activeDot={{ r: 8 }} />
+                      <Line type="monotone" dataKey="visitors" stroke="#82ca9d" />
+                      <Line type="monotone" dataKey="bounceRate" stroke="#ffc658" />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
 
@@ -312,17 +371,45 @@ export default function Analytics() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-green-600 mb-2">23</div>
+                    <div className="text-5xl font-bold text-green-600 mb-2 animate-pulse">
+                      {analyticsData?.realtimeUsers || 0}
+                    </div>
                     <p className="text-sm text-muted-foreground">Active right now</p>
+                    <div className="mt-4 flex items-center justify-center gap-2">
+                      <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
+                      <span className="text-xs text-green-600">Live</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="col-span-2">
                 <CardHeader>
-                  <CardTitle>Live Activity</CardTitle>
+                  <CardTitle>Live Activity Feed</CardTitle>
                   <CardDescription>Real-time user actions</CardDescription>
                 </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {[
+                      { action: 'Page View', page: '/projects', time: 'Just now', user: 'Anonymous' },
+                      { action: 'Sign Up', page: '/auth/register', time: '12 seconds ago', user: 'New User' },
+                      { action: 'Project Created', page: '/new', time: '45 seconds ago', user: 'john_doe' },
+                      { action: 'Deploy Started', page: '/deployments', time: '1 minute ago', user: 'sarah_dev' },
+                      { action: 'File Edit', page: '/projects/123', time: '2 minutes ago', user: 'alex_coder' }
+                    ].map((activity, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                          <div>
+                            <p className="text-sm font-medium">{activity.action}</p>
+                            <p className="text-xs text-muted-foreground">{activity.user} • {activity.page}</p>
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground">{activity.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-sm">

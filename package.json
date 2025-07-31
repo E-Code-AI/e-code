@@ -112,7 +112,7 @@
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^2.1.7",
     "react-syntax-highlighter": "^15.6.1",
-    "recharts": "^2.15.2",
+    "recharts": "^2.15.4",
     "remark-gfm": "^4.0.1",
     "samlify": "^2.10.1",
     "socket.io": "^4.8.1",
