@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
-import { templates as templatesTable } from '@shared/schema';
+// import { templates as templatesTable } from '@shared/schema';
 
 const logger = createLogger('marketplace-service');
 

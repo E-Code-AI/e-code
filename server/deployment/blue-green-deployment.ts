@@ -4,7 +4,7 @@
  */
 
 import { db } from '../db';
-import { deploymentEnvironments, deploymentStrategies, projects, deployments } from '@shared/schema';
+// import { deploymentEnvironments, deploymentStrategies, projects, deployments } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { ContainerOrchestrator } from '../orchestration/container-orchestrator';
 import { CDNService } from '../edge/cdn-service';

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { users, projects, files, deployments } from '@shared/schema';
+// import { users, projects, files, deployments } from '@shared/schema';
 import { sql, count, sum } from 'drizzle-orm';
 import * as os from 'os';
 import * as fs from 'fs/promises';

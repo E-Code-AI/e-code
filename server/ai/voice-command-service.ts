@@ -4,7 +4,7 @@
  */
 
 import { db } from '../db';
-import { voiceCommandSettings, projects, auditLogs } from '@shared/schema';
+// import { voiceCommandSettings, projects, auditLogs } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { AIProviderFactory } from './ai-provider-factory';
 import * as WebSocket from 'ws';

@@ -4,7 +4,7 @@
  */
 
 import { db } from '../db';
-import { ssoProviders, auditLogs, users } from '@shared/schema';
+// // import { ssoProviders, auditLogs, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import * as crypto from 'crypto';
 import * as saml from 'samlify';

@@ -2,7 +2,9 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertProjectSchema, insertFileSchema, insertProjectCollaboratorSchema, insertDeploymentSchema, insertCodeSnippetSchema, type EnvironmentVariable } from "@shared/schema";
+import { insertProjectSchema, insertFileSchema } from "@shared/schema";
+// TODO: Add missing schemas after schema migration
+// import { insertProjectCollaboratorSchema, insertDeploymentSchema, insertCodeSnippetSchema, type EnvironmentVariable } from "@shared/schema";
 import * as z from "zod";
 import { devAuthBypass, setupAuthBypass } from "./dev-auth-bypass";
 import { WebSocketServer, WebSocket } from "ws";
@@ -9353,6 +9355,350 @@ Generate a comprehensive application based on the user's request. Include all ne
         res.status(500).json({ message: 'Failed to export project' });
       }
     });
+  });
+
+  // ===== API & SDK Service Routes =====
+  // Get API keys
+  app.get('/api/sdk/keys', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { SDKService } = await import('./api/sdk-service');
+      const sdkService = new SDKService();
+      const keys = await sdkService.getUserApiKeys(req.user.id);
+      res.json(keys);
+    } catch (error) {
+      console.error('Error fetching API keys:', error);
+      res.status(500).json({ error: 'Failed to fetch API keys' });
+    }
+  });
+
+  // Create API key
+  app.post('/api/sdk/keys', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { name, permissions } = req.body;
+      const { SDKService } = await import('./api/sdk-service');
+      const sdkService = new SDKService();
+      const key = await sdkService.createAPIKey(req.user.id, name, permissions);
+      res.json(key);
+    } catch (error) {
+      console.error('Error creating API key:', error);
+      res.status(500).json({ error: 'Failed to create API key' });
+    }
+  });
+
+  // Delete API key
+  app.delete('/api/sdk/keys/:id', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const keyId = parseInt(req.params.id);
+      const { SDKService } = await import('./api/sdk-service');
+      const sdkService = new SDKService();
+      await sdkService.deleteAPIKey(req.user.id, keyId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting API key:', error);
+      res.status(500).json({ error: 'Failed to delete API key' });
+    }
+  });
+
+  // Get SDK examples
+  app.get('/api/sdk/examples', async (req, res) => {
+    try {
+      const { SDKService } = await import('./api/sdk-service');
+      const sdkService = new SDKService();
+      const examples = await sdkService.getCodeExamples();
+      res.json(examples);
+    } catch (error) {
+      console.error('Error fetching SDK examples:', error);
+      res.status(500).json({ error: 'Failed to fetch SDK examples' });
+    }
+  });
+
+  // Get SDK analytics
+  app.get('/api/sdk/analytics', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { SDKService } = await import('./api/sdk-service');
+      const sdkService = new SDKService();
+      const analytics = await sdkService.getUsageAnalytics(req.user.id);
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching SDK analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch SDK analytics' });
+    }
+  });
+
+  // ===== Code Review Service Routes =====
+  // Get code reviews
+  app.get('/api/code-reviews', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { filter, search, page, limit } = req.query;
+      const { CodeReviewService } = await import('./api/code-review-service');
+      const codeReviewService = new CodeReviewService();
+      const reviews = await codeReviewService.getReviews(req.user.id, {
+        filter,
+        search,
+        page: parseInt(page) || 1,
+        limit: parseInt(limit) || 20
+      });
+      res.json(reviews);
+    } catch (error) {
+      console.error('Error fetching code reviews:', error);
+      res.status(500).json({ error: 'Failed to fetch code reviews' });
+    }
+  });
+
+  // Create code review
+  app.post('/api/code-reviews', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { projectId, title, description, files } = req.body;
+      const { CodeReviewService } = await import('./api/code-review-service');
+      const codeReviewService = new CodeReviewService();
+      const review = await codeReviewService.createReview(req.user.id, {
+        projectId,
+        title,
+        description,
+        files
+      });
+      res.json(review);
+    } catch (error) {
+      console.error('Error creating code review:', error);
+      res.status(500).json({ error: 'Failed to create code review' });
+    }
+  });
+
+  // Get code review statistics
+  app.get('/api/code-reviews/stats', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { CodeReviewService } = await import('./api/code-review-service');
+      const codeReviewService = new CodeReviewService();
+      const stats = await codeReviewService.getReviewStats(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching review stats:', error);
+      res.status(500).json({ error: 'Failed to fetch review stats' });
+    }
+  });
+
+  // Submit review
+  app.post('/api/code-reviews/:id/submit', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const { status, comments } = req.body;
+      const { CodeReviewService } = await import('./api/code-review-service');
+      const codeReviewService = new CodeReviewService();
+      const result = await codeReviewService.submitReview(req.user.id, reviewId, status, comments);
+      res.json(result);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      res.status(500).json({ error: 'Failed to submit review' });
+    }
+  });
+
+  // ===== Mentorship Service Routes =====
+  // Get mentors
+  app.get('/api/mentorship/mentors', async (req, res) => {
+    try {
+      const { search, expertise, price, page, limit } = req.query;
+      const { MentorshipService } = await import('./api/mentorship-service');
+      const mentorshipService = new MentorshipService();
+      const mentors = await mentorshipService.getMentors({
+        search,
+        expertise,
+        price,
+        page: parseInt(page as string) || 1,
+        limit: parseInt(limit as string) || 20
+      });
+      res.json(mentors);
+    } catch (error) {
+      console.error('Error fetching mentors:', error);
+      res.status(500).json({ error: 'Failed to fetch mentors' });
+    }
+  });
+
+  // Get user sessions
+  app.get('/api/mentorship/sessions', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { MentorshipService } = await import('./api/mentorship-service');
+      const mentorshipService = new MentorshipService();
+      const sessions = await mentorshipService.getUserSessions(req.user.id);
+      res.json(sessions);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      res.status(500).json({ error: 'Failed to fetch sessions' });
+    }
+  });
+
+  // Book mentorship session
+  app.post('/api/mentorship/sessions', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { mentorId, topic, scheduledAt, sessionType } = req.body;
+      const { MentorshipService } = await import('./api/mentorship-service');
+      const mentorshipService = new MentorshipService();
+      const session = await mentorshipService.bookSession(req.user.id, {
+        mentorId,
+        topic,
+        scheduledAt,
+        sessionType
+      });
+      res.json(session);
+    } catch (error) {
+      console.error('Error booking session:', error);
+      res.status(500).json({ error: 'Failed to book session' });
+    }
+  });
+
+  // Get mentorship statistics
+  app.get('/api/mentorship/stats', async (req, res) => {
+    try {
+      const { MentorshipService } = await import('./api/mentorship-service');
+      const mentorshipService = new MentorshipService();
+      const stats = await mentorshipService.getMentorshipStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching mentorship stats:', error);
+      res.status(500).json({ error: 'Failed to fetch mentorship stats' });
+    }
+  });
+
+  // ===== Challenges Service Routes =====
+  // Get challenges
+  app.get('/api/challenges', async (req, res) => {
+    try {
+      const { filter, difficulty, category, search, page, limit } = req.query;
+      const { ChallengesService } = await import('./api/challenges-service');
+      const challengesService = new ChallengesService();
+      const challenges = await challengesService.getChallenges({
+        filter,
+        difficulty,
+        category,
+        search,
+        page: parseInt(page as string) || 1,
+        limit: parseInt(limit as string) || 20
+      });
+      res.json(challenges);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+      res.status(500).json({ error: 'Failed to fetch challenges' });
+    }
+  });
+
+  // Get user submissions
+  app.get('/api/challenges/submissions', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { ChallengesService } = await import('./api/challenges-service');
+      const challengesService = new ChallengesService();
+      const submissions = await challengesService.getUserSubmissions(req.user.id);
+      res.json(submissions);
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+      res.status(500).json({ error: 'Failed to fetch submissions' });
+    }
+  });
+
+  // Submit solution
+  app.post('/api/challenges/submit', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { challengeId, code } = req.body;
+      const { ChallengesService } = await import('./api/challenges-service');
+      const challengesService = new ChallengesService();
+      const result = await challengesService.submitSolution(req.user.id, challengeId, code);
+      res.json(result);
+    } catch (error) {
+      console.error('Error submitting solution:', error);
+      res.status(500).json({ error: 'Failed to submit solution' });
+    }
+  });
+
+  // Get leaderboard
+  app.get('/api/challenges/leaderboard', async (req, res) => {
+    try {
+      const { ChallengesService } = await import('./api/challenges-service');
+      const challengesService = new ChallengesService();
+      const leaderboard = await challengesService.getLeaderboard();
+      res.json(leaderboard);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    }
+  });
+
+  // Get challenge statistics
+  app.get('/api/challenges/stats', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { ChallengesService } = await import('./api/challenges-service');
+      const challengesService = new ChallengesService();
+      const stats = await challengesService.getUserStats(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching challenge stats:', error);
+      res.status(500).json({ error: 'Failed to fetch challenge stats' });
+    }
+  });
+
+  // ===== Mobile App Service Routes =====
+  // Get mobile apps
+  app.get('/api/mobile/apps', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { MobileAppService } = await import('./api/mobile-app-service');
+      const mobileAppService = new MobileAppService();
+      const apps = await mobileAppService.getUserApps(req.user.id);
+      res.json(apps);
+    } catch (error) {
+      console.error('Error fetching mobile apps:', error);
+      res.status(500).json({ error: 'Failed to fetch mobile apps' });
+    }
+  });
+
+  // Get mobile settings
+  app.get('/api/mobile/settings', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { MobileAppService } = await import('./api/mobile-app-service');
+      const mobileAppService = new MobileAppService();
+      const settings = await mobileAppService.getUserSettings(req.user.id);
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching mobile settings:', error);
+      res.status(500).json({ error: 'Failed to fetch mobile settings' });
+    }
+  });
+
+  // Update mobile settings
+  app.patch('/api/mobile/settings', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { setting, value } = req.body;
+      const { MobileAppService } = await import('./api/mobile-app-service');
+      const mobileAppService = new MobileAppService();
+      await mobileAppService.updateSetting(req.user.id, setting, value);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating mobile settings:', error);
+      res.status(500).json({ error: 'Failed to update mobile settings' });
+    }
+  });
+
+  // Send push notification
+  app.post('/api/mobile/notifications/send', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { title, message, recipients } = req.body;
+      const { MobileAppService } = await import('./api/mobile-app-service');
+      const mobileAppService = new MobileAppService();
+      const result = await mobileAppService.sendPushNotification(req.user.id, { title, message, recipients });
+      res.json(result);
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+      res.status(500).json({ error: 'Failed to send push notification' });
+    }
+  });
+
+  // Get mobile statistics
+  app.get('/api/mobile/stats', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { MobileAppService } = await import('./api/mobile-app-service');
+      const mobileAppService = new MobileAppService();
+      const stats = await mobileAppService.getMobileStats(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching mobile stats:', error);
+      res.status(500).json({ error: 'Failed to fetch mobile stats' });
+    }
   });
 
   return httpServer;
