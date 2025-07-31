@@ -3991,6 +3991,216 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
+  // Build and Deploy Pipeline Routes
+  
+  // Build project
+  app.post('/api/projects/:projectId/build', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      const { buildPipeline } = await import('./deployment/build-pipeline');
+      
+      const buildResult = await buildPipeline.build({
+        projectId,
+        projectName: project.name,
+        projectPath: path.join(process.cwd(), 'projects', projectId.toString()),
+        buildCommand: req.body.buildCommand,
+        installCommand: req.body.installCommand,
+        outputDir: req.body.outputDir,
+        framework: req.body.framework,
+        environmentVars: req.body.environmentVars
+      });
+      
+      res.json({
+        success: true,
+        buildId: buildResult.id,
+        status: buildResult.status,
+        logs: buildResult.logs
+      });
+    } catch (error) {
+      console.error('Build error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to start build'
+      });
+    }
+  });
+  
+  // Get build status
+  app.get('/api/builds/:buildId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { buildPipeline } = await import('./deployment/build-pipeline');
+      const buildStatus = await buildPipeline.getBuildStatus(req.params.buildId);
+      
+      if (!buildStatus) {
+        return res.status(404).json({ message: 'Build not found' });
+      }
+      
+      res.json(buildStatus);
+    } catch (error) {
+      console.error('Get build status error:', error);
+      res.status(500).json({ message: 'Failed to get build status' });
+    }
+  });
+  
+  // Get build logs
+  app.get('/api/builds/:buildId/logs', ensureAuthenticated, async (req, res) => {
+    try {
+      const { buildPipeline } = await import('./deployment/build-pipeline');
+      const logs = await buildPipeline.getBuildLogs(req.params.buildId);
+      
+      res.json({ logs });
+    } catch (error) {
+      console.error('Get build logs error:', error);
+      res.status(500).json({ message: 'Failed to get build logs' });
+    }
+  });
+  
+  // Deploy with build pipeline
+  app.post('/api/projects/:projectId/deploy-with-build', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      const { deploymentPipeline } = await import('./deployment/deployment-pipeline');
+      
+      const pipelineResult = await deploymentPipeline.deployWithBuild({
+        projectId,
+        projectName: project.name,
+        environment: req.body.environment || 'production',
+        region: req.body.region || ['us-east-1'],
+        type: req.body.type || 'autoscale',
+        customDomain: req.body.customDomain,
+        buildCommand: req.body.buildCommand,
+        startCommand: req.body.startCommand,
+        environmentVars: req.body.environmentVars,
+        scaling: req.body.scaling,
+        resources: req.body.resources
+      });
+      
+      res.json({
+        success: true,
+        pipelineId: pipelineResult.id,
+        status: pipelineResult.status,
+        logs: pipelineResult.logs
+      });
+    } catch (error) {
+      console.error('Deploy with build error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to start deployment pipeline'
+      });
+    }
+  });
+  
+  // Quick deploy (no build)
+  app.post('/api/projects/:projectId/quick-deploy', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      const { deploymentPipeline } = await import('./deployment/deployment-pipeline');
+      
+      const pipelineResult = await deploymentPipeline.quickDeploy({
+        projectId,
+        projectName: project.name,
+        environment: req.body.environment || 'production',
+        region: req.body.region || ['us-east-1'],
+        type: req.body.type || 'static',
+        customDomain: req.body.customDomain,
+        startCommand: req.body.startCommand,
+        environmentVars: req.body.environmentVars
+      });
+      
+      res.json({
+        success: true,
+        pipelineId: pipelineResult.id,
+        status: pipelineResult.status,
+        url: pipelineResult.url,
+        logs: pipelineResult.logs
+      });
+    } catch (error) {
+      console.error('Quick deploy error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to quick deploy'
+      });
+    }
+  });
+  
+  // Get deployment pipeline status
+  app.get('/api/pipelines/:pipelineId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deploymentPipeline } = await import('./deployment/deployment-pipeline');
+      const pipelineStatus = await deploymentPipeline.getPipelineStatus(req.params.pipelineId);
+      
+      if (!pipelineStatus) {
+        return res.status(404).json({ message: 'Pipeline not found' });
+      }
+      
+      res.json(pipelineStatus);
+    } catch (error) {
+      console.error('Get pipeline status error:', error);
+      res.status(500).json({ message: 'Failed to get pipeline status' });
+    }
+  });
+  
+  // Get deployment pipeline logs
+  app.get('/api/pipelines/:pipelineId/logs', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deploymentPipeline } = await import('./deployment/deployment-pipeline');
+      const logs = await deploymentPipeline.getPipelineLogs(req.params.pipelineId);
+      
+      res.json({ logs });
+    } catch (error) {
+      console.error('Get pipeline logs error:', error);
+      res.status(500).json({ message: 'Failed to get pipeline logs' });
+    }
+  });
+  
+  // Cancel deployment pipeline
+  app.post('/api/pipelines/:pipelineId/cancel', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deploymentPipeline } = await import('./deployment/deployment-pipeline');
+      const cancelled = await deploymentPipeline.cancelPipeline(req.params.pipelineId);
+      
+      res.json({ 
+        success: cancelled,
+        message: cancelled ? 'Pipeline cancelled' : 'Pipeline not found'
+      });
+    } catch (error) {
+      console.error('Cancel pipeline error:', error);
+      res.status(500).json({ message: 'Failed to cancel pipeline' });
+    }
+  });
+  
+  // Get project deployments
+  app.get('/api/projects/:projectId/deployments', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { deploymentPipeline } = await import('./deployment/deployment-pipeline');
+      const deployments = await deploymentPipeline.getProjectDeployments(projectId);
+      
+      res.json({ deployments });
+    } catch (error) {
+      console.error('Get project deployments error:', error);
+      res.status(500).json({ message: 'Failed to get project deployments' });
+    }
+  });
+  
   // Runtime API Routes
   
   // Get runtime dependencies status (Docker, Nix, etc.)
