@@ -73,6 +73,10 @@ const Support = lazy(() => import("@/pages/Support"));
 const Themes = lazy(() => import("@/pages/Themes"));
 const Referrals = lazy(() => import("@/pages/Referrals"));
 const Usage = lazy(() => import("@/pages/Usage"));
+// Enterprise pages
+const SSOConfiguration = lazy(() => import("@/pages/SSOConfiguration"));
+const AuditLogs = lazy(() => import("@/pages/AuditLogs"));
+const CustomRoles = lazy(() => import("@/pages/CustomRoles"));
 const Subprocessors = lazy(() => import("@/pages/Subprocessors"));
 const HealthDashboard = lazy(() => import("@/pages/HealthDashboard"));
 const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
@@ -399,6 +403,21 @@ function AppContent() {
           <ProtectedRoute path="/referrals" component={() => (
             <ReplitLayout>
               <Referrals />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/sso-configuration" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <SSOConfiguration />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/audit-logs" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <AuditLogs />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/custom-roles" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <CustomRoles />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/@:username" component={() => (
