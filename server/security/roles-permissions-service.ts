@@ -4,7 +4,7 @@
  */
 
 import { db } from '../db';
-import { roles, userRoles, permissions, users, auditLogs } from '@shared/schema';
+// import { roles, userRoles, permissions, users, auditLogs } from '@shared/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 
 export interface PermissionDefinition {

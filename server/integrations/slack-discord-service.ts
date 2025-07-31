@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { WebClient as SlackWebClient } from '@slack/web-api';
 import axios from 'axios';
 import { db } from '../db';
-import { projects, deployments } from '@shared/schema';
+// import { projects, deployments } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 interface IntegrationConfig {

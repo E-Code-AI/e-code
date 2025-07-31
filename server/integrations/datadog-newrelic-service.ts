@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import axios from 'axios';
 import os from 'os';
 import { db } from '../db';
-import { projects, deployments } from '@shared/schema';
+// import { projects, deployments } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 interface MonitoringIntegration {

@@ -105,6 +105,12 @@ const CommercialAgreement = lazy(() => import("@/pages/CommercialAgreement"));
 const ReportAbuse = lazy(() => import("@/pages/ReportAbuse"));
 // Shared snippet page
 const SharedSnippet = lazy(() => import("@/pages/SharedSnippet"));
+// New feature pages
+const APISDKPage = lazy(() => import("@/pages/APISDKPage"));
+const CodeReviewsPage = lazy(() => import("@/pages/CodeReviewsPage"));
+const MentorshipPage = lazy(() => import("@/pages/MentorshipPage"));
+const ChallengesPage = lazy(() => import("@/pages/ChallengesPage"));
+const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -232,6 +238,32 @@ function AppContent() {
           <ProtectedRoute path="/powerups" component={() => (
             <ReplitLayout showSidebar={false}>
               <PowerUps />
+            </ReplitLayout>
+          )} />
+          {/* New Feature Routes */}
+          <ProtectedRoute path="/api-sdk" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <APISDKPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/code-reviews" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <CodeReviewsPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/mentorship" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <MentorshipPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/challenges" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <ChallengesPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/mobile-apps" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <MobileAppsPage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/settings" component={() => (

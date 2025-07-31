@@ -1,5 +1,5 @@
 import { db } from './db';
-import { templates } from '@shared/schema';
+// import { templates } from '@shared/schema';
 
 const REPLIT_TEMPLATES = [
   // Web Development
