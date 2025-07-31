@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw } from 'lucide-react';
 
 interface DemoStep {
   id: string;
@@ -108,71 +106,63 @@ const DEMO_STEPS: DemoStep[] = [
 
 export function AnimatedPlatformDemo() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true); // Auto-start
   const [currentLine, setCurrentLine] = useState(0);
   const [displayedCode, setDisplayedCode] = useState<string[]>([]);
   const [displayedTerminal, setDisplayedTerminal] = useState<string[]>([]);
-  const [hasCompleted, setHasCompleted] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  // Reset demo
-  const resetDemo = () => {
-    setCurrentStep(0);
-    setCurrentLine(0);
-    setDisplayedCode([]);
-    setDisplayedTerminal([]);
-    setIsPlaying(false);
-    setHasCompleted(false);
-  };
-
-  // Start/pause demo
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  // Simulate typing animation
+  // Continuous autoplay animation
   useEffect(() => {
-    if (!isPlaying) return;
-
     const step = DEMO_STEPS[currentStep];
     if (!step) return;
 
-    const interval = setInterval(() => {
+    const timer = setTimeout(() => {
       const codeLines = step.code;
       const terminalLines = step.terminal;
       
       if (currentLine < Math.max(codeLines.length, terminalLines.length)) {
+        // Add lines progressively
         if (currentLine < codeLines.length) {
           setDisplayedCode(prev => [...prev, codeLines[currentLine]]);
         }
         if (currentLine < terminalLines.length) {
-          setDisplayedTerminal(prev => [...prev, terminalLines[currentLine]]);
+          setDisplayedTerminal(prev => {
+            const updated = [...prev, terminalLines[currentLine]];
+            // Keep only last 4 lines for cleaner look
+            return updated.slice(-4);
+          });
         }
         setCurrentLine(prev => prev + 1);
       } else {
-        // Move to next step
+        // Step complete, move to next
         setTimeout(() => {
           if (currentStep < DEMO_STEPS.length - 1) {
+            // Next step
             setCurrentStep(prev => prev + 1);
             setCurrentLine(0);
             setDisplayedCode([]);
             setDisplayedTerminal([]);
           } else {
-            // Auto-restart demo after completion
-            setHasCompleted(true);
-            setTimeout(() => {
-              setCurrentStep(0);
-              setCurrentLine(0);
-              setDisplayedCode([]);
-              setDisplayedTerminal([]);
-              setHasCompleted(false);
-            }, 6000); // Increased from 3000ms to 6000ms for longer pause before restart
+            // Restart immediately - continuous loop
+            setCurrentStep(0);
+            setCurrentLine(0);
+            setDisplayedCode([]);
+            setDisplayedTerminal([]);
           }
-        }, 3000); // Increased from 1500ms to 3000ms for longer pause between steps
+        }, step.duration - (codeLines.length * 150)); // Use remaining duration after typing
       }
-    }, 400); // Increased from 200ms to 400ms for slower typing speed
+    }, 150); // Fast typing for dynamic feel
 
-    return () => clearInterval(interval);
-  }, [isPlaying, currentStep, currentLine]);
+    return () => clearTimeout(timer);
+  }, [currentStep, currentLine]);
+
+  // Update progress bar smoothly
+  useEffect(() => {
+    const totalSteps = DEMO_STEPS.length;
+    const currentStepProgress = currentStep / totalSteps;
+    const lineProgress = currentLine / (DEMO_STEPS[currentStep]?.code.length || 1) / totalSteps;
+    setProgress((currentStepProgress + lineProgress) * 100);
+  }, [currentStep, currentLine]);
 
   const currentStepData = DEMO_STEPS[currentStep];
 
@@ -190,24 +180,23 @@ export function AnimatedPlatformDemo() {
           <span className="text-gray-700 dark:text-gray-300 text-xs font-medium">todo-app — E-Code</span>
         </div>
         
-        {/* Compact Demo Controls */}
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={togglePlay}
-            className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-          >
-            {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={resetDemo}
-            className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-          >
-            <RotateCcw className="h-3 w-3" />
-          </Button>
+        {/* Step indicator */}
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <span className="font-medium">{currentStepData?.title}</span>
+          <div className="flex gap-1">
+            {DEMO_STEPS.map((_, index) => (
+              <div
+                key={index}
+                className={`w-1 h-1 rounded-full transition-all duration-300 ${
+                  index === currentStep 
+                    ? 'bg-orange-500 w-3' 
+                    : index < currentStep 
+                      ? 'bg-orange-300' 
+                      : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -311,21 +300,21 @@ export function AnimatedPlatformDemo() {
         </div>
       </div>
 
-      {/* Sleek Progress Bar */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gray-100 dark:bg-gray-800 h-8">
-        <div className="flex items-center justify-between h-full px-3">
-          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">{currentStepData?.title}</span>
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1">
-              {DEMO_STEPS.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    index === currentStep ? 'bg-orange-500' : 'bg-gray-300 dark:bg-gray-600'
-                  }`}
-                />
-              ))}
-            </div>
+      {/* Animated Progress Bar */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gray-100 dark:bg-gray-800 h-8 overflow-hidden">
+        <div 
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-400 via-purple-500 to-blue-500 transition-all duration-1000 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+        <div className="relative flex items-center justify-between h-full px-3">
+          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+            {currentStepData?.title}
+          </span>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-500 dark:text-gray-400">
+              {currentStep + 1}/{DEMO_STEPS.length}
+            </span>
           </div>
         </div>
       </div>
