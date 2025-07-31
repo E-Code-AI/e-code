@@ -28,6 +28,7 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
@@ -72,6 +73,11 @@ export interface IStorage {
   createMentorProfile(profile: InsertMentorProfile): Promise<MentorProfile>;
   getMentorProfile(userId: number): Promise<MentorProfile | undefined>;
   updateMentorProfile(userId: number, profile: Partial<InsertMentorProfile>): Promise<MentorProfile | undefined>;
+
+  // Template operations
+  getAllTemplates(publishedOnly?: boolean): Promise<any[]>;
+  pinProject(projectId: number, userId: number): Promise<void>;
+  unpinProject(projectId: number, userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -84,6 +90,11 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    // For now, use email as username since we don't have a separate username field
+    return this.getUserByEmail(username);
   }
 
   async createUser(userData: InsertUser): Promise<User> {
@@ -285,6 +296,92 @@ export class DatabaseStorage implements IStorage {
       .where(eq(mentorProfiles.userId, userId))
       .returning();
     return profile;
+  }
+
+  // Template operations
+  async getAllTemplates(publishedOnly?: boolean): Promise<any[]> {
+    // Return built-in templates for now
+    const templates = [
+      {
+        id: 'nextjs-blog',
+        slug: 'nextjs-blog',
+        name: 'Next.js Blog',
+        description: 'A modern blog with Next.js and Tailwind CSS',
+        category: 'web',
+        tags: ['nextjs', 'react', 'blog', 'tailwind'],
+        authorName: 'E-Code',
+        authorVerified: true,
+        uses: 1250,
+        stars: 89,
+        forks: 23,
+        language: 'javascript',
+        framework: 'nextjs',
+        difficulty: 'beginner',
+        estimatedTime: 30,
+        features: ['SEO optimized', 'Dark mode', 'Markdown support'],
+        isFeatured: true,
+        isOfficial: true,
+        createdAt: new Date()
+      },
+      {
+        id: 'react-dashboard',
+        slug: 'react-dashboard',
+        name: 'React Admin Dashboard',
+        description: 'Professional admin dashboard with charts and analytics',
+        category: 'web',
+        tags: ['react', 'dashboard', 'admin', 'charts'],
+        authorName: 'E-Code',
+        authorVerified: true,
+        uses: 2100,
+        stars: 156,
+        forks: 45,
+        language: 'javascript',
+        framework: 'react',
+        difficulty: 'intermediate',
+        estimatedTime: 45,
+        features: ['Charts', 'Tables', 'Authentication', 'Responsive'],
+        isFeatured: true,
+        isOfficial: true,
+        createdAt: new Date()
+      },
+      {
+        id: 'python-api',
+        slug: 'python-api',
+        name: 'Python REST API',
+        description: 'FastAPI backend with authentication and database',
+        category: 'backend',
+        tags: ['python', 'fastapi', 'api', 'rest'],
+        authorName: 'E-Code',
+        authorVerified: true,
+        uses: 1800,
+        stars: 120,
+        forks: 34,
+        language: 'python',
+        framework: 'fastapi',
+        difficulty: 'intermediate',
+        estimatedTime: 40,
+        features: ['JWT Auth', 'PostgreSQL', 'Swagger docs', 'Docker'],
+        isFeatured: true,
+        isOfficial: true,
+        createdAt: new Date()
+      }
+    ];
+
+    return publishedOnly ? templates : templates;
+  }
+
+  async pinProject(projectId: number, userId: number): Promise<void> {
+    await db
+      .update(projects)
+      .set({ isPinned: true })
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
+  }
+
+  async unpinProject(projectId: number, userId: number): Promise<void> {
+    await db
+      .update(projects)
+      .set({ isPinned: false })
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
   }
 }
 
