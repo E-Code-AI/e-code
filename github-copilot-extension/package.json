@@ -1,0 +1,185 @@
+{
+  "name": "e-code-copilot",
+  "displayName": "E-Code GitHub Copilot Extension",
+  "description": "Enhanced GitHub Copilot integration for E-Code platform",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Other"
+  ],
+  "extensionKind": [
+    "ui"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:python",
+    "onLanguage:java",
+    "onLanguage:cpp",
+    "onLanguage:go",
+    "onLanguage:rust",
+    "onLanguage:html",
+    "onLanguage:css"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ecodeCopilot.explainCode",
+        "title": "Explain with E-Code AI",
+        "category": "E-Code Copilot"
+      },
+      {
+        "command": "ecodeCopilot.generateTests",
+        "title": "Generate Tests with E-Code AI",
+        "category": "E-Code Copilot"
+      },
+      {
+        "command": "ecodeCopilot.optimizeCode",
+        "title": "Optimize Code with E-Code AI",
+        "category": "E-Code Copilot"
+      },
+      {
+        "command": "ecodeCopilot.generateDocs",
+        "title": "Generate Documentation",
+        "category": "E-Code Copilot"
+      },
+      {
+        "command": "ecodeCopilot.findBugs",
+        "title": "Find Potential Bugs",
+        "category": "E-Code Copilot"
+      },
+      {
+        "command": "ecodeCopilot.refactorCode",
+        "title": "Suggest Refactoring",
+        "category": "E-Code Copilot"
+      },
+      {
+        "command": "ecodeCopilot.translateCode",
+        "title": "Translate to Another Language",
+        "category": "E-Code Copilot"
+      },
+      {
+        "command": "ecodeCopilot.generateComments",
+        "title": "Generate Comments",
+        "category": "E-Code Copilot"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "ecodeCopilot.submenu",
+          "group": "1_modification"
+        }
+      ],
+      "ecodeCopilot.submenu": [
+        {
+          "command": "ecodeCopilot.explainCode",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "ecodeCopilot.generateTests",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "ecodeCopilot.optimizeCode",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "ecodeCopilot.generateDocs",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "ecodeCopilot.findBugs",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "ecodeCopilot.refactorCode",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "ecodeCopilot.translateCode",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "ecodeCopilot.generateComments",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "ecodeCopilot.submenu",
+        "label": "E-Code AI Assistant"
+      }
+    ],
+    "configuration": {
+      "title": "E-Code Copilot",
+      "properties": {
+        "ecodeCopilot.apiEndpoint": {
+          "type": "string",
+          "default": "https://e-code.dev/api",
+          "description": "E-Code API endpoint"
+        },
+        "ecodeCopilot.autoSuggest": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic code suggestions"
+        },
+        "ecodeCopilot.suggestionDelay": {
+          "type": "number",
+          "default": 1000,
+          "description": "Delay in milliseconds before showing suggestions"
+        },
+        "ecodeCopilot.maxSuggestions": {
+          "type": "number",
+          "default": 3,
+          "description": "Maximum number of suggestions to show"
+        },
+        "ecodeCopilot.preferredLanguage": {
+          "type": "string",
+          "default": "auto",
+          "enum": ["auto", "english", "spanish", "french", "german", "chinese", "japanese"],
+          "description": "Preferred language for AI responses"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "ecodeCopilot.explainCode",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "ecodeCopilot.generateTests",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "ecodeCopilot.optimizeCode",
+        "key": "ctrl+alt+o",
+        "mac": "cmd+alt+o",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "axios": "^1.5.0"
+  }
+}

@@ -1,311 +1,273 @@
 #!/usr/bin/env node
+
 import { Command } from 'commander';
 import chalk from 'chalk';
-import ora from 'ora';
-import inquirer from 'inquirer';
-import { AuthManager } from './auth';
-import { ProjectManager } from './projects';
-import { DeploymentManager } from './deployments';
-import { PackageManager } from './packages';
-import { LogsManager } from './logs';
-import { ConfigManager } from './config';
-import { version } from '../package.json';
+import { AuthCommand } from './commands/auth';
+import { ProjectsCommand } from './commands/projects';
+import { DeployCommand } from './commands/deploy';
+import { FilesCommand } from './commands/files';
+import { ShellCommand } from './commands/shell';
+import { SecretsCommand } from './commands/secrets';
+import { DatabaseCommand } from './commands/database';
+import { AICommand } from './commands/ai';
+import { TemplatesCommand } from './commands/templates';
+import { ConfigCommand } from './commands/config';
 
 const program = new Command();
-const config = new ConfigManager();
-
-// ASCII Art Logo
-const logo = chalk.blue(`
-╔═══════════════════════════════════════╗
-║  ███████╗   ██████╗ ██████╗ ██████╗  ║
-║  ██╔════╝  ██╔════╝██╔═══██╗██╔══██╗ ║
-║  █████╗    ██║     ██║   ██║██║  ██║ ║
-║  ██╔══╝    ██║     ██║   ██║██║  ██║ ║
-║  ███████╗  ╚██████╗╚██████╔╝██████╔╝ ║
-║  ╚══════╝   ╚═════╝ ╚═════╝ ╚═════╝  ║
-╚═══════════════════════════════════════╝
-`);
 
 program
-  .name('ecode')
-  .description('E-Code CLI - Build and deploy from your terminal')
-  .version(version);
+  .name('e-code')
+  .description('E-Code CLI - Command line interface for E-Code development platform')
+  .version('1.0.0');
 
-// Auth commands
-program
-  .command('login')
-  .description('Login to your E-Code account')
-  .action(async () => {
-    console.log(logo);
-    const auth = new AuthManager(config);
-    await auth.login();
-  });
+// Banner
+console.log(chalk.blue.bold(`
+ ______ ______ ______ ______ 
+|  ____|  ____| ____|  ____|
+| |__  | |__  | |__  | |__  
+|  __| |  __| |  __| |  __| 
+| |____| |____| |____| |____
+|______|______|______|______|
+`));
 
-program
-  .command('logout')
-  .description('Logout from your E-Code account')
-  .action(async () => {
-    const auth = new AuthManager(config);
-    await auth.logout();
-  });
+console.log(chalk.gray('E-Code CLI v1.0.0 - Cloud Development Platform'));
+console.log('');
 
-program
-  .command('whoami')
-  .description('Display current logged in user')
-  .action(async () => {
-    const auth = new AuthManager(config);
-    await auth.whoami();
-  });
+// Authentication commands
+const auth = program.command('auth').description('Authentication commands');
+auth.command('login')
+  .description('Login to E-Code')
+  .option('-t, --token <token>', 'API token for authentication')
+  .action(AuthCommand.login);
+
+auth.command('logout')
+  .description('Logout from E-Code')
+  .action(AuthCommand.logout);
+
+auth.command('whoami')
+  .description('Show current user')
+  .action(AuthCommand.whoami);
 
 // Project commands
-const project = program.command('project');
+const projects = program.command('projects').description('Project management commands');
+projects.command('list')
+  .alias('ls')
+  .description('List all projects')
+  .option('-l, --limit <limit>', 'Limit number of results', '20')
+  .option('-f, --filter <filter>', 'Filter projects by name')
+  .action(ProjectsCommand.list);
 
-project
-  .command('create [name]')
+projects.command('create')
   .description('Create a new project')
-  .option('-l, --language <language>', 'Project language', 'javascript')
-  .option('-t, --template <template>', 'Use a template')
-  .option('-p, --private', 'Make project private', false)
-  .action(async (name, options) => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.create(name, options);
-  });
+  .argument('<name>', 'Project name')
+  .option('-t, --template <template>', 'Project template')
+  .option('-d, --description <description>', 'Project description')
+  .option('-p, --public', 'Make project public')
+  .action(ProjectsCommand.create);
 
-project
-  .command('list')
-  .description('List all your projects')
-  .option('-l, --limit <limit>', 'Number of projects to show', '10')
-  .action(async (options) => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.list(options);
-  });
+projects.command('clone')
+  .description('Clone a project')
+  .argument('<project>', 'Project ID or slug (@username/projectname)')
+  .option('-d, --dir <directory>', 'Target directory')
+  .action(ProjectsCommand.clone);
 
-project
-  .command('open <name>')
-  .description('Open a project in the browser')
-  .action(async (name) => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.open(name);
-  });
-
-project
-  .command('delete <name>')
+projects.command('delete')
   .description('Delete a project')
-  .option('-f, --force', 'Skip confirmation')
-  .action(async (name, options) => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.delete(name, options);
-  });
+  .argument('<project>', 'Project ID or slug')
+  .option('-f, --force', 'Force delete without confirmation')
+  .action(ProjectsCommand.delete);
 
-project
-  .command('fork <name>')
-  .description('Fork a project')
-  .option('-n, --new-name <name>', 'Name for the forked project')
-  .action(async (name, options) => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.fork(name, options);
-  });
+projects.command('info')
+  .description('Show project information')
+  .argument('<project>', 'Project ID or slug')
+  .action(ProjectsCommand.info);
 
-// Run command
-program
-  .command('run [script]')
-  .description('Run a project or script')
-  .option('-w, --watch', 'Watch for changes')
-  .option('-p, --project <name>', 'Project to run')
-  .action(async (script, options) => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.run(script, options);
-  });
+// File commands
+const files = program.command('files').description('File management commands');
+files.command('upload')
+  .description('Upload files to project')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<path>', 'Local file or directory path')
+  .option('-r, --remote <path>', 'Remote path in project')
+  .action(FilesCommand.upload);
 
-// Deploy commands
-const deploy = program.command('deploy');
+files.command('download')
+  .description('Download files from project')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<path>', 'Remote file or directory path')
+  .option('-o, --output <path>', 'Local output path')
+  .action(FilesCommand.download);
 
-deploy
-  .command('create')
-  .description('Deploy current project')
-  .option('-t, --type <type>', 'Deployment type (static, autoscale, reserved-vm)', 'autoscale')
-  .option('-n, --name <name>', 'Deployment name')
-  .action(async (options) => {
-    const deploymentManager = new DeploymentManager(config);
-    await deploymentManager.create(options);
-  });
+files.command('list')
+  .alias('ls')
+  .description('List project files')
+  .argument('<project>', 'Project ID or slug')
+  .option('-p, --path <path>', 'Directory path', '/')
+  .action(FilesCommand.list);
 
-deploy
-  .command('list')
-  .description('List all deployments')
-  .action(async () => {
-    const deploymentManager = new DeploymentManager(config);
-    await deploymentManager.list();
-  });
+files.command('create')
+  .description('Create a new file')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<path>', 'File path')
+  .option('-c, --content <content>', 'File content')
+  .action(FilesCommand.create);
 
-deploy
-  .command('status <name>')
-  .description('Get deployment status')
-  .action(async (name) => {
-    const deploymentManager = new DeploymentManager(config);
-    await deploymentManager.status(name);
-  });
+files.command('delete')
+  .alias('rm')
+  .description('Delete a file or directory')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<path>', 'File or directory path')
+  .option('-r, --recursive', 'Delete recursively')
+  .action(FilesCommand.delete);
 
-deploy
-  .command('rollback <name>')
-  .description('Rollback a deployment')
-  .action(async (name) => {
-    const deploymentManager = new DeploymentManager(config);
-    await deploymentManager.rollback(name);
-  });
+// Deployment commands
+const deploy = program.command('deploy').description('Deployment commands');
+deploy.command('create')
+  .description('Create a new deployment')
+  .argument('<project>', 'Project ID or slug')
+  .option('-t, --type <type>', 'Deployment type (static, autoscale, serverless)', 'static')
+  .option('-d, --domain <domain>', 'Custom domain')
+  .option('-e, --env <env>', 'Environment variables (key=value)', [])
+  .action(DeployCommand.create);
 
-// Package commands
-const pkg = program.command('package');
+deploy.command('list')
+  .alias('ls')
+  .description('List deployments')
+  .argument('<project>', 'Project ID or slug')
+  .action(DeployCommand.list);
 
-pkg
-  .command('add <packages...>')
-  .description('Add packages to your project')
-  .option('-D, --dev', 'Add as dev dependency')
-  .action(async (packages, options) => {
-    const packageManager = new PackageManager(config);
-    await packageManager.add(packages, options);
-  });
-
-pkg
-  .command('remove <packages...>')
-  .description('Remove packages from your project')
-  .action(async (packages) => {
-    const packageManager = new PackageManager(config);
-    await packageManager.remove(packages);
-  });
-
-pkg
-  .command('list')
-  .description('List installed packages')
-  .action(async () => {
-    const packageManager = new PackageManager(config);
-    await packageManager.list();
-  });
-
-// Logs command
-program
-  .command('logs')
-  .description('View project logs')
-  .option('-f, --follow', 'Follow log output')
+deploy.command('logs')
+  .description('Show deployment logs')
+  .argument('<deployment>', 'Deployment ID')
+  .option('-f, --follow', 'Follow logs in real-time')
   .option('-n, --lines <lines>', 'Number of lines to show', '100')
-  .option('-p, --project <name>', 'Project name')
-  .action(async (options) => {
-    const logsManager = new LogsManager(config);
-    await logsManager.view(options);
-  });
+  .action(DeployCommand.logs);
 
-// Secret commands
-const secret = program.command('secret');
+deploy.command('delete')
+  .description('Delete a deployment')
+  .argument('<deployment>', 'Deployment ID')
+  .action(DeployCommand.delete);
 
-secret
-  .command('add <key> [value]')
-  .description('Add a secret')
-  .action(async (key, value) => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.addSecret(key, value);
-  });
+// Shell commands
+const shell = program.command('shell').description('Remote shell commands');
+shell.command('exec')
+  .description('Execute command in project shell')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<command>', 'Command to execute')
+  .option('-i, --interactive', 'Interactive mode')
+  .action(ShellCommand.exec);
 
-secret
-  .command('remove <key>')
-  .description('Remove a secret')
-  .action(async (key) => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.removeSecret(key);
-  });
+shell.command('connect')
+  .description('Connect to project shell')
+  .argument('<project>', 'Project ID or slug')
+  .action(ShellCommand.connect);
 
-secret
-  .command('list')
-  .description('List all secrets')
-  .action(async () => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.listSecrets();
-  });
+// Secrets commands
+const secrets = program.command('secrets').description('Secrets management commands');
+secrets.command('list')
+  .alias('ls')
+  .description('List project secrets')
+  .argument('<project>', 'Project ID or slug')
+  .action(SecretsCommand.list);
 
-// Init command for current directory
-program
-  .command('init')
-  .description('Initialize E-Code in current directory')
-  .action(async () => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.init();
-  });
+secrets.command('set')
+  .description('Set a secret value')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<key>', 'Secret key')
+  .argument('<value>', 'Secret value')
+  .action(SecretsCommand.set);
 
-// Export command
-program
-  .command('export')
-  .description('Export project')
-  .option('-f, --format <format>', 'Export format (zip, docker, github)', 'zip')
-  .option('-o, --output <path>', 'Output path')
-  .action(async (options) => {
-    const projectManager = new ProjectManager(config);
-    await projectManager.export(options);
-  });
+secrets.command('delete')
+  .alias('rm')
+  .description('Delete a secret')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<key>', 'Secret key')
+  .action(SecretsCommand.delete);
 
-// Interactive mode
-program
-  .command('interactive')
-  .alias('i')
-  .description('Start interactive mode')
-  .action(async () => {
-    console.log(logo);
-    console.log(chalk.cyan('Welcome to E-Code CLI Interactive Mode!\n'));
-    
-    const auth = new AuthManager(config);
-    const isLoggedIn = await auth.isAuthenticated();
-    
-    if (!isLoggedIn) {
-      console.log(chalk.yellow('You are not logged in. Please login first.\n'));
-      await auth.login();
-    }
-    
-    // Interactive menu
-    while (true) {
-      const { action } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'action',
-          message: 'What would you like to do?',
-          choices: [
-            { name: '🚀 Create a new project', value: 'create' },
-            { name: '📁 List projects', value: 'list' },
-            { name: '🔧 Run a project', value: 'run' },
-            { name: '🌐 Deploy a project', value: 'deploy' },
-            { name: '📦 Manage packages', value: 'packages' },
-            { name: '🔑 Manage secrets', value: 'secrets' },
-            { name: '📊 View logs', value: 'logs' },
-            { name: '❌ Exit', value: 'exit' }
-          ]
-        }
-      ]);
-      
-      if (action === 'exit') break;
-      
-      // Handle each action
-      switch (action) {
-        case 'create':
-          const projectManager = new ProjectManager(config);
-          await projectManager.createInteractive();
-          break;
-        case 'list':
-          const pm = new ProjectManager(config);
-          await pm.list({ limit: '20' });
-          break;
-        // ... other cases
-      }
-    }
-  });
+// Database commands
+const database = program.command('db').description('Database commands');
+database.command('get')
+  .description('Get database value')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<key>', 'Database key')
+  .action(DatabaseCommand.get);
 
-// Error handling
-process.on('unhandledRejection', (err) => {
-  console.error(chalk.red('Error:'), err);
-  process.exit(1);
-});
+database.command('set')
+  .description('Set database value')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<key>', 'Database key')
+  .argument('<value>', 'Database value')
+  .action(DatabaseCommand.set);
 
-// Parse arguments
-program.parse(process.argv);
+database.command('list')
+  .alias('ls')
+  .description('List database keys')
+  .argument('<project>', 'Project ID or slug')
+  .option('-p, --prefix <prefix>', 'Key prefix filter')
+  .action(DatabaseCommand.list);
 
-// Show help if no command provided
-if (!process.argv.slice(2).length) {
-  console.log(logo);
-  program.outputHelp();
-}
+database.command('delete')
+  .alias('rm')
+  .description('Delete database key')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<key>', 'Database key')
+  .action(DatabaseCommand.delete);
+
+// AI commands
+const ai = program.command('ai').description('AI assistant commands');
+ai.command('chat')
+  .description('Chat with AI assistant')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<message>', 'Message to AI')
+  .option('-m, --model <model>', 'AI model to use')
+  .action(AICommand.chat);
+
+ai.command('review')
+  .description('AI code review')
+  .argument('<project>', 'Project ID or slug')
+  .option('-f, --files <files>', 'Specific files to review')
+  .action(AICommand.review);
+
+ai.command('explain')
+  .description('Explain code with AI')
+  .argument('<project>', 'Project ID or slug')
+  .argument('<file>', 'File to explain')
+  .option('-l, --lines <lines>', 'Specific line range (start:end)')
+  .action(AICommand.explain);
+
+// Templates commands
+const templates = program.command('templates').description('Template management commands');
+templates.command('list')
+  .alias('ls')
+  .description('List available templates')
+  .option('-c, --category <category>', 'Filter by category')
+  .action(TemplatesCommand.list);
+
+templates.command('info')
+  .description('Show template information')
+  .argument('<template>', 'Template name')
+  .action(TemplatesCommand.info);
+
+// Configuration commands
+const config = program.command('config').description('Configuration commands');
+config.command('set')
+  .description('Set configuration value')
+  .argument('<key>', 'Configuration key')
+  .argument('<value>', 'Configuration value')
+  .action(ConfigCommand.set);
+
+config.command('get')
+  .description('Get configuration value')
+  .argument('<key>', 'Configuration key')
+  .action(ConfigCommand.get);
+
+config.command('list')
+  .alias('ls')
+  .description('List all configuration')
+  .action(ConfigCommand.list);
+
+// Global options
+program.option('-v, --verbose', 'Verbose output');
+program.option('--api-url <url>', 'E-Code API URL', 'https://e-code.dev/api');
+
+program.parse();

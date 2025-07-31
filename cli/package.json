@@ -1,47 +1,41 @@
 {
-  "name": "@ecode/cli",
+  "name": "@e-code/cli",
   "version": "1.0.0",
-  "description": "E-Code CLI - Build and deploy from your terminal",
+  "description": "E-Code CLI - Command line interface for E-Code development platform",
   "main": "dist/index.js",
   "bin": {
-    "ecode": "./dist/index.js"
+    "e-code": "dist/index.js",
+    "ecode": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
     "prepublish": "npm run build"
   },
+  "keywords": ["cli", "development", "ide", "cloud"],
+  "author": "E-Code Team",
+  "license": "MIT",
   "dependencies": {
-    "chalk": "^5.3.0",
-    "commander": "^11.1.0",
-    "inquirer": "^9.2.12",
-    "ora": "^7.0.1",
-    "open": "^9.1.0",
+    "commander": "^11.0.0",
+    "chalk": "^4.1.2",
+    "ora": "^6.3.1",
+    "inquirer": "^9.2.8",
+    "axios": "^1.5.0",
+    "fs-extra": "^11.1.1",
+    "archiver": "^5.3.1",
+    "tar": "^6.1.15",
+    "ws": "^8.13.0",
     "node-fetch": "^3.3.2",
-    "ws": "^8.16.0",
-    "tar": "^6.2.0",
-    "archiver": "^6.0.1"
+    "formdata-node": "^6.0.3"
   },
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "@types/inquirer": "^9.0.7",
-    "@types/ws": "^8.5.10",
-    "@types/tar": "^6.1.11",
-    "@types/archiver": "^6.0.2",
-    "typescript": "^5.3.3",
-    "tsx": "^4.6.2"
-  },
-  "keywords": [
-    "ecode",
-    "cli",
-    "ide",
-    "development",
-    "deploy"
-  ],
-  "author": "E-Code",
-  "license": "MIT",
-  "engines": {
-    "node": ">=16.0.0"
+    "@types/node": "^20.5.0",
+    "@types/inquirer": "^9.0.3",
+    "@types/fs-extra": "^11.0.1",
+    "@types/archiver": "^5.3.2",
+    "@types/tar": "^6.1.5",
+    "@types/ws": "^8.5.5",
+    "typescript": "^5.1.6",
+    "ts-node": "^10.9.1"
   }
 }
