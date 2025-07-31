@@ -15,189 +15,94 @@ interface DemoStep {
 const DEMO_STEPS: DemoStep[] = [
   {
     id: 'ai-prompt',
-    title: 'AI understands your idea',
-    duration: 4000, // Doubled from 2000ms to 4000ms
+    title: 'AI analyzes your request',
+    duration: 3000,
     code: [
-      '// E-Code AI Agent is analyzing your request:',
-      '// "Build a todo app with dark mode and categories"',
+      '// "Build a todo app with dark mode"',
       '',
-      '// 🤖 AI Planning:',
-      '// - React components with hooks',
-      '// - Dark mode toggle',
-      '// - Category filtering',
-      '// - Local storage persistence',
-      '',
-      '// Starting code generation...'
+      '// AI is planning your app...'
     ],
     terminal: [
-      '🤖 E-Code AI Agent: Analyzing request...',
-      '✓ Identified: Todo application',
-      '✓ Features: Dark mode, categories, persistence',
-      '✓ Generating project structure...',
-      '✓ Creating optimal component architecture...'
+      '$ e-code create todo-app',
+      '✓ Creating project structure',
+      '✓ Installing dependencies'
     ],
-    preview: '<div class="p-4 bg-gray-100"><div class="animate-pulse"><div class="h-6 bg-gray-300 rounded mb-4 w-32"></div><div class="h-4 bg-gray-300 rounded mb-2"></div><div class="h-4 bg-gray-300 rounded w-3/4"></div></div></div>'
+    preview: '<div class="p-3 text-center text-gray-500"><svg class="w-8 h-8 mx-auto mb-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-opacity="0.2" stroke-width="4"></circle><path stroke-opacity="1" stroke-width="4" d="M12 2a10 10 0 0 1 0 20"></path></svg><p class="text-xs">Building...</p></div>'
   },
   {
     id: 'start',
-    title: 'AI generates the foundation',
-    duration: 4000, // Doubled from 2000ms to 4000ms
+    title: 'AI writes your code',
+    duration: 3000,
     code: [
-      '// E-Code AI Agent is building your app',
-      '',
-      'import React, { useState, useEffect } from \'react\';',
-      'import { Moon, Sun, Plus, Filter } from \'lucide-react\';',
+      'import React, { useState } from \'react\';',
+      'import { Moon, Sun } from \'lucide-react\';',
       '',
       'function TodoApp() {',
       '  const [todos, setTodos] = useState([]);',
-      '  const [darkMode, setDarkMode] = useState(false);',
-      '  const [category, setCategory] = useState(\'all\');'
+      '  const [darkMode, setDarkMode] = useState(false);'
     ],
     terminal: [
-      '🤖 E-Code AI Agent: Analyzing request...',
-      '✓ Identified: Todo application',
-      '✓ Features: Dark mode, categories, persistence',
-      '✓ Generating project structure...',
-      '✓ Creating optimal component architecture...',
-      '$ npm install lucide-react tailwindcss',
-      '✓ Dependencies installed'
+      '✓ React components created',
+      '✓ Installing lucide-react',
+      '✓ Setting up dark mode'
     ],
-    preview: '<div class="p-4"><h1 class="text-xl font-bold">Todo App</h1><div class="flex gap-2 mt-4"><input placeholder="Add todo..." class="border p-2 flex-1 rounded"><button class="bg-orange-500 text-white px-4 py-2 rounded">Add</button></div></div>'
+    preview: '<div class="p-3"><h1 class="text-lg font-semibold">Todo App</h1><div class="flex gap-2 mt-3"><input placeholder="Add todo..." class="border px-2 py-1 text-sm flex-1 rounded"><button class="bg-orange-500 text-white px-3 py-1 text-sm rounded">Add</button></div></div>'
   },
   {
     id: 'code',
-    title: 'AI writing the code',
-    duration: 5000, // Increased from 3000ms to 5000ms
+    title: 'Adding functionality',
+    duration: 3500,
     code: [
-      '// Welcome to E-Code!',
-      '// Let\'s build a todo app with AI',
-      '',
-      'import React, { useState } from \'react\';',
-      '',
-      'function TodoApp() {',
-      '  const [todos, setTodos] = useState([]);',
-      '  const [input, setInput] = useState(\'\');',
-      '',
       '  const addTodo = () => {',
       '    if (input.trim()) {',
       '      setTodos([...todos, {',
       '        id: Date.now(),',
       '        text: input,',
-      '        completed: false',
+      '        done: false',
       '      }]);',
-      '      setInput(\'\');',
       '    }',
-      '  };'
+      '  };',
+      '',
+      '  return (',
+      '    <div className={darkMode ? "dark" : ""}>',
+      '      {/* App UI */}',
+      '    </div>',
+      '  );',
+      '}'
     ],
     terminal: [
-      '$ e-code create todo-app',
-      '✓ Creating new project...',
-      '✓ Installing dependencies...',
-      '✓ Setting up environment...',
-      '✓ AI generating components...',
-      '✓ Optimizing code structure...'
+      '✓ Todo functionality added',
+      '✓ Dark mode integrated',
+      '✓ Building app...',
+      '🚀 Starting preview server'
     ],
-    preview: '<div class="p-4"><h1>Todo App</h1><div class="flex gap-2 mb-4"><input placeholder="Add todo..." class="border p-2 flex-1"><button class="bg-blue-500 text-white px-4 py-2">Add</button></div></div>'
-  },
-  {
-    id: 'features',
-    title: 'AI adds advanced features',
-    duration: 5000, // Increased from 3000ms to 5000ms
-    code: [
-      '// E-Code AI Agent is building your app',
-      '',
-      'import React, { useState, useEffect } from \'react\';',
-      'import { Moon, Sun, Plus, Filter } from \'lucide-react\';',
-      '',
-      'function TodoApp() {',
-      '  const [todos, setTodos] = useState([]);',
-      '  const [darkMode, setDarkMode] = useState(false);',
-      '  const [category, setCategory] = useState(\'all\');',
-      '  const [input, setInput] = useState(\'\');',
-      '',
-      '  // AI-generated smart features',
-      '  const addTodo = () => {',
-      '    if (input.trim()) {',
-      '      const newTodo = {',
-      '        id: Date.now(),',
-      '        text: input,',
-      '        category: detectCategory(input),',
-      '        completed: false,',
-      '        createdAt: new Date().toISOString()',
-      '      };',
-      '      setTodos([...todos, newTodo]);',
-      '      setInput(\'\');',
-      '    }',
-      '  };'
-    ],
-    terminal: [
-      '🤖 E-Code AI Agent: Analyzing request...',
-      '✓ Identified: Todo application',
-      '✓ Features: Dark mode, categories, persistence',
-      '✓ Generating project structure...',
-      '✓ Creating optimal component architecture...',
-      '$ npm install lucide-react tailwindcss',
-      '✓ Dependencies installed',
-      '🤖 Adding smart categorization...',
-      '✓ Implementing dark mode toggle',
-      '✓ Adding local storage persistence'
-    ],
-    preview: '<div class="p-4 bg-white dark:bg-gray-900"><div class="flex justify-between items-center mb-4"><h1 class="text-2xl font-bold text-gray-900 dark:text-white">Smart Todo App</h1><button class="p-2 rounded bg-gray-200 dark:bg-gray-700"><svg class="w-4 h-4" fill="currentColor"><path d="M12 3v9l4-4-4-4z"/></svg></button></div><div class="flex gap-2 mb-4"><input placeholder="Add task (AI will categorize)..." class="border p-2 flex-1 rounded dark:bg-gray-800 dark:text-white"><button class="bg-orange-500 text-white px-4 py-2 rounded">Add</button></div><div class="flex gap-2 mb-4"><button class="px-3 py-1 bg-blue-100 text-blue-800 rounded">All</button><button class="px-3 py-1 bg-gray-100 text-gray-800 rounded">Work</button><button class="px-3 py-1 bg-gray-100 text-gray-800 rounded">Personal</button></div></div>'
+    preview: '<div class="p-3"><div class="flex justify-between items-center mb-3"><h1 class="text-lg font-semibold">Todo App</h1><button class="p-1 rounded hover:bg-gray-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></button></div><div class="space-y-2"><div class="flex items-center gap-2 p-2 bg-gray-50 rounded"><input type="checkbox" class="w-4 h-4"><span class="text-sm">Complete the demo</span></div></div></div>'
   },
   {
     id: 'complete',
-    title: 'App deployed instantly',
-    duration: 4000, // Doubled from 2000ms to 4000ms
+    title: 'Your app is live!',
+    duration: 3000,
     code: [
-      '// E-Code AI Agent completed your app!',
+      '// App completed and deployed!',
+      '// Live at: https://todo.e-code.app',
       '',
-      'import React, { useState, useEffect } from \'react\';',
-      'import { Moon, Sun, Plus, Filter, Check } from \'lucide-react\';',
+      'export default TodoApp;',
       '',
-      'function TodoApp() {',
-      '  const [todos, setTodos] = useState([]);',
-      '  const [darkMode, setDarkMode] = useState(false);',
-      '  const [category, setCategory] = useState(\'all\');',
-      '  const [input, setInput] = useState(\'\');',
-      '',
-      '  // AI-generated smart features',
-      '  const addTodo = () => { /* ... */ };',
-      '  const toggleTodo = (id) => { /* ... */ };',
-      '  const detectCategory = (text) => { /* AI logic */ };',
-      '',
-      '  useEffect(() => {',
-      '    // Auto-save to localStorage',
-      '    localStorage.setItem(\'todos\', JSON.stringify(todos));',
-      '  }, [todos]);',
-      '',
-      '  return (',
-      '    <div className={darkMode ? \'dark\' : \'\'}>',
-      '      <div className="min-h-screen bg-white dark:bg-gray-900">',
-      '        {/* Beautiful responsive UI */}',
-      '      </div>',
-      '    </div>',
-      '  );',
-      '}',
-      '',
-      'export default TodoApp;'
+      '// Total build time: 45 seconds',
+      '// Files created: 5',
+      '// Dependencies: 3',
+      '// Ready to share! 🚀'
     ],
     terminal: [
-      '🤖 E-Code AI Agent: Analyzing request...',
-      '✓ Identified: Todo application',
-      '✓ Features: Dark mode, categories, persistence',
-      '✓ Generating project structure...',
-      '✓ Creating optimal component architecture...',
-      '$ npm install lucide-react tailwindcss',
-      '✓ Dependencies installed',
-      '🤖 Adding smart categorization...',
-      '✓ Implementing dark mode toggle',
-      '✓ Adding local storage persistence',
-      '$ e-code deploy',
-      '✓ Building production bundle...',
-      '✓ Deployed to https://smart-todo.e-code.app',
-      '🚀 Your app is live!'
+      '✓ Build successful',
+      '✓ Deployed to E-Code Cloud',
+      '',
+      '🎉 App is live at:',
+      'https://todo.e-code.app',
+      '',
+      'Share your creation!'
     ],
-    preview: '<div class="p-4 bg-white dark:bg-gray-900 min-h-[200px]"><div class="flex justify-between items-center mb-4"><h1 class="text-2xl font-bold text-gray-900">Smart Todo App</h1><button class="p-2 rounded bg-yellow-100 hover:bg-yellow-200"><svg class="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2L13 8l6 .75-4.5 4.25L16 19l-6-3.25L4 19l1.5-6.25L1 8.75 7 8z"/></svg></button></div><div class="flex gap-2 mb-4"><input placeholder="Add task (AI categorizes automatically)..." class="border p-2 flex-1 rounded focus:ring-2 focus:ring-orange-500"><button class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded transition-colors">Add</button></div><div class="flex gap-2 mb-4"><button class="px-3 py-1 bg-orange-100 text-orange-800 rounded">All (3)</button><button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded">Work (2)</button><button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded">Personal (1)</button></div><div class="space-y-2"><div class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500"><input type="checkbox" class="w-4 h-4 text-orange-500"><span class="flex-1">Review E-Code documentation</span><span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Work</span></div><div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-500"><input type="checkbox" checked class="w-4 h-4 text-orange-500"><span class="flex-1 line-through text-gray-500">Build amazing todo app</span><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Personal</span></div><div class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500"><input type="checkbox" class="w-4 h-4 text-orange-500"><span class="flex-1">Deploy to production</span><span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Work</span></div></div><div class="mt-4 p-3 bg-green-100 rounded-lg text-center"><span class="text-green-800 font-medium">✓ Live at https://smart-todo.e-code.app</span></div></div>'
+    preview: '<div class="p-3"><div class="mb-3"><h1 class="text-lg font-semibold mb-2">Smart Todo</h1><div class="flex gap-2"><span class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">Live</span><span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">v1.0</span></div></div><div class="space-y-2"><div class="flex items-center gap-2 p-2 bg-blue-50 rounded border-l-2 border-blue-400"><input type="checkbox" checked class="w-4 h-4"><span class="text-sm line-through text-gray-500">Build with AI</span></div><div class="flex items-center gap-2 p-2 bg-green-50 rounded border-l-2 border-green-400"><input type="checkbox" checked class="w-4 h-4"><span class="text-sm line-through text-gray-500">Deploy instantly</span></div><div class="flex items-center gap-2 p-2 bg-purple-50 rounded border-l-2 border-purple-400"><input type="checkbox" class="w-4 h-4"><span class="text-sm">Share with friends</span></div></div><div class="mt-3 p-2 bg-gradient-to-r from-orange-100 to-purple-100 rounded text-center"><span class="text-xs font-medium">Built in 45 seconds with E-Code AI</span></div></div>'
   }
 ];
 
@@ -216,6 +121,7 @@ export function AnimatedPlatformDemo() {
     setDisplayedCode([]);
     setDisplayedTerminal([]);
     setIsPlaying(false);
+    setHasCompleted(false);
   };
 
   // Start/pause demo
@@ -271,132 +177,155 @@ export function AnimatedPlatformDemo() {
   const currentStepData = DEMO_STEPS[currentStep];
 
   return (
-    <Card className="relative overflow-hidden border-2 mx-auto w-full bg-gray-900 shadow-2xl">
-      {/* Window Controls */}
-      <div className="bg-gray-800 p-4 flex items-center justify-between border-b border-gray-700">
-        <div className="flex items-center gap-3">
-          <div className="flex gap-2">
-            <div className="w-3.5 h-3.5 rounded-full bg-red-500" />
-            <div className="w-3.5 h-3.5 rounded-full bg-yellow-500" />
-            <div className="w-3.5 h-3.5 rounded-full bg-green-500" />
+    <Card className="relative overflow-hidden border border-gray-200 dark:border-gray-700 mx-auto w-full bg-white dark:bg-gray-900 shadow-xl rounded-lg">
+      {/* Realistic IDE Header */}
+      <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5 px-1">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500 hover:bg-red-600 transition-colors cursor-pointer" />
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors cursor-pointer" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500 hover:bg-green-600 transition-colors cursor-pointer" />
           </div>
-          <span className="text-gray-300 text-base font-medium ml-3">todo-app - E-Code</span>
+          <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+          <span className="text-gray-700 dark:text-gray-300 text-xs font-medium">todo-app — E-Code</span>
         </div>
         
-        {/* Demo Controls */}
-        <div className="flex items-center gap-3">
+        {/* Compact Demo Controls */}
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={togglePlay}
-            className="text-gray-300 hover:text-white"
+            className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
           >
-            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+            {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={resetDemo}
-            className="text-gray-300 hover:text-white"
+            className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
           >
-            <RotateCcw className="h-5 w-5" />
+            <RotateCcw className="h-3 w-3" />
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 min-h-[600px]">
-        {/* Left Side - Code Editor */}
-        <div className="bg-gray-900 p-6 xl:border-r border-gray-700">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="bg-gray-700 px-4 py-2 rounded-t text-base text-gray-300 font-medium">
-              App.jsx
+      <div className="grid grid-cols-1 lg:grid-cols-3 h-[400px]">
+        {/* Left Side - Compact Code Editor */}
+        <div className="bg-gray-50 dark:bg-gray-900 p-3 lg:col-span-2 border-r border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex gap-1">
+              <div className="bg-white dark:bg-gray-800 px-3 py-1 rounded-t-md text-xs text-gray-700 dark:text-gray-300 font-medium border border-b-0 border-gray-200 dark:border-gray-700">
+                App.jsx
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-850 px-3 py-1 rounded-t-md text-xs text-gray-500 dark:text-gray-500">
+                styles.css
+              </div>
             </div>
           </div>
           
-          <div className="font-mono text-base">
-            {displayedCode.map((line, index) => (
-              <div key={index} className="flex">
-                <span className="text-gray-500 w-8 text-right mr-3 select-none">
-                  {index + 1}
-                </span>
-                <span className="text-gray-100">
-                  {line.includes('//') ? (
-                    <>
-                      {line.split('//')[0]}
-                      <span className="text-green-400">//{line.split('//')[1]}</span>
-                    </>
-                  ) : line.includes('import') ? (
-                    <>
-                      <span className="text-purple-400">import</span>
-                      {line.replace('import', '')}
-                    </>
-                  ) : line.includes('function') ? (
-                    <>
-                      <span className="text-blue-400">function</span>
-                      {line.replace('function', '')}
-                    </>
-                  ) : line.includes('const') || line.includes('let') ? (
-                    <>
-                      <span className="text-purple-400">{line.includes('const') ? 'const' : 'let'}</span>
-                      {line.replace(/(const|let)/, '')}
-                    </>
-                  ) : (
-                    line
-                  )}
-                </span>
-              </div>
-            ))}
-            <div className="w-2 h-5 bg-orange-500 opacity-75 animate-pulse inline-block" />
+          <div className="bg-white dark:bg-gray-800 rounded-md p-3 h-[calc(100%-40px)] overflow-auto border border-gray-200 dark:border-gray-700">
+            <div className="font-mono text-xs leading-5">
+              {displayedCode.map((line, index) => (
+                <div key={index} className="flex hover:bg-gray-50 dark:hover:bg-gray-750 px-1 -mx-1">
+                  <span className="text-gray-400 dark:text-gray-500 w-6 text-right mr-3 select-none text-xs">
+                    {index + 1}
+                  </span>
+                  <span className="text-gray-800 dark:text-gray-200 flex-1">
+                    {line.includes('//') ? (
+                      <>
+                        {line.split('//')[0]}
+                        <span className="text-gray-500 dark:text-gray-400 italic">//{line.split('//')[1]}</span>
+                      </>
+                    ) : line.includes('import') ? (
+                      <>
+                        <span className="text-purple-600 dark:text-purple-400">import</span>
+                        {line.replace('import', '')}
+                      </>
+                    ) : line.includes('function') ? (
+                      <>
+                        <span className="text-blue-600 dark:text-blue-400">function</span>
+                        {line.replace('function', '')}
+                      </>
+                    ) : line.includes('const') || line.includes('let') ? (
+                      <>
+                        <span className="text-purple-600 dark:text-purple-400">{line.includes('const') ? 'const' : 'let'}</span>
+                        {line.replace(/(const|let)/, '')}
+                      </>
+                    ) : (
+                      line
+                    )}
+                  </span>
+                </div>
+              ))}
+              {currentLine < currentStepData?.code.length && (
+                <span className="inline-block w-1.5 h-4 bg-blue-500 animate-pulse ml-9" />
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Right Side - Split between Terminal and Preview */}
-        <div className="flex flex-col">
-          {/* Terminal */}
-          <div className="bg-black p-6 flex-1 border-b border-gray-700">
-            <div className="text-green-400 font-mono text-base">
-              {displayedTerminal.map((line, index) => (
-                <div key={index} className="mb-1">
+        {/* Right Side - Compact Preview & Terminal */}
+        <div className="flex flex-col overflow-hidden">
+          {/* Live Preview */}
+          <div className="bg-white dark:bg-gray-800 p-3 flex-1 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5 font-medium">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                Preview
+              </div>
+              <div className="text-xs text-gray-400 dark:text-gray-500">
+                localhost:3000
+              </div>
+            </div>
+            <div 
+              className="border border-gray-200 dark:border-gray-700 rounded p-3 h-[160px] bg-gray-50 dark:bg-gray-900 overflow-auto"
+              dangerouslySetInnerHTML={{ __html: currentStepData?.preview || '' }}
+            />
+          </div>
+
+          {/* Compact Terminal */}
+          <div className="bg-gray-900 dark:bg-black p-3 h-[140px] overflow-hidden">
+            <div className="text-xs font-mono leading-4">
+              {displayedTerminal.slice(-5).map((line, index) => (
+                <div key={index} className="mb-0.5">
                   {line.startsWith('$') ? (
-                    <span className="text-yellow-400">{line}</span>
-                  ) : line.startsWith('✓') ? (
                     <span className="text-green-400">{line}</span>
+                  ) : line.startsWith('✓') ? (
+                    <span className="text-emerald-400">{line}</span>
+                  ) : line.includes('🤖') ? (
+                    <span className="text-blue-400">{line}</span>
+                  ) : line.includes('🚀') ? (
+                    <span className="text-orange-400">{line}</span>
                   ) : (
-                    <span className="text-gray-300">{line}</span>
+                    <span className="text-gray-400">{line}</span>
                   )}
                 </div>
               ))}
-              <div className="w-2 h-4 bg-green-400 animate-pulse inline-block" />
+              {currentLine < currentStepData?.terminal.length && (
+                <span className="inline-block w-1.5 h-3 bg-green-400 animate-pulse" />
+              )}
             </div>
-          </div>
-
-          {/* Live Preview */}
-          <div className="bg-white p-6 flex-1 min-h-[250px]">
-            <div className="text-sm text-gray-600 mb-3 flex items-center gap-2 font-medium">
-              <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
-              Live Preview
-            </div>
-            <div 
-              className="border-2 rounded-lg p-6 h-full bg-gray-50"
-              dangerouslySetInnerHTML={{ __html: currentStepData?.preview || '' }}
-            />
           </div>
         </div>
       </div>
 
-      {/* Progress indicator */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gray-800 p-2">
-        <div className="flex items-center justify-between text-sm text-gray-300">
-          <span>{currentStepData?.title}</span>
-          <div className="flex gap-1">
-            {DEMO_STEPS.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentStep ? 'bg-orange-500' : 'bg-gray-600'
-                }`}
-              />
-            ))}
+      {/* Sleek Progress Bar */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gray-100 dark:bg-gray-800 h-8">
+        <div className="flex items-center justify-between h-full px-3">
+          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">{currentStepData?.title}</span>
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              {DEMO_STEPS.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    index === currentStep ? 'bg-orange-500' : 'bg-gray-300 dark:bg-gray-600'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
