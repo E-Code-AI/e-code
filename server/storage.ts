@@ -144,6 +144,7 @@ export interface IStorage {
   createScreenshot(screenshot: InsertScreenshot): Promise<Screenshot>;
   getProjectScreenshots(projectId: number): Promise<Screenshot[]>;
   getScreenshot(id: number): Promise<Screenshot | undefined>;
+  deleteScreenshot(id: number): Promise<boolean>;
 
   // Task summary operations
   createTaskSummary(summary: InsertTaskSummary): Promise<TaskSummary>;
@@ -755,6 +756,11 @@ export class DatabaseStorage implements IStorage {
   async getScreenshot(id: number): Promise<Screenshot | undefined> {
     const [screenshot] = await db.select().from(projectScreenshots).where(eq(projectScreenshots.id, id));
     return screenshot;
+  }
+
+  async deleteScreenshot(id: number): Promise<boolean> {
+    const result = await db.delete(projectScreenshots).where(eq(projectScreenshots.id, id));
+    return result.length > 0;
   }
 
   // Task summary operations
