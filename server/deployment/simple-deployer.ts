@@ -66,13 +66,15 @@ export class SimpleDeployer {
         
         // Perform actual deployment operations
         const realDeploymentService = await import('./real-deployment-service').then(m => m.realDeploymentService);
-        await realDeploymentService.deployApplication({
-          projectId: parseInt(projectId),
-          deploymentId,
-          environment: config.environment,
-          customDomain: config.customDomain,
+        await realDeploymentService.deploy({
+          projectId: parseInt(config.projectId),
+          projectName: config.projectName,
+          type: projectType === 'node.js' ? 'autoscale' : 'static',
+          environment: config.environment as 'development' | 'staging' | 'production',
           region: [config.region],
-          type: projectType === 'node.js' ? 'autoscale' : 'static'
+          customDomain: config.customDomain,
+          sslEnabled: true,
+          environmentVars: {}
         });
         
         deployment.logs.push('Deployment successful!');
