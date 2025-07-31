@@ -573,17 +573,18 @@ const ProjectsPage = () => {
       <div className="border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] sticky top-0 z-10">
         <div className="max-w-full px-4 sm:px-6 lg:px-8">
           {/* Top Bar with Team Selector and Actions */}
-          <div className="flex items-center justify-between py-4 border-b border-[var(--ecode-border)]">
-            <div className="flex items-center gap-4">
-              {/* Team Selector */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 gap-4 border-b border-[var(--ecode-border)]">
+            <div className="flex items-center gap-2 sm:gap-4">
+              {/* Team Selector - Smaller on mobile */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
+                  <Button variant="ghost" className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
                     {teams.find(t => t.id === selectedTeam)?.icon && (
-                      <div>{React.createElement(teams.find(t => t.id === selectedTeam)!.icon, { className: "h-4 w-4" })}</div>
+                      <div>{React.createElement(teams.find(t => t.id === selectedTeam)!.icon, { className: "h-3 w-3 sm:h-4 sm:w-4" })}</div>
                     )}
-                    <span>{teams.find(t => t.id === selectedTeam)?.name}</span>
-                    <ChevronDown className="h-4 w-4" />
+                    <span className="hidden sm:inline">{teams.find(t => t.id === selectedTeam)?.name}</span>
+                    <span className="sm:hidden">{teams.find(t => t.id === selectedTeam)?.name.slice(0, 8)}</span>
+                    <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
@@ -603,17 +604,18 @@ const ProjectsPage = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <h1 className="text-2xl font-medium text-[var(--ecode-text)]">My Repls</h1>
+              <h1 className="text-lg sm:text-2xl font-medium text-[var(--ecode-text)]">My Repls</h1>
             </div>
             
             <div className="flex items-center gap-2">
-              <Link href="/github-import">
+              <Link href="/github-import" className="hidden sm:block">
                 <Button variant="outline" size="sm" className="gap-2">
                   <Github className="h-4 w-4" />
-                  Import from GitHub
+                  <span className="hidden md:inline">Import from GitHub</span>
+                  <span className="md:hidden">Import</span>
                 </Button>
               </Link>
-              <Link href="/templates">
+              <Link href="/templates" className="hidden sm:block">
                 <Button variant="outline" size="sm" className="gap-2">
                   <Sparkles className="h-4 w-4" />
                   Templates
@@ -623,7 +625,8 @@ const ProjectsPage = () => {
                 <DialogTrigger asChild>
                   <Button size="sm" className="gap-2 bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white">
                     <Plus className="h-4 w-4" />
-                    Create Repl
+                    <span className="hidden sm:inline">Create Repl</span>
+                    <span className="sm:hidden">Create</span>
                   </Button>
                 </DialogTrigger>
               </Dialog>
@@ -631,31 +634,33 @@ const ProjectsPage = () => {
           </div>
           
           {/* Search and Filters Bar */}
-          <div className="py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-            <div className="flex-1 flex items-center gap-3">
+          <div className="py-3 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {/* Search */}
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1 max-w-full sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--ecode-muted)]" />
                 <Input
                   type="text"
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-[var(--ecode-sidebar)] border-[var(--ecode-border)]"
+                  className="pl-10 bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] w-full"
                 />
               </div>
               
-              {/* Filters */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filters
-                    {(filterLanguage !== 'all' || filterVisibility !== 'all') && 
-                      <Badge variant="secondary" className="ml-1">Active</Badge>
-                    }
-                  </Button>
-                </DropdownMenuTrigger>
+              {/* Mobile controls row */}
+              <div className="flex items-center gap-2">
+                {/* Filters */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none">
+                      <Filter className="h-4 w-4" />
+                      <span className="hidden sm:inline">Filters</span>
+                      {(filterLanguage !== 'all' || filterVisibility !== 'all') && 
+                        <Badge variant="secondary" className="ml-1">Active</Badge>
+                      }
+                    </Button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
                   <DropdownMenuLabel>Language</DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -669,7 +674,7 @@ const ProjectsPage = () => {
                     <DropdownMenuCheckboxItem
                       key={lang}
                       checked={filterLanguage === lang}
-                      onCheckedChange={() => setFilterLanguage(lang)}
+                      onCheckedChange={() => setFilterLanguage(lang || '')}
                     >
                       {lang}
                     </DropdownMenuCheckboxItem>
@@ -705,46 +710,47 @@ const ProjectsPage = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              {/* Sort */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <ArrowUpDown className="h-4 w-4" />
-                    Sort
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => setSortBy('updated')}>
-                    Recently Updated
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('created')}>
-                    Recently Created
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('name')}>
-                    Name (A-Z)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-2">
-              <Toggle
-                pressed={viewMode === 'grid'}
-                onPressedChange={() => setViewMode('grid')}
-                size="sm"
-                aria-label="Grid view"
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Toggle>
-              <Toggle
-                pressed={viewMode === 'list'}
-                onPressedChange={() => setViewMode('list')}
-                size="sm"
-                aria-label="List view"
-              >
-                <List className="h-4 w-4" />
-              </Toggle>
+                {/* Sort */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none">
+                      <ArrowUpDown className="h-4 w-4" />
+                      <span className="hidden sm:inline">Sort</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => setSortBy('updated')}>
+                      Recently Updated
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy('created')}>
+                      Recently Created
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy('name')}>
+                      Name (A-Z)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                {/* View Mode Toggle */}
+                <div className="flex items-center gap-1">
+                  <Toggle
+                    pressed={viewMode === 'grid'}
+                    onPressedChange={() => setViewMode('grid')}
+                    size="sm"
+                    aria-label="Grid view"
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Toggle>
+                  <Toggle
+                    pressed={viewMode === 'list'}
+                    onPressedChange={() => setViewMode('list')}
+                    size="sm"
+                    aria-label="List view"
+                  >
+                    <List className="h-4 w-4" />
+                  </Toggle>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -752,8 +758,8 @@ const ProjectsPage = () => {
 
       {/* Main Content Area with Folders Sidebar */}
       <div className="flex h-[calc(100vh-180px)]">
-        {/* Folders Sidebar */}
-        <div className="w-64 border-r border-[var(--ecode-border)] bg-[var(--ecode-surface)] p-4 overflow-y-auto">
+        {/* Folders Sidebar - Hidden on mobile/tablet, shown on desktop */}
+        <div className="hidden lg:block w-64 border-r border-[var(--ecode-border)] bg-[var(--ecode-surface)] p-4 overflow-y-auto">
           <div className="space-y-4">
             {/* Folders Section */}
             <div>
@@ -818,8 +824,8 @@ const ProjectsPage = () => {
           </div>
         </div>
 
-        {/* Projects Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 bg-[var(--ecode-background)]">
+        {/* Projects Content Area - Full width on mobile/tablet */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--ecode-background)]">
           {/* Bulk Actions Bar */}
           {selectedProjects.length > 0 && (
             <div className="mb-4 p-4 bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] flex items-center justify-between">
@@ -860,8 +866,8 @@ const ProjectsPage = () => {
           {/* Projects Display */}
           {filteredProjects && filteredProjects.length > 0 ? (
             viewMode === 'grid' ? (
-              /* Grid View */
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              /* Grid View - Responsive columns */
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {filteredProjects.map((project) => (
                   <div 
                     key={project.id} 
@@ -1002,22 +1008,22 @@ const ProjectsPage = () => {
                 ))}
               </div>
             ) : (
-              /* List View */
+              /* List View - Mobile optimized */
               <div className="space-y-2">
                 {filteredProjects.map((project) => (
                   <div 
                     key={project.id}
-                    className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] transition-all p-4"
+                    className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] transition-all p-3 sm:p-4"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className={`h-8 w-8 rounded flex items-center justify-center ${getLanguageColor(project.language || 'javascript')}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1">
+                        <div className={`h-8 w-8 rounded flex items-center justify-center flex-shrink-0 ${getLanguageColor(project.language || 'javascript')}`}>
                           <Code className="h-4 w-4 text-white" />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
                             <h3 
-                              className="font-medium text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] cursor-pointer"
+                              className="font-medium text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] cursor-pointer truncate"
                               onClick={() => handleProjectClick(project.id)}
                             >
                               {project.name}
@@ -1025,15 +1031,36 @@ const ProjectsPage = () => {
                             {pinnedProjects.includes(project.id) && (
                               <Pin className="h-3 w-3 text-[var(--ecode-accent)] fill-current" />
                             )}
-                            {getVisibilityBadge(project.visibility || 'private')}
+                            <div className="sm:hidden">{getVisibilityBadge(project.visibility || 'private')}</div>
                           </div>
-                          <p className="text-sm text-[var(--ecode-muted)] line-clamp-1">
+                          <p className="text-sm text-[var(--ecode-muted)] line-clamp-1 mt-1">
                             {project.description || "No description"}
                           </p>
+                          
+                          {/* Mobile stats */}
+                          <div className="flex items-center gap-3 mt-2 text-xs text-[var(--ecode-muted)] sm:hidden">
+                            <span className="flex items-center gap-1">
+                              <Play className="h-3 w-3" />
+                              {project.runs || 0}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <GitFork className="h-3 w-3" />
+                              {project.forks || 0}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Heart className={cn("h-3 w-3", likedProjects.has(project.id) && "fill-current text-red-500")} />
+                              {project.likes || 0}
+                            </span>
+                            <span className="ml-auto text-[var(--ecode-muted)]">
+                              {new Date(project.updatedAt).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-6">
+                      {/* Desktop stats and actions */}
+                      <div className="hidden sm:flex items-center gap-6">
+                        <div className="hidden lg:inline-block">{getVisibilityBadge(project.visibility || 'private')}</div>
                         <div className="flex items-center gap-4 text-sm text-[var(--ecode-muted)]">
                           <span className="flex items-center gap-1">
                             <Play className="h-3 w-3" />
@@ -1112,10 +1139,10 @@ const ProjectsPage = () => {
               </div>
             )
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] border-dashed">
-              <Code className="h-16 w-16 text-[var(--ecode-muted)] mb-4" />
-              <h3 className="text-xl font-medium text-[var(--ecode-text)] mb-2">No Repls found</h3>
-              <p className="text-[var(--ecode-muted)] mb-6 text-center max-w-md">
+            <div className="flex flex-col items-center justify-center py-12 sm:py-20 bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] border-dashed">
+              <Code className="h-12 w-12 sm:h-16 sm:w-16 text-[var(--ecode-muted)] mb-4" />
+              <h3 className="text-lg sm:text-xl font-medium text-[var(--ecode-text)] mb-2 text-center px-4">No Repls found</h3>
+              <p className="text-sm sm:text-base text-[var(--ecode-muted)] mb-6 text-center max-w-md px-4">
                 {searchQuery || filterLanguage !== 'all' || filterVisibility !== 'all' 
                   ? "Try adjusting your filters or search query" 
                   : "Create your first Repl to start building amazing things"}
