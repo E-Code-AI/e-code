@@ -284,6 +284,71 @@ export const teamMembers = pgTable("team_members", {
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
 });
 
+// Comments system for projects and files
+export const comments = pgTable('comments', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  fileId: integer('file_id').references(() => files.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  content: text('content').notNull(),
+  lineNumber: integer('line_number'),
+  parentId: integer('parent_id'),
+  resolved: boolean('resolved').default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Checkpoints for version control
+export const checkpoints = pgTable('checkpoints', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  message: text('message').notNull(),
+  filesSnapshot: jsonb('files_snapshot').notNull(),
+  parentCheckpointId: integer('parent_checkpoint_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Time tracking for projects
+export const projectTimeTracking = pgTable('project_time_tracking', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  startTime: timestamp('start_time').notNull(),
+  endTime: timestamp('end_time'),
+  duration: integer('duration'),
+  active: boolean('active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Screenshots for projects
+export const projectScreenshots = pgTable('project_screenshots', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  url: text('url').notNull(),
+  thumbnailUrl: text('thumbnail_url'),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Task summaries
+export const taskSummaries = pgTable('task_summaries', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  taskDescription: text('task_description').notNull(),
+  summary: text('summary').notNull(),
+  filesChanged: integer('files_changed').default(0),
+  linesAdded: integer('lines_added').default(0),
+  linesDeleted: integer('lines_deleted').default(0),
+  timeSpent: integer('time_spent'),
+  completed: boolean('completed').default(false),
+  screenshotId: integer('screenshot_id').references(() => projectScreenshots.id),
+  checkpointId: integer('checkpoint_id').references(() => checkpoints.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   projects: many(projects),
@@ -334,6 +399,11 @@ export const insertCodeReviewSchema = createInsertSchema(codeReviews).omit({ id:
 export const insertChallengeSchema = createInsertSchema(challenges).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMentorProfileSchema = createInsertSchema(mentorProfiles).omit({ id: true, createdAt: true });
 export const insertDeploymentSchema = createInsertSchema(deployments).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCommentSchema = createInsertSchema(comments).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCheckpointSchema = createInsertSchema(checkpoints).omit({ id: true, createdAt: true });
+export const insertTimeTrackingSchema = createInsertSchema(projectTimeTracking).omit({ id: true, createdAt: true });
+export const insertScreenshotSchema = createInsertSchema(projectScreenshots).omit({ id: true, createdAt: true });
+export const insertTaskSummarySchema = createInsertSchema(taskSummaries).omit({ id: true, createdAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -366,3 +436,18 @@ export type ReviewApproval = typeof reviewApprovals.$inferSelect;
 
 export type Deployment = typeof deployments.$inferSelect;
 export type InsertDeployment = z.infer<typeof insertDeploymentSchema>;
+
+export type Comment = typeof comments.$inferSelect;
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+
+export type Checkpoint = typeof checkpoints.$inferSelect;
+export type InsertCheckpoint = z.infer<typeof insertCheckpointSchema>;
+
+export type TimeTracking = typeof projectTimeTracking.$inferSelect;
+export type InsertTimeTracking = z.infer<typeof insertTimeTrackingSchema>;
+
+export type Screenshot = typeof projectScreenshots.$inferSelect;
+export type InsertScreenshot = z.infer<typeof insertScreenshotSchema>;
+
+export type TaskSummary = typeof taskSummaries.$inferSelect;
+export type InsertTaskSummary = z.infer<typeof insertTaskSummarySchema>;

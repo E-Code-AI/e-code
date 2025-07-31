@@ -27,6 +27,7 @@ import { AdvancedAIService } from "./ai/advanced-ai-service";
 import { AIProviderFactory } from "./ai/ai-providers";
 import { autonomousBuilder } from "./ai/autonomous-builder";
 import { ContextAwarenessService } from "./ai/context-awareness-service";
+import { enhancedAgent } from "./ai/enhanced-autonomous-agent";
 import { createLogger } from "./utils/logger";
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, getProjectLogs } from "./simple-executor";
@@ -3222,8 +3223,50 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
           const actions = buildResult.actions;
           let responseContent = buildResult.response;
           
-          // If no specific template matched, use AI to generate custom build
+          // If no specific template matched, use enhanced autonomous agent
           if (!buildingIntent.matchedTemplate) {
+            // Use enhanced autonomous agent for building
+            const agentResponse = await enhancedAgent.processRequest({
+              projectId: parseInt(projectId),
+              userId: req.user!.id,
+              message: message,
+              existingFiles: projectFiles,
+              buildHistory: conversationHistory.map((h: any) => h.content)
+            });
+            
+            // Execute the agent's actions
+            for (const action of agentResponse.actions) {
+              if (action.type === 'create_file') {
+                await storage.createFile({
+                  projectId: parseInt(projectId),
+                  name: action.data.name,
+                  path: action.data.path,
+                  content: action.data.content || '',
+                  isDirectory: false
+                });
+              } else if (action.type === 'create_folder') {
+                await storage.createFile({
+                  projectId: parseInt(projectId),
+                  name: action.data.name,
+                  path: action.data.path,
+                  content: '',
+                  isDirectory: true
+                });
+              }
+            }
+            
+            // Add build status to response
+            responseContent = agentResponse.message;
+            responseMetadata = {
+              type: 'building',
+              buildType: 'custom',
+              actions: agentResponse.actions,
+              summary: agentResponse.summary,
+              timeWorked: agentResponse.timeWorked,
+              screenshot: agentResponse.screenshot,
+              completed: agentResponse.completed
+            };
+          } else {
             const systemMessageAgent = {
               role: 'system' as const,
               content: `You are E-Code AI Agent, an autonomous coding assistant that can build entire applications. You can create files, install packages, and set up complete projects. When a user asks you to build something, respond with specific actions and code. 

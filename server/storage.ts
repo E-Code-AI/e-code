@@ -12,9 +12,15 @@ import {
   ReviewComment,
   ReviewApproval,
   Deployment, InsertDeployment,
+  Comment, InsertComment,
+  Checkpoint, InsertCheckpoint,
+  TimeTracking, InsertTimeTracking,
+  Screenshot, InsertScreenshot,
+  TaskSummary, InsertTaskSummary,
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
-  mobileDevices, pushNotifications, teams, teamMembers, deployments
+  mobileDevices, pushNotifications, teams, teamMembers, deployments,
+  comments, checkpoints, projectTimeTracking, projectScreenshots, taskSummaries
 } from "@shared/schema";
 import { eq, and, desc, isNull, sql, inArray } from "drizzle-orm";
 import { db } from "./db";
@@ -114,6 +120,35 @@ export interface IStorage {
   installTheme(userId: number, themeId: string): Promise<void>;
   uninstallTheme(userId: number, themeId: string): Promise<void>;
   createCustomTheme(userId: number, theme: any): Promise<any>;
+
+  // Comments operations
+  createComment(comment: InsertComment): Promise<Comment>;
+  getProjectComments(projectId: number): Promise<Comment[]>;
+  getFileComments(fileId: number): Promise<Comment[]>;
+  updateComment(id: number, comment: Partial<InsertComment>): Promise<Comment | undefined>;
+  deleteComment(id: number): Promise<boolean>;
+
+  // Checkpoints operations
+  createCheckpoint(checkpoint: any): Promise<Checkpoint>;
+  getProjectCheckpoints(projectId: number): Promise<Checkpoint[]>;
+  getCheckpoint(id: number): Promise<Checkpoint | undefined>;
+  restoreCheckpoint(checkpointId: number): Promise<boolean>;
+
+  // Time tracking operations
+  startTimeTracking(tracking: InsertTimeTracking): Promise<TimeTracking>;
+  stopTimeTracking(trackingId: number): Promise<TimeTracking | undefined>;
+  getActiveTimeTracking(projectId: number, userId: number): Promise<TimeTracking | undefined>;
+  getProjectTimeTracking(projectId: number): Promise<TimeTracking[]>;
+
+  // Screenshot operations
+  createScreenshot(screenshot: InsertScreenshot): Promise<Screenshot>;
+  getProjectScreenshots(projectId: number): Promise<Screenshot[]>;
+  getScreenshot(id: number): Promise<Screenshot | undefined>;
+
+  // Task summary operations
+  createTaskSummary(summary: InsertTaskSummary): Promise<TaskSummary>;
+  getProjectTaskSummaries(projectId: number): Promise<TaskSummary[]>;
+  updateTaskSummary(id: number, summary: Partial<InsertTaskSummary>): Promise<TaskSummary | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -617,6 +652,124 @@ export class DatabaseStorage implements IStorage {
       createdBy: userId,
       createdAt: new Date()
     };
+  }
+
+  // Comments operations
+  async createComment(comment: InsertComment): Promise<Comment> {
+    const [newComment] = await db.insert(comments).values(comment).returning();
+    return newComment;
+  }
+
+  async getProjectComments(projectId: number): Promise<Comment[]> {
+    return await db.select().from(comments).where(eq(comments.projectId, projectId)).orderBy(desc(comments.createdAt));
+  }
+
+  async getFileComments(fileId: number): Promise<Comment[]> {
+    return await db.select().from(comments).where(eq(comments.fileId, fileId)).orderBy(desc(comments.createdAt));
+  }
+
+  async updateComment(id: number, comment: Partial<InsertComment>): Promise<Comment | undefined> {
+    const [updated] = await db.update(comments).set({ ...comment, updatedAt: new Date() }).where(eq(comments.id, id)).returning();
+    return updated;
+  }
+
+  async deleteComment(id: number): Promise<boolean> {
+    const result = await db.delete(comments).where(eq(comments.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Checkpoints operations
+  async createCheckpoint(checkpoint: any): Promise<Checkpoint> {
+    const filesSnapshot = await this.getFilesByProjectId(checkpoint.projectId);
+    const [newCheckpoint] = await db.insert(checkpoints).values({
+      ...checkpoint,
+      filesSnapshot: filesSnapshot
+    }).returning();
+    return newCheckpoint;
+  }
+
+  async getProjectCheckpoints(projectId: number): Promise<Checkpoint[]> {
+    return await db.select().from(checkpoints).where(eq(checkpoints.projectId, projectId)).orderBy(desc(checkpoints.createdAt));
+  }
+
+  async getCheckpoint(id: number): Promise<Checkpoint | undefined> {
+    const [checkpoint] = await db.select().from(checkpoints).where(eq(checkpoints.id, id));
+    return checkpoint;
+  }
+
+  async restoreCheckpoint(checkpointId: number): Promise<boolean> {
+    const checkpoint = await this.getCheckpoint(checkpointId);
+    if (!checkpoint) return false;
+    
+    // Restore files from snapshot
+    const filesSnapshot = checkpoint.filesSnapshot as any[];
+    for (const file of filesSnapshot) {
+      await this.updateFile(file.id, { content: file.content });
+    }
+    return true;
+  }
+
+  // Time tracking operations
+  async startTimeTracking(tracking: InsertTimeTracking): Promise<TimeTracking> {
+    const [newTracking] = await db.insert(projectTimeTracking).values(tracking).returning();
+    return newTracking;
+  }
+
+  async stopTimeTracking(trackingId: number): Promise<TimeTracking | undefined> {
+    const now = new Date();
+    const [tracking] = await db.select().from(projectTimeTracking).where(eq(projectTimeTracking.id, trackingId));
+    if (!tracking) return undefined;
+    
+    const duration = Math.floor((now.getTime() - tracking.startTime.getTime()) / 1000);
+    const [updated] = await db.update(projectTimeTracking)
+      .set({ endTime: now, duration, active: false })
+      .where(eq(projectTimeTracking.id, trackingId))
+      .returning();
+    return updated;
+  }
+
+  async getActiveTimeTracking(projectId: number, userId: number): Promise<TimeTracking | undefined> {
+    const [tracking] = await db.select().from(projectTimeTracking)
+      .where(and(
+        eq(projectTimeTracking.projectId, projectId),
+        eq(projectTimeTracking.userId, userId),
+        eq(projectTimeTracking.active, true)
+      ));
+    return tracking;
+  }
+
+  async getProjectTimeTracking(projectId: number): Promise<TimeTracking[]> {
+    return await db.select().from(projectTimeTracking).where(eq(projectTimeTracking.projectId, projectId)).orderBy(desc(projectTimeTracking.startTime));
+  }
+
+  // Screenshot operations
+  async createScreenshot(screenshot: InsertScreenshot): Promise<Screenshot> {
+    const [newScreenshot] = await db.insert(projectScreenshots).values(screenshot).returning();
+    return newScreenshot;
+  }
+
+  async getProjectScreenshots(projectId: number): Promise<Screenshot[]> {
+    return await db.select().from(projectScreenshots).where(eq(projectScreenshots.projectId, projectId)).orderBy(desc(projectScreenshots.createdAt));
+  }
+
+  async getScreenshot(id: number): Promise<Screenshot | undefined> {
+    const [screenshot] = await db.select().from(projectScreenshots).where(eq(projectScreenshots.id, id));
+    return screenshot;
+  }
+
+  // Task summary operations
+  async createTaskSummary(summary: InsertTaskSummary): Promise<TaskSummary> {
+    const [newSummary] = await db.insert(taskSummaries).values(summary).returning();
+    return newSummary;
+  }
+
+  async getProjectTaskSummaries(projectId: number): Promise<TaskSummary[]> {
+    return await db.select().from(taskSummaries).where(eq(taskSummaries.projectId, projectId)).orderBy(desc(taskSummaries.createdAt));
+  }
+
+  async updateTaskSummary(id: number, summary: Partial<InsertTaskSummary>): Promise<TaskSummary | undefined> {
+    const [updated] = await db.update(taskSummaries).set(summary).where(eq(taskSummaries.id, id)).returning();
+    return updated;
   }
 }
 
