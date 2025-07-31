@@ -99,7 +99,7 @@ export class DeploymentManager {
       await fs.mkdir(deploymentPath, { recursive: true });
 
       // Copy project files
-      const files = await storage.getFilesByProject(config.projectId);
+      const files = await storage.getFilesByProjectId(config.projectId);
       await this.copyProjectFiles(files, deploymentPath);
 
       // Write environment variables

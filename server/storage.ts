@@ -11,9 +11,10 @@ import {
   MobileDevice,
   ReviewComment,
   ReviewApproval,
+  Deployment, InsertDeployment,
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
-  mobileDevices, pushNotifications, teams, teamMembers
+  mobileDevices, pushNotifications, teams, teamMembers, deployments
 } from "@shared/schema";
 import { eq, and, desc, isNull, sql, inArray } from "drizzle-orm";
 import { db } from "./db";
@@ -85,6 +86,13 @@ export interface IStorage {
   // Admin API Key operations (for centralized AI services)
   getActiveAdminApiKey(provider: string): Promise<any>;
   trackAIUsage(userId: number, tokens: number, mode: string): Promise<void>;
+  createAiUsageRecord(record: any): Promise<any>;
+  updateUserAiTokens(userId: number, tokensUsed: number): Promise<void>;
+
+  // Deployment operations
+  createDeployment(deploymentData: InsertDeployment): Promise<Deployment>;
+  getDeployments(projectId: number): Promise<Deployment[]>;
+  updateDeployment(id: number, deploymentData: Partial<InsertDeployment>): Promise<Deployment | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -437,6 +445,36 @@ export class DatabaseStorage implements IStorage {
   async trackAIUsage(userId: number, tokens: number, mode: string): Promise<void> {
     // For now, just log the usage
     console.log(`AI usage tracked - User: ${userId}, Tokens: ${tokens}, Mode: ${mode}`);
+  }
+
+  async createAiUsageRecord(record: any): Promise<any> {
+    // For now, just log and return the record
+    console.log('AI usage record created:', record);
+    return { id: Date.now(), ...record, createdAt: new Date() };
+  }
+
+  async updateUserAiTokens(userId: number, tokensUsed: number): Promise<void> {
+    // For now, just log the token usage
+    console.log(`Updated AI tokens for user ${userId}: ${tokensUsed} tokens used`);
+  }
+
+  // Deployment operations
+  async createDeployment(deploymentData: InsertDeployment): Promise<Deployment> {
+    const [deployment] = await db.insert(deployments).values(deploymentData).returning();
+    return deployment;
+  }
+
+  async getDeployments(projectId: number): Promise<Deployment[]> {
+    return await db.select().from(deployments).where(eq(deployments.projectId, projectId));
+  }
+
+  async updateDeployment(id: number, deploymentData: Partial<InsertDeployment>): Promise<Deployment | undefined> {
+    const [deployment] = await db
+      .update(deployments)
+      .set({ ...deploymentData, updatedAt: new Date() })
+      .where(eq(deployments.id, id))
+      .returning();
+    return deployment;
   }
 }
 

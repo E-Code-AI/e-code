@@ -685,12 +685,23 @@ API will be available at http://localhost:3000
         return res.status(409).json({ error: 'A file with this name already exists in this directory' });
       }
       
+      // Determine the file path based on parent
+      let filePath = '/';
+      if (parentId) {
+        const parentFile = existingFiles.find(f => f.id === parentId);
+        if (parentFile) {
+          filePath = parentFile.path + (parentFile.path.endsWith('/') ? '' : '/');
+        }
+      } else if (req.body.path) {
+        filePath = req.body.path;
+      }
+      
       const fileData = {
         name: req.body.name.trim(),
+        path: filePath,
         projectId: projectId,
         content: req.body.content || '',
-        isFolder: req.body.isFolder || false,
-        parentId: parentId
+        isDirectory: req.body.isFolder || false
       };
       
       const result = insertFileSchema.safeParse(fileData);

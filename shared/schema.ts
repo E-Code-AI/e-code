@@ -245,6 +245,23 @@ export const pushNotifications = pgTable("push_notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Deployments table
+export const deployments = pgTable("deployments", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  projectId: integer("project_id").notNull().references(() => projects.id),
+  deploymentId: varchar("deployment_id").notNull().unique(),
+  type: varchar("type").notNull(), // static, autoscale, reserved-vm, serverless, scheduled
+  environment: varchar("environment").notNull(), // development, staging, production
+  status: varchar("status").notNull(), // pending, building, deploying, active, failed
+  url: varchar("url"),
+  customDomain: varchar("custom_domain"),
+  buildLogs: text("build_logs"),
+  deploymentLogs: text("deployment_logs"),
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Team and collaboration tables (existing from previous implementation)
 export const teams = pgTable("teams", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -316,6 +333,7 @@ export const insertApiKeySchema = createInsertSchema(apiKeys).omit({ id: true, c
 export const insertCodeReviewSchema = createInsertSchema(codeReviews).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertChallengeSchema = createInsertSchema(challenges).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMentorProfileSchema = createInsertSchema(mentorProfiles).omit({ id: true, createdAt: true });
+export const insertDeploymentSchema = createInsertSchema(deployments).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -345,3 +363,6 @@ export type MentorshipSession = typeof mentorshipSessions.$inferSelect;
 export type MobileDevice = typeof mobileDevices.$inferSelect;
 export type ReviewComment = typeof reviewComments.$inferSelect;
 export type ReviewApproval = typeof reviewApprovals.$inferSelect;
+
+export type Deployment = typeof deployments.$inferSelect;
+export type InsertDeployment = z.infer<typeof insertDeploymentSchema>;
