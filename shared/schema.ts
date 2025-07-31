@@ -46,7 +46,10 @@ export const sessions = pgTable(
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  username: varchar("username").unique(),
+  password: varchar("password"),
   email: varchar("email").unique(),
+  displayName: varchar("display_name"),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
