@@ -1042,6 +1042,113 @@ export default function Landing() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* New App 4: Portfolio Website */}
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-violet-500/10 rounded-bl-full" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20">
+                      ⚡ 20 seconds
+                    </Badge>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Live</span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">Portfolio Website</CardTitle>
+                  <CardDescription className="italic">
+                    "Design a modern portfolio to showcase my work with animations"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/20 dark:to-violet-950/20 rounded-xl mb-4 overflow-hidden relative shadow-inner">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+                    <div className="relative h-full flex items-center justify-center p-6">
+                      <div className="w-full max-w-sm">
+                        {/* Portfolio Preview */}
+                        <div className="bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-xl overflow-hidden backdrop-blur">
+                          <div className="relative h-24 bg-gradient-to-br from-indigo-500 to-violet-500">
+                            <div className="absolute inset-0 bg-black/20" />
+                            <div className="absolute bottom-3 left-3">
+                              <div className="w-12 h-12 bg-white rounded-full shadow-lg mb-1" />
+                              <p className="text-white text-sm font-semibold">Alex Chen</p>
+                              <p className="text-white/80 text-xs">Full Stack Developer</p>
+                            </div>
+                          </div>
+                          <div className="p-3 space-y-3">
+                            <div className="flex gap-2 text-xs">
+                              <Badge variant="secondary">React</Badge>
+                              <Badge variant="secondary">Node.js</Badge>
+                              <Badge variant="secondary">TypeScript</Badge>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
+                                <p className="text-xs font-medium mb-1">Latest Projects</p>
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded" />
+                                    <div className="flex-1">
+                                      <p className="text-xs font-medium">E-Commerce Platform</p>
+                                      <p className="text-[10px] text-muted-foreground">Next.js • Stripe API</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded" />
+                                    <div className="flex-1">
+                                      <p className="text-xs font-medium">Task Manager</p>
+                                      <p className="text-[10px] text-muted-foreground">React • GraphQL</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 text-xs">
+                              <button className="flex-1 bg-gradient-to-r from-indigo-500 to-violet-500 text-white py-1 rounded font-medium">View Work</button>
+                              <button className="flex-1 border border-gray-300 dark:border-gray-600 py-1 rounded">Contact</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="bg-black/80 backdrop-blur rounded-lg p-3">
+                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Responsive design</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Project showcase</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
+                              <span>Contact form</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Tech Stack:</span>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs">Next.js</Badge>
+                        <Badge variant="outline" className="text-xs">Framer</Badge>
+                        <Badge variant="outline" className="text-xs">Tailwind</Badge>
+                      </div>
+                    </div>
+                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Build Similar App
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
