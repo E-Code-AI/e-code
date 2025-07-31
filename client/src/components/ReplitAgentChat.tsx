@@ -634,7 +634,7 @@ Would you like me to explain any part of the implementation or make adjustments?
       const fallbackMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `I understand you want to ${input.toLowerCase()}. While I'm having trouble connecting to the AI service right now, I can still help you build your application.
+        content: `I understand you want to ${input.toLowerCase()}. I'm experiencing a temporary connection issue, but I can still help you build your application.
 
 **What I can do for you:**
 • Generate complete applications from your description
@@ -642,7 +642,7 @@ Would you like me to explain any part of the implementation or make adjustments?
 • Set up databases and backend infrastructure
 • Debug and optimize existing code
 
-Please make sure you have configured your AI API key in the project settings. You can add it in the Secrets tab.`,
+Our team is working to resolve this issue. Please try again in a moment.`,
         timestamp: new Date(),
         isStreaming: false
       };
@@ -651,7 +651,7 @@ Please make sure you have configured your AI API key in the project settings. Yo
       
       toast({
         title: "Connection Issue",
-        description: "Please check your AI API key in project secrets.",
+        description: "Temporary connection issue. Please try again.",
         variant: "destructive"
       });
     } finally {
