@@ -8,6 +8,7 @@ import { createLogger } from '../utils/logger';
 import { containerOrchestrator } from '../containers/container-orchestrator';
 import { edgeManager } from '../edge/edge-manager';
 import { cdnService } from '../edge/cdn-service';
+import { storage } from '../storage';
 
 const execAsync = promisify(exec);
 const logger = createLogger('real-deployment');
@@ -185,15 +186,35 @@ export class RealDeploymentService {
   }
   
   private async buildProject(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
-    const projectPath = path.join(process.cwd(), 'projects', config.projectId.toString());
     const buildPath = path.join(this.buildsPath, deployment.id);
     
     deployment.build.logs.push('Starting build process...');
     
     try {
-      // Copy project files to build directory
+      // Create build directory
       await fs.mkdir(buildPath, { recursive: true });
-      await this.copyDirectory(projectPath, buildPath);
+      
+      // Load project files from database
+      deployment.build.logs.push('Loading project files from database...');
+      const files = await storage.getFilesByProjectId(config.projectId);
+      
+      // Write files to build directory
+      for (const file of files) {
+        if (!file.path || file.path === '/') continue; // Skip root directory
+        
+        const filePath = path.join(buildPath, file.path.startsWith('/') ? file.path.slice(1) : file.path);
+        const fileDir = path.dirname(filePath);
+        
+        // Create directory if needed
+        await fs.mkdir(fileDir, { recursive: true });
+        
+        // Only write if it's a file (not a directory)
+        if (!file.path.endsWith('/')) {
+          await fs.writeFile(filePath, file.content || '');
+        }
+      }
+      
+      deployment.build.logs.push(`Loaded ${files.length} files from database`);
       
       // Detect project type
       const projectType = await this.detectProjectType(buildPath);
@@ -288,15 +309,10 @@ export class RealDeploymentService {
     // Configure edge locations
     const regions = Array.isArray(config.region) ? config.region : [config.region];
     for (const region of regions) {
-      await edgeManager.deployToEdge(deployment.id, region, {
-        type: 'static',
-        config: {
-          domain: deployment.url,
-          cache: {
-            html: 300,
-            assets: 86400
-          }
-        }
+      await edgeManager.deployToEdge(deployment.id, {
+        locations: [region],
+        cacheStrategy: 'aggressive',
+        customDomains: [deployment.url]
       });
     }
     
@@ -437,15 +453,10 @@ export class RealDeploymentService {
     
     // Set up CDN endpoints for each region
     for (const region of regions) {
-      await edgeManager.deployToEdge(deployment.id, region, {
-        type: 'static',
-        config: {
-          domain: `${deployment.id}.${region}.e-code.app`,
-          cache: {
-            html: 300,
-            assets: 86400
-          }
-        }
+      await edgeManager.deployToEdge(deployment.id, {
+        locations: [region],
+        cacheStrategy: 'aggressive',
+        customDomains: [`${deployment.id}.${region}.e-code.app`]
       });
     }
     
@@ -594,7 +605,7 @@ CMD ["sh"]`;
       // In production, integrate with Let's Encrypt or another CA
       // For now, generate self-signed certificate
       const forge = await import('node-forge');
-      const pki = forge.pki;
+      const pki = (forge as any).pki;
       
       // Generate key pair
       const keys = pki.rsa.generateKeyPair(2048);
