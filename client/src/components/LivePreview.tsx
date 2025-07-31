@@ -43,10 +43,10 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ projectId, onPreviewRe
         onPreviewReady(data.url);
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Preview Error",
-        description: error.message,
+        description: error?.message || "Failed to start preview",
         variant: "destructive"
       });
     }
