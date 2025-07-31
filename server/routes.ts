@@ -26,6 +26,7 @@ import { CodeAnalyzer } from "./ai/code-analyzer";
 import { AdvancedAIService } from "./ai/advanced-ai-service";
 import { AIProviderFactory } from "./ai/ai-providers";
 import { autonomousBuilder } from "./ai/autonomous-builder";
+import { ContextAwarenessService } from "./ai/context-awareness-service";
 import { createLogger } from "./utils/logger";
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, getProjectLogs } from "./simple-executor";
@@ -3161,6 +3162,16 @@ document.addEventListener('DOMContentLoaded', function() {
       // Build conversation history
       const conversationHistory = context?.history || [];
       
+      // Initialize context awareness service
+      const contextAwareness = new ContextAwarenessService();
+      
+      // Get enhanced project context for AI awareness
+      const projectContext = await contextAwareness.getProjectContext(parseInt(projectId));
+      
+      // Get conversation context if available
+      const conversationContext = contextAwareness.getConversationContext(parseInt(projectId));
+      
+      // Build enhanced system message with context awareness
       const systemMessage = {
         role: 'system' as const,
         content: `You are E-Code AI Assistant powered by ${provider.name}, an expert coding assistant similar to Replit's Ghostwriter. You help users with their ${project.name} project.
@@ -3170,7 +3181,15 @@ Current project context:
 - Project: ${project.name}
 ${codeContext ? `\nCurrent file context:\n${codeContext}` : ''}
 
-Provide helpful, concise responses. When suggesting code, use proper markdown formatting with language hints. Be friendly and encouraging.`
+Enhanced Context Awareness:
+- Project Structure: ${projectContext.projectStructure.totalFiles} files, ${projectContext.projectStructure.directories.length} directories
+- Recent Changes: ${projectContext.recentChanges.slice(0, 3).join('; ')}
+- Dependencies: ${Object.keys(projectContext.dependencies).slice(0, 5).join(', ')}
+- User Patterns: ${projectContext.userPatterns.slice(0, 3).map(p => p.action).join(', ')}
+${conversationContext ? `- Current Intent: ${conversationContext.currentIntent}` : ''}
+${conversationContext?.suggestedActions.length ? `- Suggested Actions: ${conversationContext.suggestedActions.slice(0, 3).join(', ')}` : ''}
+
+Provide helpful, concise responses. When suggesting code, use proper markdown formatting with language hints. Be friendly and encouraging. Use the context awareness to provide more relevant and intelligent suggestions.`
       };
       
       // Check if this is an agent mode request that wants to build something
@@ -3635,6 +3654,21 @@ Generate a comprehensive application based on the user's request. Include all ne
         timestamp: Date.now(),
         provider: provider.name
       };
+      
+      // Update conversation memory with user message and assistant response
+      contextAwareness.updateConversationMemory(parseInt(projectId), {
+        id: `msg_${Date.now() - 1}`,
+        role: 'user',
+        content: message,
+        timestamp: Date.now() - 1000
+      });
+      
+      contextAwareness.updateConversationMemory(parseInt(projectId), {
+        id: assistantMessage.id,
+        role: 'assistant',
+        content: assistantMessage.content,
+        timestamp: assistantMessage.timestamp
+      });
       
       res.json(assistantMessage);
     } catch (error: any) {
