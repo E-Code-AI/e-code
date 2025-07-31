@@ -140,6 +140,15 @@ export class DatabaseStorage implements IStorage {
     return project;
   }
 
+  async getProjectsByUser(userId: number): Promise<Project[]> {
+    return await db.select().from(projects).where(eq(projects.ownerId, userId));
+  }
+
+  // Alias for backward compatibility
+  async getProjectsByUserId(userId: number): Promise<Project[]> {
+    return this.getProjectsByUser(userId);
+  }
+
   async getProjectBySlug(slug: string): Promise<Project | undefined> {
     const [project] = await db.select().from(projects).where(eq(projects.slug, slug));
     return project;
