@@ -4848,6 +4848,370 @@ Generate a comprehensive application based on the user's request. Include all ne
       res.status(500).json({ error: 'Failed to delete workflow' });
     }
   });
+
+  // Integration Routes - Slack/Discord
+  app.post('/api/integrations/slack/configure', ensureAuthenticated, async (req, res) => {
+    try {
+      const { token, channelId, workspace } = req.body;
+      const config = await slackDiscordService.configureSlack(req.user!.id, {
+        token,
+        channelId,
+        workspace
+      });
+      res.json(config);
+    } catch (error) {
+      console.error('Error configuring Slack:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to configure Slack' });
+    }
+  });
+
+  app.post('/api/integrations/discord/configure', ensureAuthenticated, async (req, res) => {
+    try {
+      const { webhookUrl, serverId, channelId } = req.body;
+      const config = await slackDiscordService.configureDiscord(req.user!.id, {
+        webhookUrl,
+        serverId,
+        channelId
+      });
+      res.json(config);
+    } catch (error) {
+      console.error('Error configuring Discord:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to configure Discord' });
+    }
+  });
+
+  app.post('/api/integrations/slack/send', ensureAuthenticated, async (req, res) => {
+    try {
+      const { message, channel, attachments } = req.body;
+      await slackDiscordService.sendSlackMessage(req.user!.id, {
+        text: message,
+        channel,
+        attachments
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error sending Slack message:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to send Slack message' });
+    }
+  });
+
+  app.post('/api/integrations/discord/send', ensureAuthenticated, async (req, res) => {
+    try {
+      const { content, embeds } = req.body;
+      await slackDiscordService.sendDiscordMessage(req.user!.id, {
+        content,
+        embeds
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error sending Discord message:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to send Discord message' });
+    }
+  });
+
+  app.get('/api/integrations/slack/channels', ensureAuthenticated, async (req, res) => {
+    try {
+      const channels = await slackDiscordService.getSlackChannels(req.user!.id);
+      res.json(channels);
+    } catch (error) {
+      console.error('Error fetching Slack channels:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch Slack channels' });
+    }
+  });
+
+  app.get('/api/integrations/discord/servers', ensureAuthenticated, async (req, res) => {
+    try {
+      const servers = await slackDiscordService.getDiscordServers(req.user!.id);
+      res.json(servers);
+    } catch (error) {
+      console.error('Error fetching Discord servers:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch Discord servers' });
+    }
+  });
+
+  app.post('/api/integrations/slack/webhook', ensureAuthenticated, async (req, res) => {
+    try {
+      const webhook = await slackDiscordService.createSlackWebhook(req.user!.id, req.body);
+      res.json(webhook);
+    } catch (error) {
+      console.error('Error creating Slack webhook:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create Slack webhook' });
+    }
+  });
+
+  app.post('/api/integrations/discord/webhook', ensureAuthenticated, async (req, res) => {
+    try {
+      const webhook = await slackDiscordService.createDiscordWebhook(req.user!.id, req.body);
+      res.json(webhook);
+    } catch (error) {
+      console.error('Error creating Discord webhook:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create Discord webhook' });
+    }
+  });
+
+  // Integration Routes - JIRA/Linear
+  app.post('/api/integrations/jira/configure', ensureAuthenticated, async (req, res) => {
+    try {
+      const { domain, email, apiToken } = req.body;
+      const config = await jiraLinearService.configureJira(req.user!.id, {
+        domain,
+        email,
+        apiToken
+      });
+      res.json(config);
+    } catch (error) {
+      console.error('Error configuring JIRA:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to configure JIRA' });
+    }
+  });
+
+  app.post('/api/integrations/linear/configure', ensureAuthenticated, async (req, res) => {
+    try {
+      const { apiKey, teamId } = req.body;
+      const config = await jiraLinearService.configureLinear(req.user!.id, {
+        apiKey,
+        teamId
+      });
+      res.json(config);
+    } catch (error) {
+      console.error('Error configuring Linear:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to configure Linear' });
+    }
+  });
+
+  app.post('/api/integrations/jira/issues', ensureAuthenticated, async (req, res) => {
+    try {
+      const issue = await jiraLinearService.createJiraIssue(req.user!.id, req.body);
+      res.json(issue);
+    } catch (error) {
+      console.error('Error creating JIRA issue:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create JIRA issue' });
+    }
+  });
+
+  app.post('/api/integrations/linear/issues', ensureAuthenticated, async (req, res) => {
+    try {
+      const issue = await jiraLinearService.createLinearIssue(req.user!.id, req.body);
+      res.json(issue);
+    } catch (error) {
+      console.error('Error creating Linear issue:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create Linear issue' });
+    }
+  });
+
+  app.post('/api/integrations/jira/sync', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.body;
+      await jiraLinearService.syncJiraProject(req.user!.id, projectId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error syncing JIRA project:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to sync JIRA project' });
+    }
+  });
+
+  app.post('/api/integrations/linear/sync', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.body;
+      await jiraLinearService.syncLinearProject(req.user!.id, projectId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error syncing Linear project:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to sync Linear project' });
+    }
+  });
+
+  app.get('/api/integrations/jira/projects', ensureAuthenticated, async (req, res) => {
+    try {
+      const projects = await jiraLinearService.getJiraProjects(req.user!.id);
+      res.json(projects);
+    } catch (error) {
+      console.error('Error fetching JIRA projects:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch JIRA projects' });
+    }
+  });
+
+  app.get('/api/integrations/linear/teams', ensureAuthenticated, async (req, res) => {
+    try {
+      const teams = await jiraLinearService.getLinearTeams(req.user!.id);
+      res.json(teams);
+    } catch (error) {
+      console.error('Error fetching Linear teams:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch Linear teams' });
+    }
+  });
+
+  // Integration Routes - Datadog/New Relic
+  app.post('/api/integrations/datadog/configure', ensureAuthenticated, async (req, res) => {
+    try {
+      const { apiKey, appKey, site } = req.body;
+      const config = await datadogNewRelicService.configureDatadog(req.user!.id, {
+        apiKey,
+        appKey,
+        site
+      });
+      res.json(config);
+    } catch (error) {
+      console.error('Error configuring Datadog:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to configure Datadog' });
+    }
+  });
+
+  app.post('/api/integrations/newrelic/configure', ensureAuthenticated, async (req, res) => {
+    try {
+      const { accountId, apiKey, region } = req.body;
+      const config = await datadogNewRelicService.configureNewRelic(req.user!.id, {
+        accountId,
+        apiKey,
+        region
+      });
+      res.json(config);
+    } catch (error) {
+      console.error('Error configuring New Relic:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to configure New Relic' });
+    }
+  });
+
+  app.post('/api/integrations/datadog/metrics', ensureAuthenticated, async (req, res) => {
+    try {
+      await datadogNewRelicService.sendDatadogMetrics(req.user!.id, req.body);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error sending Datadog metrics:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to send Datadog metrics' });
+    }
+  });
+
+  app.post('/api/integrations/newrelic/metrics', ensureAuthenticated, async (req, res) => {
+    try {
+      await datadogNewRelicService.sendNewRelicMetrics(req.user!.id, req.body);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error sending New Relic metrics:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to send New Relic metrics' });
+    }
+  });
+
+  app.post('/api/integrations/datadog/alerts', ensureAuthenticated, async (req, res) => {
+    try {
+      const alert = await datadogNewRelicService.createDatadogAlert(req.user!.id, req.body);
+      res.json(alert);
+    } catch (error) {
+      console.error('Error creating Datadog alert:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create Datadog alert' });
+    }
+  });
+
+  app.post('/api/integrations/newrelic/alerts', ensureAuthenticated, async (req, res) => {
+    try {
+      const alert = await datadogNewRelicService.createNewRelicAlert(req.user!.id, req.body);
+      res.json(alert);
+    } catch (error) {
+      console.error('Error creating New Relic alert:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create New Relic alert' });
+    }
+  });
+
+  app.get('/api/integrations/datadog/dashboards', ensureAuthenticated, async (req, res) => {
+    try {
+      const dashboards = await datadogNewRelicService.getDatadogDashboards(req.user!.id);
+      res.json(dashboards);
+    } catch (error) {
+      console.error('Error fetching Datadog dashboards:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch Datadog dashboards' });
+    }
+  });
+
+  app.get('/api/integrations/newrelic/applications', ensureAuthenticated, async (req, res) => {
+    try {
+      const apps = await datadogNewRelicService.getNewRelicApplications(req.user!.id);
+      res.json(apps);
+    } catch (error) {
+      console.error('Error fetching New Relic applications:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch New Relic applications' });
+    }
+  });
+
+  // Integration Routes - Webhooks
+  app.post('/api/webhooks', ensureAuthenticated, async (req, res) => {
+    try {
+      const webhook = await webhookService.createWebhook(req.user!.id, req.body);
+      res.json(webhook);
+    } catch (error) {
+      console.error('Error creating webhook:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create webhook' });
+    }
+  });
+
+  app.get('/api/webhooks', ensureAuthenticated, async (req, res) => {
+    try {
+      const webhooks = await webhookService.getUserWebhooks(req.user!.id);
+      res.json(webhooks);
+    } catch (error) {
+      console.error('Error fetching webhooks:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch webhooks' });
+    }
+  });
+
+  app.patch('/api/webhooks/:webhookId', ensureAuthenticated, async (req, res) => {
+    try {
+      const webhook = await webhookService.updateWebhook(req.params.webhookId, req.body);
+      res.json(webhook);
+    } catch (error) {
+      console.error('Error updating webhook:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to update webhook' });
+    }
+  });
+
+  app.delete('/api/webhooks/:webhookId', ensureAuthenticated, async (req, res) => {
+    try {
+      await webhookService.deleteWebhook(req.params.webhookId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting webhook:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to delete webhook' });
+    }
+  });
+
+  app.post('/api/webhooks/:webhookId/trigger', ensureAuthenticated, async (req, res) => {
+    try {
+      await webhookService.triggerWebhook(req.params.webhookId, req.body);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error triggering webhook:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to trigger webhook' });
+    }
+  });
+
+  app.get('/api/webhooks/:webhookId/deliveries', ensureAuthenticated, async (req, res) => {
+    try {
+      const deliveries = await webhookService.getWebhookDeliveries(req.params.webhookId);
+      res.json(deliveries);
+    } catch (error) {
+      console.error('Error fetching webhook deliveries:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch webhook deliveries' });
+    }
+  });
+
+  app.post('/api/webhooks/:webhookId/test', ensureAuthenticated, async (req, res) => {
+    try {
+      await webhookService.testWebhook(req.params.webhookId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error testing webhook:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to test webhook' });
+    }
+  });
+
+  app.post('/api/webhooks/:webhookId/regenerate-secret', ensureAuthenticated, async (req, res) => {
+    try {
+      const webhook = await webhookService.regenerateWebhookSecret(req.params.webhookId);
+      res.json(webhook);
+    } catch (error) {
+      console.error('Error regenerating webhook secret:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to regenerate webhook secret' });
+    }
+  });
   
   // Billing routes
   app.get('/api/users/:userId/subscription', ensureAuthenticated, async (req, res) => {
