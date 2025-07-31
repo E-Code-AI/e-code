@@ -108,6 +108,7 @@
     "react-syntax-highlighter": "^15.6.1",
     "recharts": "^2.15.2",
     "remark-gfm": "^4.0.1",
+    "samlify": "^2.10.1",
     "stripe": "^18.3.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",

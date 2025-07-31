@@ -64,7 +64,7 @@ import {
   TeamActivity, InsertTeamActivity,
   teams, teamMembers, teamInvitations, teamProjects, teamWorkspaces, teamActivity
 } from "@shared/teams-schema";
-import { eq, and, desc, isNull, sql } from "drizzle-orm";
+import { eq, and, desc, isNull, sql, inArray } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";
@@ -122,6 +122,7 @@ export interface IStorage {
   
   // Deployment methods
   getDeployments(projectId: number): Promise<Deployment[]>;
+  getDeploymentsByUser(userId: number): Promise<any[]>;
   createDeployment(deployment: InsertDeployment): Promise<Deployment>;
   updateDeployment(id: number, update: Partial<Deployment>): Promise<Deployment>;
   
@@ -1005,6 +1006,32 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedDeployment;
+  }
+
+  async getDeploymentsByUser(userId: number): Promise<any[]> {
+    const userProjects = await this.getProjectsByUser(userId);
+    const projectIds = userProjects.map(p => p.id);
+    
+    if (projectIds.length === 0) {
+      return [];
+    }
+    
+    const userDeployments = await db
+      .select({
+        id: deployments.id,
+        projectId: deployments.projectId,
+        projectName: projects.name,
+        url: deployments.url,
+        status: deployments.status,
+        createdAt: deployments.createdAt,
+        updatedAt: deployments.updatedAt,
+      })
+      .from(deployments)
+      .innerJoin(projects, eq(deployments.projectId, projects.id))
+      .where(inArray(deployments.projectId, projectIds))
+      .orderBy(desc(deployments.createdAt));
+    
+    return userDeployments;
   }
 
   // Environment variable methods

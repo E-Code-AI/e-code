@@ -4389,6 +4389,160 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Shell routes
   app.use("/api/shell", shellRoutes);
   
+  // Enterprise SSO/SAML Routes
+  app.post('/api/sso/configure', ensureAuthenticated, async (req, res) => {
+    try {
+      const { organizationId, providerType, providerName, entityId, ssoUrl, certificateData, metadata } = req.body;
+      
+      const result = await enterpriseSSOService.configureSSOProvider(organizationId, {
+        providerType,
+        providerName,
+        entityId,
+        ssoUrl,
+        certificateData,
+        metadata
+      });
+      
+      res.json(result);
+    } catch (error) {
+      console.error('SSO configuration error:', error);
+      res.status(500).json({ message: 'Failed to configure SSO provider' });
+    }
+  });
+  
+  app.get('/api/sso/saml/:providerId/login', async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.providerId);
+      const samlRequest = await enterpriseSSOService.generateSAMLRequest(providerId);
+      res.redirect(samlRequest);
+    } catch (error) {
+      console.error('SAML login error:', error);
+      res.status(500).json({ message: 'Failed to generate SAML request' });
+    }
+  });
+  
+  app.post('/api/sso/saml/:providerId/callback', async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.providerId);
+      const samlResponse = req.body.SAMLResponse;
+      const result = await enterpriseSSOService.processSAMLResponse(providerId, samlResponse);
+      
+      if (result.success) {
+        req.login(result.user, (err) => {
+          if (err) {
+            return res.status(500).json({ message: 'Login failed' });
+          }
+          res.redirect('/');
+        });
+      } else {
+        res.status(401).json({ message: 'Authentication failed' });
+      }
+    } catch (error) {
+      console.error('SAML callback error:', error);
+      res.status(500).json({ message: 'Failed to process SAML response' });
+    }
+  });
+  
+  app.get('/api/sso/oidc/:providerId/login', async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.providerId);
+      const authUrl = await enterpriseSSOService.generateOIDCAuthUrl(providerId);
+      res.redirect(authUrl);
+    } catch (error) {
+      console.error('OIDC login error:', error);
+      res.status(500).json({ message: 'Failed to generate OIDC auth URL' });
+    }
+  });
+  
+  app.get('/api/sso/oidc/:providerId/callback', async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.providerId);
+      const { code } = req.query;
+      const result = await enterpriseSSOService.processOIDCCallback(providerId, code as string);
+      
+      if (result.success) {
+        req.login(result.user, (err) => {
+          if (err) {
+            return res.status(500).json({ message: 'Login failed' });
+          }
+          res.redirect('/');
+        });
+      } else {
+        res.status(401).json({ message: 'Authentication failed' });
+      }
+    } catch (error) {
+      console.error('OIDC callback error:', error);
+      res.status(500).json({ message: 'Failed to process OIDC callback' });
+    }
+  });
+  
+  // Audit Log Routes
+  app.get('/api/audit-logs', ensureAuthenticated, async (req, res) => {
+    try {
+      const { organizationId, startDate, endDate, action, userId } = req.query;
+      
+      const logs = await db.select()
+        .from(auditLogs)
+        .where(
+          and(
+            organizationId ? eq(auditLogs.organizationId, parseInt(organizationId as string)) : undefined,
+            userId ? eq(auditLogs.userId, parseInt(userId as string)) : undefined,
+            action ? eq(auditLogs.action, action as string) : undefined,
+            startDate ? gte(auditLogs.timestamp, new Date(startDate as string)) : undefined,
+            endDate ? lte(auditLogs.timestamp, new Date(endDate as string)) : undefined
+          )
+        )
+        .orderBy(desc(auditLogs.timestamp))
+        .limit(1000);
+      
+      res.json(logs);
+    } catch (error) {
+      console.error('Audit logs fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch audit logs' });
+    }
+  });
+  
+  app.post('/api/audit-logs', ensureAuthenticated, async (req, res) => {
+    try {
+      const { action, resourceType, resourceId, details } = req.body;
+      
+      const log = await db.insert(auditLogs).values({
+        organizationId: req.user!.organizationId || 1,
+        userId: req.user!.id,
+        action,
+        resourceType,
+        resourceId,
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        details,
+        status: 'success',
+        timestamp: new Date()
+      }).returning();
+      
+      res.json(log[0]);
+    } catch (error) {
+      console.error('Audit log creation error:', error);
+      res.status(500).json({ message: 'Failed to create audit log' });
+    }
+  });
+  
+  app.get('/api/audit-logs/report', ensureAuthenticated, async (req, res) => {
+    try {
+      const { organizationId, startDate, endDate } = req.query;
+      
+      const report = await enterpriseSSOService.generateAuditReport(
+        parseInt(organizationId as string),
+        new Date(startDate as string),
+        new Date(endDate as string)
+      );
+      
+      res.json(report);
+    } catch (error) {
+      console.error('Audit report generation error:', error);
+      res.status(500).json({ message: 'Failed to generate audit report' });
+    }
+  });
+  
   // Workflow routes
   app.get('/api/projects/:projectId/workflows', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
