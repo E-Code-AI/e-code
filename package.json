@@ -51,6 +51,7 @@
     "@radix-ui/react-tooltip": "^1.2.0",
     "@replit/vite-plugin-shadcn-theme-json": "^0.0.4",
     "@sendgrid/mail": "^8.1.5",
+    "@slack/web-api": "^7.9.3",
     "@stripe/react-stripe-js": "^3.7.0",
     "@stripe/stripe-js": "^7.5.0",
     "@tailwindcss/vite": "^4.1.3",

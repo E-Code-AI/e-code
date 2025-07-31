@@ -73,6 +73,12 @@ import { simpleDeployer } from './deployment/simple-deployer';
 import { simpleGitManager } from './git/simple-git-manager';
 import { simpleWorkflowRunner } from './workflows/simple-workflow-runner';
 import { simplePaymentProcessor } from './billing/simple-payment-processor';
+import { ABTestingService } from './deployment/ab-testing-service';
+import { MultiRegionFailoverService } from './deployment/multi-region-failover-service';
+import { SlackDiscordService } from './integrations/slack-discord-service';
+import { JiraLinearService } from './integrations/jira-linear-service';
+import { DatadogNewRelicService } from './integrations/datadog-newrelic-service';
+import { WebhookService } from './integrations/webhook-service';
 import { securityScanner } from './security/security-scanner';
 import { exportManager } from './export/export-manager';
 import { statusPageService } from './status/status-page-service';
@@ -89,6 +95,12 @@ import { getEducationService } from './services/education-service';
 
 const logger = createLogger('routes');
 const teamsService = new TeamsService();
+const abTestingService = new ABTestingService();
+const multiRegionFailoverService = new MultiRegionFailoverService();
+const slackDiscordService = new SlackDiscordService();
+const jiraLinearService = new JiraLinearService();
+const datadogNewRelicService = new DatadogNewRelicService();
+const webhookService = new WebhookService();
 
 // Middleware to ensure a user is authenticated
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -4382,6 +4394,210 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   
   // Git routes removed - using GitManager implementation above
+
+  // A/B Testing Routes
+  app.post('/api/projects/:projectId/ab-tests', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const config = {
+        ...req.body,
+        projectId
+      };
+      
+      const test = await abTestingService.createABTest(config);
+      res.json(test);
+    } catch (error) {
+      console.error('Error creating A/B test:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create A/B test' });
+    }
+  });
+
+  app.get('/api/projects/:projectId/ab-tests', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const tests = await abTestingService.listABTests(projectId);
+      res.json(tests);
+    } catch (error) {
+      console.error('Error listing A/B tests:', error);
+      res.status(500).json({ message: 'Failed to list A/B tests' });
+    }
+  });
+
+  app.get('/api/ab-tests/:testId', ensureAuthenticated, async (req, res) => {
+    try {
+      const test = await abTestingService.getABTest(req.params.testId);
+      if (!test) {
+        return res.status(404).json({ message: 'A/B test not found' });
+      }
+      res.json(test);
+    } catch (error) {
+      console.error('Error getting A/B test:', error);
+      res.status(500).json({ message: 'Failed to get A/B test' });
+    }
+  });
+
+  app.patch('/api/ab-tests/:testId', ensureAuthenticated, async (req, res) => {
+    try {
+      const updated = await abTestingService.updateABTest(req.params.testId, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating A/B test:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to update A/B test' });
+    }
+  });
+
+  app.delete('/api/ab-tests/:testId', ensureAuthenticated, async (req, res) => {
+    try {
+      await abTestingService.deleteABTest(req.params.testId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting A/B test:', error);
+      res.status(500).json({ message: 'Failed to delete A/B test' });
+    }
+  });
+
+  app.post('/api/ab-tests/:testId/assign', async (req, res) => {
+    try {
+      const { userId, context } = req.body;
+      const variantId = await abTestingService.assignUserToVariant(req.params.testId, userId, context);
+      res.json({ variantId });
+    } catch (error) {
+      console.error('Error assigning variant:', error);
+      res.status(500).json({ message: 'Failed to assign variant' });
+    }
+  });
+
+  app.post('/api/ab-tests/:testId/track', async (req, res) => {
+    try {
+      const { userId, eventName, value } = req.body;
+      await abTestingService.trackEvent(req.params.testId, userId, eventName, value);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error tracking event:', error);
+      res.status(500).json({ message: 'Failed to track event' });
+    }
+  });
+
+  app.get('/api/ab-tests/:testId/results', ensureAuthenticated, async (req, res) => {
+    try {
+      const results = await abTestingService.getTestResults(req.params.testId);
+      res.json(results);
+    } catch (error) {
+      console.error('Error getting test results:', error);
+      res.status(500).json({ message: 'Failed to get test results' });
+    }
+  });
+
+  app.get('/api/ab-tests/:testId/winner', ensureAuthenticated, async (req, res) => {
+    try {
+      const winner = await abTestingService.getWinningVariant(req.params.testId);
+      res.json(winner || { message: 'No statistically significant winner yet' });
+    } catch (error) {
+      console.error('Error getting winning variant:', error);
+      res.status(500).json({ message: 'Failed to get winning variant' });
+    }
+  });
+
+  app.post('/api/ab-tests/:testId/promote-winner', ensureAuthenticated, async (req, res) => {
+    try {
+      await abTestingService.promoteWinner(req.params.testId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error promoting winner:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to promote winner' });
+    }
+  });
+
+  // Multi-Region Failover Routes
+  app.post('/api/projects/:projectId/multi-region', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { primaryRegion, secondaryRegions, ...config } = req.body;
+      
+      const deployment = await multiRegionFailoverService.createMultiRegionDeployment(
+        projectId,
+        primaryRegion,
+        secondaryRegions,
+        config
+      );
+      
+      res.json(deployment);
+    } catch (error) {
+      console.error('Error creating multi-region deployment:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create multi-region deployment' });
+    }
+  });
+
+  app.get('/api/multi-region/:deploymentId', ensureAuthenticated, async (req, res) => {
+    try {
+      const deployment = await multiRegionFailoverService.getDeploymentStatus(req.params.deploymentId);
+      if (!deployment) {
+        return res.status(404).json({ message: 'Multi-region deployment not found' });
+      }
+      res.json(deployment);
+    } catch (error) {
+      console.error('Error getting multi-region deployment:', error);
+      res.status(500).json({ message: 'Failed to get multi-region deployment' });
+    }
+  });
+
+  app.patch('/api/multi-region/:deploymentId', ensureAuthenticated, async (req, res) => {
+    try {
+      const updated = await multiRegionFailoverService.updateDeployment(req.params.deploymentId, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating multi-region deployment:', error);
+      res.status(500).json({ message: 'Failed to update multi-region deployment' });
+    }
+  });
+
+  app.post('/api/multi-region/:deploymentId/failover', ensureAuthenticated, async (req, res) => {
+    try {
+      const { fromRegion, toRegion } = req.body;
+      await multiRegionFailoverService.failover(req.params.deploymentId, fromRegion, toRegion);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error performing failover:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to perform failover' });
+    }
+  });
+
+  app.get('/api/multi-region/:deploymentId/health/:regionId', ensureAuthenticated, async (req, res) => {
+    try {
+      const health = await multiRegionFailoverService.getRegionHealth(
+        req.params.deploymentId,
+        req.params.regionId
+      );
+      if (!health) {
+        return res.status(404).json({ message: 'Region health not found' });
+      }
+      res.json(health);
+    } catch (error) {
+      console.error('Error getting region health:', error);
+      res.status(500).json({ message: 'Failed to get region health' });
+    }
+  });
+
+  app.get('/api/multi-region/regions', async (req, res) => {
+    try {
+      const regions = await multiRegionFailoverService.listRegions();
+      res.json(regions);
+    } catch (error) {
+      console.error('Error listing regions:', error);
+      res.status(500).json({ message: 'Failed to list regions' });
+    }
+  });
+
+  app.post('/api/multi-region/optimal-region', async (req, res) => {
+    try {
+      const { lat, lng } = req.body;
+      const region = await multiRegionFailoverService.getOptimalRegion({ lat, lng });
+      res.json({ region });
+    } catch (error) {
+      console.error('Error getting optimal region:', error);
+      res.status(500).json({ message: 'Failed to get optimal region' });
+    }
+  });
 
   // Admin routes
   app.use("/api/admin", adminRoutes);

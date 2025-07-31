@@ -1,0 +1,140 @@
+{
+  "name": "ecode-vscode",
+  "displayName": "E-Code",
+  "description": "Official E-Code extension for Visual Studio Code",
+  "version": "1.0.0",
+  "publisher": "ecode",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Programming Languages", "Snippets", "Other"],
+  "icon": "icon.png",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ecode.login",
+        "title": "E-Code: Login"
+      },
+      {
+        "command": "ecode.createProject",
+        "title": "E-Code: Create New Project"
+      },
+      {
+        "command": "ecode.openProject",
+        "title": "E-Code: Open Project"
+      },
+      {
+        "command": "ecode.deploy",
+        "title": "E-Code: Deploy Current Project"
+      },
+      {
+        "command": "ecode.runCode",
+        "title": "E-Code: Run Code"
+      },
+      {
+        "command": "ecode.aiAssist",
+        "title": "E-Code: AI Assistant"
+      },
+      {
+        "command": "ecode.installPackage",
+        "title": "E-Code: Install Package"
+      },
+      {
+        "command": "ecode.shareProject",
+        "title": "E-Code: Share Project"
+      },
+      {
+        "command": "ecode.viewLogs",
+        "title": "E-Code: View Deployment Logs"
+      },
+      {
+        "command": "ecode.manageSecrets",
+        "title": "E-Code: Manage Secrets"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ecode",
+          "title": "E-Code",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "ecode": [
+        {
+          "id": "ecodeProjects",
+          "name": "Projects",
+          "contextualTitle": "E-Code Projects"
+        },
+        {
+          "id": "ecodeDeployments",
+          "name": "Deployments",
+          "contextualTitle": "E-Code Deployments"
+        },
+        {
+          "id": "ecodeCollaborators",
+          "name": "Collaborators",
+          "contextualTitle": "Active Collaborators"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "E-Code",
+      "properties": {
+        "ecode.apiToken": {
+          "type": "string",
+          "default": "",
+          "description": "Your E-Code API token"
+        },
+        "ecode.apiUrl": {
+          "type": "string",
+          "default": "https://e-code.app",
+          "description": "E-Code API URL"
+        },
+        "ecode.autoSync": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically sync changes with E-Code"
+        },
+        "ecode.showNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show deployment notifications"
+        }
+      }
+    },
+    "statusBar": [
+      {
+        "id": "ecode.status",
+        "alignment": "left",
+        "priority": 100
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0",
+    "@vscode/vsce": "^2.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "ws": "^8.16.0"
+  }
+}

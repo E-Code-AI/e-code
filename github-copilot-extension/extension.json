@@ -1,0 +1,41 @@
+{
+  "name": "ecode-copilot",
+  "displayName": "E-Code for GitHub Copilot",
+  "description": "Use E-Code AI models with GitHub Copilot",
+  "version": "1.0.0",
+  "publisher": "ecode",
+  "type": "copilot",
+  "contributes": {
+    "copilot": {
+      "providers": [
+        {
+          "id": "ecode-ai",
+          "name": "E-Code AI",
+          "description": "AI-powered code completion using E-Code's models",
+          "icon": "icon.png",
+          "languages": ["*"],
+          "capabilities": {
+            "supportsInlineCompletion": true,
+            "supportsChat": true,
+            "supportsExplain": true,
+            "supportsFixProblems": true,
+            "supportsGenerateTests": true,
+            "supportsGenerateDocs": true
+          }
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "@github/copilot-sdk": "^1.0.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
