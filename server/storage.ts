@@ -307,7 +307,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteApiKey(id: number): Promise<boolean> {
     const result = await db.delete(apiKeys).where(eq(apiKeys.id, id));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   // Code Review operations
@@ -675,7 +675,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteComment(id: number): Promise<boolean> {
     const result = await db.delete(comments).where(eq(comments.id, id));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   // Checkpoints operations
