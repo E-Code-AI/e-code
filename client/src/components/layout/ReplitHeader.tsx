@@ -38,6 +38,10 @@ import {
   GraduationCap,
   DollarSign,
   Gift,
+  BarChart3,
+  Trophy,
+  Store,
+  Rocket,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
@@ -274,10 +278,47 @@ export function ReplitHeader() {
             <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
             
             <DropdownMenuItem 
+              onClick={() => navigate('/analytics')}
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Analytics
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/badges')}
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
+              <Trophy className="mr-2 h-4 w-4" />
+              Badges & Achievements
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/education')}
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
+              <GraduationCap className="mr-2 h-4 w-4" />
+              Education Center
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/marketplace')}
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
+              <Store className="mr-2 h-4 w-4" />
+              Marketplace
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/powerups')}
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
+              <Rocket className="mr-2 h-4 w-4" />
+              Power Ups
+            </DropdownMenuItem>
+            
+            <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+            
+            <DropdownMenuItem 
               onClick={() => navigate('/cycles')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Zap className="mr-2 h-4 w-4" />
-              Cycles & Power Ups
+              Cycles
             </DropdownMenuItem>
             
             <DropdownMenuItem 
