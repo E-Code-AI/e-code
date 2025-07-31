@@ -404,8 +404,8 @@ const ProjectsPage = () => {
       }
       return res.json();
     },
-    onSuccess: (_, projectId) => {
-      setPinnedProjects(prev => [...prev, projectId]);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects/pinned'] });
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       toast({
         title: "Project pinned",
@@ -430,8 +430,8 @@ const ProjectsPage = () => {
       }
       return res.json();
     },
-    onSuccess: (_, projectId) => {
-      setPinnedProjects(prev => prev.filter(id => id !== projectId));
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects/pinned'] });
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       toast({
         title: "Project unpinned",
