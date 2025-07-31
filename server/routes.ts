@@ -106,6 +106,7 @@ import { enterpriseSSOService } from './sso/enterprise-sso-service';
 import { rolesPermissionsService } from './security/roles-permissions-service';
 import { previewService } from './preview/preview-service';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { dataProvisioningService } from './data/data-provisioning-service';
 
 const logger = createLogger('routes');
 const teamsService = new TeamsService();
@@ -9577,6 +9578,168 @@ Generate a comprehensive application based on the user's request. Include all ne
     } catch (error) {
       console.error('Error checking database health:', error);
       res.status(500).json({ message: 'Failed to check database health' });
+    }
+  });
+
+  // Data Provisioning Routes
+  
+  // Generate test data for a project
+  app.post('/api/projects/:projectId/data/generate', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { schema, count = 100 } = req.body;
+      
+      if (!schema) {
+        return res.status(400).json({ error: 'Schema is required' });
+      }
+      
+      const generatedData = await dataProvisioningService.generateData(schema, count);
+      
+      res.json({
+        success: true,
+        data: generatedData
+      });
+    } catch (error) {
+      console.error('Error generating test data:', error);
+      res.status(500).json({ error: 'Failed to generate test data' });
+    }
+  });
+  
+  // Import data from various sources
+  app.post('/api/projects/:projectId/data/import', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { type, source, target, options } = req.body;
+      
+      const config = {
+        projectId,
+        type: 'import' as const,
+        source,
+        target,
+        options
+      };
+      
+      const importedData = await dataProvisioningService.importData(config);
+      
+      res.json({
+        success: true,
+        data: importedData
+      });
+    } catch (error) {
+      console.error('Error importing data:', error);
+      res.status(500).json({ error: 'Failed to import data' });
+    }
+  });
+  
+  // Seed database with predefined datasets
+  app.post('/api/projects/:projectId/data/seed', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { seedType } = req.body;
+      
+      if (!seedType) {
+        return res.status(400).json({ error: 'Seed type is required' });
+      }
+      
+      await dataProvisioningService.seedDatabase(projectId, seedType);
+      
+      res.json({
+        success: true,
+        message: `Database seeded with ${seedType} data successfully`
+      });
+    } catch (error) {
+      console.error('Error seeding database:', error);
+      res.status(500).json({ error: 'Failed to seed database' });
+    }
+  });
+  
+  // Create test fixtures
+  app.post('/api/projects/:projectId/data/fixtures', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { fixtureName } = req.body;
+      
+      if (!fixtureName) {
+        return res.status(400).json({ error: 'Fixture name is required' });
+      }
+      
+      await dataProvisioningService.createFixtures(projectId, fixtureName);
+      
+      res.json({
+        success: true,
+        message: `Test fixtures created: ${fixtureName}.json`
+      });
+    } catch (error) {
+      console.error('Error creating fixtures:', error);
+      res.status(500).json({ error: 'Failed to create fixtures' });
+    }
+  });
+  
+  // Migrate data between formats/schemas
+  app.post('/api/projects/:projectId/data/migrate', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { sourceTable, targetTable, transformations } = req.body;
+      
+      const config = {
+        projectId,
+        type: 'migrate' as const,
+        options: {
+          sourceTable,
+          targetTable,
+          transformations
+        }
+      };
+      
+      await dataProvisioningService.migrateData(config);
+      
+      res.json({
+        success: true,
+        message: 'Data migration completed successfully'
+      });
+    } catch (error) {
+      console.error('Error migrating data:', error);
+      res.status(500).json({ error: 'Failed to migrate data' });
+    }
+  });
+  
+  // Get available seed types
+  app.get('/api/data/seed-types', ensureAuthenticated, async (req, res) => {
+    try {
+      const seedTypes = [
+        {
+          id: 'ecommerce',
+          name: 'E-commerce',
+          description: 'Products, customers, orders, and inventory data',
+          tables: ['products', 'customers', 'orders', 'inventory']
+        },
+        {
+          id: 'blog',
+          name: 'Blog/CMS',
+          description: 'Posts, authors, comments, and categories',
+          tables: ['posts', 'authors', 'comments', 'categories']
+        },
+        {
+          id: 'saas',
+          name: 'SaaS Application',
+          description: 'Users, organizations, subscriptions, and billing',
+          tables: ['users', 'organizations', 'subscriptions', 'invoices']
+        },
+        {
+          id: 'social',
+          name: 'Social Network',
+          description: 'Users, posts, friends, and messages',
+          tables: ['users', 'posts', 'friendships', 'messages']
+        }
+      ];
+      
+      res.json({
+        success: true,
+        seedTypes
+      });
+    } catch (error) {
+      console.error('Error getting seed types:', error);
+      res.status(500).json({ error: 'Failed to get seed types' });
     }
   });
 
