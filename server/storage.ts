@@ -103,6 +103,17 @@ export interface IStorage {
   getProjectStorageBuckets(projectId: number): Promise<any[]>;
   getStorageObjects(bucketId: string): Promise<any[]>;
   deleteStorageObject(bucketId: string, objectKey: string): Promise<void>;
+  
+  // Team operations
+  getUserTeams(userId: number): Promise<any[]>;
+  
+  // Theme operations  
+  getUserThemeSettings(userId: number): Promise<any>;
+  updateUserThemeSettings(userId: number, settings: any): Promise<any>;
+  getInstalledThemes(userId: number): Promise<any[]>;
+  installTheme(userId: number, themeId: string): Promise<void>;
+  uninstallTheme(userId: number, themeId: string): Promise<void>;
+  createCustomTheme(userId: number, theme: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -543,6 +554,69 @@ export class DatabaseStorage implements IStorage {
   async deleteStorageObject(bucketId: string, objectKey: string): Promise<void> {
     // In production, delete from storage_objects table
     console.log(`Deleting object ${objectKey} from bucket ${bucketId}`);
+  }
+  
+  // Team operations
+  async getUserTeams(userId: number): Promise<any[]> {
+    const userTeams = await db
+      .select({
+        id: teams.id,
+        name: teams.name,
+        slug: teams.slug,
+        description: teams.description,
+        avatar: teams.avatar,
+        role: teamMembers.role,
+        joinedAt: teamMembers.joinedAt
+      })
+      .from(teams)
+      .innerJoin(teamMembers, eq(teams.id, teamMembers.teamId))
+      .where(eq(teamMembers.userId, userId));
+    
+    return userTeams;
+  }
+  
+  // Theme operations
+  async getUserThemeSettings(userId: number): Promise<any> {
+    // In production, query user_theme_settings table
+    return {
+      theme: 'dark',
+      accentColor: '#0066cc',
+      fontSize: 'medium',
+      fontFamily: 'system'
+    };
+  }
+  
+  async updateUserThemeSettings(userId: number, settings: any): Promise<any> {
+    // In production, update user_theme_settings table
+    return settings;
+  }
+  
+  async getInstalledThemes(userId: number): Promise<any[]> {
+    // In production, query user_installed_themes table
+    return [
+      { id: 'dark', name: 'Dark', installed: true },
+      { id: 'light', name: 'Light', installed: true }
+    ];
+  }
+  
+  async installTheme(userId: number, themeId: string): Promise<void> {
+    // In production, insert into user_installed_themes table
+    console.log(`Installing theme ${themeId} for user ${userId}`);
+  }
+  
+  async uninstallTheme(userId: number, themeId: string): Promise<void> {
+    // In production, delete from user_installed_themes table
+    console.log(`Uninstalling theme ${themeId} for user ${userId}`);
+  }
+  
+  async createCustomTheme(userId: number, theme: any): Promise<any> {
+    // In production, insert into custom_themes table
+    return {
+      id: `custom-${Date.now()}`,
+      ...theme,
+      createdBy: userId,
+      createdAt: new Date()
+    };
   }
 }
 
