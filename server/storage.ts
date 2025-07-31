@@ -93,8 +93,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    // For now, use email as username since we don't have a separate username field
-    return this.getUserByEmail(username);
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(userData: InsertUser): Promise<User> {
@@ -113,7 +113,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
@@ -162,7 +162,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProject(id: number): Promise<boolean> {
     const result = await db.delete(projects).where(eq(projects.id, id));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   async incrementProjectViews(id: number): Promise<void> {
@@ -198,7 +198,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteFile(id: number): Promise<boolean> {
     const result = await db.delete(files).where(eq(files.id, id));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   // API Key operations
