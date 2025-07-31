@@ -215,14 +215,12 @@ export function setupAuth(app: Express) {
 
   // Serialize user to the session
   passport.serializeUser((user: Express.User, done) => {
-    console.log('Serializing user:', user.id);
     done(null, user.id);
   });
 
   // Deserialize user from the session
   passport.deserializeUser(async (id: number, done) => {
     try {
-      console.log('Deserializing user ID:', id);
       const user = await storage.getUser(id);
       if (!user) {
         console.log('User not found during deserialization:', id);

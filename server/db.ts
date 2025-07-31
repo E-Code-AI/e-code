@@ -26,12 +26,10 @@ export const client = postgres(process.env.DATABASE_URL, {
   },
   // Better error handling
   onclose: () => {
-    console.log('Database connection closed');
+    // Removed verbose logging to improve performance
   },
   onconnect: () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Database connection established');
-    }
+    // Removed verbose logging to improve performance
   },
 });
 
