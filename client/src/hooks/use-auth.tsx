@@ -47,6 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Login successful",
         description: `Welcome back, ${user.username}!`,
       });
+      // Force a page reload to ensure session is properly initialized
+      window.location.href = '/dashboard';
     },
     onError: (error: Error) => {
       toast({
