@@ -92,6 +92,8 @@ import { TeamsService } from './teams/teams-service';
 import { authCompleteRouter } from './routes/auth-complete';
 import { marketplaceService } from './services/marketplace-service';
 import { getEducationService } from './services/education-service';
+import { enterpriseSSOService } from './sso/enterprise-sso-service';
+import { rolesPermissionsService } from './security/roles-permissions-service';
 
 const logger = createLogger('routes');
 const teamsService = new TeamsService();
@@ -4756,6 +4758,155 @@ Generate a comprehensive application based on the user's request. Include all ne
     } catch (error) {
       console.error('Audit report generation error:', error);
       res.status(500).json({ message: 'Failed to generate audit report' });
+    }
+  });
+  
+  // Roles & Permissions Routes
+  app.get('/api/permissions', ensureAuthenticated, async (req, res) => {
+    try {
+      const permissions = await rolesPermissionsService.listPermissions();
+      res.json(permissions);
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+      res.status(500).json({ message: 'Failed to fetch permissions' });
+    }
+  });
+
+  app.get('/api/organizations/roles', ensureAuthenticated, async (req, res) => {
+    try {
+      const organizationId = req.user!.organizationId || 1;
+      const roles = await rolesPermissionsService.listRoles(organizationId);
+      
+      // Include user count for each role
+      const rolesWithCounts = await Promise.all(roles.map(async (role) => {
+        const users = await rolesPermissionsService.getRoleUsers(role.id, organizationId);
+        return { ...role, userCount: users.length };
+      }));
+      
+      res.json(rolesWithCounts);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      res.status(500).json({ message: 'Failed to fetch roles' });
+    }
+  });
+
+  app.post('/api/organizations/roles', ensureAuthenticated, async (req, res) => {
+    try {
+      const organizationId = req.user!.organizationId || 1;
+      const { name, description, permissions } = req.body;
+      
+      const role = await rolesPermissionsService.createRole(organizationId, {
+        name,
+        description,
+        permissions
+      });
+      
+      res.json(role);
+    } catch (error) {
+      console.error('Error creating role:', error);
+      res.status(500).json({ message: 'Failed to create role' });
+    }
+  });
+
+  app.patch('/api/organizations/roles/:roleId', ensureAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.roleId);
+      const { name, description, permissions } = req.body;
+      
+      const role = await rolesPermissionsService.updateRole(roleId, {
+        name,
+        description,
+        permissions
+      });
+      
+      res.json(role);
+    } catch (error) {
+      console.error('Error updating role:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to update role' });
+    }
+  });
+
+  app.delete('/api/organizations/roles/:roleId', ensureAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.roleId);
+      await rolesPermissionsService.deleteRole(roleId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting role:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to delete role' });
+    }
+  });
+
+  app.post('/api/organizations/roles/:roleId/assign', ensureAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.roleId);
+      const { userId } = req.body;
+      const organizationId = req.user!.organizationId || 1;
+      const assignedBy = req.user!.id;
+      
+      await rolesPermissionsService.assignRole(userId, roleId, organizationId, assignedBy);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error assigning role:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to assign role' });
+    }
+  });
+
+  app.delete('/api/organizations/roles/:roleId/users/:userId', ensureAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.roleId);
+      const userId = parseInt(req.params.userId);
+      const organizationId = req.user!.organizationId || 1;
+      const removedBy = req.user!.id;
+      
+      await rolesPermissionsService.removeRole(userId, roleId, organizationId, removedBy);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing role:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to remove role' });
+    }
+  });
+
+  app.get('/api/users/:userId/roles', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const organizationId = req.user!.organizationId || 1;
+      
+      const roles = await rolesPermissionsService.getUserRoles(userId, organizationId);
+      res.json(roles);
+    } catch (error) {
+      console.error('Error fetching user roles:', error);
+      res.status(500).json({ message: 'Failed to fetch user roles' });
+    }
+  });
+
+  app.get('/api/users/:userId/permissions', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const organizationId = req.user!.organizationId || 1;
+      
+      const permissions = await rolesPermissionsService.getUserPermissions(userId, organizationId);
+      res.json(permissions);
+    } catch (error) {
+      console.error('Error fetching user permissions:', error);
+      res.status(500).json({ message: 'Failed to fetch user permissions' });
+    }
+  });
+
+  app.post('/api/organizations/roles/initialize', ensureAuthenticated, async (req, res) => {
+    try {
+      const organizationId = req.user!.organizationId || 1;
+      
+      // Initialize system permissions
+      await rolesPermissionsService.initializeSystemPermissions();
+      
+      // Create system roles for the organization
+      await rolesPermissionsService.createSystemRoles(organizationId);
+      
+      res.json({ success: true, message: 'System roles and permissions initialized' });
+    } catch (error) {
+      console.error('Error initializing roles:', error);
+      res.status(500).json({ message: 'Failed to initialize roles and permissions' });
     }
   });
   

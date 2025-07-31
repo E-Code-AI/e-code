@@ -1378,3 +1378,48 @@ export const mobileAppSessions = pgTable('mobile_app_sessions', {
   lastActiveAt: timestamp('last_active_at').defaultNow(),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// Custom Roles & Permissions tables
+export const roles = pgTable('roles', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  isSystem: boolean('is_system').default(false), // Built-in roles that can't be deleted
+  permissions: jsonb('permissions').notNull(), // Array of permission strings
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  nameIdx: index('roles_name_idx').on(table.name),
+  orgIdx: index('roles_org_idx').on(table.organizationId),
+}));
+
+export const userRoles = pgTable('user_roles', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  roleId: integer('role_id').notNull().references(() => roles.id, { onDelete: 'cascade' }),
+  organizationId: integer('organization_id').notNull(),
+  assignedBy: integer('assigned_by').references(() => users.id),
+  assignedAt: timestamp('assigned_at').defaultNow(),
+}, (table) => ({
+  userRoleIdx: index('user_role_idx').on(table.userId, table.roleId),
+  userOrgIdx: index('user_org_idx').on(table.userId, table.organizationId),
+}));
+
+export const permissions = pgTable('permissions', {
+  id: serial('id').primaryKey(),
+  resource: varchar('resource', { length: 100 }).notNull(), // e.g., 'project', 'user', 'team'
+  action: varchar('action', { length: 100 }).notNull(), // e.g., 'create', 'read', 'update', 'delete'
+  description: text('description'),
+  category: varchar('category', { length: 50 }), // e.g., 'project_management', 'user_management'
+  isSystem: boolean('is_system').default(true),
+}, (table) => ({
+  resourceActionIdx: index('resource_action_idx').on(table.resource, table.action),
+}));
+
+export type Role = typeof roles.$inferSelect;
+export type InsertRole = typeof roles.$inferInsert;
+export type UserRole = typeof userRoles.$inferSelect;
+export type InsertUserRole = typeof userRoles.$inferInsert;
+export type Permission = typeof permissions.$inferSelect;
+export type InsertPermission = typeof permissions.$inferInsert;

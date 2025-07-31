@@ -8,7 +8,7 @@ import { ssoProviders, auditLogs, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import * as crypto from 'crypto';
 import * as saml from 'samlify';
-import openidClient from 'openid-client';
+import * as openidClient from 'openid-client';
 import * as jwt from 'jsonwebtoken';
 
 interface SSOConfig {
