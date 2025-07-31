@@ -59,7 +59,11 @@ export default function APISDKPage() {
   // Create API key mutation
   const createKeyMutation = useMutation({
     mutationFn: (data: { name: string; permissions: string[] }) =>
-      apiRequest("/api/sdk/keys", { method: "POST", body: data }),
+      apiRequest("/api/sdk/keys", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data) 
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/sdk/keys"] });
       setNewKeyName("");
