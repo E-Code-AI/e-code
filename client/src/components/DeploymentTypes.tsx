@@ -606,7 +606,7 @@ export function DeploymentTypes({ projectId, onDeploy }: DeploymentTypesProps) {
                         value={config.healthCheck?.path || ''}
                         onChange={(e) => setConfig(prev => ({
                           ...prev,
-                          healthCheck: { ...prev.healthCheck!, path: e.target.value, port: 3000, intervalSeconds: 30, timeoutSeconds: 5 }
+                          healthCheck: { ...prev.healthCheck!, path: e.target.value, port: 5000, intervalSeconds: 30, timeoutSeconds: 5 }
                         }))}
                       />
                     </div>
