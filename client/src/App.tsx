@@ -159,7 +159,11 @@ function AppContent() {
           <Route path="/subprocessors" component={Subprocessors} />
           <Route path="/student-dpa" component={StudentDPA} />
           <Route path="/languages" component={Languages} />
-          <Route path="/github-import" component={GitHubImport} />
+          <ProtectedRoute path="/github-import" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <GitHubImport />
+            </ReplitLayout>
+          )} />
           <Route path="/git" component={Git} />
           {/* Newsletter pages */}
           <Route path="/newsletter-confirmed" component={NewsletterConfirmed} />
@@ -229,6 +233,11 @@ function AppContent() {
           <ProtectedRoute path="/settings" component={() => (
             <ReplitLayout>
               <Settings />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/settings/notifications" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Notifications />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/profile/:username?" component={() => (
@@ -392,7 +401,7 @@ function AppContent() {
               <Referrals />
             </ReplitLayout>
           )} />
-          <Route path="/@:username" component={(params) => (
+          <ProtectedRoute path="/@:username" component={() => (
             <ReplitLayout>
               <UserProfile />
             </ReplitLayout>
