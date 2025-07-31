@@ -81,6 +81,10 @@ export interface IStorage {
 
   // Login history operations
   createLoginHistory(history: any): Promise<any>;
+  
+  // Admin API Key operations (for centralized AI services)
+  getActiveAdminApiKey(provider: string): Promise<any>;
+  trackAIUsage(userId: number, tokens: number, mode: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -400,6 +404,39 @@ export class DatabaseStorage implements IStorage {
     // Simple implementation - just log for now since we don't have a login_history table
     console.log('Login attempt logged:', history);
     return { id: Date.now(), ...history };
+  }
+
+  // Admin API Key operations (for centralized AI services)
+  async getActiveAdminApiKey(provider: string): Promise<any> {
+    // For now, return the environment variables as admin keys
+    const envKeyMap: Record<string, string> = {
+      'openai': 'OPENAI_API_KEY',
+      'anthropic': 'ANTHROPIC_API_KEY',
+      'gemini': 'GEMINI_API_KEY',
+      'xai': 'XAI_API_KEY',
+      'perplexity': 'PERPLEXITY_API_KEY',
+      'mixtral': 'MIXTRAL_API_KEY',
+      'llama': 'LLAMA_API_KEY',
+      'cohere': 'COHERE_API_KEY',
+      'deepseek': 'DEEPSEEK_API_KEY',
+      'mistral': 'MISTRAL_API_KEY'
+    };
+    
+    const envKey = envKeyMap[provider];
+    if (envKey && process.env[envKey]) {
+      return {
+        provider,
+        apiKey: process.env[envKey],
+        isActive: true
+      };
+    }
+    
+    return null;
+  }
+
+  async trackAIUsage(userId: number, tokens: number, mode: string): Promise<void> {
+    // For now, just log the usage
+    console.log(`AI usage tracked - User: ${userId}, Tokens: ${tokens}, Mode: ${mode}`);
   }
 }
 

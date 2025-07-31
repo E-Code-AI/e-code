@@ -628,7 +628,7 @@ API will be available at http://localhost:3000
   app.get('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
-      const files = await storage.getFilesByProject(projectId);
+      const files = await storage.getFilesByProjectId(projectId);
       res.json(files);
     } catch (error) {
       console.error('Error fetching files:', error);
@@ -654,7 +654,7 @@ API will be available at http://localhost:3000
       // Handle parentPath (from AI agent) by resolving it to parentId
       let parentId = req.body.parentId || null;
       if (req.body.parentPath && !req.body.parentId) {
-        const existingFiles = await storage.getFilesByProject(projectId);
+        const existingFiles = await storage.getFilesByProjectId(projectId);
         const parentFolder = existingFiles.find(f => 
           f.isFolder && f.name === req.body.parentPath && !f.parentId
         );
@@ -675,7 +675,7 @@ API will be available at http://localhost:3000
       }
       
       // Check for duplicate file names in the same directory
-      const existingFiles = await storage.getFilesByProject(projectId);
+      const existingFiles = await storage.getFilesByProjectId(projectId);
       const duplicate = existingFiles.find(f => 
         f.name === req.body.name && 
         f.parentId === parentId
@@ -762,7 +762,7 @@ API will be available at http://localhost:3000
         }
         
         // Check for duplicate names
-        const existingFiles = await storage.getFilesByProject(file.projectId);
+        const existingFiles = await storage.getFilesByProjectId(file.projectId);
         const duplicate = existingFiles.find(f => 
           f.id !== fileId && 
           f.name === req.body.name && 
@@ -1805,7 +1805,7 @@ API will be available at http://localhost:3000
       }
 
       // Get project files
-      const files = await storage.getFilesByProject(projectId);
+      const files = await storage.getFilesByProjectId(projectId);
       
       // Check if this is a web project (HTML/CSS/JS)
       const hasHtmlFile = files.some(f => f.name.endsWith('.html'));
@@ -1869,7 +1869,7 @@ API will be available at http://localhost:3000
       }
       
       // Get all files in the project
-      const files = await storage.getFilesByProject(projectId);
+      const files = await storage.getFilesByProjectId(projectId);
       
       // Search through files
       const results = [];
@@ -1959,7 +1959,7 @@ API will be available at http://localhost:3000
       const projectId = parseInt(req.params.id);
       
       // Get project files to check if it's a web project
-      const files = await storage.getFilesByProject(projectId);
+      const files = await storage.getFilesByProjectId(projectId);
       const hasHtmlFile = files.some(f => f.name.endsWith('.html'));
       
       if (hasHtmlFile) {
@@ -2813,7 +2813,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return res.status(400).json({ message: 'Invalid project ID' });
       }
 
-      const files = await storage.getFilesByProject(projectId);
+      const files = await storage.getFilesByProjectId(projectId);
       res.json(files);
     } catch (error) {
       console.error("Error fetching files:", error);
@@ -3062,7 +3062,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       // Get recent file content for context
-      const files = await storage.getFilesByProject(parseInt(projectId));
+      const files = await storage.getFilesByProjectId(parseInt(projectId));
       const codeContext = files
         .filter(f => !f.isFolder && context?.file === f.name)
         .slice(0, 3)
@@ -3181,6 +3181,9 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
         // Use comprehensive autonomous builder for building detection and generation
         const buildingIntent = autonomousBuilder.detectBuildingIntent(message);
         
+        // Initialize agentMessages at a higher scope
+        let agentMessages: ChatMessage[] = [];
+        
         if (buildingIntent.detected) {
           logger.info('Building intent detected by autonomous builder:', {
             matchedTemplate: buildingIntent.matchedTemplate,
@@ -3213,7 +3216,7 @@ Available action types:
 Generate a comprehensive application based on the user's request. Include all necessary files, folders, and packages.`
             };
             
-            const agentMessages: ChatMessage[] = [
+            agentMessages = [
               systemMessageAgent,
               ...conversationHistory.map((msg: any) => ({
                 role: msg.role as 'user' | 'assistant',
@@ -3360,20 +3363,11 @@ Generate a comprehensive application based on the user's request. Include all ne
             
             const cost = (totalTokens / 1000) * (costPerThousandTokens[provider.name.toLowerCase()] || 0.001);
             
-            // Save usage record
-            await storage.createAiUsageRecord({
-              userId: req.user.id,
-              provider: provider.name.toLowerCase(),
-              model: provider.name,
-              operation: 'agent',
-              promptTokens,
-              completionTokens,
-              totalTokens,
-              cost
-            });
+            // Track AI usage
+            await storage.trackAIUsage(req.user.id, totalTokens, 'agent');
             
-            // Update user's subscription token usage
-            await storage.updateUserAiTokens(req.user.id, totalTokens);
+            // Update user's subscription token usage would go here
+            // await storage.updateUserAiTokens(req.user.id, totalTokens);
           }
           
           res.json({
@@ -6259,7 +6253,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       const filepath = (req.params as any)[0] || 'index.html';
       
       // Get all project files
-      const files = await storage.getFilesByProject(projectId);
+      const files = await storage.getFilesByProjectId(projectId);
       
       // Find the requested file
       const file = files.find(f => f.name === filepath && !f.isFolder);
