@@ -1,896 +1,500 @@
 import { EventEmitter } from 'events';
 import axios from 'axios';
-import os from 'os';
-import { db } from '../db';
-// import { projects, deployments } from '@shared/schema';
-import { eq } from 'drizzle-orm';
-
-interface MonitoringIntegration {
-    id: string;
-    projectId: number;
-    type: 'datadog' | 'newrelic';
-    name: string;
-    enabled: boolean;
-    config: DatadogConfig | NewRelicConfig;
-    metricSettings: MetricSettings;
-    created: Date;
-}
 
 interface DatadogConfig {
-    apiKey: string;
-    applicationKey: string;
-    site: string; // e.g., 'datadoghq.com', 'datadoghq.eu'
-    tags?: string[];
-    service?: string;
-    env?: string;
+  apiKey: string;
+  appKey: string;
+  site?: string;
 }
 
 interface NewRelicConfig {
-    accountId: string;
-    apiKey: string;
-    region: 'us' | 'eu';
-    appId?: string;
-    insightsInsertKey?: string;
-}
-
-interface MetricSettings {
-    collectSystemMetrics: boolean;
-    collectCustomMetrics: boolean;
-    collectLogs: boolean;
-    collectTraces: boolean;
-    collectErrors: boolean;
-    sampleRate: number; // 0.0 to 1.0
-    customMetrics?: CustomMetricConfig[];
-}
-
-interface CustomMetricConfig {
-    name: string;
-    type: 'counter' | 'gauge' | 'histogram' | 'distribution';
-    tags?: string[];
+  apiKey: string;
+  accountId: string;
+  licenseKey?: string;
 }
 
 interface MetricData {
-    name: string;
-    value: number;
-    tags?: Record<string, string>;
-    timestamp?: Date;
-    type: 'counter' | 'gauge' | 'histogram' | 'distribution';
+  metric: string;
+  points: Array<[number, number]>;
+  tags?: string[];
+  host?: string;
 }
 
-interface LogData {
-    message: string;
-    level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
-    timestamp: Date;
-    context?: Record<string, any>;
-    tags?: Record<string, string>;
-}
-
-interface TraceData {
-    traceId: string;
-    spanId: string;
-    parentSpanId?: string;
-    operationName: string;
-    startTime: Date;
-    duration: number;
-    tags?: Record<string, any>;
-    status?: 'ok' | 'error';
-}
-
-interface ErrorData {
-    message: string;
-    stack?: string;
-    type?: string;
-    timestamp: Date;
-    context?: Record<string, any>;
-    userId?: string;
-    sessionId?: string;
+interface Alert {
+  id: string;
+  name: string;
+  condition: string;
+  threshold: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  enabled: boolean;
 }
 
 export class DatadogNewRelicService extends EventEmitter {
-    private integrations: Map<string, MonitoringIntegration> = new Map();
-    private metricBuffers: Map<string, MetricData[]> = new Map();
-    private logBuffers: Map<string, LogData[]> = new Map();
-    private flushInterval: NodeJS.Timeout | null = null;
+  private datadogConfigs: Map<string, DatadogConfig> = new Map();
+  private newrelicConfigs: Map<string, NewRelicConfig> = new Map();
 
-    constructor() {
-        super();
-        this.startFlushInterval();
+  constructor() {
+    super();
+    this.initializeDefaultConfigs();
+  }
+
+  private initializeDefaultConfigs() {
+    if (process.env.DATADOG_API_KEY) {
+      this.datadogConfigs.set('default', {
+        apiKey: process.env.DATADOG_API_KEY,
+        appKey: process.env.DATADOG_APP_KEY || '',
+        site: process.env.DATADOG_SITE || 'datadoghq.com'
+      });
     }
 
-    async createIntegration(config: Omit<MonitoringIntegration, 'id' | 'created'>): Promise<MonitoringIntegration> {
-        const integrationId = `mon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Validate configuration
-        if (config.type === 'datadog') {
-            await this.validateDatadogConfig(config.config as DatadogConfig);
-        } else if (config.type === 'newrelic') {
-            await this.validateNewRelicConfig(config.config as NewRelicConfig);
-        }
+    if (process.env.NEWRELIC_API_KEY) {
+      this.newrelicConfigs.set('default', {
+        apiKey: process.env.NEWRELIC_API_KEY,
+        accountId: process.env.NEWRELIC_ACCOUNT_ID || '',
+        licenseKey: process.env.NEWRELIC_LICENSE_KEY
+      });
+    }
+  }
 
-        const integration: MonitoringIntegration = {
-            ...config,
-            id: integrationId,
-            created: new Date()
-        };
+  // Datadog Configuration
+  async configureDatadog(projectId: string, config: DatadogConfig): Promise<void> {
+    await this.testDatadogConnection(config);
+    this.datadogConfigs.set(projectId, config);
+    this.emit('datadog:configured', { projectId });
+  }
 
-        this.integrations.set(integrationId, integration);
-        this.metricBuffers.set(integrationId, []);
-        this.logBuffers.set(integrationId, []);
-        
-        this.emit('integration:created', integration);
-        
-        // Start collecting system metrics if enabled
-        if (config.metricSettings.collectSystemMetrics) {
-            this.startSystemMetricsCollection(integrationId);
+  async testDatadogConnection(config: DatadogConfig): Promise<boolean> {
+    try {
+      const response = await axios.get(`https://api.${config.site || 'datadoghq.com'}/api/v1/validate`, {
+        headers: {
+          'DD-API-KEY': config.apiKey,
+          'DD-APPLICATION-KEY': config.appKey
         }
-        
-        return integration;
+      });
+      return response.data.valid;
+    } catch (error) {
+      throw new Error('Datadog connection failed: Invalid API keys');
+    }
+  }
+
+  // New Relic Configuration
+  async configureNewRelic(projectId: string, config: NewRelicConfig): Promise<void> {
+    await this.testNewRelicConnection(config);
+    this.newrelicConfigs.set(projectId, config);
+    this.emit('newrelic:configured', { projectId });
+  }
+
+  async testNewRelicConnection(config: NewRelicConfig): Promise<boolean> {
+    try {
+      const response = await axios.get(`https://api.newrelic.com/v2/accounts/${config.accountId}.json`, {
+        headers: {
+          'X-API-Key': config.apiKey
+        }
+      });
+      return response.status === 200;
+    } catch (error) {
+      throw new Error('New Relic connection failed: Invalid API key or account ID');
+    }
+  }
+
+  // Datadog Metrics
+  async sendDatadogMetrics(projectId: string, metrics: MetricData[]): Promise<void> {
+    const config = this.datadogConfigs.get(projectId) || this.datadogConfigs.get('default');
+    if (!config) {
+      throw new Error('Datadog not configured for this project');
     }
 
-    async updateIntegration(integrationId: string, updates: Partial<MonitoringIntegration>): Promise<MonitoringIntegration> {
-        const integration = this.integrations.get(integrationId);
-        if (!integration) {
-            throw new Error('Integration not found');
-        }
+    const payload = {
+      series: metrics.map(metric => ({
+        metric: metric.metric,
+        points: metric.points,
+        tags: metric.tags,
+        host: metric.host || 'e-code-app'
+      }))
+    };
 
-        const updated = { ...integration, ...updates };
-        
-        // Re-validate if config changed
-        if (updates.config) {
-            if (updated.type === 'datadog') {
-                await this.validateDatadogConfig(updated.config as DatadogConfig);
-            } else if (updated.type === 'newrelic') {
-                await this.validateNewRelicConfig(updated.config as NewRelicConfig);
-            }
-        }
+    await axios.post(`https://api.${config.site}/api/v1/series`, payload, {
+      headers: {
+        'DD-API-KEY': config.apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
 
-        this.integrations.set(integrationId, updated);
-        this.emit('integration:updated', updated);
-        
-        return updated;
+    this.emit('datadog:metrics_sent', { projectId, count: metrics.length });
+  }
+
+  async getDatadogMetrics(projectId: string, query: string, from: number, to: number): Promise<any> {
+    const config = this.datadogConfigs.get(projectId) || this.datadogConfigs.get('default');
+    if (!config) {
+      throw new Error('Datadog not configured for this project');
     }
 
-    async deleteIntegration(integrationId: string): Promise<void> {
-        const integration = this.integrations.get(integrationId);
-        if (!integration) {
-            throw new Error('Integration not found');
-        }
+    const response = await axios.get(`https://api.${config.site}/api/v1/query`, {
+      params: {
+        query,
+        from,
+        to
+      },
+      headers: {
+        'DD-API-KEY': config.apiKey,
+        'DD-APPLICATION-KEY': config.appKey
+      }
+    });
 
-        // Flush any remaining data
-        await this.flush(integrationId);
+    return response.data;
+  }
 
-        this.integrations.delete(integrationId);
-        this.metricBuffers.delete(integrationId);
-        this.logBuffers.delete(integrationId);
-        
-        this.emit('integration:deleted', integrationId);
+  // New Relic Metrics
+  async sendNewRelicMetrics(projectId: string, metrics: MetricData[]): Promise<void> {
+    const config = this.newrelicConfigs.get(projectId) || this.newrelicConfigs.get('default');
+    if (!config) {
+      throw new Error('New Relic not configured for this project');
     }
 
-    async getIntegration(integrationId: string): Promise<MonitoringIntegration | undefined> {
-        return this.integrations.get(integrationId);
+    const payload = metrics.map(metric => ({
+      metrics: [{
+        name: metric.metric,
+        type: 'gauge',
+        value: metric.points[metric.points.length - 1][1],
+        timestamp: metric.points[metric.points.length - 1][0],
+        attributes: metric.tags?.reduce((acc, tag) => {
+          const [key, value] = tag.split(':');
+          acc[key] = value;
+          return acc;
+        }, {} as Record<string, string>)
+      }]
+    }));
+
+    for (const batch of payload) {
+      await axios.post('https://metric-api.newrelic.com/metric/v1', batch, {
+        headers: {
+          'Api-Key': config.apiKey,
+          'Content-Type': 'application/json'
+        }
+      });
     }
 
-    async listIntegrations(projectId?: number): Promise<MonitoringIntegration[]> {
-        const integrations = Array.from(this.integrations.values());
-        
-        if (projectId) {
-            return integrations.filter(i => i.projectId === projectId);
-        }
-        
-        return integrations;
+    this.emit('newrelic:metrics_sent', { projectId, count: metrics.length });
+  }
+
+  async getNewRelicMetrics(projectId: string, nrql: string): Promise<any> {
+    const config = this.newrelicConfigs.get(projectId) || this.newrelicConfigs.get('default');
+    if (!config) {
+      throw new Error('New Relic not configured for this project');
     }
 
-    async sendMetric(integrationId: string, metric: MetricData): Promise<void> {
-        const integration = this.integrations.get(integrationId);
-        if (!integration || !integration.enabled) {
-            return;
-        }
-
-        if (!integration.metricSettings.collectCustomMetrics) {
-            return;
-        }
-
-        // Apply sample rate
-        if (Math.random() > integration.metricSettings.sampleRate) {
-            return;
-        }
-
-        const buffer = this.metricBuffers.get(integrationId) || [];
-        buffer.push({
-            ...metric,
-            timestamp: metric.timestamp || new Date()
-        });
-        this.metricBuffers.set(integrationId, buffer);
-
-        // Flush if buffer is large
-        if (buffer.length >= 100) {
-            await this.flushMetrics(integrationId);
-        }
-    }
-
-    async sendLog(integrationId: string, log: LogData): Promise<void> {
-        const integration = this.integrations.get(integrationId);
-        if (!integration || !integration.enabled) {
-            return;
-        }
-
-        if (!integration.metricSettings.collectLogs) {
-            return;
-        }
-
-        const buffer = this.logBuffers.get(integrationId) || [];
-        buffer.push(log);
-        this.logBuffers.set(integrationId, buffer);
-
-        // Flush if buffer is large
-        if (buffer.length >= 50) {
-            await this.flushLogs(integrationId);
-        }
-    }
-
-    async sendTrace(integrationId: string, trace: TraceData): Promise<void> {
-        const integration = this.integrations.get(integrationId);
-        if (!integration || !integration.enabled) {
-            return;
-        }
-
-        if (!integration.metricSettings.collectTraces) {
-            return;
-        }
-
-        if (integration.type === 'datadog') {
-            await this.sendDatadogTrace(integration, trace);
-        } else if (integration.type === 'newrelic') {
-            await this.sendNewRelicTrace(integration, trace);
-        }
-    }
-
-    async sendError(integrationId: string, error: ErrorData): Promise<void> {
-        const integration = this.integrations.get(integrationId);
-        if (!integration || !integration.enabled) {
-            return;
-        }
-
-        if (!integration.metricSettings.collectErrors) {
-            return;
-        }
-
-        if (integration.type === 'datadog') {
-            await this.sendDatadogError(integration, error);
-        } else if (integration.type === 'newrelic') {
-            await this.sendNewRelicError(integration, error);
-        }
-    }
-
-    async trackDeployment(projectId: number, deployment: any): Promise<void> {
-        const integrations = await this.listIntegrations(projectId);
-        
-        for (const integration of integrations) {
-            try {
-                if (integration.type === 'datadog') {
-                    await this.sendDatadogEvent(integration, {
-                        title: 'Deployment',
-                        text: `Deployed version ${deployment.version} to ${deployment.environment}`,
-                        tags: ['deployment', `env:${deployment.environment}`, `version:${deployment.version}`],
-                        alertType: 'info'
-                    });
-                } else if (integration.type === 'newrelic') {
-                    await this.sendNewRelicDeployment(integration, deployment);
+    const response = await axios.get(`https://api.newrelic.com/graphql`, {
+      method: 'POST',
+      data: {
+        query: `
+          {
+            actor {
+              account(id: ${config.accountId}) {
+                nrql(query: "${nrql}") {
+                  results
                 }
-            } catch (error) {
-                console.error(`Failed to track deployment in ${integration.type}:`, error);
+              }
             }
+          }
+        `
+      },
+      headers: {
+        'Api-Key': config.apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.data.data.actor.account.nrql.results;
+  }
+
+  // Datadog Alerts
+  async createDatadogAlert(projectId: string, alert: Omit<Alert, 'id'>): Promise<Alert> {
+    const config = this.datadogConfigs.get(projectId) || this.datadogConfigs.get('default');
+    if (!config) {
+      throw new Error('Datadog not configured for this project');
+    }
+
+    const payload = {
+      name: alert.name,
+      query: alert.condition,
+      message: `Alert: ${alert.name}`,
+      tags: [`project:${projectId}`, `severity:${alert.severity}`],
+      options: {
+        thresholds: {
+          critical: alert.threshold
+        },
+        notify_audit: false,
+        notify_no_data: false
+      }
+    };
+
+    const response = await axios.post(`https://api.${config.site}/api/v1/monitor`, payload, {
+      headers: {
+        'DD-API-KEY': config.apiKey,
+        'DD-APPLICATION-KEY': config.appKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const createdAlert = {
+      id: response.data.id.toString(),
+      name: alert.name,
+      condition: alert.condition,
+      threshold: alert.threshold,
+      severity: alert.severity,
+      enabled: alert.enabled
+    };
+
+    this.emit('datadog:alert_created', { projectId, alertId: createdAlert.id });
+    return createdAlert;
+  }
+
+  async getDatadogAlerts(projectId: string): Promise<Alert[]> {
+    const config = this.datadogConfigs.get(projectId) || this.datadogConfigs.get('default');
+    if (!config) {
+      throw new Error('Datadog not configured for this project');
+    }
+
+    const response = await axios.get(`https://api.${config.site}/api/v1/monitor`, {
+      params: {
+        tags: `project:${projectId}`
+      },
+      headers: {
+        'DD-API-KEY': config.apiKey,
+        'DD-APPLICATION-KEY': config.appKey
+      }
+    });
+
+    return response.data.map((monitor: any) => ({
+      id: monitor.id.toString(),
+      name: monitor.name,
+      condition: monitor.query,
+      threshold: monitor.options?.thresholds?.critical || 0,
+      severity: this.extractSeverityFromTags(monitor.tags),
+      enabled: monitor.options?.silenced === undefined
+    }));
+  }
+
+  // New Relic Alerts
+  async createNewRelicAlert(projectId: string, alert: Omit<Alert, 'id'>): Promise<Alert> {
+    const config = this.newrelicConfigs.get(projectId) || this.newrelicConfigs.get('default');
+    if (!config) {
+      throw new Error('New Relic not configured for this project');
+    }
+
+    // First create a policy
+    const policyResponse = await axios.post('https://api.newrelic.com/v2/alerts_policies.json', {
+      policy: {
+        name: `${alert.name} Policy`,
+        incident_preference: 'PER_CONDITION'
+      }
+    }, {
+      headers: {
+        'X-API-Key': config.apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const policyId = policyResponse.data.policy.id;
+
+    // Then create the condition
+    const conditionResponse = await axios.post(`https://api.newrelic.com/v2/alerts_conditions/policies/${policyId}.json`, {
+      condition: {
+        type: 'apm_app_metric',
+        name: alert.name,
+        enabled: alert.enabled,
+        entities: [],
+        metric: 'apdex',
+        condition_scope: 'application',
+        terms: [{
+          duration: '5',
+          operator: 'below',
+          priority: alert.severity === 'critical' ? 'critical' : 'warning',
+          threshold: alert.threshold.toString(),
+          time_function: 'all'
+        }]
+      }
+    }, {
+      headers: {
+        'X-API-Key': config.apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const createdAlert = {
+      id: conditionResponse.data.condition.id.toString(),
+      name: alert.name,
+      condition: alert.condition,
+      threshold: alert.threshold,
+      severity: alert.severity,
+      enabled: alert.enabled
+    };
+
+    this.emit('newrelic:alert_created', { projectId, alertId: createdAlert.id });
+    return createdAlert;
+  }
+
+  async getNewRelicAlerts(projectId: string): Promise<Alert[]> {
+    const config = this.newrelicConfigs.get(projectId) || this.newrelicConfigs.get('default');
+    if (!config) {
+      throw new Error('New Relic not configured for this project');
+    }
+
+    const response = await axios.get('https://api.newrelic.com/v2/alerts_conditions.json', {
+      headers: {
+        'X-API-Key': config.apiKey
+      }
+    });
+
+    return response.data.conditions.map((condition: any) => ({
+      id: condition.id.toString(),
+      name: condition.name,
+      condition: condition.metric,
+      threshold: parseFloat(condition.terms[0]?.threshold || '0'),
+      severity: condition.terms[0]?.priority === 'critical' ? 'critical' : 'medium',
+      enabled: condition.enabled
+    }));
+  }
+
+  // Dashboard Management
+  async createDatadogDashboard(projectId: string, title: string, widgets: any[]): Promise<string> {
+    const config = this.datadogConfigs.get(projectId) || this.datadogConfigs.get('default');
+    if (!config) {
+      throw new Error('Datadog not configured for this project');
+    }
+
+    const payload = {
+      title,
+      widgets,
+      layout_type: 'ordered',
+      tags: [`project:${projectId}`]
+    };
+
+    const response = await axios.post(`https://api.${config.site}/api/v1/dashboard`, payload, {
+      headers: {
+        'DD-API-KEY': config.apiKey,
+        'DD-APPLICATION-KEY': config.appKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    this.emit('datadog:dashboard_created', { projectId, dashboardId: response.data.id });
+    return response.data.id;
+  }
+
+  async createNewRelicDashboard(projectId: string, title: string, pages: any[]): Promise<string> {
+    const config = this.newrelicConfigs.get(projectId) || this.newrelicConfigs.get('default');
+    if (!config) {
+      throw new Error('New Relic not configured for this project');
+    }
+
+    const mutation = `
+      mutation {
+        dashboardCreate(
+          accountId: ${config.accountId}
+          dashboard: {
+            name: "${title}"
+            pages: ${JSON.stringify(pages)}
+            permissions: PRIVATE
+          }
+        ) {
+          entityResult {
+            guid
+          }
         }
+      }
+    `;
+
+    const response = await axios.post('https://api.newrelic.com/graphql', {
+      query: mutation
+    }, {
+      headers: {
+        'Api-Key': config.apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const dashboardId = response.data.data.dashboardCreate.entityResult.guid;
+    this.emit('newrelic:dashboard_created', { projectId, dashboardId });
+    return dashboardId;
+  }
+
+  // Application Performance Monitoring
+  async trackApplicationPerformance(projectId: string, performanceData: {
+    responseTime: number;
+    throughput: number;
+    errorRate: number;
+    cpuUsage: number;
+    memoryUsage: number;
+  }): Promise<void> {
+    const timestamp = Math.floor(Date.now() / 1000);
+    
+    const metrics: MetricData[] = [
+      {
+        metric: 'e_code.performance.response_time',
+        points: [[timestamp, performanceData.responseTime]],
+        tags: [`project:${projectId}`]
+      },
+      {
+        metric: 'e_code.performance.throughput',
+        points: [[timestamp, performanceData.throughput]],
+        tags: [`project:${projectId}`]
+      },
+      {
+        metric: 'e_code.performance.error_rate',
+        points: [[timestamp, performanceData.errorRate]],
+        tags: [`project:${projectId}`]
+      },
+      {
+        metric: 'e_code.system.cpu_usage',
+        points: [[timestamp, performanceData.cpuUsage]],
+        tags: [`project:${projectId}`]
+      },
+      {
+        metric: 'e_code.system.memory_usage',
+        points: [[timestamp, performanceData.memoryUsage]],
+        tags: [`project:${projectId}`]
+      }
+    ];
+
+    // Send to both services if configured
+    if (this.datadogConfigs.has(projectId) || this.datadogConfigs.has('default')) {
+      await this.sendDatadogMetrics(projectId, metrics);
     }
 
-    async trackIncident(projectId: number, incident: any): Promise<void> {
-        const integrations = await this.listIntegrations(projectId);
-        
-        for (const integration of integrations) {
-            try {
-                if (integration.type === 'datadog') {
-                    await this.sendDatadogEvent(integration, {
-                        title: 'Incident',
-                        text: incident.description,
-                        tags: ['incident', `severity:${incident.severity}`, `status:${incident.status}`],
-                        alertType: incident.severity === 'critical' ? 'error' : 'warning'
-                    });
-                } else if (integration.type === 'newrelic') {
-                    await this.sendNewRelicEvent(integration, 'Incident', {
-                        description: incident.description,
-                        severity: incident.severity,
-                        status: incident.status
-                    });
-                }
-            } catch (error) {
-                console.error(`Failed to track incident in ${integration.type}:`, error);
-            }
-        }
+    if (this.newrelicConfigs.has(projectId) || this.newrelicConfigs.has('default')) {
+      await this.sendNewRelicMetrics(projectId, metrics);
     }
 
-    async createDashboard(integrationId: string, name: string, widgets: any[]): Promise<any> {
-        const integration = this.integrations.get(integrationId);
-        if (!integration) {
-            throw new Error('Integration not found');
-        }
+    this.emit('performance:tracked', { projectId, metrics: performanceData });
+  }
 
-        if (integration.type === 'datadog') {
-            return await this.createDatadogDashboard(integration, name, widgets);
-        } else if (integration.type === 'newrelic') {
-            return await this.createNewRelicDashboard(integration, name, widgets);
-        }
+  // Utility Methods
+  private extractSeverityFromTags(tags: string[]): 'low' | 'medium' | 'high' | 'critical' {
+    const severityTag = tags.find(tag => tag.startsWith('severity:'));
+    if (severityTag) {
+      const severity = severityTag.split(':')[1];
+      return ['low', 'medium', 'high', 'critical'].includes(severity) ? severity as any : 'medium';
     }
+    return 'medium';
+  }
 
-    async createAlert(integrationId: string, alert: any): Promise<any> {
-        const integration = this.integrations.get(integrationId);
-        if (!integration) {
-            throw new Error('Integration not found');
-        }
+  // Configuration Management
+  getDatadogConfig(projectId: string): DatadogConfig | undefined {
+    return this.datadogConfigs.get(projectId);
+  }
 
-        if (integration.type === 'datadog') {
-            return await this.createDatadogMonitor(integration, alert);
-        } else if (integration.type === 'newrelic') {
-            return await this.createNewRelicAlert(integration, alert);
-        }
-    }
+  getNewRelicConfig(projectId: string): NewRelicConfig | undefined {
+    return this.newrelicConfigs.get(projectId);
+  }
 
-    private async validateDatadogConfig(config: DatadogConfig): Promise<void> {
-        try {
-            const response = await axios.get(
-                `https://api.${config.site}/api/v1/validate`,
-                {
-                    headers: {
-                        'DD-API-KEY': config.apiKey,
-                        'DD-APPLICATION-KEY': config.applicationKey
-                    }
-                }
-            );
-            
-            if (!response.data.valid) {
-                throw new Error('Invalid Datadog credentials');
-            }
-        } catch (error: any) {
-            throw new Error(`Datadog validation failed: ${error.response?.data?.errors?.[0] || error.message}`);
-        }
-    }
+  removeDatadogConfig(projectId: string): void {
+    this.datadogConfigs.delete(projectId);
+    this.emit('datadog:removed', { projectId });
+  }
 
-    private async validateNewRelicConfig(config: NewRelicConfig): Promise<void> {
-        try {
-            const baseUrl = config.region === 'eu' ? 'https://api.eu.newrelic.com' : 'https://api.newrelic.com';
-            const response = await axios.get(
-                `${baseUrl}/v2/accounts/${config.accountId}.json`,
-                {
-                    headers: {
-                        'Api-Key': config.apiKey
-                    }
-                }
-            );
-            
-            if (!response.data.account) {
-                throw new Error('Invalid New Relic credentials');
-            }
-        } catch (error: any) {
-            throw new Error(`New Relic validation failed: ${error.response?.data?.error?.title || error.message}`);
-        }
-    }
-
-    private async flushMetrics(integrationId: string): Promise<void> {
-        const integration = this.integrations.get(integrationId);
-        const metrics = this.metricBuffers.get(integrationId) || [];
-        
-        if (!integration || metrics.length === 0) {
-            return;
-        }
-
-        try {
-            if (integration.type === 'datadog') {
-                await this.sendDatadogMetrics(integration, metrics);
-            } else if (integration.type === 'newrelic') {
-                await this.sendNewRelicMetrics(integration, metrics);
-            }
-            
-            this.metricBuffers.set(integrationId, []);
-        } catch (error) {
-            console.error(`Failed to flush metrics for ${integrationId}:`, error);
-        }
-    }
-
-    private async flushLogs(integrationId: string): Promise<void> {
-        const integration = this.integrations.get(integrationId);
-        const logs = this.logBuffers.get(integrationId) || [];
-        
-        if (!integration || logs.length === 0) {
-            return;
-        }
-
-        try {
-            if (integration.type === 'datadog') {
-                await this.sendDatadogLogs(integration, logs);
-            } else if (integration.type === 'newrelic') {
-                await this.sendNewRelicLogs(integration, logs);
-            }
-            
-            this.logBuffers.set(integrationId, []);
-        } catch (error) {
-            console.error(`Failed to flush logs for ${integrationId}:`, error);
-        }
-    }
-
-    private async sendDatadogMetrics(integration: MonitoringIntegration, metrics: MetricData[]): Promise<void> {
-        const config = integration.config as DatadogConfig;
-        const series = metrics.map(metric => ({
-            metric: metric.name,
-            points: [[Math.floor((metric.timestamp?.getTime() || Date.now()) / 1000), metric.value]],
-            type: metric.type,
-            tags: [
-                ...(config.tags || []),
-                ...(metric.tags ? Object.entries(metric.tags).map(([k, v]) => `${k}:${v}`) : [])
-            ]
-        }));
-
-        await axios.post(
-            `https://api.${config.site}/api/v1/series`,
-            { series },
-            {
-                headers: {
-                    'DD-API-KEY': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-
-    private async sendNewRelicMetrics(integration: MonitoringIntegration, metrics: MetricData[]): Promise<void> {
-        const config = integration.config as NewRelicConfig;
-        const baseUrl = config.region === 'eu' ? 'https://metric-api.eu.newrelic.com' : 'https://metric-api.newrelic.com';
-        
-        const metricsData = metrics.map(metric => ({
-            name: metric.name,
-            type: metric.type,
-            value: metric.value,
-            timestamp: Math.floor((metric.timestamp?.getTime() || Date.now()) / 1000),
-            attributes: metric.tags || {}
-        }));
-
-        await axios.post(
-            `${baseUrl}/metric/v1`,
-            [{
-                metrics: metricsData
-            }],
-            {
-                headers: {
-                    'Api-Key': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-
-    private async sendDatadogLogs(integration: MonitoringIntegration, logs: LogData[]): Promise<void> {
-        const config = integration.config as DatadogConfig;
-        const logData = logs.map(log => ({
-            message: log.message,
-            level: log.level,
-            timestamp: log.timestamp.toISOString(),
-            service: config.service,
-            env: config.env,
-            tags: [
-                ...(config.tags || []),
-                ...(log.tags ? Object.entries(log.tags).map(([k, v]) => `${k}:${v}`) : [])
-            ],
-            ...log.context
-        }));
-
-        await axios.post(
-            `https://http-intake.logs.${config.site}/v1/input/${config.apiKey}`,
-            logData,
-            {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-
-    private async sendNewRelicLogs(integration: MonitoringIntegration, logs: LogData[]): Promise<void> {
-        const config = integration.config as NewRelicConfig;
-        const baseUrl = config.region === 'eu' ? 'https://log-api.eu.newrelic.com' : 'https://log-api.newrelic.com';
-        
-        const logData = logs.map(log => ({
-            message: log.message,
-            level: log.level,
-            timestamp: log.timestamp.getTime(),
-            attributes: {
-                ...log.context,
-                ...log.tags
-            }
-        }));
-
-        await axios.post(
-            `${baseUrl}/log/v1`,
-            [{
-                logs: logData
-            }],
-            {
-                headers: {
-                    'Api-Key': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-
-    private async sendDatadogTrace(integration: MonitoringIntegration, trace: TraceData): Promise<void> {
-        const config = integration.config as DatadogConfig;
-        const traceData = [{
-            trace_id: trace.traceId,
-            span_id: trace.spanId,
-            parent_id: trace.parentSpanId,
-            name: trace.operationName,
-            start: trace.startTime.getTime() * 1000000, // nanoseconds
-            duration: trace.duration * 1000000, // nanoseconds
-            error: trace.status === 'error' ? 1 : 0,
-            meta: trace.tags,
-            metrics: {}
-        }];
-
-        await axios.put(
-            `https://trace.agent.${config.site}/v0.3/traces`,
-            [[traceData]],
-            {
-                headers: {
-                    'DD-API-KEY': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-
-    private async sendNewRelicTrace(integration: MonitoringIntegration, trace: TraceData): Promise<void> {
-        const config = integration.config as NewRelicConfig;
-        const baseUrl = config.region === 'eu' ? 'https://trace-api.eu.newrelic.com' : 'https://trace-api.newrelic.com';
-        
-        const traceData = {
-            'trace.id': trace.traceId,
-            id: trace.spanId,
-            attributes: {
-                name: trace.operationName,
-                parent: { id: trace.parentSpanId },
-                timestamp: trace.startTime.getTime(),
-                duration: { ms: trace.duration },
-                ...trace.tags
-            }
-        };
-
-        await axios.post(
-            `${baseUrl}/trace/v1`,
-            [{
-                spans: [traceData]
-            }],
-            {
-                headers: {
-                    'Api-Key': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-
-    private async sendDatadogError(integration: MonitoringIntegration, error: ErrorData): Promise<void> {
-        const config = integration.config as DatadogConfig;
-        
-        // Send as log with error level
-        await this.sendDatadogLogs(integration, [{
-            message: error.message,
-            level: 'error',
-            timestamp: error.timestamp,
-            context: {
-                error: {
-                    kind: error.type,
-                    message: error.message,
-                    stack: error.stack
-                },
-                usr: {
-                    id: error.userId,
-                    session_id: error.sessionId
-                },
-                ...error.context
-            },
-            tags: {}
-        }]);
-    }
-
-    private async sendNewRelicError(integration: MonitoringIntegration, error: ErrorData): Promise<void> {
-        const config = integration.config as NewRelicConfig;
-        const baseUrl = config.region === 'eu' ? 'https://api.eu.newrelic.com' : 'https://api.newrelic.com';
-        
-        await axios.post(
-            `${baseUrl}/v1/accounts/${config.accountId}/events`,
-            [{
-                eventType: 'JavaScriptError',
-                errorMessage: error.message,
-                errorClass: error.type,
-                stackTrace: error.stack,
-                timestamp: error.timestamp.getTime(),
-                userAgent: error.context?.userAgent,
-                session: error.sessionId,
-                userId: error.userId,
-                ...error.context
-            }],
-            {
-                headers: {
-                    'Api-Key': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-
-    private async sendDatadogEvent(integration: MonitoringIntegration, event: any): Promise<void> {
-        const config = integration.config as DatadogConfig;
-        
-        await axios.post(
-            `https://api.${config.site}/api/v1/events`,
-            {
-                title: event.title,
-                text: event.text,
-                tags: event.tags,
-                alert_type: event.alertType
-            },
-            {
-                headers: {
-                    'DD-API-KEY': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-
-    private async sendNewRelicDeployment(integration: MonitoringIntegration, deployment: any): Promise<void> {
-        const config = integration.config as NewRelicConfig;
-        const baseUrl = config.region === 'eu' ? 'https://api.eu.newrelic.com' : 'https://api.newrelic.com';
-        
-        await axios.post(
-            `${baseUrl}/v2/applications/${config.appId}/deployments.json`,
-            {
-                deployment: {
-                    revision: deployment.version,
-                    description: `Deployed to ${deployment.environment}`,
-                    user: deployment.userId
-                }
-            },
-            {
-                headers: {
-                    'Api-Key': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-
-    private async sendNewRelicEvent(integration: MonitoringIntegration, eventType: string, data: any): Promise<void> {
-        const config = integration.config as NewRelicConfig;
-        const baseUrl = config.region === 'eu' ? 'https://insights-collector.eu01.nr-data.net' : 'https://insights-collector.newrelic.com';
-        
-        await axios.post(
-            `${baseUrl}/v1/accounts/${config.accountId}/events`,
-            [{
-                eventType,
-                timestamp: Date.now(),
-                ...data
-            }],
-            {
-                headers: {
-                    'X-Insert-Key': config.insightsInsertKey || config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-    }
-
-    private async createDatadogDashboard(integration: MonitoringIntegration, name: string, widgets: any[]): Promise<any> {
-        const config = integration.config as DatadogConfig;
-        
-        const response = await axios.post(
-            `https://api.${config.site}/api/v1/dashboard`,
-            {
-                title: name,
-                layout_type: 'ordered',
-                widgets
-            },
-            {
-                headers: {
-                    'DD-API-KEY': config.apiKey,
-                    'DD-APPLICATION-KEY': config.applicationKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-        
-        return response.data;
-    }
-
-    private async createNewRelicDashboard(integration: MonitoringIntegration, name: string, widgets: any[]): Promise<any> {
-        const config = integration.config as NewRelicConfig;
-        const baseUrl = config.region === 'eu' ? 'https://api.eu.newrelic.com' : 'https://api.newrelic.com';
-        
-        const mutation = `
-            mutation CreateDashboard($dashboard: DashboardInput!) {
-                dashboardCreate(accountId: ${config.accountId}, dashboard: $dashboard) {
-                    entityResult {
-                        guid
-                    }
-                    errors {
-                        description
-                    }
-                }
-            }
-        `;
-        
-        const response = await axios.post(
-            `${baseUrl}/graphql`,
-            {
-                query: mutation,
-                variables: {
-                    dashboard: {
-                        name,
-                        permissions: 'PUBLIC_READ_WRITE',
-                        pages: [{
-                            name: 'Page 1',
-                            widgets
-                        }]
-                    }
-                }
-            },
-            {
-                headers: {
-                    'Api-Key': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-        
-        return response.data.data.dashboardCreate;
-    }
-
-    private async createDatadogMonitor(integration: MonitoringIntegration, alert: any): Promise<any> {
-        const config = integration.config as DatadogConfig;
-        
-        const response = await axios.post(
-            `https://api.${config.site}/api/v1/monitor`,
-            {
-                name: alert.name,
-                type: alert.type || 'metric alert',
-                query: alert.query,
-                message: alert.message,
-                tags: alert.tags || [],
-                options: alert.options || {}
-            },
-            {
-                headers: {
-                    'DD-API-KEY': config.apiKey,
-                    'DD-APPLICATION-KEY': config.applicationKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-        
-        return response.data;
-    }
-
-    private async createNewRelicAlert(integration: MonitoringIntegration, alert: any): Promise<any> {
-        const config = integration.config as NewRelicConfig;
-        const baseUrl = config.region === 'eu' ? 'https://api.eu.newrelic.com' : 'https://api.newrelic.com';
-        
-        const response = await axios.post(
-            `${baseUrl}/v2/alerts_policies.json`,
-            {
-                policy: {
-                    name: alert.name,
-                    incident_preference: alert.incidentPreference || 'PER_CONDITION'
-                }
-            },
-            {
-                headers: {
-                    'Api-Key': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-        
-        const policyId = response.data.policy.id;
-        
-        // Create condition
-        await axios.post(
-            `${baseUrl}/v2/alerts_conditions.json`,
-            {
-                condition: {
-                    policy_id: policyId,
-                    name: alert.conditionName,
-                    type: alert.conditionType || 'apm_app_metric',
-                    entities: alert.entities || [],
-                    metric: alert.metric,
-                    terms: alert.terms
-                }
-            },
-            {
-                headers: {
-                    'Api-Key': config.apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-        
-        return response.data;
-    }
-
-    private startSystemMetricsCollection(integrationId: string): void {
-        // Collect system metrics every minute
-        const interval = setInterval(async () => {
-            const integration = this.integrations.get(integrationId);
-            if (!integration || !integration.enabled || !integration.metricSettings.collectSystemMetrics) {
-                clearInterval(interval);
-                return;
-            }
-
-            const cpuUsage = process.cpuUsage();
-            const memUsage = process.memoryUsage();
-            const loadAvg = os.loadavg();
-
-            await this.sendMetric(integrationId, {
-                name: 'system.cpu.usage',
-                value: (cpuUsage.user + cpuUsage.system) / 1000000, // Convert to seconds
-                type: 'gauge',
-                tags: { project_id: integration.projectId.toString() }
-            });
-
-            await this.sendMetric(integrationId, {
-                name: 'system.memory.rss',
-                value: memUsage.rss / 1024 / 1024, // Convert to MB
-                type: 'gauge',
-                tags: { project_id: integration.projectId.toString() }
-            });
-
-            await this.sendMetric(integrationId, {
-                name: 'system.memory.heap_used',
-                value: memUsage.heapUsed / 1024 / 1024, // Convert to MB
-                type: 'gauge',
-                tags: { project_id: integration.projectId.toString() }
-            });
-
-            await this.sendMetric(integrationId, {
-                name: 'system.load.1m',
-                value: loadAvg[0],
-                type: 'gauge',
-                tags: { project_id: integration.projectId.toString() }
-            });
-        }, 60000); // Every minute
-    }
-
-    private startFlushInterval(): void {
-        this.flushInterval = setInterval(async () => {
-            await this.flush();
-        }, 30000); // Every 30 seconds
-    }
-
-    async flush(integrationId?: string): Promise<void> {
-        if (integrationId) {
-            await this.flushMetrics(integrationId);
-            await this.flushLogs(integrationId);
-        } else {
-            // Flush all integrations
-            const integrations = Array.from(this.integrations.keys());
-            for (const id of integrations) {
-                await this.flushMetrics(id);
-                await this.flushLogs(id);
-            }
-        }
-    }
-
-    destroy(): void {
-        if (this.flushInterval) {
-            clearInterval(this.flushInterval);
-            this.flushInterval = null;
-        }
-    }
+  removeNewRelicConfig(projectId: string): void {
+    this.newrelicConfigs.delete(projectId);
+    this.emit('newrelic:removed', { projectId });
+  }
 }

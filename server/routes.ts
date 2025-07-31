@@ -73,14 +73,14 @@ import { nixPackageManager } from './package-management/nix-package-manager';
 import { nixEnvironmentBuilder } from './package-management/nix-environment-builder';
 import { simpleDeployer } from './deployment/simple-deployer';
 import { simpleGitManager } from './git/simple-git-manager';
-import { simpleWorkflowRunner } from './workflows/simple-workflow-runner';
-import { simplePaymentProcessor } from './billing/simple-payment-processor';
-import { ABTestingService } from './deployment/ab-testing-service';
-import { MultiRegionFailoverService } from './deployment/multi-region-failover-service';
 import { SlackDiscordService } from './integrations/slack-discord-service';
 import { JiraLinearService } from './integrations/jira-linear-service';
 import { DatadogNewRelicService } from './integrations/datadog-newrelic-service';
 import { WebhookService } from './integrations/webhook-service';
+import { simpleWorkflowRunner } from './workflows/simple-workflow-runner';
+import { simplePaymentProcessor } from './billing/simple-payment-processor';
+import { ABTestingService } from './deployment/ab-testing-service';
+import { MultiRegionFailoverService } from './deployment/multi-region-failover-service';
 import { securityScanner } from './security/security-scanner';
 import { exportManager } from './export/export-manager';
 import { statusPageService } from './status/status-page-service';
@@ -9698,6 +9698,434 @@ Generate a comprehensive application based on the user's request. Include all ne
     } catch (error) {
       console.error('Error fetching mobile stats:', error);
       res.status(500).json({ error: 'Failed to fetch mobile stats' });
+    }
+  });
+
+  // Integration Routes - Slack/Discord
+  app.post('/api/integrations/slack/configure/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await slackDiscordService.configureSlack(projectId, req.body);
+      res.json({ message: 'Slack configured successfully' });
+    } catch (error) {
+      console.error('Error configuring Slack:', error);
+      res.status(500).json({ message: 'Failed to configure Slack' });
+    }
+  });
+
+  app.post('/api/integrations/discord/configure/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await slackDiscordService.configureDiscord(projectId, req.body);
+      res.json({ message: 'Discord configured successfully' });
+    } catch (error) {
+      console.error('Error configuring Discord:', error);
+      res.status(500).json({ message: 'Failed to configure Discord' });
+    }
+  });
+
+  app.post('/api/integrations/slack/send/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await slackDiscordService.sendSlackMessage(projectId, req.body);
+      res.json({ message: 'Slack message sent successfully' });
+    } catch (error) {
+      console.error('Error sending Slack message:', error);
+      res.status(500).json({ message: 'Failed to send Slack message' });
+    }
+  });
+
+  app.post('/api/integrations/discord/send/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await slackDiscordService.sendDiscordMessage(projectId, req.body);
+      res.json({ message: 'Discord message sent successfully' });  
+    } catch (error) {
+      console.error('Error sending Discord message:', error);
+      res.status(500).json({ message: 'Failed to send Discord message' });
+    }
+  });
+
+  app.get('/api/integrations/slack/channels/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const channels = await slackDiscordService.getSlackChannels(projectId);
+      res.json(channels);
+    } catch (error) {
+      console.error('Error getting Slack channels:', error);
+      res.status(500).json({ message: 'Failed to get Slack channels' });
+    }
+  });
+
+  app.get('/api/integrations/discord/channels/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const channels = await slackDiscordService.getDiscordChannels(projectId);
+      res.json(channels);
+    } catch (error) {
+      console.error('Error getting Discord channels:', error);
+      res.status(500).json({ message: 'Failed to get Discord channels' });
+    }
+  });
+
+  app.post('/api/integrations/slack/webhook/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { channelId } = req.body;
+      const webhookUrl = await slackDiscordService.createSlackWebhook(projectId, channelId);
+      res.json({ webhookUrl });
+    } catch (error) {
+      console.error('Error creating Slack webhook:', error);
+      res.status(500).json({ message: 'Failed to create Slack webhook' });
+    }
+  });
+
+  app.post('/api/integrations/discord/webhook/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { channelId, name } = req.body;
+      const webhookUrl = await slackDiscordService.createDiscordWebhook(projectId, channelId, name);
+      res.json({ webhookUrl });
+    } catch (error) {
+      console.error('Error creating Discord webhook:', error);
+      res.status(500).json({ message: 'Failed to create Discord webhook' });
+    }
+  });
+
+  // Integration Routes - JIRA/Linear
+  app.post('/api/integrations/jira/configure/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await jiraLinearService.configureJira(projectId, req.body);
+      res.json({ message: 'JIRA configured successfully' });
+    } catch (error) {
+      console.error('Error configuring JIRA:', error);
+      res.status(500).json({ message: 'Failed to configure JIRA' });
+    }
+  });
+
+  app.post('/api/integrations/linear/configure/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await jiraLinearService.configureLinear(projectId, req.body);
+      res.json({ message: 'Linear configured successfully' });
+    } catch (error) {
+      console.error('Error configuring Linear:', error);
+      res.status(500).json({ message: 'Failed to configure Linear' });
+    }
+  });
+
+  app.post('/api/integrations/jira/issues/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const issue = await jiraLinearService.createJiraIssue(projectId, req.body);
+      res.json(issue);
+    } catch (error) {
+      console.error('Error creating JIRA issue:', error);
+      res.status(500).json({ message: 'Failed to create JIRA issue' });
+    }
+  });
+
+  app.post('/api/integrations/linear/issues/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const issue = await jiraLinearService.createLinearIssue(projectId, req.body);
+      res.json(issue);
+    } catch (error) {
+      console.error('Error creating Linear issue:', error);
+      res.status(500).json({ message: 'Failed to create Linear issue' });
+    }
+  });
+
+  app.get('/api/integrations/jira/issues/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { limit } = req.query;
+      const issues = await jiraLinearService.getJiraIssues(projectId, Number(limit) || 50);
+      res.json(issues);
+    } catch (error) {
+      console.error('Error getting JIRA issues:', error);
+      res.status(500).json({ message: 'Failed to get JIRA issues' });
+    }
+  });
+
+  app.get('/api/integrations/linear/issues/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { limit } = req.query;
+      const issues = await jiraLinearService.getLinearIssues(projectId, Number(limit) || 50);
+      res.json(issues);
+    } catch (error) {
+      console.error('Error getting Linear issues:', error);
+      res.status(500).json({ message: 'Failed to get Linear issues' });
+    }
+  });
+
+  app.put('/api/integrations/jira/issues/:projectId/:issueId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, issueId } = req.params;
+      await jiraLinearService.updateJiraIssue(projectId, issueId, req.body);
+      res.json({ message: 'JIRA issue updated successfully' });
+    } catch (error) {
+      console.error('Error updating JIRA issue:', error);
+      res.status(500).json({ message: 'Failed to update JIRA issue' });
+    }
+  });
+
+  app.put('/api/integrations/linear/issues/:projectId/:issueId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, issueId } = req.params;
+      await jiraLinearService.updateLinearIssue(projectId, issueId, req.body);
+      res.json({ message: 'Linear issue updated successfully' });
+    } catch (error) {
+      console.error('Error updating Linear issue:', error);
+      res.status(500).json({ message: 'Failed to update Linear issue' });
+    }
+  });
+
+  app.get('/api/integrations/sync/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const issues = await jiraLinearService.syncProjectIssues(projectId);
+      res.json(issues);
+    } catch (error) {
+      console.error('Error syncing project issues:', error);
+      res.status(500).json({ message: 'Failed to sync project issues' });
+    }
+  });
+
+  // Integration Routes - Datadog/New Relic
+  app.post('/api/integrations/datadog/configure/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await datadogNewRelicService.configureDatadog(projectId, req.body);
+      res.json({ message: 'Datadog configured successfully' });
+    } catch (error) {
+      console.error('Error configuring Datadog:', error);
+      res.status(500).json({ message: 'Failed to configure Datadog' });
+    }
+  });
+
+  app.post('/api/integrations/newrelic/configure/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await datadogNewRelicService.configureNewRelic(projectId, req.body);
+      res.json({ message: 'New Relic configured successfully' });
+    } catch (error) {
+      console.error('Error configuring New Relic:', error);
+      res.status(500).json({ message: 'Failed to configure New Relic' });
+    }
+  });
+
+  app.post('/api/integrations/datadog/metrics/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await datadogNewRelicService.sendDatadogMetrics(projectId, req.body.metrics);
+      res.json({ message: 'Datadog metrics sent successfully' });
+    } catch (error) {
+      console.error('Error sending Datadog metrics:', error);
+      res.status(500).json({ message: 'Failed to send Datadog metrics' });
+    }
+  });
+
+  app.post('/api/integrations/newrelic/metrics/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await datadogNewRelicService.sendNewRelicMetrics(projectId, req.body.metrics);
+      res.json({ message: 'New Relic metrics sent successfully' });
+    } catch (error) {
+      console.error('Error sending New Relic metrics:', error);
+      res.status(500).json({ message: 'Failed to send New Relic metrics' });
+    }
+  });
+
+  app.get('/api/integrations/datadog/metrics/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { query, from, to } = req.query;
+      const metrics = await datadogNewRelicService.getDatadogMetrics(
+        projectId, 
+        query as string, 
+        Number(from), 
+        Number(to)
+      );
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error getting Datadog metrics:', error);
+      res.status(500).json({ message: 'Failed to get Datadog metrics' });
+    }
+  });
+
+  app.get('/api/integrations/newrelic/metrics/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { nrql } = req.query;
+      const metrics = await datadogNewRelicService.getNewRelicMetrics(projectId, nrql as string);
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error getting New Relic metrics:', error);
+      res.status(500).json({ message: 'Failed to get New Relic metrics' });
+    }
+  });
+
+  app.post('/api/integrations/datadog/alerts/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const alert = await datadogNewRelicService.createDatadogAlert(projectId, req.body);
+      res.json(alert);
+    } catch (error) {
+      console.error('Error creating Datadog alert:', error);
+      res.status(500).json({ message: 'Failed to create Datadog alert' });
+    }
+  });
+
+  app.post('/api/integrations/newrelic/alerts/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const alert = await datadogNewRelicService.createNewRelicAlert(projectId, req.body);
+      res.json(alert);
+    } catch (error) {
+      console.error('Error creating New Relic alert:', error);
+      res.status(500).json({ message: 'Failed to create New Relic alert' });
+    }
+  });
+
+  app.get('/api/integrations/datadog/alerts/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const alerts = await datadogNewRelicService.getDatadogAlerts(projectId);
+      res.json(alerts);
+    } catch (error) {
+      console.error('Error getting Datadog alerts:', error);
+      res.status(500).json({ message: 'Failed to get Datadog alerts' });
+    }
+  });
+
+  app.get('/api/integrations/newrelic/alerts/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const alerts = await datadogNewRelicService.getNewRelicAlerts(projectId);
+      res.json(alerts);
+    } catch (error) {
+      console.error('Error getting New Relic alerts:', error);
+      res.status(500).json({ message: 'Failed to get New Relic alerts' });
+    }
+  });
+
+  app.post('/api/integrations/performance/track/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      await datadogNewRelicService.trackApplicationPerformance(projectId, req.body);
+      res.json({ message: 'Performance data tracked successfully' });
+    } catch (error) {
+      console.error('Error tracking performance:', error);
+      res.status(500).json({ message: 'Failed to track performance' });
+    }
+  });
+
+  // Integration Routes - Webhooks
+  app.post('/api/webhooks/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const webhook = await webhookService.createWebhook(projectId, req.body);
+      res.json(webhook);
+    } catch (error) {
+      console.error('Error creating webhook:', error);
+      res.status(500).json({ message: 'Failed to create webhook' });
+    }
+  });
+
+  app.get('/api/webhooks/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const webhooks = webhookService.getWebhooks(projectId);
+      res.json(webhooks);
+    } catch (error) {
+      console.error('Error getting webhooks:', error);
+      res.status(500).json({ message: 'Failed to get webhooks' });
+    }
+  });
+
+  app.put('/api/webhooks/:projectId/:webhookId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, webhookId } = req.params;
+      await webhookService.updateWebhook(projectId, webhookId, req.body);
+      res.json({ message: 'Webhook updated successfully' });
+    } catch (error) {
+      console.error('Error updating webhook:', error);
+      res.status(500).json({ message: 'Failed to update webhook' });
+    }
+  });
+
+  app.delete('/api/webhooks/:projectId/:webhookId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, webhookId } = req.params;
+      await webhookService.deleteWebhook(projectId, webhookId);
+      res.json({ message: 'Webhook deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting webhook:', error);
+      res.status(500).json({ message: 'Failed to delete webhook' });
+    }
+  });
+
+  app.post('/api/webhooks/:projectId/trigger', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { event, data } = req.body;
+      await webhookService.triggerWebhooks(projectId, event, data);
+      res.json({ message: 'Webhooks triggered successfully' });
+    } catch (error) {
+      console.error('Error triggering webhooks:', error);
+      res.status(500).json({ message: 'Failed to trigger webhooks' });
+    }
+  });
+
+  app.get('/api/webhooks/:projectId/deliveries', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { webhookId, limit } = req.query;
+      const deliveries = webhookService.getDeliveries(
+        projectId, 
+        webhookId as string, 
+        Number(limit) || 50
+      );
+      res.json(deliveries);
+    } catch (error) {
+      console.error('Error getting webhook deliveries:', error);
+      res.status(500).json({ message: 'Failed to get webhook deliveries' });
+    }
+  });
+
+  app.post('/api/webhooks/deliveries/:deliveryId/retry', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deliveryId } = req.params;
+      await webhookService.retryDelivery(deliveryId);
+      res.json({ message: 'Webhook delivery retried successfully' });
+    } catch (error) {
+      console.error('Error retrying webhook delivery:', error);
+      res.status(500).json({ message: 'Failed to retry webhook delivery' });
+    }
+  });
+
+  app.get('/api/webhooks/:projectId/stats', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { webhookId } = req.query;
+      const stats = webhookService.getWebhookStats(projectId, webhookId as string);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error getting webhook stats:', error);
+      res.status(500).json({ message: 'Failed to get webhook stats' });
+    }
+  });
+
+  app.get('/api/webhooks/events/supported', ensureAuthenticated, async (req, res) => {
+    try {
+      const events = webhookService.getSupportedEvents();
+      res.json(events);
+    } catch (error) {
+      console.error('Error getting supported events:', error);
+      res.status(500).json({ message: 'Failed to get supported events' });
     }
   });
 

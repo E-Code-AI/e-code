@@ -1,528 +1,454 @@
 import { EventEmitter } from 'events';
 import axios from 'axios';
 import crypto from 'crypto';
-import { db } from '../db';
-import { projects } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 
-interface Webhook {
-    id: string;
-    projectId: number;
-    name: string;
-    url: string;
-    secret?: string;
-    events: WebhookEvent[];
-    headers?: Record<string, string>;
-    active: boolean;
-    retryConfig: RetryConfig;
-    created: Date;
-    lastTriggered?: Date;
-    failureCount: number;
-}
-
-interface WebhookEvent {
-    type: string;
-    enabled: boolean;
-}
-
-interface RetryConfig {
-    maxRetries: number;
-    retryDelay: number; // milliseconds
-    backoffMultiplier: number;
-    maxRetryDelay: number;
+interface WebhookConfig {
+  id: string;
+  url: string;
+  events: string[];
+  secret?: string;
+  headers?: Record<string, string>;
+  enabled: boolean;
+  retryAttempts: number;
+  timeout: number;
+  createdAt: Date;
+  lastTriggered?: Date;
+  successCount: number;
+  failureCount: number;
 }
 
 interface WebhookPayload {
-    id: string;
-    timestamp: string;
-    event: string;
-    projectId: number;
-    data: any;
-    signature?: string;
+  event: string;
+  timestamp: number;
+  projectId: string;
+  data: any;
+  signature?: string;
 }
 
 interface WebhookDelivery {
-    id: string;
-    webhookId: string;
-    payload: WebhookPayload;
-    status: 'pending' | 'success' | 'failed';
-    attempts: number;
-    lastAttempt?: Date;
-    response?: {
-        status: number;
-        statusText: string;
-        data?: any;
-    };
-    error?: string;
-    created: Date;
+  id: string;
+  webhookId: string;
+  event: string;
+  url: string;
+  status: 'pending' | 'success' | 'failed' | 'retrying';
+  attempts: number;
+  response?: {
+    status: number;
+    headers: Record<string, string>;
+    body: string;
+  };
+  error?: string;
+  timestamp: Date;
+  duration?: number;
 }
 
-// Predefined event types that can trigger webhooks
-export const WEBHOOK_EVENTS = {
-    // Project events
-    PROJECT_CREATED: 'project.created',
-    PROJECT_UPDATED: 'project.updated',
-    PROJECT_DELETED: 'project.deleted',
-    PROJECT_FORKED: 'project.forked',
-    
-    // File events
-    FILE_CREATED: 'file.created',
-    FILE_UPDATED: 'file.updated',
-    FILE_DELETED: 'file.deleted',
-    FILE_RENAMED: 'file.renamed',
-    
-    // Deployment events
-    DEPLOYMENT_CREATED: 'deployment.created',
-    DEPLOYMENT_STARTED: 'deployment.started',
-    DEPLOYMENT_COMPLETED: 'deployment.completed',
-    DEPLOYMENT_FAILED: 'deployment.failed',
-    DEPLOYMENT_ROLLED_BACK: 'deployment.rolled_back',
-    
-    // Build events
-    BUILD_STARTED: 'build.started',
-    BUILD_COMPLETED: 'build.completed',
-    BUILD_FAILED: 'build.failed',
-    
-    // Collaboration events
-    COLLABORATOR_ADDED: 'collaborator.added',
-    COLLABORATOR_REMOVED: 'collaborator.removed',
-    COLLABORATOR_JOINED: 'collaborator.joined',
-    COLLABORATOR_LEFT: 'collaborator.left',
-    
-    // Terminal events
-    TERMINAL_COMMAND_EXECUTED: 'terminal.command_executed',
-    TERMINAL_SESSION_STARTED: 'terminal.session_started',
-    TERMINAL_SESSION_ENDED: 'terminal.session_ended',
-    
-    // AI events
-    AI_QUERY_MADE: 'ai.query_made',
-    AI_CODE_GENERATED: 'ai.code_generated',
-    AI_ACTION_PERFORMED: 'ai.action_performed',
-    
-    // Security events
-    SECURITY_SCAN_COMPLETED: 'security.scan_completed',
-    SECURITY_ISSUE_FOUND: 'security.issue_found',
-    SECURITY_ISSUE_RESOLVED: 'security.issue_resolved',
-    
-    // Error events
-    ERROR_OCCURRED: 'error.occurred',
-    ERROR_RATE_THRESHOLD: 'error.rate_threshold',
-    
-    // Custom events
-    CUSTOM_EVENT: 'custom.event'
-} as const;
-
 export class WebhookService extends EventEmitter {
-    private webhooks: Map<string, Webhook> = new Map();
-    private deliveries: Map<string, WebhookDelivery[]> = new Map();
-    private retryQueue: Map<string, NodeJS.Timeout> = new Map();
+  private webhooks: Map<string, WebhookConfig[]> = new Map(); // projectId -> webhooks
+  private deliveries: Map<string, WebhookDelivery> = new Map(); // deliveryId -> delivery
+  private deliveryQueue: WebhookDelivery[] = [];
+  private processing = false;
 
-    constructor() {
-        super();
-        this.setupEventListeners();
+  constructor() {
+    super();
+    this.startDeliveryProcessor();
+  }
+
+  // Webhook Management
+  async createWebhook(projectId: string, config: Omit<WebhookConfig, 'id' | 'createdAt' | 'successCount' | 'failureCount'>): Promise<WebhookConfig> {
+    const webhook: WebhookConfig = {
+      ...config,
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
+      successCount: 0,
+      failureCount: 0
+    };
+
+    // Validate webhook URL
+    await this.validateWebhookUrl(webhook.url);
+
+    const projectWebhooks = this.webhooks.get(projectId) || [];
+    projectWebhooks.push(webhook);
+    this.webhooks.set(projectId, projectWebhooks);
+
+    this.emit('webhook:created', { projectId, webhook });
+    return webhook;
+  }
+
+  async updateWebhook(projectId: string, webhookId: string, updates: Partial<WebhookConfig>): Promise<void> {
+    const projectWebhooks = this.webhooks.get(projectId) || [];
+    const webhookIndex = projectWebhooks.findIndex(w => w.id === webhookId);
+    
+    if (webhookIndex === -1) {
+      throw new Error('Webhook not found');
     }
 
-    async createWebhook(config: Omit<Webhook, 'id' | 'created' | 'failureCount'>): Promise<Webhook> {
-        const webhookId = `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Validate URL
-        try {
-            new URL(config.url);
-        } catch (error) {
-            throw new Error('Invalid webhook URL');
-        }
-
-        // Test webhook connectivity if active
-        if (config.active) {
-            await this.testWebhook(config.url, config.headers, config.secret);
-        }
-
-        const webhook: Webhook = {
-            ...config,
-            id: webhookId,
-            created: new Date(),
-            failureCount: 0
-        };
-
-        this.webhooks.set(webhookId, webhook);
-        this.deliveries.set(webhookId, []);
-        
-        this.emit('webhook:created', webhook);
-        
-        return webhook;
+    // Validate URL if being updated
+    if (updates.url) {
+      await this.validateWebhookUrl(updates.url);
     }
 
-    async updateWebhook(webhookId: string, updates: Partial<Webhook>): Promise<Webhook> {
-        const webhook = this.webhooks.get(webhookId);
-        if (!webhook) {
-            throw new Error('Webhook not found');
-        }
+    projectWebhooks[webhookIndex] = { ...projectWebhooks[webhookIndex], ...updates };
+    this.webhooks.set(projectId, projectWebhooks);
 
-        // Validate URL if being updated
-        if (updates.url) {
-            try {
-                new URL(updates.url);
-            } catch (error) {
-                throw new Error('Invalid webhook URL');
-            }
-        }
+    this.emit('webhook:updated', { projectId, webhookId, updates });
+  }
 
-        const updated = { ...webhook, ...updates };
-        
-        // Test webhook if URL or headers changed and webhook is active
-        if ((updates.url || updates.headers) && updated.active) {
-            await this.testWebhook(updated.url, updated.headers, updated.secret);
-        }
-
-        this.webhooks.set(webhookId, updated);
-        this.emit('webhook:updated', updated);
-        
-        return updated;
+  async deleteWebhook(projectId: string, webhookId: string): Promise<void> {
+    const projectWebhooks = this.webhooks.get(projectId) || [];
+    const filteredWebhooks = projectWebhooks.filter(w => w.id !== webhookId);
+    
+    if (filteredWebhooks.length === projectWebhooks.length) {
+      throw new Error('Webhook not found');
     }
 
-    async deleteWebhook(webhookId: string): Promise<void> {
-        const webhook = this.webhooks.get(webhookId);
-        if (!webhook) {
-            throw new Error('Webhook not found');
-        }
+    this.webhooks.set(projectId, filteredWebhooks);
+    this.emit('webhook:deleted', { projectId, webhookId });
+  }
 
-        // Cancel any pending retries
-        const retryTimer = this.retryQueue.get(webhookId);
-        if (retryTimer) {
-            clearTimeout(retryTimer);
-            this.retryQueue.delete(webhookId);
-        }
+  getWebhooks(projectId: string): WebhookConfig[] {
+    return this.webhooks.get(projectId) || [];
+  }
 
-        this.webhooks.delete(webhookId);
-        this.deliveries.delete(webhookId);
-        
-        this.emit('webhook:deleted', webhookId);
+  getWebhook(projectId: string, webhookId: string): WebhookConfig | undefined {
+    const projectWebhooks = this.webhooks.get(projectId) || [];
+    return projectWebhooks.find(w => w.id === webhookId);
+  }
+
+  // Event Triggering
+  async triggerWebhooks(projectId: string, event: string, data: any): Promise<void> {
+    const projectWebhooks = this.webhooks.get(projectId) || [];
+    const relevantWebhooks = projectWebhooks.filter(w => 
+      w.enabled && w.events.includes(event)
+    );
+
+    if (relevantWebhooks.length === 0) {
+      return;
     }
 
-    async getWebhook(webhookId: string): Promise<Webhook | undefined> {
-        return this.webhooks.get(webhookId);
+    const timestamp = Date.now();
+    const payload: WebhookPayload = {
+      event,
+      timestamp,
+      projectId,
+      data
+    };
+
+    for (const webhook of relevantWebhooks) {
+      const delivery: WebhookDelivery = {
+        id: crypto.randomUUID(),
+        webhookId: webhook.id,
+        event,
+        url: webhook.url,
+        status: 'pending',
+        attempts: 0,
+        timestamp: new Date()
+      };
+
+      // Add signature if secret is configured
+      if (webhook.secret) {
+        payload.signature = this.generateSignature(JSON.stringify(payload), webhook.secret);
+      }
+
+      this.deliveries.set(delivery.id, delivery);
+      this.deliveryQueue.push(delivery);
+
+      // Update webhook stats
+      webhook.lastTriggered = new Date();
     }
 
-    async listWebhooks(projectId?: number): Promise<Webhook[]> {
-        const webhooks = Array.from(this.webhooks.values());
-        
-        if (projectId) {
-            return webhooks.filter(w => w.projectId === projectId);
-        }
-        
-        return webhooks;
+    this.emit('webhooks:triggered', { projectId, event, count: relevantWebhooks.length });
+  }
+
+  // Delivery Processing
+  private async startDeliveryProcessor(): Promise<void> {
+    if (this.processing) return;
+    this.processing = true;
+
+    while (this.processing) {
+      if (this.deliveryQueue.length > 0) {
+        const delivery = this.deliveryQueue.shift()!;
+        await this.processDelivery(delivery);
+      } else {
+        // Wait a bit before checking again
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+
+  private async processDelivery(delivery: WebhookDelivery): Promise<void> {
+    const webhook = this.findWebhookById(delivery.webhookId);
+    if (!webhook) {
+      delivery.status = 'failed';
+      delivery.error = 'Webhook configuration not found';
+      return;
     }
 
-    async triggerWebhook(event: string, projectId: number, data: any): Promise<void> {
-        const webhooks = await this.listWebhooks(projectId);
-        
-        for (const webhook of webhooks) {
-            if (!webhook.active) continue;
-            
-            const eventConfig = webhook.events.find(e => e.type === event);
-            if (!eventConfig || !eventConfig.enabled) continue;
-            
-            const payload: WebhookPayload = {
-                id: `whp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                timestamp: new Date().toISOString(),
-                event,
-                projectId,
-                data
-            };
-            
-            // Generate signature if secret is configured
-            if (webhook.secret) {
-                payload.signature = this.generateSignature(payload, webhook.secret);
-            }
-            
-            await this.deliverWebhook(webhook, payload);
-        }
-    }
+    const startTime = Date.now();
+    delivery.attempts++;
+    delivery.status = 'retrying';
 
-    async deliverWebhook(webhook: Webhook, payload: WebhookPayload): Promise<void> {
-        const delivery: WebhookDelivery = {
-            id: `whd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            webhookId: webhook.id,
-            payload,
-            status: 'pending',
-            attempts: 0,
-            created: new Date()
-        };
+    try {
+      const payload: WebhookPayload = {
+        event: delivery.event,
+        timestamp: delivery.timestamp.getTime(),
+        projectId: this.findProjectIdForWebhook(delivery.webhookId)!,
+        data: {} // This would be populated from the original trigger
+      };
 
-        const deliveries = this.deliveries.get(webhook.id) || [];
-        deliveries.push(delivery);
-        
-        // Keep only last 100 deliveries
-        if (deliveries.length > 100) {
-            deliveries.shift();
-        }
-        
-        this.deliveries.set(webhook.id, deliveries);
-        
-        await this.attemptDelivery(webhook, delivery);
-    }
+      // Add signature if secret is configured
+      if (webhook.secret) {
+        payload.signature = this.generateSignature(JSON.stringify(payload), webhook.secret);
+      }
 
-    private async attemptDelivery(webhook: Webhook, delivery: WebhookDelivery): Promise<void> {
-        delivery.attempts++;
-        delivery.lastAttempt = new Date();
+      const headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'E-Code-Webhooks/1.0',
+        'X-E-Code-Event': delivery.event,
+        'X-E-Code-Delivery': delivery.id,
+        ...webhook.headers
+      };
 
-        try {
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-                'X-E-Code-Event': delivery.payload.event,
-                'X-E-Code-Delivery': delivery.id,
-                'X-E-Code-Timestamp': delivery.payload.timestamp,
-                ...webhook.headers
-            };
+      if (payload.signature) {
+        headers['X-E-Code-Signature'] = payload.signature;
+      }
 
-            if (webhook.secret) {
-                headers['X-E-Code-Signature'] = delivery.payload.signature!;
-            }
+      const response = await axios.post(delivery.url, payload, {
+        headers,
+        timeout: webhook.timeout || 10000,
+        validateStatus: (status) => status < 500 // Only retry on 5xx errors
+      });
 
-            const response = await axios.post(webhook.url, delivery.payload, {
-                headers,
-                timeout: 30000, // 30 seconds
-                validateStatus: () => true // Accept any status
-            });
+      delivery.duration = Date.now() - startTime;
+      delivery.response = {
+        status: response.status,
+        headers: response.headers as Record<string, string>,
+        body: typeof response.data === 'string' ? response.data : JSON.stringify(response.data)
+      };
 
-            delivery.response = {
-                status: response.status,
-                statusText: response.statusText,
-                data: response.data
-            };
-
-            if (response.status >= 200 && response.status < 300) {
-                delivery.status = 'success';
-                
-                // Reset failure count on success
-                webhook.failureCount = 0;
-                webhook.lastTriggered = new Date();
-                this.webhooks.set(webhook.id, webhook);
-                
-                this.emit('webhook:delivered', { webhook, delivery });
-            } else {
-                delivery.status = 'failed';
-                delivery.error = `HTTP ${response.status}: ${response.statusText}`;
-                
-                await this.handleFailedDelivery(webhook, delivery);
-            }
-        } catch (error: any) {
-            delivery.status = 'failed';
-            delivery.error = error.message;
-            
-            await this.handleFailedDelivery(webhook, delivery);
-        }
-    }
-
-    private async handleFailedDelivery(webhook: Webhook, delivery: WebhookDelivery): Promise<void> {
+      if (response.status >= 200 && response.status < 300) {
+        delivery.status = 'success';
+        webhook.successCount++;
+        this.emit('webhook:delivery_success', { delivery, webhook });
+      } else {
+        delivery.status = 'failed';
+        delivery.error = `HTTP ${response.status}: ${response.statusText}`;
         webhook.failureCount++;
-        this.webhooks.set(webhook.id, webhook);
-        
-        this.emit('webhook:failed', { webhook, delivery });
-        
-        // Check if we should retry
-        if (delivery.attempts < webhook.retryConfig.maxRetries) {
-            const retryDelay = Math.min(
-                webhook.retryConfig.retryDelay * Math.pow(webhook.retryConfig.backoffMultiplier, delivery.attempts - 1),
-                webhook.retryConfig.maxRetryDelay
-            );
-            
-            const retryTimer = setTimeout(() => {
-                this.attemptDelivery(webhook, delivery);
-                this.retryQueue.delete(delivery.id);
-            }, retryDelay);
-            
-            this.retryQueue.set(delivery.id, retryTimer);
-        } else {
-            // Max retries reached, check if webhook should be disabled
-            if (webhook.failureCount >= 10) {
-                webhook.active = false;
-                this.webhooks.set(webhook.id, webhook);
-                this.emit('webhook:disabled', webhook);
-            }
-        }
+        this.emit('webhook:delivery_failed', { delivery, webhook });
+      }
+
+    } catch (error: any) {
+      delivery.duration = Date.now() - startTime;
+      delivery.status = 'failed';
+      delivery.error = error.message;
+      webhook.failureCount++;
+
+      // Retry logic
+      if (delivery.attempts < webhook.retryAttempts) {
+        const retryDelay = Math.pow(2, delivery.attempts) * 1000; // Exponential backoff
+        setTimeout(() => {
+          delivery.status = 'pending';
+          this.deliveryQueue.push(delivery);
+        }, retryDelay);
+      } else {
+        this.emit('webhook:delivery_failed', { delivery, webhook });
+      }
     }
 
-    async getDeliveries(webhookId: string, limit: number = 50): Promise<WebhookDelivery[]> {
-        const deliveries = this.deliveries.get(webhookId) || [];
-        return deliveries.slice(-limit);
+    this.deliveries.set(delivery.id, delivery);
+  }
+
+  // Webhook Validation
+  private async validateWebhookUrl(url: string): Promise<void> {
+    try {
+      const parsedUrl = new URL(url);
+      
+      // Ensure HTTPS for security
+      if (parsedUrl.protocol !== 'https:') {
+        throw new Error('Webhook URL must use HTTPS');
+      }
+
+      // Prevent localhost/internal URLs
+      if (['localhost', '127.0.0.1', '0.0.0.0'].includes(parsedUrl.hostname) ||
+          parsedUrl.hostname.includes('192.168.') ||
+          parsedUrl.hostname.includes('10.') ||
+          parsedUrl.hostname.includes('172.')) {
+        throw new Error('Webhook URL cannot point to internal/localhost addresses');
+      }
+
+      // Test the endpoint
+      await axios.head(url, { timeout: 5000 });
+    } catch (error: any) {
+      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        throw new Error('Webhook URL is not accessible');
+      }
+      throw error;
+    }
+  }
+
+  // Signature Generation
+  private generateSignature(payload: string, secret: string): string {
+    return 'sha256=' + crypto
+      .createHmac('sha256', secret)
+      .update(payload)
+      .digest('hex');
+  }
+
+  // Signature Verification (for incoming webhook validation)
+  verifySignature(payload: string, signature: string, secret: string): boolean {
+    const expectedSignature = this.generateSignature(payload, secret);
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  }
+
+  // Delivery Management
+  getDeliveries(projectId: string, webhookId?: string, limit: number = 50): WebhookDelivery[] {
+    const allDeliveries = Array.from(this.deliveries.values());
+    
+    let filtered = allDeliveries.filter(d => {
+      const webhook = this.findWebhookById(d.webhookId);
+      return webhook && this.findProjectIdForWebhook(d.webhookId) === projectId;
+    });
+
+    if (webhookId) {
+      filtered = filtered.filter(d => d.webhookId === webhookId);
     }
 
-    async retryDelivery(webhookId: string, deliveryId: string): Promise<void> {
-        const webhook = this.webhooks.get(webhookId);
-        if (!webhook) {
-            throw new Error('Webhook not found');
-        }
+    return filtered
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, limit);
+  }
 
-        const deliveries = this.deliveries.get(webhookId) || [];
-        const delivery = deliveries.find(d => d.id === deliveryId);
-        
-        if (!delivery) {
-            throw new Error('Delivery not found');
-        }
+  getDelivery(deliveryId: string): WebhookDelivery | undefined {
+    return this.deliveries.get(deliveryId);
+  }
 
-        // Reset delivery for retry
-        delivery.attempts = 0;
-        delivery.status = 'pending';
-        
-        await this.attemptDelivery(webhook, delivery);
+  async retryDelivery(deliveryId: string): Promise<void> {
+    const delivery = this.deliveries.get(deliveryId);
+    if (!delivery) {
+      throw new Error('Delivery not found');
     }
 
-    async testWebhook(url: string, headers?: Record<string, string>, secret?: string): Promise<void> {
-        const testPayload: WebhookPayload = {
-            id: 'test',
-            timestamp: new Date().toISOString(),
-            event: 'webhook.test',
-            projectId: 0,
-            data: {
-                message: 'This is a test webhook from E-Code'
-            }
-        };
-
-        if (secret) {
-            testPayload.signature = this.generateSignature(testPayload, secret);
-        }
-
-        const requestHeaders: Record<string, string> = {
-            'Content-Type': 'application/json',
-            'X-E-Code-Event': 'webhook.test',
-            'X-E-Code-Delivery': 'test',
-            'X-E-Code-Timestamp': testPayload.timestamp,
-            ...headers
-        };
-
-        if (secret) {
-            requestHeaders['X-E-Code-Signature'] = testPayload.signature!;
-        }
-
-        try {
-            const response = await axios.post(url, testPayload, {
-                headers: requestHeaders,
-                timeout: 10000,
-                validateStatus: () => true
-            });
-
-            if (response.status < 200 || response.status >= 300) {
-                throw new Error(`Webhook test failed with status ${response.status}`);
-            }
-        } catch (error: any) {
-            throw new Error(`Webhook test failed: ${error.message}`);
-        }
+    if (delivery.status === 'success') {
+      throw new Error('Cannot retry successful delivery');
     }
 
-    private generateSignature(payload: WebhookPayload, secret: string): string {
-        const data = JSON.stringify(payload);
-        return crypto.createHmac('sha256', secret).update(data).digest('hex');
+    delivery.status = 'pending';
+    delivery.attempts = 0;
+    delivery.error = undefined;
+    delivery.response = undefined;
+    
+    this.deliveryQueue.push(delivery);
+    this.emit('webhook:delivery_retried', { deliveryId });
+  }
+
+  // Statistics
+  getWebhookStats(projectId: string, webhookId?: string): {
+    totalDeliveries: number;
+    successfulDeliveries: number;
+    failedDeliveries: number;
+    successRate: number;
+    averageResponseTime: number;
+  } {
+    const deliveries = this.getDeliveries(projectId, webhookId, 1000);
+    
+    const totalDeliveries = deliveries.length;
+    const successfulDeliveries = deliveries.filter(d => d.status === 'success').length;
+    const failedDeliveries = deliveries.filter(d => d.status === 'failed').length;
+    const successRate = totalDeliveries > 0 ? (successfulDeliveries / totalDeliveries) * 100 : 0;
+    
+    const responseTimes = deliveries
+      .filter(d => d.duration !== undefined)
+      .map(d => d.duration!);
+    
+    const averageResponseTime = responseTimes.length > 0 
+      ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length 
+      : 0;
+
+    return {
+      totalDeliveries,
+      successfulDeliveries,
+      failedDeliveries,
+      successRate,
+      averageResponseTime
+    };
+  }
+
+  // Event Types
+  getSupportedEvents(): string[] {
+    return [
+      'project.created',
+      'project.updated',
+      'project.deleted',
+      'deployment.started',
+      'deployment.completed',
+      'deployment.failed',
+      'build.started',
+      'build.completed',
+      'build.failed',
+      'collaboration.user_joined',
+      'collaboration.user_left',
+      'ai.chat_message',
+      'ai.code_generated',
+      'file.created',
+      'file.updated',
+      'file.deleted',
+      'secret.created',
+      'secret.updated',
+      'secret.deleted'
+    ];
+  }
+
+  // Helper Methods
+  private findWebhookById(webhookId: string): WebhookConfig | undefined {
+    for (const projectWebhooks of this.webhooks.values()) {
+      const webhook = projectWebhooks.find(w => w.id === webhookId);
+      if (webhook) return webhook;
+    }
+    return undefined;
+  }
+
+  private findProjectIdForWebhook(webhookId: string): string | undefined {
+    for (const [projectId, projectWebhooks] of this.webhooks.entries()) {
+      if (projectWebhooks.some(w => w.id === webhookId)) {
+        return projectId;
+      }
+    }
+    return undefined;
+  }
+
+  // Bulk Operations
+  async bulkTriggerWebhooks(events: Array<{ projectId: string; event: string; data: any }>): Promise<void> {
+    const promises = events.map(({ projectId, event, data }) => 
+      this.triggerWebhooks(projectId, event, data)
+    );
+    
+    await Promise.all(promises);
+    this.emit('webhooks:bulk_triggered', { count: events.length });
+  }
+
+  // Cleanup
+  cleanupOldDeliveries(olderThanDays: number = 30): number {
+    const cutoffDate = new Date(Date.now() - (olderThanDays * 24 * 60 * 60 * 1000));
+    let cleanedCount = 0;
+
+    for (const [deliveryId, delivery] of this.deliveries.entries()) {
+      if (delivery.timestamp < cutoffDate) {
+        this.deliveries.delete(deliveryId);
+        cleanedCount++;
+      }
     }
 
-    verifySignature(payload: any, signature: string, secret: string): boolean {
-        const expectedSignature = this.generateSignature(payload, secret);
-        return crypto.timingSafeEqual(
-            Buffer.from(signature),
-            Buffer.from(expectedSignature)
-        );
-    }
+    this.emit('webhooks:cleanup_completed', { cleanedCount });
+    return cleanedCount;
+  }
 
-    // Event emitters for different webhook triggers
-    async emitProjectCreated(projectId: number, project: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.PROJECT_CREATED, projectId, { project });
-    }
-
-    async emitProjectUpdated(projectId: number, project: any, changes: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.PROJECT_UPDATED, projectId, { project, changes });
-    }
-
-    async emitFileCreated(projectId: number, file: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.FILE_CREATED, projectId, { file });
-    }
-
-    async emitFileUpdated(projectId: number, file: any, previousContent?: string): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.FILE_UPDATED, projectId, { file, previousContent });
-    }
-
-    async emitDeploymentStarted(projectId: number, deployment: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.DEPLOYMENT_STARTED, projectId, { deployment });
-    }
-
-    async emitDeploymentCompleted(projectId: number, deployment: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.DEPLOYMENT_COMPLETED, projectId, { deployment });
-    }
-
-    async emitDeploymentFailed(projectId: number, deployment: any, error: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.DEPLOYMENT_FAILED, projectId, { deployment, error });
-    }
-
-    async emitBuildStarted(projectId: number, build: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.BUILD_STARTED, projectId, { build });
-    }
-
-    async emitBuildCompleted(projectId: number, build: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.BUILD_COMPLETED, projectId, { build });
-    }
-
-    async emitBuildFailed(projectId: number, build: any, error: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.BUILD_FAILED, projectId, { build, error });
-    }
-
-    async emitSecurityScanCompleted(projectId: number, scan: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.SECURITY_SCAN_COMPLETED, projectId, { scan });
-    }
-
-    async emitErrorOccurred(projectId: number, error: any, context: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.ERROR_OCCURRED, projectId, { error, context });
-    }
-
-    async emitCustomEvent(projectId: number, eventName: string, data: any): Promise<void> {
-        await this.triggerWebhook(WEBHOOK_EVENTS.CUSTOM_EVENT, projectId, { eventName, data });
-    }
-
-    private setupEventListeners(): void {
-        // Set up internal event listeners that can be triggered by other services
-        this.on('trigger:webhook', async ({ event, projectId, data }) => {
-            await this.triggerWebhook(event, projectId, data);
-        });
-    }
-
-    // Get webhook statistics
-    async getWebhookStats(webhookId: string): Promise<any> {
-        const webhook = this.webhooks.get(webhookId);
-        if (!webhook) {
-            throw new Error('Webhook not found');
-        }
-
-        const deliveries = this.deliveries.get(webhookId) || [];
-        const successCount = deliveries.filter(d => d.status === 'success').length;
-        const failureCount = deliveries.filter(d => d.status === 'failed').length;
-        const pendingCount = deliveries.filter(d => d.status === 'pending').length;
-
-        const recentDeliveries = deliveries.slice(-10);
-        const avgResponseTime = recentDeliveries
-            .filter(d => d.response && d.lastAttempt)
-            .reduce((sum, d) => {
-                const startTime = d.created.getTime();
-                const endTime = d.lastAttempt!.getTime();
-                return sum + (endTime - startTime);
-            }, 0) / recentDeliveries.length || 0;
-
-        return {
-            webhook,
-            totalDeliveries: deliveries.length,
-            successCount,
-            failureCount,
-            pendingCount,
-            successRate: deliveries.length > 0 ? (successCount / deliveries.length) * 100 : 0,
-            avgResponseTime,
-            recentDeliveries
-        };
-    }
-
-    // Cleanup method
-    destroy(): void {
-        // Clear all retry timers
-        const timers = Array.from(this.retryQueue.values());
-        for (const timer of timers) {
-            clearTimeout(timer);
-        }
-        this.retryQueue.clear();
-    }
+  // Graceful Shutdown
+  async shutdown(): Promise<void> {
+    this.processing = false;
+    // Wait for current deliveries to complete
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    this.emit('webhook:service_shutdown');
+  }
 }
