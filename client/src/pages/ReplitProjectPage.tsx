@@ -68,7 +68,7 @@ import { CommentsPanel } from '@/components/CommentsPanel';
 import { HistoryTimeline } from '@/components/HistoryTimeline';
 import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 import { ConsolePanel } from '@/components/ConsolePanel';
-import { PreviewPanel } from '@/components/PreviewPanel';
+import { LivePreview } from '@/components/LivePreview';
 import { DeploymentPanel } from '@/components/DeploymentPanel';
 import { ToolsDropdown } from '@/components/ToolsDropdown';
 
@@ -119,6 +119,22 @@ const ReplitProjectPage = () => {
       window.sessionStorage.setItem(`agent-prompt-${projectId}`, decodeURIComponent(promptParam));
     }
   }, [projectId]);
+
+  // Listen for preview messages from AI agent
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'show-preview') {
+        setRightPanelMode('preview');
+        toast({
+          title: "Preview Ready",
+          description: "Your app preview is now available",
+        });
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [toast]);
 
   // Query for project details
   const { 
@@ -782,7 +798,7 @@ const ReplitProjectPage = () => {
                         <AdvancedAIPanel
                           projectId={projectId.toString()}
                           selectedCode={selectedFile?.content || ''}
-                          selectedLanguage={project?.data?.language || 'javascript'}
+                          selectedLanguage={project?.language || 'javascript'}
                         />
                       </TabsContent>
                     </Tabs>
@@ -844,9 +860,11 @@ const ReplitProjectPage = () => {
                   )}
 
                   {rightPanelMode === 'preview' && (
-                    <PreviewPanel 
-                      projectId={projectId} 
-                      projectUrl={executionId ? `https://localhost:5000/preview/${executionId}` : undefined}
+                    <LivePreview 
+                      projectId={projectId}
+                      onPreviewReady={(url) => {
+                        console.log('Preview ready at:', url);
+                      }}
                     />
                   )}
 

@@ -96,6 +96,8 @@ import { marketplaceService } from './services/marketplace-service';
 import { getEducationService } from './services/education-service';
 import { enterpriseSSOService } from './sso/enterprise-sso-service';
 import { rolesPermissionsService } from './security/roles-permissions-service';
+import { previewService } from './preview/preview-service';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const logger = createLogger('routes');
 const teamsService = new TeamsService();
@@ -4146,6 +4148,67 @@ Generate a comprehensive application based on the user's request. Include all ne
         error: errorMessage,
         timestamp: new Date().toISOString()
       });
+    }
+  });
+  
+  // Preview proxy route (must be before API routes)
+  app.use('/preview/:projectId', (req, res, next) => {
+    const projectId = req.params.projectId;
+    const preview = previewService.getPreview(parseInt(projectId));
+    
+    if (!preview || preview.status !== 'running') {
+      return res.status(404).json({ error: 'Preview not available' });
+    }
+    
+    const proxy = createProxyMiddleware({
+      target: `http://localhost:${preview.port}`,
+      changeOrigin: true,
+      pathRewrite: {
+        [`^/preview/${projectId}`]: ''
+      },
+      onError: (err: any, req: any, res: any) => {
+        logger.error(`Preview proxy error for project ${projectId}:`, err);
+        res.status(502).json({ error: 'Preview server error' });
+      }
+    });
+    
+    proxy(req, res, next);
+  });
+  
+  // Preview routes
+  app.post('/api/projects/:id/preview/start', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const preview = await previewService.startPreview(projectId);
+      res.json(preview);
+    } catch (error) {
+      console.error('Error starting preview:', error);
+      res.status(500).json({ error: 'Failed to start preview' });
+    }
+  });
+
+  app.post('/api/projects/:id/preview/stop', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      await previewService.stopPreview(projectId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error stopping preview:', error);
+      res.status(500).json({ error: 'Failed to stop preview' });
+    }
+  });
+
+  app.get('/api/projects/:id/preview/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const preview = previewService.getPreview(projectId);
+      if (!preview) {
+        return res.json({ status: 'stopped' });
+      }
+      res.json(preview);
+    } catch (error) {
+      console.error('Error getting preview status:', error);
+      res.status(500).json({ error: 'Failed to get preview status' });
     }
   });
   
