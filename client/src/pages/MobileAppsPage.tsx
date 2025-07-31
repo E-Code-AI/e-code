@@ -260,7 +260,7 @@ export default function MobileAppsPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Sync className="h-8 w-8 text-orange-600" />
+                  <RefreshCw className="h-8 w-8 text-orange-600" />
                   <div>
                     <p className="text-sm text-gray-600">Sync Rate</p>
                     <p className="text-2xl font-bold">{stats.syncRate || 99}%</p>
