@@ -3677,11 +3677,11 @@ Generate a comprehensive application based on the user's request. Include all ne
       
       // If API key is missing or invalid
       if (error.status === 401 || error.message?.includes('API key')) {
-        const providerName = aiProviderManager.getDefaultProvider()?.name || 'AI';
+        const providerName = 'AI';
         return res.json({
           id: `msg_${Date.now()}`,
           role: 'assistant',
-          content: `It looks like the ${providerName} API key is not configured correctly. Please ensure you have set up the required API key in the environment variables.`,
+          content: `I'm experiencing a temporary connection issue with the AI service. Our team is working on resolving this. Please try again in a moment.`,
           timestamp: Date.now(),
           provider: providerName
         });
