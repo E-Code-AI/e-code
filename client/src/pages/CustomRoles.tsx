@@ -525,3 +525,5 @@ const mockPermissions: Permission[] = [
   { id: 16, resource: 'system', action: 'view_audit_logs', description: 'View audit logs', category: 'system' },
   { id: 17, resource: 'system', action: 'manage_organization', description: 'Organization settings', category: 'system' },
 ];
+
+export default CustomRoles;

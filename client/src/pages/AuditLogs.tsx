@@ -187,7 +187,7 @@ export function AuditLogs() {
             </div>
           ) : logs && logs.length > 0 ? (
             <div className="space-y-2">
-              {logs.map((log) => (
+              {logs.map((log: AuditLog) => (
                 <div key={log.id} className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className={`p-2 rounded-lg ${getActionColor(log.action)}`}>
                     {getActionIcon(log.action)}
@@ -307,7 +307,7 @@ const mockAuditLogs: AuditLog[] = [
     id: 4,
     organizationId: 1,
     userId: null,
-    username: null,
+    username: undefined,
     action: 'sso_login_failed',
     resourceType: 'authentication',
     resourceId: null,
@@ -318,3 +318,5 @@ const mockAuditLogs: AuditLog[] = [
     timestamp: new Date(Date.now() - 10800000).toISOString()
   }
 ];
+
+export default AuditLogs;
