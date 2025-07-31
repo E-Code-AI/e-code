@@ -74,7 +74,7 @@ export const projects = pgTable("projects", {
   ownerId: integer("owner_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  forkedFromId: integer("forked_from_id").references(() => projects.id),
+  forkedFromId: integer("forked_from_id"),
   views: integer("views").notNull().default(0),
   likes: integer("likes").notNull().default(0),
   forks: integer("forks").notNull().default(0),
