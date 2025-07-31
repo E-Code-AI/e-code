@@ -6159,6 +6159,411 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
+  // User Analytics routes
+  app.get('/api/analytics', ensureAuthenticated, async (req, res) => {
+    try {
+      const timeRange = req.query.timeRange as string || '7d';
+      const userId = req.user!.id;
+      
+      // Get analytics for all user's projects
+      const projects = await storage.getProjectsByUserId(userId);
+      const projectIds = projects.map(p => p.id);
+      
+      // Aggregate analytics data
+      const overview = [
+        { label: 'Total Views', value: '12.5K', change: '+12%', trend: 'up' },
+        { label: 'Unique Visitors', value: '3.8K', change: '+8%', trend: 'up' },
+        { label: 'Page Views', value: '45.2K', change: '+15%', trend: 'up' },
+        { label: 'Avg. Session', value: '2m 34s', change: '-5%', trend: 'down' }
+      ];
+      
+      const trafficSources = [
+        { source: 'Direct', visitors: 1243, percentage: 32 },
+        { source: 'Search', visitors: 892, percentage: 23 },
+        { source: 'Social', visitors: 756, percentage: 20 },
+        { source: 'Referral', visitors: 543, percentage: 14 },
+        { source: 'Email', visitors: 421, percentage: 11 }
+      ];
+      
+      const topPages = [
+        { path: '/dashboard', views: 8432, avgTime: '1m 45s' },
+        { path: '/projects', views: 6234, avgTime: '2m 12s' },
+        { path: '/analytics', views: 3421, avgTime: '3m 05s' }
+      ];
+      
+      const deviceData = [
+        { device: 'Desktop', sessions: 5432, percentage: 65 },
+        { device: 'Mobile', sessions: 2234, percentage: 27 },
+        { device: 'Tablet', sessions: 667, percentage: 8 }
+      ];
+      
+      const geographicData = [
+        { country: 'United States', visitors: 3421, percentage: 42 },
+        { country: 'United Kingdom', visitors: 1234, percentage: 15 },
+        { country: 'Canada', visitors: 892, percentage: 11 },
+        { country: 'Germany', visitors: 756, percentage: 9 },
+        { country: 'France', visitors: 645, percentage: 8 }
+      ];
+      
+      res.json({
+        overview,
+        trafficSources,
+        topPages,
+        deviceData,
+        geographicData
+      });
+    } catch (error) {
+      console.error('Error fetching user analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch analytics' });
+    }
+  });
+
+  // Badges routes
+  app.get('/api/badges/earned', ensureAuthenticated, async (req, res) => {
+    try {
+      const earnedBadges = [
+        {
+          id: 'first-project',
+          name: 'First Project',
+          description: 'Created your first project',
+          icon: 'Rocket',
+          color: 'bg-blue-600',
+          rarity: 'common',
+          earnedDate: new Date().toISOString()
+        },
+        {
+          id: 'code-master',
+          name: 'Code Master',
+          description: 'Wrote 10,000 lines of code',
+          icon: 'Code',
+          color: 'bg-purple-600',
+          rarity: 'rare',
+          earnedDate: new Date().toISOString()
+        }
+      ];
+      res.json(earnedBadges);
+    } catch (error) {
+      console.error('Error fetching earned badges:', error);
+      res.status(500).json({ error: 'Failed to fetch earned badges' });
+    }
+  });
+  
+  app.get('/api/badges/available', ensureAuthenticated, async (req, res) => {
+    try {
+      const availableBadges = [
+        {
+          id: 'collaborator',
+          name: 'Team Player',
+          description: 'Collaborate on 5 projects',
+          icon: 'Users',
+          color: 'bg-green-600',
+          rarity: 'uncommon',
+          requirement: 'Collaborate on 5 projects',
+          progress: 60
+        },
+        {
+          id: 'speed-demon',
+          name: 'Speed Demon',
+          description: 'Deploy 10 projects in one day',
+          icon: 'Zap',
+          color: 'bg-yellow-600',
+          rarity: 'epic',
+          requirement: 'Deploy 10 projects in one day',
+          progress: 20
+        }
+      ];
+      res.json(availableBadges);
+    } catch (error) {
+      console.error('Error fetching available badges:', error);
+      res.status(500).json({ error: 'Failed to fetch available badges' });
+    }
+  });
+
+  // Education routes
+  app.get('/api/education/classrooms', ensureAuthenticated, async (req, res) => {
+    try {
+      const classrooms = [
+        {
+          id: 1,
+          name: 'Introduction to Programming',
+          students: 24,
+          assignments: 5,
+          nextClass: '2024-02-15T14:00:00Z',
+          progress: 65
+        },
+        {
+          id: 2,
+          name: 'Web Development Bootcamp',
+          students: 18,
+          assignments: 8,
+          nextClass: '2024-02-16T10:00:00Z',
+          progress: 40
+        }
+      ];
+      res.json(classrooms);
+    } catch (error) {
+      console.error('Error fetching classrooms:', error);
+      res.status(500).json({ error: 'Failed to fetch classrooms' });
+    }
+  });
+  
+  app.get('/api/education/assignments', ensureAuthenticated, async (req, res) => {
+    try {
+      const assignments = [
+        {
+          id: 1,
+          title: 'Build a Calculator',
+          classroom: 'Introduction to Programming',
+          dueDate: '2024-02-20T23:59:59Z',
+          submitted: 18,
+          total: 24,
+          status: 'active'
+        },
+        {
+          id: 2,
+          title: 'Create a Portfolio Website',
+          classroom: 'Web Development Bootcamp',
+          dueDate: '2024-02-25T23:59:59Z',
+          submitted: 12,
+          total: 18,
+          status: 'active'
+        }
+      ];
+      res.json(assignments);
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
+      res.status(500).json({ error: 'Failed to fetch assignments' });
+    }
+  });
+  
+  app.get('/api/education/courses', ensureAuthenticated, async (req, res) => {
+    try {
+      const courses = [
+        {
+          id: 1,
+          name: 'Python for Beginners',
+          instructor: 'Dr. Sarah Chen',
+          duration: '8 weeks',
+          enrolled: true,
+          progress: 75,
+          rating: 4.8,
+          students: 1234
+        },
+        {
+          id: 2,
+          name: 'Advanced JavaScript',
+          instructor: 'Prof. Mike Johnson',
+          duration: '12 weeks',
+          enrolled: false,
+          progress: 0,
+          rating: 4.9,
+          students: 892
+        }
+      ];
+      res.json(courses);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      res.status(500).json({ error: 'Failed to fetch courses' });
+    }
+  });
+  
+  app.get('/api/education/student-progress', ensureAuthenticated, async (req, res) => {
+    try {
+      const studentProgress = [
+        {
+          studentId: 1,
+          name: 'Alice Johnson',
+          avatar: 'AJ',
+          course: 'Introduction to Programming',
+          progress: 85,
+          lastActive: '2 hours ago',
+          grade: 'A'
+        },
+        {
+          studentId: 2,
+          name: 'Bob Smith',
+          avatar: 'BS',
+          course: 'Introduction to Programming',
+          progress: 72,
+          lastActive: '1 day ago',
+          grade: 'B+'
+        }
+      ];
+      res.json(studentProgress);
+    } catch (error) {
+      console.error('Error fetching student progress:', error);
+      res.status(500).json({ error: 'Failed to fetch student progress' });
+    }
+  });
+
+  // Marketplace routes
+  app.get('/api/marketplace/extensions', ensureAuthenticated, async (req, res) => {
+    try {
+      const extensions = await marketplaceService.getExtensions();
+      res.json(extensions);
+    } catch (error) {
+      console.error('Error fetching marketplace extensions:', error);
+      res.status(500).json({ error: 'Failed to fetch extensions' });
+    }
+  });
+  
+  app.post('/api/marketplace/extensions/:id/install', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await marketplaceService.installExtension(req.user!.id, id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error installing extension:', error);
+      res.status(500).json({ error: 'Failed to install extension' });
+    }
+  });
+
+  // Notifications routes
+  app.get('/api/notifications', ensureAuthenticated, async (req, res) => {
+    try {
+      const notifications = [
+        {
+          id: '1',
+          type: 'deployment',
+          title: 'Deployment successful',
+          message: 'Your project "Book scanner" was deployed successfully',
+          timestamp: new Date().toISOString(),
+          read: false,
+          link: '/deployments'
+        },
+        {
+          id: '2',
+          type: 'collaboration',
+          title: 'New team member',
+          message: 'John Doe joined your team "Awesome Developers"',
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          read: true,
+          link: '/teams'
+        }
+      ];
+      res.json(notifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+  });
+  
+  app.patch('/api/notifications/:id/read', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      // In production, update notification read status in database
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      res.status(500).json({ error: 'Failed to mark notification as read' });
+    }
+  });
+  
+  app.delete('/api/notifications/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      // In production, delete notification from database
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      res.status(500).json({ error: 'Failed to delete notification' });
+    }
+  });
+
+  // PowerUps routes
+  app.get('/api/powerups/current-plan', ensureAuthenticated, async (req, res) => {
+    try {
+      const currentPlan = {
+        name: 'Pro Plan',
+        cpu: { current: 4, max: 8, unit: 'vCPUs' },
+        memory: { current: 8, max: 16, unit: 'GB' },
+        storage: { current: 50, max: 200, unit: 'GB' },
+        bandwidth: { current: 100, max: 500, unit: 'GB/month' },
+        builds: { current: 50, max: 200, unit: 'builds/month' },
+        monthlyCost: 29.99
+      };
+      res.json(currentPlan);
+    } catch (error) {
+      console.error('Error fetching current plan:', error);
+      res.status(500).json({ error: 'Failed to fetch current plan' });
+    }
+  });
+  
+  app.get('/api/powerups', ensureAuthenticated, async (req, res) => {
+    try {
+      const powerUps = [
+        {
+          id: 'cpu-boost',
+          name: 'CPU Boost',
+          description: 'Double your CPU power for faster builds',
+          icon: 'Cpu',
+          color: 'bg-orange-600',
+          category: 'Performance',
+          boost: '2x Speed',
+          price: '$5/month',
+          active: true,
+          usage: 65
+        },
+        {
+          id: 'memory-upgrade',
+          name: 'Memory Upgrade',
+          description: 'Get 16GB RAM for heavy workloads',
+          icon: 'Database',
+          color: 'bg-blue-600',
+          category: 'Capacity',
+          boost: '+8GB RAM',
+          price: '$10/month',
+          active: false,
+          usage: 0
+        }
+      ];
+      res.json(powerUps);
+    } catch (error) {
+      console.error('Error fetching powerups:', error);
+      res.status(500).json({ error: 'Failed to fetch powerups' });
+    }
+  });
+  
+  app.get('/api/powerups/usage-stats', ensureAuthenticated, async (req, res) => {
+    try {
+      const usageStats = [
+        { metric: 'CPU Usage', current: 3.2, max: 4, unit: 'vCPUs' },
+        { metric: 'Memory Usage', current: 6.8, max: 8, unit: 'GB' },
+        { metric: 'Storage Used', current: 32, max: 50, unit: 'GB' },
+        { metric: 'Bandwidth Used', current: 45, max: 100, unit: 'GB' }
+      ];
+      res.json(usageStats);
+    } catch (error) {
+      console.error('Error fetching usage stats:', error);
+      res.status(500).json({ error: 'Failed to fetch usage stats' });
+    }
+  });
+  
+  app.get('/api/powerups/recommendations', ensureAuthenticated, async (req, res) => {
+    try {
+      const recommendations = [
+        {
+          id: 'gpu-acceleration',
+          name: 'GPU Acceleration',
+          reason: 'Your AI projects would benefit from GPU power',
+          savings: '5x faster training',
+          price: '$20/month'
+        },
+        {
+          id: 'priority-support',
+          name: 'Priority Support',
+          reason: 'Get help faster with dedicated support',
+          savings: '< 1hr response time',
+          price: '$15/month'
+        }
+      ];
+      res.json(recommendations);
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      res.status(500).json({ error: 'Failed to fetch recommendations' });
+    }
+  });
+
   // Backup routes
   app.get('/api/projects/:projectId/backups', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
