@@ -3353,9 +3353,181 @@ Generate a comprehensive application based on the user's request. Include all ne
             }
           }
 
-          logger.info('Returning agent response with actions:', {
+          // Enhanced AI Agent Integration Features
+          
+          // 1. Environment Variable Setup Automation
+          if (message.toLowerCase().includes('environment') || message.toLowerCase().includes('env var') || message.toLowerCase().includes('api key')) {
+            const envVarActions: BuildAction[] = [];
+            
+            // Detect common environment variables needed
+            const projectFiles = await storage.getFilesByProjectId(parseInt(projectId));
+            const codeContent = projectFiles.map(f => f.content).join('\n');
+            
+            // Common patterns for env vars
+            const envPatterns = [
+              /process\.env\.(\w+)/g,
+              /import\.meta\.env\.(\w+)/g,
+              /os\.environ\[['"](\w+)['"]\]/g,
+              /getenv\(['"](\w+)['"]\)/g
+            ];
+            
+            const detectedEnvVars = new Set<string>();
+            envPatterns.forEach(pattern => {
+              const matches = codeContent.matchAll(pattern);
+              for (const match of matches) {
+                detectedEnvVars.add(match[1]);
+              }
+            });
+            
+            if (detectedEnvVars.size > 0) {
+              responseContent += '\n\n**Environment Variables Detected:**\n';
+              for (const envVar of detectedEnvVars) {
+                responseContent += `- ${envVar}\n`;
+                
+                // Auto-setup common env vars
+                if (envVar.includes('DATABASE_URL') || envVar.includes('DB_')) {
+                  envVarActions.push({
+                    type: 'create_file',
+                    data: {
+                      path: '.env',
+                      content: `${envVar}=postgresql://user:password@localhost:5432/dbname`
+                    }
+                  });
+                }
+              }
+              
+              responseContent += '\nI\'ve detected these environment variables in your code. You can set them in the Secrets tab or I can help you configure them.';
+              actions.push(...envVarActions);
+            }
+          }
+          
+          // 2. Database Provisioning
+          if (message.toLowerCase().includes('database') || message.toLowerCase().includes('postgres') || message.toLowerCase().includes('mysql') || message.toLowerCase().includes('mongodb')) {
+            const dbType = message.toLowerCase().includes('mysql') ? 'mysql' : 
+                          message.toLowerCase().includes('mongodb') ? 'mongodb' : 'postgresql';
+            
+            responseContent += `\n\n**Database Setup:**\nI'll help you provision a ${dbType} database. `;
+            
+            // Check if database hosting service is available
+            const dbInstances = await realDatabaseHostingService.listDatabases(req.user!.id);
+            const existingDb = dbInstances.find(db => db.projectId === parseInt(projectId));
+            
+            if (!existingDb) {
+              // Create database instance
+              try {
+                const newDb = await realDatabaseHostingService.createDatabase({
+                  projectId: parseInt(projectId),
+                  userId: req.user!.id,
+                  name: `${project.name.toLowerCase().replace(/\s+/g, '-')}-db`,
+                  type: dbType as any,
+                  plan: 'free',
+                  region: 'us-east-1'
+                });
+                
+                responseContent += `I've provisioned a ${dbType} database for your project!\n\n`;
+                responseContent += `**Connection Details:**\n`;
+                responseContent += `- Host: ${newDb.connectionInfo.host}\n`;
+                responseContent += `- Port: ${newDb.connectionInfo.port}\n`;
+                responseContent += `- Database: ${newDb.connectionInfo.database}\n`;
+                responseContent += `- Username: ${newDb.connectionInfo.username}\n`;
+                responseContent += `- Connection URL is saved in your environment variables as DATABASE_URL\n`;
+                
+                // Set environment variable (stored in project settings or secrets)
+                // In a real implementation, this would be stored in a secure secrets vault
+                // For now, we'll include it in the .env file action
+                
+                actions.push({
+                  type: 'create_file',
+                  data: {
+                    path: '.env',
+                    content: `DATABASE_URL=${newDb.connectionInfo.connectionString}`
+                  }
+                });
+              } catch (error) {
+                logger.error('Database provisioning error:', error);
+                responseContent += `There was an issue provisioning the database. Please try using the Database tab to create one manually.`;
+              }
+            } else {
+              responseContent += `You already have a ${existingDb.type} database provisioned for this project.\n`;
+              responseContent += `Connection string is available as DATABASE_URL environment variable.`;
+            }
+          }
+          
+          // 3. Preview URL Integration
+          const hasWebFiles = files.some(f => f.name.endsWith('.html') || f.name === 'index.html');
+          if (hasWebFiles || (actions.some(a => a.type === 'create_file' && a.data.name?.includes('.html')))) {
+            const previewUrl = `/api/projects/${projectId}/preview/`;
+            responseContent += `\n\n**Live Preview Available!** 🎉\n`;
+            responseContent += `Your web application is ready to preview at: [Open Preview](${previewUrl})\n`;
+            responseContent += `The preview will automatically update as you make changes to your files.`;
+            
+            // Add preview URL to response metadata
+            (res as any).previewUrl = previewUrl;
+          }
+          
+          // 4. Build/Deploy Status Monitoring
+          if (message.toLowerCase().includes('deploy') || message.toLowerCase().includes('build')) {
+            const deploymentStatus = await realDeploymentService.getDeploymentsByProject(parseInt(projectId));
+            
+            if (deploymentStatus.length > 0) {
+              const latestDeployment = deploymentStatus[0];
+              responseContent += `\n\n**Deployment Status:**\n`;
+              responseContent += `- Status: ${latestDeployment.status}\n`;
+              responseContent += `- Last deployed: ${new Date(latestDeployment.createdAt).toLocaleString()}\n`;
+              
+              if (latestDeployment.status === 'failed') {
+                responseContent += `- Error: ${latestDeployment.error || 'Unknown error'}\n`;
+                responseContent += `\nLet me help you fix the deployment issue.`;
+              }
+            } else {
+              responseContent += `\n\n**Ready to Deploy:**\n`;
+              responseContent += `Your project is ready for deployment. Use the Deploy button or ask me to help you deploy.`;
+            }
+          }
+          
+          // 5. Error Recovery and Debugging Assistance
+          if (message.toLowerCase().includes('error') || message.toLowerCase().includes('bug') || message.toLowerCase().includes('fix') || message.toLowerCase().includes('debug')) {
+            // Get recent execution logs
+            const logs = await getProjectLogs(parseInt(projectId));
+            
+            if (logs && logs.includes('error')) {
+              responseContent += `\n\n**Error Analysis:**\n`;
+              
+              // Parse common error patterns
+              const errorPatterns = [
+                { pattern: /TypeError: (.+)/gi, type: 'Type Error' },
+                { pattern: /ReferenceError: (.+)/gi, type: 'Reference Error' },
+                { pattern: /SyntaxError: (.+)/gi, type: 'Syntax Error' },
+                { pattern: /Cannot find module '(.+)'/gi, type: 'Missing Module' },
+                { pattern: /ENOENT: no such file or directory/gi, type: 'File Not Found' }
+              ];
+              
+              errorPatterns.forEach(({ pattern, type }) => {
+                const matches = logs.matchAll(pattern);
+                for (const match of matches) {
+                  responseContent += `- **${type}**: ${match[1] || match[0]}\n`;
+                  
+                  // Suggest fixes
+                  if (type === 'Missing Module') {
+                    const moduleName = match[1];
+                    actions.push({
+                      type: 'install_package',
+                      data: { name: moduleName }
+                    });
+                    responseContent += `  → Installing missing package: ${moduleName}\n`;
+                  }
+                }
+              });
+              
+              responseContent += `\nI've analyzed the errors and will help you fix them. The suggested actions are included above.`;
+            }
+          }
+          
+          logger.info('Returning enhanced agent response with integrations:', {
             actionsCount: actions.length,
-            responseContentLength: responseContent.length
+            responseContentLength: responseContent.length,
+            hasPreview: hasWebFiles,
+            hasDatabase: message.toLowerCase().includes('database')
           });
           
           // Track AI usage for agent mode
