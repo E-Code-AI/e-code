@@ -243,7 +243,7 @@ export function ReplitHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 replit-hover">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.avatarUrl || ""} alt={user?.username} />
+                <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.username || undefined} />
                 <AvatarFallback className="bg-[var(--ecode-accent)] text-white">
                   {user?.username?.charAt(0).toUpperCase() || "U"}
                 </AvatarFallback>

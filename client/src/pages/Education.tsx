@@ -33,37 +33,90 @@ import {
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
+// Types for education data
+interface Classroom {
+  id: number;
+  name: string;
+  students: number;
+  assignments: number;
+  activeNow: number;
+  code: string;
+  teacher: string;
+  description: string;
+  progress: number;
+  nextAssignment: string;
+  dueDate: string;
+}
+
+interface Assignment {
+  id: number;
+  title: string;
+  dueDate: string;
+  submissions: number;
+  totalStudents: number;
+  subject: string;
+  status: string;
+  submitted: number;
+  total: number;
+}
+
+interface Course {
+  id: number;
+  name: string;
+  level: string;
+  duration: string;
+  students: number;
+  completion: number;
+  instructor: string;
+  rating: number;
+  description: string;
+  price: string;
+  title: string;
+  topics?: string[];
+  progress: number;
+}
+
+interface StudentProgress {
+  id: number;
+  name: string;
+  avatar: string;
+  completedLessons: number;
+  totalLessons: number;
+  progress: number;
+  lastActive: string;
+  grade: string;
+}
+
+interface LearningTopic {
+  title: string;
+  description: string;
+  difficulty: string;
+  duration: string;
+  progress: number;
+}
+
 export default function Education() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch real classroom data
-  const { data: classrooms = [], isLoading: classroomsLoading } = useQuery({
-    queryKey: ['/api/education/classrooms'],
-    queryFn: async () => {
-      const response = await fetch('/api/education/classrooms', {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch classrooms');
-      return response.json();
-    }
+  const { data: classrooms = [], isLoading: classroomsLoading } = useQuery<Classroom[]>({
+    queryKey: ['/api/education/classrooms']
   });
 
-
-
   // Fetch assignments from API
-  const { data: assignments = [] } = useQuery({
-    queryKey: ['/api/education/assignments'],
+  const { data: assignments = [] } = useQuery<Assignment[]>({
+    queryKey: ['/api/education/assignments']
   });
 
   // Fetch courses from API
-  const { data: courses = [] } = useQuery({
-    queryKey: ['/api/education/courses'],
+  const { data: courses = [] } = useQuery<Course[]>({
+    queryKey: ['/api/education/courses']
   });
 
   // Fetch student progress from API
-  const { data: studentProgress = [] } = useQuery({
-    queryKey: ['/api/education/student-progress'],
+  const { data: studentProgress = [] } = useQuery<StudentProgress[]>({
+    queryKey: ['/api/education/student-progress']
   });
 
   const EducationDashboard = () => (
@@ -136,7 +189,7 @@ export default function Education() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {(classrooms.length > 0 ? classrooms : fallbackClassrooms).map((classroom: any) => (
+              {classrooms.map((classroom: Classroom) => (
                 <div key={classroom.id} className="p-4 border rounded-lg">
                   <div className="flex items-start justify-between mb-2">
                     <div>
@@ -173,7 +226,7 @@ export default function Education() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {assignments.slice(0, 3).map((assignment) => (
+              {assignments.slice(0, 3).map((assignment: Assignment) => (
                 <div key={assignment.id} className="p-4 border rounded-lg">
                   <div className="flex items-start justify-between mb-2">
                     <div>
@@ -212,7 +265,7 @@ export default function Education() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {(classrooms.length > 0 ? classrooms : fallbackClassrooms).map((classroom: any) => (
+        {classrooms.map((classroom: Classroom) => (
           <Card key={classroom.id}>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -314,7 +367,7 @@ export default function Education() {
                 </div>
                 
                 <div className="flex flex-wrap gap-1">
-                  {course.topics.map((topic, index) => (
+                  {(course.topics || []).map((topic, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {topic}
                     </Badge>

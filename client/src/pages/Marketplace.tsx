@@ -126,7 +126,7 @@ export default function Marketplace() {
     }
   ];
 
-  const filteredExtensions = (extensions || fallbackExtensions).filter((ext: any) => {
+  const filteredExtensions = extensions.filter((ext: any) => {
     const matchesSearch = ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          ext.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          ext.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
