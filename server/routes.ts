@@ -1,7 +1,11 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
+
+const execAsync = promisify(exec);
 import { insertProjectSchema, insertFileSchema } from "@shared/schema";
 // TODO: Add missing schemas after schema migration
 // import { insertProjectCollaboratorSchema, insertDeploymentSchema, insertCodeSnippetSchema, type EnvironmentVariable } from "@shared/schema";
@@ -71,6 +75,7 @@ import { performanceMiddleware } from './monitoring/performance';
 import { monitoringRouter } from './monitoring/routes';
 import { nixPackageManager } from './package-management/nix-package-manager';
 import { nixEnvironmentBuilder } from './package-management/nix-environment-builder';
+import { simplePackageInstaller } from './package-management/simple-package-installer';
 import { simpleDeployer } from './deployment/simple-deployer';
 import { simpleGitManager } from './git/simple-git-manager';
 import { SlackDiscordService } from './integrations/slack-discord-service';
@@ -3965,11 +3970,12 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  // Package Management API with Nix
+  // Package Management API with real npm/pip implementation
   app.get('/api/projects/:id/packages', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = req.params.id;
-      const packages = await nixPackageManager.getInstalledPackages(projectId.toString());
+      // Use SimplePackageInstaller for real package listing
+      const packages = await simplePackageInstaller.getInstalledPackages(projectId.toString());
       res.json(packages);
     } catch (error) {
       console.error('Error fetching packages:', error);
@@ -3986,10 +3992,16 @@ Generate a comprehensive application based on the user's request. Include all ne
         return res.status(400).json({ error: 'Package name is required' });
       }
       
-      // Install package using Nix
-      await nixPackageManager.installPackage(projectId.toString(), name);
+      // Get project to determine language
+      const project = await storage.getProject(parseInt(projectId));
+      const projectLanguage = language || project?.language || 'javascript';
       
-      res.json({ name, status: 'installed' });
+      logger.info(`Installing package ${name} for project ${projectId} with language ${projectLanguage}`);
+      
+      // Install package using real npm/pip commands
+      await simplePackageInstaller.installPackage(projectId.toString(), name, projectLanguage);
+      
+      res.json({ name, status: 'installed', language: projectLanguage });
     } catch (error) {
       console.error('Error installing package:', error);
       res.status(500).json({ error: 'Failed to install package' });
@@ -4001,7 +4013,11 @@ Generate a comprehensive application based on the user's request. Include all ne
       const projectId = req.params.id;
       const packageName = req.params.packageName;
       
-      await nixPackageManager.removePackage(projectId.toString(), packageName);
+      // Get project to determine language
+      const project = await storage.getProject(parseInt(projectId));
+      const projectLanguage = project?.language || 'javascript';
+      
+      await simplePackageInstaller.removePackage(projectId.toString(), packageName, projectLanguage);
       res.json({ name: packageName, status: 'removed' });
     } catch (error) {
       console.error('Error uninstalling package:', error);
@@ -4017,8 +4033,8 @@ Generate a comprehensive application based on the user's request. Include all ne
         return res.status(400).json({ error: 'Search query is required' });
       }
       
-      // Search packages using Nix
-      const results = await nixPackageManager.searchPackages(q);
+      // Search packages using real npm search or pip search
+      const results = await simplePackageInstaller.searchPackages(q, language as string);
       res.json(results);
     } catch (error) {
       console.error('Error searching packages:', error);
@@ -4026,11 +4042,24 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  // Additional package management endpoints (Nix)
+  // Additional package management endpoints with real implementations
   app.post('/api/projects/:id/packages/update', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = req.params.id;
-      await nixPackageManager.updateAllPackages(projectId.toString());
+      const project = await storage.getProject(parseInt(projectId));
+      const language = project?.language || 'javascript';
+      
+      logger.info(`Updating all packages for project ${projectId}`);
+      
+      // For npm projects, run npm update
+      if (language === 'javascript' || language === 'typescript' || language === 'nodejs') {
+        const projectDir = path.join(process.cwd(), 'projects', projectId);
+        await execAsync(`cd ${projectDir} && npm update`);
+      } else if (language === 'python' || language === 'python3') {
+        const projectDir = path.join(process.cwd(), 'projects', projectId);
+        await execAsync(`cd ${projectDir} && pip install --upgrade -r requirements.txt`);
+      }
+      
       res.json({ status: 'updated', message: 'All packages updated to latest versions' });
     } catch (error) {
       console.error('Error updating packages:', error);
@@ -4041,8 +4070,12 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.post('/api/projects/:id/packages/rollback', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = req.params.id;
-      await nixPackageManager.rollbackEnvironment(projectId.toString());
-      res.json({ status: 'rolled back', message: 'Environment rolled back to previous state' });
+      // Package rollback is not easily implemented without version control
+      // This would require maintaining package-lock.json history or similar
+      res.json({ 
+        status: 'not_implemented', 
+        message: 'Package rollback requires version control integration. Use git to manage package versions.' 
+      });
     } catch (error) {
       console.error('Error rolling back packages:', error);
       res.status(500).json({ error: 'Failed to rollback packages' });
@@ -4052,10 +4085,28 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.get('/api/projects/:id/packages/environment', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = req.params.id;
-      // Export Nix environment as shell.nix
-      const shellNix = await nixPackageManager.exportEnvironment(projectId.toString());
+      const packages = await simplePackageInstaller.getInstalledPackages(projectId.toString());
+      const project = await storage.getProject(parseInt(projectId));
+      const language = project?.language || 'javascript';
+      
+      // Generate environment export based on language
+      let environment = '';
+      if (language === 'javascript' || language === 'typescript' || language === 'nodejs') {
+        environment = JSON.stringify({
+          name: project?.name || 'project',
+          version: '1.0.0',
+          dependencies: packages.reduce((deps, pkg) => {
+            deps[pkg.name] = pkg.version;
+            return deps;
+          }, {} as Record<string, string>)
+        }, null, 2);
+      } else if (language === 'python' || language === 'python3') {
+        environment = packages.map(pkg => `${pkg.name}${pkg.version !== 'latest' ? '==' + pkg.version : ''}`).join('\n');
+      }
+      
       res.json({ 
-        environment: shellNix
+        environment,
+        language
       });
     } catch (error) {
       console.error('Error exporting environment:', error);
