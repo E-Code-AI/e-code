@@ -923,6 +923,201 @@ API will be available at http://localhost:3000
     }
   });
 
+  // Comments Routes
+  app.get('/api/projects/:projectId/comments', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const comments = await storage.getProjectComments(projectId);
+      res.json(comments);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      res.status(500).json({ error: 'Failed to fetch comments' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/comments', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { content, fileId, lineNumber } = req.body;
+      const comment = await storage.createComment({
+        projectId,
+        fileId,
+        authorId: req.user!.id,
+        content,
+        lineNumber
+      });
+      res.json(comment);
+    } catch (error) {
+      console.error('Error creating comment:', error);
+      res.status(500).json({ error: 'Failed to create comment' });
+    }
+  });
+
+  // Checkpoints Routes
+  app.get('/api/projects/:projectId/checkpoints', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const checkpoints = await storage.getProjectCheckpoints(projectId);
+      res.json(checkpoints);
+    } catch (error) {
+      console.error('Error fetching checkpoints:', error);
+      res.status(500).json({ error: 'Failed to fetch checkpoints' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/checkpoints', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { name, description } = req.body;
+      const checkpoint = await storage.createCheckpoint({
+        projectId,
+        name,
+        description,
+        createdBy: req.user!.id
+      });
+      res.json(checkpoint);
+    } catch (error) {
+      console.error('Error creating checkpoint:', error);
+      res.status(500).json({ error: 'Failed to create checkpoint' });
+    }
+  });
+
+  app.post('/api/checkpoints/:id/restore', ensureAuthenticated, async (req, res) => {
+    try {
+      const checkpointId = parseInt(req.params.id);
+      const success = await storage.restoreCheckpoint(checkpointId);
+      res.json({ success });
+    } catch (error) {
+      console.error('Error restoring checkpoint:', error);
+      res.status(500).json({ error: 'Failed to restore checkpoint' });
+    }
+  });
+
+  // Time Tracking Routes
+  app.get('/api/projects/:projectId/time-tracking', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const tracking = await storage.getProjectTimeTracking(projectId);
+      res.json(tracking);
+    } catch (error) {
+      console.error('Error fetching time tracking:', error);
+      res.status(500).json({ error: 'Failed to fetch time tracking' });
+    }
+  });
+
+  app.get('/api/projects/:projectId/time-tracking/active', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const active = await storage.getActiveTimeTracking(projectId, req.user!.id);
+      res.json(active);
+    } catch (error) {
+      console.error('Error fetching active time tracking:', error);
+      res.status(500).json({ error: 'Failed to fetch active time tracking' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/time-tracking/start', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const tracking = await storage.startTimeTracking({
+        projectId,
+        userId: req.user!.id,
+        startTime: new Date(),
+        active: true
+      });
+      res.json(tracking);
+    } catch (error) {
+      console.error('Error starting time tracking:', error);
+      res.status(500).json({ error: 'Failed to start time tracking' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/time-tracking/stop', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const active = await storage.getActiveTimeTracking(projectId, req.user!.id);
+      if (!active) {
+        return res.status(404).json({ error: 'No active time tracking found' });
+      }
+      const tracking = await storage.stopTimeTracking(active.id);
+      res.json(tracking);
+    } catch (error) {
+      console.error('Error stopping time tracking:', error);
+      res.status(500).json({ error: 'Failed to stop time tracking' });
+    }
+  });
+
+  // Screenshots Routes
+  app.get('/api/projects/:projectId/screenshots', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const screenshots = await storage.getProjectScreenshots(projectId);
+      res.json(screenshots);
+    } catch (error) {
+      console.error('Error fetching screenshots:', error);
+      res.status(500).json({ error: 'Failed to fetch screenshots' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/screenshots/capture', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { title, description } = req.body;
+      // In a real implementation, you would capture the actual screenshot here
+      const screenshot = await storage.createScreenshot({
+        projectId,
+        userId: req.user!.id,
+        title,
+        description,
+        url: `/api/projects/${projectId}/preview`, // Placeholder URL
+        thumbnailUrl: `/api/projects/${projectId}/preview?thumb=true`
+      });
+      res.json(screenshot);
+    } catch (error) {
+      console.error('Error capturing screenshot:', error);
+      res.status(500).json({ error: 'Failed to capture screenshot' });
+    }
+  });
+
+  app.delete('/api/screenshots/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const screenshotId = parseInt(req.params.id);
+      // In real implementation, check user permissions
+      await storage.deleteScreenshot(screenshotId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting screenshot:', error);
+      res.status(500).json({ error: 'Failed to delete screenshot' });
+    }
+  });
+
+  // Task Summaries Routes
+  app.get('/api/projects/:projectId/task-summaries', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const summaries = await storage.getProjectTaskSummaries(projectId);
+      res.json(summaries);
+    } catch (error) {
+      console.error('Error fetching task summaries:', error);
+      res.status(500).json({ error: 'Failed to fetch task summaries' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/task-summaries', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const summary = await storage.createTaskSummary({
+        projectId,
+        userId: req.user!.id,
+        ...req.body
+      });
+      res.json(summary);
+    } catch (error) {
+      console.error('Error creating task summary:', error);
+      res.status(500).json({ error: 'Failed to create task summary' });
+    }
+  });
+
   // API Routes for Project Status and Runtime
   app.get('/api/projects/:id/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {

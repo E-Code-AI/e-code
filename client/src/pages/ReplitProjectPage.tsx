@@ -74,6 +74,11 @@ import { useYjsCollaboration } from '@/hooks/useYjsCollaboration';
 
 // Import new feature components
 import { CommentsPanel } from '@/components/CommentsPanel';
+import { CheckpointsPanel } from '@/components/CheckpointsPanel';
+import { TimeTrackingPanel } from '@/components/TimeTrackingPanel';
+import { ScreenshotsPanel } from '@/components/ScreenshotsPanel';
+import { TaskSummariesPanel } from '@/components/TaskSummariesPanel';
+import { CommentsPanel } from '@/components/CommentsPanel';
 import { HistoryTimeline } from '@/components/HistoryTimeline';
 import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 import { ConsolePanel } from '@/components/ConsolePanel';
@@ -1052,6 +1057,62 @@ const ReplitProjectPage = () => {
                     <Key className="h-4 w-4 mr-2" />
                     Secrets
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('comments')) {
+                      setOpenTools([...openTools, 'comments']);
+                      setRightPanelMode('comments');
+                    } else {
+                      setRightPanelMode('comments');
+                    }
+                  }}>
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Comments
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('checkpoints')) {
+                      setOpenTools([...openTools, 'checkpoints']);
+                      setRightPanelMode('checkpoints');
+                    } else {
+                      setRightPanelMode('checkpoints');
+                    }
+                  }}>
+                    <Clock className="h-4 w-4 mr-2" />
+                    Checkpoints
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('time-tracking')) {
+                      setOpenTools([...openTools, 'time-tracking']);
+                      setRightPanelMode('time-tracking');
+                    } else {
+                      setRightPanelMode('time-tracking');
+                    }
+                  }}>
+                    <Activity className="h-4 w-4 mr-2" />
+                    Time Tracking
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('screenshots')) {
+                      setOpenTools([...openTools, 'screenshots']);
+                      setRightPanelMode('screenshots');
+                    } else {
+                      setRightPanelMode('screenshots');
+                    }
+                  }}>
+                    <FileIcon className="h-4 w-4 mr-2" />
+                    Screenshots
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('task-summaries')) {
+                      setOpenTools([...openTools, 'task-summaries']);
+                      setRightPanelMode('task-summaries');
+                    } else {
+                      setRightPanelMode('task-summaries');
+                    }
+                  }}>
+                    <FileCode className="h-4 w-4 mr-2" />
+                    Task Summaries
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -1088,6 +1149,18 @@ const ReplitProjectPage = () => {
           )}
           {rightPanelMode === 'comments' && (
             <CommentsPanel projectId={projectId} />
+          )}
+          {rightPanelMode === 'checkpoints' && (
+            <CheckpointsPanel projectId={projectId} />
+          )}
+          {rightPanelMode === 'time-tracking' && (
+            <TimeTrackingPanel projectId={projectId} userId={user?.id || 0} />
+          )}
+          {rightPanelMode === 'screenshots' && (
+            <ScreenshotsPanel projectId={projectId} />
+          )}
+          {rightPanelMode === 'task-summaries' && (
+            <TaskSummariesPanel projectId={projectId} />
           )}
           {rightPanelMode === 'history' && (
             <HistoryTimeline projectId={projectId} />
