@@ -1,4 +1,4 @@
-import * as express from 'express';
+import express from 'express';
 import * as path from 'path';
 import { storage } from '../storage';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -44,7 +44,7 @@ export class PreviewService {
         pathRewrite: {
           [`^/${projectId}`]: ''
         },
-        onError: (err, req, res) => {
+        onError: (err: any, req: any, res: any) => {
           logger.error(`Preview proxy error for project ${projectId}:`, err);
           res.status(502).json({ error: 'Preview server error' });
         }
@@ -196,3 +196,11 @@ export class PreviewService {
 }
 
 export const previewService = new PreviewService();
+
+// Start preview server on port 3100
+export function startPreviewServer() {
+  const PORT = 3100;
+  previewService.app.listen(PORT, () => {
+    logger.info(`Preview server running on port ${PORT}`);
+  });
+}

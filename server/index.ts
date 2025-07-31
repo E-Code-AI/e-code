@@ -74,6 +74,15 @@ app.use((req, res, next) => {
       console.warn("Warning: Nix package manager initialization failed:", nixError);
       console.warn("Package management features may be limited");
     }
+    
+    // Start the preview server
+    try {
+      const { startPreviewServer } = await import("./preview/preview-service");
+      startPreviewServer();
+      console.log("Preview server started on port 3100");
+    } catch (previewError) {
+      console.warn("Warning: Preview server failed to start:", previewError);
+    }
   } catch (error) {
     console.error("Failed to initialize:", error);
   }

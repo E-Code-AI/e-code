@@ -245,6 +245,19 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
                   } else {
                     console.log('Successfully created file:', action.data.path);
                     queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+                    
+                    // If this is a main file, show preview
+                    if (action.data.path && (
+                      action.data.path.endsWith('.html') || 
+                      action.data.path.endsWith('index.html') ||
+                      action.data.path === '/index.html' ||
+                      action.data.path === '/app.py' ||
+                      action.data.path === '/main.py' ||
+                      action.data.path === '/server.js' ||
+                      action.data.path === '/app.js'
+                    )) {
+                      window.postMessage({ type: 'show-preview' }, '*');
+                    }
                   }
                 } catch (error) {
                   console.error('Error creating file:', action.data.path, error);
