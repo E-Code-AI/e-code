@@ -1369,14 +1369,106 @@ export default function Landing() {
                   <span className="text-xs text-muted-foreground">localhost:5000</span>
                   <div className="ml-auto w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 </div>
-                <div className="relative">
-                  <img 
-                    src="https://cdn.sanity.io/images/bj34pdbp/migration/c7f2a8b9e4d5f6g7h8i9j0k1l2m3n4o5-800x601.gif?w=800&q=80&fit=clip&auto=format"
-                    alt="Weather app running live"
-                    className="w-full h-auto"
-                  />
-                  <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/90 rounded-lg px-3 py-2">
-                    <p className="text-sm font-medium">🌤️ Weather App - Live</p>
+                <div className="relative bg-gradient-to-br from-sky-100 to-blue-100 dark:from-sky-950 dark:to-blue-950 min-h-[400px] flex items-center justify-center p-8">
+                  {/* Weather App Preview */}
+                  <div className="w-full max-w-lg">
+                    <div className="bg-white/95 dark:bg-gray-900/95 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md">
+                      {/* Header */}
+                      <div className="bg-gradient-to-r from-sky-500 to-blue-600 p-6 text-white">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="text-2xl font-bold mb-1">San Francisco</h3>
+                            <p className="text-sm opacity-80">Tuesday, March 19</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-5xl font-bold">72°</p>
+                            <p className="text-sm opacity-80">Partly Cloudy</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-6xl animate-pulse">☀️</div>
+                          <div className="flex-1 grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <p className="opacity-80">Feels like</p>
+                              <p className="font-medium">68°</p>
+                            </div>
+                            <div>
+                              <p className="opacity-80">Humidity</p>
+                              <p className="font-medium">65%</p>
+                            </div>
+                            <div>
+                              <p className="opacity-80">Wind</p>
+                              <p className="font-medium">12 mph</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Body */}
+                      <div className="p-6 space-y-6">
+                        {/* Hourly Forecast */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-3">Hourly Forecast</h4>
+                          <div className="flex gap-3 overflow-x-auto pb-2">
+                            {[
+                              { time: "12 PM", temp: "72°", icon: "☀️" },
+                              { time: "1 PM", temp: "74°", icon: "🌤️" },
+                              { time: "2 PM", temp: "76°", icon: "☀️" },
+                              { time: "3 PM", temp: "75°", icon: "⛅" },
+                              { time: "4 PM", temp: "73°", icon: "☁️" },
+                              { time: "5 PM", temp: "70°", icon: "🌤️" }
+                            ].map((hour, i) => (
+                              <div key={i} className="flex-shrink-0 text-center bg-muted/50 rounded-lg p-3 min-w-[70px]">
+                                <p className="text-xs text-muted-foreground">{hour.time}</p>
+                                <p className="text-2xl my-2">{hour.icon}</p>
+                                <p className="text-sm font-medium">{hour.temp}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* 5-Day Forecast */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-3">5-Day Forecast</h4>
+                          <div className="space-y-2">
+                            {[
+                              { day: "Wednesday", high: "75°", low: "62°", icon: "🌤️", desc: "Partly Cloudy" },
+                              { day: "Thursday", high: "68°", low: "58°", icon: "🌧️", desc: "Light Rain" },
+                              { day: "Friday", high: "70°", low: "60°", icon: "⛅", desc: "Mostly Cloudy" },
+                              { day: "Saturday", high: "78°", low: "65°", icon: "☀️", desc: "Sunny" },
+                              { day: "Sunday", high: "80°", low: "67°", icon: "☀️", desc: "Clear" }
+                            ].map((day, i) => (
+                              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-2xl">{day.icon}</span>
+                                  <div>
+                                    <p className="font-medium">{day.day}</p>
+                                    <p className="text-xs text-muted-foreground">{day.desc}</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-medium">{day.high}</span>
+                                  <span className="text-muted-foreground mx-2">/</span>
+                                  <span className="text-muted-foreground">{day.low}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Floating annotations */}
+                  <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/90 rounded-lg px-3 py-2 shadow-lg">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                      Live Preview
+                    </p>
+                  </div>
+                  
+                  <div className="absolute bottom-4 right-4 bg-white/90 dark:bg-black/90 rounded-lg px-3 py-2 shadow-lg">
+                    <p className="text-xs font-mono">Built in 45 seconds with AI</p>
                   </div>
                 </div>
               </Card>
