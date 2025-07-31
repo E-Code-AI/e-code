@@ -118,6 +118,7 @@ import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import { SpotlightSearch } from "@/components/SpotlightSearch";
 import { CommandPalette } from "@/components/CommandPalette";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Loading fallback component
 function PageLoader() {
@@ -128,14 +129,15 @@ function AppContent() {
 
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen replit-layout-main">
-        <Toaster />
-        <SpotlightSearch />
-        <CommandPalette />
-        <KeyboardShortcuts />
-        <Suspense fallback={<PageLoader />}>
-          <Switch>
+    <ErrorBoundary>
+      <TooltipProvider>
+        <div className="min-h-screen replit-layout-main">
+          <Toaster />
+          <SpotlightSearch />
+          <CommandPalette />
+          <KeyboardShortcuts />
+          <Suspense fallback={<PageLoader />}>
+            <Switch>
           <Route path="/auth" component={AuthPage} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
@@ -462,6 +464,7 @@ function AppContent() {
         </Suspense>
       </div>
     </TooltipProvider>
+    </ErrorBoundary>
   );
 }
 

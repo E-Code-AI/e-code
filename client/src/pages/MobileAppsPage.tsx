@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Smartphone, Download, Bell, Sync, Code, Play, Settings, Users } from "lucide-react";
+import { Smartphone, Download, Bell, RefreshCw, Code, Play, Settings, Users } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -61,7 +61,11 @@ export default function MobileAppsPage() {
   // Update settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: (data: { setting: string; value: any }) =>
-      apiRequest("/api/mobile/settings", { method: "PATCH", body: data }),
+      apiRequest("/api/mobile/settings", { 
+        method: "PATCH", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data) 
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/mobile/settings"] });
       toast({
@@ -74,7 +78,11 @@ export default function MobileAppsPage() {
   // Send push notification mutation
   const sendNotificationMutation = useMutation({
     mutationFn: (data: { title: string; message: string; recipients?: string[] }) =>
-      apiRequest("/api/mobile/notifications/send", { method: "POST", body: data }),
+      apiRequest("/api/mobile/notifications/send", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data) 
+      }),
     onSuccess: () => {
       toast({
         title: "Notification Sent",
@@ -96,7 +104,7 @@ export default function MobileAppsPage() {
       id: 'project-sync',
       name: 'Project Sync',
       description: 'Real-time synchronization between desktop and mobile',
-      icon: Sync,
+      icon: RefreshCw,
       status: 'available',
       platforms: ['iOS', 'Android']
     },

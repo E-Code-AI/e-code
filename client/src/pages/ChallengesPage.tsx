@@ -70,7 +70,11 @@ export default function ChallengesPage() {
   // Submit solution mutation
   const submitSolutionMutation = useMutation({
     mutationFn: (data: { challengeId: number; code: string }) =>
-      apiRequest("/api/challenges/submit", { method: "POST", body: data }),
+      apiRequest("/api/challenges/submit", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data) 
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/challenges/submissions"] });
       toast({

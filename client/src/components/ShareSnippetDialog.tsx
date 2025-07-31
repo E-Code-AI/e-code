@@ -65,17 +65,21 @@ export function ShareSnippetDialog({
         }
       }
 
-      const response = await apiRequest("POST", `/api/projects/${projectId}/snippets`, {
-        fileName,
-        filePath,
-        lineStart,
-        lineEnd,
-        code,
-        language,
-        title,
-        description,
-        isPublic,
-        expiresAt,
+      const response = await apiRequest(`/api/projects/${projectId}/snippets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName,
+          filePath,
+          lineStart,
+          lineEnd,
+          code,
+          language,
+          title,
+          description,
+          isPublic,
+          expiresAt,
+        })
       });
 
       const data = await response.json();
