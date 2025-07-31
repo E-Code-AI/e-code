@@ -1293,12 +1293,11 @@ Please make sure you have configured your AI API key in the project settings. Yo
               placeholder="Ask me to build something..."
               className="w-full min-h-[40px] max-h-24 text-[15px] resize-none border-0 rounded-2xl px-4 py-2.5 pr-12 focus:ring-2 focus:ring-primary focus:outline-none bg-muted placeholder:text-muted-foreground"
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === 'Enter' && !e.shiftKey && !isLoading && !isBuilding) {
                   e.preventDefault();
                   handleSend();
                 }
               }}
-              disabled={isLoading || isBuilding}
             />
             <Button
               onClick={handleSend}
