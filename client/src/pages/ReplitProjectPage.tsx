@@ -78,6 +78,7 @@ import { HistoryTimeline } from '@/components/HistoryTimeline';
 import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 import { ConsolePanel } from '@/components/ConsolePanel';
 import { LivePreview } from '@/components/LivePreview';
+import { PreviewPanel } from '@/components/PreviewPanel';
 import { DeploymentPanel } from '@/components/DeploymentPanel';
 import { ToolsDropdown } from '@/components/ToolsDropdown';
 
@@ -170,11 +171,18 @@ const ReplitProjectPage = () => {
       
       const res = await apiRequest('GET', url);
       if (!res.ok) {
-        const error = await res.text();
         if (res.status === 401) {
-          throw new Error('You need to log in to access this project');
+          // Redirect to login page for authentication
+          window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+          throw new Error('Please log in to access this project');
         }
-        throw new Error(error || 'Failed to fetch project');
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await res.json();
+          throw new Error(error.message || error.error || 'Failed to fetch project');
+        } else {
+          throw new Error(`Failed to fetch project (${res.status})`);
+        }
       }
       return res.json();
     },
@@ -237,7 +245,7 @@ const ReplitProjectPage = () => {
                   : 'text-muted-foreground'
               )}
             >
-              <Terminal className="h-5 w-5" />
+              <TerminalIcon className="h-5 w-5" />
               <span className="text-[10px] font-medium">Console</span>
             </button>
 
@@ -351,6 +359,33 @@ const ReplitProjectPage = () => {
     onSuccess: () => {
       setProjectRunning(false);
       setExecutionId(undefined);
+    },
+  });
+
+  // Mutation for creating files/folders
+  const createFileMutation = useMutation({
+    mutationFn: async ({ projectId, name, content, isFolder, parentId }: {
+      projectId: number;
+      name: string;
+      content: string;
+      isFolder: boolean;
+      parentId?: number | null;
+    }) => {
+      const res = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+        name,
+        content,
+        isDirectory: isFolder,
+        parentId
+      });
+      if (!res.ok) throw new Error('Failed to create file/folder');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      toast({
+        title: 'Success',
+        description: 'File/folder created successfully',
+      });
     },
   });
 
@@ -720,7 +755,7 @@ const ReplitProjectPage = () => {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => {
                 if (!openTools.includes('deployment')) setOpenTools([...openTools, 'deployment']);
-                setRightPanelMode('deployment');
+                setRightPanelMode('deployments');
               }}>
                 <Rocket className="h-4 w-4 mr-2" />
                 Deployments
@@ -887,7 +922,7 @@ const ReplitProjectPage = () => {
           ) : (
             <ReplitAssistant 
               projectId={projectId}
-              selectedFile={selectedFile}
+              currentFile={selectedFile?.name}
               selectedCode={selectedCode}
               onApplyCode={handleApplyCode}
             />
@@ -1031,8 +1066,6 @@ const ReplitProjectPage = () => {
           {rightPanelMode === 'console' && (
             <ConsolePanel
               projectId={projectId}
-              executionResults={executionResults}
-              projectRunning={projectRunning}
             />
           )}
           {rightPanelMode === 'database' && (
@@ -1050,8 +1083,7 @@ const ReplitProjectPage = () => {
           {rightPanelMode === 'collaboration' && (
             <CollaborationPanel 
               projectId={projectId}
-              users={collaboration.users}
-              onFollowUser={collaboration.followUser}
+              onFollowUser={(userId) => collaboration.followUser(parseInt(userId))}
             />
           )}
           {rightPanelMode === 'comments' && (
