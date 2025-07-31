@@ -44,7 +44,9 @@ import {
   MessageCircle,
   Terminal as TerminalIcon,
   Globe,
-  MoreVertical
+  MoreVertical,
+  Activity,
+  Rocket
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -72,6 +74,13 @@ import { LivePreview } from '@/components/LivePreview';
 import { DeploymentPanel } from '@/components/DeploymentPanel';
 import { ToolsDropdown } from '@/components/ToolsDropdown';
 
+// Import advanced UI components
+import { ReplitForkGraph } from '@/components/ReplitForkGraph';
+import { ReplitVersionControl } from '@/components/ReplitVersionControl';
+import { ReplitPackageExplorer } from '@/components/ReplitPackageExplorer';
+import { ReplitResourceMonitor } from '@/components/ReplitResourceMonitor';
+import { ReplitDeploymentPipeline } from '@/components/ReplitDeploymentPipeline';
+
 type MobileTab = 'files' | 'agent' | 'console' | 'preview' | 'secrets' | 'database' | 'auth';
 
 const ReplitProjectPage = () => {
@@ -94,7 +103,7 @@ const ReplitProjectPage = () => {
   const [showTerminal, setShowTerminal] = useState(false); // Hide terminal by default like Replit
   const [mobileTab, setMobileTab] = useState<MobileTab>('agent'); // Default to agent on mobile like Replit
   const [showCollaboration, setShowCollaboration] = useState(false);
-  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions' | 'deployments' | 'shell' | 'database' | 'secrets' | 'workflows' | 'console' | 'authentication' | 'preview' | 'git' | 'ssh' | 'vnc' | 'threads' | 'object-storage' | 'problems' | 'security-scanner' | 'networking' | 'integrations' | 'user-settings'>('ai');
+  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions' | 'deployments' | 'shell' | 'database' | 'secrets' | 'workflows' | 'console' | 'authentication' | 'preview' | 'git' | 'ssh' | 'vnc' | 'threads' | 'object-storage' | 'problems' | 'security-scanner' | 'networking' | 'integrations' | 'user-settings' | 'fork-graph' | 'version-control' | 'package-explorer' | 'resource-monitor' | 'deployment-pipeline'>('ai');
   const [aiMode, setAIMode] = useState<'agent' | 'advanced'>('agent'); // Default to agent mode
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
   const [openTools, setOpenTools] = useState<string[]>(['ai']);
@@ -682,6 +691,33 @@ const ReplitProjectPage = () => {
             <Package className="h-4 w-4" />
           </Button>
 
+          {/* Quick access buttons for advanced UI components */}
+          <Button
+            variant={rightPanelMode === 'resource-monitor' ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setRightPanelMode('resource-monitor');
+              setShowAIChat(true);
+            }}
+            className="h-8 w-8"
+            title="Resource Monitor"
+          >
+            <Activity className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant={rightPanelMode === 'deployment-pipeline' ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setRightPanelMode('deployment-pipeline');
+              setShowAIChat(true);
+            }}
+            className="h-8 w-8"
+            title="Deployment Pipeline"
+          >
+            <Rocket className="h-4 w-4" />
+          </Button>
+
           <ToolsDropdown 
             onSelectTool={(tool) => {
               setRightPanelMode(tool as any);
@@ -866,6 +902,27 @@ const ReplitProjectPage = () => {
                         console.log('Preview ready at:', url);
                       }}
                     />
+                  )}
+
+                  {/* Advanced UI Components */}
+                  {rightPanelMode === 'fork-graph' && (
+                    <ReplitForkGraph projectId={projectId} />
+                  )}
+
+                  {rightPanelMode === 'version-control' && (
+                    <ReplitVersionControl projectId={projectId} />
+                  )}
+
+                  {rightPanelMode === 'package-explorer' && (
+                    <ReplitPackageExplorer projectId={projectId} />
+                  )}
+
+                  {rightPanelMode === 'resource-monitor' && (
+                    <ReplitResourceMonitor projectId={projectId} />
+                  )}
+
+                  {rightPanelMode === 'deployment-pipeline' && (
+                    <ReplitDeploymentPipeline projectId={projectId} />
                   )}
 
                   {/* Placeholder panels for other tools */}

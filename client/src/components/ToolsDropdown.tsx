@@ -72,6 +72,13 @@ export const ToolsDropdown: React.FC<ToolsDropdownProps> = ({ onSelectTool, curr
     { id: 'threads', label: 'Threads', icon: MessageSquareText, description: 'Comment and discuss topics with collaborators directly inside code or text files' },
     { id: 'user-settings', label: 'User Settings', icon: Settings, description: 'Configure personal editor preferences and workspace settings which apply to all Apps' },
     { id: 'vnc', label: 'VNC', icon: Monitor, description: 'View your app\'s desktop screen output' },
+    
+    // Advanced UI Components (New)
+    { id: 'fork-graph', label: 'Fork Graph', icon: GitBranch, description: 'Interactive visualization of project fork networks' },
+    { id: 'version-control', label: 'Version Control', icon: GitBranch, description: 'Comprehensive Git integration with diff viewer and branch management' },
+    { id: 'package-explorer', label: 'Package Explorer', icon: Package, description: 'Visual dependency tree showing package relationships' },
+    { id: 'resource-monitor', label: 'Resource Monitor', icon: Monitor, description: 'Real-time CPU/memory/disk/network monitoring with live charts' },
+    { id: 'deployment-pipeline', label: 'Deployment Pipeline', icon: Settings, description: 'Visual CI/CD pipeline with stage-by-stage progress tracking' },
   ];
 
   return (
