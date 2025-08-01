@@ -4,6 +4,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
+import Stripe from "stripe";
 
 const execAsync = promisify(exec);
 import { insertProjectSchema, insertFileSchema } from "@shared/schema";
@@ -190,6 +191,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize services
   const educationService = getEducationService(storage);
   
+  // Initialize Stripe
+  const stripe = process.env.STRIPE_SECRET_KEY 
+    ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2024-12-18.acacia",
+      })
+    : null;
+  
   // Set up authentication
   setupAuth(app);
   
@@ -269,6 +277,294 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching folders:', error);
       res.status(500).json({ error: 'Failed to fetch folders' });
+    }
+  });
+
+  // Stripe Usage and Billing Routes
+  app.get('/api/user/usage', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Get current billing period
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      // Track real usage from database
+      const usage = await storage.getUserUsage(userId, startOfMonth);
+
+      // Define plan limits based on subscription
+      const planLimits: Record<string, any> = {
+        free: {
+          compute: { limit: 50, unit: 'hours' },
+          storage: { limit: 5, unit: 'GB' },
+          bandwidth: { limit: 50, unit: 'GB' },
+          privateProjects: { limit: 3, unit: 'projects' },
+          deployments: { limit: 5, unit: 'deployments' },
+          collaborators: { limit: 1, unit: 'users' }
+        },
+        hacker: {
+          compute: { limit: 100, unit: 'hours' },
+          storage: { limit: 10, unit: 'GB' },
+          bandwidth: { limit: 100, unit: 'GB' },
+          privateProjects: { limit: 5, unit: 'projects' },
+          deployments: { limit: 10, unit: 'deployments' },
+          collaborators: { limit: 3, unit: 'users' }
+        },
+        pro: {
+          compute: { limit: 500, unit: 'hours' },
+          storage: { limit: 50, unit: 'GB' },
+          bandwidth: { limit: 500, unit: 'GB' },
+          privateProjects: { limit: -1, unit: 'projects' }, // unlimited
+          deployments: { limit: -1, unit: 'deployments' }, // unlimited
+          collaborators: { limit: 10, unit: 'users' }
+        }
+      };
+
+      // Determine user's plan
+      const userPlan = user.stripePriceId ? 'hacker' : 'free'; // You can map price IDs to plans
+      const limits = planLimits[userPlan] || planLimits.free;
+
+      // Get actual usage counts
+      const projects = await storage.getProjectsByUserId(userId);
+      const projectCount = projects.filter(proj => proj.visibility === 'private').length;
+      const deploymentCount = 0; // You can track this from deployments table
+      const collaboratorCount = 0; // You can track this from team members
+
+      // Format response with real data
+      const formattedUsage = {
+        compute: {
+          used: usage.compute?.used || 0,
+          limit: limits.compute.limit,
+          unit: limits.compute.unit,
+          percentage: limits.compute.limit > 0 ? ((usage.compute?.used || 0) / limits.compute.limit) * 100 : 0
+        },
+        storage: {
+          used: usage.storage?.used || 0,
+          limit: limits.storage.limit,
+          unit: limits.storage.unit,
+          percentage: limits.storage.limit > 0 ? ((usage.storage?.used || 0) / limits.storage.limit) * 100 : 0
+        },
+        bandwidth: {
+          used: usage.bandwidth?.used || 0,
+          limit: limits.bandwidth.limit,
+          unit: limits.bandwidth.unit,
+          percentage: limits.bandwidth.limit > 0 ? ((usage.bandwidth?.used || 0) / limits.bandwidth.limit) * 100 : 0
+        },
+        privateProjects: {
+          used: projectCount,
+          limit: limits.privateProjects.limit,
+          unit: limits.privateProjects.unit,
+          percentage: limits.privateProjects.limit > 0 ? (projectCount / limits.privateProjects.limit) * 100 : 0
+        },
+        deployments: {
+          used: deploymentCount,
+          limit: limits.deployments.limit,
+          unit: limits.deployments.unit,
+          percentage: limits.deployments.limit > 0 ? (deploymentCount / limits.deployments.limit) * 100 : 0
+        },
+        collaborators: {
+          used: collaboratorCount,
+          limit: limits.collaborators.limit,
+          unit: limits.collaborators.unit,
+          percentage: limits.collaborators.limit > 0 ? (collaboratorCount / limits.collaborators.limit) * 100 : 0
+        }
+      };
+
+      res.json(formattedUsage);
+    } catch (error) {
+      console.error('Error fetching usage data:', error);
+      res.status(500).json({ error: 'Failed to fetch usage data' });
+    }
+  });
+
+  app.get('/api/user/billing', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Calculate billing cycle
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const daysInMonth = endOfMonth.getDate();
+      const currentDay = now.getDate();
+      const daysRemaining = daysInMonth - currentDay + 1;
+
+      // Get subscription info from Stripe if customer exists
+      let subscriptionInfo = null;
+      if (stripe && user.stripeCustomerId && user.stripeSubscriptionId) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          subscriptionInfo = {
+            status: subscription.status,
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+            priceId: subscription.items.data[0]?.price.id
+          };
+        } catch (error) {
+          console.error('Error fetching Stripe subscription:', error);
+        }
+      }
+
+      // Get billing history
+      const previousCycles = [];
+      if (stripe && user.stripeCustomerId) {
+        try {
+          const invoices = await stripe.invoices.list({
+            customer: user.stripeCustomerId,
+            limit: 6
+          });
+
+          for (const invoice of invoices.data) {
+            if (invoice.status === 'paid') {
+              previousCycles.push({
+                month: new Date(invoice.created * 1000).toLocaleString('default', { month: 'long', year: 'numeric' }),
+                period: `${new Date(invoice.period_start * 1000).toLocaleDateString()} - ${new Date(invoice.period_end * 1000).toLocaleDateString()}`,
+                amount: `$${(invoice.amount_paid / 100).toFixed(2)}`,
+                plan: invoice.lines.data[0]?.description || 'E-Code Subscription'
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching billing history:', error);
+        }
+      }
+
+      res.json({
+        currentCycle: {
+          start: startOfMonth,
+          end: endOfMonth,
+          daysRemaining
+        },
+        plan: user.stripePriceId ? 'Hacker' : 'Free',
+        subscriptionInfo,
+        previousCycles
+      });
+    } catch (error) {
+      console.error('Error fetching billing data:', error);
+      res.status(500).json({ error: 'Failed to fetch billing data' });
+    }
+  });
+
+  // Stripe subscription management
+  app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ error: 'Stripe is not configured' });
+      }
+
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      if (!user || !user.email) {
+        return res.status(400).json({ error: 'User email not found' });
+      }
+
+      let customerId = user.stripeCustomerId;
+
+      // Create or retrieve customer
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.displayName || user.username,
+          metadata: {
+            userId: userId.toString()
+          }
+        });
+        customerId = customer.id;
+        await storage.updateUserStripeInfo(userId, { stripeCustomerId: customerId });
+      }
+
+      // Create subscription with payment method collection
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{
+          price: process.env.STRIPE_PRICE_ID || 'price_1234', // You need to set this
+        }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent']
+      });
+
+      // Update user with subscription info
+      await storage.updateUserStripeInfo(userId, {
+        stripeSubscriptionId: subscription.id,
+        stripePriceId: subscription.items.data[0].price.id,
+        subscriptionStatus: subscription.status
+      });
+
+      const paymentIntent = (subscription.latest_invoice as any).payment_intent;
+
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent.client_secret
+      });
+    } catch (error: any) {
+      console.error('Error creating subscription:', error);
+      res.status(500).json({ error: error.message || 'Failed to create subscription' });
+    }
+  });
+
+  app.post('/api/cancel-subscription', ensureAuthenticated, async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ error: 'Stripe is not configured' });
+      }
+
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.stripeSubscriptionId) {
+        return res.status(400).json({ error: 'No active subscription found' });
+      }
+
+      const subscription = await stripe.subscriptions.update(user.stripeSubscriptionId, {
+        cancel_at_period_end: true
+      });
+
+      await storage.updateUserStripeInfo(userId, {
+        subscriptionStatus: 'canceling'
+      });
+
+      res.json({
+        message: 'Subscription will be canceled at the end of the billing period',
+        cancelAt: new Date(subscription.cancel_at! * 1000)
+      });
+    } catch (error: any) {
+      console.error('Error canceling subscription:', error);
+      res.status(500).json({ error: error.message || 'Failed to cancel subscription' });
+    }
+  });
+
+  // Track usage endpoint
+  app.post('/api/track-usage', ensureAuthenticated, async (req, res) => {
+    try {
+      const { metricType, value, unit } = req.body;
+      const userId = req.user!.id;
+
+      const now = new Date();
+      const billingPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const billingPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      await storage.trackUsage(userId, {
+        metricType,
+        value,
+        unit,
+        billingPeriodStart,
+        billingPeriodEnd
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error tracking usage:', error);
+      res.status(500).json({ error: 'Failed to track usage' });
     }
   });
 

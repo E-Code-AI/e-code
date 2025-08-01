@@ -20,7 +20,7 @@ import {
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
   mobileDevices, pushNotifications, teams, teamMembers, deployments,
-  comments, checkpoints, projectTimeTracking, projectScreenshots, taskSummaries
+  comments, checkpoints, projectTimeTracking, projectScreenshots, taskSummaries, usageTracking
 } from "@shared/schema";
 import { eq, and, desc, isNull, sql, inArray } from "drizzle-orm";
 import { db } from "./db";
@@ -120,6 +120,26 @@ export interface IStorage {
   installTheme(userId: number, themeId: string): Promise<void>;
   uninstallTheme(userId: number, themeId: string): Promise<void>;
   createCustomTheme(userId: number, theme: any): Promise<any>;
+
+  // Stripe operations
+  updateUserStripeInfo(userId: number, stripeData: {
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    stripePriceId?: string;
+    subscriptionStatus?: string;
+    subscriptionCurrentPeriodEnd?: Date;
+  }): Promise<User | undefined>;
+  updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined>;
+  
+  // Usage tracking operations
+  trackUsage(userId: number, metric: {
+    metricType: string;
+    value: number;
+    unit: string;
+    billingPeriodStart: Date;
+    billingPeriodEnd: Date;
+  }): Promise<void>;
+  getUserUsage(userId: number, billingPeriodStart?: Date): Promise<any>;
 
   // Comments operations
   createComment(comment: InsertComment): Promise<Comment>;
@@ -776,6 +796,73 @@ export class DatabaseStorage implements IStorage {
   async updateTaskSummary(id: number, summary: Partial<InsertTaskSummary>): Promise<TaskSummary | undefined> {
     const [updated] = await db.update(taskSummaries).set(summary).where(eq(taskSummaries.id, id)).returning();
     return updated;
+  }
+
+  // Stripe operations
+  async updateUserStripeInfo(userId: number, stripeData: {
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    stripePriceId?: string;
+    subscriptionStatus?: string;
+    subscriptionCurrentPeriodEnd?: Date;
+  }): Promise<User | undefined> {
+    const [updated] = await db.update(users)
+      .set({ ...stripeData, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
+  }
+
+  async updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined> {
+    const [updated] = await db.update(users)
+      .set({ stripeCustomerId: customerId, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
+  }
+
+  // Usage tracking operations
+  async trackUsage(userId: number, metric: {
+    metricType: string;
+    value: number;
+    unit: string;
+    billingPeriodStart: Date;
+    billingPeriodEnd: Date;
+  }): Promise<void> {
+    await db.insert(usageTracking).values({
+      userId,
+      ...metric,
+      value: metric.value.toString()
+    });
+  }
+
+  async getUserUsage(userId: number, billingPeriodStart?: Date): Promise<any> {
+    const query = billingPeriodStart 
+      ? and(
+          eq(usageTracking.userId, userId),
+          eq(usageTracking.billingPeriodStart, billingPeriodStart)
+        )
+      : eq(usageTracking.userId, userId);
+
+    const results = await db.select({
+      metricType: usageTracking.metricType,
+      total: sql<number>`SUM(${usageTracking.value})`,
+      unit: usageTracking.unit
+    })
+    .from(usageTracking)
+    .where(query)
+    .groupBy(usageTracking.metricType, usageTracking.unit);
+
+    // Transform results into usage object
+    const usage: any = {};
+    results.forEach(row => {
+      usage[row.metricType] = {
+        used: parseFloat(row.total?.toString() || '0'),
+        unit: row.unit
+      };
+    });
+
+    return usage;
   }
 }
 

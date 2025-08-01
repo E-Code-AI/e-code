@@ -152,6 +152,11 @@ export default function Usage() {
     navigate('/support?topic=sales');
   };
 
+  const handleUpgradeNow = () => {
+    // Navigate to subscription page
+    navigate('/subscribe');
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
