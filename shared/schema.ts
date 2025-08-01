@@ -61,6 +61,11 @@ export const users = pgTable("users", {
   reputation: integer("reputation").default(0),
   isMentor: boolean("is_mentor").default(false),
   emailVerified: boolean("email_verified").default(false),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  stripePriceId: varchar("stripe_price_id"),
+  subscriptionStatus: varchar("subscription_status"),
+  subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -116,6 +121,18 @@ export const apiUsage = pgTable("api_usage", {
   statusCode: integer("status_code").notNull(),
   responseTime: integer("response_time"),
   timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// Usage tracking table for billing
+export const usageTracking = pgTable("usage_tracking", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  metricType: varchar("metric_type").notNull(), // compute, storage, bandwidth, etc.
+  value: decimal("value", { precision: 10, scale: 2 }).notNull(),
+  unit: varchar("unit").notNull(), // hours, GB, etc.
+  timestamp: timestamp("timestamp").defaultNow(),
+  billingPeriodStart: timestamp("billing_period_start").notNull(),
+  billingPeriodEnd: timestamp("billing_period_end").notNull(),
 });
 
 // Code Review Tables
