@@ -9,9 +9,10 @@ import {
   Zap, Globe, Users, Shield, Code, Terminal, GitBranch, 
   Rocket, Package, Database, Cpu, Cloud, Lock, Star,
   ChevronRight, ArrowRight, CheckCircle, PlayCircle,
-  Sparkles, Check, Loader2, MessageSquare, Bot, ShoppingCart
+  Sparkles, Check, Loader2, MessageSquare, Bot, ShoppingCart,
+  Play, Pause, Volume2, VolumeX, Maximize, Globe2
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 import { MobileChatInterface } from '@/components/MobileChatInterface';
@@ -1304,10 +1305,10 @@ export default function Landing() {
         <div className="container-responsive max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Watch code come to life instantly
+              Watch E-Code in action
             </h2>
             <p className="text-lg text-muted-foreground">
-              From idea to running app in seconds. No setup, no downloads, just code.
+              See how our AI transforms your ideas into fully functional applications in real-time
             </p>
           </div>
           
@@ -1374,106 +1375,75 @@ export default function Landing() {
                   <span className="text-xs text-muted-foreground">localhost:5000</span>
                   <div className="ml-auto w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 </div>
-                <div className="relative bg-gradient-to-br from-sky-100 to-blue-100 dark:from-sky-950 dark:to-blue-950 min-h-[400px] flex items-center justify-center p-8">
-                  {/* Weather App Preview */}
-                  <div className="w-full max-w-lg">
-                    <div className="bg-white/95 dark:bg-gray-900/95 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md">
-                      {/* Header */}
-                      <div className="bg-gradient-to-r from-sky-500 to-blue-600 p-6 text-white">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="text-2xl font-bold mb-1">San Francisco</h3>
-                            <p className="text-sm opacity-80">Tuesday, March 19</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-5xl font-bold">72°</p>
-                            <p className="text-sm opacity-80">Partly Cloudy</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-6xl animate-pulse">☀️</div>
-                          <div className="flex-1 grid grid-cols-3 gap-4 text-sm">
-                            <div>
-                              <p className="opacity-80">Feels like</p>
-                              <p className="font-medium">68°</p>
-                            </div>
-                            <div>
-                              <p className="opacity-80">Humidity</p>
-                              <p className="font-medium">65%</p>
-                            </div>
-                            <div>
-                              <p className="opacity-80">Wind</p>
-                              <p className="font-medium">12 mph</p>
-                            </div>
+                <div className="relative bg-gradient-to-br from-gray-900 to-black min-h-[400px] rounded-lg overflow-hidden">
+                  {/* Video Container with Aspect Ratio */}
+                  <div className="relative w-full" style={{ paddingBottom: '56.25%' /* 16:9 Aspect Ratio */ }}>
+                    <iframe
+                      className="absolute top-0 left-0 w-full h-full"
+                      src="https://www.youtube.com/embed/IcrbM1l_BoI?autoplay=1&mute=1&loop=1&playlist=IcrbM1l_BoI&controls=0&showinfo=0&rel=0&modestbranding=1"
+                      title="E-Code Platform Demo"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                    
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                    
+                    {/* Custom Video Controls */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-none">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 pointer-events-auto">
+                          <button className="bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full p-3 transition-all hover:scale-110 shadow-lg">
+                            <PlayCircle className="h-6 w-6 text-white" />
+                          </button>
+                          <div className="text-white">
+                            <p className="text-base font-semibold">Watch Full Demo</p>
+                            <p className="text-sm opacity-80">See how AI builds apps in seconds</p>
                           </div>
                         </div>
-                      </div>
-                      
-                      {/* Body */}
-                      <div className="p-6 space-y-6">
-                        {/* Hourly Forecast */}
-                        <div>
-                          <h4 className="text-sm font-medium text-muted-foreground mb-3">Hourly Forecast</h4>
-                          <div className="flex gap-3 overflow-x-auto pb-2">
-                            {[
-                              { time: "12 PM", temp: "72°", icon: "☀️" },
-                              { time: "1 PM", temp: "74°", icon: "🌤️" },
-                              { time: "2 PM", temp: "76°", icon: "☀️" },
-                              { time: "3 PM", temp: "75°", icon: "⛅" },
-                              { time: "4 PM", temp: "73°", icon: "☁️" },
-                              { time: "5 PM", temp: "70°", icon: "🌤️" }
-                            ].map((hour, i) => (
-                              <div key={i} className="flex-shrink-0 text-center bg-muted/50 rounded-lg p-3 min-w-[70px]">
-                                <p className="text-xs text-muted-foreground">{hour.time}</p>
-                                <p className="text-2xl my-2">{hour.icon}</p>
-                                <p className="text-sm font-medium">{hour.temp}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        {/* 5-Day Forecast */}
-                        <div>
-                          <h4 className="text-sm font-medium text-muted-foreground mb-3">5-Day Forecast</h4>
-                          <div className="space-y-2">
-                            {[
-                              { day: "Wednesday", high: "75°", low: "62°", icon: "🌤️", desc: "Partly Cloudy" },
-                              { day: "Thursday", high: "68°", low: "58°", icon: "🌧️", desc: "Light Rain" },
-                              { day: "Friday", high: "70°", low: "60°", icon: "⛅", desc: "Mostly Cloudy" },
-                              { day: "Saturday", high: "78°", low: "65°", icon: "☀️", desc: "Sunny" },
-                              { day: "Sunday", high: "80°", low: "67°", icon: "☀️", desc: "Clear" }
-                            ].map((day, i) => (
-                              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-2xl">{day.icon}</span>
-                                  <div>
-                                    <p className="font-medium">{day.day}</p>
-                                    <p className="text-xs text-muted-foreground">{day.desc}</p>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <span className="font-medium">{day.high}</span>
-                                  <span className="text-muted-foreground mx-2">/</span>
-                                  <span className="text-muted-foreground">{day.low}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                        <div className="flex items-center gap-3 pointer-events-auto">
+                          <Badge className="bg-white/20 backdrop-blur-md text-white border-white/20 hover:bg-white/30 transition-colors cursor-pointer">
+                            <PlayCircle className="h-3 w-3 mr-1" />
+                            3:45
+                          </Badge>
+                          <button className="bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg p-2 transition-all hover:scale-110">
+                            <Globe2 className="h-4 w-4 text-white" />
+                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
                   
                   {/* Floating annotations */}
-                  <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/90 rounded-lg px-3 py-2 shadow-lg">
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                      Live Preview
+                  <div className="absolute top-6 left-6 bg-black/80 backdrop-blur-md rounded-lg px-4 py-2 shadow-xl">
+                    <p className="text-sm font-medium flex items-center gap-2 text-white">
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></span>
+                      Live Coding Demo
                     </p>
                   </div>
                   
-                  <div className="absolute bottom-4 right-4 bg-white/90 dark:bg-black/90 rounded-lg px-3 py-2 shadow-lg">
-                    <p className="text-xs font-mono">Built in 45 seconds with AI</p>
+                  <div className="absolute top-6 right-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg px-4 py-2 shadow-xl">
+                    <p className="text-sm font-medium text-white flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      AI-Powered
+                    </p>
+                  </div>
+                  
+                  {/* Feature Highlights */}
+                  <div className="absolute bottom-24 right-6 space-y-2 pointer-events-none">
+                    <div className="bg-black/80 backdrop-blur-md rounded-lg px-3 py-2 shadow-xl transform hover:scale-105 transition-transform pointer-events-auto">
+                      <p className="text-xs text-white flex items-center gap-2">
+                        <Zap className="h-3 w-3 text-yellow-400" />
+                        Instant deployment
+                      </p>
+                    </div>
+                    <div className="bg-black/80 backdrop-blur-md rounded-lg px-3 py-2 shadow-xl transform hover:scale-105 transition-transform pointer-events-auto">
+                      <p className="text-xs text-white flex items-center gap-2">
+                        <Code className="h-3 w-3 text-blue-400" />
+                        No setup required
+                      </p>
+                    </div>
                   </div>
                 </div>
               </Card>
