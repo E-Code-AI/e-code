@@ -41,6 +41,8 @@ const Community = lazy(() => import("@/pages/Community"));
 const CommunityPost = lazy(() => import("@/pages/CommunityPost"));
 const SearchPage = lazy(() => import("@/pages/SearchPage"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
+const AdminUsage = lazy(() => import("@/pages/AdminUsage"));
+const AdminBilling = lazy(() => import("@/pages/AdminBilling"));
 // Public pages
 const Landing = lazy(() => import("@/pages/Landing"));
 const Pricing = lazy(() => import("@/pages/Pricing"));
@@ -391,14 +393,16 @@ function AppContent() {
               <AdminDashboard />
             </ReplitLayout>
           )} />
-          <ProtectedRoute path="/admin/usage" component={() => {
-            const AdminUsage = lazy(() => import("./pages/AdminUsage"));
-            return (
-              <ReplitLayout>
-                <AdminUsage />
-              </ReplitLayout>
-            );
-          }} />
+          <ProtectedRoute path="/admin/usage" component={() => (
+            <ReplitLayout>
+              <AdminUsage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/admin/billing" component={() => (
+            <ReplitLayout>
+              <AdminBilling />
+            </ReplitLayout>
+          )} />
           <ProtectedRoute path="/account" component={() => (
             <ReplitLayout showSidebar={false}>
               <Account />
