@@ -115,8 +115,8 @@ export default function Plans() {
       window.open('mailto:sales@e-code.io?subject=Enterprise%20Plan%20Inquiry', '_blank');
       return;
     }
-    // Navigate to subscribe page with selected tier
-    setLocation(`/subscribe?tier=${planId}`);
+    // Navigate to subscribe page with selected tier and billing interval
+    setLocation(`/subscribe?tier=${planId}&interval=${billingInterval === "monthly" ? "month" : "year"}`);
   };
 
   return (

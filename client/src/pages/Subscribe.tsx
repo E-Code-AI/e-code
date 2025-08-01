@@ -85,21 +85,27 @@ const SubscribeForm = () => {
 export default function Subscribe() {
   const [clientSecret, setClientSecret] = useState("");
   const [selectedTier, setSelectedTier] = useState<string>("");
+  const [billingInterval, setBillingInterval] = useState<string>("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    // Get tier from URL params
+    // Get tier and interval from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const tierParam = urlParams.get('tier');
-    setSelectedTier(tierParam || 'standard');
+    const intervalParam = urlParams.get('interval');
+    setSelectedTier(tierParam || 'core');
+    setBillingInterval(intervalParam || 'month');
   }, []);
 
   useEffect(() => {
-    if (!selectedTier) return;
+    if (!selectedTier || !billingInterval) return;
     
     // Create subscription for selected tier
-    apiRequest("POST", "/api/create-subscription", { tier: selectedTier })
+    apiRequest("POST", "/api/create-subscription", { 
+      tier: selectedTier,
+      interval: billingInterval 
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.error) {
@@ -121,7 +127,7 @@ export default function Subscribe() {
         });
         setLocation('/usage');
       });
-  }, [selectedTier, toast, setLocation]);
+  }, [selectedTier, billingInterval, toast, setLocation]);
 
   if (!clientSecret) {
     return (
@@ -159,8 +165,13 @@ export default function Subscribe() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-6">
-              €{selectedTier === 'core' ? '25' : '40'}
-              <span className="text-base font-normal text-muted-foreground">/month</span>
+              €{selectedTier === 'core' 
+                ? (billingInterval === 'year' ? '20' : '25')
+                : (billingInterval === 'year' ? '35' : '40')
+              }
+              <span className="text-base font-normal text-muted-foreground">
+                /{billingInterval === 'year' ? 'month (billed annually)' : 'month'}
+              </span>
             </div>
             
             <div className="space-y-3">

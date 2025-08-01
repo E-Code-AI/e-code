@@ -455,29 +455,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Pricing configuration for E-Code tiers
-  const PRICING_TIERS: Record<string, { priceId?: string, productId: string, name: string, monthlyAmount: number, yearlyAmount?: number }> = {
+  const PRICING_TIERS: Record<string, { monthlyPriceId?: string, yearlyPriceId?: string, productId: string, name: string, monthlyAmount: number, yearlyAmount?: number }> = {
     starter: {
-      priceId: process.env.STRIPE_PRICE_ID_STARTER,
+      monthlyPriceId: process.env.STRIPE_PRICE_ID_STARTER,
+      yearlyPriceId: process.env.STRIPE_PRICE_ID_STARTER,
       productId: 'prod_SmqlmYuAKlqhAo',
       name: 'E-Code Starter',
       monthlyAmount: 0
     },
     core: {
-      priceId: process.env.STRIPE_PRICE_ID_CORE,
+      monthlyPriceId: process.env.STRIPE_PRICE_ID_CORE_MONTHLY,
+      yearlyPriceId: process.env.STRIPE_PRICE_ID_CORE_YEARLY,
       productId: 'prod_SmqeF8z5hVEDgn',
       name: 'E-Code Core',
       monthlyAmount: 25,
       yearlyAmount: 20
     },
     pro: {
-      priceId: process.env.STRIPE_PRICE_ID_PRO,
+      monthlyPriceId: process.env.STRIPE_PRICE_ID_PRO_MONTHLY,
+      yearlyPriceId: process.env.STRIPE_PRICE_ID_PRO_YEARLY,
       productId: 'prod_SmqqkOPRY15MGD',
       name: 'E-Code Pro',
       monthlyAmount: 40,
       yearlyAmount: 35
     },
     enterprise: {
-      priceId: process.env.STRIPE_PRICE_ID_ENTERPRISE,
+      monthlyPriceId: process.env.STRIPE_PRICE_ID_ENTERPRISE_MONTHLY,
+      yearlyPriceId: process.env.STRIPE_PRICE_ID_ENTERPRISE_YEARLY,
       productId: 'prod_Smr3DOm5Rp9C53',
       name: 'E-Code Enterprise',
       monthlyAmount: -1 // Custom pricing
@@ -566,7 +570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       productId: tier.productId,
       monthlyAmount: tier.monthlyAmount,
       yearlyAmount: tier.yearlyAmount,
-      available: !!tier.priceId || tier.monthlyAmount === 0
+      available: !!tier.monthlyPriceId || !!tier.yearlyPriceId || tier.monthlyAmount === 0
     }));
     const usagePricing = Object.entries(USAGE_PRICING).map(([key, pricing]) => ({
       id: key,
@@ -593,8 +597,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Cannot subscribe to free tier' });
       }
 
-      if (!selectedTier.priceId) {
-        return res.status(400).json({ error: 'Pricing tier not configured. Please contact support.' });
+      // Select the appropriate price ID based on interval
+      const priceId = interval === 'year' ? selectedTier.yearlyPriceId : selectedTier.monthlyPriceId;
+      
+      if (!priceId) {
+        return res.status(400).json({ error: `${interval === 'year' ? 'Yearly' : 'Monthly'} pricing for ${selectedTier.name} is not configured. Please contact support.` });
       }
 
       const userId = req.user!.id;
@@ -622,13 +629,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{
-          price: selectedTier.priceId,
+          price: priceId,
         }],
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
         expand: ['latest_invoice.payment_intent'],
         metadata: {
-          tier: tier
+          tier: tier,
+          interval: interval
         }
       });
 
