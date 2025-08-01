@@ -391,6 +391,14 @@ function AppContent() {
               <AdminDashboard />
             </ReplitLayout>
           )} />
+          <ProtectedRoute path="/admin/usage" component={() => {
+            const AdminUsage = lazy(() => import("./pages/AdminUsage"));
+            return (
+              <ReplitLayout>
+                <AdminUsage />
+              </ReplitLayout>
+            );
+          }} />
           <ProtectedRoute path="/account" component={() => (
             <ReplitLayout showSidebar={false}>
               <Account />
