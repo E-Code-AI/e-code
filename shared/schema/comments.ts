@@ -7,10 +7,9 @@ export const comments = pgTable('comments', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull(),
   fileId: integer('file_id'),
-  userId: integer('user_id').notNull(),
+  authorId: integer('author_id').notNull(),
   content: text('content').notNull(),
   lineNumber: integer('line_number'),
-  parentId: integer('parent_id'), // For reply threads
   resolved: boolean('resolved').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

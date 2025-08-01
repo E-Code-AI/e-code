@@ -672,7 +672,13 @@ export class DatabaseStorage implements IStorage {
 
   // Comments operations
   async createComment(comment: InsertComment): Promise<Comment> {
-    const [newComment] = await db.insert(comments).values(comment).returning();
+    // Map authorId field if it exists in the input
+    const commentData = { ...comment };
+    if ('authorId' in commentData && !('userId' in commentData)) {
+      // @ts-ignore - handling schema mismatch
+      commentData.authorId = commentData.authorId || commentData.userId;
+    }
+    const [newComment] = await db.insert(comments).values(commentData).returning();
     return newComment;
   }
 
