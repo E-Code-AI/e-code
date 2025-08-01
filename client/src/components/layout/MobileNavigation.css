@@ -1,0 +1,106 @@
+/* Mobile Navigation Custom Styles */
+
+/* Smooth transitions for mobile menu */
+@media (max-width: 1023px) {
+  /* Enhanced sheet animation */
+  [data-state="open"] .sheet-content {
+    animation: slideInRight 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  [data-state="closed"] .sheet-content {
+    animation: slideOutRight 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* Tablet-specific adjustments */
+  @media (min-width: 640px) {
+    .mobile-nav-content {
+      padding: 1.5rem;
+    }
+
+    .mobile-nav-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  /* Phone-specific adjustments */
+  @media (max-width: 639px) {
+    .mobile-nav-content {
+      padding: 1rem;
+    }
+
+    .mobile-nav-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* Improved touch targets */
+  .mobile-nav-item {
+    min-height: 60px;
+    touch-action: manipulation;
+  }
+
+  /* Prevent scroll bounce on iOS */
+  .sheet-content {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Better focus states for accessibility */
+  .mobile-nav-item:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  /* Smooth hover transitions */
+  .mobile-nav-item {
+    transition: all 0.2s ease;
+  }
+
+  /* Icon animations */
+  .mobile-nav-icon {
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-nav-item:active .mobile-nav-icon {
+    transform: scale(0.95);
+  }
+}
+
+/* Animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Backdrop blur support */
+@supports (backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px)) {
+  .mobile-nav-header {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    background-color: rgba(var(--background-rgb), 0.8);
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .mobile-nav-header {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
