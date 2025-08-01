@@ -84,12 +84,22 @@ const SubscribeForm = () => {
 
 export default function Subscribe() {
   const [clientSecret, setClientSecret] = useState("");
+  const [selectedTier, setSelectedTier] = useState<string>("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    // Create subscription as soon as the page loads
-    apiRequest("POST", "/api/create-subscription")
+    // Get tier from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const tierParam = urlParams.get('tier');
+    setSelectedTier(tierParam || 'standard');
+  }, []);
+
+  useEffect(() => {
+    if (!selectedTier) return;
+    
+    // Create subscription for selected tier
+    apiRequest("POST", "/api/create-subscription", { tier: selectedTier })
       .then((res) => res.json())
       .then((data) => {
         if (data.error) {
@@ -111,7 +121,7 @@ export default function Subscribe() {
         });
         setLocation('/usage');
       });
-  }, [toast, setLocation]);
+  }, [selectedTier, toast, setLocation]);
 
   if (!clientSecret) {
     return (
@@ -124,9 +134,14 @@ export default function Subscribe() {
   return (
     <div className="container max-w-4xl mx-auto py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Upgrade to E-Code Pro</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          Upgrade to {selectedTier === 'core' ? 'E-Code Core' : 'E-Code Pro'}
+        </h1>
         <p className="text-muted-foreground">
-          Unlock more resources and advanced features for your development workflow
+          {selectedTier === 'core' 
+            ? 'Perfect for individual developers and small teams'
+            : 'Advanced features for professional development and larger teams'
+          }
         </p>
       </div>
 
@@ -134,50 +149,92 @@ export default function Subscribe() {
         {/* Plan Details */}
         <Card>
           <CardHeader>
-            <CardTitle>E-Code Pro</CardTitle>
+            <CardTitle>{selectedTier === 'core' ? 'E-Code Core' : 'E-Code Pro'}</CardTitle>
             <CardDescription>
-              Everything you need for professional development
+              {selectedTier === 'core' 
+                ? 'Essential tools for productive development'
+                : 'Everything you need for professional development'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-6">
-              $10
+              €{selectedTier === 'core' ? '25' : '40'}
               <span className="text-base font-normal text-muted-foreground">/month</span>
             </div>
             
             <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">500 hours of compute time per month</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">50 GB storage space</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">500 GB bandwidth</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">Unlimited private projects</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">Unlimited deployments</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">10 team collaborators</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">Priority support</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">Advanced AI features</span>
-              </div>
+              {selectedTier === 'core' ? (
+                <>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">100 hours of compute time per month</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">10 GB storage space</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">100 GB bandwidth</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Unlimited private projects</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">10 deployments per month</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">3 team collaborators</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Email support</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">500 AI requests per month</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">500 hours of compute time per month</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">50 GB storage space</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">500 GB bandwidth</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Unlimited private projects</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Unlimited deployments</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">10 team collaborators</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Priority support</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">2000 AI requests per month</span>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

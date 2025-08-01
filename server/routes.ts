@@ -454,11 +454,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pricing configuration for E-Code tiers
+  const PRICING_TIERS: Record<string, { priceId?: string, productId: string, name: string, monthlyAmount: number, yearlyAmount?: number }> = {
+    starter: {
+      priceId: process.env.STRIPE_PRICE_ID_STARTER,
+      productId: 'prod_SmqlmYuAKlqhAo',
+      name: 'E-Code Starter',
+      monthlyAmount: 0
+    },
+    core: {
+      priceId: process.env.STRIPE_PRICE_ID_CORE,
+      productId: 'prod_SmqeF8z5hVEDgn',
+      name: 'E-Code Core',
+      monthlyAmount: 25,
+      yearlyAmount: 20
+    },
+    pro: {
+      priceId: process.env.STRIPE_PRICE_ID_PRO,
+      productId: 'prod_SmqqkOPRY15MGD',
+      name: 'E-Code Pro',
+      monthlyAmount: 40,
+      yearlyAmount: 35
+    },
+    enterprise: {
+      priceId: process.env.STRIPE_PRICE_ID_ENTERPRISE,
+      productId: 'prod_Smr3DOm5Rp9C53',
+      name: 'E-Code Enterprise',
+      monthlyAmount: -1 // Custom pricing
+    }
+  };
+
+  // Usage-based pricing configuration
+  const USAGE_PRICING = {
+    agentEditRequests: {
+      priceId: process.env.STRIPE_PRICE_ID_AGENT_USAGE,
+      productId: 'prod_Smqxp1E5jrfqp3',
+      amount: 0.05,
+      unit: 'request'
+    },
+    cpuHours: { amount: 0.02, unit: 'hour' },
+    storage: { amount: 0.10, unit: 'GB/month' },
+    bandwidth: { amount: 0.08, unit: 'GB' },
+    deployments: { amount: 0.50, unit: 'deployment' },
+    databases: { amount: 10, unit: 'database/month' },
+    teamMembers: { amount: 10, unit: 'user/month' }
+  };
+
+  // Track usage for metered billing
+  app.post('/api/usage/track', ensureAuthenticated, async (req, res) => {
+    try {
+      const { eventType, quantity = 1, metadata = {} } = req.body;
+      const userId = req.user!.id;
+      
+      // Record usage in database
+      await storage.trackUsage(userId, eventType, quantity, metadata);
+      
+      // If Stripe is configured and this is agent usage, report to Stripe
+      if (stripe && eventType === 'agentEditRequests') {
+        const user = await storage.getUser(userId);
+        if (user?.stripeSubscriptionId) {
+          // Get the subscription
+          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          
+          // Find the metered billing item
+          const meteredItem = subscription.items.data.find(
+            item => item.price.id === process.env.STRIPE_PRICE_ID_AGENT_USAGE
+          );
+          
+          if (meteredItem) {
+            // Report usage to Stripe
+            await stripe.subscriptionItems.createUsageRecord(meteredItem.id, {
+              quantity: quantity,
+              timestamp: Math.floor(Date.now() / 1000),
+              action: 'increment'
+            });
+          }
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error tracking usage:', error);
+      res.status(500).json({ error: 'Failed to track usage' });
+    }
+  });
+
+  // Get usage statistics
+  app.get('/api/usage/stats', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { startDate, endDate } = req.query;
+      
+      const usage = await storage.getUsageStats(
+        userId,
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+      
+      res.json(usage);
+    } catch (error: any) {
+      console.error('Error fetching usage stats:', error);
+      res.status(500).json({ error: 'Failed to fetch usage statistics' });
+    }
+  });
+
+  // Get available pricing tiers
+  app.get('/api/pricing-tiers', (req, res) => {
+    const tiers = Object.entries(PRICING_TIERS).map(([id, tier]) => ({
+      id,
+      name: tier.name,
+      productId: tier.productId,
+      monthlyAmount: tier.monthlyAmount,
+      yearlyAmount: tier.yearlyAmount,
+      available: !!tier.priceId || tier.monthlyAmount === 0
+    }));
+    const usagePricing = Object.entries(USAGE_PRICING).map(([key, pricing]) => ({
+      id: key,
+      ...pricing
+    }));
+    res.json({ tiers, usagePricing });
+  });
+
   // Stripe subscription management
   app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
     try {
       if (!stripe) {
         return res.status(500).json({ error: 'Stripe is not configured' });
+      }
+
+      const { tier = 'core', interval = 'month' } = req.body;
+      const selectedTier = PRICING_TIERS[tier];
+      
+      if (!selectedTier) {
+        return res.status(400).json({ error: 'Invalid pricing tier' });
+      }
+
+      if (selectedTier.monthlyAmount === 0) {
+        return res.status(400).json({ error: 'Cannot subscribe to free tier' });
+      }
+
+      if (!selectedTier.priceId) {
+        return res.status(400).json({ error: 'Pricing tier not configured. Please contact support.' });
       }
 
       const userId = req.user!.id;
@@ -486,11 +622,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{
-          price: process.env.STRIPE_PRICE_ID || 'price_1234', // You need to set this
+          price: selectedTier.priceId,
         }],
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
-        expand: ['latest_invoice.payment_intent']
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          tier: tier
+        }
       });
 
       // Update user with subscription info
