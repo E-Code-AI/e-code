@@ -504,36 +504,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     teamMembers: { amount: 10, unit: 'user/month' }
   };
 
-  // Track usage for metered billing
+  // Admin Usage Analytics Endpoints
+  app.get('/api/admin/usage/stats', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check admin permissions
+      const user = req.user!;
+      if (!user.email?.includes('admin') && !user.username?.includes('admin')) {
+        return res.status(403).json({ message: 'Forbidden: Admin access required' });
+      }
+
+      const { period = 'current' } = req.query;
+      
+      // Mock platform stats - in production this would query real usage data
+      const platformStats = {
+        totalUsers: 127,
+        activeUsers: 89,
+        totalRevenue: 4250.00,
+        usageByService: {
+          compute: { total: 1245.5, cost: 24.91 },
+          storage: { total: 287.3, cost: 28.73 },
+          bandwidth: { total: 1876.2, cost: 150.10 },
+          deployments: { total: 89, cost: 44.50 },
+          databases: { total: 23, cost: 230.00 },
+          agentRequests: { total: 2156, cost: 107.80 }
+        }
+      };
+
+      res.json(platformStats);
+    } catch (error) {
+      console.error('Error fetching admin usage stats:', error);
+      res.status(500).json({ error: 'Failed to fetch usage statistics' });
+    }
+  });
+
+  app.get('/api/admin/usage/users', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check admin permissions
+      const user = req.user!;
+      if (!user.email?.includes('admin') && !user.username?.includes('admin')) {
+        return res.status(403).json({ message: 'Forbidden: Admin access required' });
+      }
+
+      const { period = 'current', plan = 'all', search = '' } = req.query;
+      
+      // Mock user usage data - in production this would query real usage and billing data
+      const usersUsage = [
+        {
+          userId: 1,
+          username: 'admin',
+          email: 'admin@example.com',
+          plan: 'pro',
+          usage: {
+            compute: { used: 45.2, limit: 500, cost: 0.90 },
+            storage: { used: 12.5, limit: 50, cost: 1.25 },
+            bandwidth: { used: 78.3, limit: 500, cost: 6.26 },
+            deployments: { used: 3, limit: -1, cost: 1.50 },
+            databases: { used: 1, limit: 10, cost: 10.00 },
+            agentRequests: { used: 156, limit: 2000, cost: 7.80 }
+          },
+          totalCost: 27.71,
+          billingPeriod: 'monthly'
+        },
+        {
+          userId: 2,
+          username: 'testuser',
+          email: 'test@example.com',
+          plan: 'core',
+          usage: {
+            compute: { used: 23.1, limit: 100, cost: 0.46 },
+            storage: { used: 3.2, limit: 10, cost: 0.32 },
+            bandwidth: { used: 15.7, limit: 100, cost: 1.26 },
+            deployments: { used: 2, limit: 10, cost: 1.00 },
+            databases: { used: 0, limit: 3, cost: 0.00 },
+            agentRequests: { used: 67, limit: 500, cost: 3.35 }
+          },
+          totalCost: 6.39,
+          billingPeriod: 'monthly'
+        }
+      ];
+
+      res.json(usersUsage);
+    } catch (error) {
+      console.error('Error fetching admin user usage:', error);
+      res.status(500).json({ error: 'Failed to fetch user usage data' });
+    }
+  });
+
+  // Track usage for metered billing - Enhanced with real-time tracking
   app.post('/api/usage/track', ensureAuthenticated, async (req, res) => {
     try {
-      const { eventType, quantity = 1, metadata = {} } = req.body;
+      const { metricType, eventType, value = 1, quantity = 1, projectId, metadata = {} } = req.body;
       const userId = req.user!.id;
       
-      // Record usage in database
-      await storage.trackUsage(userId, eventType, quantity, metadata);
-      
-      // If Stripe is configured and this is agent usage, report to Stripe
-      if (stripe && eventType === 'agentEditRequests') {
-        const user = await storage.getUser(userId);
-        if (user?.stripeSubscriptionId) {
-          // Get the subscription
-          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+      // Enhanced usage tracking with specific handling for each metric type
+      switch (metricType) {
+        case 'agentRequests':
+          // Record usage in database
+          await storage.trackUsage(userId, metricType, value, metadata);
           
-          // Find the metered billing item
-          const meteredItem = subscription.items.data.find(
-            item => item.price.id === process.env.STRIPE_PRICE_ID_AGENT_USAGE
-          );
-          
-          if (meteredItem) {
-            // Report usage to Stripe
-            await stripe.subscriptionItems.createUsageRecord(meteredItem.id, {
-              quantity: quantity,
-              timestamp: Math.floor(Date.now() / 1000),
-              action: 'increment'
-            });
+          // Report to Stripe if configured
+          if (stripe && eventType === 'agentEditRequests') {
+            const user = await storage.getUser(userId);
+            if (user?.stripeSubscriptionId) {
+              try {
+                const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+                const meteredItem = subscription.items.data.find(
+                  item => item.price.id === process.env.STRIPE_PRICE_ID_AGENT_USAGE
+                );
+                
+                if (meteredItem) {
+                  await stripe.subscriptionItems.usageRecords.create(meteredItem.id, {
+                    quantity: value,
+                    timestamp: Math.floor(Date.now() / 1000),
+                    action: 'increment'
+                  });
+                }
+              } catch (stripeError) {
+                console.error('Failed to report usage to Stripe:', stripeError);
+              }
+            }
           }
-        }
+          break;
+        default:
+          // Record all other usage types in database
+          await storage.trackUsage(userId, metricType, value, metadata);
       }
       
       res.json({ success: true });
