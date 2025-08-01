@@ -1,8 +1,6 @@
 # Missing Features Compared to Replit
 
-Based on analysis of https://docs.replit.com/getting-started/intro-replit
-
-## Missing Import Features
+## Import Features (from intro-replit)
 
 ### 1. Import from Figma
 - **Description**: Convert Figma designs into functional React applications
@@ -21,6 +19,92 @@ Based on analysis of https://docs.replit.com/getting-started/intro-replit
 - **Status**: Not implemented
 - **Priority**: Low
 - **Implementation Notes**: Similar to Bolt import, needs project structure analysis
+
+## Agent Features (from replitai/agent)
+
+### 1. Agent v2 with Claude Sonnet 4.0
+- **Description**: Latest AI model for Agent functionality
+- **Status**: Not implemented (we use various models but not Sonnet 4.0)
+- **Priority**: High
+- **Implementation Notes**: Update AI provider to use Anthropic Claude Sonnet 4.0
+
+### 2. Web Content Import
+- **Description**: Copy page content from URLs directly into prompts
+- **Status**: Not implemented
+- **Priority**: Medium
+- **Implementation Notes**: Need web scraping functionality with content extraction
+
+### 3. Webpage Screenshot Capture
+- **Description**: Take screenshots of webpages from URLs
+- **Status**: Not implemented
+- **Priority**: Medium
+- **Implementation Notes**: Requires headless browser integration (Puppeteer/Playwright)
+
+### 4. Prompt Refinement
+- **Description**: "Improve prompt" button that uses AI to enhance user prompts
+- **Status**: Not implemented
+- **Priority**: Medium
+- **Implementation Notes**: AI-powered prompt enhancement feature
+
+### 5. Comprehensive Checkpoint System
+- **Description**: Snapshots that capture workspace, AI conversation context, and databases
+- **Status**: Partially implemented (basic checkpoints exist)
+- **Priority**: High
+- **Implementation Notes**: Need to expand checkpoint system to include AI context and database state
+
+### 6. Effort-Based Pricing
+- **Description**: Variable pricing based on Agent work complexity with usage tracking per checkpoint
+- **Status**: Not implemented
+- **Priority**: High
+- **Implementation Notes**: Integrate with billing system to track effort metrics
+
+### 7. Advanced Capabilities Toggles
+- **Description**: Extended Thinking and High Power mode for complex tasks
+- **Status**: Not implemented
+- **Priority**: Medium
+- **Implementation Notes**: Add UI toggles and backend support for different AI processing modes
+
+### 8. Progress Tab
+- **Description**: Real-time updates with chronological history and file navigation links
+- **Status**: Not implemented (we have basic progress tracking)
+- **Priority**: Medium
+- **Implementation Notes**: Create dedicated Progress component with live updates
+
+### 9. Feedback Mechanism
+- **Description**: "Have feedback?" button after Agent completes tasks
+- **Status**: Not implemented
+- **Priority**: Low
+- **Implementation Notes**: Add feedback UI and backend collection
+
+### 10. Pause Functionality
+- **Description**: Ability to pause Agent during work
+- **Status**: Not implemented
+- **Priority**: Medium
+- **Implementation Notes**: Add pause/resume state management
+
+### 11. Conversation Management
+- **Description**: UI for managing multiple conversations, switching between them
+- **Status**: Not implemented
+- **Priority**: Medium
+- **Implementation Notes**: Add conversation history management UI
+
+### 12. Usage Tracking in Chat
+- **Description**: Usage icon in chat header for quick billing access
+- **Status**: Not implemented
+- **Priority**: Low
+- **Implementation Notes**: Add usage tracking UI component
+
+### 11. Conversation Management
+- **Description**: UI for managing multiple conversations, switching between them
+- **Status**: Not implemented
+- **Priority**: Medium
+- **Implementation Notes**: Add conversation history management UI
+
+### 12. Usage Tracking in Chat
+- **Description**: Usage icon in chat header for quick billing access
+- **Status**: Not implemented
+- **Priority**: Low
+- **Implementation Notes**: Add usage tracking UI component
 
 ## Features We Have But Need Better Documentation
 
@@ -75,5 +159,29 @@ Based on analysis of https://docs.replit.com/getting-started/intro-replit
 2. **Medium Priority**: Implement Figma import (most useful of the missing imports)
 3. **Low Priority**: Implement Bolt and Lovable imports (niche use cases)
 
+## Summary
+
+### Critical Missing Features (High Priority)
+1. Agent v2 with Claude Sonnet 4.0
+2. Comprehensive checkpoint system with AI context and database state
+3. Effort-based pricing model
+
+### Important Missing Features (Medium Priority)  
+1. Import from Figma
+2. Web content import and screenshot capture
+3. Prompt refinement ("Improve prompt" button)
+4. Advanced capabilities toggles (Extended Thinking, High Power mode)
+5. Progress tab with real-time updates
+6. Pause functionality
+7. Conversation management UI
+
+### Nice-to-have Features (Low Priority)
+1. Import from Bolt and Lovable
+2. Feedback mechanism
+3. Usage tracking icon in chat header
+
 ## Notes
-Last updated: August 1, 2025
+- We have a basic checkpoint system but it needs to be expanded to match Replit's comprehensive snapshots
+- Our AI agent works well but lacks some of the newer features like prompt refinement and advanced modes
+- The import features would help with user acquisition from competing platforms
+- Last updated: August 1, 2025
