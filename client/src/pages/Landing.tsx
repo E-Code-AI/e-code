@@ -954,62 +954,27 @@ export default function Landing() {
                 </CardHeader>
                 <CardContent>
                   <div className="aspect-video bg-gradient-to-br from-sky-50 to-cyan-50 dark:from-sky-950/20 dark:to-cyan-950/20 rounded-xl mb-4 overflow-hidden relative shadow-inner">
-                    <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-                    <div className="relative h-full flex items-center justify-center p-6">
-                      <div className="w-full max-w-sm">
-                        {/* Weather Dashboard Preview */}
-                        <div className="bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-xl overflow-hidden backdrop-blur">
-                          <div className="bg-gradient-to-r from-sky-500 to-cyan-500 p-3 text-white">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-xs opacity-80">San Francisco</p>
-                                <p className="text-2xl font-bold">72°F</p>
-                                <p className="text-xs opacity-80">Partly Cloudy</p>
-                              </div>
-                              <div className="text-4xl">☀️</div>
-                            </div>
-                          </div>
-                          <div className="p-3">
-                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                              <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
-                                <p className="text-muted-foreground">Wind</p>
-                                <p className="font-medium">12 mph</p>
-                              </div>
-                              <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
-                                <p className="text-muted-foreground">Humidity</p>
-                                <p className="font-medium">65%</p>
-                              </div>
-                              <div className="bg-gray-50 dark:bg-gray-800 rounded p-2">
-                                <p className="text-muted-foreground">UV Index</p>
-                                <p className="font-medium">6</p>
-                              </div>
-                            </div>
-                            <div className="mt-2 flex justify-between text-xs">
-                              <div className="text-center">
-                                <p className="text-muted-foreground">Mon</p>
-                                <p>🌤️</p>
-                                <p className="font-medium">68°</p>
-                              </div>
-                              <div className="text-center">
-                                <p className="text-muted-foreground">Tue</p>
-                                <p>☀️</p>
-                                <p className="font-medium">75°</p>
-                              </div>
-                              <div className="text-center">
-                                <p className="text-muted-foreground">Wed</p>
-                                <p>🌧️</p>
-                                <p className="font-medium">62°</p>
-                              </div>
-                              <div className="text-center">
-                                <p className="text-muted-foreground">Thu</p>
-                                <p>⛅</p>
-                                <p className="font-medium">70°</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                    <div className="relative w-full h-full">
+                      <iframe
+                        className="absolute top-0 left-0 w-full h-full"
+                        src="https://www.youtube.com/embed/nz9BXJwJfCU?autoplay=1&mute=1&loop=1&playlist=nz9BXJwJfCU&controls=0&showinfo=0&rel=0&modestbranding=1"
+                        title="Weather Dashboard App Demo"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                      
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                      
+                      {/* Play Button Overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                        <button className="bg-white/90 backdrop-blur-md rounded-full p-4 shadow-2xl pointer-events-auto transform hover:scale-110 transition-transform">
+                          <Play className="h-8 w-8 text-gray-900" />
+                        </button>
                       </div>
                     </div>
+                    
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-4 left-4 right-4">
                         <div className="bg-black/80 backdrop-blur rounded-lg p-3">
