@@ -8,6 +8,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { Project, File } from '@shared/schema';
 import { storage } from './storage';
+import { resourceMonitor } from './services/resource-monitor';
 
 // Map of active project processes
 const activeProjects = new Map<number, {
@@ -118,7 +119,7 @@ function getRunCommand(files: File[]): { command: string; args: string[]; isWebP
 /**
  * Start a project
  */
-export async function startProject(projectId: number): Promise<{
+export async function startProject(projectId: number, userId?: number): Promise<{
   success: boolean;
   url?: string;
   error?: string;
@@ -142,6 +143,17 @@ export async function startProject(projectId: number): Promise<{
         success: false,
         error: 'No files found in project'
       };
+    }
+    
+    // Get project owner if not provided
+    if (!userId) {
+      const project = await storage.getProject(projectId);
+      userId = project?.ownerId;
+    }
+    
+    // Start resource monitoring if userId is available
+    if (userId) {
+      await resourceMonitor.startProjectMonitoring(projectId, userId);
     }
     
     // Write files to temp directory
@@ -238,10 +250,12 @@ export async function startProject(projectId: number): Promise<{
       projectData.logs.push(`ERROR: ${log}`);
     });
     
-    childProcess.on('exit', (code: number | null) => {
+    childProcess.on('exit', async (code: number | null) => {
       console.log(`Project ${projectId} exited with code ${code}`);
       projectData.status = 'stopped';
       releasePort(port);
+      // Stop resource monitoring when project exits
+      await resourceMonitor.stopProjectMonitoring(projectId);
     });
     
     childProcess.on('error', (error: Error) => {
@@ -276,7 +290,7 @@ export async function startProject(projectId: number): Promise<{
 /**
  * Stop a project
  */
-export function stopProject(projectId: number): { success: boolean; error?: string } {
+export async function stopProject(projectId: number): Promise<{ success: boolean; error?: string }> {
   const project = activeProjects.get(projectId);
   if (!project) {
     return {
@@ -294,6 +308,9 @@ export function stopProject(projectId: number): { success: boolean; error?: stri
   }
   
   activeProjects.delete(projectId);
+  
+  // Stop resource monitoring
+  await resourceMonitor.stopProjectMonitoring(projectId);
   
   return { success: true };
 }

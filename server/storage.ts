@@ -22,7 +22,7 @@ import {
   mobileDevices, pushNotifications, teams, teamMembers, deployments,
   comments, checkpoints, projectTimeTracking, projectScreenshots, taskSummaries, usageTracking
 } from "@shared/schema";
-import { eq, and, desc, isNull, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, isNull, sql, inArray, gte, lte } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";
@@ -135,6 +135,8 @@ export interface IStorage {
   trackUsage(userId: number, eventType: string, quantity: number, metadata?: any): Promise<void>;
   getUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any>;
   getUserUsage(userId: number, billingPeriodStart?: Date): Promise<any>;
+  getUsageHistory(userId: number, startDate: Date, endDate: Date, metricType?: string): Promise<any[]>;
+  getUsageSummary(userId: number, period: string): Promise<any>;
 
   // Comments operations
   createComment(comment: InsertComment): Promise<Comment>;
@@ -899,6 +901,80 @@ export class DatabaseStorage implements IStorage {
     });
 
     return usage;
+  }
+
+  async getUsageHistory(userId: number, startDate: Date, endDate: Date, metricType?: string): Promise<any[]> {
+    let query = and(
+      eq(usageTracking.userId, userId),
+      gte(usageTracking.timestamp, startDate),
+      lte(usageTracking.timestamp, endDate)
+    );
+    
+    if (metricType) {
+      query = and(query, eq(usageTracking.metricType, metricType));
+    }
+    
+    const results = await db.select()
+      .from(usageTracking)
+      .where(query)
+      .orderBy(desc(usageTracking.timestamp));
+    
+    return results.map(row => ({
+      id: row.id,
+      metricType: row.metricType,
+      value: parseFloat(row.value),
+      unit: row.unit,
+      timestamp: row.timestamp,
+      billingPeriodStart: row.billingPeriodStart,
+      billingPeriodEnd: row.billingPeriodEnd
+    }));
+  }
+
+  async getUsageSummary(userId: number, period: string): Promise<any> {
+    const now = new Date();
+    let startDate: Date;
+    let endDate: Date = now;
+    
+    switch (period) {
+      case 'current':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        break;
+      case 'last_month':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+        break;
+      case 'last_7_days':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'last_30_days':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+    
+    const results = await db.select({
+      metricType: usageTracking.metricType,
+      total: sql<number>`SUM(CAST(${usageTracking.value} AS NUMERIC))`,
+      unit: usageTracking.unit,
+      count: sql<number>`COUNT(*)`
+    })
+    .from(usageTracking)
+    .where(and(
+      eq(usageTracking.userId, userId),
+      gte(usageTracking.timestamp, startDate),
+      lte(usageTracking.timestamp, endDate)
+    ))
+    .groupBy(usageTracking.metricType, usageTracking.unit);
+    
+    // Transform results into summary object
+    const summary: any = {};
+    results.forEach(row => {
+      summary[row.metricType] = parseFloat(row.total?.toString() || '0');
+    });
+    
+    return summary;
   }
 }
 

@@ -109,6 +109,7 @@ import { rolesPermissionsService } from './security/roles-permissions-service';
 import { previewService } from './preview/preview-service';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { dataProvisioningService } from './data/data-provisioning-service';
+import { resourceMonitor } from './services/resource-monitor';
 
 const logger = createLogger('routes');
 const teamsService = new TeamsService();
@@ -587,6 +588,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching admin user usage:', error);
       res.status(500).json({ error: 'Failed to fetch user usage data' });
+    }
+  });
+
+  // Resource Monitoring Endpoints
+  app.get('/api/projects/:id/resources', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const currentUsage = await resourceMonitor.getCurrentUsage(projectId);
+      
+      if (!currentUsage) {
+        return res.json({
+          projectId,
+          status: 'not_running',
+          resources: {
+            cpu: 0,
+            memory: 0,
+            storage: 0,
+            bandwidth: { in: 0, out: 0 },
+            database: { queries: 0, storage: 0 }
+          }
+        });
+      }
+      
+      res.json({
+        projectId,
+        status: 'running',
+        resources: {
+          cpu: currentUsage.cpuSeconds,
+          memory: currentUsage.memoryMBSeconds,
+          storage: currentUsage.storageBytes,
+          bandwidth: {
+            in: currentUsage.bandwidthBytesIn,
+            out: currentUsage.bandwidthBytesOut
+          },
+          database: {
+            queries: currentUsage.databaseQueries,
+            storage: currentUsage.databaseStorageBytes
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching project resources:', error);
+      res.status(500).json({ error: 'Failed to fetch project resources' });
+    }
+  });
+
+  app.get('/api/usage/history', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { startDate, endDate, metricType } = req.query;
+      
+      const start = startDate ? new Date(startDate as string) : new Date(new Date().setMonth(new Date().getMonth() - 1));
+      const end = endDate ? new Date(endDate as string) : new Date();
+      
+      const usage = await storage.getUsageHistory(userId, start, end, metricType as string);
+      
+      res.json({
+        userId,
+        period: { start, end },
+        metricType: metricType || 'all',
+        usage
+      });
+    } catch (error) {
+      console.error('Error fetching usage history:', error);
+      res.status(500).json({ error: 'Failed to fetch usage history' });
+    }
+  });
+
+  app.get('/api/usage/summary', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { period = 'current' } = req.query;
+      
+      const summary = await storage.getUsageSummary(userId, period as string);
+      
+      // Calculate costs based on USAGE_PRICING
+      const costs = {
+        compute: (summary.compute_cpu || 0) * 0.02,
+        storage: (summary.storage || 0) * 0.10,
+        bandwidth: (summary.bandwidth || 0) * 0.08,
+        deployments: (summary.deployment || 0) * 0.50,
+        databases: (summary.database_storage || 0) * 10,
+        agentRequests: (summary.agent_requests || 0) * 0.05
+      };
+      
+      const totalCost = Object.values(costs).reduce((sum, cost) => sum + cost, 0);
+      
+      res.json({
+        userId,
+        period,
+        usage: summary,
+        costs,
+        totalCost: Math.round(totalCost * 100) / 100
+      });
+    } catch (error) {
+      console.error('Error fetching usage summary:', error);
+      res.status(500).json({ error: 'Failed to fetch usage summary' });
     }
   });
 
