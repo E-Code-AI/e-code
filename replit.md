@@ -35,15 +35,22 @@ E-Code is a comprehensive web-based Integrated Development Environment (IDE) ins
 - **Core Services**: Security Scanner, Export Manager, SSH Manager, Status Page, Database Hosting, Analytics, Theme Management, Data Provisioning.
 
 ### Feature Specifications
-- **Core IDE**: File operations, terminal, code execution for various languages, live preview.
+- **Core IDE**: File operations, terminal, code execution for various languages, live preview with real-time updates.
 - **AI Agent**: Autonomous application building, code analysis, error recovery, environment variable setup, database provisioning, real-time deployment status.
+- **Import Capabilities**: 
+    - GitHub repository import with automatic setup
+    - Project forking/remixing from public projects
+    - *Missing*: Figma design import, Bolt project migration, Lovable project transfer
 - **Collaboration**: Real-time multi-user editing with live cursors, presence indicators, and document synchronization via Yjs CRDT.
 - **Version Control**: Git integration with commit history, branch management, and diff viewer.
-- **Package Management**: Universal package search, installation, updates, and rollback.
+- **Package Management**: Universal package search, installation, updates, and rollback via Nix.
+- **Preview Service**: Real-time app preview with hot reload, accessible via dedicated preview pane.
+- **Mobile Support**: Native mobile endpoints for iOS/Android app development on mobile devices.
 - **Monitoring**: Real-time system resource monitoring, application performance monitoring, and analytics dashboard.
 - **Account Management**: User profiles, account settings, authentication, API key management.
 - **Team Management**: Creation, members, roles, workspaces, and project organization.
 - **Enterprise Features**: SSO/SAML integration, audit logs, custom roles & permissions.
+- **Deployment**: One-click deployment with custom domains, SSL certificates, and global CDN distribution.
 - **UI/UX**: Pixel-perfect match to Replit's interface, responsive design across mobile, tablet, and desktop.
 
 ## External Dependencies
