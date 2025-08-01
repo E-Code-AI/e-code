@@ -130,6 +130,7 @@ export interface IStorage {
     subscriptionCurrentPeriodEnd?: Date;
   }): Promise<User | undefined>;
   updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   
   // Usage tracking operations
   trackUsage(userId: number, eventType: string, quantity: number, metadata?: any): Promise<void>;
@@ -822,6 +823,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return updated;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
   }
 
   // Usage tracking operations

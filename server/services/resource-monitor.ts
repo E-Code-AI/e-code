@@ -9,6 +9,9 @@ import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
+// Import after the class is defined to avoid circular dependency
+let stripeBillingService: any;
+
 interface ResourceMetrics {
   cpuUsage: number;
   memoryUsage: number;
@@ -303,6 +306,44 @@ export class ResourceMonitor {
         });
       }
 
+      // Report usage to Stripe for billing
+      if (!stripeBillingService && typeof require !== 'undefined') {
+        try {
+          stripeBillingService = require('./stripe-billing-service').stripeBillingService;
+        } catch (error) {
+          console.warn('[ResourceMonitor] Stripe billing service not available');
+        }
+      }
+
+      if (stripeBillingService) {
+        try {
+          // Report CPU usage to Stripe
+          if (metrics.cpuSeconds > 0) {
+            await stripeBillingService.reportUsage(metrics.userId, 'compute_cpu', metrics.cpuSeconds / 3600); // Convert to hours
+          }
+          
+          // Report storage usage to Stripe
+          if (metrics.storageBytes > 0) {
+            const storageGB = metrics.storageBytes / (1024 * 1024 * 1024);
+            await stripeBillingService.reportUsage(metrics.userId, 'storage', storageGB);
+          }
+          
+          // Report bandwidth usage to Stripe
+          const bandwidthGB = (metrics.bandwidthBytesIn + metrics.bandwidthBytesOut) / (1024 * 1024 * 1024);
+          if (bandwidthGB > 0) {
+            await stripeBillingService.reportUsage(metrics.userId, 'bandwidth', bandwidthGB);
+          }
+          
+          // Report database usage to Stripe
+          if (metrics.databaseStorageBytes > 0) {
+            const dbStorageGB = metrics.databaseStorageBytes / (1024 * 1024 * 1024);
+            await stripeBillingService.reportUsage(metrics.userId, 'database_storage', dbStorageGB);
+          }
+        } catch (error) {
+          console.error('[ResourceMonitor] Error reporting to Stripe:', error);
+        }
+      }
+
       console.log(`[ResourceMonitor] Saved metrics for project ${projectId}`);
     } catch (error) {
       console.error(`[ResourceMonitor] Error saving metrics:`, error);
@@ -335,7 +376,7 @@ export class ResourceMonitor {
 
     await db.insert(usageTracking).values({
       userId,
-      metricType: 'deployment',
+      metricType: 'deployments',
       value: '1',
       unit: `${deploymentType}_deployment`,
       timestamp,

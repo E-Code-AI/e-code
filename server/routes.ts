@@ -1,4 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -73,6 +74,7 @@ import { searchEngine } from "./search/search-engine";
 import { extensionManager } from "./extensions/extension-manager";
 import { apiManager } from "./api/api-manager";
 import { projectExporter } from "./import-export/exporter";
+import { stripeBillingService } from "./services/stripe-billing-service";
 import { deploymentManager } from "./deployment";
 import { deploymentManager as enterpriseDeploymentManager } from "./services/deployment-manager";
 import { realDeploymentService } from "./deployment/real-deployment-service";
@@ -3877,6 +3879,143 @@ API will be available at http://localhost:3000
     }
   });
   
+  // Stripe Webhook Endpoint (no authentication required - verified by signature)
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+      const signature = req.headers['stripe-signature'] as string;
+      if (!signature) {
+        return res.status(400).json({ error: 'No Stripe signature found' });
+      }
+
+      if (!process.env.STRIPE_WEBHOOK_SECRET) {
+        console.error('STRIPE_WEBHOOK_SECRET not configured');
+        return res.status(500).json({ error: 'Webhook not configured' });
+      }
+
+      // Verify webhook signature
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+        apiVersion: '2025-07-30.basil',
+      });
+      
+      const event = stripe.webhooks.constructEvent(
+        req.body,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+
+      // Handle webhook event
+      await stripeBillingService.handleWebhook(event);
+      
+      res.json({ received: true });
+    } catch (error) {
+      console.error('Stripe webhook error:', error);
+      res.status(400).json({ error: 'Webhook error' });
+    }
+  });
+
+  // Stripe Subscription Management Routes
+  app.post('/api/stripe/create-subscription', ensureAuthenticated, async (req, res) => {
+    try {
+      const { planId } = req.body;
+      const userId = req.user!.id;
+      
+      const subscription = await stripeBillingService.createSubscription(userId, planId);
+      
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+        status: subscription.status
+      });
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      res.status(500).json({ error: 'Failed to create subscription' });
+    }
+  });
+
+  app.get('/api/stripe/subscription', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.stripeSubscriptionId) {
+        return res.json({ subscription: null });
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+        apiVersion: '2025-07-30.basil',
+      });
+      
+      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+      
+      res.json({ subscription });
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+      res.status(500).json({ error: 'Failed to fetch subscription' });
+    }
+  });
+
+  app.post('/api/stripe/cancel-subscription', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.stripeSubscriptionId) {
+        return res.status(400).json({ error: 'No active subscription' });
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+        apiVersion: '2025-07-30.basil',
+      });
+      
+      const subscription = await stripe.subscriptions.update(user.stripeSubscriptionId, {
+        cancel_at_period_end: true
+      });
+      
+      res.json({ subscription });
+    } catch (error) {
+      console.error('Error canceling subscription:', error);
+      res.status(500).json({ error: 'Failed to cancel subscription' });
+    }
+  });
+
+  app.get('/api/stripe/invoices', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const invoiceUrl = await stripeBillingService.generateInvoice(userId);
+      
+      res.json({ invoiceUrl });
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      res.status(500).json({ error: 'Failed to generate invoice' });
+    }
+  });
+
+  app.post('/api/stripe/report-usage', ensureAuthenticated, async (req, res) => {
+    try {
+      const { metricType, quantity } = req.body;
+      const userId = req.user!.id;
+      
+      await stripeBillingService.reportUsage(userId, metricType, quantity);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error reporting usage:', error);
+      res.status(500).json({ error: 'Failed to report usage' });
+    }
+  });
+
+  app.get('/api/stripe/check-limits', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const withinLimits = await stripeBillingService.enforceUsageLimits(userId);
+      
+      res.json({ withinLimits });
+    } catch (error) {
+      console.error('Error checking limits:', error);
+      res.status(500).json({ error: 'Failed to check limits' });
+    }
+  });
+
   // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
   
