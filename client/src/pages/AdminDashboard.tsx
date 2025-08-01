@@ -10,8 +10,10 @@ import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
   Settings, Users, Shield, Database, Activity, 
   FileText, Cpu, GitBranch, Package, Globe,
-  Lock, BarChart3, CheckCircle, XCircle
+  Lock, BarChart3, CheckCircle, XCircle,
+  DollarSign, TrendingUp
 } from 'lucide-react';
+import { Link } from 'wouter';
 import PerformanceMonitor from '@/pages/admin/PerformanceMonitor';
 import { formatDistanceToNow } from 'date-fns';
 import NewsletterSubscribers from '@/components/admin/NewsletterSubscribers';
@@ -183,6 +185,51 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link href="/admin/usage">
+              <Card className="hover:bg-accent transition-colors cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">Usage Analytics</CardTitle>
+                      <CardDescription>Monitor platform usage and resource consumption</CardDescription>
+                    </div>
+                    <TrendingUp className="h-8 w-8 text-primary" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm space-y-1">
+                    <p>• View real-time usage statistics</p>
+                    <p>• Monitor resource consumption by user</p>
+                    <p>• Export usage reports</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/admin/billing">
+              <Card className="hover:bg-accent transition-colors cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">Billing Management</CardTitle>
+                      <CardDescription>Configure pricing plans and billing settings</CardDescription>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-primary" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm space-y-1">
+                    <p>• Manage pricing tiers</p>
+                    <p>• Configure resource limits</p>
+                    <p>• Update billing settings</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
 
           {/* Recent Activities */}
           <Card>

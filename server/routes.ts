@@ -5,6 +5,9 @@ import { promisify } from 'util';
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import Stripe from "stripe";
+import { db } from "./db";
+import { users, usageTracking } from "@shared/schema";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
 
 const execAsync = promisify(exec);
 import { insertProjectSchema, insertFileSchema } from "@shared/schema";
@@ -516,19 +519,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { period = 'current' } = req.query;
       
-      // Mock platform stats - in production this would query real usage data
-      const platformStats = {
-        totalUsers: 127,
-        activeUsers: 89,
-        totalRevenue: 4250.00,
-        usageByService: {
-          compute: { total: 1245.5, cost: 24.91 },
-          storage: { total: 287.3, cost: 28.73 },
-          bandwidth: { total: 1876.2, cost: 150.10 },
-          deployments: { total: 89, cost: 44.50 },
-          databases: { total: 23, cost: 230.00 },
-          agentRequests: { total: 2156, cost: 107.80 }
+      // Get real platform stats from database
+      const now = new Date();
+      let startDate: Date;
+      let endDate = now;
+      
+      switch (period as string) {
+        case 'current':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          break;
+        case 'last_month':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          break;
+        default:
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+      
+      // Get total users
+      const totalUsersResult = await db.select({ count: sql<number>`COUNT(*)` }).from(users);
+      const totalUsers = totalUsersResult[0]?.count || 0;
+      
+      // Get active users (users with usage in the period)
+      const activeUsersResult = await db.selectDistinct({ userId: usageTracking.userId })
+        .from(usageTracking)
+        .where(and(
+          gte(usageTracking.timestamp, startDate),
+          lte(usageTracking.timestamp, endDate)
+        ));
+      const activeUsers = activeUsersResult.length;
+      
+      // Get usage by service
+      const usageByServiceResult = await db.select({
+        metricType: usageTracking.metricType,
+        total: sql<number>`SUM(CAST(${usageTracking.value} AS NUMERIC))`,
+        unit: usageTracking.unit
+      })
+      .from(usageTracking)
+      .where(and(
+        gte(usageTracking.timestamp, startDate),
+        lte(usageTracking.timestamp, endDate)
+      ))
+      .groupBy(usageTracking.metricType, usageTracking.unit);
+      
+      // Transform results into usage by service
+      const usageByService: any = {
+        compute: { total: 0, cost: 0 },
+        storage: { total: 0, cost: 0 },
+        bandwidth: { total: 0, cost: 0 },
+        deployments: { total: 0, cost: 0 },
+        databases: { total: 0, cost: 0 },
+        agentRequests: { total: 0, cost: 0 }
+      };
+      
+      usageByServiceResult.forEach(row => {
+        const total = parseFloat(row.total?.toString() || '0');
+        let cost = 0;
+        
+        switch (row.metricType) {
+          case 'compute_cpu':
+            usageByService.compute.total += total;
+            usageByService.compute.cost += total * 0.02;
+            break;
+          case 'storage':
+            usageByService.storage.total = total;
+            usageByService.storage.cost = total * 0.10;
+            break;
+          case 'bandwidth':
+            usageByService.bandwidth.total = total;
+            usageByService.bandwidth.cost = total * 0.08;
+            break;
+          case 'deployment':
+            usageByService.deployments.total = total;
+            usageByService.deployments.cost = total * 0.50;
+            break;
+          case 'database_storage':
+            usageByService.databases.total = total;
+            usageByService.databases.cost = total * 10;
+            break;
+          case 'agent_requests':
+            usageByService.agentRequests.total = total;
+            usageByService.agentRequests.cost = total * 0.05;
+            break;
         }
+      });
+      
+      // Calculate total revenue
+      const totalRevenue = Object.values(usageByService).reduce((sum: number, service: any) => sum + service.cost, 0);
+      
+      const platformStats = {
+        totalUsers,
+        activeUsers,
+        totalRevenue,
+        usageByService
       };
 
       res.json(platformStats);
@@ -545,49 +629,364 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user.email?.includes('admin') && !user.username?.includes('admin')) {
         return res.status(403).json({ message: 'Forbidden: Admin access required' });
       }
-
+      
       const { period = 'current', plan = 'all', search = '' } = req.query;
       
-      // Mock user usage data - in production this would query real usage and billing data
-      const usersUsage = [
-        {
-          userId: 1,
-          username: 'admin',
-          email: 'admin@example.com',
-          plan: 'pro',
-          usage: {
-            compute: { used: 45.2, limit: 500, cost: 0.90 },
-            storage: { used: 12.5, limit: 50, cost: 1.25 },
-            bandwidth: { used: 78.3, limit: 500, cost: 6.26 },
-            deployments: { used: 3, limit: -1, cost: 1.50 },
-            databases: { used: 1, limit: 10, cost: 10.00 },
-            agentRequests: { used: 156, limit: 2000, cost: 7.80 }
+      // Get real user usage data from database
+      const now = new Date();
+      let startDate: Date;
+      let endDate = now;
+      
+      switch (period as string) {
+        case 'current':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          break;
+        case 'last_month':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          break;
+        default:
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+      
+      // Get all users
+      const allUsers = await db.select().from(users);
+      
+      // Get usage for each user
+      const usersUsage = await Promise.all(allUsers.map(async (user) => {
+        // Get user's usage summary
+        const usageResult = await db.select({
+          metricType: usageTracking.metricType,
+          total: sql<number>`SUM(CAST(${usageTracking.value} AS NUMERIC))`,
+          unit: usageTracking.unit
+        })
+        .from(usageTracking)
+        .where(and(
+          eq(usageTracking.userId, user.id),
+          gte(usageTracking.timestamp, startDate),
+          lte(usageTracking.timestamp, endDate)
+        ))
+        .groupBy(usageTracking.metricType, usageTracking.unit);
+        
+        // Transform usage into structured format
+        const usage = {
+          compute: { used: 0, limit: -1, cost: 0 },
+          storage: { used: 0, limit: -1, cost: 0 },
+          bandwidth: { used: 0, limit: -1, cost: 0 },
+          deployments: { used: 0, limit: -1, cost: 0 },
+          databases: { used: 0, limit: -1, cost: 0 },
+          agentRequests: { used: 0, limit: -1, cost: 0 }
+        };
+        
+        // Set limits based on plan
+        const planLimits: any = {
+          starter: {
+            compute: 0,
+            storage: 1,
+            bandwidth: 10,
+            deployments: 1,
+            databases: 0,
+            agentRequests: 0
           },
-          totalCost: 27.71,
-          billingPeriod: 'monthly'
-        },
-        {
-          userId: 2,
-          username: 'testuser',
-          email: 'test@example.com',
-          plan: 'core',
-          usage: {
-            compute: { used: 23.1, limit: 100, cost: 0.46 },
-            storage: { used: 3.2, limit: 10, cost: 0.32 },
-            bandwidth: { used: 15.7, limit: 100, cost: 1.26 },
-            deployments: { used: 2, limit: 10, cost: 1.00 },
-            databases: { used: 0, limit: 3, cost: 0.00 },
-            agentRequests: { used: 67, limit: 500, cost: 3.35 }
+          core: {
+            compute: 100,
+            storage: 10,
+            bandwidth: 100,
+            deployments: 10,
+            databases: 3,
+            agentRequests: 500
           },
-          totalCost: 6.39,
+          pro: {
+            compute: 500,
+            storage: 50,
+            bandwidth: 500,
+            deployments: -1,
+            databases: 10,
+            agentRequests: 2000
+          },
+          enterprise: {
+            compute: -1,
+            storage: -1,
+            bandwidth: -1,
+            deployments: -1,
+            databases: -1,
+            agentRequests: -1
+          }
+        };
+        
+        const userPlan = user.plan || 'starter';
+        const limits = planLimits[userPlan] || planLimits.starter;
+        
+        // Process usage results
+        usageResult.forEach(row => {
+          const total = parseFloat(row.total?.toString() || '0');
+          
+          switch (row.metricType) {
+            case 'compute_cpu':
+              usage.compute.used = total;
+              usage.compute.limit = limits.compute;
+              usage.compute.cost = total * 0.02;
+              break;
+            case 'storage':
+              usage.storage.used = total;
+              usage.storage.limit = limits.storage;
+              usage.storage.cost = total * 0.10;
+              break;
+            case 'bandwidth':
+              usage.bandwidth.used = total;
+              usage.bandwidth.limit = limits.bandwidth;
+              usage.bandwidth.cost = total * 0.08;
+              break;
+            case 'deployment':
+              usage.deployments.used = total;
+              usage.deployments.limit = limits.deployments;
+              usage.deployments.cost = total * 0.50;
+              break;
+            case 'database_storage':
+              usage.databases.used = total;
+              usage.databases.limit = limits.databases;
+              usage.databases.cost = total * 10;
+              break;
+            case 'agent_requests':
+              usage.agentRequests.used = total;
+              usage.agentRequests.limit = limits.agentRequests;
+              usage.agentRequests.cost = total * 0.05;
+              break;
+          }
+        });
+        
+        // Calculate total cost
+        const totalCost = Object.values(usage).reduce((sum: number, service: any) => sum + service.cost, 0);
+        
+        return {
+          userId: user.id,
+          username: user.username,
+          email: user.email,
+          plan: userPlan,
+          usage,
+          totalCost,
           billingPeriod: 'monthly'
-        }
-      ];
+        };
+      }));
+      
+      // Filter users based on query parameters
+      let filteredUsers = usersUsage;
+      
+      if (plan !== 'all') {
+        filteredUsers = filteredUsers.filter(u => u.plan === plan);
+      }
+      
+      if (search) {
+        const searchLower = (search as string).toLowerCase();
+        filteredUsers = filteredUsers.filter(u => 
+          u.username.toLowerCase().includes(searchLower) ||
+          u.email.toLowerCase().includes(searchLower)
+        );
+      }
 
-      res.json(usersUsage);
+      res.json(filteredUsers);
     } catch (error) {
       console.error('Error fetching admin user usage:', error);
       res.status(500).json({ error: 'Failed to fetch user usage data' });
+    }
+  });
+
+  // Admin Billing Management Endpoints
+  app.get('/api/admin/billing/plans', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check admin permissions
+      const user = req.user!;
+      if (!user.email?.includes('admin') && !user.username?.includes('admin')) {
+        return res.status(403).json({ message: 'Forbidden: Admin access required' });
+      }
+
+      // Return pricing plans with resource limits
+      const pricingPlans = [
+        {
+          id: 'starter',
+          name: 'E-Code Starter',
+          monthlyPrice: 0,
+          yearlyPrice: 0,
+          features: [
+            '1 GB Storage',
+            '10 GB Bandwidth',
+            '1 Deployment',
+            'Community Support'
+          ],
+          limits: [
+            { id: 1, planId: 'starter', resourceType: 'compute_cpu', limit: 0, unit: 'hours' },
+            { id: 2, planId: 'starter', resourceType: 'storage', limit: 1, unit: 'GB' },
+            { id: 3, planId: 'starter', resourceType: 'bandwidth', limit: 10, unit: 'GB' },
+            { id: 4, planId: 'starter', resourceType: 'deployments', limit: 1, unit: 'deployments' },
+            { id: 5, planId: 'starter', resourceType: 'databases', limit: 0, unit: 'databases' },
+            { id: 6, planId: 'starter', resourceType: 'agent_requests', limit: 0, unit: 'requests' }
+          ]
+        },
+        {
+          id: 'core',
+          name: 'E-Code Core',
+          monthlyPrice: 25,
+          yearlyPrice: 250,
+          features: [
+            '100 CPU Hours',
+            '10 GB Storage',
+            '100 GB Bandwidth',
+            '10 Deployments',
+            '3 Databases',
+            '500 AI Agent Requests',
+            'Priority Support'
+          ],
+          limits: [
+            { id: 7, planId: 'core', resourceType: 'compute_cpu', limit: 100, unit: 'hours', overage_rate: 0.02 },
+            { id: 8, planId: 'core', resourceType: 'storage', limit: 10, unit: 'GB', overage_rate: 0.10 },
+            { id: 9, planId: 'core', resourceType: 'bandwidth', limit: 100, unit: 'GB', overage_rate: 0.08 },
+            { id: 10, planId: 'core', resourceType: 'deployments', limit: 10, unit: 'deployments', overage_rate: 0.50 },
+            { id: 11, planId: 'core', resourceType: 'databases', limit: 3, unit: 'databases', overage_rate: 10 },
+            { id: 12, planId: 'core', resourceType: 'agent_requests', limit: 500, unit: 'requests', overage_rate: 0.05 }
+          ]
+        },
+        {
+          id: 'pro',
+          name: 'E-Code Pro',
+          monthlyPrice: 40,
+          yearlyPrice: 400,
+          features: [
+            '500 CPU Hours',
+            '50 GB Storage',
+            '500 GB Bandwidth',
+            'Unlimited Deployments',
+            '10 Databases',
+            '2000 AI Agent Requests',
+            'Dedicated Support',
+            'Custom Domains'
+          ],
+          limits: [
+            { id: 13, planId: 'pro', resourceType: 'compute_cpu', limit: 500, unit: 'hours', overage_rate: 0.02 },
+            { id: 14, planId: 'pro', resourceType: 'storage', limit: 50, unit: 'GB', overage_rate: 0.10 },
+            { id: 15, planId: 'pro', resourceType: 'bandwidth', limit: 500, unit: 'GB', overage_rate: 0.08 },
+            { id: 16, planId: 'pro', resourceType: 'deployments', limit: -1, unit: 'deployments' },
+            { id: 17, planId: 'pro', resourceType: 'databases', limit: 10, unit: 'databases', overage_rate: 10 },
+            { id: 18, planId: 'pro', resourceType: 'agent_requests', limit: 2000, unit: 'requests', overage_rate: 0.05 }
+          ]
+        },
+        {
+          id: 'enterprise',
+          name: 'E-Code Enterprise',
+          monthlyPrice: 0, // Custom pricing
+          yearlyPrice: 0,
+          features: [
+            'Unlimited CPU Hours',
+            'Unlimited Storage',
+            'Unlimited Bandwidth',
+            'Unlimited Deployments',
+            'Unlimited Databases',
+            'Unlimited AI Agent Requests',
+            '24/7 Dedicated Support',
+            'SLA Guarantee',
+            'Custom Integrations'
+          ],
+          limits: [
+            { id: 19, planId: 'enterprise', resourceType: 'compute_cpu', limit: -1, unit: 'hours' },
+            { id: 20, planId: 'enterprise', resourceType: 'storage', limit: -1, unit: 'GB' },
+            { id: 21, planId: 'enterprise', resourceType: 'bandwidth', limit: -1, unit: 'GB' },
+            { id: 22, planId: 'enterprise', resourceType: 'deployments', limit: -1, unit: 'deployments' },
+            { id: 23, planId: 'enterprise', resourceType: 'databases', limit: -1, unit: 'databases' },
+            { id: 24, planId: 'enterprise', resourceType: 'agent_requests', limit: -1, unit: 'requests' }
+          ]
+        }
+      ];
+
+      res.json(pricingPlans);
+    } catch (error) {
+      console.error('Error fetching pricing plans:', error);
+      res.status(500).json({ error: 'Failed to fetch pricing plans' });
+    }
+  });
+
+  app.get('/api/admin/billing/settings', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check admin permissions
+      const user = req.user!;
+      if (!user.email?.includes('admin') && !user.username?.includes('admin')) {
+        return res.status(403).json({ message: 'Forbidden: Admin access required' });
+      }
+
+      // Return billing settings
+      const billingSettings = {
+        stripeWebhookEndpoint: 'https://api.e-code.com/webhooks/stripe',
+        taxRate: 21, // VAT rate
+        currency: 'EUR',
+        invoicePrefix: 'INV-',
+        gracePeriodDays: 7
+      };
+
+      res.json(billingSettings);
+    } catch (error) {
+      console.error('Error fetching billing settings:', error);
+      res.status(500).json({ error: 'Failed to fetch billing settings' });
+    }
+  });
+
+  app.put('/api/admin/billing/plans/:planId', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check admin permissions
+      const user = req.user!;
+      if (!user.email?.includes('admin') && !user.username?.includes('admin')) {
+        return res.status(403).json({ message: 'Forbidden: Admin access required' });
+      }
+
+      const { planId } = req.params;
+      const updatedPlan = req.body;
+
+      // In production, this would update the plan in the database
+      console.log('Updating plan:', planId, updatedPlan);
+
+      res.json({ success: true, plan: updatedPlan });
+    } catch (error) {
+      console.error('Error updating pricing plan:', error);
+      res.status(500).json({ error: 'Failed to update pricing plan' });
+    }
+  });
+
+  app.put('/api/admin/billing/plans/:planId/limits/:limitId', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check admin permissions
+      const user = req.user!;
+      if (!user.email?.includes('admin') && !user.username?.includes('admin')) {
+        return res.status(403).json({ message: 'Forbidden: Admin access required' });
+      }
+
+      const { planId, limitId } = req.params;
+      const updatedLimit = req.body;
+
+      // In production, this would update the resource limit in the database
+      console.log('Updating resource limit:', planId, limitId, updatedLimit);
+
+      res.json({ success: true, limit: updatedLimit });
+    } catch (error) {
+      console.error('Error updating resource limit:', error);
+      res.status(500).json({ error: 'Failed to update resource limit' });
+    }
+  });
+
+  app.put('/api/admin/billing/settings', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check admin permissions
+      const user = req.user!;
+      if (!user.email?.includes('admin') && !user.username?.includes('admin')) {
+        return res.status(403).json({ message: 'Forbidden: Admin access required' });
+      }
+
+      const updatedSettings = req.body;
+
+      // In production, this would update the settings in the database
+      console.log('Updating billing settings:', updatedSettings);
+
+      res.json({ success: true, settings: updatedSettings });
+    } catch (error) {
+      console.error('Error updating billing settings:', error);
+      res.status(500).json({ error: 'Failed to update billing settings' });
     }
   });
 
