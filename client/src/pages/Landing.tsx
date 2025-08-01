@@ -18,6 +18,11 @@ import { MobileChatInterface } from '@/components/MobileChatInterface';
 import { AnimatedPlatformDemo } from '@/components/AnimatedPlatformDemo';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
+import { 
+  SiPython, SiJavascript, SiHtml5, SiCss3,
+  SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
+  SiRust, SiPhp, SiOpenjdk
+} from 'react-icons/si';
 
 export default function Landing() {
   const [, navigate] = useLocation();
@@ -1499,79 +1504,195 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <Card className="group hover:shadow-xl transition-all cursor-pointer">
+          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-6 mb-12">
+            {/* Python Card */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 border-0">
               <CardContent className="p-0">
-                <div className="aspect-video bg-gradient-to-br from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-t-lg overflow-hidden flex items-center justify-center">
-                  <div className="text-center space-y-3">
-                    <div className="text-4xl animate-bounce">🐍</div>
-                    <div className="font-mono text-xs space-y-1">
-                      <div className="animate-pulse text-blue-600 dark:text-blue-400">print("Hello World!")</div>
-                      <div className="animate-pulse delay-100 text-green-600 dark:text-green-400">data = [1, 2, 3]</div>
-                      <div className="animate-pulse delay-200 text-purple-600 dark:text-purple-400">for i in data:</div>
+                <div className="relative h-48 bg-gradient-to-br from-blue-600 via-blue-700 to-yellow-600 overflow-hidden">
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                  <div className="relative h-full flex flex-col items-center justify-center p-6">
+                    <SiPython className="h-16 w-16 text-white mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-white/90 text-center">
+                      <div className="animate-pulse">print("Hello!")</div>
                     </div>
                   </div>
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-white/20 backdrop-blur text-white border-white/20 text-xs">
+                      Popular
+                    </Badge>
+                  </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">Python</h3>
-                  <p className="text-sm text-muted-foreground">Perfect for beginners, data science, and AI</p>
+                <div className="p-4 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
+                  <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                    Python
+                    <span className="text-xs text-muted-foreground">3.11</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">Data Science & AI</p>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Django</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Flask</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">NumPy</Badge>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-xl transition-all cursor-pointer">
+            {/* JavaScript Card */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 border-0">
               <CardContent className="p-0">
-                <div className="aspect-video bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-t-lg overflow-hidden flex items-center justify-center">
-                  <div className="text-center space-y-3">
-                    <div className="text-4xl animate-bounce">⚡</div>
-                    <div className="font-mono text-xs space-y-1">
-                      <div className="animate-pulse text-blue-600 dark:text-blue-400">const App = () =&gt; {"{}"}</div>
-                      <div className="animate-pulse delay-100 text-purple-600 dark:text-purple-400">return {"<div>"}</div>
-                      <div className="animate-pulse delay-200 text-green-600 dark:text-green-400">export default App</div>
+                <div className="relative h-48 bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 overflow-hidden">
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                  <div className="relative h-full flex flex-col items-center justify-center p-6">
+                    <SiJavascript className="h-16 w-16 text-black mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-black/80 text-center">
+                      <div className="animate-pulse">const app = {}</div>
                     </div>
                   </div>
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-black/20 backdrop-blur text-white border-black/20 text-xs">
+                      #1 Web
+                    </Badge>
+                  </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">JavaScript</h3>
-                  <p className="text-sm text-muted-foreground">Build websites, apps, and interactive experiences</p>
+                <div className="p-4 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
+                  <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                    JavaScript
+                    <span className="text-xs text-muted-foreground">ES2024</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">Web & Full-Stack</p>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">React</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Node.js</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Vue</Badge>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-xl transition-all cursor-pointer">
+            {/* TypeScript Card */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 border-0">
               <CardContent className="p-0">
-                <div className="aspect-video bg-gradient-to-br from-red-50 to-blue-50 dark:from-red-900/20 dark:to-blue-900/20 rounded-t-lg overflow-hidden flex items-center justify-center">
-                  <div className="text-center space-y-3">
-                    <div className="text-4xl animate-bounce">🎨</div>
-                    <div className="font-mono text-xs space-y-1">
-                      <div className="animate-pulse text-red-600 dark:text-red-400">{"<div class=\"header\">"}</div>
-                      <div className="animate-pulse delay-100 text-blue-600 dark:text-blue-400">.header {"{ color: blue; }"}</div>
-                      <div className="animate-pulse delay-200 text-green-600 dark:text-green-400">{"</div>"}</div>
+                <div className="relative h-48 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 overflow-hidden">
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                  <div className="relative h-full flex flex-col items-center justify-center p-6">
+                    <SiTypescript className="h-16 w-16 text-white mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-white/90 text-center">
+                      <div className="animate-pulse">type Safe = true</div>
                     </div>
                   </div>
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-white/20 backdrop-blur text-white border-white/20 text-xs">
+                      Trending
+                    </Badge>
+                  </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">HTML & CSS</h3>
-                  <p className="text-sm text-muted-foreground">Create beautiful websites from scratch</p>
+                <div className="p-4 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
+                  <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                    TypeScript
+                    <span className="text-xs text-muted-foreground">5.3</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">Type-Safe JS</p>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Next.js</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Nest.js</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Deno</Badge>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-xl transition-all cursor-pointer">
+            {/* Go Card */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 border-0">
               <CardContent className="p-0">
-                <div className="aspect-video bg-gradient-to-br from-orange-50 to-purple-50 dark:from-orange-900/20 dark:to-purple-900/20 rounded-t-lg overflow-hidden flex items-center justify-center">
-                  <div className="text-center space-y-3">
-                    <div className="text-4xl animate-bounce">☕</div>
-                    <div className="font-mono text-xs space-y-1">
-                      <div className="animate-pulse text-purple-600 dark:text-purple-400">@RestController</div>
-                      <div className="animate-pulse delay-100 text-blue-600 dark:text-blue-400">public class API {}</div>
-                      <div className="animate-pulse delay-200 text-green-600 dark:text-green-400">@GetMapping("/users")</div>
+                <div className="relative h-48 bg-gradient-to-br from-cyan-500 via-cyan-600 to-blue-600 overflow-hidden">
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                  <div className="relative h-full flex flex-col items-center justify-center p-6">
+                    <SiGo className="h-16 w-16 text-white mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-white/90 text-center">
+                      <div className="animate-pulse">go run main.go</div>
                     </div>
                   </div>
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-white/20 backdrop-blur text-white border-white/20 text-xs">
+                      Fast
+                    </Badge>
+                  </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">Java</h3>
-                  <p className="text-sm text-muted-foreground">Enterprise applications and backend services</p>
+                <div className="p-4 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
+                  <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                    Go
+                    <span className="text-xs text-muted-foreground">1.21</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">Cloud & Backend</p>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Gin</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Fiber</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">gRPC</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Java Card */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 border-0">
+              <CardContent className="p-0">
+                <div className="relative h-48 bg-gradient-to-br from-red-600 via-orange-600 to-red-700 overflow-hidden">
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                  <div className="relative h-full flex flex-col items-center justify-center p-6">
+                    <SiOpenjdk className="h-16 w-16 text-white mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-white/90 text-center">
+                      <div className="animate-pulse">public class Main</div>
+                    </div>
+                  </div>
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-white/20 backdrop-blur text-white border-white/20 text-xs">
+                      Enterprise
+                    </Badge>
+                  </div>
+                </div>
+                <div className="p-4 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
+                  <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                    Java
+                    <span className="text-xs text-muted-foreground">21 LTS</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">Enterprise Apps</p>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Spring</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Maven</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Gradle</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Rust Card */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105 border-0">
+              <CardContent className="p-0">
+                <div className="relative h-48 bg-gradient-to-br from-orange-700 via-orange-800 to-red-800 overflow-hidden">
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                  <div className="relative h-full flex flex-col items-center justify-center p-6">
+                    <SiRust className="h-16 w-16 text-white mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-white/90 text-center">
+                      <div className="animate-pulse">fn main() {}</div>
+                    </div>
+                  </div>
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-white/20 backdrop-blur text-white border-white/20 text-xs">
+                      Safe
+                    </Badge>
+                  </div>
+                </div>
+                <div className="p-4 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
+                  <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                    Rust
+                    <span className="text-xs text-muted-foreground">1.75</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">Systems & WASM</p>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Tokio</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Actix</Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Rocket</Badge>
+                  </div>
                 </div>
               </CardContent>
             </Card>
