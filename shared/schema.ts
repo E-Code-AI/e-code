@@ -306,10 +306,9 @@ export const comments = pgTable('comments', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
   fileId: integer('file_id').references(() => files.id),
-  userId: integer('user_id').notNull().references(() => users.id),
+  authorId: integer('author_id').notNull().references(() => users.id),
   content: text('content').notNull(),
   lineNumber: integer('line_number'),
-  parentId: integer('parent_id'),
   resolved: boolean('resolved').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -319,10 +318,10 @@ export const comments = pgTable('comments', {
 export const checkpoints = pgTable('checkpoints', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: integer('user_id').notNull().references(() => users.id),
-  message: text('message').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  createdBy: integer('created_by').notNull().references(() => users.id),
   filesSnapshot: jsonb('files_snapshot').notNull(),
-  parentCheckpointId: integer('parent_checkpoint_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -334,18 +333,18 @@ export const projectTimeTracking = pgTable('project_time_tracking', {
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time'),
   duration: integer('duration'),
+  taskDescription: text('task_description'),
   active: boolean('active').default(true),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Screenshots for projects
 export const projectScreenshots = pgTable('project_screenshots', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: integer('user_id').notNull().references(() => users.id),
-  url: text('url').notNull(),
-  thumbnailUrl: text('thumbnail_url'),
+  title: text('title').notNull(),
+  imageUrl: text('image_url').notNull(),
   description: text('description'),
+  createdBy: integer('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -353,16 +352,14 @@ export const projectScreenshots = pgTable('project_screenshots', {
 export const taskSummaries = pgTable('task_summaries', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: integer('user_id').notNull().references(() => users.id),
-  taskDescription: text('task_description').notNull(),
-  summary: text('summary').notNull(),
-  filesChanged: integer('files_changed').default(0),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  completedTasks: jsonb('completed_tasks'),
+  filesCreated: integer('files_created').default(0),
+  filesModified: integer('files_modified').default(0),
   linesAdded: integer('lines_added').default(0),
   linesDeleted: integer('lines_deleted').default(0),
-  timeSpent: integer('time_spent'),
-  completed: boolean('completed').default(false),
-  screenshotId: integer('screenshot_id').references(() => projectScreenshots.id),
-  checkpointId: integer('checkpoint_id').references(() => checkpoints.id),
+  createdBy: integer('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
