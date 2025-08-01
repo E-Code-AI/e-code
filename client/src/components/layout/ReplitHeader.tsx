@@ -42,6 +42,7 @@ import {
   Trophy,
   Store,
   Rocket,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
@@ -319,6 +320,13 @@ export function ReplitHeader() {
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Zap className="mr-2 h-4 w-4" />
               Cycles
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => navigate('/plans')}
+              className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
+              <CreditCard className="mr-2 h-4 w-4" />
+              Plans & Pricing
             </DropdownMenuItem>
             
             <DropdownMenuItem 

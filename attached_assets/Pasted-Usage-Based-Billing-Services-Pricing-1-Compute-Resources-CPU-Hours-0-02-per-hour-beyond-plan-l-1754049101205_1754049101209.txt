@@ -1,0 +1,57 @@
+Usage-Based Billing Services & Pricing
+1. Compute Resources
+CPU Hours: €0.02 per hour (beyond plan limits)
+Memory: €0.01 per GB-hour
+GPU Hours: €0.50 per hour (for AI/ML workloads)
+2. Storage
+Project Storage: €0.10 per GB/month (beyond plan limits)
+Database Storage: €0.15 per GB/month
+Object Storage: €0.05 per GB/month
+Backup Storage: €0.03 per GB/month
+3. Network & Bandwidth
+Outbound Bandwidth: €0.08 per GB (beyond plan limits)
+CDN Bandwidth: €0.05 per GB
+DDoS Protection: €10 per month (optional add-on)
+4. AI & Agent Services
+Agent Edit Requests: $0.05 per request (already configured)
+AI Model API Calls:
+GPT-4: €0.03 per 1K tokens
+GPT-3.5: €0.002 per 1K tokens
+Claude: €0.025 per 1K tokens
+Image Generation: €0.10 per image
+5. Deployment & Infrastructure
+Deployments: €0.50 per deployment (beyond plan limits)
+Always-On Repls: €5 per month per repl
+Custom Domains: €2 per month per domain
+SSL Certificates: Free with Starter, €5/month for wildcard
+6. Database Services
+PostgreSQL Database: €10 per database/month
+Database Backups: €0.05 per backup
+Database Replicas: €15 per replica/month
+7. Collaboration & Teams
+Additional Team Members: €10 per user/month
+Guest Collaborators: €2 per collaborator/month
+Private Projects: €1 per project/month (beyond limits)
+8. Development Tools
+Build Minutes: €0.01 per minute (CI/CD)
+SSH Access: €5 per month (if not included)
+API Rate Limits: €0.0001 per API call beyond limits
+9. Communication & Support
+Email Sends: €0.0001 per email (transactional)
+SMS Notifications: €0.05 per SMS
+Priority Support: €50 per ticket
+Dedicated Support: €500 per month
+10. Advanced Features
+Scheduled Jobs/Cron: €0.001 per execution
+WebSocket Connections: €0.01 per 1K messages
+Real-time Collaboration: €0.10 per hour per user
+Code Reviews: €0.50 per review (AI-powered)
+11. Enterprise Features
+SSO/SAML: €100 per month
+Audit Logs: €50 per month
+SLA Guarantee: €200 per month
+VPN Access: €150 per month
+12. Regional Services
+Multi-region Deployment: €20 per additional region
+Edge Functions: €0.001 per invocation
+Geo-replication: €30 per region/month

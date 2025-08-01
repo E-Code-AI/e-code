@@ -132,13 +132,8 @@ export interface IStorage {
   updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined>;
   
   // Usage tracking operations
-  trackUsage(userId: number, metric: {
-    metricType: string;
-    value: number;
-    unit: string;
-    billingPeriodStart: Date;
-    billingPeriodEnd: Date;
-  }): Promise<void>;
+  trackUsage(userId: number, eventType: string, quantity: number, metadata?: any): Promise<void>;
+  getUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any>;
   getUserUsage(userId: number, billingPeriodStart?: Date): Promise<any>;
 
   // Comments operations
@@ -822,18 +817,53 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Usage tracking operations
-  async trackUsage(userId: number, metric: {
-    metricType: string;
-    value: number;
-    unit: string;
-    billingPeriodStart: Date;
-    billingPeriodEnd: Date;
-  }): Promise<void> {
+  async trackUsage(userId: number, eventType: string, quantity: number, metadata?: any): Promise<void> {
+    const now = new Date();
+    const billingPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const billingPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
     await db.insert(usageTracking).values({
       userId,
-      ...metric,
-      value: metric.value.toString()
+      metricType: eventType,
+      value: quantity.toString(),
+      unit: metadata?.unit || 'request',
+      billingPeriodStart,
+      billingPeriodEnd
     });
+  }
+
+  async getUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any> {
+    let query = eq(usageTracking.userId, userId);
+    
+    if (startDate && endDate) {
+      query = and(
+        query,
+        sql`${usageTracking.billingPeriodStart} >= ${startDate}`,
+        sql`${usageTracking.billingPeriodEnd} <= ${endDate}`
+      );
+    }
+
+    const results = await db.select({
+      metricType: usageTracking.metricType,
+      total: sql<number>`SUM(CAST(${usageTracking.value} AS NUMERIC))`,
+      unit: usageTracking.unit,
+      count: sql<number>`COUNT(*)`
+    })
+    .from(usageTracking)
+    .where(query)
+    .groupBy(usageTracking.metricType, usageTracking.unit);
+
+    // Transform results into usage stats object
+    const stats: any = {};
+    results.forEach(row => {
+      stats[row.metricType] = {
+        total: parseFloat(row.total?.toString() || '0'),
+        count: parseInt(row.count?.toString() || '0'),
+        unit: row.unit
+      };
+    });
+
+    return stats;
   }
 
   async getUserUsage(userId: number, billingPeriodStart?: Date): Promise<any> {

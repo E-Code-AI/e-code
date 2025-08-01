@@ -74,6 +74,7 @@ const Themes = lazy(() => import("@/pages/Themes"));
 const Referrals = lazy(() => import("@/pages/Referrals"));
 const Usage = lazy(() => import("@/pages/Usage"));
 const Subscribe = lazy(() => import("@/pages/Subscribe"));
+const Plans = lazy(() => import("@/pages/Plans"));
 // Enterprise pages
 const SSOConfiguration = lazy(() => import("@/pages/SSOConfiguration"));
 const AuditLogs = lazy(() => import("@/pages/AuditLogs"));
@@ -418,6 +419,11 @@ function AppContent() {
           <ProtectedRoute path="/subscribe" component={() => (
             <ReplitLayout showSidebar={false}>
               <Subscribe />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/plans" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Plans />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/learn" component={() => (
