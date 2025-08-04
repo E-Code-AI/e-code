@@ -306,7 +306,7 @@ export class DatabaseStorage implements IStorage {
 
   // API Key operations
   async createApiKey(apiKeyData: InsertApiKey): Promise<ApiKey> {
-    const [apiKey] = await db.insert(apiKeys).values(apiKeyData).returning();
+    const [apiKey] = await db.insert(apiKeys).values([apiKeyData]).returning();
     return apiKey;
   }
 
@@ -335,7 +335,7 @@ export class DatabaseStorage implements IStorage {
 
   // Code Review operations
   async createCodeReview(reviewData: InsertCodeReview): Promise<CodeReview> {
-    const [review] = await db.insert(codeReviews).values(reviewData).returning();
+    const [review] = await db.insert(codeReviews).values([reviewData]).returning();
     return review;
   }
 
@@ -359,7 +359,7 @@ export class DatabaseStorage implements IStorage {
 
   // Challenge operations
   async createChallenge(challengeData: InsertChallenge): Promise<Challenge> {
-    const [challenge] = await db.insert(challenges).values(challengeData).returning();
+    const [challenge] = await db.insert(challenges).values([challengeData]).returning();
     return challenge;
   }
 
@@ -383,7 +383,7 @@ export class DatabaseStorage implements IStorage {
 
   // Mentorship operations
   async createMentorProfile(profileData: InsertMentorProfile): Promise<MentorProfile> {
-    const [profile] = await db.insert(mentorProfiles).values(profileData).returning();
+    const [profile] = await db.insert(mentorProfiles).values([profileData]).returning();
     return profile;
   }
 
@@ -622,7 +622,7 @@ export class DatabaseStorage implements IStorage {
         name: teams.name,
         slug: teams.slug,
         description: teams.description,
-        avatar: teams.avatar,
+        logo: teams.logo,
         role: teamMembers.role,
         joinedAt: teamMembers.joinedAt
       })
@@ -740,7 +740,7 @@ export class DatabaseStorage implements IStorage {
 
   // Time tracking operations
   async startTimeTracking(tracking: InsertTimeTracking): Promise<TimeTracking> {
-    const [newTracking] = await db.insert(projectTimeTracking).values(tracking).returning();
+    const [newTracking] = await db.insert(projectTimeTracking).values([tracking]).returning();
     return newTracking;
   }
 
@@ -839,14 +839,14 @@ export class DatabaseStorage implements IStorage {
     const billingPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const billingPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     
-    await db.insert(usageTracking).values({
+    await db.insert(usageTracking).values([{
       userId,
       metricType: eventType,
       value: quantity.toString(),
       unit: metadata?.unit || 'request',
       billingPeriodStart,
       billingPeriodEnd
-    });
+    }]);
   }
 
   async getUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any> {
@@ -857,7 +857,7 @@ export class DatabaseStorage implements IStorage {
         query,
         sql`${usageTracking.billingPeriodStart} >= ${startDate}`,
         sql`${usageTracking.billingPeriodEnd} <= ${endDate}`
-      );
+      ) as any;
     }
 
     const results = await db.select({
@@ -1013,10 +1013,7 @@ export class DatabaseStorage implements IStorage {
     return [];
   }
 
-  async createFile(fileData: any): Promise<any> {
-    // Mock implementation for file creation
-    return { id: Date.now(), ...fileData };
-  }
+
 
   async getImportStatistics(): Promise<any> {
     // Mock implementation for import statistics
@@ -1074,7 +1071,7 @@ export class DatabaseStorage implements IStorage {
       WHERE project_id = ${projectId}
       ORDER BY created_at DESC
     `);
-    return results.rows || [];
+    return results || [];
   }
   
   async getSecret(id: number): Promise<any | undefined> {
@@ -1092,7 +1089,7 @@ export class DatabaseStorage implements IStorage {
       DELETE FROM ${sql.identifier(secretsTable)}
       WHERE id = ${id}
     `);
-    return result.rowCount > 0;
+    return (result as any).length > 0;
   }
 }
 
@@ -1102,7 +1099,7 @@ export const storage = new DatabaseStorage();
 // Session store
 const pgStore = connectPg(session);
 export const sessionStore = new pgStore({
-  pool: client,
+  pool: client as any,
   createTableIfMissing: true,
   ttl: 7 * 24 * 60 * 60, // 7 days
 });
