@@ -7,12 +7,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Zap, ArrowRight, CheckCircle, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { useParams, useNavigate } from 'wouter';
+import { useParams, useLocation } from 'wouter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function BoltImport() {
   const { id: projectId } = useParams();
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [boltUrl, setBoltUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
