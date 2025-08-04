@@ -56,7 +56,8 @@ const ContactSales = lazy(() => import("@/pages/ContactSales"));
 const Terms = lazy(() => import("@/pages/Terms"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const Status = lazy(() => import("@/pages/Status"));
-const Mobile = lazy(() => import("@/pages/mobile"));
+const PublicMobilePage = lazy(() => import("@/pages/PublicMobilePage"));
+const MobileAdmin = lazy(() => import("@/pages/mobile"));
 const AI = lazy(() => import("@/pages/AI"));
 const Press = lazy(() => import("@/pages/Press"));
 const Partners = lazy(() => import("@/pages/Partners"));
@@ -172,7 +173,7 @@ function AppContent() {
           <Route path="/commercial-agreement" component={CommercialAgreement} />
           <Route path="/report-abuse" component={ReportAbuse} />
           <Route path="/status" component={Status} />
-          <Route path="/mobile" component={Mobile} />
+          <Route path="/mobile" component={PublicMobilePage} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-agent" component={AIAgent} />
           <Route path="/press" component={Press} />
@@ -448,6 +449,11 @@ function AppContent() {
           )} />
           <ProtectedRoute path="/projects/:id/preview" component={() => (
             <PreviewWithDevTools />
+          )} />
+          <ProtectedRoute path="/mobile-admin" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <MobileAdmin />
+            </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin" component={() => (
             <ReplitLayout>
