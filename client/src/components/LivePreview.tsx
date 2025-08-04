@@ -32,7 +32,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ projectId, onPreviewRe
 
   // Mutation to start preview
   const startPreviewMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/preview/${projectId}/start`, 'POST'),
+    mutationFn: () => apiRequest('POST', `/api/preview/${projectId}/start`),
     onSuccess: (data) => {
       toast({
         title: "Preview Started",
@@ -54,7 +54,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ projectId, onPreviewRe
 
   // Mutation to stop preview
   const stopPreviewMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/preview/${projectId}/stop`, 'POST'),
+    mutationFn: () => apiRequest('POST', `/api/preview/${projectId}/stop`),
     onSuccess: () => {
       toast({
         title: "Preview Stopped",
