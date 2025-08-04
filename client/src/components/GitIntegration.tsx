@@ -192,7 +192,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleStageFile = async (path: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/stage`, {
+      const response = await fetch(`/api/git/${projectId}/stage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paths: [path] })
@@ -219,7 +219,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleUnstageFile = async (path: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/unstage`, {
+      const response = await fetch(`/api/git/${projectId}/unstage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paths: [path] })
@@ -249,7 +249,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
     
     setIsCommitting(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/commit`, {
+      const response = await fetch(`/api/git/${projectId}/commit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: commitMessage })
@@ -278,7 +278,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
   const handlePush = async () => {
     setIsPushing(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/push`, {
+      const response = await fetch(`/api/git/${projectId}/push`, {
         method: 'POST'
       });
       
@@ -303,7 +303,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
   const handlePull = async () => {
     setIsPulling(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/pull`, {
+      const response = await fetch(`/api/git/${projectId}/pull`, {
         method: 'POST'
       });
       
@@ -330,7 +330,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
     if (!newBranchName.trim()) return;
     
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/branch`, {
+      const response = await fetch(`/api/git/${projectId}/branch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newBranchName })
@@ -356,7 +356,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleCheckout = async (branchName: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/checkout`, {
+      const response = await fetch(`/api/git/${projectId}/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ branch: branchName })

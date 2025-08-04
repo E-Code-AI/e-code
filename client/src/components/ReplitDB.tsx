@@ -221,7 +221,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
 
   const handleDelete = async (key: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/db/${key}`, {
+      const response = await fetch(`/api/database/${projectId}/replitdb/${key}`, {
         method: 'DELETE'
       });
 
@@ -280,7 +280,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
       const text = await file.text();
       const data = JSON.parse(text);
 
-      const response = await fetch(`/api/projects/${projectId}/db/import`, {
+      const response = await fetch(`/api/database/${projectId}/replitdb/import`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data })

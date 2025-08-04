@@ -175,7 +175,7 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
             });
             break;
           case 'create_folder':
-            await apiRequest('POST', `/api/projects/${projectId}/folders`, {
+            await apiRequest('POST', `/api/files/${projectId}/folders`, {
               name: action.data.name,
               path: action.data.path
             });

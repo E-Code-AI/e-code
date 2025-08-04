@@ -219,7 +219,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
   const downloadBackup = async (backupId: string, name: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/backups/${backupId}/download`, {
+      const response = await fetch(`/api/backups/${projectId}/${backupId}/download`, {
         credentials: 'include'
       });
       

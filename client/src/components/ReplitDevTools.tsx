@@ -209,7 +209,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const debugAction = async (action: 'continue' | 'step' | 'stepinto' | 'stepout') => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/debug/${action}`, {
+      const response = await fetch(`/api/debug/${projectId}/${action}`, {
         method: 'POST',
         credentials: 'include'
       });

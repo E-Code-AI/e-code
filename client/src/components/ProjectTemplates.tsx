@@ -106,7 +106,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
   // Create project from template mutation
   const createProjectMutation = useMutation({
     mutationFn: async ({ template, name }: { template: Template; name: string }) => {
-      const response = await apiRequest('POST', '/api/projects/from-template', {
+      const response = await apiRequest('POST', '/api/templates/create-from-template', {
         templateId: template.id,
         name: name || `My ${template.name}`,
       });

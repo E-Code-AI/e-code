@@ -118,7 +118,7 @@ const ResponsiveProjectPage = () => {
     queryFn: async () => {
       if (!projectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('GET', `/api/projects/${projectId}`);
+      const res = await apiRequest('GET', `/api/user/projects/${projectId}`);
       if (!res.ok) {
         const error = await res.text();
         if (res.status === 401) {
