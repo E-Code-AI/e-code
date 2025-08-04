@@ -73,9 +73,13 @@ export function ReplitHeader() {
   const [projectInfo, setProjectInfo] = useState<any>(null);
   const isMobile = useIsMobile();
 
-  // Get project ID from URL
+  // Get project info from URL - supports both formats: /projects/:id and /@:username/:project
   const pathMatch = location.match(/^\/projects\/(\d+)/);
   const projectId = pathMatch ? pathMatch[1] : null;
+  
+  const replitStyleMatch = location.match(/^\/@([^/]+)\/([^/]+)/);
+  const username = replitStyleMatch ? replitStyleMatch[1] : null;
+  const projectSlug = replitStyleMatch ? replitStyleMatch[2] : null;
 
   // Fetch project info if we're in a project view
   useEffect(() => {
@@ -87,13 +91,20 @@ export function ReplitHeader() {
         } catch (error) {
           console.error('Failed to fetch project info:', error);
         }
+      } else if (username && projectSlug) {
+        try {
+          const data = await apiRequest('GET', `/api/users/${username}/projects/${projectSlug}`);
+          setProjectInfo(data);
+        } catch (error) {
+          console.error('Failed to fetch project info:', error);
+        }
       } else {
         setProjectInfo(null);
       }
     };
     
     fetchProjectInfo();
-  }, [projectId]);
+  }, [projectId, username, projectSlug]);
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -137,7 +148,13 @@ export function ReplitHeader() {
               <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
                 <DropdownMenuItem 
                   className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-                  onClick={() => navigate(`/projects/${projectId}`)}
+                  onClick={() => {
+                    if (projectInfo?.owner?.username && projectInfo?.slug) {
+                      navigate(`/@${projectInfo.owner.username}/${projectInfo.slug}`);
+                    } else {
+                      navigate(`/projects/${projectId}`);
+                    }
+                  }}
                 >
                   <Code className="mr-2 h-4 w-4" />
                   Open project

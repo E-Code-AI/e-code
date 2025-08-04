@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Project, InsertProject } from '@shared/schema';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -106,9 +107,19 @@ const projectFormSchema = z.object({
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
+// Extended Project type that includes owner information
+interface ProjectWithOwner extends Project {
+  owner?: {
+    id: number;
+    username: string;
+    email: string;
+  };
+}
+
 const ProjectsPage = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [deleteProjectId, setDeleteProjectId] = useState<number | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -176,7 +187,7 @@ const ProjectsPage = () => {
   });
 
   // Query for fetching projects
-  const { data: projects, isLoading, error } = useQuery<Project[]>({
+  const { data: projects, isLoading, error } = useQuery<ProjectWithOwner[]>({
     queryKey: ['/api/projects'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/projects');
@@ -252,8 +263,12 @@ const ProjectsPage = () => {
         title: "Great! Your project is ready",
         description: `"${project.name}" is all set up. Let's start creating!`,
       });
-      // Navigate to the new project
-      setLocation(`/project/${project.id}`);
+      // Navigate to the new project using Replit-style URL
+      if (user?.username && project.slug) {
+        setLocation(`/@${user.username}/${project.slug}`);
+      } else {
+        setLocation(`/project/${project.id}`);
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -475,9 +490,14 @@ const ProjectsPage = () => {
   };
 
   // Handle project click with view tracking
-  const handleProjectClick = (projectId: number) => {
-    trackViewMutation.mutate(projectId);
-    setLocation(`/project/${projectId}`);
+  const handleProjectClick = (project: Project) => {
+    trackViewMutation.mutate(project.id);
+    // Use new Replit-style URL format if we have owner and slug
+    if (project.owner?.username && project.slug) {
+      setLocation(`/@${project.owner.username}/${project.slug}`);
+    } else {
+      setLocation(`/project/${project.id}`);
+    }
   };
 
   // Function to get language icon
@@ -883,7 +903,7 @@ const ProjectsPage = () => {
                     {/* Project Cover Image */}
                     <div 
                       className="h-32 bg-gradient-to-br from-[var(--ecode-accent)] to-[var(--ecode-accent-hover)] opacity-20 cursor-pointer"
-                      onClick={() => handleProjectClick(project.id)}
+                      onClick={() => handleProjectClick(project)}
                     />
                     
                     {/* Project Info */}
@@ -891,7 +911,7 @@ const ProjectsPage = () => {
                       <div className="flex items-start justify-between mb-2">
                         <h3 
                           className="font-medium text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors truncate flex-1 cursor-pointer"
-                          onClick={() => handleProjectClick(project.id)}
+                          onClick={() => handleProjectClick(project)}
                         >
                           {project.name}
                         </h3>
@@ -934,7 +954,7 @@ const ProjectsPage = () => {
                         variant="secondary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleProjectClick(project.id);
+                          handleProjectClick(project);
                         }}
                       >
                         <Play className="h-4 w-4 mr-1" />
@@ -1024,7 +1044,7 @@ const ProjectsPage = () => {
                           <div className="flex flex-wrap items-center gap-2">
                             <h3 
                               className="font-medium text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] cursor-pointer truncate"
-                              onClick={() => handleProjectClick(project.id)}
+                              onClick={() => handleProjectClick(project)}
                             >
                               {project.name}
                             </h3>
@@ -1090,7 +1110,7 @@ const ProjectsPage = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleProjectClick(project.id)}>
+                            <DropdownMenuItem onClick={() => handleProjectClick(project)}>
                               <Play className="h-4 w-4 mr-2" />
                               Run
                             </DropdownMenuItem>

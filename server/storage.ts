@@ -250,6 +250,20 @@ export class DatabaseStorage implements IStorage {
 
 
   async createProject(projectData: InsertProject): Promise<Project> {
+    // Import the generateUniqueSlug function
+    const { generateUniqueSlug } = await import('./utils/slug');
+    
+    // Generate a unique slug if not provided
+    if (!projectData.slug && projectData.name) {
+      projectData.slug = await generateUniqueSlug(
+        projectData.name,
+        async (slug) => {
+          const existing = await this.getProjectBySlug(slug);
+          return !!existing;
+        }
+      );
+    }
+    
     const [project] = await db.insert(projects).values(projectData).returning();
     return project;
   }

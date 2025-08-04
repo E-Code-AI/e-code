@@ -108,9 +108,8 @@ const ReplitProjectPage = () => {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const projectId = matchProject && paramsProject?.id ? parseInt(paramsProject.id) : 0;
-  const projectSlug = matchSlug && paramsSlug?.username && paramsSlug?.projectname 
-    ? `@${paramsSlug.username}/${paramsSlug.projectname}` 
-    : undefined;
+  const username = matchSlug && paramsSlug?.username ? paramsSlug.username : undefined;
+  const projectname = matchSlug && paramsSlug?.projectname ? paramsSlug.projectname : undefined;
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, string>>({});
   const [projectRunning, setProjectRunning] = useState(false);
@@ -169,12 +168,14 @@ const ReplitProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: projectSlug ? ['/api/projects/by-slug', projectSlug] : ['/api/projects', projectId],
+    queryKey: username && projectname 
+      ? ['/api/users', username, 'projects', projectname] 
+      : ['/api/projects', projectId],
     queryFn: async () => {
-      if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
+      if (!projectId && (!username || !projectname)) return Promise.reject(new Error('No project identifier provided'));
       
-      const url = projectSlug 
-        ? `/api/projects/by-slug/${encodeURIComponent(projectSlug)}`
+      const url = username && projectname
+        ? `/api/users/${encodeURIComponent(username)}/projects/${encodeURIComponent(projectname)}`
         : `/api/projects/${projectId}`;
       
       const res = await apiRequest('GET', url);
@@ -194,7 +195,7 @@ const ReplitProjectPage = () => {
       }
       return res.json();
     },
-    enabled: !!projectId || !!projectSlug,
+    enabled: !!projectId || (!!username && !!projectname),
   });
 
   // Query for project files
