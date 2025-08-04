@@ -21,6 +21,419 @@ import {
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
+// Documentation content for different pages
+const getDocumentationContent = (href: string | null): React.ReactNode => {
+  if (!href) return null;
+  
+  const contentMap: Record<string, React.ReactNode> = {
+    '/docs/intro': (
+      <>
+        <p className="lead">
+          E-Code is a powerful web-based development environment that makes coding accessible to everyone. 
+          Whether you're a beginner learning to code or an experienced developer building production applications, 
+          E-Code provides all the tools you need in one place.
+        </p>
+        
+        <h2>What is E-Code?</h2>
+        <p>
+          E-Code is a complete development platform that runs entirely in your browser. It combines a professional 
+          code editor, real-time collaboration features, AI-powered assistance, and instant deployment capabilities 
+          into a seamless experience.
+        </p>
+        
+        <h2>Key Features</h2>
+        <ul>
+          <li><strong>Browser-Based IDE:</strong> No downloads or installations required - start coding instantly</li>
+          <li><strong>AI Agent:</strong> Build complete applications with natural language descriptions</li>
+          <li><strong>50+ Languages:</strong> Support for Python, JavaScript, Java, C++, Go, Rust, and more</li>
+          <li><strong>Real-Time Collaboration:</strong> Code together with teammates in real-time</li>
+          <li><strong>Instant Deployment:</strong> Deploy your applications with one click</li>
+          <li><strong>Package Management:</strong> Access millions of packages without manual installation</li>
+        </ul>
+        
+        <h2>Who Uses E-Code?</h2>
+        <div className="grid gap-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Students & Educators</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Learn programming without setup complexity. Perfect for classrooms and online courses.</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Professional Developers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Build and deploy production applications with enterprise-grade features and security.</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Teams & Organizations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Collaborate on projects with real-time editing, shared workspaces, and team management.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    ),
+    
+    '/docs/quickstart': (
+      <>
+        <p className="lead">
+          Get up and running with E-Code in less than 5 minutes. This guide will walk you through creating 
+          your first project and deploying it to the web.
+        </p>
+        
+        <h2>Step 1: Create an Account</h2>
+        <p>
+          Sign up for a free E-Code account at <a href="/auth">e-code.app/auth</a>. 
+          You can use your email or sign in with Google, GitHub, or other providers.
+        </p>
+        
+        <h2>Step 2: Create Your First Project</h2>
+        <ol>
+          <li>Click the <strong>"Create Project"</strong> button on your dashboard</li>
+          <li>Choose a template or start from scratch</li>
+          <li>Give your project a name</li>
+          <li>Click <strong>"Create"</strong></li>
+        </ol>
+        
+        <h2>Step 3: Write Some Code</h2>
+        <p>Try this simple example in a Python project:</p>
+        <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+          <code>{`# main.py
+print("Hello from E-Code!")
+
+# Create a simple web server
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+
+server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
+print("Server running on port 8000")
+server.serve_forever()`}</code>
+        </pre>
+        
+        <h2>Step 4: Run Your Code</h2>
+        <p>
+          Click the <strong>"Run"</strong> button or press <kbd>Ctrl+Enter</kbd> to execute your code. 
+          You'll see the output in the console below.
+        </p>
+        
+        <h2>Step 5: Deploy Your Application</h2>
+        <ol>
+          <li>Click the <strong>"Deploy"</strong> button in the top toolbar</li>
+          <li>Choose your deployment settings</li>
+          <li>Click <strong>"Deploy Now"</strong></li>
+          <li>Your app will be live at a unique URL in seconds!</li>
+        </ol>
+        
+        <div className="mt-8 p-4 bg-primary/10 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2">🎉 Congratulations!</h3>
+          <p>
+            You've just created and deployed your first E-Code application. 
+            Explore more features in our comprehensive guides.
+          </p>
+        </div>
+      </>
+    ),
+    
+    '/docs/ai-agent': (
+      <>
+        <p className="lead">
+          The E-Code AI Agent is a powerful assistant that can help you build complete applications 
+          using natural language. Simply describe what you want to create, and the AI will generate 
+          the code for you.
+        </p>
+        
+        <h2>How It Works</h2>
+        <p>
+          The AI Agent uses advanced language models to understand your requirements and generate 
+          production-ready code. It can:
+        </p>
+        <ul>
+          <li>Create entire applications from descriptions</li>
+          <li>Debug and fix errors in your code</li>
+          <li>Add features to existing projects</li>
+          <li>Explain complex code concepts</li>
+          <li>Suggest improvements and optimizations</li>
+        </ul>
+        
+        <h2>Getting Started with AI Agent</h2>
+        <ol>
+          <li>Open the AI Agent panel by clicking the AI icon in the sidebar</li>
+          <li>Describe what you want to build in plain English</li>
+          <li>The AI will generate code and explain its approach</li>
+          <li>Review the code and ask for modifications if needed</li>
+        </ol>
+        
+        <h2>Example Prompts</h2>
+        <div className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Web Application</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-2">
+                "Create a todo list app with React that saves tasks to local storage"
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">API Development</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-2">
+                "Build a REST API with Express.js for a blog with posts and comments"
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Data Analysis</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-2">
+                "Create a Python script that analyzes CSV data and generates charts"
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <h2>Best Practices</h2>
+        <ul>
+          <li><strong>Be Specific:</strong> The more detail you provide, the better the results</li>
+          <li><strong>Iterate:</strong> Ask the AI to modify or improve the generated code</li>
+          <li><strong>Learn:</strong> Ask the AI to explain how the code works</li>
+          <li><strong>Test:</strong> Always test the generated code before deploying</li>
+        </ul>
+        
+        <h2>Advanced Features</h2>
+        <p>
+          The AI Agent can also help with advanced tasks like:
+        </p>
+        <ul>
+          <li>Database schema design and migrations</li>
+          <li>Authentication and authorization setup</li>
+          <li>API integration with third-party services</li>
+          <li>Performance optimization</li>
+          <li>Security best practices</li>
+        </ul>
+      </>
+    ),
+    
+    '/docs/languages/python': (
+      <>
+        <p className="lead">
+          Python is one of the most popular languages on E-Code. With built-in support for pip packages, 
+          web frameworks, and data science libraries, you can build anything from simple scripts to 
+          complex applications.
+        </p>
+        
+        <h2>Getting Started</h2>
+        <p>
+          Create a new Python project or add Python files to an existing project. E-Code automatically 
+          detects Python files and provides syntax highlighting, code completion, and error checking.
+        </p>
+        
+        <h2>Package Management</h2>
+        <p>
+          Install any package from PyPI using the package manager or by creating a <code>requirements.txt</code> file:
+        </p>
+        <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+          <code>{`# requirements.txt
+flask==2.3.2
+requests==2.31.0
+pandas==2.0.3
+numpy==1.24.3
+matplotlib==3.7.2`}</code>
+        </pre>
+        
+        <h2>Popular Frameworks</h2>
+        <div className="grid gap-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Flask</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Lightweight web framework perfect for APIs and small applications</p>
+              <pre className="bg-muted p-2 rounded text-sm mt-2">
+                <code>{`from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return 'Hello, World!'`}</code>
+              </pre>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Django</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Full-featured web framework for building complex applications</p>
+              <pre className="bg-muted p-2 rounded text-sm mt-2">
+                <code>{`# Install Django
+pip install django
+
+# Create a new project
+django-admin startproject mysite`}</code>
+              </pre>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">FastAPI</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Modern, fast web framework for building APIs with Python 3.7+</p>
+              <pre className="bg-muted p-2 rounded text-sm mt-2">
+                <code>{`from fastapi import FastAPI
+app = FastAPI()
+
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}`}</code>
+              </pre>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <h2>Data Science & Machine Learning</h2>
+        <p>
+          E-Code provides excellent support for data science workflows with pre-installed libraries:
+        </p>
+        <ul>
+          <li><strong>NumPy:</strong> Numerical computing</li>
+          <li><strong>Pandas:</strong> Data manipulation and analysis</li>
+          <li><strong>Matplotlib/Seaborn:</strong> Data visualization</li>
+          <li><strong>Scikit-learn:</strong> Machine learning</li>
+          <li><strong>TensorFlow/PyTorch:</strong> Deep learning</li>
+        </ul>
+      </>
+    ),
+    
+    '/docs/deployment': (
+      <>
+        <p className="lead">
+          Deploy your applications to the web with just one click. E-Code handles all the infrastructure, 
+          scaling, and security so you can focus on building great applications.
+        </p>
+        
+        <h2>Deployment Types</h2>
+        <div className="grid gap-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Static Hosting</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Perfect for frontend applications, documentation sites, and static content</p>
+              <ul className="text-sm mt-2">
+                <li>• Automatic HTTPS</li>
+                <li>• Global CDN</li>
+                <li>• Custom domains</li>
+              </ul>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Autoscale</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Automatically scale your application based on traffic</p>
+              <ul className="text-sm mt-2">
+                <li>• Pay only for what you use</li>
+                <li>• Scales to zero when idle</li>
+                <li>• Handles traffic spikes</li>
+              </ul>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Reserved VM</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Dedicated resources for consistent performance</p>
+              <ul className="text-sm mt-2">
+                <li>• Always-on availability</li>
+                <li>• Predictable pricing</li>
+                <li>• Full control over resources</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <h2>How to Deploy</h2>
+        <ol>
+          <li>Click the <strong>"Deploy"</strong> button in your project</li>
+          <li>Choose your deployment type</li>
+          <li>Configure your settings (optional)</li>
+          <li>Click <strong>"Deploy Now"</strong></li>
+        </ol>
+        
+        <h2>Custom Domains</h2>
+        <p>
+          Connect your own domain to your E-Code deployment:
+        </p>
+        <ol>
+          <li>Go to your deployment settings</li>
+          <li>Click "Add custom domain"</li>
+          <li>Enter your domain name</li>
+          <li>Update your DNS records as instructed</li>
+          <li>E-Code will automatically provision SSL certificates</li>
+        </ol>
+        
+        <h2>Environment Variables</h2>
+        <p>
+          Securely store sensitive configuration like API keys:
+        </p>
+        <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+          <code>{`# In your deployment settings
+DATABASE_URL=postgres://user:pass@host/db
+API_KEY=your-secret-key
+NODE_ENV=production`}</code>
+        </pre>
+        
+        <h2>Monitoring & Logs</h2>
+        <p>
+          Monitor your deployments with built-in tools:
+        </p>
+        <ul>
+          <li>Real-time logs</li>
+          <li>Performance metrics</li>
+          <li>Error tracking</li>
+          <li>Usage analytics</li>
+        </ul>
+      </>
+    )
+  };
+  
+  // Return specific content or a default message
+  return contentMap[href] || (
+    <div className="mt-8 p-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+      <h3 className="flex items-center gap-2 text-amber-800 dark:text-amber-200 mt-0">
+        <Sparkles className="h-5 w-5" />
+        Documentation Coming Soon
+      </h3>
+      <p className="text-amber-700 dark:text-amber-300 mb-0">
+        We're actively working on completing our documentation. This page will be available soon with comprehensive guides, examples, and best practices for using E-Code.
+      </p>
+    </div>
+  );
+};
+
 interface DocCategory {
   id: string;
   title: string;
@@ -39,6 +452,7 @@ export default function Docs() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['getting-started']);
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
+  const [selectedDocHref, setSelectedDocHref] = useState<string | null>(null);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev =>
@@ -48,9 +462,10 @@ export default function Docs() {
     );
   };
 
-  const handleDocClick = (e: React.MouseEvent, title: string) => {
+  const handleDocClick = (e: React.MouseEvent, title: string, href: string) => {
     e.preventDefault();
     setSelectedDoc(title);
+    setSelectedDocHref(href);
   };
 
   const docCategories: DocCategory[] = [
@@ -345,7 +760,7 @@ export default function Docs() {
                       <a
                         key={item.href}
                         href="#"
-                        onClick={(e) => handleDocClick(e, item.title)}
+                        onClick={(e) => handleDocClick(e, item.title, item.href)}
                         className={cn(
                           "group flex items-center justify-between px-2 py-1 text-sm rounded-md transition-colors cursor-pointer",
                           selectedDoc === item.title
@@ -386,54 +801,14 @@ export default function Docs() {
               <div className="prose prose-gray dark:prose-invert max-w-none">
                 <h1>{selectedDoc}</h1>
                 
-                <div className="mt-8 p-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                  <h3 className="flex items-center gap-2 text-amber-800 dark:text-amber-200 mt-0">
-                    <Sparkles className="h-5 w-5" />
-                    Documentation Coming Soon
-                  </h3>
-                  <p className="text-amber-700 dark:text-amber-300 mb-0">
-                    We're actively working on completing our documentation. This page will be available soon with comprehensive guides, examples, and best practices for using E-Code.
-                  </p>
-                </div>
+                {getDocumentationContent(selectedDocHref)}
                 
-                <div className="mt-8 space-y-6">
-                  <div>
-                    <h2>What you can do now:</h2>
-                    <ul>
-                      <li>
-                        <strong>Use the AI Agent:</strong> Our AI assistant can help you build applications without needing documentation. Just describe what you want to create!
-                      </li>
-                      <li>
-                        <strong>Explore Templates:</strong> Browse our ready-to-use templates to get started quickly with your preferred framework or language.
-                      </li>
-                      <li>
-                        <strong>Join the Community:</strong> Connect with other developers in our forum to share knowledge and get help.
-                      </li>
-                      <li>
-                        <strong>Watch Tutorials:</strong> Check out our video tutorials on the Learn page for visual walkthroughs.
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div className="grid gap-4 sm:grid-cols-2 mt-8">
+                <div className="mt-12 pt-8 border-t">
+                  <h3>Related Resources</h3>
+                  <div className="grid gap-4 sm:grid-cols-2 mt-4">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-base">Start Building</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Button 
-                          className="w-full"
-                          onClick={() => navigate('/agent')}
-                        >
-                          <Bot className="h-4 w-4 mr-2" />
-                          Open AI Agent
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Get Help</CardTitle>
+                        <CardTitle className="text-base">Need Help?</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <Button 
@@ -443,6 +818,21 @@ export default function Docs() {
                         >
                           <HelpCircle className="h-4 w-4 mr-2" />
                           Contact Support
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Try AI Agent</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Button 
+                          className="w-full"
+                          onClick={() => navigate('/agent')}
+                        >
+                          <Bot className="h-4 w-4 mr-2" />
+                          Build with AI
                         </Button>
                       </CardContent>
                     </Card>
