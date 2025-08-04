@@ -57,7 +57,7 @@ export function PackageManager({ projectId, language }: PackageManagerProps) {
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/packages', projectId] });
       toast({
         title: 'Package installed',
         description: `Successfully installed ${data.name}`,
@@ -75,11 +75,11 @@ export function PackageManager({ projectId, language }: PackageManagerProps) {
   // Uninstall package
   const uninstallPackageMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      const res = await apiRequest('DELETE', `/api/projects/${projectId}/packages/${packageName}`);
+      const res = await apiRequest('DELETE', `/api/packages/${projectId}/${packageName}`);
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/packages', projectId] });
       toast({
         title: 'Package uninstalled',
         description: `Successfully removed ${data.name}`,
@@ -97,11 +97,11 @@ export function PackageManager({ projectId, language }: PackageManagerProps) {
   // Update packages
   const updatePackagesMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/packages/update`);
+      const res = await apiRequest('POST', `/api/packages/${projectId}/update`);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/packages', projectId] });
       toast({
         title: 'Packages updated',
         description: 'All packages have been updated to their latest versions',
@@ -119,11 +119,11 @@ export function PackageManager({ projectId, language }: PackageManagerProps) {
   // Rollback packages
   const rollbackPackagesMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/packages/rollback`);
+      const res = await apiRequest('POST', `/api/packages/${projectId}/rollback`);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/packages', projectId] });
       toast({
         title: 'Packages rolled back',
         description: 'Environment has been restored to the previous state',

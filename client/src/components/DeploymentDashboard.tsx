@@ -57,7 +57,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
   const fetchDeployments = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/enterprise-deployments`, {
+      const response = await fetch(`/api/deployment/${projectId}/enterprise`, {
         credentials: 'include'
       });
       
@@ -79,7 +79,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
 
   const handleCreateDeployment = async (config: any) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/enterprise-deploy`, {
+      const response = await fetch(`/api/deployment/${projectId}/enterprise`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

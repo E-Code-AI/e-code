@@ -75,7 +75,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
   const loadEntries = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/db`);
+      const response = await fetch(`/api/database/${projectId}/replitdb`);
       if (response.ok) {
         const data = await response.json();
           // Get all keys and their values
@@ -83,7 +83,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         const entries: DBEntry[] = [];
         
         for (const key of keys) {
-          const valueResponse = await fetch(`/api/projects/${projectId}/db/${key}`);
+          const valueResponse = await fetch(`/api/database/${projectId}/replitdb/${key}`);
           if (valueResponse.ok) {
             const { value } = await valueResponse.json();
             entries.push({
@@ -112,7 +112,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
 
   const loadStats = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/db/stats`);
+      const response = await fetch(`/api/database/${projectId}/replitdb/stats`);
       if (response.ok) {
         const data = await response.json();
         setStats(data);
@@ -156,7 +156,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         parsedValue = null;
       }
 
-      const response = await fetch(`/api/projects/${projectId}/db`, {
+      const response = await fetch(`/api/database/${projectId}/replitdb`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: newKey, value: parsedValue })
@@ -196,7 +196,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         parsedValue = JSON.parse(editValue);
       }
 
-      const response = await fetch(`/api/projects/${projectId}/db/${selectedEntry.key}`, {
+      const response = await fetch(`/api/database/${projectId}/replitdb/${selectedEntry.key}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value: parsedValue })

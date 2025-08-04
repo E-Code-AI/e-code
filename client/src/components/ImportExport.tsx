@@ -54,7 +54,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
     setExportProgress(0);
     
     try {
-      const response = await fetch(`/api/projects/${projectId}/export`, {
+      const response = await fetch(`/api/import-export/${projectId}/export`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -141,13 +141,13 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
         const formData = new FormData();
         formData.append('file', selectedFile);
         
-        response = await fetch(`/api/projects/${projectId}/import`, {
+        response = await fetch(`/api/import-export/${projectId}/import`, {
           method: 'POST',
           credentials: 'include',
           body: formData
         });
       } else if (importSource === 'github') {
-        response = await fetch(`/api/projects/${projectId}/import`, {
+        response = await fetch(`/api/import-export/${projectId}/import`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
