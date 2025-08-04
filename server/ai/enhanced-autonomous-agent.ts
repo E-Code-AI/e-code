@@ -17,6 +17,9 @@ export interface AgentContext {
   existingFiles?: any[];
   buildHistory?: string[];
   conversationHistory?: any[];
+  extendedThinking?: boolean;
+  highPowerMode?: boolean;
+  isPaused?: boolean;
 }
 
 export interface AgentResponse {
@@ -60,8 +63,24 @@ export class EnhancedAutonomousAgent {
     this.resetMetrics();
     
     try {
-      // Analyze the user's request
-      const analysis = await this.analyzeRequest(context.message);
+      // Check if paused
+      if (context.isPaused) {
+        return {
+          message: "Agent is paused. Click play to resume.",
+          actions: [],
+          thinking: "Paused by user",
+          completed: false
+        };
+      }
+      
+      // Log mode for debugging
+      logger.info(`Processing with extendedThinking: ${context.extendedThinking}, highPowerMode: ${context.highPowerMode}`);
+      
+      // Analyze the user's request with appropriate depth
+      const analysis = await this.analyzeRequest(context.message, {
+        extendedThinking: context.extendedThinking,
+        highPowerMode: context.highPowerMode
+      });
       this.apiCallsCount++;
       
       // Plan the application structure
@@ -154,7 +173,7 @@ export class EnhancedAutonomousAgent {
     this.tokensUsed = Math.ceil(totalContent / 4); // ~4 chars per token
   }
   
-  private async analyzeRequest(message: string): Promise<any> {
+  private async analyzeRequest(message: string, options?: { extendedThinking?: boolean; highPowerMode?: boolean }): Promise<any> {
     this.thinkingProcess.push('🤔 Analyzing user request...');
     
     // Extract key information from the message

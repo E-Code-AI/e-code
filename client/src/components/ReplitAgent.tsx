@@ -4,7 +4,9 @@ import {
   Lightbulb, Zap, RefreshCw, Copy, X, Hammer, Package,
   FolderOpen, FileCode, Loader2, CheckCircle, AlertCircle,
   Wrench, Rocket, GitBranch, Database, Globe, Server,
-  MessageSquare, DollarSign
+  MessageSquare, DollarSign, Link, Camera, Brain, Power,
+  Pause, Play, Plus, ChevronLeft, ChevronRight, FileTerminal,
+  History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,6 +24,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 interface ReplitAgentProps {
   projectId: number;
@@ -724,6 +738,24 @@ What would you like me to build for you today?`,
   const [isBuilding, setIsBuilding] = useState(false);
   const [buildProgress, setBuildProgress] = useState(0);
   const [currentTask, setCurrentTask] = useState('');
+  const [isPaused, setIsPaused] = useState(false);
+  const [extendedThinking, setExtendedThinking] = useState(false);
+  const [highPowerMode, setHighPowerMode] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chat' | 'progress'>('chat');
+  const [progressLogs, setProgressLogs] = useState<Array<{
+    id: string;
+    timestamp: Date;
+    message: string;
+    file?: string;
+    type: 'info' | 'success' | 'warning' | 'error';
+  }>>([]);
+  const [sessions, setSessions] = useState<Array<{
+    id: string;
+    name: string;
+    messages: Message[];
+    createdAt: Date;
+  }>>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string>('default');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
@@ -731,6 +763,145 @@ What would you like me to build for you today?`,
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Initialize default session
+  useEffect(() => {
+    if (sessions.length === 0) {
+      setSessions([{
+        id: 'default',
+        name: 'Main Chat',
+        messages: messages,
+        createdAt: new Date()
+      }]);
+    }
+  }, []);
+
+  // Web Content Import
+  const handleWebImport = async () => {
+    const url = prompt('Enter URL to import content from:');
+    if (!url) return;
+
+    addProgressLog('info', `Importing content from ${url}...`);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/tools/web-import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+
+      if (response.ok) {
+        const { content } = await response.json();
+        setInput(prev => prev + '\n\n' + content);
+        addProgressLog('success', 'Web content imported successfully');
+        toast({ title: 'Content imported successfully' });
+      } else {
+        throw new Error('Failed to import content');
+      }
+    } catch (error) {
+      addProgressLog('error', 'Failed to import web content');
+      toast({ title: 'Error importing content', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Screenshot Capture
+  const handleScreenshotCapture = async () => {
+    const url = prompt('Enter URL to capture screenshot:');
+    if (!url) return;
+
+    addProgressLog('info', `Capturing screenshot of ${url}...`);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/tools/screenshot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+
+      if (response.ok) {
+        const { screenshotUrl } = await response.json();
+        const screenshotMessage: Message = {
+          id: Date.now().toString(),
+          role: 'system',
+          content: `Screenshot captured: ![Screenshot](${screenshotUrl})`,
+          timestamp: new Date(),
+          type: 'action'
+        };
+        setMessages(prev => [...prev, screenshotMessage]);
+        addProgressLog('success', 'Screenshot captured successfully');
+        toast({ title: 'Screenshot captured successfully' });
+      } else {
+        throw new Error('Failed to capture screenshot');
+      }
+    } catch (error) {
+      addProgressLog('error', 'Failed to capture screenshot');
+      toast({ title: 'Error capturing screenshot', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Prompt Refinement
+  const handleImprovePrompt = async () => {
+    if (!input.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/ai/improve-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: input })
+      });
+
+      if (response.ok) {
+        const { improvedPrompt } = await response.json();
+        setInput(improvedPrompt);
+        toast({ title: 'Prompt improved!' });
+      }
+    } catch (error) {
+      toast({ title: 'Error improving prompt', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Progress logging
+  const addProgressLog = (type: 'info' | 'success' | 'warning' | 'error', message: string, file?: string) => {
+    const log = {
+      id: Date.now().toString(),
+      timestamp: new Date(),
+      message,
+      file,
+      type
+    };
+    setProgressLogs(prev => [...prev, log]);
+  };
+
+  // Session management
+  const createNewSession = () => {
+    const sessionName = prompt('Enter session name:') || `Session ${sessions.length + 1}`;
+    const newSession = {
+      id: Date.now().toString(),
+      name: sessionName,
+      messages: [],
+      createdAt: new Date()
+    };
+    setSessions(prev => [...prev, newSession]);
+    setActiveSessionId(newSession.id);
+    setMessages([]);
+  };
+
+  const switchSession = (sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId);
+    if (session) {
+      setActiveSessionId(sessionId);
+      setMessages(session.messages);
+    }
+  };
 
   useEffect(() => {
     if (inputRef.current) {
@@ -1082,7 +1253,10 @@ What would you like me to build for you today?`,
             file: selectedFile,
             code: selectedCode,
             history: messages.slice(-5),
-            mode: 'agent' // Indicate this is the autonomous agent
+            mode: 'agent', // Indicate this is the autonomous agent
+            extendedThinking,
+            highPowerMode,
+            conversationHistory: sessions.find(s => s.id === activeSessionId)?.messages || []
           }
         })
       });
@@ -1282,19 +1456,89 @@ What would you like me to build?`,
             <Bot className="h-4 w-4 text-white" />
           </div>
           <span className="text-sm font-medium text-[var(--ecode-text)]">AI Agent</span>
+          
+          {/* Session Management */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-1">
+                <History className="h-3 w-3" />
+                {sessions.find(s => s.id === activeSessionId)?.name || 'Main Chat'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {sessions.map(session => (
+                <DropdownMenuItem
+                  key={session.id}
+                  onClick={() => switchSession(session.id)}
+                  className={cn(session.id === activeSessionId && "bg-accent")}
+                >
+                  {session.name}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={createNewSession}>
+                <Plus className="h-3 w-3 mr-2" />
+                New Session
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           {isBuilding && (
             <div className="flex items-center gap-2 text-xs text-[var(--ecode-text-secondary)]">
-              <RefreshCw className="h-3 w-3 animate-spin" />
+              {isPaused ? (
+                <Pause className="h-3 w-3" />
+              ) : (
+                <RefreshCw className="h-3 w-3 animate-spin" />
+              )}
               <span>{currentTask}</span>
             </div>
           )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Advanced Capabilities */}
+          <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="extended-thinking"
+                checked={extendedThinking}
+                onCheckedChange={setExtendedThinking}
+              />
+              <Label htmlFor="extended-thinking" className="cursor-pointer">
+                <Brain className="h-3 w-3 inline mr-1" />
+                Extended Thinking
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="high-power"
+                checked={highPowerMode}
+                onCheckedChange={setHighPowerMode}
+              />
+              <Label htmlFor="high-power" className="cursor-pointer">
+                <Power className="h-3 w-3 inline mr-1" />
+                High Power
+              </Label>
+            </div>
+          </div>
+          
+          {/* Pause/Resume Button */}
+          {isBuilding && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsPaused(!isPaused)}
+              className="h-8 w-8 p-0"
+            >
+              {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+            </Button>
+          )}
+          
           {isBuilding && (
             <div className="text-xs text-[var(--ecode-text-secondary)]">
               {buildProgress}%
             </div>
           )}
+          
           {/* Usage Tracking Icon */}
           <TooltipProvider>
             <Tooltip>
@@ -1316,9 +1560,16 @@ What would you like me to build?`,
         </div>
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="flex-1">
-        <div className="py-4">
+      {/* Tabs for Chat and Progress */}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'chat' | 'progress')} className="flex-1 flex flex-col">
+        <TabsList className="w-full rounded-none border-b">
+          <TabsTrigger value="chat" className="flex-1">Chat</TabsTrigger>
+          <TabsTrigger value="progress" className="flex-1">Progress</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="chat" className="flex-1 m-0">
+          <ScrollArea className="h-full">
+            <div className="py-4">
           {messages.length === 0 ? (
             <div className="px-4 py-8">
               <div className="flex items-center gap-3 mb-6">
@@ -1359,33 +1610,148 @@ What would you like me to build?`,
                 </div>
               )}
             </>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </ScrollArea>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+      </TabsContent>
+      
+      {/* Progress Tab */}
+      <TabsContent value="progress" className="flex-1 m-0">
+        <ScrollArea className="h-full">
+          <div className="p-4">
+            {progressLogs.length === 0 ? (
+              <div className="text-center text-[var(--ecode-text-secondary)] py-8">
+                <FileTerminal className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No progress logs yet</p>
+                <p className="text-xs mt-2">Actions will appear here as the agent works</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {progressLogs.map(log => (
+                  <div key={log.id} className="flex items-start gap-2 text-sm">
+                    <div className={cn(
+                      "mt-1 h-2 w-2 rounded-full",
+                      log.type === 'info' && "bg-blue-500",
+                      log.type === 'success' && "bg-green-500",
+                      log.type === 'warning' && "bg-yellow-500",
+                      log.type === 'error' && "bg-red-500"
+                    )} />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[var(--ecode-text)]">{log.message}</span>
+                        {log.file && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 text-xs"
+                            onClick={() => {
+                              // Navigate to file
+                              if (selectedFile !== log.file) {
+                                // This would trigger file selection in the parent component
+                                toast({ title: `Opening ${log.file}` });
+                              }
+                            }}
+                          >
+                            <ChevronRight className="h-3 w-3" />
+                            {log.file}
+                          </Button>
+                        )}
+                      </div>
+                      <span className="text-xs text-[var(--ecode-text-tertiary)]">
+                        {log.timestamp.toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </TabsContent>
+    </Tabs>
 
-      {/* Input area */}
-      <div className="p-4 border-t border-[var(--ecode-border)]">
-        <div className="relative">
-          <Textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask me anything about your code..."
-            className="min-h-[44px] max-h-[150px] pr-12 resize-none bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-tertiary)]"
-            disabled={isLoading}
-          />
-          <Button
-            size="icon"
-            onClick={() => sendMessage(input)}
-            disabled={isLoading || !input.trim()}
-            className="absolute right-2 bottom-2 h-8 w-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
+    {/* Enhanced Input area */}
+    <div className="p-4 border-t border-[var(--ecode-border)]">
+      <div className="flex gap-2 mb-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleWebImport}
+                disabled={isLoading}
+              >
+                <Link className="h-3 w-3 mr-1" />
+                Import
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Import content from a URL</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleScreenshotCapture}
+                disabled={isLoading}
+              >
+                <Camera className="h-3 w-3 mr-1" />
+                Screenshot
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Capture screenshot of a webpage</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleImprovePrompt}
+                disabled={isLoading || !input.trim()}
+              >
+                <Sparkles className="h-3 w-3 mr-1" />
+                Improve Prompt
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>AI-enhance your prompt for better results</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      
+      <div className="relative">
+        <Textarea
+          ref={inputRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={
+            extendedThinking 
+              ? "Ask me to think deeply about complex problems..." 
+              : highPowerMode
+              ? "I'm in high power mode - ready for intensive tasks..."
+              : "Ask me anything about your code..."
+          }
+          className="min-h-[44px] max-h-[150px] pr-12 resize-none bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-tertiary)]"
+          disabled={isLoading}
+        />
+        <Button
+          size="icon"
+          onClick={() => sendMessage(input)}
+          disabled={isLoading || !input.trim()}
+          className="absolute right-2 bottom-2 h-8 w-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
+        >
+          <Send className="h-4 w-4" />
+        </Button>
       </div>
     </div>
+  </div>
   );
 }

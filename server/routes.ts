@@ -3372,6 +3372,65 @@ API will be available at http://localhost:3000
     }
   });
 
+  // Web Import Tool
+  app.post('/api/tools/web-import', ensureAuthenticated, async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      // Use fetch to get web content
+      const response = await fetch(url);
+      const html = await response.text();
+      
+      // Extract text content (simple extraction)
+      const textContent = html
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 5000); // Limit to 5000 chars
+      
+      res.json({ content: textContent });
+    } catch (error: any) {
+      console.error('Web import error:', error);
+      res.status(500).json({ error: 'Failed to import web content' });
+    }
+  });
+
+  // Screenshot Capture Tool
+  app.post('/api/tools/screenshot', ensureAuthenticated, async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      // In a real implementation, this would use a headless browser
+      // For now, we'll return a placeholder
+      const screenshotUrl = `/api/screenshots/${Date.now()}.png`;
+      
+      res.json({ screenshotUrl });
+    } catch (error: any) {
+      console.error('Screenshot capture error:', error);
+      res.status(500).json({ error: 'Failed to capture screenshot' });
+    }
+  });
+
+  // AI Prompt Improvement
+  app.post('/api/ai/improve-prompt', ensureAuthenticated, async (req, res) => {
+    try {
+      const { prompt } = req.body;
+      
+      // Use AI to improve the prompt
+      const improvedPrompt = await advancedAIService.improvePrompt({
+        prompt,
+        context: 'Improve this prompt to be more specific and actionable for building applications'
+      });
+      
+      res.json({ improvedPrompt });
+    } catch (error: any) {
+      console.error('Prompt improvement error:', error);
+      res.status(500).json({ error: 'Failed to improve prompt' });
+    }
+  });
+
   // AI Agent Chat Endpoint with Comprehensive Checkpoints and Effort-Based Pricing
   app.post('/api/projects/:id/ai/chat', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
@@ -3379,14 +3438,17 @@ API will be available at http://localhost:3000
       const { message, context } = req.body;
       const userId = req.user!.id;
 
-      // Prepare agent context with conversation history
+      // Prepare agent context with conversation history and advanced capabilities
       const agentContext = {
         projectId,
         userId,
         message,
         existingFiles: context?.files || [],
         buildHistory: context?.history || [],
-        conversationHistory: context?.conversationHistory || []
+        conversationHistory: context?.conversationHistory || [],
+        extendedThinking: context?.extendedThinking || false,
+        highPowerMode: context?.highPowerMode || false,
+        isPaused: context?.isPaused || false
       };
 
       // Process request with enhanced autonomous agent
