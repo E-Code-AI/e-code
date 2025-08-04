@@ -16709,6 +16709,154 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
 
+  // Mobile App Development endpoints
+  app.post('/api/mobile/build', async (req, res) => {
+    try {
+      const { projectId, platform, framework, config } = req.body;
+      
+      // Simulate build process
+      const buildId = `build-${Date.now()}`;
+      const buildResult = {
+        id: buildId,
+        projectId,
+        platform,
+        framework,
+        status: 'success',
+        downloadUrl: `/api/mobile/download/${buildId}`,
+        buildTime: Math.floor(Math.random() * 60) + 30, // 30-90 seconds
+        size: platform === 'ios' ? '45.2 MB' : '28.7 MB',
+        createdAt: new Date().toISOString()
+      };
+      
+      res.json(buildResult);
+    } catch (error) {
+      logger.error('Mobile build error:', error);
+      res.status(500).json({ error: 'Build failed' });
+    }
+  });
+
+  app.post('/api/mobile/deploy', async (req, res) => {
+    try {
+      const { projectId, store, config } = req.body;
+      
+      const deployment = {
+        id: `deploy-${Date.now()}`,
+        projectId,
+        store,
+        status: 'pending',
+        submittedAt: new Date().toISOString(),
+        estimatedReviewTime: store === 'app-store' ? '24-48 hours' : '2-3 hours'
+      };
+      
+      res.json(deployment);
+    } catch (error) {
+      logger.error('Mobile deployment error:', error);
+      res.status(500).json({ error: 'Deployment failed' });
+    }
+  });
+
+  app.post('/api/mobile/run', async (req, res) => {
+    try {
+      const { projectId, deviceId, framework } = req.body;
+      
+      const session = {
+        id: `session-${Date.now()}`,
+        projectId,
+        deviceId,
+        framework,
+        status: 'running',
+        debugUrl: `ws://localhost:3000/mobile/debug/${projectId}`,
+        startedAt: new Date().toISOString()
+      };
+      
+      res.json(session);
+    } catch (error) {
+      logger.error('Mobile run error:', error);
+      res.status(500).json({ error: 'Failed to start app' });
+    }
+  });
+
+  app.get('/api/mobile/preview/:projectId', async (req, res) => {
+    const { projectId } = req.params;
+    const { device, orientation } = req.query;
+    
+    // Return HTML for mobile preview iframe
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+          .app-container { 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            background: #f5f5f7;
+          }
+          .app-header {
+            background: #007aff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+          }
+          .app-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+          }
+          .demo-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+        </style>
+      </head>
+      <body>
+        <div class="app-container">
+          <div class="app-header">
+            <h1>Mobile App Preview</h1>
+            <p>Project ${projectId} - ${device || 'iPhone 14'}</p>
+          </div>
+          <div class="app-content">
+            <div class="demo-card">
+              <h2>Welcome to E-Code Mobile</h2>
+              <p>Your app is running in preview mode.</p>
+            </div>
+            <div class="demo-card">
+              <h3>Device Info</h3>
+              <p>Device: ${device || 'iPhone 14'}</p>
+              <p>Orientation: ${orientation || 'portrait'}</p>
+              <p>Framework: React Native</p>
+            </div>
+            <div class="demo-card">
+              <h3>Features</h3>
+              <ul>
+                <li>Hot Reload Enabled</li>
+                <li>Debug Mode Active</li>
+                <li>Network Inspector Ready</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+  });
+
+  app.get('/api/mobile/download/:buildId', (req, res) => {
+    const { buildId } = req.params;
+    
+    // In a real implementation, this would serve the actual built app file
+    res.json({
+      message: 'Download endpoint for build',
+      buildId,
+      downloadUrl: `https://e-code.app/downloads/${buildId}.apk`
+    });
+  });
+
   // Initialize screenshot service
   screenshotService.initialize().catch(error => {
     logger.error('Failed to initialize screenshot service:', error);

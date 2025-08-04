@@ -53,7 +53,8 @@ import {
   EyeOff,
   FileIcon,
   FolderIcon,
-  Puzzle
+  Puzzle,
+  Smartphone
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -94,6 +95,7 @@ import { ToolsDropdown } from '@/components/ToolsDropdown';
 import { CheckpointManager } from '@/components/CheckpointManager';
 import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
 import { AgentV2Interface } from '@/components/AgentV2Interface';
+import { MobileAppDevelopment } from '@/components/MobileAppDevelopment';
 
 // Import advanced UI components
 import { ReplitForkGraph } from '@/components/ReplitForkGraph';
@@ -123,7 +125,7 @@ const ReplitProjectPage = () => {
   const [showTerminal, setShowTerminal] = useState(false); // Hide terminal by default like Replit
   const [mobileTab, setMobileTab] = useState<MobileTab>('agent'); // Default to agent on mobile like Replit
   const [showCollaboration, setShowCollaboration] = useState(false);
-  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions' | 'deployments' | 'shell' | 'database' | 'secrets' | 'workflows' | 'console' | 'authentication' | 'preview' | 'git' | 'ssh' | 'vnc' | 'threads' | 'object-storage' | 'problems' | 'security-scanner' | 'networking' | 'integrations' | 'user-settings' | 'fork-graph' | 'version-control' | 'package-explorer' | 'resource-monitor' | 'deployment-pipeline' | 'checkpoints' | 'time-tracking' | 'screenshots' | 'task-summaries' | 'effort-pricing' | 'agent-v2'>('ai');
+  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions' | 'deployments' | 'shell' | 'database' | 'secrets' | 'workflows' | 'console' | 'authentication' | 'preview' | 'git' | 'ssh' | 'vnc' | 'threads' | 'object-storage' | 'problems' | 'security-scanner' | 'networking' | 'integrations' | 'user-settings' | 'fork-graph' | 'version-control' | 'package-explorer' | 'resource-monitor' | 'deployment-pipeline' | 'checkpoints' | 'time-tracking' | 'screenshots' | 'task-summaries' | 'effort-pricing' | 'agent-v2' | 'mobile-app'>('ai');
   const [aiMode, setAIMode] = useState<'agent' | 'advanced'>('agent'); // Default to agent mode
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
   const [openTools, setOpenTools] = useState<string[]>(['agent', 'preview']);
@@ -1145,6 +1147,17 @@ const ReplitProjectPage = () => {
                     <Activity className="h-4 w-4 mr-2" />
                     Effort Pricing
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('mobile-app')) {
+                      setOpenTools([...openTools, 'mobile-app']);
+                      setRightPanelMode('mobile-app');
+                    } else {
+                      setRightPanelMode('mobile-app');
+                    }
+                  }}>
+                    <Smartphone className="h-4 w-4 mr-2" />
+                    Mobile App Development
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -1220,6 +1233,9 @@ const ReplitProjectPage = () => {
           )}
           {rightPanelMode === 'agent-v2' && (
             <AgentV2Interface projectId={projectId} />
+          )}
+          {rightPanelMode === 'mobile-app' && (
+            <MobileAppDevelopment projectId={projectId} />
           )}
         </div>
       </div>
