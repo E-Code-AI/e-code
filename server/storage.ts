@@ -981,6 +981,38 @@ export class DatabaseStorage implements IStorage {
     
     return summary;
   }
+
+  // Project Imports
+  async createProjectImport(data: any): Promise<any> {
+    // For now, return a mock import since we don't have the imports table in DB yet
+    const importRecord = {
+      id: Date.now(),
+      ...data,
+      createdAt: new Date(),
+      completedAt: null
+    };
+    return importRecord;
+  }
+
+  async updateProjectImport(id: number, updates: any): Promise<any> {
+    // Mock implementation for now
+    return { id, ...updates };
+  }
+
+  async getProjectImport(id: number): Promise<any | undefined> {
+    // Mock implementation for now
+    return undefined;
+  }
+
+  async getProjectImports(projectId: number): Promise<any[]> {
+    // Mock implementation for now
+    return [];
+  }
+
+  async createFile(fileData: any): Promise<any> {
+    // Mock implementation for file creation
+    return { id: Date.now(), ...fileData };
+  }
 }
 
 // Initialize storage

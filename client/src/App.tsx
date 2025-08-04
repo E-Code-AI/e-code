@@ -115,6 +115,9 @@ const CodeReviewsPage = lazy(() => import("@/pages/CodeReviewsPage"));
 const MentorshipPage = lazy(() => import("@/pages/MentorshipPage"));
 const ChallengesPage = lazy(() => import("@/pages/ChallengesPage"));
 const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
+const FigmaImport = lazy(() => import("@/pages/FigmaImport"));
+const BoltImport = lazy(() => import("@/pages/BoltImport"));
+const LovableImport = lazy(() => import("@/pages/LovableImport"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -178,6 +181,21 @@ function AppContent() {
           <ProtectedRoute path="/github-import" component={() => (
             <ReplitLayout showSidebar={false}>
               <GitHubImport />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/projects/:id/import/figma" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <FigmaImport />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/projects/:id/import/bolt" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <BoltImport />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/projects/:id/import/lovable" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <LovableImport />
             </ReplitLayout>
           )} />
           <Route path="/git" component={Git} />

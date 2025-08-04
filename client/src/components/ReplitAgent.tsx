@@ -6,7 +6,7 @@ import {
   Wrench, Rocket, GitBranch, Database, Globe, Server,
   MessageSquare, DollarSign, Link, Camera, Brain, Power,
   Pause, Play, Plus, ChevronLeft, ChevronRight, FileTerminal,
-  History
+  History, Palette, Heart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useLocation } from 'wouter';
 
 interface ReplitAgentProps {
   projectId: number;
@@ -759,6 +760,7 @@ What would you like me to build for you today?`,
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   useEffect(() => {
     scrollToBottom();
@@ -1677,15 +1679,43 @@ What would you like me to build?`,
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleWebImport}
-                disabled={isLoading}
-              >
-                <Link className="h-3 w-3 mr-1" />
-                Import
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isLoading}
+                  >
+                    <Link className="h-3 w-3 mr-1" />
+                    Import
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={handleWebImport}>
+                    <Globe className="h-4 w-4 mr-2" />
+                    Web Content
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => navigate(`/projects/${projectId}/import/figma`)}
+                  >
+                    <Palette className="h-4 w-4 mr-2" />
+                    Figma Design
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => navigate(`/projects/${projectId}/import/bolt`)}
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    Bolt Project
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => navigate(`/projects/${projectId}/import/lovable`)}
+                  >
+                    <Heart className="h-4 w-4 mr-2" />
+                    Lovable App
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TooltipTrigger>
             <TooltipContent>Import content from a URL</TooltipContent>
           </Tooltip>
