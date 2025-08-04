@@ -28,10 +28,10 @@ export const client = postgres(process.env.DATABASE_URL, {
   onclose: () => {
     // Removed verbose logging to improve performance
   },
-  onconnect: () => {
-    // Removed verbose logging to improve performance
-  },
 });
 
 // Create drizzle database instance with our schema
 export const db = drizzle(client, { schema });
+
+// Export pool for direct SQL queries (used by database management service)
+export const pool = client;

@@ -78,6 +78,9 @@ import { enterpriseSSOService } from './sso/enterprise-sso-service';
 import { advancedCollaborationService } from './collaboration/advanced-collaboration-service';
 import { communityService } from './community/community-service';
 import { webSearchService } from "./services/web-search-service";
+import { encryptionService } from "./services/encryption-service";
+import { databaseManagementService } from "./services/database-management-service";
+import { usageTrackingService } from "./services/usage-tracking-service";
 import { projectExporter } from "./import-export/exporter";
 import { stripeBillingService } from "./services/stripe-billing-service";
 import { deploymentManager } from "./deployment";
@@ -3687,20 +3690,34 @@ API will be available at http://localhost:3000
   app.post('/api/projects/:projectId/secrets', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      const userId = req.user!.id;
       const { name, value, category, scope, description } = req.body;
       
-      // Mock implementation - would store securely
-      const secret = {
-        id: Date.now(),
-        name,
+      if (!name || !value) {
+        return res.status(400).json({ error: 'Name and value are required' });
+      }
+      
+      // Encrypt the secret value before storing
+      const encryptedData = encryptionService.encrypt(value);
+      
+      const secret = await storage.createSecret({
+        userId,
+        key: name,
+        value: JSON.stringify(encryptedData),
+        description,
+        projectId
+      });
+      
+      res.json({
+        id: secret.id,
+        name: secret.key,
         category,
         scope,
-        description,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      
-      res.json(secret);
+        description: secret.description,
+        createdAt: secret.createdAt,
+        updatedAt: secret.updatedAt,
+        isEncrypted: true
+      });
     } catch (error) {
       console.error('Error creating secret:', error);
       res.status(500).json({ error: 'Failed to create secret' });
@@ -3720,17 +3737,29 @@ API will be available at http://localhost:3000
   // Usage Alerts Routes
   app.get('/api/usage/alerts', ensureAuthenticated, async (req, res) => {
     try {
-      // Mock implementation
-      const alerts = [
-        {
-          id: 1,
-          name: 'High Compute Usage',
-          threshold: 80,
-          metric: 'compute',
-          enabled: true,
-          createdAt: new Date('2024-01-01')
+      const userId = req.user!.id;
+      
+      // Get user's usage limits
+      const limits = await usageTrackingService.getResourceLimits(userId);
+      
+      // Create alerts based on usage approaching limits
+      const alerts = [];
+      
+      Object.entries(limits).forEach(([resource, data]) => {
+        const usagePercentage = (data.used / data.limit) * 100;
+        
+        if (usagePercentage >= 80) {
+          alerts.push({
+            id: `alert_${resource}_80`,
+            name: `High ${resource} usage`,
+            threshold: 80,
+            metric: resource,
+            enabled: true,
+            currentUsage: usagePercentage,
+            createdAt: new Date()
+          });
         }
-      ];
+      });
       
       res.json(alerts);
     } catch (error) {
@@ -3741,11 +3770,20 @@ API will be available at http://localhost:3000
 
   app.post('/api/usage/alerts', ensureAuthenticated, async (req, res) => {
     try {
-      const alert = req.body;
+      const userId = req.user!.id;
+      const { resource, threshold, type, action } = req.body;
+      
+      // Create alert using the service
+      const result = await usageTrackingService.createUsageAlert(userId, {
+        resource,
+        threshold,
+        type: type || 'percentage',
+        action: action || 'notification'
+      });
       
       res.json({
-        id: Date.now(),
-        ...alert,
+        ...result,
+        ...req.body,
         createdAt: new Date()
       });
     } catch (error) {
@@ -3756,15 +3794,34 @@ API will be available at http://localhost:3000
 
   app.get('/api/usage/budgets', ensureAuthenticated, async (req, res) => {
     try {
+      const userId = req.user!.id;
+      
+      // Get current usage stats to calculate spent amounts
+      const currentUsage = await usageTrackingService.getUsageHistory(userId, 'daily');
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      
+      // Calculate total spent this month
+      let monthlySpent = 0;
+      currentUsage.forEach(day => {
+        if (day.date.getMonth() === currentMonth && day.date.getFullYear() === currentYear) {
+          monthlySpent += day.totalCost;
+        }
+      });
+      
+      // Create budget based on user's plan limits
+      const limits = await usageTrackingService.getResourceLimits(userId);
+      const monthlyBudget = Object.values(limits).reduce((total, limit) => total + (limit.limit * 0.01), 0); // Estimate budget
+      
       const budgets = [
         {
           id: 1,
           name: 'Monthly Development Budget',
-          amount: 100,
+          amount: monthlyBudget,
           period: 'monthly',
-          spent: 65.43,
-          startDate: new Date('2024-01-01'),
-          endDate: new Date('2024-01-31')
+          spent: monthlySpent,
+          startDate: new Date(currentYear, currentMonth, 1),
+          endDate: new Date(currentYear, currentMonth + 1, 0)
         }
       ];
       
@@ -3789,6 +3846,71 @@ API will be available at http://localhost:3000
     } catch (error) {
       console.error('Error creating budget:', error);
       res.status(500).json({ error: 'Failed to create budget' });
+    }
+  });
+
+  // Database Management Routes (REAL IMPLEMENTATION)
+  app.get('/api/database/tables', ensureAuthenticated, async (req, res) => {
+    try {
+      const tables = await databaseManagementService.getTableList();
+      res.json({ tables });
+    } catch (error) {
+      console.error('Error fetching database tables:', error);
+      res.status(500).json({ error: 'Failed to fetch database tables' });
+    }
+  });
+
+  app.post('/api/database/query', ensureAuthenticated, async (req, res) => {
+    try {
+      const { query } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+      
+      const result = await databaseManagementService.executeQuery(query);
+      res.json(result);
+    } catch (error) {
+      console.error('Error executing database query:', error);
+      res.status(500).json({ error: 'Failed to execute query' });
+    }
+  });
+
+  app.get('/api/database/stats', ensureAuthenticated, async (req, res) => {
+    try {
+      const stats = await databaseManagementService.getDatabaseStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching database stats:', error);
+      res.status(500).json({ error: 'Failed to fetch database stats' });
+    }
+  });
+
+  app.post('/api/database/backup', ensureAuthenticated, async (req, res) => {
+    try {
+      const { backupName } = req.body;
+      
+      const backup = await databaseManagementService.createBackup(backupName || `backup_${Date.now()}`);
+      res.json(backup);
+    } catch (error) {
+      console.error('Error creating database backup:', error);
+      res.status(500).json({ error: 'Failed to create backup' });
+    }
+  });
+
+  app.post('/api/database/restore', ensureAuthenticated, async (req, res) => {
+    try {
+      const { backupId } = req.body;
+      
+      if (!backupId) {
+        return res.status(400).json({ error: 'Backup ID is required' });
+      }
+      
+      const result = await databaseManagementService.restoreBackup(backupId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error restoring database:', error);
+      res.status(500).json({ error: 'Failed to restore backup' });
     }
   });
 
