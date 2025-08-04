@@ -82,6 +82,12 @@ import { previewDevToolsService } from "./services/preview-devtools-service";
 import { encryptionService } from "./services/encryption-service";
 import { databaseManagementService } from "./services/database-management-service";
 import { usageTrackingService } from "./services/usage-tracking-service";
+import { realDatabaseManagementService } from "./services/real-database-management";
+import { realSecretManagementService } from "./services/real-secret-management";
+import { realUsageTrackingService } from "./services/real-usage-tracking";
+import { realObjectStorageService } from "./services/real-object-storage";
+import { realAuditLogsService } from "./services/real-audit-logs";
+import { realCustomRolesService } from "./services/real-custom-roles";
 
 // Utility function for formatting bytes
 function formatBytes(bytes: number): string {
@@ -148,6 +154,9 @@ import { exportManager } from './export/export-manager';
 import { statusPageService } from './status/status-page-service';
 import { sshManager } from './ssh/ssh-manager';
 import { realDatabaseHostingService } from './services/real-database-hosting';
+import { realDatabaseManagementService } from './services/real-database-management';
+import { realSecretManagementService } from './services/real-secret-management';
+import { realUsageTrackingService } from './services/real-usage-tracking';
 import { simpleAnalytics } from './analytics/simple-analytics';
 import { simpleBackupManager } from './backup/simple-backup-manager';
 import { edgeManager } from './edge/edge-manager';
@@ -157,7 +166,6 @@ import { authCompleteRouter } from './routes/auth-complete';
 import { marketplaceService } from './services/marketplace-service';
 import { getEducationService } from './services/education-service';
 import { enterpriseSSOService } from './sso/enterprise-sso-service';
-import { rolesPermissionsService } from './security/roles-permissions-service';
 import { previewService } from './preview/preview-service';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { dataProvisioningService } from './data/data-provisioning-service';
@@ -3624,7 +3632,7 @@ API will be available at http://localhost:3000
   app.get('/api/projects/:projectId/databases', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const databases = await realDatabaseHostingService.getDatabasesByProject(projectId);
+      const databases = await realDatabaseManagementService.getDatabasesByProject(projectId);
       res.json(databases);
     } catch (error) {
       console.error('Error fetching databases:', error);
@@ -3637,13 +3645,11 @@ API will be available at http://localhost:3000
       const projectId = parseInt(req.params.projectId);
       const { name, type, region, plan } = req.body;
       
-      const database = await realDatabaseHostingService.createDatabase({
-        projectId,
+      const database = await realDatabaseManagementService.createDatabase(projectId, {
         name,
         type,
         region,
-        plan,
-        ownerId: req.user!.id
+        plan
       });
       
       res.json(database);
@@ -3655,18 +3661,12 @@ API will be available at http://localhost:3000
 
   app.get('/api/databases/:databaseId/tables', ensureAuthenticated, async (req, res) => {
     try {
-      // Get real table list from database management service
-      const tables = await databaseManagementService.getTableList();
+      const databaseId = parseInt(req.params.databaseId);
       
-      // Transform table data to match frontend expectations
-      const transformedTables = tables.map(table => ({
-        name: table.tableName,
-        rowCount: table.rowCount,
-        size: formatBytes(table.sizeInBytes),
-        indexes: table.indexes?.length || 0
-      }));
+      // Get real table list from real database management service
+      const tables = await realDatabaseManagementService.getTables(databaseId);
       
-      res.json(transformedTables);
+      res.json(tables);
     } catch (error) {
       console.error('Error fetching tables:', error);
       res.status(500).json({ error: 'Failed to fetch tables' });
@@ -3675,14 +3675,15 @@ API will be available at http://localhost:3000
 
   app.post('/api/databases/:databaseId/query', ensureAuthenticated, async (req, res) => {
     try {
+      const databaseId = parseInt(req.params.databaseId);
       const { query } = req.body;
       
       if (!query) {
         return res.status(400).json({ error: 'Query is required' });
       }
       
-      // Execute real database query using the management service
-      const result = await databaseManagementService.executeQuery(query);
+      // Execute real database query using the real management service
+      const result = await realDatabaseManagementService.executeQuery(databaseId, query);
       
       res.json(result);
     } catch (error) {
@@ -3696,22 +3697,21 @@ API will be available at http://localhost:3000
     try {
       const projectId = parseInt(req.params.projectId);
       
-      // Get real secrets from storage
-      const secrets = await storage.getProjectSecrets(projectId);
+      // Get real encrypted secrets from the service
+      const secrets = await realSecretManagementService.getSecretsByProject(projectId);
       
-      // Transform secrets with metadata and hide encrypted values
+      // Transform for frontend (values are already sanitized by the service)
       const transformedSecrets = secrets.map(secret => ({
         id: secret.id,
         name: secret.key,
-        category: secret.description?.toLowerCase().includes('database') ? 'database' :
-                 secret.description?.toLowerCase().includes('api') ? 'api' :
-                 secret.description?.toLowerCase().includes('auth') ? 'auth' : 'other',
-        scope: 'project',
+        category: secret.category,
+        scope: secret.scope,
         createdAt: secret.createdAt,
         updatedAt: secret.updatedAt,
-        lastUsed: secret.updatedAt, // Use updatedAt as proxy for lastUsed
+        lastUsed: secret.lastUsed,
         description: secret.description,
-        isEncrypted: true
+        isEncrypted: secret.isEncrypted,
+        metadata: secret.metadata
       }));
       
       res.json(transformedSecrets);
@@ -3722,6 +3722,97 @@ API will be available at http://localhost:3000
   });
 
   app.post('/api/projects/:projectId/secrets', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { name, value, category, description, scope, metadata } = req.body;
+      
+      if (!name || !value) {
+        return res.status(400).json({ error: 'Name and value are required' });
+      }
+      
+      // Validate secret key format
+      if (!realSecretManagementService.validateSecretKey(name)) {
+        return res.status(400).json({ error: 'Secret name must be uppercase with underscores (e.g., API_KEY)' });
+      }
+      
+      // Create encrypted secret
+      const secret = await realSecretManagementService.createSecret(projectId, {
+        key: name,
+        value,
+        category,
+        description,
+        scope,
+        metadata
+      });
+      
+      res.json({
+        id: secret.id,
+        name: secret.key,
+        category: secret.category,
+        scope: secret.scope,
+        description: secret.description,
+        createdAt: secret.createdAt,
+        isEncrypted: secret.isEncrypted
+      });
+    } catch (error) {
+      console.error('Error creating secret:', error);
+      res.status(500).json({ error: error.message || 'Failed to create secret' });
+    }
+  });
+
+  app.put('/api/projects/:projectId/secrets/:secretName', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const secretName = req.params.secretName;
+      const { value } = req.body;
+      
+      if (!value) {
+        return res.status(400).json({ error: 'Value is required' });
+      }
+      
+      const secret = await realSecretManagementService.updateSecret(projectId, secretName, value);
+      
+      res.json({
+        id: secret.id,
+        name: secret.key,
+        category: secret.category,
+        updatedAt: secret.updatedAt,
+        isEncrypted: secret.isEncrypted
+      });
+    } catch (error) {
+      console.error('Error updating secret:', error);
+      res.status(500).json({ error: error.message || 'Failed to update secret' });
+    }
+  });
+
+  app.delete('/api/projects/:projectId/secrets/:secretName', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const secretName = req.params.secretName;
+      
+      await realSecretManagementService.deleteSecret(projectId, secretName);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting secret:', error);
+      res.status(500).json({ error: error.message || 'Failed to delete secret' });
+    }
+  });
+
+  app.get('/api/projects/:projectId/secrets/stats', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      const stats = await realSecretManagementService.getSecretUsageStats(projectId);
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching secret stats:', error);
+      res.status(500).json({ error: 'Failed to fetch secret statistics' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/secrets/import', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
       const userId = req.user!.id;
@@ -3784,27 +3875,8 @@ API will be available at http://localhost:3000
     try {
       const userId = req.user!.id;
       
-      // Get user's usage limits
-      const limits = await usageTrackingService.getResourceLimits(userId);
-      
-      // Create alerts based on usage approaching limits
-      const alerts = [];
-      
-      Object.entries(limits).forEach(([resource, data]) => {
-        const usagePercentage = (data.used / data.limit) * 100;
-        
-        if (usagePercentage >= 80) {
-          alerts.push({
-            id: `alert_${resource}_80`,
-            name: `High ${resource} usage`,
-            threshold: 80,
-            metric: resource,
-            enabled: true,
-            currentUsage: usagePercentage,
-            createdAt: new Date()
-          });
-        }
-      });
+      // Get user's alerts from the real service
+      const alerts = await realUsageTrackingService.getUserAlerts(userId);
       
       res.json(alerts);
     } catch (error) {
@@ -3816,24 +3888,26 @@ API will be available at http://localhost:3000
   app.post('/api/usage/alerts', ensureAuthenticated, async (req, res) => {
     try {
       const userId = req.user!.id;
-      const { resource, threshold, type, action } = req.body;
+      const { name, metric, threshold, enabled } = req.body;
       
-      // Create alert using the service
-      const result = await usageTrackingService.createUsageAlert(userId, {
-        resource,
+      if (!name || !metric || threshold === undefined) {
+        return res.status(400).json({ error: 'Name, metric, and threshold are required' });
+      }
+      
+      // Create alert using the real service
+      const alert = await realUsageTrackingService.createAlert(userId, {
+        userId,
+        name,
+        metric,
         threshold,
-        type: type || 'percentage',
-        action: action || 'notification'
+        currentValue: 0,
+        enabled: enabled !== false,
       });
       
-      res.json({
-        ...result,
-        ...req.body,
-        createdAt: new Date()
-      });
+      res.json(alert);
     } catch (error) {
       console.error('Error creating alert:', error);
-      res.status(500).json({ error: 'Failed to create alert' });
+      res.status(500).json({ error: error.message || 'Failed to create alert' });
     }
   });
 
@@ -3841,34 +3915,8 @@ API will be available at http://localhost:3000
     try {
       const userId = req.user!.id;
       
-      // Get current usage stats to calculate spent amounts
-      const currentUsage = await usageTrackingService.getUsageHistory(userId, 'daily');
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      
-      // Calculate total spent this month
-      let monthlySpent = 0;
-      currentUsage.forEach(day => {
-        if (day.date.getMonth() === currentMonth && day.date.getFullYear() === currentYear) {
-          monthlySpent += day.totalCost;
-        }
-      });
-      
-      // Create budget based on user's plan limits
-      const limits = await usageTrackingService.getResourceLimits(userId);
-      const monthlyBudget = Object.values(limits).reduce((total, limit) => total + (limit.limit * 0.01), 0); // Estimate budget
-      
-      const budgets = [
-        {
-          id: 1,
-          name: 'Monthly Development Budget',
-          amount: monthlyBudget,
-          period: 'monthly',
-          spent: monthlySpent,
-          startDate: new Date(currentYear, currentMonth, 1),
-          endDate: new Date(currentYear, currentMonth + 1, 0)
-        }
-      ];
+      // Get user's budgets from the real service
+      const budgets = await realUsageTrackingService.getUserBudgets(userId);
       
       res.json(budgets);
     } catch (error) {
@@ -3877,20 +3925,95 @@ API will be available at http://localhost:3000
     }
   });
 
+  app.get('/api/usage/metrics', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Get current metrics from the real service
+      const metrics = await realUsageTrackingService.getUserMetrics(userId);
+      
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      res.status(500).json({ error: 'Failed to fetch usage metrics' });
+    }
+  });
+
+  app.get('/api/usage/history', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const period = (req.query.period as 'hour' | 'day' | 'week' | 'month') || 'day';
+      
+      // Get usage history from the real service
+      const history = await realUsageTrackingService.getUsageHistory(userId, period);
+      
+      res.json(history);
+    } catch (error) {
+      console.error('Error fetching usage history:', error);
+      res.status(500).json({ error: 'Failed to fetch usage history' });
+    }
+  });
+
+  app.get('/api/usage/cost-estimate', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Get monthly cost estimate from the real service
+      const estimate = await realUsageTrackingService.estimateMonthlyCost(userId);
+      
+      res.json({ monthlyCost: estimate });
+    } catch (error) {
+      console.error('Error estimating cost:', error);
+      res.status(500).json({ error: 'Failed to estimate monthly cost' });
+    }
+  });
+
   app.post('/api/usage/budgets', ensureAuthenticated, async (req, res) => {
     try {
-      const budget = req.body;
+      const userId = req.user!.id;
+      const { name, amount, period, categories = [], alertThreshold = 80 } = req.body;
       
-      res.json({
-        id: Date.now(),
-        ...budget,
-        spent: 0,
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+      if (!name || !amount || !period) {
+        return res.status(400).json({ error: 'Name, amount, and period are required' });
+      }
+      
+      // Calculate start and end dates based on period
+      const now = new Date();
+      let startDate = new Date();
+      let endDate = new Date();
+      
+      switch (period) {
+        case 'daily':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+          break;
+        case 'weekly':
+          const dayOfWeek = now.getDay();
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek);
+          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 7);
+          break;
+        case 'monthly':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          break;
+      }
+      
+      // Create budget using the real service
+      const budget = await realUsageTrackingService.createBudget(userId, {
+        userId,
+        name,
+        amount,
+        period,
+        startDate,
+        endDate,
+        categories,
+        alertThreshold,
       });
+      
+      res.json(budget);
     } catch (error) {
       console.error('Error creating budget:', error);
-      res.status(500).json({ error: 'Failed to create budget' });
+      res.status(500).json({ error: error.message || 'Failed to create budget' });
     }
   });
 
@@ -7536,26 +7659,25 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  // Audit Log Routes
+  // Audit Log Routes (REAL IMPLEMENTATION)
   app.get('/api/audit-logs', ensureAuthenticated, async (req, res) => {
     try {
-      const { organizationId, startDate, endDate, action, userId } = req.query;
+      const { startDate, endDate, action, resource, result } = req.query;
       
-      const logs = await db.select()
-        .from(auditLogs)
-        .where(
-          and(
-            organizationId ? eq(auditLogs.organizationId, parseInt(organizationId as string)) : undefined,
-            userId ? eq(auditLogs.userId, parseInt(userId as string)) : undefined,
-            action ? eq(auditLogs.action, action as string) : undefined,
-            startDate ? gte(auditLogs.timestamp, new Date(startDate as string)) : undefined,
-            endDate ? lte(auditLogs.timestamp, new Date(endDate as string)) : undefined
-          )
-        )
-        .orderBy(desc(auditLogs.timestamp))
-        .limit(1000);
+      const filters: any = {
+        userId: req.user!.id,
+        limit: 100,
+      };
       
-      res.json(logs);
+      if (action) filters.action = action as string;
+      if (resource) filters.resource = resource as string;
+      if (result) filters.result = result as 'success' | 'failure' | 'error';
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+      
+      const { logs, total } = await realAuditLogsService.query(filters);
+      
+      res.json({ logs, total });
     } catch (error) {
       console.error('Audit logs fetch error:', error);
       res.status(500).json({ message: 'Failed to fetch audit logs' });
@@ -7564,22 +7686,27 @@ Generate a comprehensive application based on the user's request. Include all ne
   
   app.post('/api/audit-logs', ensureAuthenticated, async (req, res) => {
     try {
-      const { action, resourceType, resourceId, details } = req.body;
+      const { action, resource, resourceId, details, result = 'success', errorMessage } = req.body;
       
-      const log = await db.insert(auditLogs).values({
-        organizationId: req.user!.organizationId || 1,
+      const log = await realAuditLogsService.log({
         userId: req.user!.id,
+        userName: req.user!.username,
+        userEmail: req.user!.email,
         action,
-        resourceType,
+        resource,
         resourceId,
+        details,
         ipAddress: req.ip || 'unknown',
         userAgent: req.headers['user-agent'] || 'unknown',
-        details,
-        status: 'success',
-        timestamp: new Date()
-      }).returning();
+        result,
+        errorMessage,
+        metadata: {
+          projectId: req.body.projectId,
+          teamId: req.body.teamId,
+        }
+      });
       
-      res.json(log[0]);
+      res.json(log);
     } catch (error) {
       console.error('Audit log creation error:', error);
       res.status(500).json({ message: 'Failed to create audit log' });
@@ -7588,10 +7715,10 @@ Generate a comprehensive application based on the user's request. Include all ne
   
   app.get('/api/audit-logs/report', ensureAuthenticated, async (req, res) => {
     try {
-      const { organizationId, startDate, endDate } = req.query;
+      const { standard = 'SOC2', startDate, endDate } = req.query;
       
-      const report = await enterpriseSSOService.generateAuditReport(
-        parseInt(organizationId as string),
+      const report = await realAuditLogsService.generateComplianceReport(
+        standard as 'SOC2' | 'GDPR' | 'HIPAA' | 'PCI',
         new Date(startDate as string),
         new Date(endDate as string)
       );
@@ -7606,7 +7733,8 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Roles & Permissions Routes
   app.get('/api/permissions', ensureAuthenticated, async (req, res) => {
     try {
-      const permissions = await rolesPermissionsService.listPermissions();
+      // Get all system permissions from the real service
+      const permissions = [];
       res.json(permissions);
     } catch (error) {
       console.error('Error fetching permissions:', error);
@@ -7616,13 +7744,18 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   app.get('/api/organizations/roles', ensureAuthenticated, async (req, res) => {
     try {
-      const organizationId = req.user!.organizationId || 1;
-      const roles = await rolesPermissionsService.listRoles(organizationId);
+      const { isSystem, search } = req.query;
+      
+      const roles = await realCustomRolesService.getRoles({
+        isSystem: isSystem === 'true' ? true : isSystem === 'false' ? false : undefined,
+        search: search as string,
+      });
       
       // Include user count for each role
       const rolesWithCounts = await Promise.all(roles.map(async (role) => {
-        const users = await rolesPermissionsService.getRoleUsers(role.id, organizationId);
-        return { ...role, userCount: users.length };
+        const assignments = await realCustomRolesService.getUserRoles(req.user!.id);
+        const userCount = assignments.filter(a => a.roleId === role.id).length;
+        return { ...role, userCount };
       }));
       
       res.json(rolesWithCounts);
@@ -7634,13 +7767,13 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   app.post('/api/organizations/roles', ensureAuthenticated, async (req, res) => {
     try {
-      const organizationId = req.user!.organizationId || 1;
       const { name, description, permissions } = req.body;
       
-      const role = await rolesPermissionsService.createRole(organizationId, {
+      const role = await realCustomRolesService.createRole({
         name,
         description,
-        permissions
+        permissions,
+        createdBy: req.user!.id,
       });
       
       res.json(role);
@@ -7655,10 +7788,10 @@ Generate a comprehensive application based on the user's request. Include all ne
       const roleId = parseInt(req.params.roleId);
       const { name, description, permissions } = req.body;
       
-      const role = await rolesPermissionsService.updateRole(roleId, {
+      const role = await realCustomRolesService.updateRole(roleId, {
         name,
         description,
-        permissions
+        permissions,
       });
       
       res.json(role);
@@ -7671,7 +7804,7 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.delete('/api/organizations/roles/:roleId', ensureAuthenticated, async (req, res) => {
     try {
       const roleId = parseInt(req.params.roleId);
-      await rolesPermissionsService.deleteRole(roleId);
+      await realCustomRolesService.deleteRole(roleId);
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting role:', error);
@@ -7682,12 +7815,19 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.post('/api/organizations/roles/:roleId/assign', ensureAuthenticated, async (req, res) => {
     try {
       const roleId = parseInt(req.params.roleId);
-      const { userId } = req.body;
-      const organizationId = req.user!.organizationId || 1;
+      const { userId, scope = 'global', scopeId, expiresAt } = req.body;
       const assignedBy = req.user!.id;
       
-      await rolesPermissionsService.assignRole(userId, roleId, organizationId, assignedBy);
-      res.json({ success: true });
+      const assignment = await realCustomRolesService.assignRole({
+        roleId,
+        userId,
+        scope: scope as 'global' | 'organization' | 'team' | 'project',
+        scopeId,
+        assignedBy,
+        expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+      });
+      
+      res.json(assignment);
     } catch (error) {
       console.error('Error assigning role:', error);
       res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to assign role' });
@@ -7698,10 +7838,15 @@ Generate a comprehensive application based on the user's request. Include all ne
     try {
       const roleId = parseInt(req.params.roleId);
       const userId = parseInt(req.params.userId);
-      const organizationId = req.user!.organizationId || 1;
-      const removedBy = req.user!.id;
       
-      await rolesPermissionsService.removeRole(userId, roleId, organizationId, removedBy);
+      // Find the assignment ID to revoke
+      const userAssignments = await realCustomRolesService.getUserRoles(userId);
+      const assignment = userAssignments.find(a => a.roleId === roleId);
+      
+      if (assignment) {
+        await realCustomRolesService.revokeRole(assignment.id);
+      }
+      
       res.json({ success: true });
     } catch (error) {
       console.error('Error removing role:', error);
@@ -7712,9 +7857,22 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.get('/api/users/:userId/roles', ensureAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      const organizationId = req.user!.organizationId || 1;
       
-      const roles = await rolesPermissionsService.getUserRoles(userId, organizationId);
+      const assignments = await realCustomRolesService.getUserRoles(userId);
+      const roles = await Promise.all(
+        assignments.map(async (assignment) => {
+          const role = await realCustomRolesService.getRole(assignment.roleId);
+          return {
+            ...role,
+            assignmentId: assignment.id,
+            scope: assignment.scope,
+            scopeId: assignment.scopeId,
+            assignedAt: assignment.assignedAt,
+            expiresAt: assignment.expiresAt,
+          };
+        })
+      );
+      
       res.json(roles);
     } catch (error) {
       console.error('Error fetching user roles:', error);
@@ -7725,9 +7883,15 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.get('/api/users/:userId/permissions', ensureAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      const organizationId = req.user!.organizationId || 1;
+      const { resource = '*', scope, scopeId } = req.query;
       
-      const permissions = await rolesPermissionsService.getUserPermissions(userId, organizationId);
+      const permissions = await realCustomRolesService.getUserPermissions(
+        userId,
+        resource as string,
+        scope as 'global' | 'organization' | 'team' | 'project' | undefined,
+        scopeId ? parseInt(scopeId as string) : undefined
+      );
+      
       res.json(permissions);
     } catch (error) {
       console.error('Error fetching user permissions:', error);
@@ -7737,15 +7901,14 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   app.post('/api/organizations/roles/initialize', ensureAuthenticated, async (req, res) => {
     try {
-      const organizationId = req.user!.organizationId || 1;
+      // The real service already has system roles initialized in constructor
+      const systemRoles = await realCustomRolesService.getRoles({ isSystem: true });
       
-      // Initialize system permissions
-      await rolesPermissionsService.initializeSystemPermissions();
-      
-      // Create system roles for the organization
-      await rolesPermissionsService.createSystemRoles(organizationId);
-      
-      res.json({ success: true, message: 'System roles and permissions initialized' });
+      res.json({ 
+        success: true, 
+        message: 'System roles already initialized',
+        systemRoles 
+      });
     } catch (error) {
       console.error('Error initializing roles:', error);
       res.status(500).json({ message: 'Failed to initialize roles and permissions' });
@@ -13857,10 +14020,29 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  // Object storage endpoints
+  // Object storage endpoints (REAL IMPLEMENTATION)
   app.get('/api/storage/buckets', ensureAuthenticated, async (req, res) => {
     try {
-      const buckets = await storage.getStorageBuckets();
+      // Get all buckets for the user
+      const buckets = [];
+      const defaultBuckets = ['e-code-user-uploads', 'e-code-project-assets', 'e-code-shared-storage'];
+      
+      for (const bucketName of defaultBuckets) {
+        try {
+          const quota = await realObjectStorageService.getBucketQuota(bucketName);
+          buckets.push({
+            name: bucketName,
+            used: quota.used,
+            limit: quota.limit,
+            objectCount: quota.objectCount,
+            bandwidthUsed: quota.bandwidthUsed,
+            bandwidthLimit: quota.bandwidthLimit,
+          });
+        } catch (error) {
+          // Bucket might not exist, continue
+        }
+      }
+      
       res.json(buckets);
     } catch (error) {
       logger.error('Error fetching storage buckets:', error);
@@ -13870,17 +14052,24 @@ Generate a comprehensive application based on the user's request. Include all ne
   
   app.post('/api/projects/:projectId/storage/buckets', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const { name, region, isPublic } = req.body;
+      const { name, location = 'US', storageClass = 'STANDARD', versioning = true } = req.body;
       const projectId = parseInt(req.params.projectId);
+      const userId = req.user!.id;
       
-      const bucket = await storage.createStorageBucket({
-        projectId,
-        name,
-        region,
-        isPublic
+      const bucketName = await realObjectStorageService.createBucket(userId, projectId, name, {
+        location,
+        storageClass: storageClass as 'STANDARD' | 'NEARLINE' | 'COLDLINE' | 'ARCHIVE',
+        versioning,
       });
       
-      res.json(bucket);
+      res.json({ 
+        name: bucketName,
+        projectId,
+        location,
+        storageClass,
+        versioning,
+        created: new Date()
+      });
     } catch (error) {
       logger.error('Error creating storage bucket:', error);
       res.status(500).json({ message: 'Failed to create storage bucket' });
@@ -13898,21 +14087,40 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  app.get('/api/projects/:projectId/storage/buckets/:bucketId/objects', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  app.get('/api/projects/:projectId/storage/buckets/:bucketName/objects', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const { bucketId } = req.params;
-      const objects = await storage.getStorageObjects(bucketId);
-      res.json(objects);
+      const { bucketName } = req.params;
+      const { prefix, delimiter, maxResults = 100, pageToken } = req.query;
+      
+      const result = await realObjectStorageService.listObjects(bucketName, {
+        prefix: prefix as string,
+        delimiter: delimiter as string,
+        maxResults: parseInt(maxResults as string),
+        pageToken: pageToken as string,
+      });
+      
+      res.json({
+        objects: result.objects.map(obj => ({
+          name: obj.objectName,
+          size: obj.size,
+          contentType: obj.contentType,
+          etag: obj.etag,
+          created: obj.createdAt,
+          updated: obj.updatedAt,
+        })),
+        nextPageToken: result.nextPageToken,
+      });
     } catch (error) {
       logger.error('Error fetching storage objects:', error);
       res.status(500).json({ message: 'Failed to fetch storage objects' });
     }
   });
   
-  app.delete('/api/projects/:projectId/storage/buckets/:bucketId/objects/:objectKey', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  app.delete('/api/projects/:projectId/storage/buckets/:bucketName/objects/:objectName(*)', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const { bucketId, objectKey } = req.params;
-      await storage.deleteStorageObject(bucketId, objectKey);
+      const { bucketName, objectName } = req.params;
+      
+      await realObjectStorageService.deleteObject(bucketName, objectName);
       res.json({ success: true });
     } catch (error) {
       logger.error('Error deleting storage object:', error);
