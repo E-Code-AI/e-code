@@ -13139,6 +13139,21 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   
   // Real audit logs endpoints
+  app.get('/api/admin/import-stats', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check admin permissions
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
+      const stats = await storage.getImportStatistics();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching import statistics:', error);
+      res.status(500).json({ error: 'Failed to fetch import statistics' });
+    }
+  });
+
   app.get('/api/admin/audit-logs', ensureAuthenticated, async (req, res) => {
     try {
       const { userId, action, dateRange, search, status, from, to } = req.query;
