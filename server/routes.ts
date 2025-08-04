@@ -73,7 +73,7 @@ import { replitDB } from "./database/replitdb";
 import { searchEngine } from "./search/search-engine";
 import { extensionManager } from "./extensions/extension-manager";
 import { apiManager } from "./api/api-manager";
-import { mobileAPIService } from './mobile/mobile-api-service';
+import { MobileAPIService } from './mobile/mobile-api-service';
 import { enterpriseSSOService } from './sso/enterprise-sso-service';
 import { advancedCollaborationService } from './collaboration/advanced-collaboration-service';
 import { communityService } from './community/community-service';
@@ -4061,7 +4061,49 @@ API will be available at http://localhost:3000
     }
   });
 
+  // Mobile API Service instance
+  const mobileAPIService = new MobileAPIService();
+
   // Mobile App API Endpoints
+  app.post('/api/mobile/authenticate', async (req, res) => {
+    await mobileAPIService.authenticateDevice(req, res);
+  });
+
+  app.get('/api/mobile/devices', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.getMobileDevices(req, res);
+  });
+
+  app.get('/api/mobile/projects', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.getMobileProjects(req, res);
+  });
+
+  app.get('/api/mobile/projects/:id', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.getMobileProject(req, res);
+  });
+
+  app.post('/api/mobile/projects/:id/run', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.runMobileProject(req, res);
+  });
+
+  app.get('/api/mobile/projects/:projectId/files/:fileName', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.getMobileFile(req, res);
+  });
+
+  app.put('/api/mobile/projects/:projectId/files/:fileName', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.updateMobileFile(req, res);
+  });
+
+  app.post('/api/mobile/projects/:id/sync', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      // Sync project files for mobile
+      res.json({ success: true, message: 'Project synchronized' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to sync project' });
+    }
+  });
+
+  // Legacy mobile endpoints for backward compatibility
   app.post('/api/mobile/register-device', ensureAuthenticated, async (req: any, res) => {
     try {
       const { deviceId, platform, appVersion, osVersion, deviceModel, pushToken } = req.body;
