@@ -66,6 +66,8 @@ const Desktop = lazy(() => import("@/pages/Desktop"));
 const Forum = lazy(() => import("@/pages/Forum"));
 const AIAgent = lazy(() => import("@/pages/AIAgent"));
 const ReplitAIAgentPage = lazy(() => import("@/pages/ReplitAIAgentPage"));
+const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
+const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
 // User area pages
 const Account = lazy(() => import("@/pages/Account"));
 const Cycles = lazy(() => import("@/pages/Cycles"));
@@ -184,6 +186,9 @@ function AppContent() {
           <Route path="/subprocessors" component={Subprocessors} />
           <Route path="/student-dpa" component={StudentDPA} />
           <Route path="/languages" component={Languages} />
+          <Route path="/team" component={PublicTeamPage} />
+          <Route path="/collaboration" component={PublicTeamPage} />
+          <Route path="/deployments" component={PublicDeploymentsPage} />
           <ProtectedRoute path="/github-import" component={() => (
             <ReplitLayout showSidebar={false}>
               <GitHubImport />
