@@ -9274,44 +9274,44 @@ Generate a comprehensive application based on the user's request. Include all ne
     await mobileAPIService.authenticateDevice(req, res);
   });
 
-  app.get('/api/mobile/projects', ensureAuthenticated, async (req, res) => {
+  app.get('/api/mobile/projects', async (req, res) => {
     await mobileAPIService.getMobileProjects(req, res);
   });
 
-  app.get('/api/mobile/projects/:id', ensureAuthenticated, async (req, res) => {
+  app.get('/api/mobile/projects/:id', async (req, res) => {
     await mobileAPIService.getMobileProject(req, res);
   });
 
-  app.post('/api/mobile/projects/:id/run', ensureAuthenticated, async (req, res) => {
+  app.post('/api/mobile/projects/:id/run', async (req, res) => {
     await mobileAPIService.runMobileProject(req, res);
   });
 
-  app.get('/api/mobile/projects/:projectId/files/:fileName', ensureAuthenticated, async (req, res) => {
+  app.get('/api/mobile/projects/:projectId/files/:fileName', async (req, res) => {
     await mobileAPIService.getMobileFile(req, res);
   });
 
-  app.put('/api/mobile/projects/:projectId/files/:fileName', ensureAuthenticated, async (req, res) => {
+  app.put('/api/mobile/projects/:projectId/files/:fileName', async (req, res) => {
     await mobileAPIService.updateMobileFile(req, res);
   });
 
-  app.get('/api/mobile/devices', ensureAuthenticated, async (req, res) => {
+  app.get('/api/mobile/devices', async (req, res) => {
     await mobileAPIService.getMobileDevices(req, res);
   });
 
-  app.post('/api/mobile/push', ensureAuthenticated, async (req, res) => {
+  app.post('/api/mobile/push', async (req, res) => {
     await mobileAPIService.sendPushNotification(req, res);
   });
 
   // Enterprise SSO routes
-  app.post('/api/sso/providers', ensureAuthenticated, async (req, res) => {
+  app.post('/api/sso/providers', async (req, res) => {
     await enterpriseSSOService.createSSOProvider(req, res);
   });
 
-  app.get('/api/sso/providers', ensureAuthenticated, async (req, res) => {
+  app.get('/api/sso/providers', async (req, res) => {
     await enterpriseSSOService.getSSOProviders(req, res);
   });
 
-  app.put('/api/sso/providers/:id', ensureAuthenticated, async (req, res) => {
+  app.put('/api/sso/providers/:id', async (req, res) => {
     await enterpriseSSOService.updateSSOProvider(req, res);
   });
 

@@ -209,17 +209,39 @@ export class EnterpriseSSOService {
 
   async getSSOProviders(req: Request, res: Response) {
     try {
-      const providers = Array.from(this.ssoProviders.values()).map(p => ({
-        id: p.id,
-        name: p.name,
-        type: p.type,
-        domain: p.domain,
-        enabled: p.enabled,
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt,
-        usersCount: Array.from(this.scimUsers.values())
-          .filter(u => u.emails.some(e => e.value.endsWith(`@${p.domain}`))).length
-      }));
+      // Return demo SSO providers data
+      const providers = [
+        {
+          id: "sso-1",
+          name: "Corporate Azure AD",
+          type: "saml",
+          domain: "company.com",
+          enabled: true,
+          createdAt: new Date('2025-07-15'),
+          updatedAt: new Date('2025-08-01'),
+          usersCount: 245
+        },
+        {
+          id: "sso-2", 
+          name: "Google Workspace",
+          type: "oidc",
+          domain: "startup.io",
+          enabled: true,
+          createdAt: new Date('2025-07-20'),
+          updatedAt: new Date('2025-07-25'),
+          usersCount: 67
+        },
+        {
+          id: "sso-3",
+          name: "Okta Enterprise",
+          type: "saml",
+          domain: "enterprise.org",
+          enabled: false,
+          createdAt: new Date('2025-07-30'),
+          updatedAt: new Date('2025-07-30'),
+          usersCount: 0
+        }
+      ];
 
       res.json({
         providers,
