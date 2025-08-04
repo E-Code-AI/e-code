@@ -9265,7 +9265,7 @@ Generate a comprehensive application based on the user's request. Include all ne
   const fileUploadRoutesModule = await import('./routes/file-upload');
   app.use(fileUploadRoutesModule.default);
 
-  // Simple preview route for HTML/CSS/JS projects
+  // Simple preview route for HTML/CSS/JS projects (no auth required for preview)
   app.get('/preview/:projectId/*', async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
