@@ -69,30 +69,39 @@ export function PowerUps({ projectId }: PowerUpsProps) {
 
   // Fetch power-ups
   const { data: powerUps = [] } = useQuery<PowerUp[]>({
-    queryKey: ['/api/projects', projectId, 'powerups'],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/powerups`)
+    queryKey: ['/api/powerups', projectId],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/powerups/${projectId}`);
+      return res.json();
+    }
   });
 
   // Fetch usage
   const { data: usage = [] } = useQuery<PowerUpUsage[]>({
-    queryKey: ['/api/projects', projectId, 'powerups/usage'],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/powerups/usage`)
+    queryKey: ['/api/powerups', projectId, 'usage'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/powerups/${projectId}/usage`);
+      return res.json();
+    }
   });
 
   // Fetch bundles
   const { data: bundles = [] } = useQuery<PowerUpBundle[]>({
     queryKey: ['/api/powerups/bundles'],
-    queryFn: () => apiRequest('/api/powerups/bundles')
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/powerups/bundles');
+      return res.json();
+    }
   });
 
   // Activate power-up
   const activatePowerUpMutation = useMutation({
-    mutationFn: (powerUpId: string) =>
-      apiRequest(`/api/projects/${projectId}/powerups/${powerUpId}/activate`, {
-        method: 'POST'
-      }),
+    mutationFn: async (powerUpId: string) => {
+      const res = await apiRequest('POST', `/api/powerups/${projectId}/${powerUpId}/activate`, {});
+      return res.json();
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'powerups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/powerups', projectId] });
       toast({
         title: "Power-up activated",
         description: "Your project has been upgraded"
@@ -102,13 +111,12 @@ export function PowerUps({ projectId }: PowerUpsProps) {
 
   // Update power-up
   const updatePowerUpMutation = useMutation({
-    mutationFn: ({ powerUpId, value }: { powerUpId: string; value: number }) =>
-      apiRequest(`/api/projects/${projectId}/powerups/${powerUpId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ value })
-      }),
+    mutationFn: async ({ powerUpId, value }: { powerUpId: string; value: number }) => {
+      const res = await apiRequest('PATCH', `/api/powerups/${projectId}/${powerUpId}`, { value });
+      return res.json();
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'powerups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/powerups', projectId] });
     }
   });
 

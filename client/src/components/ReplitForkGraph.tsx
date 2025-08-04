@@ -60,7 +60,7 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
 
   // Fetch fork network data
   const { data: forkNetwork } = useQuery<Fork>({
-    queryKey: [`/api/projects/${projectId}/forks/network`]
+    queryKey: [`/api/forks/${projectId}/network`]
   });
 
   // Draw the fork network graph

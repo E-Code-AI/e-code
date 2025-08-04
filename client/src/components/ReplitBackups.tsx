@@ -77,7 +77,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
   const fetchBackups = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/backups`, {
+      const response = await fetch(`/api/backups/${projectId}`, {
         credentials: 'include'
       });
       
@@ -99,7 +99,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/backup-settings`, {
+      const response = await fetch(`/api/backups/${projectId}/settings`, {
         credentials: 'include'
       });
       
@@ -124,7 +124,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
     try {
       setCreating(true);
-      const response = await fetch(`/api/projects/${projectId}/backups`, {
+      const response = await fetch(`/api/backups/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -171,7 +171,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
   const restoreBackup = async (backupId: string) => {
     try {
       setRestoring(backupId);
-      const response = await fetch(`/api/projects/${projectId}/backups/${backupId}/restore`, {
+      const response = await fetch(`/api/backups/${projectId}/${backupId}/restore`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -184,7 +184,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
         
         // Poll for restore status
         const pollRestore = setInterval(async () => {
-          const statusRes = await fetch(`/api/projects/${projectId}/backups/${backupId}/restore-status`, {
+          const statusRes = await fetch(`/api/backups/${projectId}/${backupId}/restore-status`, {
             credentials: 'include'
           });
           
@@ -250,7 +250,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
   const deleteBackup = async (backupId: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/backups/${backupId}`, {
+      const response = await fetch(`/api/backups/${projectId}/${backupId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -273,7 +273,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
   const updateSettings = async (newSettings: Partial<BackupSettings>) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/backup-settings`, {
+      const response = await fetch(`/api/backups/${projectId}/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

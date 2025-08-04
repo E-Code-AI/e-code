@@ -78,7 +78,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
   const fetchTestSuites = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/tests/suites`, {
+      const response = await fetch(`/api/tests/${projectId}/suites`, {
         credentials: 'include'
       });
       
@@ -100,7 +100,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
 
   const fetchTestRuns = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/tests/runs`, {
+      const response = await fetch(`/api/tests/${projectId}/runs`, {
         credentials: 'include'
       });
       
@@ -116,7 +116,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
   const runAllTests = async () => {
     try {
       setRunning(true);
-      const response = await fetch(`/api/projects/${projectId}/tests/run`, {
+      const response = await fetch(`/api/tests/${projectId}/run`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -133,7 +133,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
           await fetchTestRuns();
           
           // Check if tests are complete
-          const updatedResponse = await fetch(`/api/projects/${projectId}/tests/status`, {
+          const updatedResponse = await fetch(`/api/tests/${projectId}/status`, {
             credentials: 'include'
           });
           
@@ -168,7 +168,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
 
   const runSuite = async (suiteId: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/tests/suites/${suiteId}/run`, {
+      const response = await fetch(`/api/tests/${projectId}/suites/${suiteId}/run`, {
         method: 'POST',
         credentials: 'include'
       });

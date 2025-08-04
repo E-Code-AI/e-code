@@ -68,6 +68,10 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
+  const [suggestions, setSuggestions] = useState<CodeSuggestion[]>([]);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
@@ -94,7 +98,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
 
   const loadChatHistory = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/ai/history`);
+      const response = await fetch(`/api/ai/${projectId}/history`);
       if (response.ok) {
         const data = await response.json();
         setMessages(data.map((msg: any) => ({
@@ -111,7 +115,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     if (!selectedCode) return;
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/ai/suggestions`, {
+      const response = await fetch(`/api/ai/${projectId}/suggestions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -149,7 +153,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/ai/chat`, {
+      const response = await fetch(`/api/ai/${projectId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

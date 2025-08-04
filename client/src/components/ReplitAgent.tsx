@@ -930,7 +930,7 @@ What would you like me to build for you today?`,
       switch (action.type) {
         case 'create_file':
           if (action.path && action.content !== undefined) {
-            const response = await fetch(`/api/projects/${projectId}/files`, {
+            const response = await fetch(`/api/files/${projectId}`, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
@@ -953,7 +953,7 @@ What would you like me to build for you today?`,
           if (action.path && action.content !== undefined) {
             const fileId = await getFileIdByPath(action.path);
             if (fileId) {
-              const response = await fetch(`/api/projects/${projectId}/files/${fileId}`, {
+              const response = await fetch(`/api/files/${projectId}/${fileId}`, {
                 method: 'PUT',
                 headers: { 
                   'Content-Type': 'application/json',
@@ -971,7 +971,7 @@ What would you like me to build for you today?`,
           break;
         case 'install_package':
           if (action.package) {
-            const response = await fetch(`/api/projects/${projectId}/packages/install`, {
+            const response = await fetch(`/api/packages/${projectId}/install`, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
@@ -988,7 +988,7 @@ What would you like me to build for you today?`,
           break;
         case 'create_folder':
           if (action.path) {
-            const response = await fetch(`/api/projects/${projectId}/folders`, {
+            const response = await fetch(`/api/files/${projectId}/folder`, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
@@ -1020,7 +1020,7 @@ What would you like me to build for you today?`,
 
   const getFileIdByPath = async (path: string): Promise<number | null> => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/files`, {
+      const response = await fetch(`/api/files/${projectId}`, {
         headers: { 
           'credentials': 'include'
         },
@@ -1245,7 +1245,7 @@ What would you like me to build for you today?`,
     }
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/ai/chat`, {
+      const response = await fetch(`/api/ai/chat/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1421,7 +1421,7 @@ What would you like me to build?`,
             </div>
           )}
           {/* Feedback Mechanism - Show after AI messages with actions */}
-          {message.role === 'assistant' && (message.actions?.length > 0 || message.completed) && (
+          {message.role === 'assistant' && ((message.actions && message.actions.length > 0) || message.completed) && (
             <div className="mt-3 flex items-center gap-2">
               <Button
                 variant="outline"

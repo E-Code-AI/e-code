@@ -90,7 +90,7 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
 
   // Fetch current pipeline
   const { data: currentPipeline } = useQuery<Pipeline>({
-    queryKey: [`/api/projects/${projectId}/pipeline/current`],
+    queryKey: [`/api/deployment/${projectId}/pipeline/current`],
     refetchInterval: (query) => {
       const pipeline = query.state.data;
       if (pipeline && ['running', 'pending'].includes(pipeline.status)) {
@@ -102,16 +102,16 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
 
   // Fetch pipeline history
   const { data: pipelineHistory = [] } = useQuery<Pipeline[]>({
-    queryKey: [`/api/projects/${projectId}/pipeline/history`]
+    queryKey: [`/api/deployment/${projectId}/pipeline/history`]
   });
 
   // Trigger deployment mutation
   const deployMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/projects/${projectId}/deploy`);
+      return apiRequest('POST', `/api/deployment/${projectId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/pipeline`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/deployment/${projectId}/pipeline`] });
       toast({
         title: 'Deployment started',
         description: 'Your deployment pipeline has been triggered'
@@ -122,10 +122,10 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
   // Cancel deployment mutation
   const cancelMutation = useMutation({
     mutationFn: async (pipelineId: string) => {
-      return apiRequest('POST', `/api/projects/${projectId}/pipeline/${pipelineId}/cancel`);
+      return apiRequest('POST', `/api/deployment/${projectId}/pipeline/${pipelineId}/cancel`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/pipeline`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/deployment/${projectId}/pipeline`] });
       toast({
         title: 'Deployment cancelled',
         description: 'The deployment has been cancelled'
@@ -136,10 +136,10 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
   // Retry deployment mutation
   const retryMutation = useMutation({
     mutationFn: async (pipelineId: string) => {
-      return apiRequest('POST', `/api/projects/${projectId}/pipeline/${pipelineId}/retry`);
+      return apiRequest('POST', `/api/deployment/${projectId}/pipeline/${pipelineId}/retry`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/pipeline`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/deployment/${projectId}/pipeline`] });
       toast({
         title: 'Deployment retried',
         description: 'The deployment has been retried'

@@ -112,14 +112,14 @@ export function ReplitFileExplorer({
 
   // Récupération de l'arbre de fichiers
   const { data: fileTree = [], isLoading, refetch } = useQuery<FileNode[]>({
-    queryKey: ["/api/projects", projectId, "files"],
+    queryKey: ["/api/files", projectId],
     staleTime: 30000, // 30 secondes
   });
 
   // Mutations pour les opérations sur les fichiers
   const createFileMutation = useMutation({
     mutationFn: async ({ path, type, name }: { path: string; type: "file" | "folder"; name: string }) => {
-      const response = await fetch(`/api/projects/${projectId}/files`, {
+      const response = await fetch(`/api/files/${projectId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path: `${path}/${name}`, type }),
@@ -128,7 +128,7 @@ export function ReplitFileExplorer({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "files"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/files", projectId] });
       setCreateDialogOpen(false);
       setNewItemName("");
       toast({
@@ -147,14 +147,14 @@ export function ReplitFileExplorer({
 
   const deleteFileMutation = useMutation({
     mutationFn: async (file: FileNode) => {
-      const response = await fetch(`/api/projects/${projectId}/files/${file.id}`, {
+      const response = await fetch(`/api/files/${projectId}/${file.id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete file/folder");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "files"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/files", projectId] });
       toast({
         title: "Deleted successfully",
         description: "File/folder deleted successfully.",
@@ -171,7 +171,7 @@ export function ReplitFileExplorer({
 
   const renameFileMutation = useMutation({
     mutationFn: async ({ file, newName }: { file: FileNode; newName: string }) => {
-      const response = await fetch(`/api/projects/${projectId}/files/${file.id}`, {
+      const response = await fetch(`/api/files/${projectId}/${file.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newName }),
@@ -180,7 +180,7 @@ export function ReplitFileExplorer({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "files"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/files", projectId] });
       toast({
         title: "Renamed successfully",
         description: "File/folder renamed successfully.",

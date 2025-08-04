@@ -93,7 +93,7 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/ai/${endpoint}`, {
+      const response = await fetch(`/api/ai/${projectId}/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

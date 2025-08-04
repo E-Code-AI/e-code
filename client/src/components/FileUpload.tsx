@@ -40,7 +40,7 @@ export function FileUpload({ projectId, parentId, onUploadComplete, className = 
         formData.append('parentId', parentId.toString());
       }
 
-      const response = await fetch(`/api/projects/${projectId}/upload-multiple`, {
+      const response = await fetch(`/api/files/${projectId}/upload-multiple`, {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -53,7 +53,7 @@ export function FileUpload({ projectId, parentId, onUploadComplete, className = 
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       toast({
         title: 'Files uploaded',
         description: 'Your files have been uploaded successfully'

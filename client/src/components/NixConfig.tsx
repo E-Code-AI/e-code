@@ -37,9 +37,9 @@ export function NixConfig({ projectId }: { projectId: number }) {
   
   // Fetch Nix packages
   const { data: packages = [] } = useQuery<NixPackage[]>({
-    queryKey: ['/api/projects', projectId, 'nix/packages'],
+    queryKey: ['/api/nix', projectId, 'packages'],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/nix/packages`);
+      const response = await fetch(`/api/nix/${projectId}/packages`);
       if (!response.ok) throw new Error('Failed to fetch packages');
       return response.json();
     }
@@ -47,9 +47,9 @@ export function NixConfig({ projectId }: { projectId: number }) {
 
   // Fetch Nix channels
   const { data: channels = [] } = useQuery<NixChannel[]>({
-    queryKey: ['/api/projects', projectId, 'nix/channels'],
+    queryKey: ['/api/nix', projectId, 'channels'],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/nix/channels`);
+      const response = await fetch(`/api/nix/${projectId}/channels`);
       if (!response.ok) throw new Error('Failed to fetch channels');
       return response.json();
     }

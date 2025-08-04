@@ -112,7 +112,7 @@ export function ConsolePanel({ projectId, className }: ConsolePanelProps) {
 
   // Fetch real logs (when backend endpoint is available)
   const { data: realLogs } = useQuery({
-    queryKey: [`/api/projects/${projectId}/logs`],
+    queryKey: [`/api/logs/${projectId}`],
     refetchInterval: isPaused ? false : 2000, // Poll every 2 seconds when not paused
     enabled: !isOptimizing,
   });

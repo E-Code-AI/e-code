@@ -30,9 +30,9 @@ export function PackageManager({ projectId, language }: PackageManagerProps) {
 
   // Get installed packages
   const { data: installedPackages = [], isLoading: isLoadingInstalled } = useQuery({
-    queryKey: ['/api/projects', projectId, 'packages'],
+    queryKey: ['/api/packages', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/projects/${projectId}/packages`);
+      const res = await apiRequest('GET', `/api/packages/${projectId}`);
       return res.json();
     },
   });
@@ -50,7 +50,7 @@ export function PackageManager({ projectId, language }: PackageManagerProps) {
   // Install package
   const installPackageMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/packages`, {
+      const res = await apiRequest('POST', `/api/packages/${projectId}`, {
         name: packageName,
         language,
       });
@@ -141,7 +141,7 @@ export function PackageManager({ projectId, language }: PackageManagerProps) {
   // Export environment
   const exportEnvironmentMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('GET', `/api/projects/${projectId}/packages/environment`);
+      const res = await apiRequest('GET', `/api/packages/${projectId}/environment`);
       return res.json();
     },
     onSuccess: (data) => {

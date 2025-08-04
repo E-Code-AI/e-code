@@ -37,7 +37,7 @@ export default function Editor() {
 
   // Get project files
   const { data: files = [], isLoading: isFilesLoading } = useQuery<File[]>({
-    queryKey: [`/api/projects/${id}/files`],
+    queryKey: [`/api/files/${id}`],
   });
 
   // Save file content mutation
@@ -47,7 +47,7 @@ export default function Editor() {
       return await res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/files`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${id}`] });
       toast({
         title: "File saved",
         description: "Your changes have been saved.",
@@ -70,7 +70,7 @@ export default function Editor() {
       parentId?: number,
       isFolder: boolean
     }) => {
-      const res = await apiRequest('POST', `/api/projects/${id}/files`, { 
+      const res = await apiRequest('POST', `/api/files/${id}`, { 
         name, 
         content: content || '', 
         parentId, 
@@ -79,7 +79,7 @@ export default function Editor() {
       return await res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/files`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${id}`] });
       toast({
         title: data.isFolder ? "Folder created" : "File created",
         description: `${data.name} has been created.`,
@@ -100,7 +100,7 @@ export default function Editor() {
       await apiRequest('DELETE', `/api/files/${fileId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/files`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${id}`] });
       toast({
         title: "Deleted successfully",
         description: "The item has been deleted.",

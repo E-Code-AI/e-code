@@ -35,8 +35,8 @@ export interface RuntimeLogs {
  */
 export function useRuntime(projectId: number) {
   const queryClient = useQueryClient();
-  const queryKey = [`/api/projects/${projectId}/runtime`];
-  const logsQueryKey = [`/api/projects/${projectId}/runtime/logs`];
+  const queryKey = [`/api/runtime/${projectId}`];
+  const logsQueryKey = [`/api/runtime/${projectId}/logs`];
 
   /**
    * Get runtime status
@@ -65,7 +65,7 @@ export function useRuntime(projectId: number) {
    */
   const startRuntime = useMutation<RuntimeStartResult, Error>({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/runtime/start`);
+      const res = await apiRequest('POST', `/api/runtime/${projectId}/start`);
       return await res.json();
     },
     onSuccess: () => {
@@ -78,7 +78,7 @@ export function useRuntime(projectId: number) {
    */
   const stopRuntime = useMutation<RuntimeStopResult, Error>({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/runtime/stop`);
+      const res = await apiRequest('POST', `/api/runtime/${projectId}/stop`);
       return await res.json();
     },
     onSuccess: () => {
@@ -91,7 +91,7 @@ export function useRuntime(projectId: number) {
    */
   const executeCommand = useMutation<{ success: boolean; output: string }, Error, string>({
     mutationFn: async (command: string) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/runtime/execute`, { command });
+      const res = await apiRequest('POST', `/api/runtime/${projectId}/execute`, { command });
       return await res.json();
     },
   });

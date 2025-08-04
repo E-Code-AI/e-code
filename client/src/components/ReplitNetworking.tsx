@@ -100,7 +100,7 @@ export function ReplitNetworking({ projectId, className }: ReplitNetworkingProps
 
   // Network Monitoring
   const { data: networkStats } = useQuery({
-    queryKey: [`/api/projects/${projectId}/network/stats`],
+    queryKey: [`/api/network/${projectId}/stats`],
     refetchInterval: isRecording ? 5000 : false,
   });
 
@@ -166,7 +166,7 @@ export function ReplitNetworking({ projectId, className }: ReplitNetworkingProps
   // Real HTTP proxy request
   const proxyHttpRequest = useMutation({
     mutationFn: async (request: NetworkRequest) => {
-      const response = await apiRequest(`/api/projects/${projectId}/proxy`, {
+      const response = await apiRequest(`/api/network/${projectId}/proxy`, {
         method: 'POST',
         body: JSON.stringify({
           method: request.method,

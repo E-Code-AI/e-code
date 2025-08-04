@@ -14,6 +14,13 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
+interface Deployment {
+  url: string;
+  status?: string;
+  customDomain?: string;
+  sslEnabled?: boolean;
+}
+
 interface PreviewPanelProps {
   projectId: number;
   projectUrl?: string;
@@ -26,8 +33,8 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
   const [customDomain, setCustomDomain] = useState('');
 
   // Fetch deployment status
-  const { data: deployment } = useQuery({
-    queryKey: [`/api/projects/${projectId}/deployment`],
+  const { data: deployment } = useQuery<Deployment>({
+    queryKey: [`/api/deployment/${projectId}`],
   });
 
   const handleRefresh = () => {
@@ -38,7 +45,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
 
   const handleDeploy = async () => {
     try {
-      await apiRequest('POST', `/api/projects/${projectId}/deploy`, {
+      await apiRequest('POST', `/api/deployment/${projectId}`, {
         type: 'static',
         customDomain: customDomain || null,
         sslEnabled: true,

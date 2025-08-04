@@ -97,19 +97,19 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
 
   // Fetch databases
   const { data: databases = [] } = useQuery<DatabaseInstance[]>({
-    queryKey: ['/api/projects', projectId, 'databases'],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/databases`)
+    queryKey: ['/api/database-hosting', projectId],
+    queryFn: () => apiRequest(`/api/database-hosting/${projectId}`)
   });
 
   // Create database
   const createDatabaseMutation = useMutation({
     mutationFn: (data: typeof databaseConfig) =>
-      apiRequest(`/api/projects/${projectId}/databases`, {
+      apiRequest(`/api/database-hosting/${projectId}`, {
         method: 'POST',
         body: JSON.stringify(data)
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'databases'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/database-hosting', projectId] });
       setShowNewDatabase(false);
       toast({
         title: "Database created",
@@ -121,11 +121,11 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
   // Create backup
   const createBackupMutation = useMutation({
     mutationFn: (databaseId: number) =>
-      apiRequest(`/api/projects/${projectId}/databases/${databaseId}/backup`, {
+      apiRequest(`/api/database-hosting/${projectId}/${databaseId}/backup`, {
         method: 'POST'
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'databases'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/database-hosting', projectId] });
       toast({
         title: "Backup started",
         description: "Your database backup is in progress"
@@ -136,7 +136,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
   // Execute query
   const executeQueryMutation = useMutation({
     mutationFn: ({ databaseId, query }: { databaseId: number; query: string }) =>
-      apiRequest(`/api/projects/${projectId}/databases/${databaseId}/query`, {
+      apiRequest(`/api/database-hosting/${projectId}/${databaseId}/query`, {
         method: 'POST',
         body: JSON.stringify({ query })
       }),

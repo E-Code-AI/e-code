@@ -26,19 +26,19 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ projectId, onPreviewRe
 
   // Query to get preview status
   const { data: previewStatus, refetch } = useQuery<PreviewStatus>({
-    queryKey: [`/api/projects/${projectId}/preview/status`],
+    queryKey: [`/api/preview/${projectId}/status`],
     refetchInterval: 2000
   });
 
   // Mutation to start preview
   const startPreviewMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/projects/${projectId}/preview/start`, 'POST'),
+    mutationFn: () => apiRequest(`/api/preview/${projectId}/start`, 'POST'),
     onSuccess: (data) => {
       toast({
         title: "Preview Started",
         description: "Your app is starting up..."
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/preview/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/preview/${projectId}/status`] });
       if (data.url && onPreviewReady) {
         onPreviewReady(data.url);
       }
@@ -54,13 +54,13 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ projectId, onPreviewRe
 
   // Mutation to stop preview
   const stopPreviewMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/projects/${projectId}/preview/stop`, 'POST'),
+    mutationFn: () => apiRequest(`/api/preview/${projectId}/stop`, 'POST'),
     onSuccess: () => {
       toast({
         title: "Preview Stopped",
         description: "The preview has been stopped."
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/preview/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/preview/${projectId}/status`] });
     }
   });
 

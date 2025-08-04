@@ -114,22 +114,22 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
 
   // Fetch buckets
   const { data: buckets = [], isLoading: bucketsLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/storage/buckets`],
+    queryKey: [`/api/storage/${projectId}/buckets`],
   });
 
   // Fetch objects in current bucket
   const { data: objects = [], isLoading: objectsLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/storage/buckets/${selectedBucket?.id}/objects`, currentPath],
+    queryKey: [`/api/storage/${projectId}/buckets/${selectedBucket?.id}/objects`, currentPath],
     enabled: !!selectedBucket,
   });
 
   // Create bucket mutation
   const createBucketMutation = useMutation({
     mutationFn: async (data: { name: string; region: string; isPublic: boolean }) => {
-      return apiRequest('POST', `/api/projects/${projectId}/storage/buckets`, data);
+      return apiRequest('POST', `/api/storage/${projectId}/buckets`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/storage/buckets`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/storage/${projectId}/buckets`] });
       setShowCreateBucket(false);
       setNewBucketName('');
       toast({
@@ -149,10 +149,10 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
   // Delete object mutation
   const deleteObjectMutation = useMutation({
     mutationFn: async (objectKey: string) => {
-      return apiRequest('DELETE', `/api/projects/${projectId}/storage/buckets/${selectedBucket?.id}/objects/${objectKey}`);
+      return apiRequest('DELETE', `/api/storage/${projectId}/buckets/${selectedBucket?.id}/objects/${objectKey}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/storage/buckets/${selectedBucket?.id}/objects`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/storage/${projectId}/buckets/${selectedBucket?.id}/objects`] });
       toast({
         title: 'Object Deleted',
         description: 'File deleted successfully',

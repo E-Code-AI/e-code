@@ -113,27 +113,32 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
 
   // Fetch deployments
   const { data: deployments = [] } = useQuery<AdvancedDeployment[]>({
-    queryKey: ['/api/projects', projectId, 'advanced-deployments'],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/advanced-deployments`)
+    queryKey: ['/api/deployment', projectId, 'advanced'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/deployment/${projectId}/advanced`);
+      return res.json();
+    }
   });
 
   // Fetch cron jobs
   const { data: cronJobs = [] } = useQuery<CronJob[]>({
-    queryKey: ['/api/projects', projectId, 'cron-jobs'],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/cron-jobs`),
+    queryKey: ['/api/deployment', projectId, 'cron-jobs'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/deployment/${projectId}/cron-jobs`);
+      return res.json();
+    },
     enabled: deployments.length > 0
   });
 
   // Create deployment
   const createDeploymentMutation = useMutation({
-    mutationFn: (data: typeof deploymentConfig) =>
-      apiRequest(`/api/projects/${projectId}/advanced-deployments`, {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }),
+    mutationFn: async (data: typeof deploymentConfig) => {
+      const res = await apiRequest('POST', `/api/deployment/${projectId}/advanced`, data);
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/projects', projectId, 'advanced-deployments'] 
+        queryKey: ['/api/deployment', projectId, 'advanced'] 
       });
       setShowNewDeployment(false);
       toast({
@@ -145,14 +150,13 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
 
   // Update deployment
   const updateDeploymentMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      apiRequest(`/api/projects/${projectId}/advanced-deployments/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data)
-      }),
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const res = await apiRequest('PATCH', `/api/deployment/${projectId}/advanced/${id}`, data);
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/projects', projectId, 'advanced-deployments'] 
+        queryKey: ['/api/deployment', projectId, 'advanced'] 
       });
       toast({
         title: "Deployment updated",
@@ -163,13 +167,12 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
 
   // Create cron job
   const createCronJobMutation = useMutation({
-    mutationFn: (data: { deploymentId: number; name: string; schedule: string; command: string }) =>
-      apiRequest(`/api/projects/${projectId}/cron-jobs`, {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }),
+    mutationFn: async (data: { deploymentId: number; name: string; schedule: string; command: string }) => {
+      const res = await apiRequest('POST', `/api/deployment/${projectId}/cron-jobs`, data);
+      return res.json();
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'cron-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/deployment', projectId, 'cron-jobs'] });
       toast({
         title: "Cron job created",
         description: "Your scheduled task has been set up"

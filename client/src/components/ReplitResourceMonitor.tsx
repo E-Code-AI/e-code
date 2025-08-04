@@ -77,19 +77,19 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
 
   // Fetch current metrics
   const { data: currentMetrics } = useQuery<ResourceMetrics>({
-    queryKey: [`/api/projects/${projectId}/metrics/current`],
+    queryKey: [`/api/monitoring/${projectId}/current`],
     refetchInterval: autoRefresh ? 5000 : false
   });
 
   // Fetch historical metrics
   const { data: historicalMetrics = [] } = useQuery<ResourceMetrics[]>({
-    queryKey: [`/api/projects/${projectId}/metrics/history`, timeRange],
+    queryKey: [`/api/monitoring/${projectId}/history`, timeRange],
     refetchInterval: autoRefresh ? 30000 : false
   });
 
   // Fetch running processes
   const { data: processes = [] } = useQuery<ProcessInfo[]>({
-    queryKey: [`/api/projects/${projectId}/processes`],
+    queryKey: [`/api/monitoring/${projectId}/processes`],
     refetchInterval: autoRefresh ? 10000 : false
   });
 
