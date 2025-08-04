@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Clock, RotateCcw, Save } from 'lucide-react';
+import { Clock, RotateCcw, Save, DollarSign, Code, FileText, Activity } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 interface CheckpointsPanelProps {
   projectId: number;
@@ -101,9 +102,49 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
               <Card key={checkpoint.id} className="p-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h4 className="font-medium">{checkpoint.name}</h4>
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-medium">{checkpoint.name || checkpoint.message}</h4>
+                      {checkpoint.pricing && (
+                        <Badge 
+                          variant={
+                            checkpoint.pricing.complexity === 'expert' ? 'destructive' :
+                            checkpoint.pricing.complexity === 'very_complex' ? 'secondary' :
+                            checkpoint.pricing.complexity === 'complex' ? 'default' :
+                            'outline'
+                          }
+                          className="ml-2"
+                        >
+                          {checkpoint.pricing.complexity}
+                        </Badge>
+                      )}
+                    </div>
                     {checkpoint.description && (
                       <p className="text-sm text-muted-foreground">{checkpoint.description}</p>
+                    )}
+                    {checkpoint.agentTaskDescription && (
+                      <p className="text-sm text-muted-foreground italic mt-1">
+                        AI Task: {checkpoint.agentTaskDescription}
+                      </p>
+                    )}
+                    {checkpoint.pricing && (
+                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <span className="flex items-center">
+                          <DollarSign className="h-3 w-3 mr-1" />
+                          ${checkpoint.pricing.costInDollars.toFixed(2)}
+                        </span>
+                        <span className="flex items-center">
+                          <Code className="h-3 w-3 mr-1" />
+                          {checkpoint.linesOfCodeWritten || 0} lines
+                        </span>
+                        <span className="flex items-center">
+                          <FileText className="h-3 w-3 mr-1" />
+                          {checkpoint.filesModified || 0} files
+                        </span>
+                        <span className="flex items-center">
+                          <Activity className="h-3 w-3 mr-1" />
+                          {checkpoint.apiCallsCount || 0} API calls
+                        </span>
+                      </div>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
                       <Clock className="h-3 w-3 inline mr-1" />
