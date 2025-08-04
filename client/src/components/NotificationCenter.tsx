@@ -32,7 +32,17 @@ import { queryClient } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import type { Notification } from '@shared/schema';
+// Notification interface
+interface Notification {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  url?: string;
+  read: boolean;
+  timestamp: string;
+  metadata?: any;
+}
 
 // Icon mapping for notification types
 const notificationIcons: Record<string, any> = {
@@ -72,7 +82,7 @@ export function NotificationCenter() {
   const { toast } = useToast();
 
   // Fetch notifications from API
-  const { data: notifications = [], isLoading } = useQuery({
+  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['/api/notifications'],
     refetchInterval: 60000, // Refetch every minute
   });
@@ -80,9 +90,7 @@ export function NotificationCenter() {
   // Mark notification as read mutation
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: number) => {
-      await apiRequest(`/api/notifications/${notificationId}/read`, {
-        method: 'POST',
-      });
+      await apiRequest('POST', `/api/notifications/${notificationId}/read`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
@@ -92,9 +100,7 @@ export function NotificationCenter() {
   // Mark all notifications as read mutation
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest('/api/notifications/read-all', {
-        method: 'POST',
-      });
+      await apiRequest('POST', '/api/notifications/read-all');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
@@ -108,9 +114,7 @@ export function NotificationCenter() {
   // Delete notification mutation
   const deleteNotificationMutation = useMutation({
     mutationFn: async (notificationId: number) => {
-      await apiRequest(`/api/notifications/${notificationId}`, {
-        method: 'DELETE',
-      });
+      await apiRequest('DELETE', `/api/notifications/${notificationId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
@@ -120,9 +124,7 @@ export function NotificationCenter() {
   // Clear all notifications mutation
   const clearAllMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest('/api/notifications', {
-        method: 'DELETE',
-      });
+      await apiRequest('DELETE', '/api/notifications');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
@@ -251,7 +253,7 @@ export function NotificationCenter() {
                                 {notification.message}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                                {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
                               </p>
                             </div>
                             <div className="opacity-0 hover:opacity-100">
@@ -305,7 +307,7 @@ export function NotificationCenter() {
                             {notification.message}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
                           </p>
                         </div>
                         {notification.read && (

@@ -65,7 +65,7 @@ export default function EditorPage() {
   } = useQuery({
     queryKey: ['/api/projects', projectIdNum],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/projects/${projectIdNum}`);
+      const res = await apiRequest('GET', `/api/user/projects/${projectIdNum}`);
       return res.json();
     },
     enabled: !!projectIdNum && !!user,

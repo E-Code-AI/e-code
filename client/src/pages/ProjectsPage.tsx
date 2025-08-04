@@ -168,7 +168,7 @@ const ProjectsPage = () => {
   const { data: pinnedProjects = [] } = useQuery({
     queryKey: ['/api/projects/pinned'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/projects/pinned');
+      const res = await apiRequest('GET', '/api/user/projects/pinned');
       if (!res.ok) return [];
       const projects = await res.json();
       return projects.map((p: any) => p.id);
@@ -267,7 +267,7 @@ const ProjectsPage = () => {
   // Mutation for deleting a project
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
-      const res = await apiRequest('DELETE', `/api/projects/${projectId}`);
+      const res = await apiRequest('DELETE', `/api/user/projects/${projectId}`);
       if (!res.ok) {
         throw new Error('Failed to delete project');
       }
@@ -306,7 +306,7 @@ const ProjectsPage = () => {
   // Mutation for forking a project
   const forkProjectMutation = useMutation({
     mutationFn: async ({ projectId, name }: { projectId: number; name: string }) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/fork`, { name });
+      const res = await apiRequest('POST', `/api/user/projects/${projectId}/fork`, { name });
       if (!res.ok) {
         throw new Error('Failed to fork project');
       }
@@ -335,7 +335,7 @@ const ProjectsPage = () => {
   // Mutation for liking a project
   const likeProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/like`);
+      const res = await apiRequest('POST', `/api/user/projects/${projectId}/like`);
       if (!res.ok) {
         throw new Error('Failed to like project');
       }
@@ -361,7 +361,7 @@ const ProjectsPage = () => {
   // Mutation for unliking a project
   const unlikeProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
-      const res = await apiRequest('DELETE', `/api/projects/${projectId}/like`);
+      const res = await apiRequest('DELETE', `/api/user/projects/${projectId}/like`);
       if (!res.ok) {
         throw new Error('Failed to unlike project');
       }
@@ -387,7 +387,7 @@ const ProjectsPage = () => {
   // Mutation for tracking project views
   const trackViewMutation = useMutation({
     mutationFn: async (projectId: number) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/view`);
+      const res = await apiRequest('POST', `/api/analytics/projects/${projectId}/view`);
       if (!res.ok) {
         throw new Error('Failed to track view');
       }
@@ -398,7 +398,7 @@ const ProjectsPage = () => {
   // Mutation for pinning a project
   const pinProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/pin`);
+      const res = await apiRequest('POST', `/api/user/projects/${projectId}/pin`);
       if (!res.ok) {
         throw new Error('Failed to pin project');
       }
@@ -424,7 +424,7 @@ const ProjectsPage = () => {
   // Mutation for unpinning a project
   const unpinProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
-      const res = await apiRequest('DELETE', `/api/projects/${projectId}/pin`);
+      const res = await apiRequest('DELETE', `/api/user/projects/${projectId}/pin`);
       if (!res.ok) {
         throw new Error('Failed to unpin project');
       }

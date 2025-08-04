@@ -113,7 +113,7 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
 
   const exportTable = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/database/export/${selectedTable}`);
+      const response = await fetch(`/api/database/${projectId}/export/${selectedTable}`);
       if (!response.ok) throw new Error('Failed to export table');
       const data = await response.json();
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
