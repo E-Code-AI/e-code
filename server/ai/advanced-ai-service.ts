@@ -131,7 +131,7 @@ Format as JSON matching the CodeExplanation interface.`;
       // Fallback if AI doesn't return valid JSON
       return {
         summary: response,
-        concepts: analysis.patterns,
+        concepts: analysis.patterns.map((p: any) => typeof p === 'string' ? p : p.name || p.type || 'unknown'),
         complexity: analysis.complexity > 10 ? 'complex' : analysis.complexity > 5 ? 'moderate' : 'simple',
         lineByLine: []
       };
@@ -234,7 +234,7 @@ ${file.content}
 
 Code metrics:
 - Complexity: ${analysis.complexity}
-- Lines: ${analysis.lines}
+- Lines: ${(file.content || '').split('\n').length}
 - Functions: ${analysis.functions.length}
 
 Suggest improvements for:
@@ -316,7 +316,7 @@ ${file.content}
 
 Code metrics:
 - Complexity: ${analysis.complexity}
-- Lines: ${analysis.lines}
+- Lines: ${(file.content || '').split('\n').length}
 - Functions: ${analysis.functions.length}
 - Dependencies: ${analysis.dependencies.join(', ')}
 
