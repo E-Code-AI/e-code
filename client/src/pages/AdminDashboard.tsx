@@ -11,7 +11,7 @@ import {
   Settings, Users, Shield, Database, Activity, 
   FileText, Cpu, GitBranch, Package, Globe,
   Lock, BarChart3, CheckCircle, XCircle,
-  DollarSign, TrendingUp
+  DollarSign, TrendingUp, Palette, Zap, Heart
 } from 'lucide-react';
 import { Link } from 'wouter';
 import PerformanceMonitor from '@/pages/admin/PerformanceMonitor';
@@ -45,6 +45,22 @@ interface ProjectStats {
   totalStorage: string;
 }
 
+interface ImportStats {
+  figma: number;
+  bolt: number;
+  lovable: number;
+  webContent: number;
+  total: number;
+  recent: Array<{
+    id: number;
+    type: string;
+    url: string;
+    projectId: number;
+    status: string;
+    createdAt: string;
+  }>;
+}
+
 export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState('overview');
 
@@ -62,6 +78,11 @@ export default function AdminDashboard() {
   // Fetch project statistics  
   const { data: projectStats } = useQuery({
     queryKey: ['/api/admin/project-stats']
+  });
+
+  // Fetch import statistics
+  const { data: importStats } = useQuery({
+    queryKey: ['/api/admin/import-stats']
   });
 
   // Fetch recent activities
@@ -183,6 +204,70 @@ export default function AdminDashboard() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Import Statistics */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Platform Imports</CardTitle>
+              <CardDescription>Import activity from various platforms</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="text-center p-4 border rounded-lg">
+                  <Palette className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+                  <div className="text-2xl font-bold">{importStats?.figma || 0}</div>
+                  <div className="text-sm text-muted-foreground">Figma Imports</div>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <Zap className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
+                  <div className="text-2xl font-bold">{importStats?.bolt || 0}</div>
+                  <div className="text-sm text-muted-foreground">Bolt Imports</div>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <Heart className="h-8 w-8 mx-auto mb-2 text-red-600" />
+                  <div className="text-2xl font-bold">{importStats?.lovable || 0}</div>
+                  <div className="text-sm text-muted-foreground">Lovable Imports</div>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <Globe className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                  <div className="text-2xl font-bold">{importStats?.webContent || 0}</div>
+                  <div className="text-sm text-muted-foreground">Web Imports</div>
+                </div>
+              </div>
+              
+              {importStats?.recent && importStats.recent.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Recent Imports</h4>
+                  <div className="space-y-2">
+                    {importStats.recent.slice(0, 5).map((importItem) => (
+                      <div key={importItem.id} className="flex items-center justify-between text-sm p-2 border rounded">
+                        <div className="flex items-center gap-2">
+                          {importItem.type === 'figma' && <Palette className="h-4 w-4 text-purple-600" />}
+                          {importItem.type === 'bolt' && <Zap className="h-4 w-4 text-yellow-600" />}
+                          {importItem.type === 'lovable' && <Heart className="h-4 w-4 text-red-600" />}
+                          {importItem.type === 'web' && <Globe className="h-4 w-4 text-blue-600" />}
+                          <span className="capitalize">{importItem.type} Import</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Link href={`/projects/${importItem.projectId}`}>
+                            <Button variant="ghost" size="sm">
+                              View Project
+                            </Button>
+                          </Link>
+                          <Badge variant={importItem.status === 'completed' ? 'default' : 'secondary'}>
+                            {importItem.status}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(importItem.createdAt), { addSuffix: true })}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

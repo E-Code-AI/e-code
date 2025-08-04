@@ -116,6 +116,9 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import { dataProvisioningService } from './data/data-provisioning-service';
 import { resourceMonitor } from './services/resource-monitor';
 import { CheckpointService } from './services/checkpoint-service';
+import { figmaImportService } from './import/figma-import-service';
+import { boltImportService } from './import/bolt-import-service';
+import { lovableImportService } from './import/lovable-import-service';
 
 const logger = createLogger('routes');
 const checkpointService = new CheckpointService();
@@ -3369,6 +3372,93 @@ API will be available at http://localhost:3000
     } catch (error) {
       console.error('Error downloading export:', error);
       res.status(500).json({ error: 'Failed to download export' });
+    }
+  });
+
+  // Import Routes for Figma, Bolt, and Lovable
+  // Figma Import
+  app.post('/api/import/figma', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, figmaUrl } = req.body;
+      
+      const importResult = await figmaImportService.importFromFigma({
+        projectId,
+        userId: req.user!.id,
+        figmaUrl
+      });
+      
+      res.json({ success: true, import: importResult });
+    } catch (error: any) {
+      console.error('Figma import error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Bolt Import
+  app.post('/api/import/bolt', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, boltUrl, boltProjectData } = req.body;
+      
+      const importResult = await boltImportService.importFromBolt({
+        projectId,
+        userId: req.user!.id,
+        boltUrl,
+        boltProjectData
+      });
+      
+      res.json({ success: true, import: importResult });
+    } catch (error: any) {
+      console.error('Bolt import error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Lovable Import
+  app.post('/api/import/lovable', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, lovableUrl, lovableExportData } = req.body;
+      
+      const importResult = await lovableImportService.importFromLovable({
+        projectId,
+        userId: req.user!.id,
+        lovableUrl,
+        lovableExportData
+      });
+      
+      res.json({ success: true, import: importResult });
+    } catch (error: any) {
+      console.error('Lovable import error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get import status
+  app.get('/api/import/:id/status', ensureAuthenticated, async (req, res) => {
+    try {
+      const importId = parseInt(req.params.id);
+      const importRecord = await storage.getProjectImport(importId);
+      
+      if (!importRecord) {
+        return res.status(404).json({ error: 'Import not found' });
+      }
+      
+      res.json(importRecord);
+    } catch (error: any) {
+      console.error('Error fetching import status:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all imports for a project
+  app.get('/api/projects/:id/imports', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const imports = await storage.getProjectImports(projectId);
+      
+      res.json(imports);
+    } catch (error: any) {
+      console.error('Error fetching project imports:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 
