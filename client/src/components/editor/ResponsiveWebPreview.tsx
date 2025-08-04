@@ -46,8 +46,18 @@ export function ResponsiveWebPreview({
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Show "Cannot GET" message instead of actual preview
-  const previewData = { previewUrl: null };
+  // Get preview URL from the backend - REAL BACKEND
+  const { data: previewData } = useQuery<{ previewUrl: string }>({
+    queryKey: [`/api/preview/url`, projectId],
+    enabled: !!projectId
+  });
+
+  useEffect(() => {
+    // Use the preview URL from the backend
+    if (previewData?.previewUrl) {
+      setPreviewUrl(previewData.previewUrl);
+    }
+  }, [previewData]);
 
   const handleRefresh = () => {
     if (iframeRef.current) {
@@ -149,14 +159,58 @@ export function ResponsiveWebPreview({
 
       {/* Preview Content */}
       <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
-        <div className="text-center space-y-4">
-          <div className="font-mono text-sm text-muted-foreground bg-muted p-4 rounded">
-            Cannot GET /
+        {!previewUrl ? (
+          <div className="text-center">
+            <p className="text-[var(--ecode-text-muted)] mb-2">
+              Add an HTML file to preview your project
+            </p>
+            <p className="text-sm text-[var(--ecode-text-muted)]">
+              The preview will appear automatically
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Preview not available
-          </p>
-        </div>
+        ) : (
+          <div 
+            className={cn(
+              "relative bg-white rounded-lg shadow-lg transition-all duration-300",
+              isResponsive ? "w-full h-full" : "overflow-hidden"
+            )}
+            style={{
+              width: isResponsive ? '100%' : deviceSize.width,
+              height: isResponsive ? '100%' : deviceSize.height,
+              maxWidth: '100%',
+              maxHeight: '100%'
+            }}
+          >
+            {/* Device Frame (optional) */}
+            {!isResponsive && !isMobile && (
+              <div className="absolute -top-6 left-0 right-0 text-center">
+                <span className="text-xs text-[var(--ecode-text-muted)]">
+                  {deviceSize.name} ({deviceSize.width} × {deviceSize.height})
+                </span>
+              </div>
+            )}
+
+            {/* Loading Overlay */}
+            {isLoading && (
+              <div className="absolute inset-0 bg-[var(--ecode-background)] flex items-center justify-center z-10">
+                <div className="text-center">
+                  <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-[var(--ecode-accent)]" />
+                  <p className="text-sm text-[var(--ecode-text-muted)]">Loading preview...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Iframe */}
+            <iframe
+              ref={iframeRef}
+              src={previewUrl}
+              className="w-full h-full border-0 rounded-lg"
+              onLoad={handleIframeLoad}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+              title={`Preview for project ${projectId}`}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
