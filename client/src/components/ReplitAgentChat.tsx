@@ -78,6 +78,23 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
     performanceAnalysis: false
   });
   const [queueItems, setQueueItems] = useState<string[]>([]);
+  const [projectInfo, setProjectInfo] = useState<any>(null);
+  
+  // Fetch project details
+  useEffect(() => {
+    const fetchProjectInfo = async () => {
+      try {
+        const data = await apiRequest('GET', `/api/projects/${projectId}`);
+        setProjectInfo(data);
+      } catch (error) {
+        console.error('Failed to fetch project info:', error);
+      }
+    };
+    
+    if (projectId) {
+      fetchProjectInfo();
+    }
+  }, [projectId]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -872,66 +889,222 @@ Our team is working to resolve this issue. Please try again in a moment.`,
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center mx-auto mb-4">
                 <Bot className="h-8 w-8 text-white" />
               </div>
-              <h3 className="font-semibold mb-2 text-center">Hi! I'm your E-Code Agent</h3>
+              <h3 className="font-semibold mb-2 text-center">
+                {projectInfo ? `Hi! I'm here to help with ${projectInfo.name}` : "Hi! I'm your E-Code Agent"}
+              </h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto text-center">
-                I can help you build complete applications, debug code, set up databases, and deploy your projects.
+                {projectInfo 
+                  ? `I can help you enhance your ${projectInfo.template || 'project'}, add features, fix bugs, and deploy updates.`
+                  : "I can help you build complete applications, debug code, set up databases, and deploy your projects."
+                }
               </p>
               
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Try asking me to:</h4>
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2">
+                    {projectInfo ? "Try asking me to:" : "Try asking me to:"}
+                  </h4>
                   <div className="space-y-2">
-                    <button
-                      onClick={() => setInput('Build a todo app with React and TypeScript')}
-                      className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="text-sm font-medium">Build a todo app</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Create a modern task management app with React
-                      </p>
-                    </button>
-                    
-                    <button
-                      onClick={() => setInput('Create a portfolio website with animations')}
-                      className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-blue-500" />
-                        <span className="text-sm font-medium">Portfolio website</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Design a personal portfolio with smooth animations
-                      </p>
-                    </button>
-                    
-                    <button
-                      onClick={() => setInput('Build a real-time chat application')}
-                      className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4 text-purple-500" />
-                        <span className="text-sm font-medium">Chat application</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Create a WebSocket-powered chat with rooms
-                      </p>
-                    </button>
-                    
-                    <button
-                      onClick={() => setInput('Create an expense tracker with charts')}
-                      className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Database className="h-4 w-4 text-orange-500" />
-                        <span className="text-sm font-medium">Expense tracker</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Track expenses with visual charts and reports
-                      </p>
-                    </button>
+                    {projectInfo ? (
+                      // Project-specific suggestions based on the project type
+                      <>
+                        {projectInfo.name.includes('Chat') || projectInfo.name.includes('WhatsApp') ? (
+                          <>
+                            <button
+                              onClick={() => setInput('Add voice messages support to the chat')}
+                              className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Mic className="h-4 w-4 text-green-500" />
+                                <span className="text-sm font-medium">Add voice messages</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Enable voice recording and playback in chat
+                              </p>
+                            </button>
+                            
+                            <button
+                              onClick={() => setInput('Implement message reactions and emojis')}
+                              className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <MessageSquare className="h-4 w-4 text-blue-500" />
+                                <span className="text-sm font-medium">Add reactions</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                React to messages with emojis
+                              </p>
+                            </button>
+                          </>
+                        ) : projectInfo.name.includes('CRM') || projectInfo.name.includes('SalesForce') ? (
+                          <>
+                            <button
+                              onClick={() => setInput('Add email automation for customer follow-ups')}
+                              className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Activity className="h-4 w-4 text-purple-500" />
+                                <span className="text-sm font-medium">Email automation</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Automate customer follow-up emails
+                              </p>
+                            </button>
+                            
+                            <button
+                              onClick={() => setInput('Generate sales reports and analytics dashboard')}
+                              className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Activity className="h-4 w-4 text-orange-500" />
+                                <span className="text-sm font-medium">Sales analytics</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Create detailed sales performance reports
+                              </p>
+                            </button>
+                          </>
+                        ) : projectInfo.name.includes('Solar') || projectInfo.name.includes('commerce') ? (
+                          <>
+                            <button
+                              onClick={() => setInput('Add customer reviews and ratings system')}
+                              className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Shield className="h-4 w-4 text-yellow-500" />
+                                <span className="text-sm font-medium">Product reviews</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Let customers rate and review products
+                              </p>
+                            </button>
+                            
+                            <button
+                              onClick={() => setInput('Implement discount codes and promotions')}
+                              className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Zap className="h-4 w-4 text-red-500" />
+                                <span className="text-sm font-medium">Promotions system</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Add coupon codes and special offers
+                              </p>
+                            </button>
+                          </>
+                        ) : (
+                          // Generic suggestions for other project types
+                          <>
+                            <button
+                              onClick={() => setInput(`Add new features to ${projectInfo.name}`)}
+                              className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Code className="h-4 w-4 text-blue-500" />
+                                <span className="text-sm font-medium">Enhance features</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Add new functionality to your project
+                              </p>
+                            </button>
+                            
+                            <button
+                              onClick={() => setInput(`Improve the UI/UX of ${projectInfo.name}`)}
+                              className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Palette className="h-4 w-4 text-purple-500" />
+                                <span className="text-sm font-medium">Improve design</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Enhance the user interface
+                              </p>
+                            </button>
+                          </>
+                        )}
+                        
+                        <button
+                          onClick={() => setInput(`Fix bugs and improve performance`)}
+                          className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Activity className="h-4 w-4 text-green-500" />
+                            <span className="text-sm font-medium">Optimize performance</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Debug issues and improve speed
+                          </p>
+                        </button>
+                        
+                        <button
+                          onClick={() => setInput(`Deploy ${projectInfo.name} to production`)}
+                          className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-orange-500" />
+                            <span className="text-sm font-medium">Deploy to production</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Make your project live
+                          </p>
+                        </button>
+                      </>
+                    ) : (
+                      // Generic suggestions when no project is loaded
+                      <>
+                        <button
+                          onClick={() => setInput('Build a todo app with React and TypeScript')}
+                          className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <span className="text-sm font-medium">Build a todo app</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Create a modern task management app with React
+                          </p>
+                        </button>
+                        
+                        <button
+                          onClick={() => setInput('Create a portfolio website with animations')}
+                          className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-blue-500" />
+                            <span className="text-sm font-medium">Portfolio website</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Design a personal portfolio with smooth animations
+                          </p>
+                        </button>
+                        
+                        <button
+                          onClick={() => setInput('Build a real-time chat application')}
+                          className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4 text-purple-500" />
+                            <span className="text-sm font-medium">Chat application</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Create a WebSocket-powered chat with rooms
+                          </p>
+                        </button>
+                        
+                        <button
+                          onClick={() => setInput('Create an expense tracker with charts')}
+                          className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Database className="h-4 w-4 text-orange-500" />
+                            <span className="text-sm font-medium">Expense tracker</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Track expenses with visual charts and reports
+                          </p>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
