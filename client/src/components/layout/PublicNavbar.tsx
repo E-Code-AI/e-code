@@ -41,6 +41,15 @@ export function PublicNavbar() {
     { title: 'Bounties', href: '/bounties', description: 'Earn by coding' },
   ];
 
+  const solutionsItems = [
+    { title: 'App Builder', href: '/solutions/app-builder', description: 'Build full-stack applications with AI' },
+    { title: 'Website Builder', href: '/solutions/website-builder', description: 'Create stunning websites instantly' },
+    { title: 'Game Builder', href: '/solutions/game-builder', description: 'Design and code games with AI' },
+    { title: 'Dashboard Builder', href: '/solutions/dashboard-builder', description: 'Build data visualizations and dashboards' },
+    { title: 'Chatbot / AI Agent Builder', href: '/solutions/chatbot-builder', description: 'Create intelligent conversational agents' },
+    { title: 'AI Agent Internal Builder', href: '/solutions/internal-ai-builder', description: 'Deploy AI agents for your team' },
+  ];
+
   const resourcesItems = [
     { title: 'Documentation', href: '/docs', description: 'Learn how to use E-Code' },
     { title: 'Blog', href: '/blog', description: 'News and updates' },
@@ -78,6 +87,24 @@ export function PublicNavbar() {
                     <NavigationMenuContent>
                       <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                         {productItems.map((item) => (
+                          <li key={item.title}>
+                            <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                              <div className="text-sm font-medium leading-none">{item.title}</div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                {item.description}
+                              </p>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger>Solutions</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                        {solutionsItems.map((item) => (
                           <li key={item.title}>
                             <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
                               <div className="text-sm font-medium leading-none">{item.title}</div>
@@ -239,6 +266,50 @@ export function PublicNavbar() {
                               'AI': Sparkles,
                               'Deployments': Rocket,
                               'Bounties': DollarSign
+                            };
+                            const Icon = icons[item.title] || Code;
+                            
+                            return (
+                              <Link key={item.title} href={item.href}>
+                                <Button
+                                  variant="ghost"
+                                  className="mobile-nav-item w-full justify-start h-auto py-3 px-3 hover:bg-muted/80"
+                                  onClick={() => setMobileMenuOpen(false)}
+                                >
+                                  <div className="flex items-start gap-3 w-full">
+                                    <div className="rounded-lg bg-primary/10 p-2 mt-0.5">
+                                      <Icon className="mobile-nav-icon h-4 w-4 text-primary" />
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                      <div className="font-medium text-sm">{item.title}</div>
+                                      <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>
+                                    </div>
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground mt-2" />
+                                  </div>
+                                </Button>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Solutions Section */}
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Solutions</h3>
+                          <Badge variant="secondary" className="text-[10px]">6 Solutions</Badge>
+                        </div>
+                        <div className="space-y-1">
+                          {solutionsItems.map((item) => {
+                            const icons: Record<string, any> = {
+                              'App Builder': Code,
+                              'Website Builder': Globe,
+                              'Game Builder': Rocket,
+                              'Dashboard Builder': Monitor,
+                              'Chatbot / AI Agent Builder': MessageSquare,
+                              'AI Agent Internal Builder': Brain
                             };
                             const Icon = icons[item.title] || Code;
                             

@@ -193,6 +193,13 @@ function AppContent() {
           <Route path="/team" component={PublicTeamPage} />
           <Route path="/collaboration" component={PublicTeamPage} />
           <Route path="/deployments" component={PublicDeploymentsPage} />
+          {/* Solution Pages */}
+          <Route path="/solutions/app-builder" component={lazy(() => import('@/pages/solutions/AppBuilder'))} />
+          <Route path="/solutions/website-builder" component={lazy(() => import('@/pages/solutions/WebsiteBuilder'))} />
+          <Route path="/solutions/game-builder" component={lazy(() => import('@/pages/solutions/GameBuilder'))} />
+          <Route path="/solutions/dashboard-builder" component={lazy(() => import('@/pages/solutions/DashboardBuilder'))} />
+          <Route path="/solutions/chatbot-builder" component={lazy(() => import('@/pages/solutions/ChatbotBuilder'))} />
+          <Route path="/solutions/internal-ai-builder" component={lazy(() => import('@/pages/solutions/InternalAIBuilder'))} />
           <ProtectedRoute path="/github-import" component={() => (
             <ReplitLayout showSidebar={false}>
               <GitHubImport />
