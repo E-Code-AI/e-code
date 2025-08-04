@@ -19,7 +19,7 @@ import {
   AlertCircle, Clock, Zap, Brain, Search, Upload, MessageSquare,
   Eye, Palette, FileCode, ListPlus, Shield, Cpu, Activity,
   DollarSign, Plus, Layers, ChevronRight, Hash,
-  GitBranch, Package, RefreshCw
+  GitBranch, Package, RefreshCw, X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
