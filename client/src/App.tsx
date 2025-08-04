@@ -57,7 +57,7 @@ const Terms = lazy(() => import("@/pages/Terms"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const Status = lazy(() => import("@/pages/Status"));
 const PublicMobilePage = lazy(() => import("@/pages/PublicMobilePage"));
-const MobileAdmin = lazy(() => import("@/pages/mobile"));
+const MobileAdmin = lazy(() => import("@/pages/Mobile"));
 const AI = lazy(() => import("@/pages/AI"));
 const Press = lazy(() => import("@/pages/Press"));
 const Partners = lazy(() => import("@/pages/Partners"));
@@ -190,6 +190,7 @@ function AppContent() {
           <Route path="/subprocessors" component={Subprocessors} />
           <Route path="/student-dpa" component={StudentDPA} />
           <Route path="/languages" component={Languages} />
+          <Route path="/templates/languages" component={Languages} />
           <Route path="/team" component={PublicTeamPage} />
           <Route path="/collaboration" component={PublicTeamPage} />
           <Route path="/deployments" component={PublicDeploymentsPage} />
@@ -319,7 +320,7 @@ function AppContent() {
           {/* Advanced Feature Routes */}
           <ProtectedRoute path="/advanced/mobile" component={() => (
             <ReplitLayout showSidebar={false}>
-              <Mobile />
+              <MobileAdmin />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/advanced/sso" component={() => (
