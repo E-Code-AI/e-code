@@ -7,6 +7,7 @@ E-Code is a comprehensive web-based Integrated Development Environment (IDE) ins
 - **API Endpoint Conversion Complete**: Successfully converted all 425 API endpoints from `/api/projects` structure to service-specific patterns (Git, Database, Files, Runtime, etc.) achieving true 100% completion
 - **TypeScript Errors Resolved**: Fixed NotificationCenter.tsx type errors and all apiRequest parameter ordering issues
 - **Query Invalidation Maintained**: Proper cache invalidation patterns preserved during conversion
+- **Project Name Header Display**: Added Replit-style project name display in header with dropdown menu containing project options (Settings, Version Control, Database, Deployments, Fork, Share, Download, History)
 
 ## User Preferences
 - **Vision**: Create a pixel-perfect development platform inspired by Replit, then add personal features, branded as E-Code

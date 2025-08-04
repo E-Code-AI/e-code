@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,6 +43,14 @@ import {
   Store,
   Rocket,
   CreditCard,
+  Share2,
+  GitBranch,
+  Download,
+  Copy,
+  FolderOpen,
+  History,
+  Star,
+  MoreHorizontal,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
@@ -51,6 +59,7 @@ import { SpotlightSearch } from "@/components/SpotlightSearch";
 import { useIsMobile } from "@/hooks/use-media-query";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
 
 import { ECodeLogo } from "@/components/ECodeLogo";
 import { MobileMenu } from "./MobileMenu";
@@ -61,7 +70,30 @@ export function ReplitHeader() {
   const [searchQuery, setSearchQuery] = useState("");
   const [spotlightOpen, setSpotlightOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [projectInfo, setProjectInfo] = useState<any>(null);
   const isMobile = useIsMobile();
+
+  // Get project ID from URL
+  const pathMatch = location.match(/^\/projects\/(\d+)/);
+  const projectId = pathMatch ? pathMatch[1] : null;
+
+  // Fetch project info if we're in a project view
+  useEffect(() => {
+    const fetchProjectInfo = async () => {
+      if (projectId) {
+        try {
+          const data = await apiRequest('GET', `/api/projects/${projectId}`);
+          setProjectInfo(data);
+        } catch (error) {
+          console.error('Failed to fetch project info:', error);
+        }
+      } else {
+        setProjectInfo(null);
+      }
+    };
+    
+    fetchProjectInfo();
+  }, [projectId]);
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -85,6 +117,94 @@ export function ReplitHeader() {
             <ECodeLogo size="sm" showText={!isMobile} className="group-hover:opacity-80 transition-opacity" />
           </div>
         </Link>
+
+        {/* Project Name Display - shown when in project view */}
+        {projectInfo && (
+          <>
+            <span className="text-[var(--ecode-text-muted)] mx-2">/</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] replit-transition font-medium flex items-center gap-1"
+                >
+                  <FolderOpen className="h-4 w-4" />
+                  {projectInfo.name}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+                <DropdownMenuItem 
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => navigate(`/projects/${projectId}`)}
+                >
+                  <Code className="mr-2 h-4 w-4" />
+                  Open project
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => navigate(`/projects/${projectId}/settings`)}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+                <DropdownMenuItem 
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => navigate(`/projects/${projectId}/git`)}
+                >
+                  <GitBranch className="mr-2 h-4 w-4" />
+                  Version control
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => navigate(`/projects/${projectId}/database`)}
+                >
+                  <Database className="mr-2 h-4 w-4" />
+                  Database
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => navigate(`/projects/${projectId}/deployments`)}
+                >
+                  <Rocket className="mr-2 h-4 w-4" />
+                  Deployments
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+                <DropdownMenuItem 
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => {/* TODO: Fork project */}}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Fork project
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => {/* TODO: Share project */}}
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => {/* TODO: Download project */}}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+                <DropdownMenuItem 
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => navigate(`/projects/${projectId}/history`)}
+                >
+                  <History className="mr-2 h-4 w-4" />
+                  History
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        )}
 
         {/* Navigation principale - hidden on mobile */}
         <nav className="hidden lg:flex items-center space-x-1 ml-8">
