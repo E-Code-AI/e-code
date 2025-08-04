@@ -39,6 +39,14 @@ import { startProject, stopProject, getProjectStatus, getProjectLogs } from "./s
 import { setupLogsWebsocket } from "./logs";
 import shellRoutes, { setupShellWebSocket } from "./routes/shell";
 import { notificationRoutes } from "./routes/notifications";
+import { webImportService } from "./tools/web-import-service";
+import { screenshotService } from "./services/screenshot-service";
+import { promptRefinementService } from "./services/prompt-refinement-service";
+import { agentProgressService } from "./services/agent-progress-service";
+import { conversationManagementService } from "./services/conversation-management-service";
+import { feedbackService } from "./services/feedback-service";
+import { agentUsageTrackingService } from "./services/agent-usage-tracking-service";
+import { advancedCapabilitiesService } from "./services/advanced-capabilities-service";
 // import { deployProject, stopDeployment, getDeploymentStatus, getDeploymentLogs } from "./deployment";
 import { 
   initRepo, 
@@ -5500,6 +5508,9 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
         // Use comprehensive autonomous builder for building detection and generation
         const buildingIntent = autonomousBuilder.detectBuildingIntent(message);
         
+        // Track start time for effort calculation
+        const startTime = Date.now();
+        
         // Initialize agentMessages at a higher scope
         let agentMessages: ChatMessage[] = [];
         
@@ -5927,14 +5938,52 @@ Generate a comprehensive application based on the user's request. Include all ne
             webSearchPerformed: responseMetadata?.webSearchPerformed || false
           });
           
-          // Track AI usage for agent mode
+          // Calculate effort-based pricing
+          let effortMetrics = {
+            filesModified: 0,
+            linesOfCode: 0,
+            tokensUsed: 0,
+            apiCalls: 1,
+            executionTimeMs: Date.now() - startTime
+          };
+          
+          let complexity = 'simple';
+          let effortScore = 1;
+          
+          // Count files and lines from actions
+          for (const action of actions) {
+            if (action.type === 'create_file' || action.type === 'update_file') {
+              effortMetrics.filesModified++;
+              if (action.content) {
+                effortMetrics.linesOfCode += action.content.split('\n').length;
+              }
+            }
+          }
+          
+          // Calculate effort score based on metrics
+          if (effortMetrics.filesModified > 10 || effortMetrics.linesOfCode > 500) {
+            complexity = 'expert';
+            effortScore = 20;
+          } else if (effortMetrics.filesModified > 5 || effortMetrics.linesOfCode > 200) {
+            complexity = 'very_complex';
+            effortScore = 15;
+          } else if (effortMetrics.filesModified > 2 || effortMetrics.linesOfCode > 100) {
+            complexity = 'complex';
+            effortScore = 10;
+          } else if (effortMetrics.filesModified > 0 || effortMetrics.linesOfCode > 50) {
+            complexity = 'moderate';
+            effortScore = 5;
+          }
+          
+          // Track AI usage and calculate pricing
           if (req.user && adminApiKey) {
             // Estimate tokens (rough approximation: ~4 chars = 1 token)
             const promptTokens = Math.ceil(agentMessages.reduce((sum, msg) => sum + msg.content.length, 0) / 4);
             const completionTokens = Math.ceil(responseContent.length / 4);
             const totalTokens = promptTokens + completionTokens;
+            effortMetrics.tokensUsed = totalTokens;
             
-            // Calculate cost based on provider (prices in USD per 1K tokens)
+            // Base cost per 1K tokens
             const costPerThousandTokens = {
               'openai': 0.002,
               'anthropic': 0.003,
@@ -5948,21 +5997,33 @@ Generate a comprehensive application based on the user's request. Include all ne
               'mistral': 0.001
             };
             
-            const cost = (totalTokens / 1000) * (costPerThousandTokens[provider.name.toLowerCase()] || 0.001);
+            // Calculate base cost and apply effort multiplier
+            const baseCost = (totalTokens / 1000) * (costPerThousandTokens[provider.name.toLowerCase()] || 0.001);
+            const effortBasedCost = baseCost * effortScore;
             
-            // Track AI usage
-            await storage.trackAIUsage(req.user.id, totalTokens, 'agent');
-            
-            // Update user's subscription token usage would go here
-            // await storage.updateUserAiTokens(req.user.id, totalTokens);
+            // Track AI usage with effort pricing
+            await storage.trackAIUsage(req.user.id, totalTokens, 'agent', {
+              effortScore,
+              complexity,
+              costInCents: Math.ceil(effortBasedCost * 100)
+            });
           }
+          
+          const pricingInfo = {
+            complexity,
+            costInCents: Math.ceil((effortMetrics.tokensUsed / 1000) * effortScore * 0.3), // $0.003 per 1K tokens * effort
+            costInDollars: ((effortMetrics.tokensUsed / 1000) * effortScore * 0.003).toFixed(2),
+            effortScore
+          };
           
           res.json({
             id: `msg_${Date.now()}`,
             role: 'assistant',
             content: responseContent,
             timestamp: Date.now(),
-            actions: actions
+            actions: actions,
+            pricing: pricingInfo,
+            metrics: effortMetrics
           });
           return;
         } else {
@@ -14741,6 +14802,1393 @@ Generate a comprehensive application based on the user's request. Include all ne
       logger.error('Error fetching available badges:', error);
       res.status(500).json({ message: 'Failed to fetch available badges' });
     }
+  });
+
+  // Agent API Routes
+  app.post('/api/agent/import-web', ensureAuthenticated, async (req, res) => {
+    try {
+      const { url, projectId } = req.body;
+      
+      if (!url || typeof url !== 'string') {
+        return res.status(400).json({ error: 'Valid URL is required' });
+      }
+
+      // Validate URL format
+      try {
+        new URL(url);
+      } catch (e) {
+        return res.status(400).json({ error: 'Invalid URL format' });
+      }
+
+      logger.info(`Processing web import request for URL: ${url}`);
+      
+      const result = await webImportService.importFromUrl(
+        url, 
+        projectId, 
+        req.user!.id
+      );
+
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      logger.error('Web import error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to import from URL' 
+      });
+    }
+  });
+
+  app.post('/api/agent/import-figma', ensureAuthenticated, async (req, res) => {
+    try {
+      const { figmaUrl, projectId } = req.body;
+      
+      if (!figmaUrl || typeof figmaUrl !== 'string') {
+        return res.status(400).json({ error: 'Valid Figma URL is required' });
+      }
+
+      logger.info(`Processing Figma import request for URL: ${figmaUrl}`);
+      
+      const result = await webImportService.importFigmaDesign(figmaUrl);
+
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      logger.error('Figma import error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to import from Figma' 
+      });
+    }
+  });
+
+  app.post('/api/agent/import-github', ensureAuthenticated, async (req, res) => {
+    try {
+      const { repoUrl, projectId } = req.body;
+      
+      if (!repoUrl || typeof repoUrl !== 'string') {
+        return res.status(400).json({ error: 'Valid GitHub repository URL is required' });
+      }
+
+      logger.info(`Processing GitHub import request for URL: ${repoUrl}`);
+      
+      const result = await webImportService.importGitHubRepo(repoUrl);
+
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      logger.error('GitHub import error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to import from GitHub' 
+      });
+    }
+  });
+
+  // Screenshot API Routes
+  app.post('/api/agent/screenshot', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.body;
+      
+      if (!projectId || typeof projectId !== 'number') {
+        return res.status(400).json({ error: 'Valid project ID is required' });
+      }
+
+      logger.info(`Capturing screenshot for project ${projectId}`);
+      
+      const result = await screenshotService.captureProjectPreview(
+        projectId,
+        req.user!.id
+      );
+
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      logger.error('Screenshot capture error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to capture screenshot' 
+      });
+    }
+  });
+
+  app.post('/api/agent/screenshot/workflow', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.body;
+      
+      if (!projectId || typeof projectId !== 'number') {
+        return res.status(400).json({ error: 'Valid project ID is required' });
+      }
+
+      logger.info(`Capturing workflow state for project ${projectId}`);
+      
+      const result = await screenshotService.captureWorkflowState(projectId);
+
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      logger.error('Workflow screenshot error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to capture workflow state' 
+      });
+    }
+  });
+
+  app.post('/api/agent/screenshot/error', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, error: errorData } = req.body;
+      
+      if (!projectId || typeof projectId !== 'number') {
+        return res.status(400).json({ error: 'Valid project ID is required' });
+      }
+
+      if (!errorData || !errorData.message) {
+        return res.status(400).json({ error: 'Error data is required' });
+      }
+
+      logger.info(`Capturing error state for project ${projectId}`);
+      
+      const error = new Error(errorData.message);
+      if (errorData.stack) {
+        error.stack = errorData.stack;
+      }
+
+      const result = await screenshotService.captureErrorState(projectId, error);
+
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      logger.error('Error screenshot capture error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to capture error state' 
+      });
+    }
+  });
+
+  // Prompt Refinement API Routes
+  app.post('/api/agent/prompt/analyze', ensureAuthenticated, async (req, res) => {
+    try {
+      const { prompt, context } = req.body;
+      
+      if (!prompt || typeof prompt !== 'string') {
+        return res.status(400).json({ error: 'Valid prompt is required' });
+      }
+
+      logger.info('Analyzing prompt quality');
+      
+      const analysis = await promptRefinementService.analyzePrompt(prompt, context);
+
+      res.json({
+        success: true,
+        analysis
+      });
+    } catch (error) {
+      logger.error('Prompt analysis error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to analyze prompt' 
+      });
+    }
+  });
+
+  app.post('/api/agent/prompt/refine', ensureAuthenticated, async (req, res) => {
+    try {
+      const { prompt, options } = req.body;
+      
+      if (!prompt || typeof prompt !== 'string') {
+        return res.status(400).json({ error: 'Valid prompt is required' });
+      }
+
+      logger.info('Refining user prompt');
+      
+      const result = await promptRefinementService.refinePrompt(prompt, options);
+
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      logger.error('Prompt refinement error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to refine prompt' 
+      });
+    }
+  });
+
+  app.post('/api/agent/prompt/alternatives', ensureAuthenticated, async (req, res) => {
+    try {
+      const { prompt, count } = req.body;
+      
+      if (!prompt || typeof prompt !== 'string') {
+        return res.status(400).json({ error: 'Valid prompt is required' });
+      }
+
+      logger.info('Generating prompt alternatives');
+      
+      const result = await promptRefinementService.generateAlternatives(
+        prompt, 
+        count || 3
+      );
+
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      logger.error('Alternative generation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to generate alternatives' 
+      });
+    }
+  });
+
+  app.post('/api/agent/prompt/feedback', ensureAuthenticated, async (req, res) => {
+    try {
+      const { promptId, feedback } = req.body;
+      
+      if (!promptId || !feedback) {
+        return res.status(400).json({ error: 'Prompt ID and feedback are required' });
+      }
+
+      logger.info('Processing prompt refinement feedback');
+      
+      await promptRefinementService.learnFromFeedback(promptId, feedback);
+
+      res.json({
+        success: true,
+        message: 'Feedback processed successfully'
+      });
+    } catch (error) {
+      logger.error('Feedback processing error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to process feedback' 
+      });
+    }
+  });
+
+  // Agent Progress API Routes
+  app.post('/api/agent/task/create', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, title, description, estimatedSteps } = req.body;
+      
+      if (!projectId || !title) {
+        return res.status(400).json({ error: 'Project ID and title are required' });
+      }
+
+      logger.info(`Creating agent task for project ${projectId}`);
+      
+      const task = await agentProgressService.createTask({
+        projectId,
+        userId: req.user!.id,
+        title,
+        description,
+        estimatedSteps
+      });
+
+      res.json({
+        success: true,
+        task
+      });
+    } catch (error) {
+      logger.error('Task creation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to create task' 
+      });
+    }
+  });
+
+  app.post('/api/agent/task/:taskId/start', ensureAuthenticated, async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      
+      logger.info(`Starting agent task ${taskId}`);
+      await agentProgressService.startTask(taskId);
+
+      res.json({
+        success: true,
+        message: 'Task started'
+      });
+    } catch (error) {
+      logger.error('Task start error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to start task' 
+      });
+    }
+  });
+
+  app.post('/api/agent/task/:taskId/pause', ensureAuthenticated, async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      
+      logger.info(`Pausing agent task ${taskId}`);
+      await agentProgressService.pauseTask(taskId);
+
+      res.json({
+        success: true,
+        message: 'Task paused'
+      });
+    } catch (error) {
+      logger.error('Task pause error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to pause task' 
+      });
+    }
+  });
+
+  app.post('/api/agent/task/:taskId/resume', ensureAuthenticated, async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      
+      logger.info(`Resuming agent task ${taskId}`);
+      await agentProgressService.resumeTask(taskId);
+
+      res.json({
+        success: true,
+        message: 'Task resumed'
+      });
+    } catch (error) {
+      logger.error('Task resume error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to resume task' 
+      });
+    }
+  });
+
+  app.post('/api/agent/task/:taskId/step', ensureAuthenticated, async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      const { name, description, total } = req.body;
+      
+      if (!name || !description) {
+        return res.status(400).json({ error: 'Step name and description are required' });
+      }
+
+      const stepId = await agentProgressService.addStep(taskId, { name, description, total });
+
+      res.json({
+        success: true,
+        stepId
+      });
+    } catch (error) {
+      logger.error('Add step error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to add step' 
+      });
+    }
+  });
+
+  app.post('/api/agent/task/:taskId/step/:stepId/progress', ensureAuthenticated, async (req, res) => {
+    try {
+      const { taskId, stepId } = req.params;
+      const { progress, output } = req.body;
+      
+      if (typeof progress !== 'number') {
+        return res.status(400).json({ error: 'Progress value is required' });
+      }
+
+      await agentProgressService.updateStepProgress(taskId, stepId, progress, output);
+
+      res.json({
+        success: true,
+        message: 'Progress updated'
+      });
+    } catch (error) {
+      logger.error('Update progress error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to update progress' 
+      });
+    }
+  });
+
+  app.post('/api/agent/task/:taskId/metrics', ensureAuthenticated, async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      const { metrics } = req.body;
+      
+      if (!metrics) {
+        return res.status(400).json({ error: 'Metrics data is required' });
+      }
+
+      await agentProgressService.updateMetrics(taskId, metrics);
+
+      res.json({
+        success: true,
+        message: 'Metrics updated'
+      });
+    } catch (error) {
+      logger.error('Update metrics error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to update metrics' 
+      });
+    }
+  });
+
+  app.get('/api/agent/tasks/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { limit } = req.query;
+      
+      const tasks = await agentProgressService.loadRecentTasks(
+        parseInt(projectId),
+        limit ? parseInt(limit as string) : undefined
+      );
+
+      res.json({
+        success: true,
+        tasks
+      });
+    } catch (error) {
+      logger.error('Load tasks error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to load tasks' 
+      });
+    }
+  });
+
+  app.get('/api/agent/task/:taskId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      
+      const task = agentProgressService.getTask(taskId);
+      
+      if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      res.json({
+        success: true,
+        task
+      });
+    } catch (error) {
+      logger.error('Get task error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get task' 
+      });
+    }
+  });
+
+  // WebSocket endpoint would be registered here if express-ws was configured
+  // For now, progress updates can be polled via the GET endpoints
+
+  // Conversation Management API Routes
+  app.post('/api/agent/conversation/create', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, title, initialContext } = req.body;
+      
+      if (!projectId || !title) {
+        return res.status(400).json({ error: 'Project ID and title are required' });
+      }
+
+      logger.info(`Creating conversation for project ${projectId}`);
+      
+      const conversation = await conversationManagementService.createConversation({
+        projectId,
+        userId: req.user!.id,
+        title,
+        initialContext
+      });
+
+      res.json({
+        success: true,
+        conversation
+      });
+    } catch (error) {
+      logger.error('Conversation creation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to create conversation' 
+      });
+    }
+  });
+
+  app.post('/api/agent/conversation/:conversationId/message', ensureAuthenticated, async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      const { role, content, metadata } = req.body;
+      
+      if (!role || !content) {
+        return res.status(400).json({ error: 'Role and content are required' });
+      }
+
+      const message = await conversationManagementService.addMessage(conversationId, {
+        role,
+        content,
+        metadata
+      });
+
+      res.json({
+        success: true,
+        message
+      });
+    } catch (error) {
+      logger.error('Add message error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to add message' 
+      });
+    }
+  });
+
+  app.get('/api/agent/conversation/:conversationId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      
+      const conversation = await conversationManagementService.getConversation(conversationId);
+      
+      if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+
+      res.json({
+        success: true,
+        conversation
+      });
+    } catch (error) {
+      logger.error('Get conversation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get conversation' 
+      });
+    }
+  });
+
+  app.get('/api/agent/conversations/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { status, limit, offset } = req.query;
+      
+      const conversations = await conversationManagementService.getProjectConversations(
+        parseInt(projectId),
+        {
+          status: status as any,
+          limit: limit ? parseInt(limit as string) : undefined,
+          offset: offset ? parseInt(offset as string) : undefined
+        }
+      );
+
+      res.json({
+        success: true,
+        conversations
+      });
+    } catch (error) {
+      logger.error('Get conversations error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get conversations' 
+      });
+    }
+  });
+
+  app.post('/api/agent/conversation/:conversationId/pause', ensureAuthenticated, async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      
+      await conversationManagementService.pauseConversation(conversationId);
+
+      res.json({
+        success: true,
+        message: 'Conversation paused'
+      });
+    } catch (error) {
+      logger.error('Pause conversation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to pause conversation' 
+      });
+    }
+  });
+
+  app.post('/api/agent/conversation/:conversationId/resume', ensureAuthenticated, async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      
+      await conversationManagementService.resumeConversation(conversationId);
+
+      res.json({
+        success: true,
+        message: 'Conversation resumed'
+      });
+    } catch (error) {
+      logger.error('Resume conversation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to resume conversation' 
+      });
+    }
+  });
+
+  app.post('/api/agent/conversation/:conversationId/complete', ensureAuthenticated, async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      
+      await conversationManagementService.completeConversation(conversationId);
+
+      res.json({
+        success: true,
+        message: 'Conversation completed'
+      });
+    } catch (error) {
+      logger.error('Complete conversation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to complete conversation' 
+      });
+    }
+  });
+
+  app.post('/api/agent/conversation/:conversationId/summary', ensureAuthenticated, async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      
+      const summary = await conversationManagementService.generateSummary(conversationId);
+
+      res.json({
+        success: true,
+        summary
+      });
+    } catch (error) {
+      logger.error('Generate summary error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to generate summary' 
+      });
+    }
+  });
+
+  app.get('/api/agent/conversation/:conversationId/export', ensureAuthenticated, async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      
+      const exportData = await conversationManagementService.exportConversation(conversationId);
+
+      res.json({
+        success: true,
+        ...exportData
+      });
+    } catch (error) {
+      logger.error('Export conversation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to export conversation' 
+      });
+    }
+  });
+
+  app.post('/api/agent/conversations/search', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, query, limit } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+
+      const results = await conversationManagementService.searchConversations({
+        projectId,
+        userId: req.user!.id,
+        query,
+        limit
+      });
+
+      res.json({
+        success: true,
+        conversations: results
+      });
+    } catch (error) {
+      logger.error('Search conversations error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to search conversations' 
+      });
+    }
+  });
+
+  app.delete('/api/agent/conversation/:conversationId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      
+      await conversationManagementService.deleteConversation(conversationId);
+
+      res.json({
+        success: true,
+        message: 'Conversation deleted'
+      });
+    } catch (error) {
+      logger.error('Delete conversation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to delete conversation' 
+      });
+    }
+  });
+
+  // Feedback API Routes
+  app.post('/api/agent/feedback/submit', ensureAuthenticated, async (req, res) => {
+    try {
+      const { 
+        projectId, 
+        conversationId, 
+        taskId,
+        type, 
+        category, 
+        rating, 
+        message,
+        context,
+        metadata 
+      } = req.body;
+      
+      if (!projectId || !type || !category || !message) {
+        return res.status(400).json({ 
+          error: 'Project ID, type, category, and message are required' 
+        });
+      }
+
+      logger.info(`Submitting feedback for project ${projectId}`);
+      
+      const feedback = await feedbackService.submitFeedback({
+        projectId,
+        userId: req.user!.id,
+        conversationId,
+        taskId,
+        type,
+        category,
+        rating,
+        message,
+        context,
+        metadata
+      });
+
+      res.json({
+        success: true,
+        feedback
+      });
+    } catch (error) {
+      logger.error('Submit feedback error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to submit feedback' 
+      });
+    }
+  });
+
+  app.get('/api/agent/feedback/:feedbackId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { feedbackId } = req.params;
+      
+      const feedback = await feedbackService.getFeedback(feedbackId);
+      
+      if (!feedback) {
+        return res.status(404).json({ error: 'Feedback not found' });
+      }
+
+      res.json({
+        success: true,
+        feedback
+      });
+    } catch (error) {
+      logger.error('Get feedback error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get feedback' 
+      });
+    }
+  });
+
+  app.get('/api/agent/feedback/project/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { type, category, status, limit, offset } = req.query;
+      
+      const feedback = await feedbackService.getProjectFeedback(
+        parseInt(projectId),
+        {
+          type: type as any,
+          category: category as any,
+          status: status as any,
+          limit: limit ? parseInt(limit as string) : undefined,
+          offset: offset ? parseInt(offset as string) : undefined
+        }
+      );
+
+      res.json({
+        success: true,
+        feedback
+      });
+    } catch (error) {
+      logger.error('Get project feedback error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get project feedback' 
+      });
+    }
+  });
+
+  app.get('/api/agent/feedback/user/:userId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { limit, offset } = req.query;
+      
+      // Ensure users can only access their own feedback
+      if (parseInt(userId) !== req.user!.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      const feedback = await feedbackService.getUserFeedback(
+        parseInt(userId),
+        {
+          limit: limit ? parseInt(limit as string) : undefined,
+          offset: offset ? parseInt(offset as string) : undefined
+        }
+      );
+
+      res.json({
+        success: true,
+        feedback
+      });
+    } catch (error) {
+      logger.error('Get user feedback error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get user feedback' 
+      });
+    }
+  });
+
+  app.get('/api/agent/feedback/stats/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      
+      const stats = await feedbackService.getProjectStats(parseInt(projectId));
+
+      res.json({
+        success: true,
+        stats
+      });
+    } catch (error) {
+      logger.error('Get feedback stats error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get feedback stats' 
+      });
+    }
+  });
+
+  app.post('/api/agent/feedback/search', ensureAuthenticated, async (req, res) => {
+    try {
+      const { 
+        projectId,
+        query,
+        type,
+        category,
+        minRating,
+        maxRating,
+        dateFrom,
+        dateTo,
+        limit 
+      } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+
+      const results = await feedbackService.searchFeedback({
+        projectId,
+        query,
+        type,
+        category,
+        minRating,
+        maxRating,
+        dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+        dateTo: dateTo ? new Date(dateTo) : undefined,
+        limit
+      });
+
+      res.json({
+        success: true,
+        feedback: results
+      });
+    } catch (error) {
+      logger.error('Search feedback error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to search feedback' 
+      });
+    }
+  });
+
+  app.put('/api/agent/feedback/:feedbackId/status', ensureAuthenticated, async (req, res) => {
+    try {
+      const { feedbackId } = req.params;
+      const { status, response } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ error: 'Status is required' });
+      }
+
+      await feedbackService.updateFeedbackStatus(feedbackId, status, response);
+
+      res.json({
+        success: true,
+        message: 'Feedback status updated'
+      });
+    } catch (error) {
+      logger.error('Update feedback status error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to update feedback status' 
+      });
+    }
+  });
+
+  app.get('/api/agent/feedback/:feedbackId/sentiment', ensureAuthenticated, async (req, res) => {
+    try {
+      const { feedbackId } = req.params;
+      
+      const analysis = await feedbackService.analyzeSentiment(feedbackId);
+
+      res.json({
+        success: true,
+        analysis
+      });
+    } catch (error) {
+      logger.error('Analyze sentiment error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to analyze sentiment' 
+      });
+    }
+  });
+
+  app.get('/api/agent/feedback/export/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { format = 'json' } = req.query;
+      
+      const exportData = await feedbackService.exportFeedback(
+        parseInt(projectId), 
+        format as 'json' | 'csv'
+      );
+
+      // Set appropriate content type
+      const contentType = format === 'csv' ? 'text/csv' : 'application/json';
+      const filename = `feedback_${projectId}_${new Date().toISOString().split('T')[0]}.${format}`;
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(exportData);
+    } catch (error) {
+      logger.error('Export feedback error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to export feedback' 
+      });
+    }
+  });
+
+  // Usage Tracking API Routes
+  app.post('/api/agent/usage/track', ensureAuthenticated, async (req, res) => {
+    try {
+      const { 
+        projectId, 
+        conversationId, 
+        taskId,
+        tokensUsed,
+        model,
+        responseTime,
+        features
+      } = req.body;
+      
+      if (!projectId || !tokensUsed || !model || !responseTime) {
+        return res.status(400).json({ 
+          error: 'Project ID, tokens used, model, and response time are required' 
+        });
+      }
+
+      await agentUsageTrackingService.trackUsage({
+        projectId,
+        userId: req.user!.id,
+        conversationId,
+        taskId,
+        tokensUsed,
+        model,
+        responseTime,
+        features
+      });
+
+      res.json({
+        success: true,
+        message: 'Usage tracked successfully'
+      });
+    } catch (error) {
+      logger.error('Track usage error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to track usage' 
+      });
+    }
+  });
+
+  app.post('/api/agent/usage/error', ensureAuthenticated, async (req, res) => {
+    try {
+      const { 
+        projectId, 
+        conversationId, 
+        taskId,
+        error
+      } = req.body;
+      
+      if (!projectId || !error) {
+        return res.status(400).json({ 
+          error: 'Project ID and error are required' 
+        });
+      }
+
+      await agentUsageTrackingService.trackError({
+        projectId,
+        userId: req.user!.id,
+        conversationId,
+        taskId,
+        error
+      });
+
+      res.json({
+        success: true,
+        message: 'Error tracked successfully'
+      });
+    } catch (error) {
+      logger.error('Track error error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to track error' 
+      });
+    }
+  });
+
+  app.get('/api/agent/usage/realtime/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      
+      const usage = await agentUsageTrackingService.getRealtimeUsage(parseInt(projectId));
+
+      res.json({
+        success: true,
+        usage
+      });
+    } catch (error) {
+      logger.error('Get realtime usage error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get realtime usage' 
+      });
+    }
+  });
+
+  app.get('/api/agent/usage/summary/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { startDate, endDate, groupBy } = req.query;
+      
+      const summary = await agentUsageTrackingService.getUsageSummary(
+        parseInt(projectId),
+        {
+          startDate: startDate ? new Date(startDate as string) : undefined,
+          endDate: endDate ? new Date(endDate as string) : undefined,
+          groupBy: groupBy as any
+        }
+      );
+
+      res.json({
+        success: true,
+        summary
+      });
+    } catch (error) {
+      logger.error('Get usage summary error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get usage summary' 
+      });
+    }
+  });
+
+  app.get('/api/agent/usage/user/:userId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { startDate, endDate } = req.query;
+      
+      // Ensure users can only access their own usage
+      if (parseInt(userId) !== req.user!.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      const summary = await agentUsageTrackingService.getUserUsageSummary(
+        parseInt(userId),
+        {
+          startDate: startDate ? new Date(startDate as string) : undefined,
+          endDate: endDate ? new Date(endDate as string) : undefined
+        }
+      );
+
+      res.json({
+        success: true,
+        summary
+      });
+    } catch (error) {
+      logger.error('Get user usage summary error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get user usage summary' 
+      });
+    }
+  });
+
+  app.get('/api/agent/usage/alerts/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      
+      const alerts = await agentUsageTrackingService.getUsageAlerts(parseInt(projectId));
+
+      res.json({
+        success: true,
+        alerts
+      });
+    } catch (error) {
+      logger.error('Get usage alerts error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get usage alerts' 
+      });
+    }
+  });
+
+  app.get('/api/agent/usage/export/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { format = 'json' } = req.query;
+      
+      const exportData = await agentUsageTrackingService.exportUsageData(
+        parseInt(projectId), 
+        format as 'json' | 'csv'
+      );
+
+      // Set appropriate content type
+      const contentType = format === 'csv' ? 'text/csv' : 'application/json';
+      const filename = `usage_${projectId}_${new Date().toISOString().split('T')[0]}.${format}`;
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(exportData);
+    } catch (error) {
+      logger.error('Export usage data error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to export usage data' 
+      });
+    }
+  });
+
+  // Advanced Capabilities API Routes
+  app.get('/api/agent/capabilities/list', ensureAuthenticated, async (req, res) => {
+    try {
+      const { category, enabled } = req.query;
+      
+      const capabilities = await advancedCapabilitiesService.listCapabilities({
+        category: category as any,
+        enabled: enabled === 'true' ? true : enabled === 'false' ? false : undefined
+      });
+
+      res.json({
+        success: true,
+        capabilities
+      });
+    } catch (error) {
+      logger.error('List capabilities error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to list capabilities' 
+      });
+    }
+  });
+
+  app.get('/api/agent/capabilities/:capabilityId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { capabilityId } = req.params;
+      
+      const capability = await advancedCapabilitiesService.getCapability(capabilityId);
+      
+      if (!capability) {
+        return res.status(404).json({ error: 'Capability not found' });
+      }
+
+      res.json({
+        success: true,
+        capability
+      });
+    } catch (error) {
+      logger.error('Get capability error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get capability' 
+      });
+    }
+  });
+
+  app.post('/api/agent/capabilities/install', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, capabilityId, config } = req.body;
+      
+      if (!projectId || !capabilityId) {
+        return res.status(400).json({ 
+          error: 'Project ID and capability ID are required' 
+        });
+      }
+
+      const plugin = await advancedCapabilitiesService.installPlugin({
+        projectId,
+        userId: req.user!.id,
+        capabilityId,
+        config
+      });
+
+      res.json({
+        success: true,
+        plugin
+      });
+    } catch (error) {
+      logger.error('Install capability error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to install capability' 
+      });
+    }
+  });
+
+  app.delete('/api/agent/capabilities/:projectId/:capabilityId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, capabilityId } = req.params;
+      
+      await advancedCapabilitiesService.uninstallPlugin(
+        parseInt(projectId), 
+        capabilityId
+      );
+
+      res.json({
+        success: true,
+        message: 'Capability uninstalled successfully'
+      });
+    } catch (error) {
+      logger.error('Uninstall capability error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to uninstall capability' 
+      });
+    }
+  });
+
+  app.post('/api/agent/capabilities/execute', ensureAuthenticated, async (req, res) => {
+    try {
+      const { 
+        projectId, 
+        capabilityId, 
+        conversationId,
+        taskId,
+        input,
+        config 
+      } = req.body;
+      
+      if (!projectId || !capabilityId || !input) {
+        return res.status(400).json({ 
+          error: 'Project ID, capability ID, and input are required' 
+        });
+      }
+
+      const result = await advancedCapabilitiesService.executeCapability({
+        projectId,
+        userId: req.user!.id,
+        capabilityId,
+        conversationId,
+        taskId,
+        input,
+        config
+      });
+
+      res.json({
+        success: true,
+        result
+      });
+    } catch (error) {
+      logger.error('Execute capability error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to execute capability' 
+      });
+    }
+  });
+
+  app.get('/api/agent/capabilities/project/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      
+      const plugins = await advancedCapabilitiesService.getProjectPlugins(parseInt(projectId));
+
+      res.json({
+        success: true,
+        plugins
+      });
+    } catch (error) {
+      logger.error('Get project plugins error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get project plugins' 
+      });
+    }
+  });
+
+  app.get('/api/agent/capabilities/stats/:projectId/:capabilityId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, capabilityId } = req.params;
+      
+      const stats = await advancedCapabilitiesService.getPluginUsageStats(
+        parseInt(projectId), 
+        capabilityId
+      );
+
+      res.json({
+        success: true,
+        stats
+      });
+    } catch (error) {
+      logger.error('Get plugin stats error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get plugin stats' 
+      });
+    }
+  });
+
+  app.put('/api/agent/capabilities/config/:projectId/:capabilityId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, capabilityId } = req.params;
+      const { config } = req.body;
+      
+      if (!config) {
+        return res.status(400).json({ error: 'Config is required' });
+      }
+
+      await advancedCapabilitiesService.updateCapabilityConfig(
+        parseInt(projectId), 
+        capabilityId, 
+        config
+      );
+
+      res.json({
+        success: true,
+        message: 'Configuration updated successfully'
+      });
+    } catch (error) {
+      logger.error('Update capability config error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to update configuration' 
+      });
+    }
+  });
+
+  app.get('/api/agent/capabilities/search', ensureAuthenticated, async (req, res) => {
+    try {
+      const { query } = req.query;
+      
+      if (!query) {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+
+      const capabilities = await advancedCapabilitiesService.searchCapabilities(query as string);
+
+      res.json({
+        success: true,
+        capabilities
+      });
+    } catch (error) {
+      logger.error('Search capabilities error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to search capabilities' 
+      });
+    }
+  });
+
+  // Initialize screenshot service
+  screenshotService.initialize().catch(error => {
+    logger.error('Failed to initialize screenshot service:', error);
   });
 
   return httpServer;
