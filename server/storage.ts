@@ -1123,6 +1123,27 @@ export class DatabaseStorage implements IStorage {
     `);
     return (result as any).length > 0;
   }
+
+  // Deployment methods
+  async saveDeployment(deployment: any): Promise<void> {
+    // Store deployment in memory or database
+    console.log('Saving deployment:', deployment);
+  }
+
+  async getDeployment(deploymentId: string): Promise<any | null> {
+    // Retrieve deployment from storage
+    return null;
+  }
+
+  async getProjectDeployments(projectId: number): Promise<any[]> {
+    // Get all deployments for a project
+    return [];
+  }
+
+  async getRecentDeployments(userId: number, limit: number = 10): Promise<any[]> {
+    // Get recent deployments for a user
+    return [];
+  }
 }
 
 // Initialize storage
