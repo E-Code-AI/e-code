@@ -3,7 +3,8 @@ import {
   Bot, Send, Sparkles, Code, FileText, HelpCircle,
   Lightbulb, Zap, RefreshCw, Copy, X, Hammer, Package,
   FolderOpen, FileCode, Loader2, CheckCircle, AlertCircle,
-  Wrench, Rocket, GitBranch, Database, Globe, Server
+  Wrench, Rocket, GitBranch, Database, Globe, Server,
+  MessageSquare, DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,6 +16,12 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { AgentPricingDisplay } from './AgentPricingDisplay';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface ReplitAgentProps {
   projectId: number;
@@ -53,6 +60,8 @@ interface Message {
     executionTimeMs: number;
   };
   checkpoint?: any;
+  actions?: AgentAction[];
+  completed?: boolean;
 }
 
 interface AgentAction {
@@ -1235,6 +1244,30 @@ What would you like me to build?`,
               />
             </div>
           )}
+          {/* Feedback Mechanism - Show after AI messages with actions */}
+          {message.role === 'assistant' && (message.actions?.length > 0 || message.completed) && (
+            <div className="mt-3 flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs h-7"
+                onClick={() => {
+                  const feedback = prompt('Please share your feedback about this response:');
+                  if (feedback) {
+                    toast({
+                      title: "Thank you for your feedback!",
+                      description: "We'll use this to improve our AI agent.",
+                    });
+                    // Log feedback for future improvements
+                    console.log('User feedback:', feedback, 'for message:', message.id);
+                  }
+                }}
+              >
+                <MessageSquare className="h-3 w-3 mr-1" />
+                Have feedback?
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1256,11 +1289,31 @@ What would you like me to build?`,
             </div>
           )}
         </div>
-        {isBuilding && (
-          <div className="text-xs text-[var(--ecode-text-secondary)]">
-            {buildProgress}%
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {isBuilding && (
+            <div className="text-xs text-[var(--ecode-text-secondary)]">
+              {buildProgress}%
+            </div>
+          )}
+          {/* Usage Tracking Icon */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => window.location.href = '/billing'}
+                >
+                  <DollarSign className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View usage & billing</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
       {/* Messages */}
