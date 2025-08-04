@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { checkpoints, files, projects, agentConversations } from '@shared/schema';
+import { checkpoints, files, projects } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 
@@ -129,8 +129,8 @@ export class CheckpointService {
     return projectFiles.reduce((snapshot: any, file) => {
       snapshot[file.path] = {
         content: file.content,
-        language: file.language,
-        size: file.size,
+        name: file.name,
+        isDirectory: file.isDirectory,
         lastModified: file.updatedAt
       };
       return snapshot;
@@ -269,9 +269,9 @@ export class CheckpointService {
       await db.insert(files).values({
         projectId,
         path,
+        name: (fileData as any).name,
         content: (fileData as any).content,
-        language: (fileData as any).language,
-        size: (fileData as any).size
+        isDirectory: (fileData as any).isDirectory || false
       });
     }
   }

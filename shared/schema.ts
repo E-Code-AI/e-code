@@ -318,10 +318,23 @@ export const comments = pgTable('comments', {
 export const checkpoints = pgTable('checkpoints', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
+  userId: integer('user_id').notNull().references(() => users.id), // Changed from createdBy to userId
   name: text('name').notNull(),
-  description: text('description'),
-  createdBy: integer('created_by').notNull().references(() => users.id),
+  message: text('message').notNull(), // Changed from description to message
   filesSnapshot: jsonb('files_snapshot').notNull(),
+  aiConversationContext: jsonb('ai_conversation_context'), // NEW: AI conversation history
+  databaseSnapshot: jsonb('database_snapshot'), // NEW: Database state
+  environmentVariables: jsonb('environment_variables'), // NEW: Environment snapshot
+  agentTaskDescription: text('agent_task_description'), // NEW: Agent task
+  agentActionsPerformed: jsonb('agent_actions_performed'), // NEW: Actions taken
+  filesModified: integer('files_modified').default(0), // NEW: Metrics
+  linesOfCodeWritten: integer('lines_of_code_written').default(0), // NEW: Metrics
+  effortScore: decimal('effort_score'), // NEW: Effort-based pricing
+  tokensUsed: integer('tokens_used').default(0), // NEW: AI token usage
+  executionTimeMs: integer('execution_time_ms'), // NEW: Performance metric
+  apiCallsCount: integer('api_calls_count').default(0), // NEW: API usage
+  costInCents: integer('cost_in_cents'), // NEW: Calculated cost
+  isAutomatic: boolean('is_automatic').default(false), // NEW: Auto checkpoint flag
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
