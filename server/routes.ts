@@ -78,6 +78,7 @@ import { enterpriseSSOService } from './sso/enterprise-sso-service';
 import { advancedCollaborationService } from './collaboration/advanced-collaboration-service';
 import { communityService } from './community/community-service';
 import { webSearchService } from "./services/web-search-service";
+import { previewDevToolsService } from "./services/preview-devtools-service";
 import { encryptionService } from "./services/encryption-service";
 import { databaseManagementService } from "./services/database-management-service";
 import { usageTrackingService } from "./services/usage-tracking-service";
@@ -4396,6 +4397,25 @@ API will be available at http://localhost:3000
       console.error('GPU provision error:', error);
       res.status(500).json({ message: 'Failed to provision GPU instance' });
     }
+  });
+
+  // Preview Developer Tools endpoints
+  app.post('/api/preview/devtools/console', async (req, res) => {
+    const { projectId, level, message, source } = req.body;
+    previewDevToolsService.logConsole(projectId, { level, message, source });
+    res.json({ success: true });
+  });
+
+  app.post('/api/preview/devtools/network', async (req, res) => {
+    const { projectId, ...request } = req.body;
+    previewDevToolsService.trackNetworkRequest(projectId, request);
+    res.json({ success: true });
+  });
+
+  app.post('/api/preview/devtools/element', async (req, res) => {
+    const { projectId, ...element } = req.body;
+    previewDevToolsService.sendElementInfo(projectId, element);
+    res.json({ success: true });
   });
 
   app.get('/api/gpu/instances', ensureAuthenticated, async (req: any, res) => {
@@ -12871,6 +12891,29 @@ Generate a comprehensive application based on the user's request. Include all ne
           level: 'info', 
           message: 'Connected to log stream' 
         }));
+      });
+    } else if (pathname.startsWith('/ws/preview-devtools/')) {
+      // Extract projectId from pathname
+      const parts = pathname.split('/');
+      const projectId = parseInt(parts[parts.length - 1]);
+      
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        // TODO: Add authentication
+        const userId = 1; // Default user for now
+        previewDevToolsService.addClient(ws, projectId, userId);
+      });
+    } else if (pathname.startsWith('/ws/preview-inject/')) {
+      // WebSocket for injecting commands into preview iframe
+      const parts = pathname.split('/');
+      const projectId = parseInt(parts[parts.length - 1]);
+      
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        // Handle preview injection commands
+        ws.on('message', (message) => {
+          const data = JSON.parse(message.toString());
+          // Forward to preview devtools service
+          previewDevToolsService.emit('inject-command', { projectId, data });
+        });
       });
     }
   });

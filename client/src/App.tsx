@@ -56,7 +56,7 @@ const ContactSales = lazy(() => import("@/pages/ContactSales"));
 const Terms = lazy(() => import("@/pages/Terms"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const Status = lazy(() => import("@/pages/Status"));
-const Mobile = lazy(() => import("@/pages/Mobile"));
+const Mobile = lazy(() => import("@/pages/mobile"));
 const AI = lazy(() => import("@/pages/AI"));
 const Press = lazy(() => import("@/pages/Press"));
 const Partners = lazy(() => import("@/pages/Partners"));
@@ -121,12 +121,8 @@ const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
 const FigmaImport = lazy(() => import("@/pages/FigmaImport"));
 const BoltImport = lazy(() => import("@/pages/BoltImport"));
 const LovableImport = lazy(() => import("@/pages/LovableImport"));
+const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
 // Advanced Feature Components
-const MobileAppPage = lazy(() => import("@/components/MobileApp"));
-const EnterpriseSSOPage = lazy(() => import("@/components/EnterpriseSSO"));
-const AdvancedCollaborationPage = lazy(() => import("@/components/AdvancedCollaboration"));
-const ObjectStoragePage = lazy(() => import("@/components/ObjectStorage"));
-const CommunityFeaturesPage = lazy(() => import("@/components/CommunityFeatures"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -302,27 +298,27 @@ function AppContent() {
           {/* Advanced Feature Routes */}
           <ProtectedRoute path="/advanced/mobile" component={() => (
             <ReplitLayout showSidebar={false}>
-              <MobileAppPage />
+              <Mobile />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/advanced/sso" component={() => (
             <ReplitLayout showSidebar={false}>
-              <EnterpriseSSOPage />
+              <SSOConfiguration />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/advanced/collaboration" component={() => (
             <ReplitLayout showSidebar={false}>
-              <AdvancedCollaborationPage />
+              <Community />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/advanced/storage" component={() => (
             <ReplitLayout showSidebar={false}>
-              <ObjectStoragePage />
+              <Usage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/advanced/community" component={() => (
             <ReplitLayout showSidebar={false}>
-              <CommunityFeaturesPage />
+              <Community />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/settings" component={() => (
@@ -449,6 +445,9 @@ function AppContent() {
           )} />
           <ProtectedRoute path="/usage-alerts" component={() => (
             <UsageAlerts />
+          )} />
+          <ProtectedRoute path="/projects/:id/preview" component={() => (
+            <PreviewWithDevTools />
           )} />
           <ProtectedRoute path="/admin" component={() => (
             <ReplitLayout>
