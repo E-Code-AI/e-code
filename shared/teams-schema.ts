@@ -91,37 +91,13 @@ export const teamActivity = pgTable('team_activity', {
 });
 
 // Schema exports
-export const insertTeamSchema = createInsertSchema(teams).omit({ 
-  id: true, 
-  createdAt: true, 
-  updatedAt: true 
-});
-export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({ 
-  id: true, 
-  joinedAt: true 
-});
-export const insertTeamInvitationSchema = createInsertSchema(teamInvitations).omit({ 
-  id: true, 
-  token: true,
-  createdAt: true 
-});
-export const insertTeamProjectSchema = createInsertSchema(teamProjects).omit({ 
-  id: true, 
-  createdAt: true 
-});
-export const insertTeamWorkspaceSchema = createInsertSchema(teamWorkspaces).omit({ 
-  id: true, 
-  createdAt: true,
-  updatedAt: true 
-});
-export const insertWorkspaceProjectSchema = createInsertSchema(workspaceProjects).omit({ 
-  id: true, 
-  createdAt: true 
-});
-export const insertTeamActivitySchema = createInsertSchema(teamActivity).omit({ 
-  id: true, 
-  createdAt: true 
-});
+export const insertTeamSchema = createInsertSchema(teams);
+export const insertTeamMemberSchema = createInsertSchema(teamMembers);
+export const insertTeamInvitationSchema = createInsertSchema(teamInvitations);
+export const insertTeamProjectSchema = createInsertSchema(teamProjects);
+export const insertTeamWorkspaceSchema = createInsertSchema(teamWorkspaces);
+export const insertWorkspaceProjectSchema = createInsertSchema(workspaceProjects);
+export const insertTeamActivitySchema = createInsertSchema(teamActivity);
 
 // Type exports
 export type Team = typeof teams.$inferSelect;
