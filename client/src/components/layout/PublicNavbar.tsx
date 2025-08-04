@@ -56,6 +56,7 @@ export function PublicNavbar() {
     { title: 'Blog', href: '/blog', description: 'News and updates' },
     { title: 'Community', href: '/community', description: 'Connect with developers' },
     { title: 'Templates', href: '/templates', description: 'Start from a template' },
+    { title: 'Languages', href: '/templates/languages', description: '40+ supported languages' },
     { title: 'Status', href: '/status', description: 'Service uptime' },
     { title: 'Forum', href: '/forum', description: 'Get help' },
   ];
