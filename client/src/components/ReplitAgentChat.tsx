@@ -908,7 +908,7 @@ Our team is working to resolve this issue. Please try again in a moment.`,
                     {projectInfo ? (
                       // Project-specific suggestions based on the project type
                       <>
-                        {projectInfo.name.includes('Chat') || projectInfo.name.includes('WhatsApp') ? (
+                        {projectInfo?.name?.includes('Chat') || projectInfo?.name?.includes('WhatsApp') ? (
                           <>
                             <button
                               onClick={() => setInput('Add voice messages support to the chat')}
@@ -936,7 +936,7 @@ Our team is working to resolve this issue. Please try again in a moment.`,
                               </p>
                             </button>
                           </>
-                        ) : projectInfo.name.includes('CRM') || projectInfo.name.includes('SalesForce') ? (
+                        ) : projectInfo?.name?.includes('CRM') || projectInfo?.name?.includes('SalesForce') ? (
                           <>
                             <button
                               onClick={() => setInput('Add email automation for customer follow-ups')}
@@ -964,7 +964,7 @@ Our team is working to resolve this issue. Please try again in a moment.`,
                               </p>
                             </button>
                           </>
-                        ) : projectInfo.name.includes('Solar') || projectInfo.name.includes('commerce') ? (
+                        ) : projectInfo?.name?.includes('Solar') || projectInfo?.name?.includes('commerce') ? (
                           <>
                             <button
                               onClick={() => setInput('Add customer reviews and ratings system')}
