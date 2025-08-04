@@ -448,4 +448,26 @@ Consider the full file context and common ${analysis.language} pitfalls.`;
 
     return languageMap[ext] || 'text';
   }
+
+  async improvePrompt(options: { prompt: string; context?: string }): Promise<string> {
+    const systemPrompt = `You are an AI prompt engineer expert. Improve the user's prompt to be more specific, actionable, and effective for building applications.
+    
+    Guidelines:
+    - Make the prompt clearer and more specific
+    - Add helpful context if missing
+    - Ensure the request is actionable
+    - Keep the improved prompt concise but comprehensive
+    - Focus on what needs to be built or accomplished`;
+
+    const userPrompt = `${options.context ? `Context: ${options.context}\n\n` : ''}Original prompt: "${options.prompt}"
+    
+Please provide an improved version of this prompt that will lead to better results.`;
+
+    const response = await this.provider.generateChat([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ]);
+
+    return response;
+  }
 }
