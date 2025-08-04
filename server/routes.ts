@@ -3574,6 +3574,220 @@ API will be available at http://localhost:3000
     }
   });
 
+  // Database Management Routes
+  app.get('/api/projects/:projectId/databases', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const databases = await realDatabaseHostingService.getDatabasesByProject(projectId);
+      res.json(databases);
+    } catch (error) {
+      console.error('Error fetching databases:', error);
+      res.status(500).json({ error: 'Failed to fetch databases' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/databases', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { name, type, region, plan } = req.body;
+      
+      const database = await realDatabaseHostingService.createDatabase({
+        projectId,
+        name,
+        type,
+        region,
+        plan,
+        ownerId: req.user!.id
+      });
+      
+      res.json(database);
+    } catch (error) {
+      console.error('Error creating database:', error);
+      res.status(500).json({ error: 'Failed to create database' });
+    }
+  });
+
+  app.get('/api/databases/:databaseId/tables', ensureAuthenticated, async (req, res) => {
+    try {
+      // Mock implementation - would query actual database
+      const tables = [
+        { name: 'users', rowCount: 1523, size: '2.3 MB', indexes: 3 },
+        { name: 'projects', rowCount: 456, size: '1.1 MB', indexes: 2 },
+        { name: 'files', rowCount: 8921, size: '15.7 MB', indexes: 4 },
+        { name: 'sessions', rowCount: 3241, size: '0.8 MB', indexes: 1 },
+      ];
+      res.json(tables);
+    } catch (error) {
+      console.error('Error fetching tables:', error);
+      res.status(500).json({ error: 'Failed to fetch tables' });
+    }
+  });
+
+  app.post('/api/databases/:databaseId/query', ensureAuthenticated, async (req, res) => {
+    try {
+      const { query } = req.body;
+      
+      // Mock implementation - would execute actual query
+      const result = {
+        columns: ['id', 'name', 'email', 'created_at'],
+        rows: [
+          { id: 1, name: 'John Doe', email: 'john@example.com', created_at: '2024-01-01' },
+          { id: 2, name: 'Jane Smith', email: 'jane@example.com', created_at: '2024-01-02' },
+        ],
+        rowCount: 2,
+        executionTime: 23
+      };
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error executing query:', error);
+      res.status(500).json({ error: 'Failed to execute query' });
+    }
+  });
+
+  // Secret Management Routes
+  app.get('/api/projects/:projectId/secrets', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      // Mock implementation - would fetch from secure storage
+      const secrets = [
+        {
+          id: 1,
+          name: 'DATABASE_URL',
+          category: 'database',
+          scope: 'project',
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          lastUsed: new Date('2024-01-20'),
+          description: 'PostgreSQL connection string'
+        },
+        {
+          id: 2,
+          name: 'STRIPE_API_KEY',
+          category: 'api',
+          scope: 'project',
+          createdAt: new Date('2024-01-05'),
+          updatedAt: new Date('2024-01-05'),
+          description: 'Stripe payment processing API key'
+        }
+      ];
+      
+      res.json(secrets);
+    } catch (error) {
+      console.error('Error fetching secrets:', error);
+      res.status(500).json({ error: 'Failed to fetch secrets' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/secrets', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { name, value, category, scope, description } = req.body;
+      
+      // Mock implementation - would store securely
+      const secret = {
+        id: Date.now(),
+        name,
+        category,
+        scope,
+        description,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      res.json(secret);
+    } catch (error) {
+      console.error('Error creating secret:', error);
+      res.status(500).json({ error: 'Failed to create secret' });
+    }
+  });
+
+  app.delete('/api/projects/:projectId/secrets/:secretId', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      // Mock implementation
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting secret:', error);
+      res.status(500).json({ error: 'Failed to delete secret' });
+    }
+  });
+
+  // Usage Alerts Routes
+  app.get('/api/usage/alerts', ensureAuthenticated, async (req, res) => {
+    try {
+      // Mock implementation
+      const alerts = [
+        {
+          id: 1,
+          name: 'High Compute Usage',
+          threshold: 80,
+          metric: 'compute',
+          enabled: true,
+          createdAt: new Date('2024-01-01')
+        }
+      ];
+      
+      res.json(alerts);
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+      res.status(500).json({ error: 'Failed to fetch alerts' });
+    }
+  });
+
+  app.post('/api/usage/alerts', ensureAuthenticated, async (req, res) => {
+    try {
+      const alert = req.body;
+      
+      res.json({
+        id: Date.now(),
+        ...alert,
+        createdAt: new Date()
+      });
+    } catch (error) {
+      console.error('Error creating alert:', error);
+      res.status(500).json({ error: 'Failed to create alert' });
+    }
+  });
+
+  app.get('/api/usage/budgets', ensureAuthenticated, async (req, res) => {
+    try {
+      const budgets = [
+        {
+          id: 1,
+          name: 'Monthly Development Budget',
+          amount: 100,
+          period: 'monthly',
+          spent: 65.43,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-01-31')
+        }
+      ];
+      
+      res.json(budgets);
+    } catch (error) {
+      console.error('Error fetching budgets:', error);
+      res.status(500).json({ error: 'Failed to fetch budgets' });
+    }
+  });
+
+  app.post('/api/usage/budgets', ensureAuthenticated, async (req, res) => {
+    try {
+      const budget = req.body;
+      
+      res.json({
+        id: Date.now(),
+        ...budget,
+        spent: 0,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+      });
+    } catch (error) {
+      console.error('Error creating budget:', error);
+      res.status(500).json({ error: 'Failed to create budget' });
+    }
+  });
+
   // Checkpoint Routes
   app.get('/api/projects/:id/checkpoints', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {

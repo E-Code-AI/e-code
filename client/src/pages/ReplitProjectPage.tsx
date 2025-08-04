@@ -67,6 +67,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // Import components for mobile tabs
 import { ReplitSecrets } from '@/components/ReplitSecrets';
 import { ReplitDatabase } from '@/components/ReplitDatabase';
+import { DatabaseManagement } from '@/components/DatabaseManagement';
+import { SecretManagement } from '@/components/SecretManagement';
+import { PreviewDevTools } from '@/components/PreviewDevTools';
 
 // Import collaboration components
 import { CollaborationPanel } from '@/components/CollaborationPanel';
@@ -78,12 +81,12 @@ import { CheckpointsPanel } from '@/components/CheckpointsPanel';
 import { TimeTrackingPanel } from '@/components/TimeTrackingPanel';
 import { ScreenshotsPanel } from '@/components/ScreenshotsPanel';
 import { TaskSummariesPanel } from '@/components/TaskSummariesPanel';
-import { CommentsPanel } from '@/components/CommentsPanel';
 import { HistoryTimeline } from '@/components/HistoryTimeline';
 import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 import { ConsolePanel } from '@/components/ConsolePanel';
 import { LivePreview } from '@/components/LivePreview';
 import { PreviewPanel } from '@/components/PreviewPanel';
+import { EnhancedPreview } from '@/components/EnhancedPreview';
 import { DeploymentPanel } from '@/components/DeploymentPanel';
 import { ToolsDropdown } from '@/components/ToolsDropdown';
 
@@ -116,7 +119,7 @@ const ReplitProjectPage = () => {
   const [showTerminal, setShowTerminal] = useState(false); // Hide terminal by default like Replit
   const [mobileTab, setMobileTab] = useState<MobileTab>('agent'); // Default to agent on mobile like Replit
   const [showCollaboration, setShowCollaboration] = useState(false);
-  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions' | 'deployments' | 'shell' | 'database' | 'secrets' | 'workflows' | 'console' | 'authentication' | 'preview' | 'git' | 'ssh' | 'vnc' | 'threads' | 'object-storage' | 'problems' | 'security-scanner' | 'networking' | 'integrations' | 'user-settings' | 'fork-graph' | 'version-control' | 'package-explorer' | 'resource-monitor' | 'deployment-pipeline'>('ai');
+  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions' | 'deployments' | 'shell' | 'database' | 'secrets' | 'workflows' | 'console' | 'authentication' | 'preview' | 'git' | 'ssh' | 'vnc' | 'threads' | 'object-storage' | 'problems' | 'security-scanner' | 'networking' | 'integrations' | 'user-settings' | 'fork-graph' | 'version-control' | 'package-explorer' | 'resource-monitor' | 'deployment-pipeline' | 'checkpoints' | 'time-tracking' | 'screenshots' | 'task-summaries'>('ai');
   const [aiMode, setAIMode] = useState<'agent' | 'advanced'>('agent'); // Default to agent mode
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
   const [openTools, setOpenTools] = useState<string[]>(['agent', 'preview']);
@@ -1122,7 +1125,7 @@ const ReplitProjectPage = () => {
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
           {rightPanelMode === 'preview' && (
-            <LivePreview projectId={projectId} />
+            <EnhancedPreview projectId={projectId} />
           )}
           {rightPanelMode === 'console' && (
             <ConsolePanel
@@ -1130,13 +1133,13 @@ const ReplitProjectPage = () => {
             />
           )}
           {rightPanelMode === 'database' && (
-            <ReplitDatabase projectId={projectId} />
+            <DatabaseManagement projectId={projectId.toString()} />
           )}
           {rightPanelMode === 'deployments' && (
             <DeploymentPanel projectId={projectId} />
           )}
           {rightPanelMode === 'secrets' && (
-            <ReplitSecrets projectId={projectId} />
+            <SecretManagement projectId={projectId.toString()} />
           )}
           {rightPanelMode === 'shell' && (
             <Terminal projectId={projectId} />
