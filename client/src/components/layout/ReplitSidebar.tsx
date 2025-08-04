@@ -34,6 +34,7 @@ import {
   Star,
   Clock,
   Tag,
+  Sparkles,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -240,6 +241,38 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 </div>
               </CollapsibleContent>
             </Collapsible>
+
+            {/* Section Agent - Positioned before Tools like in Replit */}
+            {projectId && (
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto"
+                  >
+                    <div className="flex items-center">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      <span className="text-sm font-medium">Agent</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-1 mt-2">
+                  <div className="px-2 py-2 text-xs text-[var(--ecode-text-secondary)]">
+                    AI-powered assistant to help you build faster
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                    onClick={() => window.dispatchEvent(new CustomEvent('openAgent'))}
+                  >
+                    <Sparkles className="h-3 w-3 mr-2" />
+                    Open Agent Chat
+                  </Button>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
 
             {/* Section Outils */}
             <Collapsible>

@@ -18,6 +18,7 @@ E-Code is a comprehensive web-based Integrated Development Environment (IDE) ins
 - **State Management**: React Query for server state, React hooks for local state.
 - **Theme System**: Custom CSS variables for light/dark mode.
 - **UI/UX**: Pixel-perfect match to Replit's interface, responsive design.
+- **Layout Architecture**: Left sidebar contains tabs for Files, Version Control, Agent (AI), and Tools - matching Replit's exact layout where Agent is integrated as a sidebar tab, not a separate right panel.
 
 ### Backend
 - **Framework & Database**: Express.js with TypeScript, PostgreSQL with Drizzle ORM.
@@ -47,6 +48,9 @@ E-Code is a comprehensive web-based Integrated Development Environment (IDE) ins
 - **Secret Management**: Secure credential storage, category-based organization, scope management, usage tracking.
 - **Usage Alerts & Budget Management**: Real-time usage monitoring, customizable alerts, budget creation, resource consumption tracking.
 - **Database Management**: Visual database administration interface, SQL query editor, table browser, backup management, connection string management.
+
+## Recent Changes (August 2025)
+- **Agent UI Position**: Moved AI Agent from separate right panel to left sidebar tabs (matching Replit's layout). Agent section now appears before Tools section in sidebar.
 
 ## External Dependencies
 - **Monaco Editor**: Code editor.
