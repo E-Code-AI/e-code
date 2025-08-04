@@ -4781,6 +4781,51 @@ API will be available at http://localhost:3000
     res.json({ success: true });
   });
 
+  // Main preview endpoint for serving project files
+  app.get('/api/projects/:projectId/preview/*', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const requestedPath = req.params[0] || 'index.html';
+      
+      // Get the file from storage
+      const files = await storage.getFilesByProjectId(projectId);
+      const file = files.find(f => f.name === requestedPath || f.path === requestedPath);
+      
+      if (!file) {
+        // If no file found, try index.html
+        const indexFile = files.find(f => f.name === 'index.html');
+        if (indexFile) {
+          res.setHeader('Content-Type', 'text/html');
+          res.send(indexFile.content);
+          return;
+        }
+        return res.status(404).send('File not found');
+      }
+      
+      // Set appropriate content type based on file extension
+      const ext = path.extname(file.name).toLowerCase();
+      const contentTypes: { [key: string]: string } = {
+        '.html': 'text/html',
+        '.css': 'text/css',
+        '.js': 'application/javascript',
+        '.json': 'application/json',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+        '.ico': 'image/x-icon'
+      };
+      
+      const contentType = contentTypes[ext] || 'text/plain';
+      res.setHeader('Content-Type', contentType);
+      res.send(file.content);
+    } catch (error) {
+      console.error('Preview error:', error);
+      res.status(500).send('Preview error');
+    }
+  });
+
   app.get('/api/gpu/instances', ensureAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -16868,21 +16913,71 @@ Generate a comprehensive application based on the user's request. Include all ne
   const { aiService } = await import('./ai/ai-service');
   
   // AI Chat endpoint - using real AI providers
-  app.post('/api/ai/chat', ensureAuthenticated, async (req, res) => {
+  app.post('/api/ai/chat/:projectId', ensureAuthenticated, async (req, res) => {
     try {
-      const { messages, model = 'gpt-4o', projectContext, temperature } = req.body;
+      const { projectId } = req.params;
+      const { message, context, provider = 'openai' } = req.body;
+      
+      // Convert single message to messages array for AI service
+      const messages = [{
+        role: 'user',
+        content: message
+      }];
+      
+      // Map provider names to models
+      const modelMap: Record<string, string> = {
+        openai: 'gpt-4o',
+        anthropic: 'claude-3-5-sonnet-20241022',
+        gemini: 'gemini-pro',
+        xai: 'grok-beta',
+        perplexity: 'llama-3.1-sonar-small-128k-online'
+      };
+      
+      const model = modelMap[provider] || 'gpt-4o';
+      
+      // Get project context
+      const project = await storage.getProject(parseInt(projectId));
+      const files = await storage.getFilesByProjectId(parseInt(projectId));
+      
+      const projectContext = {
+        projectId: parseInt(projectId),
+        projectName: project?.name,
+        language: project?.language,
+        files: files.map(f => ({ path: f.path, content: f.content }))
+      };
       
       const response = await aiService.generateResponse(messages, {
         model,
         projectContext,
-        temperature,
-        tools: true
+        temperature: 0.7,
+        tools: true,
+        provider
       });
       
-      res.json(response);
-    } catch (error) {
+      // Transform response to match frontend expectations
+      const transformedResponse = {
+        content: response.content,
+        actions: response.tool_calls?.map((call: any) => ({
+          type: call.function.name,
+          data: JSON.parse(call.function.arguments)
+        })) || [],
+        thinking: context?.thinking || false,
+        completed: response.finish_reason === 'stop'
+      };
+      
+      res.json(transformedResponse);
+    } catch (error: any) {
       logger.error('AI chat error:', error);
-      res.status(500).json({ error: 'AI service error' });
+      
+      // Check for missing API key errors
+      if (error.message?.includes('API key') || error.message?.includes('401')) {
+        res.status(401).json({ 
+          error: 'API key missing',
+          message: `${req.body.provider?.toUpperCase() || 'AI'} API key is missing. Please add it in the Secrets tab.`
+        });
+      } else {
+        res.status(500).json({ error: 'AI service error', message: error.message });
+      }
     }
   });
   

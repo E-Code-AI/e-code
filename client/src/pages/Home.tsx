@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -42,12 +42,14 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { ECodeLoading } from '@/components/ECodeLoading';
+import { AuthModal } from '@/components/AuthModal';
 
 export default function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("recent");
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -56,8 +58,19 @@ export default function Home() {
     queryKey: ['/api/projects'],
   });
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user && !isLoading) {
+      setIsAuthModalOpen(true);
+    }
+  }, [user, isLoading]);
+
   const createProjectMutation = useMutation({
     mutationFn: async (name: string) => {
+      if (!user) {
+        setIsAuthModalOpen(true);
+        throw new Error("Please log in to create projects");
+      }
       const res = await apiRequest('POST', '/api/projects', { name });
       return res.json();
     },
@@ -373,6 +386,16 @@ export default function Home() {
         onSubmit={handleCreateProject}
         isLoading={createProjectMutation.isPending}
         initialDescription={searchQuery}
+      />
+      
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setIsAuthModalOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+        }}
       />
     </AppLayout>
   );
