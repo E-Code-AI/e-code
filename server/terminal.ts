@@ -1,6 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
-import { spawn, ChildProcess } from 'child_process';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
@@ -8,18 +7,27 @@ import { storage } from './storage';
 import { File } from '@shared/schema';
 import readline from 'readline';
 import { createLogger } from './utils/logger';
+import { ContainerExecutor } from './execution/container-executor';
 
 // Create a logger for the terminal module
 const logger = createLogger('terminal');
 
-// Map to store terminal processes by projectId
-const terminalProcesses = new Map<number, {
-  process: ChildProcess | null;
+// Initialize container executor
+const containerExecutor = new ContainerExecutor();
+containerExecutor.init().catch(err => {
+  logger.error('Failed to initialize container executor:', err);
+});
+
+// Map to store terminal sessions by projectId
+const terminalSessions = new Map<number, {
+  sessionId: string;
   clients: Set<WebSocket>;
   commandHistory: string[];
   autocompleteSuggestions: string[];
   columns?: number;
   rows?: number;
+  currentDirectory: string;
+  outputBuffer: string;
 }>();
 
 // Setup the terminal WebSocket server
@@ -44,67 +52,72 @@ export function setupTerminalWebsocket(server: Server) {
       
       logger.info(`Terminal connection established for project ${projectId}`);
       
-      // Create terminal info entry if it doesn't exist
-      if (!terminalProcesses.has(projectId)) {
-        terminalProcesses.set(projectId, {
-          process: null,
+      // Create terminal session if it doesn't exist
+      if (!terminalSessions.has(projectId)) {
+        terminalSessions.set(projectId, {
+          sessionId: `terminal-${projectId}-${Date.now()}`,
           clients: new Set(),
           commandHistory: [],
           autocompleteSuggestions: [
             'ls', 'cd', 'mkdir', 'touch', 'cat', 'grep', 'find', 'echo',
             'npm', 'node', 'python', 'python3', 'git', 'curl', 'wget',
             'yarn', 'clear', 'exit', 'kill', 'ps', 'cp', 'mv', 'rm'
-          ]
+          ],
+          currentDirectory: `/project${projectId}`,
+          outputBuffer: ''
         });
       }
       
-      const terminalInfo = terminalProcesses.get(projectId)!;
-      terminalInfo.clients.add(ws);
+      const terminalSession = terminalSessions.get(projectId)!;
+      terminalSession.clients.add(ws);
       
-      // Start the process if it's not already running
-      if (!terminalInfo.process) {
-        startProcess(projectId, terminalInfo);
-      }
+      // Send welcome message
+      ws.send(JSON.stringify({
+        type: 'output',
+        data: `Welcome to E-Code Terminal\r\nProject: ${projectId}\r\n\r\n$ `
+      }));
       
       // Handle messages from the client
-      ws.on('message', (message) => {
+      ws.on('message', async (message) => {
         try {
-          if (!terminalInfo.process) {
-            // Try to restart the process if it's not running
-            startProcess(projectId, terminalInfo);
-            return;
-          }
-          
           const data = JSON.parse(message.toString());
           
           if (data.type === 'input') {
-            // For Enter key presses (usually ending with \r), add to command history
-            if (data.data.endsWith('\r')) {
-              const command = data.data.trim().replace('\r', '');
-              // Only store non-empty commands
-              if (command && command.length > 0) {
-                // Add to history if it's not a repeat of the last command
-                if (terminalInfo.commandHistory.length === 0 || 
-                    terminalInfo.commandHistory[terminalInfo.commandHistory.length - 1] !== command) {
-                  terminalInfo.commandHistory.push(command);
-                  // Limit history to last 100 commands
-                  if (terminalInfo.commandHistory.length > 100) {
-                    terminalInfo.commandHistory.shift();
+            const input = data.data;
+            
+            // Echo the input back to the terminal
+            broadcast(projectId, JSON.stringify({
+              type: 'output',
+              data: input
+            }));
+            
+            // Handle Enter key presses
+            if (input.includes('\r')) {
+              const command = terminalSession.outputBuffer.trim();
+              terminalSession.outputBuffer = '';
+              
+              if (command) {
+                // Add to history
+                if (terminalSession.commandHistory[terminalSession.commandHistory.length - 1] !== command) {
+                  terminalSession.commandHistory.push(command);
+                  if (terminalSession.commandHistory.length > 100) {
+                    terminalSession.commandHistory.shift();
                   }
                 }
                 
-                // Update autocompleteSuggestions with new command if not already present
-                if (!terminalInfo.autocompleteSuggestions.includes(command.split(' ')[0])) {
-                  const baseCommand = command.split(' ')[0];
-                  if (baseCommand && baseCommand.length > 1) {
-                    terminalInfo.autocompleteSuggestions.push(baseCommand);
-                  }
-                }
+                // Execute the command
+                await executeCommand(projectId, command);
+              } else {
+                // Empty command, just show prompt
+                broadcast(projectId, JSON.stringify({
+                  type: 'output',
+                  data: '$ '
+                }));
               }
+            } else {
+              // Add to output buffer
+              terminalSession.outputBuffer += input;
             }
-            
-            // Send input to the terminal process
-            terminalInfo.process.stdin?.write(data.data);
           } else if (data.type === 'resize') {
             // Store the terminal dimensions for future reference
             const { cols, rows } = data;
@@ -360,4 +373,97 @@ async function createProjectDir(project: { id: number }, files: File[]): Promise
     logger.error(`Error creating project directory: ${error}`);
     throw error;
   }
+}
+
+// Execute a command using the container executor
+async function executeCommand(projectId: number, command: string) {
+  const session = terminalSessions.get(projectId);
+  if (!session) return;
+  
+  logger.info(`Executing command for project ${projectId}: ${command}`);
+  
+  try {
+    // Handle built-in commands
+    if (command === 'clear') {
+      broadcast(projectId, JSON.stringify({
+        type: 'clear'
+      }));
+      broadcast(projectId, JSON.stringify({
+        type: 'output',
+        data: '$ '
+      }));
+      return;
+    }
+    
+    if (command.startsWith('cd ')) {
+      const newDir = command.substring(3).trim();
+      if (newDir === '..') {
+        const parts = session.currentDirectory.split('/');
+        if (parts.length > 2) {
+          parts.pop();
+          session.currentDirectory = parts.join('/');
+        }
+      } else if (newDir.startsWith('/')) {
+        session.currentDirectory = newDir;
+      } else {
+        session.currentDirectory = path.join(session.currentDirectory, newDir);
+      }
+      broadcast(projectId, JSON.stringify({
+        type: 'output',
+        data: `$ `
+      }));
+      return;
+    }
+    
+    // Get project info for language detection
+    const project = await storage.getProject(projectId);
+    const language = project?.language || 'nodejs';
+    
+    // Execute command in container
+    const result = await containerExecutor.execute({
+      language,
+      code: command,
+      timeout: 30000 // 30 second timeout
+    });
+    
+    // Send output
+    if (result.stdout) {
+      broadcast(projectId, JSON.stringify({
+        type: 'output',
+        data: result.stdout
+      }));
+    }
+    
+    if (result.stderr) {
+      broadcast(projectId, JSON.stringify({
+        type: 'output',
+        data: result.stderr
+      }));
+    }
+    
+    // Send prompt
+    broadcast(projectId, JSON.stringify({
+      type: 'output',
+      data: '\r\n$ '
+    }));
+    
+  } catch (error) {
+    logger.error(`Failed to execute command for project ${projectId}:`, error);
+    broadcast(projectId, JSON.stringify({
+      type: 'output',
+      data: `\r\nError: ${error}\r\n$ `
+    }));
+  }
+}
+
+// Broadcast message to all connected clients for a project
+function broadcast(projectId: number, message: string) {
+  const session = terminalSessions.get(projectId);
+  if (!session) return;
+  
+  session.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
 }

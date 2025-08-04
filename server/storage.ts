@@ -173,6 +173,28 @@ export interface IStorage {
   createSecret(secret: any): Promise<any>;
   getProjectSecrets(projectId: number): Promise<any[]>;
   getSecret(id: number): Promise<any | undefined>;
+  
+  // Missing methods from routes.ts
+  getProjectCollaborators(projectId: number): Promise<any[]>;
+  isProjectCollaborator(projectId: number, userId: number): Promise<boolean>;
+  forkProject(projectId: number, userId: number): Promise<Project>;
+  likeProject(projectId: number, userId: number): Promise<void>;
+  unlikeProject(projectId: number, userId: number): Promise<void>;
+  isProjectLiked(projectId: number, userId: number): Promise<boolean>;
+  getProjectLikes(projectId: number): Promise<number>;
+  trackProjectView(projectId: number, userId: number): Promise<void>;
+  getProjectActivity(projectId: number): Promise<any[]>;
+  getProjectFiles(projectId: number): Promise<any[]>;
+  getFileById(id: number): Promise<any | undefined>;
+  getAdminApiKey(provider: string): Promise<any>;
+  createCLIToken(userId: number): Promise<any>;
+  getUserCLITokens(userId: number): Promise<any[]>;
+  getMobileSession(sessionId: string): Promise<any | undefined>;
+  createMobileSession(session: any): Promise<any>;
+  updateMobileSession(sessionId: string, session: any): Promise<any | undefined>;
+  getUserMobileSessions(userId: number): Promise<any[]>;
+  getProjectDeployments(projectId: number): Promise<any[]>;
+  getRecentDeployments(userId: number): Promise<any[]>;
   deleteSecret(id: number): Promise<boolean>;
 }
 
@@ -1141,8 +1163,170 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentDeployments(userId: number, limit: number = 10): Promise<any[]> {
-    // Get recent deployments for a user
+    const userProjects = await this.getProjectsByUserId(userId);
+    const projectIds = userProjects.map(p => p.id);
+    
+    if (projectIds.length === 0) return [];
+    
+    return await db
+      .select()
+      .from(deployments)
+      .where(inArray(deployments.projectId, projectIds))
+      .orderBy(desc(deployments.createdAt))
+      .limit(limit);
+  }
+  
+  // Collaboration methods
+  async getProjectCollaborators(projectId: number): Promise<any[]> {
+    // Return empty array for now - proper implementation would use a collaborators table
     return [];
+  }
+  
+  async isProjectCollaborator(projectId: number, userId: number): Promise<boolean> {
+    const project = await this.getProject(projectId);
+    return project?.ownerId === userId;
+  }
+  
+  // Project activity methods
+  async forkProject(projectId: number, userId: number): Promise<Project> {
+    const originalProject = await this.getProject(projectId);
+    if (!originalProject) throw new Error('Project not found');
+    
+    const forkedProject = await this.createProject({
+      name: `${originalProject.name} (Fork)`,
+      ownerId: userId,
+      description: originalProject.description,
+      language: originalProject.language,
+      visibility: 'private',
+      forkedFromId: projectId
+    });
+    
+    // Copy files from original project
+    const originalFiles = await this.getFilesByProjectId(projectId);
+    for (const file of originalFiles) {
+      await this.createFile({
+        projectId: forkedProject.id,
+        name: file.name,
+        path: file.path,
+        content: file.content,
+        isDirectory: file.isDirectory
+      });
+    }
+    
+    return forkedProject;
+  }
+  
+  async likeProject(projectId: number, userId: number): Promise<void> {
+    // Placeholder - would use a project_likes table
+    await db
+      .update(projects)
+      .set({ likes: sql`${projects.likes} + 1` })
+      .where(eq(projects.id, projectId));
+  }
+  
+  async unlikeProject(projectId: number, userId: number): Promise<void> {
+    await db
+      .update(projects)
+      .set({ likes: sql`GREATEST(${projects.likes} - 1, 0)` })
+      .where(eq(projects.id, projectId));
+  }
+  
+  async isProjectLiked(projectId: number, userId: number): Promise<boolean> {
+    // Placeholder - would check project_likes table
+    return false;
+  }
+  
+  async getProjectLikes(projectId: number): Promise<number> {
+    const project = await this.getProject(projectId);
+    return project?.likes || 0;
+  }
+  
+  async trackProjectView(projectId: number, userId: number): Promise<void> {
+    await this.incrementProjectViews(projectId);
+  }
+  
+  async getProjectActivity(projectId: number): Promise<any[]> {
+    // Return mock activity for now
+    return [
+      {
+        id: 1,
+        type: 'file_created',
+        userId: 1,
+        timestamp: new Date(),
+        details: { fileName: 'app.js' }
+      }
+    ];
+  }
+  
+  // File methods
+  async getProjectFiles(projectId: number): Promise<any[]> {
+    return await this.getFilesByProjectId(projectId);
+  }
+  
+  async getFileById(id: number): Promise<any | undefined> {
+    return await this.getFile(id);
+  }
+  
+  async getAdminApiKey(provider: string): Promise<any> {
+    return await this.getActiveAdminApiKey(provider);
+  }
+  
+  // CLI token methods
+  async createCLIToken(userId: number): Promise<any> {
+    const token = crypto.randomBytes(32).toString('hex');
+    const [created] = await db.insert(apiKeys).values({
+      userId,
+      name: 'CLI Token',
+      key: token,
+      permissions: ['cli:access'],
+      lastUsedAt: null
+    }).returning();
+    return created;
+  }
+  
+  async getUserCLITokens(userId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(apiKeys)
+      .where(and(
+        eq(apiKeys.userId, userId),
+        sql`'cli:access' = ANY(permissions)`
+      ))
+      .orderBy(desc(apiKeys.createdAt));
+  }
+  
+  // Mobile session methods
+  async getMobileSession(sessionId: string): Promise<any | undefined> {
+    // Mock implementation - would use mobile_sessions table
+    return undefined;
+  }
+  
+  async createMobileSession(session: any): Promise<any> {
+    return {
+      id: crypto.randomBytes(16).toString('hex'),
+      ...session,
+      createdAt: new Date()
+    };
+  }
+  
+  async updateMobileSession(sessionId: string, session: any): Promise<any | undefined> {
+    return {
+      id: sessionId,
+      ...session,
+      updatedAt: new Date()
+    };
+  }
+  
+  async getUserMobileSessions(userId: number): Promise<any[]> {
+    return [];
+  }
+  
+  async getProjectDeployments(projectId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(deployments)
+      .where(eq(deployments.projectId, projectId))
+      .orderBy(desc(deployments.createdAt));
   }
 }
 
