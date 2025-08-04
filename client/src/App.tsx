@@ -121,6 +121,12 @@ const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
 const FigmaImport = lazy(() => import("@/pages/FigmaImport"));
 const BoltImport = lazy(() => import("@/pages/BoltImport"));
 const LovableImport = lazy(() => import("@/pages/LovableImport"));
+// Advanced Feature Components
+const MobileAppPage = lazy(() => import("@/components/MobileApp"));
+const EnterpriseSSOPage = lazy(() => import("@/components/EnterpriseSSO"));
+const AdvancedCollaborationPage = lazy(() => import("@/components/AdvancedCollaboration"));
+const ObjectStoragePage = lazy(() => import("@/components/ObjectStorage"));
+const CommunityFeaturesPage = lazy(() => import("@/components/CommunityFeatures"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -291,6 +297,32 @@ function AppContent() {
           <ProtectedRoute path="/mobile-apps" component={() => (
             <ReplitLayout showSidebar={false}>
               <MobileAppsPage />
+            </ReplitLayout>
+          )} />
+          {/* Advanced Feature Routes */}
+          <ProtectedRoute path="/advanced/mobile" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <MobileAppPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/advanced/sso" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <EnterpriseSSOPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/advanced/collaboration" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <AdvancedCollaborationPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/advanced/storage" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <ObjectStoragePage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/advanced/community" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <CommunityFeaturesPage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/settings" component={() => (
