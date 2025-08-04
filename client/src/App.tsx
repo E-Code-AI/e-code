@@ -125,6 +125,10 @@ const FigmaImport = lazy(() => import("@/pages/FigmaImport"));
 const BoltImport = lazy(() => import("@/pages/BoltImport"));
 const LovableImport = lazy(() => import("@/pages/LovableImport"));
 const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
+// Application Pages
+const SolarTechAIChatApp = lazy(() => import("@/pages/SolarTechAIChatApp"));
+const SolarTechCRMApp = lazy(() => import("@/pages/SolarTechCRMApp"));
+const SolarTechStoreApp = lazy(() => import("@/pages/SolarTechStoreApp"));
 // Advanced Feature Components
 
 import { ProtectedRoute } from "./lib/protected-route";
@@ -459,6 +463,16 @@ function AppContent() {
             <ReplitLayout showSidebar={false}>
               <MobileAdmin />
             </ReplitLayout>
+          )} />
+          {/* Application Routes */}
+          <ProtectedRoute path="/solartech-ai-chat" component={() => (
+            <SolarTechAIChatApp />
+          )} />
+          <ProtectedRoute path="/solartech-crm" component={() => (
+            <SolarTechCRMApp />
+          )} />
+          <ProtectedRoute path="/solartech-fortune500-store" component={() => (
+            <SolarTechStoreApp />
           )} />
           <ProtectedRoute path="/admin" component={() => (
             <ReplitLayout>
