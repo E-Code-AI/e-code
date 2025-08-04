@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  body {
+    @apply antialiased;
+  }
+}
+
+@layer components {
+  /* Fortune 500 Enterprise Design System */
+  .enterprise-gradient {
+    @apply bg-gradient-to-r from-slate-900 to-slate-700;
+  }
+  
+  .enterprise-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-shadow duration-300;
+  }
+  
+  .enterprise-button {
+    @apply inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200;
+  }
+  
+  .btn-primary {
+    @apply enterprise-button text-white bg-blue-900 hover:bg-blue-800 focus:ring-blue-900;
+  }
+  
+  .btn-secondary {
+    @apply enterprise-button text-gray-700 bg-white border-gray-300 hover:bg-gray-50 focus:ring-blue-900;
+  }
+  
+  .btn-success {
+    @apply enterprise-button text-white bg-green-700 hover:bg-green-600 focus:ring-green-700;
+  }
+  
+  .product-card {
+    @apply enterprise-card p-4 hover:scale-[1.02] transition-transform duration-200;
+  }
+  
+  .input-field {
+    @apply block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-900 focus:border-blue-900;
+  }
+  
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+  }
+  
+  .section-title {
+    @apply text-3xl font-bold text-gray-900 mb-2;
+  }
+  
+  .section-subtitle {
+    @apply text-lg text-gray-600 mb-8;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-900 to-blue-600 bg-clip-text text-transparent;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.5s ease-out;
+  }
+  
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}

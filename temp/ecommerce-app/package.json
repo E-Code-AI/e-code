@@ -1,0 +1,44 @@
+{
+  "name": "solartech-fortune500-store",
+  "version": "1.0.0",
+  "description": "Enterprise e-commerce platform for solar products",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "tsx watch server/index.ts",
+    "client": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.3",
+    "zustand": "^4.5.2",
+    "react-query": "^3.39.3",
+    "date-fns": "^3.3.1",
+    "lucide-react": "^0.344.0",
+    "framer-motion": "^11.0.8",
+    "stripe": "^14.18.0",
+    "@stripe/stripe-js": "^3.0.4",
+    "@stripe/react-stripe-js": "^2.5.0",
+    "react-hot-toast": "^2.4.1",
+    "react-select": "^5.8.0",
+    "react-hook-form": "^7.50.1",
+    "zod": "^3.22.4",
+    "@hookform/resolvers": "^3.3.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.64",
+    "@types/react-dom": "^18.2.21",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.18",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.5",
+    "concurrently": "^8.2.2",
+    "tsx": "^4.7.1"
+  }
+}
