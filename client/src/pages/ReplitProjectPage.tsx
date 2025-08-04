@@ -12,7 +12,7 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import Terminal from '@/components/Terminal';
-import { ReplitAgentChat } from '@/components/ReplitAgentChat';
+import { UnifiedAgentInterface } from '@/components/UnifiedAgentInterface';
 import { ReplitAssistant } from '@/components/ReplitAssistant';
 import { MobileAgentInterface } from '@/components/MobileAgentInterface';
 import AdvancedAIPanel from '@/components/AdvancedAIPanel';
@@ -94,7 +94,7 @@ import { ToolsDropdown } from '@/components/ToolsDropdown';
 // Import critical new features
 import { CheckpointManager } from '@/components/CheckpointManager';
 import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
-import { AgentV2Interface } from '@/components/AgentV2Interface';
+
 import { MobileAppDevelopment } from '@/components/MobileAppDevelopment';
 
 // Import advanced UI components
@@ -934,7 +934,7 @@ const ReplitProjectPage = () => {
         </div>
         <div className="flex-1 overflow-hidden">
           {leftPanelMode === 'agent' ? (
-            <ReplitAgentChat projectId={projectId} />
+            <UnifiedAgentInterface projectId={projectId} />
           ) : (
             <ReplitAssistant 
               projectId={projectId}
@@ -1231,9 +1231,7 @@ const ReplitProjectPage = () => {
           {rightPanelMode === 'effort-pricing' && (
             <EffortPricingDisplay projectId={projectId} />
           )}
-          {rightPanelMode === 'agent-v2' && (
-            <AgentV2Interface projectId={projectId} />
-          )}
+
           {rightPanelMode === 'mobile-app' && (
             <MobileAppDevelopment projectId={projectId} />
           )}
