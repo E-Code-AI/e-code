@@ -125,6 +125,7 @@ const FigmaImport = lazy(() => import("@/pages/FigmaImport"));
 const BoltImport = lazy(() => import("@/pages/BoltImport"));
 const LovableImport = lazy(() => import("@/pages/LovableImport"));
 const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
+const BookScanner = lazy(() => import("@/pages/BookScanner"));
 // Application Pages
 const SolarTechAIChatApp = lazy(() => import("@/pages/SolarTechAIChatApp"));
 const SolarTechCRMApp = lazy(() => import("@/pages/SolarTechCRMApp"));
@@ -374,6 +375,11 @@ function AppContent() {
           )} />
           <ProtectedRoute path="/@:username/:projectname" component={() => (
             <ProjectPage />
+          )} />
+          <ProtectedRoute path="/@admin/book-scanner" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <BookScanner />
+            </ReplitLayout>
           )} />
           <Route path="/@:username" component={() => (
             <ReplitLayout showSidebar={false}>
