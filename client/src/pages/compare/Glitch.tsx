@@ -1,4 +1,5 @@
 import { ComparisonLayout } from "@/components/ComparisonLayout";
+import { SiGlitch } from 'react-icons/si';
 
 export default function GlitchComparison() {
   const features = [
@@ -51,7 +52,7 @@ export default function GlitchComparison() {
   return (
     <ComparisonLayout
       competitorName="Glitch"
-      competitorLogo="/images/competitors/glitch.svg"
+      competitorLogo={<SiGlitch className="w-16 h-16" />}
       tagline="Professional Development Platform vs Creative Coding"
       description="E-Code provides a complete development environment with AI assistance, while Glitch focuses on simple, creative web projects. Compare their capabilities."
       features={features}

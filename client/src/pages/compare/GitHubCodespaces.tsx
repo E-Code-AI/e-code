@@ -1,4 +1,5 @@
 import { ComparisonLayout } from "@/components/ComparisonLayout";
+import { SiGithub } from 'react-icons/si';
 
 export default function GitHubCodespacesComparison() {
   const features = [
@@ -53,7 +54,7 @@ export default function GitHubCodespacesComparison() {
   return (
     <ComparisonLayout
       competitorName="GitHub Codespaces"
-      competitorLogo="/images/competitors/github-codespaces.svg"
+      competitorLogo={<SiGithub className="w-16 h-16" />}
       tagline="AI-Powered Development vs Enterprise Cloud Development"
       description="E-Code offers instant, AI-assisted coding for everyone while GitHub Codespaces provides enterprise-grade cloud development environments. See how they compare."
       features={features}

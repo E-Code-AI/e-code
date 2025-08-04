@@ -3,6 +3,7 @@ import { PublicFooter } from "./layout/PublicFooter";
 import { Button } from "@/components/ui/button";
 import { Check, X, Minus } from "lucide-react";
 import { useLocation } from "wouter";
+import { ReactNode } from "react";
 
 interface Feature {
   name: string;
@@ -12,7 +13,7 @@ interface Feature {
 
 interface ComparisonLayoutProps {
   competitorName: string;
-  competitorLogo?: string;
+  competitorLogo?: string | ReactNode;
   tagline: string;
   description: string;
   features: Feature[];
@@ -63,11 +64,15 @@ export function ComparisonLayout({
                 <span className="text-3xl text-muted-foreground">vs</span>
                 <div className="flex items-center gap-4">
                   {competitorLogo && (
-                    <img
-                      src={competitorLogo}
-                      alt={competitorName}
-                      className="h-12 w-12"
-                    />
+                    typeof competitorLogo === 'string' ? (
+                      <img
+                        src={competitorLogo}
+                        alt={competitorName}
+                        className="h-12 w-12"
+                      />
+                    ) : (
+                      competitorLogo
+                    )
                   )}
                   <span className="text-4xl font-bold">{competitorName}</span>
                 </div>

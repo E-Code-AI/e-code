@@ -1,4 +1,5 @@
 import { ComparisonLayout } from "@/components/ComparisonLayout";
+import { SiCodesandbox } from 'react-icons/si';
 
 export default function CodeSandboxComparison() {
   const features = [
@@ -52,7 +53,7 @@ export default function CodeSandboxComparison() {
   return (
     <ComparisonLayout
       competitorName="CodeSandbox"
-      competitorLogo="/images/competitors/codesandbox.svg"
+      competitorLogo={<SiCodesandbox className="w-16 h-16" />}
       tagline="Full-Stack Development vs Frontend-First Coding"
       description="E-Code offers complete full-stack development with AI assistance, while CodeSandbox excels at frontend web development. Compare their features and capabilities."
       features={features}

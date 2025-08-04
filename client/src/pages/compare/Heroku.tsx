@@ -1,4 +1,5 @@
 import { ComparisonLayout } from "@/components/ComparisonLayout";
+import { SiHeroku } from 'react-icons/si';
 
 export default function HerokuComparison() {
   const features = [
@@ -51,7 +52,7 @@ export default function HerokuComparison() {
   return (
     <ComparisonLayout
       competitorName="Heroku"
-      competitorLogo="/images/competitors/heroku.svg"
+      competitorLogo={<SiHeroku className="w-16 h-16" />}
       tagline="All-in-One Development vs Traditional PaaS"
       description="E-Code combines development and deployment in one platform with AI assistance, while Heroku focuses on application hosting. See how they compare."
       features={features}
