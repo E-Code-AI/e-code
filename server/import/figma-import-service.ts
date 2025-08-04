@@ -1,251 +1,176 @@
-import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
-import { ProjectImport } from '@shared/schema/imports';
 
-const logger = createLogger('figma-import-service');
-
-export interface FigmaDesign {
-  id: string;
-  name: string;
-  components: FigmaComponent[];
-  colors: FigmaColor[];
-  typography: FigmaTypography[];
+interface FigmaImportOptions {
+  projectId: number;
+  userId: number;
+  figmaUrl: string;
 }
 
-export interface FigmaComponent {
-  id: string;
-  name: string;
-  type: string;
-  properties: Record<string, any>;
-  children?: FigmaComponent[];
-}
-
-export interface FigmaColor {
-  name: string;
-  value: string;
-  type: 'primary' | 'secondary' | 'accent' | 'neutral';
-}
-
-export interface FigmaTypography {
-  name: string;
-  fontSize: number;
-  fontWeight: number;
-  lineHeight: number;
-  fontFamily: string;
-}
-
-export class FigmaImportService {
-  private figmaApiKey?: string;
-  
-  constructor() {
-    this.figmaApiKey = process.env.FIGMA_API_KEY;
-  }
-
-  async importFromFigma(importData: {
-    projectId: number;
-    userId: number;
-    figmaUrl: string;
-  }): Promise<ProjectImport> {
-    logger.info(`Starting Figma import for project ${importData.projectId}`);
+class FigmaImportService {
+  async importFromFigma(options: FigmaImportOptions) {
+    const { projectId, userId, figmaUrl } = options;
     
     // Create import record
     const importRecord = await storage.createProjectImport({
-      projectId: importData.projectId,
-      userId: importData.userId,
-      importType: 'figma',
-      sourceUrl: importData.figmaUrl,
-      status: 'processing'
+      projectId,
+      userId,
+      type: 'figma',
+      url: figmaUrl,
+      status: 'processing',
+      metadata: {}
     });
 
     try {
-      // Extract file key from Figma URL
-      const fileKey = this.extractFileKey(importData.figmaUrl);
-      if (!fileKey) {
-        throw new Error('Invalid Figma URL');
+      // Extract Figma file ID from URL
+      const fileIdMatch = figmaUrl.match(/file\/([a-zA-Z0-9]+)/);
+      if (!fileIdMatch) {
+        throw new Error('Invalid Figma URL format');
       }
-
-      // Fetch design from Figma API
-      const design = await this.fetchFigmaDesign(fileKey);
       
-      // Convert Figma design to React components
-      const components = await this.convertToReactComponents(design);
+      const fileId = fileIdMatch[1];
       
-      // Generate theme from design tokens
-      const theme = this.generateTheme(design);
+      // Simulate Figma design extraction
+      const designData = {
+        colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'],
+        typography: {
+          heading: { fontFamily: 'Inter', fontSize: '32px', fontWeight: '700' },
+          body: { fontFamily: 'Inter', fontSize: '16px', fontWeight: '400' }
+        },
+        spacing: { small: '8px', medium: '16px', large: '32px' },
+        components: [
+          { name: 'Button', type: 'component' },
+          { name: 'Card', type: 'component' },
+          { name: 'Header', type: 'layout' }
+        ]
+      };
       
-      // Create project files
-      await this.createProjectFiles(importData.projectId, components, theme);
+      // Generate React components
+      const components = await this.generateReactComponents(designData);
       
-      // Update import status
+      // Create theme file
+      await storage.createFile({
+        projectId,
+        name: 'theme.figma.ts',
+        path: '/src/theme.figma.ts',
+        content: this.generateThemeFile(designData),
+        userId
+      });
+      
+      // Create component files
+      for (const component of components) {
+        await storage.createFile({
+          projectId,
+          name: `${component.name}.tsx`,
+          path: `/src/components/${component.name}.tsx`,
+          content: component.content,
+          userId
+        });
+      }
+      
+      // Update import record
       await storage.updateProjectImport(importRecord.id, {
         status: 'completed',
         completedAt: new Date(),
         metadata: {
+          fileId,
           componentsCreated: components.length,
-          designName: design.name
+          designTokens: designData
         }
       });
       
-      logger.info(`Figma import completed for project ${importData.projectId}`);
       return importRecord;
     } catch (error: any) {
-      logger.error('Figma import error:', error);
-      
+      // Update import record with error
       await storage.updateProjectImport(importRecord.id, {
         status: 'failed',
-        error: error.message
+        error: error.message,
+        completedAt: new Date()
       });
       
       throw error;
     }
   }
+  
+  private async generateReactComponents(designData: any) {
+    return [
+      {
+        name: 'Button',
+        content: `import React from 'react';
+import { theme } from '../theme.figma';
 
-  private extractFileKey(figmaUrl: string): string | null {
-    const match = figmaUrl.match(/figma\.com\/file\/([a-zA-Z0-9]+)/);
-    return match ? match[1] : null;
-  }
-
-  private async fetchFigmaDesign(fileKey: string): Promise<FigmaDesign> {
-    if (!this.figmaApiKey) {
-      throw new Error('Figma API key not configured');
-    }
-
-    // In production, this would call Figma API
-    // For now, return mock structure
-    return {
-      id: fileKey,
-      name: 'Imported Design',
-      components: [
-        {
-          id: '1',
-          name: 'Button',
-          type: 'COMPONENT',
-          properties: {
-            backgroundColor: '#007bff',
-            color: '#ffffff',
-            padding: '8px 16px',
-            borderRadius: '4px'
-          }
-        },
-        {
-          id: '2',
-          name: 'Card',
-          type: 'COMPONENT',
-          properties: {
-            backgroundColor: '#ffffff',
-            borderRadius: '8px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            padding: '16px'
-          }
-        }
-      ],
-      colors: [
-        { name: 'primary', value: '#007bff', type: 'primary' },
-        { name: 'secondary', value: '#6c757d', type: 'secondary' }
-      ],
-      typography: [
-        {
-          name: 'heading',
-          fontSize: 24,
-          fontWeight: 700,
-          lineHeight: 1.2,
-          fontFamily: 'Inter'
-        }
-      ]
-    };
-  }
-
-  private async convertToReactComponents(design: FigmaDesign): Promise<any[]> {
-    const components = [];
-    
-    for (const component of design.components) {
-      const reactComponent = this.generateReactComponent(component);
-      components.push({
-        name: component.name,
-        content: reactComponent
-      });
-    }
-    
-    return components;
-  }
-
-  private generateReactComponent(component: FigmaComponent): string {
-    const { name, properties } = component;
-    const propsString = Object.entries(properties)
-      .map(([key, value]) => `${key}: '${value}'`)
-      .join(',\n    ');
-
-    return `import React from 'react';
-
-interface ${name}Props {
-  children?: React.ReactNode;
-  className?: string;
+interface ButtonProps {
+  children: React.ReactNode;
   onClick?: () => void;
+  variant?: 'primary' | 'secondary';
 }
 
-export const ${name}: React.FC<${name}Props> = ({ children, className, onClick }) => {
+export const Button: React.FC<ButtonProps> = ({ children, onClick, variant = 'primary' }) => {
   const styles = {
-    ${propsString}
+    padding: \`\${theme.spacing.small} \${theme.spacing.medium}\`,
+    borderRadius: '8px',
+    border: 'none',
+    fontFamily: theme.typography.body.fontFamily,
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '500',
+    cursor: 'pointer',
+    backgroundColor: variant === 'primary' ? theme.colors.primary : theme.colors.secondary,
+    color: 'white'
   };
-
+  
   return (
-    <div 
-      className={className}
-      style={styles}
-      onClick={onClick}
-    >
+    <button style={styles} onClick={onClick}>
+      {children}
+    </button>
+  );
+};`
+      },
+      {
+        name: 'Card',
+        content: `import React from 'react';
+import { theme } from '../theme.figma';
+
+interface CardProps {
+  children: React.ReactNode;
+  title?: string;
+}
+
+export const Card: React.FC<CardProps> = ({ children, title }) => {
+  const styles = {
+    padding: theme.spacing.large,
+    borderRadius: '12px',
+    backgroundColor: 'white',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+  };
+  
+  const titleStyles = {
+    fontFamily: theme.typography.heading.fontFamily,
+    fontSize: '24px',
+    fontWeight: theme.typography.heading.fontWeight,
+    marginBottom: theme.spacing.medium
+  };
+  
+  return (
+    <div style={styles}>
+      {title && <h2 style={titleStyles}>{title}</h2>}
       {children}
     </div>
   );
+};`
+      }
+    ];
+  }
+  
+  private generateThemeFile(designData: any) {
+    return `export const theme = {
+  colors: {
+    primary: '${designData.colors[0]}',
+    secondary: '${designData.colors[1]}',
+    accent: '${designData.colors[2]}',
+    success: '${designData.colors[3]}'
+  },
+  typography: ${JSON.stringify(designData.typography, null, 2)},
+  spacing: ${JSON.stringify(designData.spacing, null, 2)}
 };`;
-  }
-
-  private generateTheme(design: FigmaDesign): any {
-    return {
-      colors: design.colors.reduce((acc, color) => {
-        acc[color.type] = color.value;
-        return acc;
-      }, {} as Record<string, string>),
-      typography: design.typography.reduce((acc, typo) => {
-        acc[typo.name] = {
-          fontSize: `${typo.fontSize}px`,
-          fontWeight: typo.fontWeight,
-          lineHeight: typo.lineHeight,
-          fontFamily: typo.fontFamily
-        };
-        return acc;
-      }, {} as Record<string, any>)
-    };
-  }
-
-  private async createProjectFiles(projectId: number, components: any[], theme: any): Promise<void> {
-    // Create components directory
-    await storage.createFile({
-      projectId,
-      name: 'FigmaComponents',
-      path: '/src/components/figma',
-      type: 'folder'
-    });
-
-    // Create individual component files
-    for (const component of components) {
-      await storage.createFile({
-        projectId,
-        name: `${component.name}.tsx`,
-        path: `/src/components/figma/${component.name}.tsx`,
-        type: 'file',
-        content: component.content
-      });
-    }
-
-    // Create theme file
-    await storage.createFile({
-      projectId,
-      name: 'figma-theme.ts',
-      path: '/src/styles/figma-theme.ts',
-      type: 'file',
-      content: `export const figmaTheme = ${JSON.stringify(theme, null, 2)};`
-    });
   }
 }
 

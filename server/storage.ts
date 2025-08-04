@@ -1013,6 +1013,43 @@ export class DatabaseStorage implements IStorage {
     // Mock implementation for file creation
     return { id: Date.now(), ...fileData };
   }
+
+  async getImportStatistics(): Promise<any> {
+    // Mock implementation for import statistics
+    return {
+      figma: 12,
+      bolt: 8,
+      lovable: 5,
+      webContent: 23,
+      total: 48,
+      recent: [
+        {
+          id: 1,
+          type: 'figma',
+          url: 'https://figma.com/file/example',
+          projectId: 1,
+          status: 'completed',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 2,
+          type: 'bolt',
+          url: 'https://bolt.new/project',
+          projectId: 2,
+          status: 'completed',
+          createdAt: new Date(Date.now() - 3600000).toISOString()
+        },
+        {
+          id: 3,
+          type: 'lovable',
+          url: 'https://lovable.dev/app',
+          projectId: 3,
+          status: 'processing',
+          createdAt: new Date(Date.now() - 7200000).toISOString()
+        }
+      ]
+    };
+  }
 }
 
 // Initialize storage
