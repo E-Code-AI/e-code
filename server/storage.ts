@@ -569,6 +569,24 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return deployment;
   }
+
+  async getProjectDeployments(projectId: number): Promise<Deployment[]> {
+    return await db.select().from(deployments).where(eq(deployments.projectId, projectId));
+  }
+
+  async getRecentDeployments(userId: number): Promise<Deployment[]> {
+    const userProjects = await this.getProjectsByUser(userId);
+    const projectIds = userProjects.map(p => p.id);
+    
+    if (projectIds.length === 0) return [];
+    
+    return await db
+      .select()
+      .from(deployments)
+      .where(sql`${deployments.projectId} = ANY(${projectIds})`)
+      .orderBy(desc(deployments.createdAt))
+      .limit(10);
+  }
   
   // Audit log operations
   async getAuditLogs(filters: { userId?: number; action?: string; dateRange?: string }): Promise<any[]> {

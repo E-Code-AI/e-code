@@ -1,7 +1,7 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { deploymentManager } from '../services/deployment-manager.js';
-import { ensureAuthenticated } from '../middleware/auth.js';
+import { storage } from '../storage';
 
 const router = Router();
 
@@ -41,7 +41,7 @@ const deploymentConfigSchema = z.object({
 });
 
 // Create deployment
-router.post('/api/projects/:projectId/deploy', ensureAuthenticated, async (req, res) => {
+router.post('/api/projects/:projectId/deploy', async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
     const userId = req.user!.id;
@@ -73,7 +73,7 @@ router.post('/api/projects/:projectId/deploy', ensureAuthenticated, async (req, 
 });
 
 // Get deployment status
-router.get('/api/deployments/:deploymentId', ensureAuthenticated, async (req, res) => {
+router.get('/api/deployments/:deploymentId', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const deployment = await deploymentManager.getDeployment(deploymentId);
@@ -99,7 +99,7 @@ router.get('/api/deployments/:deploymentId', ensureAuthenticated, async (req, re
 });
 
 // List project deployments
-router.get('/api/projects/:projectId/deployments', ensureAuthenticated, async (req, res) => {
+router.get('/api/projects/:projectId/deployments', async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
     const deployments = await deploymentManager.listDeployments(projectId);
@@ -118,7 +118,7 @@ router.get('/api/projects/:projectId/deployments', ensureAuthenticated, async (r
 });
 
 // Update deployment
-router.put('/api/deployments/:deploymentId', ensureAuthenticated, async (req, res) => {
+router.put('/api/deployments/:deploymentId', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const updateConfig = deploymentConfigSchema.partial().parse(req.body);
@@ -139,7 +139,7 @@ router.put('/api/deployments/:deploymentId', ensureAuthenticated, async (req, re
 });
 
 // Delete deployment
-router.delete('/api/deployments/:deploymentId', ensureAuthenticated, async (req, res) => {
+router.delete('/api/deployments/:deploymentId', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     await deploymentManager.deleteDeployment(deploymentId);
@@ -158,7 +158,7 @@ router.delete('/api/deployments/:deploymentId', ensureAuthenticated, async (req,
 });
 
 // Get deployment metrics
-router.get('/api/deployments/:deploymentId/metrics', ensureAuthenticated, async (req, res) => {
+router.get('/api/deployments/:deploymentId/metrics', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const metrics = await deploymentManager.getDeploymentMetrics(deploymentId);
@@ -177,7 +177,7 @@ router.get('/api/deployments/:deploymentId/metrics', ensureAuthenticated, async 
 });
 
 // Domain management endpoints
-router.post('/api/deployments/:deploymentId/domain', ensureAuthenticated, async (req, res) => {
+router.post('/api/deployments/:deploymentId/domain', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const { domain } = z.object({ domain: z.string() }).parse(req.body);
@@ -197,7 +197,7 @@ router.post('/api/deployments/:deploymentId/domain', ensureAuthenticated, async 
   }
 });
 
-router.delete('/api/deployments/:deploymentId/domain', ensureAuthenticated, async (req, res) => {
+router.delete('/api/deployments/:deploymentId/domain', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     await deploymentManager.removeCustomDomain(deploymentId);
@@ -216,7 +216,7 @@ router.delete('/api/deployments/:deploymentId/domain', ensureAuthenticated, asyn
 });
 
 // SSL certificate management
-router.post('/api/deployments/:deploymentId/ssl/renew', ensureAuthenticated, async (req, res) => {
+router.post('/api/deployments/:deploymentId/ssl/renew', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     await deploymentManager.renewSSLCertificate(deploymentId);
@@ -349,4 +349,4 @@ router.get('/api/deployment/types', async (req, res) => {
   });
 });
 
-export { router as deploymentRoutes };
+export default router;
