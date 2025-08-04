@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
+import { AgentPricingDisplay } from './AgentPricingDisplay';
 
 interface ReplitAgentProps {
   projectId: number;
@@ -38,6 +39,20 @@ interface Message {
     buildType?: string;
     technology?: string;
   };
+  pricing?: {
+    complexity: string;
+    costInCents: number;
+    costInDollars: string;
+    effortScore: number;
+  };
+  metrics?: {
+    filesModified: number;
+    linesOfCode: number;
+    tokensUsed: number;
+    apiCalls: number;
+    executionTimeMs: number;
+  };
+  checkpoint?: any;
 }
 
 interface AgentAction {
@@ -1098,6 +1113,9 @@ What would you like me to build for you today?`,
         role: 'assistant',
         content: data.content || 'I can help you with that! Let me know what specific functionality you need.',
         timestamp: new Date(data.timestamp || Date.now()),
+        pricing: data.pricing,
+        metrics: data.metrics,
+        checkpoint: data.checkpoint
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -1207,6 +1225,16 @@ What would you like me to build?`,
               return <p key={index} className={index > 0 ? "mt-2" : ""}>{part}</p>;
             })}
           </div>
+          {/* Display pricing information if available */}
+          {message.pricing && (
+            <div className="mt-4">
+              <AgentPricingDisplay 
+                pricing={message.pricing}
+                metrics={message.metrics}
+                checkpoint={message.checkpoint}
+              />
+            </div>
+          )}
         </div>
       </div>
     );

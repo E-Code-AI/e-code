@@ -4,6 +4,10 @@
 import { storage } from '../storage';
 import { BuildAction } from './autonomous-builder';
 import { AIProviderFactory } from './providers/ai-provider-factory';
+import { checkpointService } from '../services/checkpoint-service';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('EnhancedAutonomousAgent');
 
 export interface AgentContext {
   projectId: number;
@@ -11,6 +15,7 @@ export interface AgentContext {
   message: string;
   existingFiles?: any[];
   buildHistory?: string[];
+  conversationHistory?: any[];
 }
 
 export interface AgentResponse {
@@ -21,6 +26,13 @@ export interface AgentResponse {
   summary?: string;
   timeWorked?: number;
   screenshot?: string;
+  checkpoint?: any;
+  pricing?: {
+    complexity: string;
+    costInCents: number;
+    costInDollars: string;
+    effortScore: number;
+  };
 }
 
 export class EnhancedAutonomousAgent {
@@ -28,41 +40,106 @@ export class EnhancedAutonomousAgent {
   private actions: BuildAction[] = [];
   private thinkingProcess: string[] = [];
   
+  // Tracking metrics for effort-based pricing
+  private filesModified: number = 0;
+  private linesOfCodeWritten: number = 0;
+  private tokensUsed: number = 0;
+  private apiCallsCount: number = 0;
+  
   async processRequest(context: AgentContext): Promise<AgentResponse> {
     this.startTime = Date.now();
     this.actions = [];
     this.thinkingProcess = [];
+    this.resetMetrics();
     
-    // Analyze the user's request
-    const analysis = await this.analyzeRequest(context.message);
+    try {
+      // Analyze the user's request
+      const analysis = await this.analyzeRequest(context.message);
+      this.apiCallsCount++;
+      
+      // Plan the application structure
+      const plan = await this.planApplication(analysis, context);
+      this.apiCallsCount++;
+      
+      // Generate the code and files
+      const buildActions = await this.generateBuildActions(plan, context);
+      this.apiCallsCount += buildActions.length;
+      
+      // Execute the build actions
+      const results = await this.executeBuildActions(buildActions, context);
+      
+      // Calculate effort metrics
+      this.calculateEffortMetrics(buildActions);
+      
+      // Create comprehensive checkpoint with AI context and effort pricing
+      const checkpoint = await checkpointService.createComprehensiveCheckpoint({
+        projectId: context.projectId,
+        userId: context.userId,
+        message: `AI Agent: ${context.message.substring(0, 100)}...`,
+        agentTaskDescription: context.message,
+        conversationHistory: context.conversationHistory,
+        filesModified: this.filesModified,
+        linesOfCodeWritten: this.linesOfCodeWritten,
+        tokensUsed: this.tokensUsed,
+        executionTimeMs: Date.now() - this.startTime,
+        apiCallsCount: this.apiCallsCount
+      });
+      
+      // Get pricing information
+      const pricingInfo = await checkpointService.getCheckpointPricingInfo(checkpoint.id);
+      
+      // Generate summary and screenshot
+      const summary = await this.generateSummary(analysis, results);
+      const screenshot = await this.captureScreenshot(context.projectId);
+      
+      const timeWorked = Math.round((Date.now() - this.startTime) / 1000);
+      
+      logger.info(`Agent task completed: ${this.filesModified} files, ${this.linesOfCodeWritten} lines, cost: $${pricingInfo.costInDollars}`);
+      
+      return {
+        message: this.generateResponseMessage(analysis, results),
+        actions: buildActions,
+        thinking: this.thinkingProcess.join('\n'),
+        completed: true,
+        summary,
+        timeWorked,
+        screenshot,
+        checkpoint,
+        pricing: {
+          complexity: pricingInfo.complexity,
+          costInCents: pricingInfo.costInCents,
+          costInDollars: pricingInfo.costInDollars,
+          effortScore: parseFloat(pricingInfo.effortScore)
+        }
+      };
+    } catch (error) {
+      logger.error('Agent processing error:', error);
+      throw error;
+    }
+  }
+  
+  private resetMetrics(): void {
+    this.filesModified = 0;
+    this.linesOfCodeWritten = 0;
+    this.tokensUsed = 0;
+    this.apiCallsCount = 0;
+  }
+  
+  private calculateEffortMetrics(actions: BuildAction[]): void {
+    actions.forEach(action => {
+      if (action.type === 'create_file' || action.type === 'update_file') {
+        this.filesModified++;
+        
+        // Count lines of code
+        if (action.content) {
+          this.linesOfCodeWritten += action.content.split('\n').length;
+        }
+      }
+    });
     
-    // Plan the application structure
-    const plan = await this.planApplication(analysis, context);
-    
-    // Generate the code and files
-    const buildActions = await this.generateBuildActions(plan, context);
-    
-    // Create checkpoint for version control
-    await this.createCheckpoint(context.projectId, 'AI Agent Build Started');
-    
-    // Execute the build actions
-    const results = await this.executeBuildActions(buildActions, context);
-    
-    // Generate summary and screenshot
-    const summary = await this.generateSummary(analysis, results);
-    const screenshot = await this.captureScreenshot(context.projectId);
-    
-    const timeWorked = Math.round((Date.now() - this.startTime) / 1000);
-    
-    return {
-      message: this.generateResponseMessage(analysis, results),
-      actions: buildActions,
-      thinking: this.thinkingProcess.join('\n'),
-      completed: true,
-      summary,
-      timeWorked,
-      screenshot
-    };
+    // Estimate tokens (rough approximation)
+    const totalContent = actions.reduce((acc, action) => acc + (action.content || '').length, 0);
+    this.tokensUsed = Math.ceil(totalContent / 4); // ~4 chars per token
   }
   
   private async analyzeRequest(message: string): Promise<any> {

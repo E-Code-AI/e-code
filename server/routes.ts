@@ -7,8 +7,8 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import Stripe from "stripe";
 import { db } from "./db";
-import { users, usageTracking } from "@shared/schema";
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { users, usageTracking, checkpoints } from "@shared/schema";
+import { and, eq, gte, lte, sql, desc } from "drizzle-orm";
 
 const execAsync = promisify(exec);
 import { insertProjectSchema, insertFileSchema } from "@shared/schema";
@@ -115,8 +115,10 @@ import { previewService } from './preview/preview-service';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { dataProvisioningService } from './data/data-provisioning-service';
 import { resourceMonitor } from './services/resource-monitor';
+import { CheckpointService } from './services/checkpoint-service';
 
 const logger = createLogger('routes');
+const checkpointService = new CheckpointService();
 const teamsService = new TeamsService();
 const abTestingService = new ABTestingService();
 const multiRegionFailoverService = new MultiRegionFailoverService();
@@ -3367,6 +3369,158 @@ API will be available at http://localhost:3000
     } catch (error) {
       console.error('Error downloading export:', error);
       res.status(500).json({ error: 'Failed to download export' });
+    }
+  });
+
+  // AI Agent Chat Endpoint with Comprehensive Checkpoints and Effort-Based Pricing
+  app.post('/api/projects/:id/ai/chat', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { message, context } = req.body;
+      const userId = req.user!.id;
+
+      // Prepare agent context with conversation history
+      const agentContext = {
+        projectId,
+        userId,
+        message,
+        existingFiles: context?.files || [],
+        buildHistory: context?.history || [],
+        conversationHistory: context?.conversationHistory || []
+      };
+
+      // Process request with enhanced autonomous agent
+      const response = await enhancedAgent.processRequest(agentContext);
+
+      // Response includes pricing, checkpoint, and metrics
+      res.json({
+        id: Date.now().toString(),
+        content: response.message,
+        actions: response.actions,
+        thinking: response.thinking,
+        completed: response.completed,
+        summary: response.summary,
+        timeWorked: response.timeWorked,
+        screenshot: response.screenshot,
+        pricing: response.pricing,
+        metrics: response.pricing ? {
+          filesModified: response.checkpoint?.filesModified || 0,
+          linesOfCode: response.checkpoint?.linesOfCodeWritten || 0,
+          tokensUsed: response.checkpoint?.tokensUsed || 0,
+          apiCalls: response.checkpoint?.apiCallsCount || 0,
+          executionTimeMs: response.checkpoint?.executionTimeMs || 0
+        } : undefined,
+        checkpoint: response.checkpoint
+      });
+    } catch (error) {
+      console.error('AI chat error:', error);
+      res.status(500).json({ 
+        error: 'Failed to process AI request',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Checkpoint Routes
+  app.get('/api/projects/:id/checkpoints', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const checkpointList = await db.select().from(checkpoints)
+        .where(eq(checkpoints.projectId, projectId))
+        .orderBy(desc(checkpoints.createdAt));
+      
+      // Transform checkpoints to include pricing info
+      const checkpointsWithPricing = await Promise.all(checkpointList.map(async (cp) => {
+        const pricingInfo = await checkpointService.getCheckpointPricingInfo(cp.id);
+        return {
+          ...cp,
+          pricing: {
+            complexity: pricingInfo.complexity,
+            costInCents: pricingInfo.costInCents,
+            costInDollars: pricingInfo.costInDollars,
+            effortScore: pricingInfo.effortScore
+          }
+        };
+      }));
+      
+      res.json(checkpointsWithPricing);
+    } catch (error) {
+      console.error('Error fetching checkpoints:', error);
+      res.status(500).json({ error: 'Failed to fetch checkpoints' });
+    }
+  });
+
+  app.post('/api/projects/:id/checkpoints', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const { message, isAutomatic = false } = req.body;
+
+      // Create manual checkpoint
+      const checkpoint = await checkpointService.createComprehensiveCheckpoint({
+        projectId,
+        userId,
+        message,
+        agentTaskDescription: isAutomatic ? undefined : 'Manual checkpoint',
+        filesModified: 0,
+        linesOfCodeWritten: 0,
+        tokensUsed: 0,
+        executionTimeMs: 0,
+        apiCallsCount: 0
+      });
+
+      res.json(checkpoint);
+    } catch (error) {
+      console.error('Error creating checkpoint:', error);
+      res.status(500).json({ error: 'Failed to create checkpoint' });
+    }
+  });
+
+  app.post('/api/checkpoints/:id/restore', ensureAuthenticated, async (req, res) => {
+    try {
+      const checkpointId = parseInt(req.params.id);
+      
+      // Verify user has access to the checkpoint
+      const [checkpoint] = await db.select().from(checkpoints).where(eq(checkpoints.id, checkpointId));
+      if (!checkpoint) {
+        return res.status(404).json({ error: 'Checkpoint not found' });
+      }
+      
+      const project = await storage.getProject(checkpoint.projectId);
+      if (!project || project.ownerId !== req.user!.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Restore checkpoint
+      const success = await checkpointService.restoreCheckpoint(checkpointId);
+      
+      res.json({ success });
+    } catch (error) {
+      console.error('Error restoring checkpoint:', error);
+      res.status(500).json({ error: 'Failed to restore checkpoint' });
+    }
+  });
+
+  app.get('/api/checkpoints/:id/pricing', ensureAuthenticated, async (req, res) => {
+    try {
+      const checkpointId = parseInt(req.params.id);
+      
+      // Verify user has access
+      const [checkpoint] = await db.select().from(checkpoints).where(eq(checkpoints.id, checkpointId));
+      if (!checkpoint) {
+        return res.status(404).json({ error: 'Checkpoint not found' });
+      }
+      
+      const project = await storage.getProject(checkpoint.projectId);
+      if (!project || project.ownerId !== req.user!.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      const pricingInfo = await checkpointService.getCheckpointPricingInfo(checkpointId);
+      res.json(pricingInfo);
+    } catch (error) {
+      console.error('Error fetching checkpoint pricing:', error);
+      res.status(500).json({ error: 'Failed to fetch pricing information' });
     }
   });
 

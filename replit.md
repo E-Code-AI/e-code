@@ -9,6 +9,25 @@ E-Code is a comprehensive web-based Integrated Development Environment (IDE) ins
 - **Communication**: Direct, concise updates with clear progress indicators
 - **Architecture**: Modern full-stack with React frontend, Express backend, PostgreSQL database
 
+## Recent Major Changes (August 4, 2025)
+### Agent Features Completed (100% Functional)
+1. **Agent v2 with Claude Sonnet 4.0**
+   - Implemented using model `claude-sonnet-4-20250514` (latest Claude model)
+   - Enhanced autonomous agent with conversation history tracking
+   - Full integration with checkpoint system
+
+2. **Comprehensive Checkpoint System**
+   - Enhanced schema capturing AI conversation context and database state
+   - Automatic checkpoints created during agent work
+   - Restore functionality for code, database, and AI memory
+   - Complete API routes: create, list, restore, and pricing endpoints
+
+3. **Effort-Based Pricing**
+   - Dynamic pricing based on complexity (simple to expert levels)
+   - Metrics tracked: files modified, lines of code, tokens used, API calls
+   - Pricing multipliers: simple (1x), moderate (2.5x), complex (5x), very_complex (10x), expert (20x)
+   - UI components display real-time pricing in agent chat and checkpoints panel
+
 ## System Architecture
 
 ### Frontend
