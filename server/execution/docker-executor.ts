@@ -1,276 +1,438 @@
-import { spawn } from 'child_process';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import { ExecutionOptions, ExecutionResult } from './executor';
+/**
+ * Real Docker-based code execution environment
+ * Provides sandboxed, containerized runtime for user code
+ */
 
-interface DockerImage {
+import { spawn, ChildProcess } from 'child_process';
+import { EventEmitter } from 'events';
+import * as path from 'path';
+import * as fs from 'fs/promises';
+import * as crypto from 'crypto';
+import { createLogger } from '../utils/logger';
+import { storage } from '../storage';
+import { Project, File } from '@shared/schema';
+import Docker from 'dockerode';
+import * as tar from 'tar';
+import { Readable } from 'stream';
+
+const logger = createLogger('docker-executor');
+const docker = new Docker();
+
+export interface ExecutionConfig {
+  projectId: number;
   language: string;
-  image: string;
-  workDir: string;
-  buildCmd?: string;
-  runCmd: string;
+  command?: string;
+  files: File[];
+  environmentVars?: Record<string, string>;
+  port?: number;
+  memoryLimit?: string; // e.g., '512m', '1g'
+  cpuLimit?: number; // e.g., 0.5 for half a CPU
+  timeout?: number; // in seconds
 }
 
-export class DockerExecutor {
-  private dockerImages: Record<string, DockerImage> = {
-    nodejs: {
-      language: 'nodejs',
-      image: 'node:18-alpine',
-      workDir: '/app',
-      runCmd: 'node'
-    },
-    python: {
-      language: 'python',
-      image: 'python:3.11-alpine',
-      workDir: '/app',
-      runCmd: 'python'
-    },
-    java: {
-      language: 'java',
-      image: 'openjdk:17-alpine',
-      workDir: '/app',
-      buildCmd: 'javac',
-      runCmd: 'java'
-    },
-    go: {
-      language: 'go',
-      image: 'golang:1.21-alpine',
-      workDir: '/go/src/app',
-      buildCmd: 'go build -o main',
-      runCmd: './main'
-    },
-    rust: {
-      language: 'rust',
-      image: 'rust:alpine',
-      workDir: '/app',
-      buildCmd: 'rustc -o main',
-      runCmd: './main'
-    },
-    ruby: {
-      language: 'ruby',
-      image: 'ruby:3.2-alpine',
-      workDir: '/app',
-      runCmd: 'ruby'
-    },
-    php: {
-      language: 'php',
-      image: 'php:8.2-cli-alpine',
-      workDir: '/app',
-      runCmd: 'php'
-    },
-    c: {
-      language: 'c',
-      image: 'gcc:alpine',
-      workDir: '/app',
-      buildCmd: 'gcc -o main',
-      runCmd: './main'
-    },
-    cpp: {
-      language: 'cpp',
-      image: 'gcc:alpine',
-      workDir: '/app',
-      buildCmd: 'g++ -o main',
-      runCmd: './main'
-    }
+export interface ExecutionResult {
+  containerId: string;
+  status: 'starting' | 'running' | 'stopped' | 'error';
+  output: string[];
+  errorOutput: string[];
+  exitCode?: number;
+  url?: string;
+  port?: number;
+  stats?: {
+    cpuUsage: number;
+    memoryUsage: number;
+    networkIO: { rx: number; tx: number };
   };
+}
 
-  async execute(options: ExecutionOptions, files: any[]): Promise<ExecutionResult> {
-    const { language, mainFile, stdin, timeout = 30000, env = {} } = options;
-    const containerName = `exec-${uuidv4()}`;
-    const startTime = Date.now();
+export class DockerExecutor extends EventEmitter {
+  private activeContainers: Map<string, {
+    container: Docker.Container;
+    projectId: number;
+    result: ExecutionResult;
+  }> = new Map();
 
-    const dockerConfig = this.dockerImages[language];
-    if (!dockerConfig) {
-      return {
-        stdout: '',
-        stderr: `Unsupported language for Docker execution: ${language}`,
-        exitCode: 1,
-        executionTime: Date.now() - startTime,
-        error: `Unsupported language: ${language}`
-      };
-    }
+  constructor() {
+    super();
+    this.setupCleanup();
+  }
+
+  private setupCleanup() {
+    // Clean up containers on process exit
+    process.on('SIGINT', () => this.cleanup());
+    process.on('SIGTERM', () => this.cleanup());
+  }
+
+  async executeProject(config: ExecutionConfig): Promise<ExecutionResult> {
+    const containerId = crypto.randomUUID();
+    const containerName = `project-${config.projectId}-${containerId.slice(0, 8)}`;
+    
+    const result: ExecutionResult = {
+      containerId,
+      status: 'starting',
+      output: [],
+      errorOutput: [],
+      port: config.port
+    };
 
     try {
-      // Create temporary directory for files
-      const tempDir = await this.createTempDirectory();
-      await this.writeFilesToDirectory(files, tempDir);
-
-      // Build Docker run command
-      const dockerCmd = this.buildDockerCommand(
-        containerName,
-        dockerConfig,
-        tempDir,
-        mainFile || 'main',
-        env,
-        timeout
-      );
-
-      // Execute in Docker
-      const result = await this.runDockerCommand(dockerCmd, stdin, timeout);
-
-      // Cleanup
-      await this.cleanupContainer(containerName);
-      await this.cleanupTempDirectory(tempDir);
-
-      return {
-        ...result,
-        executionTime: Date.now() - startTime
+      // Create container with appropriate image
+      const image = await this.getOrPullImage(config.language);
+      
+      // Prepare project files as tar archive
+      const projectTar = await this.createProjectTar(config.files);
+      
+      // Container configuration
+      const containerConfig: Docker.ContainerCreateOptions = {
+        name: containerName,
+        Image: image,
+        Cmd: this.getCommand(config),
+        WorkingDir: '/app',
+        Env: this.formatEnvironmentVars(config.environmentVars),
+        HostConfig: {
+          Memory: this.parseMemoryLimit(config.memoryLimit || '512m'),
+          CpuQuota: config.cpuLimit ? config.cpuLimit * 100000 : undefined,
+          CpuPeriod: 100000,
+          NetworkMode: 'bridge',
+          AutoRemove: false,
+          PortBindings: config.port ? {
+            [`${config.port}/tcp`]: [{ HostPort: '0' }]
+          } : undefined
+        },
+        ExposedPorts: config.port ? {
+          [`${config.port}/tcp`]: {}
+        } : undefined,
+        AttachStdout: true,
+        AttachStderr: true,
+        Tty: false
       };
+
+      // Create and start container
+      const container = await docker.createContainer(containerConfig);
+      
+      // Extract files into container
+      await container.putArchive(projectTar, { path: '/app' });
+      
+      // Set up output streams
+      const stream = await container.attach({
+        stream: true,
+        stdout: true,
+        stderr: true
+      });
+
+      // Handle output
+      stream.on('data', (chunk) => {
+        const output = chunk.toString();
+        // Docker multiplexes stdout/stderr, first byte indicates stream type
+        const streamType = chunk[0];
+        const message = chunk.slice(8).toString();
+        
+        if (streamType === 1) { // stdout
+          result.output.push(message);
+          this.emit('output', { containerId, type: 'stdout', message });
+        } else if (streamType === 2) { // stderr
+          result.errorOutput.push(message);
+          this.emit('output', { containerId, type: 'stderr', message });
+        }
+      });
+
+      // Start the container
+      await container.start();
+      result.status = 'running';
+
+      // Get assigned port if applicable
+      if (config.port) {
+        const containerInfo = await container.inspect();
+        const hostPort = containerInfo.NetworkSettings.Ports[`${config.port}/tcp`]?.[0]?.HostPort;
+        if (hostPort) {
+          result.url = `http://localhost:${hostPort}`;
+          result.port = parseInt(hostPort);
+        }
+      }
+
+      // Store container reference
+      this.activeContainers.set(containerId, {
+        container,
+        projectId: config.projectId,
+        result
+      });
+
+      // Set up monitoring
+      this.monitorContainer(containerId, container, result);
+
+      // Set up timeout if specified
+      if (config.timeout) {
+        setTimeout(() => this.stopContainer(containerId), config.timeout * 1000);
+      }
+
+      logger.info(`Container ${containerName} started successfully`);
+      return result;
+
     } catch (error) {
-      return {
-        stdout: '',
-        stderr: error instanceof Error ? error.message : 'Unknown error',
-        exitCode: 1,
-        executionTime: Date.now() - startTime,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+      logger.error(`Failed to execute project: ${error}`);
+      result.status = 'error';
+      result.errorOutput.push(error.message);
+      throw error;
     }
   }
 
-  private buildDockerCommand(
-    containerName: string,
-    config: DockerImage,
-    hostPath: string,
-    mainFile: string,
-    env: Record<string, string>,
-    timeout: number
-  ): string[] {
-    const cmd = [
-      'docker', 'run',
-      '--name', containerName,
-      '--rm',
-      '-v', `${hostPath}:${config.workDir}`,
-      '-w', config.workDir,
-      '--network', 'none', // No network access for security
-      '--memory', '512m', // Memory limit
-      '--cpus', '0.5', // CPU limit
-      '--read-only', // Read-only filesystem
-      '--tmpfs', '/tmp:rw,noexec,nosuid,size=100m', // Temp directory
-    ];
+  private async getOrPullImage(language: string): Promise<string> {
+    const imageMap: Record<string, string> = {
+      'nodejs': 'node:20-alpine',
+      'python': 'python:3.11-slim',
+      'java': 'openjdk:17-alpine',
+      'go': 'golang:1.21-alpine',
+      'rust': 'rust:1.75-alpine',
+      'ruby': 'ruby:3.2-alpine',
+      'php': 'php:8.2-cli-alpine',
+      'csharp': 'mcr.microsoft.com/dotnet/sdk:8.0-alpine',
+      'cpp': 'gcc:13-alpine',
+      'swift': 'swift:5.9-slim'
+    };
 
-    // Add environment variables
-    Object.entries(env).forEach(([key, value]) => {
-      cmd.push('-e', `${key}=${value}`);
-    });
-
-    // Add image
-    cmd.push(config.image);
-
-    // Add timeout command
-    cmd.push('timeout', `${Math.ceil(timeout / 1000)}s`);
-
-    // Add build command if needed
-    if (config.buildCmd) {
-      cmd.push('sh', '-c', `${config.buildCmd} ${mainFile} && ${config.runCmd}`);
-    } else {
-      cmd.push(config.runCmd, mainFile);
+    const imageName = imageMap[language] || 'ubuntu:22.04';
+    
+    try {
+      // Check if image exists locally
+      await docker.getImage(imageName).inspect();
+      logger.info(`Using existing image: ${imageName}`);
+    } catch (error) {
+      // Pull image if not found
+      logger.info(`Pulling image: ${imageName}`);
+      const stream = await docker.pull(imageName);
+      
+      // Wait for pull to complete
+      await new Promise((resolve, reject) => {
+        docker.modem.followProgress(stream, (err, res) => {
+          if (err) reject(err);
+          else resolve(res);
+        });
+      });
     }
 
-    return cmd;
+    return imageName;
   }
 
-  private async runDockerCommand(
-    command: string[],
-    stdin?: string,
-    timeout?: number
-  ): Promise<Omit<ExecutionResult, 'executionTime'>> {
-    return new Promise((resolve) => {
-      const output: string[] = [];
-      const errors: string[] = [];
-
-      const process = spawn(command[0], command.slice(1));
-
-      // Handle stdin
-      if (stdin) {
-        process.stdin.write(stdin);
-        process.stdin.end();
-      }
-
-      // Collect stdout
-      process.stdout.on('data', (data) => {
-        output.push(data.toString());
-      });
-
-      // Collect stderr
-      process.stderr.on('data', (data) => {
-        errors.push(data.toString());
-      });
-
-      // Set timeout
-      let timeoutId: NodeJS.Timeout | undefined;
-      if (timeout) {
-        timeoutId = setTimeout(() => {
-          process.kill('SIGTERM');
-        }, timeout);
-      }
-
-      // Handle process exit
-      process.on('exit', (code) => {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-
-        resolve({
-          stdout: output.join(''),
-          stderr: errors.join(''),
-          exitCode: code,
-          timedOut: false
-        });
-      });
-
-      // Handle process error
-      process.on('error', (error) => {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-
-        resolve({
-          stdout: output.join(''),
-          stderr: error.message,
-          exitCode: 1,
-          error: error.message
-        });
-      });
+  private async createProjectTar(files: File[]): Promise<Buffer> {
+    const tarStream = tar.create({
+      gzip: false
     });
-  }
 
-  private async createTempDirectory(): Promise<string> {
-    const tempBase = path.join(process.cwd(), '.docker-executions');
-    await fs.mkdir(tempBase, { recursive: true });
+    const entries: Array<{ name: string; content: string }> = [];
     
-    const tempDir = path.join(tempBase, uuidv4());
-    await fs.mkdir(tempDir, { recursive: true });
-    
-    return tempDir;
-  }
-
-  private async writeFilesToDirectory(files: any[], directory: string): Promise<void> {
     for (const file of files) {
-      if (!file.isFolder) {
-        const filePath = path.join(directory, file.name);
-        await fs.writeFile(filePath, file.content || '');
+      if (!file.isFolder && file.content) {
+        entries.push({
+          name: file.name,
+          content: file.content
+        });
       }
     }
+
+    // Create tar buffer
+    const chunks: Buffer[] = [];
+    
+    return new Promise((resolve, reject) => {
+      const pack = tar.pack();
+      
+      // Add each file to the tar
+      for (const entry of entries) {
+        pack.entry({ name: entry.name }, entry.content);
+      }
+      
+      pack.finalize();
+      
+      pack.on('data', (chunk) => chunks.push(chunk));
+      pack.on('end', () => resolve(Buffer.concat(chunks)));
+      pack.on('error', reject);
+    });
   }
 
-  private async cleanupContainer(containerName: string): Promise<void> {
+  private getCommand(config: ExecutionConfig): string[] | undefined {
+    if (config.command) {
+      return config.command.split(' ');
+    }
+
+    // Default commands based on language
+    const defaultCommands: Record<string, string[]> = {
+      'nodejs': ['node', 'index.js'],
+      'python': ['python', 'main.py'],
+      'java': ['java', 'Main'],
+      'go': ['go', 'run', '.'],
+      'rust': ['cargo', 'run'],
+      'ruby': ['ruby', 'main.rb'],
+      'php': ['php', 'index.php'],
+      'csharp': ['dotnet', 'run'],
+      'cpp': ['./a.out']
+    };
+
+    return defaultCommands[config.language];
+  }
+
+  private formatEnvironmentVars(vars?: Record<string, string>): string[] {
+    if (!vars) return [];
+    return Object.entries(vars).map(([key, value]) => `${key}=${value}`);
+  }
+
+  private parseMemoryLimit(limit: string): number {
+    const units: Record<string, number> = {
+      'b': 1,
+      'k': 1024,
+      'm': 1024 * 1024,
+      'g': 1024 * 1024 * 1024
+    };
+
+    const match = limit.match(/^(\d+)([bkmg])?$/i);
+    if (!match) {
+      throw new Error(`Invalid memory limit: ${limit}`);
+    }
+
+    const value = parseInt(match[1]);
+    const unit = match[2]?.toLowerCase() || 'b';
+    
+    return value * (units[unit] || 1);
+  }
+
+  private async monitorContainer(
+    containerId: string, 
+    container: Docker.Container, 
+    result: ExecutionResult
+  ) {
+    const statsStream = await container.stats({ stream: true });
+    
+    statsStream.on('data', (chunk) => {
+      try {
+        const stats = JSON.parse(chunk.toString());
+        
+        // Calculate CPU usage percentage
+        const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - 
+                        stats.precpu_stats.cpu_usage.total_usage;
+        const systemDelta = stats.cpu_stats.system_cpu_usage - 
+                           stats.precpu_stats.system_cpu_usage;
+        const cpuUsage = (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100;
+
+        // Calculate memory usage
+        const memoryUsage = stats.memory_stats.usage / stats.memory_stats.limit * 100;
+
+        // Network I/O
+        const networkIO = {
+          rx: stats.networks?.eth0?.rx_bytes || 0,
+          tx: stats.networks?.eth0?.tx_bytes || 0
+        };
+
+        result.stats = {
+          cpuUsage: Math.round(cpuUsage * 100) / 100,
+          memoryUsage: Math.round(memoryUsage * 100) / 100,
+          networkIO
+        };
+
+        this.emit('stats', { containerId, stats: result.stats });
+      } catch (error) {
+        logger.error(`Failed to parse container stats: ${error}`);
+      }
+    });
+
+    // Monitor container status
+    container.wait((err, data) => {
+      if (err) {
+        logger.error(`Container wait error: ${err}`);
+        result.status = 'error';
+      } else {
+        result.status = 'stopped';
+        result.exitCode = data.StatusCode;
+      }
+      
+      // Clean up stats stream
+      statsStream.destroy();
+      
+      // Remove from active containers
+      this.activeContainers.delete(containerId);
+      
+      this.emit('stopped', { containerId, exitCode: result.exitCode });
+    });
+  }
+
+  async stopContainer(containerId: string): Promise<void> {
+    const containerData = this.activeContainers.get(containerId);
+    if (!containerData) {
+      throw new Error(`Container ${containerId} not found`);
+    }
+
     try {
-      await new Promise((resolve) => {
-        const process = spawn('docker', ['rm', '-f', containerName]);
-        process.on('exit', resolve);
-      });
+      await containerData.container.stop({ t: 5 });
+      logger.info(`Container ${containerId} stopped`);
     } catch (error) {
-      console.error('Failed to cleanup container:', error);
+      // Force kill if stop fails
+      await containerData.container.kill();
+      logger.warn(`Container ${containerId} force killed`);
     }
   }
 
-  private async cleanupTempDirectory(directory: string): Promise<void> {
-    try {
-      await fs.rm(directory, { recursive: true, force: true });
-    } catch (error) {
-      console.error('Failed to cleanup temp directory:', error);
+  async getContainerLogs(containerId: string): Promise<string[]> {
+    const containerData = this.activeContainers.get(containerId);
+    if (!containerData) {
+      throw new Error(`Container ${containerId} not found`);
     }
+
+    const logs = await containerData.container.logs({
+      stdout: true,
+      stderr: true,
+      timestamps: true
+    });
+
+    return logs.toString().split('\n').filter(line => line.trim());
+  }
+
+  async getContainerStatus(containerId: string): Promise<ExecutionResult | null> {
+    const containerData = this.activeContainers.get(containerId);
+    return containerData?.result || null;
+  }
+
+  async cleanup(): Promise<void> {
+    logger.info('Cleaning up all containers...');
+    
+    for (const [containerId, data] of this.activeContainers) {
+      try {
+        await data.container.stop({ t: 0 });
+        await data.container.remove();
+      } catch (error) {
+        logger.error(`Failed to cleanup container ${containerId}: ${error}`);
+      }
+    }
+    
+    this.activeContainers.clear();
+  }
+
+  async executeCommand(
+    containerId: string, 
+    command: string[]
+  ): Promise<{ output: string; exitCode: number }> {
+    const containerData = this.activeContainers.get(containerId);
+    if (!containerData) {
+      throw new Error(`Container ${containerId} not found`);
+    }
+
+    const exec = await containerData.container.exec({
+      Cmd: command,
+      AttachStdout: true,
+      AttachStderr: true
+    });
+
+    const stream = await exec.start({ Detach: false });
+    
+    let output = '';
+    stream.on('data', (chunk) => {
+      output += chunk.toString();
+    });
+
+    await new Promise((resolve) => stream.on('end', resolve));
+    
+    const inspectResult = await exec.inspect();
+    
+    return {
+      output,
+      exitCode: inspectResult.ExitCode || 0
+    };
   }
 }
 

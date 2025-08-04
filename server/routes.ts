@@ -100,6 +100,16 @@ import { realUsageTrackingService } from "./services/real-usage-tracking";
 import { realObjectStorageService } from "./services/real-object-storage";
 import { realAuditLogsService } from "./services/real-audit-logs";
 import { realCustomRolesService } from "./services/real-custom-roles";
+import { real2FAService } from "./services/real-2fa-service";
+import { realMobileCompiler } from "./services/real-mobile-compiler";
+import { realTerminalService } from "./terminal/real-terminal";
+import { realPackageManager } from "./services/real-package-manager";
+import { realWebSearchService } from "./services/real-web-search";
+import { realEmailService } from "./services/real-email-service";
+import { realKubernetesDeployment } from "./deployment/real-kubernetes-deployment";
+import { dockerExecutor } from "./execution/docker-executor";
+import { realCodeGenerator } from "./ai/real-code-generator";
+import { realCollaborationService } from "./collaboration/real-collaboration";
 
 // Utility function for formatting bytes
 function formatBytes(bytes: number): string {
@@ -16995,9 +17005,9 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  // 2. Container Executor API Endpoints
-  const { ContainerExecutor } = await import('./execution/container-executor');
-  const containerExecutor = new ContainerExecutor();
+  // 2. Container Executor API Endpoints (using real Docker executor)
+  // dockerExecutor is already imported at the top
+  logger.info('Using real Docker executor for container execution');
   
   // Execute code in container
   app.post('/api/execute/container', ensureAuthenticated, async (req, res) => {
@@ -17005,7 +17015,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       const { code, language, stdin, timeout } = req.body;
       const userId = req.user!.id;
       
-      const result = await containerExecutor.execute({
+      const result = await dockerExecutor.execute({
         code,
         language,
         stdin,
@@ -17026,7 +17036,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       const { containerId } = req.body;
       const userId = req.user!.id;
       
-      await containerExecutor.stopContainer(containerId);
+      await dockerExecutor.stopContainer(containerId);
       res.json({ success: true });
     } catch (error) {
       logger.error('Container stop error:', error);
@@ -17034,9 +17044,8 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  // 3. Kubernetes Deployment Service API Endpoints
-  const { K8sDeploymentService } = await import('./deployment/k8s-deployment-service');
-  const k8sDeploymentService = new K8sDeploymentService();
+  // 3. Kubernetes Deployment Service API Endpoints (using real K8s deployment)
+  // realKubernetesDeployment is already imported at the top
   
   // Deploy to Kubernetes
   app.post('/api/deploy/k8s', ensureAuthenticated, async (req, res) => {
@@ -17044,7 +17053,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       const { projectId, imageName, replicas = 1, resources } = req.body;
       const userId = req.user!.id;
       
-      const deployment = await k8sDeploymentService.deployApplication({
+      const deployment = await realKubernetesDeployment.deployApplication({
         projectId,
         userId: userId.toString(),
         imageName,
@@ -17064,7 +17073,7 @@ Generate a comprehensive application based on the user's request. Include all ne
     try {
       const { deploymentName, replicas } = req.body;
       
-      await k8sDeploymentService.scaleDeployment(deploymentName, replicas);
+      await realKubernetesDeployment.scaleDeployment(deploymentName, replicas);
       res.json({ success: true, replicas });
     } catch (error) {
       logger.error('K8s scaling error:', error);
@@ -17077,7 +17086,7 @@ Generate a comprehensive application based on the user's request. Include all ne
     try {
       const { deploymentName } = req.params;
       
-      const status = await k8sDeploymentService.getDeploymentStatus(deploymentName);
+      const status = await realKubernetesDeployment.getDeploymentStatus(deploymentName);
       res.json(status);
     } catch (error) {
       logger.error('K8s status error:', error);
@@ -17124,16 +17133,15 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   */
   
-  // 6. Git Backend API Endpoints
-  const { GitBackend } = await import('./git/git-backend');
-  const gitBackend = new GitBackend();
+  // 6. Git Backend API Endpoints (using existing git functions)
+  // Using the git functions already imported at the top of the file
   
   // Initialize git repository
   app.post('/api/git/init', ensureAuthenticated, async (req, res) => {
     try {
       const { projectId } = req.body;
       
-      await gitBackend.initRepository(projectId);
+      await initRepo(projectId.toString());
       res.json({ success: true });
     } catch (error) {
       logger.error('Git init error:', error);
@@ -17147,12 +17155,12 @@ Generate a comprehensive application based on the user's request. Include all ne
       const { projectId, message, files } = req.body;
       const userId = req.user!.id;
       
-      const commit = await gitBackend.commit(projectId, {
-        message,
-        author: req.user!.username,
-        email: req.user!.email,
-        files
-      });
+      const projectPath = path.join(process.cwd(), 'projects', projectId.toString());
+      if (files) {
+        await addFiles(projectPath, files);
+      }
+      const commitResult = await commit(projectPath, message, req.user!.username, req.user!.email);
+      const commit = { sha: commitResult.sha, message };
       
       res.json(commit);
     } catch (error) {
@@ -17166,7 +17174,8 @@ Generate a comprehensive application based on the user's request. Include all ne
     try {
       const { projectId } = req.params;
       
-      const history = await gitBackend.getHistory(parseInt(projectId));
+      const projectPath = path.join(process.cwd(), 'projects', projectId);
+      const history = await getCommitHistory(projectPath);
       res.json(history);
     } catch (error) {
       logger.error('Git history error:', error);
@@ -17174,9 +17183,8 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  // 7. Stripe Service API Endpoints
-  const { StripePaymentService } = await import('./payments/stripe-service');
-  const stripeService = new StripePaymentService();
+  // 7. Stripe Service API Endpoints (using existing stripe billing service)
+  // stripeBillingService is already imported at the top
   
   // Create payment intent
   app.post('/api/stripe/payment-intent', ensureAuthenticated, async (req, res) => {
@@ -17184,7 +17192,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       const { amount, currency = 'usd', metadata } = req.body;
       const userId = req.user!.id;
       
-      const paymentIntent = await stripeService.createPaymentIntent({
+      const paymentIntent = await stripeBillingService.createPaymentIntent({
         amount,
         currency,
         customerId: userId.toString(),
@@ -17204,7 +17212,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       const { priceId, paymentMethodId } = req.body;
       const userId = req.user!.id;
       
-      const subscription = await stripeService.createSubscription({
+      const subscription = await stripeBillingService.createSubscription({
         customerId: userId.toString(),
         priceId,
         paymentMethodId
@@ -17221,7 +17229,7 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     try {
       const sig = req.headers['stripe-signature'] as string;
-      const event = await stripeService.handleWebhook(req.body, sig);
+      const event = await stripeBillingService.processWebhookEvent(req.body, sig);
       
       res.json({ received: true });
     } catch (error) {
@@ -17230,9 +17238,8 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
-  // 8. Mobile Compiler API Endpoints
-  const { MobileCompiler } = await import('./mobile/mobile-compiler');
-  const mobileCompiler = new MobileCompiler();
+  // 8. Mobile Compiler API Endpoints (using real mobile compiler)
+  // realMobileCompiler is already imported at the top
   
   // Build mobile app
   app.post('/api/mobile/build', ensureAuthenticated, async (req, res) => {
@@ -17240,7 +17247,7 @@ Generate a comprehensive application based on the user's request. Include all ne
       const { projectId, platform, buildType, config } = req.body;
       const userId = req.user!.id;
       
-      const build = await mobileCompiler.buildApp({
+      const build = await realMobileCompiler.buildApp({
         projectId,
         userId: userId.toString(),
         platform,
@@ -17260,7 +17267,7 @@ Generate a comprehensive application based on the user's request. Include all ne
     try {
       const { buildId } = req.params;
       
-      const status = await mobileCompiler.getBuildStatus(buildId);
+      const status = await realMobileCompiler.getBuildStatus(buildId);
       res.json(status);
     } catch (error) {
       logger.error('Mobile build status error:', error);
@@ -17273,7 +17280,7 @@ Generate a comprehensive application based on the user's request. Include all ne
     try {
       const { buildId } = req.params;
       
-      const artifact = await mobileCompiler.getBuildArtifact(buildId);
+      const artifact = await realMobileCompiler.getBuildArtifact(buildId);
       res.json({ downloadUrl: artifact.url });
     } catch (error) {
       logger.error('Mobile download error:', error);

@@ -1,17 +1,30 @@
-export function createLogger(service: string) {
+/**
+ * Logger utility for consistent logging across services
+ */
+
+export interface Logger {
+  info: (message: string) => void;
+  warn: (message: string) => void;
+  error: (message: string) => void;
+  debug: (message: string) => void;
+}
+
+export function createLogger(service: string): Logger {
+  const prefix = `[${service}]`;
+
   return {
-    info: (message: string, ...args: any[]) => {
-      console.log(`[${new Date().toISOString()}] [${service}] INFO: ${message}`, ...args);
+    info: (message: string) => {
+      console.log(`[${new Date().toISOString()}] ${prefix} INFO: ${message}`);
     },
-    warn: (message: string, ...args: any[]) => {
-      console.warn(`[${new Date().toISOString()}] [${service}] WARN: ${message}`, ...args);
+    warn: (message: string) => {
+      console.warn(`[${new Date().toISOString()}] ${prefix} WARN: ${message}`);
     },
-    error: (message: string, ...args: any[]) => {
-      console.error(`[${new Date().toISOString()}] [${service}] ERROR: ${message}`, ...args);
+    error: (message: string) => {
+      console.error(`[${new Date().toISOString()}] ${prefix} ERROR: ${message}`);
     },
-    debug: (message: string, ...args: any[]) => {
+    debug: (message: string) => {
       if (process.env.DEBUG) {
-        console.debug(`[${new Date().toISOString()}] [${service}] DEBUG: ${message}`, ...args);
+        console.log(`[${new Date().toISOString()}] ${prefix} DEBUG: ${message}`);
       }
     }
   };
