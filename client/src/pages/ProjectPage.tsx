@@ -92,7 +92,7 @@ const ProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: ['/api/projects', projectId || projectSlug],
+    queryKey: projectSlug ? ['/api/projects/by-slug', projectSlug] : ['/api/projects', projectId],
     queryFn: async () => {
       if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
       
@@ -126,11 +126,11 @@ const ProjectPage = () => {
     isLoading: filesLoading, 
     error: filesError 
   } = useQuery<File[]>({
-    queryKey: ['/api/projects', projectId, 'files'],
+    queryKey: ['/api/files', projectId],
     queryFn: async () => {
       if (!projectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('GET', `/api/projects/${projectId}/files`);
+      const res = await apiRequest('GET', `/api/files/${projectId}`);
       if (!res.ok) {
         const error = await res.text();
         if (res.status === 401) {
@@ -173,7 +173,7 @@ const ProjectPage = () => {
       });
       
       // Refresh file list to get updated timestamps
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
     },
     onError: (error: Error) => {
       toast({
@@ -191,20 +191,20 @@ const ProjectPage = () => {
       
       const newFile: Partial<InsertFile> = {
         name,
-        isFolder,
+        isDirectory: isFolder,
         parentId,
         projectId,
         content: isFolder ? null : '',
       };
       
-      const res = await apiRequest('POST', `/api/projects/${projectId}/files`, newFile);
+      const res = await apiRequest('POST', `/api/files/${projectId}`, newFile);
       if (!res.ok) {
         throw new Error('Failed to create file');
       }
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
       toast({
         title: "File created",
         description: "New file has been created successfully.",
@@ -234,7 +234,7 @@ const ProjectPage = () => {
         setSelectedFile(null);
       }
       
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
       toast({
         title: "File deleted",
         description: "File has been deleted successfully.",
@@ -259,7 +259,7 @@ const ProjectPage = () => {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
       toast({
         title: "File renamed",
         description: "File has been renamed successfully.",
@@ -279,7 +279,7 @@ const ProjectPage = () => {
     mutationFn: async () => {
       if (!projectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('POST', `/api/projects/${projectId}/start`);
+      const res = await apiRequest('POST', `/api/runtime/${projectId}/start`);
       if (!res.ok) {
         throw new Error('Failed to start project');
       }
@@ -306,7 +306,7 @@ const ProjectPage = () => {
     mutationFn: async () => {
       if (!projectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('POST', `/api/projects/${projectId}/stop`);
+      const res = await apiRequest('POST', `/api/runtime/${projectId}/stop`);
       if (!res.ok) {
         throw new Error('Failed to stop project');
       }
@@ -407,7 +407,7 @@ const ProjectPage = () => {
     
     const checkStatus = async () => {
       try {
-        const res = await apiRequest('GET', `/api/projects/${projectId}/status`);
+        const res = await apiRequest('GET', `/api/runtime/${projectId}/status`);
         if (res.ok) {
           const data = await res.json();
           setProjectRunning(data.status === 'running');
@@ -424,7 +424,7 @@ const ProjectPage = () => {
   useEffect(() => {
     if (files && files.length > 0 && !selectedFile) {
       // Try to find a non-folder file to select
-      const fileToSelect = files.find(file => !file.isFolder);
+      const fileToSelect = files.find(file => !file.isDirectory);
       if (fileToSelect) {
         setSelectedFile(fileToSelect);
       }
@@ -466,7 +466,7 @@ const ProjectPage = () => {
                 variant="outline" 
                 onClick={() => {
                   queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
-                  queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
                 }}
               >
                 Try Again

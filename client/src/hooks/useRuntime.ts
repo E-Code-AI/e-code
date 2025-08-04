@@ -43,7 +43,8 @@ export function useRuntime(projectId: number) {
    */
   const { data: runtimeStatus, isLoading, error } = useQuery<RuntimeState>({
     queryKey,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
+      const data = query.state.data;
       // Poll more frequently when starting, less often when running/stopped
       if (data?.status === 'starting') return 1000;
       if (data?.status === 'running') return 5000;

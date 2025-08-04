@@ -168,7 +168,7 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
       try {
         switch (action.type) {
           case 'create_file':
-            await apiRequest('POST', `/api/projects/${projectId}/files`, {
+            await apiRequest('POST', `/api/files/${projectId}`, {
               name: action.data.name,
               content: action.data.content || '',
               path: action.data.path
@@ -181,7 +181,7 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
             });
             break;
           case 'install_package':
-            await apiRequest('POST', `/api/projects/${projectId}/packages`, {
+            await apiRequest('POST', `/api/packages/${projectId}/install`, {
               name: action.data.name,
               version: action.data.version
             });

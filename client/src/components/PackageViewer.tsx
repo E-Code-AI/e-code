@@ -87,7 +87,7 @@ export function PackageViewer({ projectId }: { projectId: string }) {
   // Install package mutation
   const installPackageMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      const response = await fetch(`/api/projects/${projectId}/packages/install`, {
+      const response = await fetch(`/api/packages/${projectId}/install`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ package: packageName })
@@ -100,7 +100,7 @@ export function PackageViewer({ projectId }: { projectId: string }) {
         title: "Package installed",
         description: "The package has been installed successfully"
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/packages`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/packages/installed`, projectId] });
     },
     onError: (error: Error) => {
       toast({
@@ -114,7 +114,7 @@ export function PackageViewer({ projectId }: { projectId: string }) {
   // Uninstall package mutation
   const uninstallPackageMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      const response = await fetch(`/api/projects/${projectId}/packages/uninstall`, {
+      const response = await fetch(`/api/packages/${projectId}/uninstall`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ package: packageName })

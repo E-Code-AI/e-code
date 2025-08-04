@@ -13,9 +13,9 @@ interface TaskSummariesPanelProps {
 export function TaskSummariesPanel({ projectId }: TaskSummariesPanelProps) {
   // Fetch task summaries
   const { data: summaries, isLoading } = useQuery({
-    queryKey: ['/api/projects', projectId, 'task-summaries'],
+    queryKey: ['/api/task-summaries', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/projects/${projectId}/task-summaries`);
+      const res = await apiRequest('GET', `/api/task-summaries/${projectId}`);
       if (!res.ok) throw new Error('Failed to fetch task summaries');
       return res.json();
     }
