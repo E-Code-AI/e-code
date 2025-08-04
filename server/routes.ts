@@ -16862,5 +16862,331 @@ Generate a comprehensive application based on the user's request. Include all ne
     logger.error('Failed to initialize screenshot service:', error);
   });
 
+  // Initialize Real Backend Services
+  
+  // 1. AI Service API Endpoints
+  const { aiService } = await import('./ai/ai-service');
+  
+  // AI Chat endpoint - using real AI providers
+  app.post('/api/ai/chat', ensureAuthenticated, async (req, res) => {
+    try {
+      const { messages, model = 'gpt-4o', projectContext, temperature } = req.body;
+      
+      const response = await aiService.generateResponse(messages, {
+        model,
+        projectContext,
+        temperature,
+        tools: true
+      });
+      
+      res.json(response);
+    } catch (error) {
+      logger.error('AI chat error:', error);
+      res.status(500).json({ error: 'AI service error' });
+    }
+  });
+  
+  // Execute AI actions endpoint
+  app.post('/api/ai/execute-actions', ensureAuthenticated, async (req, res) => {
+    try {
+      const { actions, projectId } = req.body;
+      
+      const response = await aiService.executeActions(actions, projectId);
+      
+      res.json(response);
+    } catch (error) {
+      logger.error('AI action execution error:', error);
+      res.status(500).json({ error: 'AI action execution error' });
+    }
+  });
+  
+  // 2. Container Executor API Endpoints
+  const { ContainerExecutor } = await import('./execution/container-executor');
+  const containerExecutor = new ContainerExecutor();
+  
+  // Execute code in container
+  app.post('/api/execute/container', ensureAuthenticated, async (req, res) => {
+    try {
+      const { code, language, stdin, timeout } = req.body;
+      const userId = req.user!.id;
+      
+      const result = await containerExecutor.execute({
+        code,
+        language,
+        stdin,
+        timeout,
+        userId: userId.toString()
+      });
+      
+      res.json(result);
+    } catch (error) {
+      logger.error('Container execution error:', error);
+      res.status(500).json({ error: 'Execution failed' });
+    }
+  });
+  
+  // Stop container execution
+  app.post('/api/execute/container/stop', ensureAuthenticated, async (req, res) => {
+    try {
+      const { containerId } = req.body;
+      const userId = req.user!.id;
+      
+      await containerExecutor.stopContainer(containerId);
+      res.json({ success: true });
+    } catch (error) {
+      logger.error('Container stop error:', error);
+      res.status(500).json({ error: 'Failed to stop container' });
+    }
+  });
+  
+  // 3. Kubernetes Deployment Service API Endpoints
+  const { K8sDeploymentService } = await import('./deployment/k8s-deployment-service');
+  const k8sDeploymentService = new K8sDeploymentService();
+  
+  // Deploy to Kubernetes
+  app.post('/api/deploy/k8s', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, imageName, replicas = 1, resources } = req.body;
+      const userId = req.user!.id;
+      
+      const deployment = await k8sDeploymentService.deployApplication({
+        projectId,
+        userId: userId.toString(),
+        imageName,
+        replicas,
+        resources
+      });
+      
+      res.json(deployment);
+    } catch (error) {
+      logger.error('K8s deployment error:', error);
+      res.status(500).json({ error: 'Deployment failed' });
+    }
+  });
+  
+  // Scale deployment
+  app.post('/api/deploy/k8s/scale', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deploymentName, replicas } = req.body;
+      
+      await k8sDeploymentService.scaleDeployment(deploymentName, replicas);
+      res.json({ success: true, replicas });
+    } catch (error) {
+      logger.error('K8s scaling error:', error);
+      res.status(500).json({ error: 'Scaling failed' });
+    }
+  });
+  
+  // Get deployment status
+  app.get('/api/deploy/k8s/status/:deploymentName', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deploymentName } = req.params;
+      
+      const status = await k8sDeploymentService.getDeploymentStatus(deploymentName);
+      res.json(status);
+    } catch (error) {
+      logger.error('K8s status error:', error);
+      res.status(500).json({ error: 'Failed to get status' });
+    }
+  });
+  
+  // 4. WebSocket Service is already initialized above
+  // WebSocket endpoints are handled through the upgrade handler
+  
+  // 5. WebRTC Service API Endpoints
+  // TODO: WebRTC service requires database schema tables (voiceVideoSessions, voiceVideoParticipants)
+  // that need to be created before this service can be enabled
+  /*
+  const { VoiceVideoService } = await import('./webrtc/voice-video-service');
+  const webrtcService = new VoiceVideoService();
+  
+  // Create WebRTC room
+  app.post('/api/webrtc/rooms', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.body;
+      const userId = req.user!.id;
+      
+      const room = await webrtcService.createRoom(projectId, userId.toString());
+      res.json(room);
+    } catch (error) {
+      logger.error('WebRTC room creation error:', error);
+      res.status(500).json({ error: 'Failed to create room' });
+    }
+  });
+  
+  // Join WebRTC room
+  app.post('/api/webrtc/rooms/:roomId/join', ensureAuthenticated, async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      const userId = req.user!.id;
+      
+      const result = await webrtcService.joinRoom(roomId, userId.toString());
+      res.json(result);
+    } catch (error) {
+      logger.error('WebRTC join error:', error);
+      res.status(500).json({ error: 'Failed to join room' });
+    }
+  });
+  */
+  
+  // 6. Git Backend API Endpoints
+  const { GitBackend } = await import('./git/git-backend');
+  const gitBackend = new GitBackend();
+  
+  // Initialize git repository
+  app.post('/api/git/init', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.body;
+      
+      await gitBackend.initRepository(projectId);
+      res.json({ success: true });
+    } catch (error) {
+      logger.error('Git init error:', error);
+      res.status(500).json({ error: 'Failed to initialize repository' });
+    }
+  });
+  
+  // Commit changes
+  app.post('/api/git/commit', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, message, files } = req.body;
+      const userId = req.user!.id;
+      
+      const commit = await gitBackend.commit(projectId, {
+        message,
+        author: req.user!.username,
+        email: req.user!.email,
+        files
+      });
+      
+      res.json(commit);
+    } catch (error) {
+      logger.error('Git commit error:', error);
+      res.status(500).json({ error: 'Failed to commit changes' });
+    }
+  });
+  
+  // Get commit history
+  app.get('/api/git/:projectId/history', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      
+      const history = await gitBackend.getHistory(parseInt(projectId));
+      res.json(history);
+    } catch (error) {
+      logger.error('Git history error:', error);
+      res.status(500).json({ error: 'Failed to get history' });
+    }
+  });
+  
+  // 7. Stripe Service API Endpoints
+  const { StripePaymentService } = await import('./payments/stripe-service');
+  const stripeService = new StripePaymentService();
+  
+  // Create payment intent
+  app.post('/api/stripe/payment-intent', ensureAuthenticated, async (req, res) => {
+    try {
+      const { amount, currency = 'usd', metadata } = req.body;
+      const userId = req.user!.id;
+      
+      const paymentIntent = await stripeService.createPaymentIntent({
+        amount,
+        currency,
+        customerId: userId.toString(),
+        metadata
+      });
+      
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+      logger.error('Stripe payment intent error:', error);
+      res.status(500).json({ error: 'Failed to create payment intent' });
+    }
+  });
+  
+  // Create subscription
+  app.post('/api/stripe/subscription', ensureAuthenticated, async (req, res) => {
+    try {
+      const { priceId, paymentMethodId } = req.body;
+      const userId = req.user!.id;
+      
+      const subscription = await stripeService.createSubscription({
+        customerId: userId.toString(),
+        priceId,
+        paymentMethodId
+      });
+      
+      res.json(subscription);
+    } catch (error) {
+      logger.error('Stripe subscription error:', error);
+      res.status(500).json({ error: 'Failed to create subscription' });
+    }
+  });
+  
+  // Webhook handler
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+      const sig = req.headers['stripe-signature'] as string;
+      const event = await stripeService.handleWebhook(req.body, sig);
+      
+      res.json({ received: true });
+    } catch (error) {
+      logger.error('Stripe webhook error:', error);
+      res.status(400).json({ error: 'Webhook error' });
+    }
+  });
+  
+  // 8. Mobile Compiler API Endpoints
+  const { MobileCompiler } = await import('./mobile/mobile-compiler');
+  const mobileCompiler = new MobileCompiler();
+  
+  // Build mobile app
+  app.post('/api/mobile/build', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, platform, buildType, config } = req.body;
+      const userId = req.user!.id;
+      
+      const build = await mobileCompiler.buildApp({
+        projectId,
+        userId: userId.toString(),
+        platform,
+        buildType,
+        config
+      });
+      
+      res.json(build);
+    } catch (error) {
+      logger.error('Mobile build error:', error);
+      res.status(500).json({ error: 'Build failed' });
+    }
+  });
+  
+  // Get build status
+  app.get('/api/mobile/build/:buildId/status', ensureAuthenticated, async (req, res) => {
+    try {
+      const { buildId } = req.params;
+      
+      const status = await mobileCompiler.getBuildStatus(buildId);
+      res.json(status);
+    } catch (error) {
+      logger.error('Mobile build status error:', error);
+      res.status(500).json({ error: 'Failed to get build status' });
+    }
+  });
+  
+  // Download build artifact
+  app.get('/api/mobile/build/:buildId/download', ensureAuthenticated, async (req, res) => {
+    try {
+      const { buildId } = req.params;
+      
+      const artifact = await mobileCompiler.getBuildArtifact(buildId);
+      res.json({ downloadUrl: artifact.url });
+    } catch (error) {
+      logger.error('Mobile download error:', error);
+      res.status(500).json({ error: 'Failed to get download URL' });
+    }
+  });
+
+  logger.info('All backend services initialized and API endpoints registered');
+
   return httpServer;
 }
