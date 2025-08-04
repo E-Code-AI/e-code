@@ -187,16 +187,16 @@ export class MobileAPIService {
         f.name === 'index.html' ||
         f.name === 'main.java' ||
         f.name === 'main.cpp'
-      ) || files.find(f => !f.isFolder);
+      ) || files.find(f => !f.isDirectory);
 
       // Calculate project stats
       const stats = {
-        totalFiles: files.filter(f => !f.isFolder).length,
-        totalFolders: files.filter(f => f.isFolder).length,
+        totalFiles: files.filter(f => !f.isDirectory).length,
+        totalFolders: files.filter(f => f.isDirectory).length,
         totalLines: files.reduce((sum, f) => 
           sum + (f.content?.split('\n').length || 0), 0
         ),
-        languages: [...new Set(files.map(f => this.getFileLanguage(f.name)))]
+        languages: Array.from(new Set(files.map(f => this.getFileLanguage(f.name))))
       };
 
       res.json({
@@ -205,7 +205,7 @@ export class MobileAPIService {
         slug: project.slug || project.name.toLowerCase().replace(/\s+/g, '-'),
         language: project.language,
         description: project.description,
-        isPublic: project.isPublic,
+        isPublic: project.visibility === 'public',
         canRun: this.canRunOnMobile(project.language || 'javascript'),
         mainFile: mainFile ? {
           name: mainFile.name,
@@ -215,13 +215,13 @@ export class MobileAPIService {
         files: files.map(f => ({
           id: f.id,
           name: f.name,
-          isFolder: f.isFolder,
+          isFolder: f.isDirectory,
           size: f.content?.length || 0,
           language: this.getFileLanguage(f.name),
           lastModified: f.updatedAt
         })),
         stats,
-        lastOpened: project.lastOpened,
+        lastOpened: project.updatedAt,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt
       });
@@ -254,7 +254,7 @@ export class MobileAPIService {
         f.name === 'main.py' || 
         f.name === 'index.js' || 
         f.name === 'app.js'
-      ) || files.find(f => !f.isFolder);
+      ) || files.find(f => !f.isDirectory);
 
       if (!mainFile || !mainFile.content) {
         return res.status(400).json({ error: 'No executable file found' });
@@ -269,7 +269,7 @@ export class MobileAPIService {
           maxMemory: 64 * 1024 * 1024, // 64MB memory limit
           input: input || '',
           files: files.reduce((acc, f) => {
-            if (!f.isFolder && f.content) {
+            if (!f.isDirectory && f.content) {
               acc[f.name] = f.content;
             }
             return acc;
@@ -277,8 +277,8 @@ export class MobileAPIService {
         }
       );
 
-      // Update last opened
-      await storage.updateProject(projectId, { lastOpened: new Date() });
+      // Update project updated time
+      await storage.updateProject(projectId, { updatedAt: new Date() });
 
       res.json({
         success: true,
@@ -307,7 +307,8 @@ export class MobileAPIService {
         return res.status(404).json({ error: 'Project not found' });
       }
 
-      const file = await storage.getFile(projectId, fileName);
+      const files = await storage.getFilesByProjectId(projectId);
+      const file = files.find(f => f.name === fileName);
       if (!file) {
         return res.status(404).json({ error: 'File not found' });
       }
@@ -316,7 +317,7 @@ export class MobileAPIService {
         id: file.id,
         name: file.name,
         content: file.content,
-        isFolder: file.isFolder,
+        isFolder: file.isDirectory,
         language: this.getFileLanguage(file.name),
         size: file.content?.length || 0,
         lastModified: file.updatedAt,
@@ -346,16 +347,23 @@ export class MobileAPIService {
         });
       }
 
-      const updatedFile = await storage.updateFile(projectId, fileName, content);
+      const file = await storage.getFilesByProjectId(projectId).then(files => 
+        files.find(f => f.name === fileName)
+      );
+      if (!file) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      
+      const updatedFile = await storage.updateFile(file.id, { content });
       
       res.json({
         success: true,
         file: {
-          id: updatedFile.id,
-          name: updatedFile.name,
-          content: updatedFile.content,
-          size: updatedFile.content?.length || 0,
-          lastModified: updatedFile.updatedAt
+          id: updatedFile?.id || file.id,
+          name: updatedFile?.name || file.name,
+          content: content,
+          size: content?.length || 0,
+          lastModified: updatedFile?.updatedAt || new Date()
         }
       });
     } catch (error) {
