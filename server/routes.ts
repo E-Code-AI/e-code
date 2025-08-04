@@ -48,6 +48,7 @@ import { feedbackService } from "./services/feedback-service";
 import { agentUsageTrackingService } from "./services/agent-usage-tracking-service";
 import { advancedCapabilitiesService } from "./services/advanced-capabilities-service";
 // import { deployProject, stopDeployment, getDeploymentStatus, getDeploymentLogs } from "./deployment";
+import { realDeploymentServiceV2 } from "./deployment/real-deployment-service-v2";
 import { 
   initRepo, 
   isGitRepo, 
@@ -2183,35 +2184,117 @@ API will be available at http://localhost:3000
         return res.status(403).json({ error: 'Access denied' });
       }
       
-      const deploymentConfig = {
-        id: '',
+      // Use real deployment service for actual container builds and hosting
+      const realDeploymentConfig = {
         projectId,
-        projectName: project.name,
+        userId: req.user!.id,
         type: req.body.type || 'autoscale',
-        environment: req.body.environment || 'production',
         regions: req.body.regions || ['us-east-1'],
         customDomain: req.body.customDomain,
         sslEnabled: req.body.sslEnabled !== false,
         environmentVars: req.body.envVars || {},
+        buildCommand: req.body.buildCommand,
+        startCommand: req.body.startCommand,
+        port: req.body.port || 3000,
+        healthCheck: req.body.healthCheck,
         scaling: req.body.type === 'autoscale' ? {
-          minInstances: 1,
-          maxInstances: 10,
-          targetCPU: 80,
-          targetMemory: 80
-        } : undefined
+          minInstances: req.body.scaling?.minInstances || 2,
+          maxInstances: req.body.scaling?.maxInstances || 10,
+          targetCPU: req.body.scaling?.targetCPU || 80
+        } : undefined,
+        resources: req.body.resources || {
+          cpu: '500m',
+          memory: '512Mi'
+        }
       };
       
-      const deploymentId = await deploymentManager.createDeployment(deploymentConfig);
+      // Deploy using real container orchestration
+      const deployment = await realDeploymentServiceV2.deployProject(realDeploymentConfig);
       
       res.json({
         success: true,
-        deploymentId,
+        deploymentId: deployment.deploymentId,
         message: 'Deployment started successfully',
-        url: `https://project-${projectId}.e-code.app`
+        url: deployment.url,
+        status: deployment.status
       });
     } catch (error) {
       console.error('Error creating deployment:', error);
       res.status(500).json({ error: 'Failed to create deployment' });
+    }
+  });
+
+  // Get deployment status
+  app.get('/api/deployments/:deploymentId/status', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deploymentId } = req.params;
+      const deployment = await realDeploymentServiceV2.getDeploymentStatus(deploymentId);
+      
+      if (!deployment) {
+        return res.status(404).json({ error: 'Deployment not found' });
+      }
+      
+      res.json({
+        success: true,
+        deployment
+      });
+    } catch (error) {
+      console.error('Error getting deployment status:', error);
+      res.status(500).json({ error: 'Failed to get deployment status' });
+    }
+  });
+
+  // Get deployment logs
+  app.get('/api/deployments/:deploymentId/logs', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deploymentId } = req.params;
+      const logs = await realDeploymentServiceV2.getDeploymentLogs(deploymentId);
+      
+      res.json({
+        success: true,
+        logs
+      });
+    } catch (error) {
+      console.error('Error getting deployment logs:', error);
+      res.status(500).json({ error: 'Failed to get deployment logs' });
+    }
+  });
+
+  // Scale deployment
+  app.post('/api/deployments/:deploymentId/scale', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deploymentId } = req.params;
+      const { replicas } = req.body;
+      
+      if (!replicas || replicas < 0 || replicas > 100) {
+        return res.status(400).json({ error: 'Invalid replica count' });
+      }
+      
+      await realDeploymentServiceV2.scaleDeployment(deploymentId, replicas);
+      
+      res.json({
+        success: true,
+        message: `Deployment scaled to ${replicas} replicas`
+      });
+    } catch (error) {
+      console.error('Error scaling deployment:', error);
+      res.status(500).json({ error: 'Failed to scale deployment' });
+    }
+  });
+
+  // Stop deployment
+  app.post('/api/deployments/:deploymentId/stop', ensureAuthenticated, async (req, res) => {
+    try {
+      const { deploymentId } = req.params;
+      await realDeploymentServiceV2.stopDeployment(deploymentId);
+      
+      res.json({
+        success: true,
+        message: 'Deployment stopped successfully'
+      });
+    } catch (error) {
+      console.error('Error stopping deployment:', error);
+      res.status(500).json({ error: 'Failed to stop deployment' });
     }
   });
 
