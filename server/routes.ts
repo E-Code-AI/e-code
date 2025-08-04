@@ -284,7 +284,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/projects', ensureAuthenticated, async (req, res) => {
     try {
       const projects = await storage.getProjectsByUser(req.user!.id);
-      res.json(projects);
+      
+      // Add owner information to each project
+      const projectsWithOwner = await Promise.all(projects.map(async (project) => {
+        const owner = await storage.getUser(project.ownerId);
+        return {
+          ...project,
+          owner: owner ? {
+            id: owner.id,
+            username: owner.username,
+            email: owner.email
+          } : null
+        };
+      }));
+      
+      res.json(projectsWithOwner);
     } catch (error) {
       console.error('Error fetching projects:', error);
       res.status(500).json({ error: 'Failed to fetch projects' });
@@ -1661,6 +1675,46 @@ API will be available at http://localhost:3000
     } catch (error) {
       console.error('Error fetching project by slug:', error);
       res.status(500).json({ error: 'Failed to fetch project' });
+    }
+  });
+
+  // Get project by username and slug (for Replit-style URLs)
+  app.get('/api/users/:username/projects/:slug', async (req, res) => {
+    try {
+      const { username, slug } = req.params;
+      
+      // Get user by username
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Get project by slug belonging to the user
+      const project = await storage.getProjectBySlug(slug);
+      if (!project || project.ownerId !== user.id) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      
+      // Check access for private projects
+      if (project.visibility === 'private' && req.user?.id !== project.ownerId) {
+        const isCollaborator = req.user ? await storage.isProjectCollaborator(project.id, req.user.id) : false;
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      // Get additional project info including owner and files
+      const owner = await storage.getUser(project.ownerId);
+      const files = await storage.getFilesByProjectId(project.id);
+      
+      res.json({
+        ...project,
+        owner,
+        files
+      });
+    } catch (error) {
+      console.error('Error getting project by username and slug:', error);
+      res.status(500).json({ error: 'Failed to get project' });
     }
   });
 
