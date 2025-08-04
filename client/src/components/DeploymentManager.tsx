@@ -134,16 +134,8 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
       }
     } catch (error) {
       console.error('Failed to load stats:', error);
-      // Mock stats
-      setStats({
-        totalDeployments: 15,
-        activeDeployments: 2,
-        totalRequests: 125000,
-        averageResponseTime: 145,
-        errorRate: 0.02,
-        bandwidth: '12.5 GB',
-        uptime: 99.95
-      });
+      // Set empty stats on error
+      setStats(null);
     }
   };
 
