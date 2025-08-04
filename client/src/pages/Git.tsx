@@ -50,7 +50,7 @@ export default function Git() {
   // Clone repository mutation
   const cloneRepoMutation = useMutation({
     mutationFn: async (data: { url: string, name: string }) => {
-      return await apiRequest('/api/git/clone', 'POST', data);
+      return await apiRequest('POST', '/api/git/clone', data);
     },
     onSuccess: () => {
       toast({
@@ -72,7 +72,7 @@ export default function Git() {
   // Create repository mutation
   const createRepoMutation = useMutation({
     mutationFn: async (data: { name: string, description: string, private: boolean }) => {
-      return await apiRequest('/api/git/create', 'POST', data);
+      return await apiRequest('POST', '/api/git/create', data);
     },
     onSuccess: () => {
       toast({
@@ -94,7 +94,7 @@ export default function Git() {
 
 
   const displayRepos = repositories || [];
-  const displayDetails = repoDetails;
+  const displayDetails = repoDetails as any;
 
   const filteredRepos = Array.isArray(displayRepos) ? displayRepos.filter((repo: any) => 
     repo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
