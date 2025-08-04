@@ -17,6 +17,7 @@ import Collaboration from '@/components/Collaboration';
 import GitPanel from '@/components/GitPanel';
 import AIPanel from '@/components/AIPanel';
 import { ReplitAgentChat } from '@/components/ReplitAgentChat';
+import { ReplitSidebar } from '@/components/layout/ReplitSidebar';
 import EnvironmentPanel from '@/components/EnvironmentPanel';
 import { EnvironmentProvider } from '@/hooks/useEnvironment';
 import { Button } from '@/components/ui/button';
@@ -400,6 +401,16 @@ const ProjectPage = () => {
       startProjectMutation.mutate();
     }
   };
+  
+  // Listen for Agent open event from sidebar
+  useEffect(() => {
+    const handleOpenAgent = () => {
+      setAiPanelVisible(true);
+    };
+    
+    window.addEventListener('openAgent', handleOpenAgent);
+    return () => window.removeEventListener('openAgent', handleOpenAgent);
+  }, []);
 
   // Check project status on load
   useEffect(() => {
@@ -667,19 +678,9 @@ const ProjectPage = () => {
       
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* File Explorer */}
+        {/* Left Sidebar with Files, Agent, Tools, etc. */}
         <div className="w-64 overflow-auto border-r">
-          {files && (
-            <FileExplorer
-              files={files}
-              selectedFile={selectedFile || undefined}
-              onFileSelect={handleFileSelect}
-              onCreateFile={handleCreateFile}
-              onCreateFolder={handleCreateFolder}
-              onRenameFile={handleRenameFile}
-              onDeleteFile={handleDeleteFile}
-            />
-          )}
+          <ReplitSidebar projectId={projectId} />
         </div>
         
         {/* Middle Section: Editor and Terminal */}
