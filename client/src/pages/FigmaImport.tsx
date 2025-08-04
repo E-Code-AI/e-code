@@ -7,11 +7,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Figma, ArrowRight, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { useParams, useNavigate } from 'wouter';
+import { useParams, useLocation } from 'wouter';
 
 export default function FigmaImport() {
   const { id: projectId } = useParams();
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [figmaUrl, setFigmaUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
