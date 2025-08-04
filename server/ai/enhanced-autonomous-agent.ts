@@ -5,6 +5,7 @@ import { storage } from '../storage';
 import { BuildAction } from './autonomous-builder';
 import { AIProviderFactory } from './ai-providers';
 import { checkpointService } from '../services/checkpoint-service';
+import { effortPricingService } from '../services/effort-pricing-service';
 import { createLogger } from '../utils/logger';
 import { AnthropicProvider } from './ai-provider';
 
@@ -43,7 +44,7 @@ export class EnhancedAutonomousAgent {
   private startTime: number = 0;
   private actions: BuildAction[] = [];
   private thinkingProcess: string[] = [];
-  private aiProvider: AnthropicProvider;
+  private aiProvider: AnthropicProvider | null = null;
   
   // Tracking metrics for effort-based pricing
   private filesModified: number = 0;
@@ -51,9 +52,16 @@ export class EnhancedAutonomousAgent {
   private tokensUsed: number = 0;
   private apiCallsCount: number = 0;
   
-  constructor() {
+  constructor(apiKey?: string) {
     // Initialize with Claude Sonnet 4.0 - latest model
-    this.aiProvider = new AnthropicProvider(process.env.ANTHROPIC_API_KEY);
+    // API key will be provided dynamically from admin keys
+    if (apiKey) {
+      this.aiProvider = new AnthropicProvider(apiKey);
+    }
+  }
+  
+  setApiKey(apiKey: string) {
+    this.aiProvider = new AnthropicProvider(apiKey);
   }
   
   async processRequest(context: AgentContext): Promise<AgentResponse> {
@@ -76,6 +84,16 @@ export class EnhancedAutonomousAgent {
       // Log mode for debugging
       logger.info(`Processing with extendedThinking: ${context.extendedThinking}, highPowerMode: ${context.highPowerMode}`);
       
+      // Check if AI provider is initialized
+      if (!this.aiProvider) {
+        return {
+          message: "AI service is not configured. Please add an Anthropic API key in the Secrets tab.",
+          actions: [],
+          thinking: "No AI provider available",
+          completed: false
+        };
+      }
+      
       // Analyze the user's request with appropriate depth
       const analysis = await this.analyzeRequest(context.message, {
         extendedThinking: context.extendedThinking,
@@ -97,13 +115,15 @@ export class EnhancedAutonomousAgent {
       // Calculate effort metrics
       this.calculateEffortMetrics(buildActions);
       
-      // Create comprehensive checkpoint with AI context and effort pricing
-      const checkpoint = await checkpointService.createComprehensiveCheckpoint({
+      // Create checkpoint
+      const checkpoint = await checkpointService.createCheckpoint({
         projectId: context.projectId,
         userId: context.userId,
-        message: `AI Agent: ${context.message.substring(0, 100)}...`,
-        agentTaskDescription: context.message,
-        conversationHistory: context.conversationHistory,
+        message: `AI Agent: ${context.message.substring(0, 100)}...`
+      });
+      
+      // Calculate pricing based on effort
+      const pricingInfo = effortPricingService.calculatePricing({
         filesModified: this.filesModified,
         linesOfCodeWritten: this.linesOfCodeWritten,
         tokensUsed: this.tokensUsed,
@@ -111,16 +131,13 @@ export class EnhancedAutonomousAgent {
         apiCallsCount: this.apiCallsCount
       });
       
-      // Get pricing information
-      const pricingInfo = await checkpointService.getCheckpointPricingInfo(checkpoint.id);
-      
       // Generate summary and screenshot
       const summary = await this.generateSummary(analysis, results);
       const screenshot = await this.captureScreenshot(context.projectId);
       
       const timeWorked = Math.round((Date.now() - this.startTime) / 1000);
       
-      logger.info(`Agent task completed: ${this.filesModified} files, ${this.linesOfCodeWritten} lines, cost: $${pricingInfo.costInDollars}`);
+      logger.info(`Agent task completed: ${this.filesModified} files, ${this.linesOfCodeWritten} lines, effort score: ${pricingInfo.effortScore}`);
       
       return {
         message: this.generateResponseMessage(analysis, results),
@@ -683,4 +700,21 @@ Would you like me to add any specific features or make changes?`;
   }
 }
 
+// Export a singleton instance that can be configured with API key
 export const enhancedAgent = new EnhancedAutonomousAgent();
+
+// Function to initialize the agent with API key
+export async function initializeEnhancedAgent() {
+  const adminApiKey = await storage.getActiveAdminApiKey('anthropic');
+  if (adminApiKey) {
+    enhancedAgent.setApiKey(adminApiKey.apiKey);
+    logger.info('Enhanced AI Agent initialized with Anthropic API key');
+  } else {
+    logger.warn('No Anthropic API key found - AI Agent will not function until API key is set');
+  }
+}
+
+// Initialize on module load
+initializeEnhancedAgent().catch(err => {
+  logger.error('Failed to initialize enhanced agent:', err);
+});

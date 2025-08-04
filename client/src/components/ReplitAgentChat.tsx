@@ -195,13 +195,19 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
         setIsLoading(true);
 
         try {
-          const response = await apiRequest('POST', `/api/ai/chat/${projectId}`, {
+          const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
             message: initialPrompt,
             context: {
               mode: 'agent',
               thinking: false,
               highPower: false,
-              webSearch: false
+              webSearch: false,
+              files: [],
+              history: [],
+              conversationHistory: messages.map(m => ({
+                role: m.role,
+                content: m.content
+              }))
             },
             provider: selectedProvider
           });
@@ -516,7 +522,16 @@ Would you like me to explain any part of the implementation or make adjustments?
           mode: 'agent',
           thinking: activeMode === 'thinking',
           highPower: activeMode === 'highpower',
-          webSearch: userMessage.metadata?.webSearch
+          webSearch: userMessage.metadata?.webSearch,
+          files: [],
+          history: messages.filter(m => m.role === 'system').map(m => m.content),
+          conversationHistory: messages.slice(-10).map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          extendedThinking: activeMode === 'thinking',
+          highPowerMode: activeMode === 'highpower',
+          isPaused: false
         },
         provider: selectedProvider
       });
