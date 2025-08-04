@@ -200,6 +200,10 @@ function AppContent() {
           <Route path="/solutions/dashboard-builder" component={lazy(() => import('@/pages/solutions/DashboardBuilder'))} />
           <Route path="/solutions/chatbot-builder" component={lazy(() => import('@/pages/solutions/ChatbotBuilder'))} />
           <Route path="/solutions/internal-ai-builder" component={lazy(() => import('@/pages/solutions/InternalAIBuilder'))} />
+          {/* Marketing Pages */}
+          <Route path="/marketing/bounties" component={lazy(() => import('@/pages/marketing/BountiesMarketing'))} />
+          <Route path="/marketing/teams" component={lazy(() => import('@/pages/marketing/TeamsMarketing'))} />
+          <Route path="/marketing/deployments" component={lazy(() => import('@/pages/marketing/DeploymentsMarketing'))} />
           <ProtectedRoute path="/github-import" component={() => (
             <ReplitLayout showSidebar={false}>
               <GitHubImport />

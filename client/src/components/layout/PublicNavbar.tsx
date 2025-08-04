@@ -37,8 +37,9 @@ export function PublicNavbar() {
     { title: 'Mobile App', href: '/mobile', description: 'Code on the go' },
     { title: 'Desktop App', href: '/desktop', description: 'Code offline' },
     { title: 'AI', href: '/ai', description: 'AI-powered coding' },
-    { title: 'Deployments', href: '/deployments', description: 'Host your apps' },
-    { title: 'Bounties', href: '/bounties', description: 'Earn by coding' },
+    { title: 'Deployments', href: '/marketing/deployments', description: 'Global cloud hosting platform' },
+    { title: 'Bounties', href: '/marketing/bounties', description: 'Developer marketplace for earning' },
+    { title: 'Teams', href: '/marketing/teams', description: 'Collaborate and scale together' },
   ];
 
   const solutionsItems = [

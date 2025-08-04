@@ -19,6 +19,11 @@ E-Code is a comprehensive web-based Integrated Development Environment (IDE) ins
   - Rephrased all content to avoid direct copying while maintaining similar structure
   - Moved existing mobile.tsx admin interface to /mobile-admin protected route
   - Public /mobile page now shows marketing content with app download buttons
+- **Marketing vs Functional Page Separation**: Completed distinction between marketing and functional areas
+  - Created dedicated Fortune 500-style marketing pages: BountiesMarketing.tsx, TeamsMarketing.tsx, DeploymentsMarketing.tsx
+  - Updated PublicNavbar to route Bounties, Teams, and Deployments to marketing pages (/marketing/*)
+  - Preserved functional pages in authenticated user area (/bounties, /teams, /deployments for actual usage)
+  - Marketing pages designed to attract users with professional content, functional pages for active development work
 
 ## User Preferences
 - **Vision**: Create a pixel-perfect development platform inspired by Replit, then add personal features, branded as E-Code
