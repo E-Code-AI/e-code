@@ -46,6 +46,17 @@ E-Code is a comprehensive web-based Integrated Development Environment (IDE) ins
     - Support for custom domains with SSL certificates via Let's Encrypt
     - Container images stored in registry.e-code.app
     - Deployment targets: us-east-1, us-west-1, eu-west-1, ap-northeast-1
+- **Mobile App Development Feature**: Comprehensive mobile app development capabilities implemented
+  - Created MobileAppDevelopment.tsx component with full mobile development interface
+  - Mobile preview with device simulator for iOS (iPhone 14 Pro, iPhone SE, iPad) and Android (Pixel 7, Galaxy S23, Galaxy Tab)
+  - Framework support: React Native, Flutter, Ionic, and Native (Swift/Kotlin)
+  - Build system for iOS (Debug, Release, App Store) and Android (Debug APK, Release APK, App Bundle)
+  - App configuration management with bundle ID, version, SDK versions, and permissions
+  - Real-time device preview with orientation switching, network simulation, and battery level
+  - Mobile debugging tools with remote debugging, hot reload, and performance monitoring
+  - App store deployment integration for both App Store and Google Play
+  - Backend endpoints: /api/mobile/build, /api/mobile/deploy, /api/mobile/run, /api/mobile/preview
+  - Accessible via dropdown menu in project page with "Mobile App Development" option
 
 ## User Preferences
 - **Vision**: Create a pixel-perfect development platform inspired by Replit, then add personal features, branded as E-Code
