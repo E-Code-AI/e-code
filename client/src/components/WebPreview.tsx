@@ -44,7 +44,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
   
   // Get preview URL for the project
   const { data: previewData } = useQuery<{ previewUrl: string }>({
-    queryKey: [`/api/projects/${projectId}/preview-url`],
+    queryKey: [`/api/preview/url`, projectId],
     enabled: !!projectId
   });
   

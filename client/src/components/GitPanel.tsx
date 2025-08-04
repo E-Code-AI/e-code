@@ -63,16 +63,16 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
   const [activeTab, setActiveTab] = useState<string>('changes');
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  // Query for checking if the project is a Git repository
+  // Query for checking if the project is a Git repository - REAL BACKEND
   const { 
     data: gitStatus,
     isLoading: gitStatusLoading,
     error: gitStatusError,
     refetch: refetchGitStatus
   } = useQuery<GitStatus>({
-    queryKey: ['/api/git/status', projectId],
+    queryKey: ['/api/git/repositories', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/git/projects/${projectId}/status`);
+      const res = await apiRequest('GET', `/api/git/repositories/${projectId}`);
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || 'Failed to get Git status');

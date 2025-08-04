@@ -293,24 +293,22 @@ export function RuntimeEnvironments({
     }
   }, [activeFile?.name]);
 
-  // Fetch runtime status
+  // Fetch runtime status - REAL BACKEND
   const { data: runtimeStatus, refetch: refetchStatus } = useQuery<RuntimeStatus>({
-    queryKey: [`/api/projects/${projectId}/runtime/status`],
+    queryKey: [`/api/runtime/status`, projectId],
     refetchInterval: 2000, // Poll every 2 seconds when running
     enabled: !!projectId,
   });
 
-  // Runtime control mutations
+  // Runtime control mutations - REAL BACKEND
   const startRuntimeMutation = useMutation({
     mutationFn: async () =>
-      apiRequest(`/api/projects/${projectId}/runtime/start`, {
-        method: 'POST',
-        body: JSON.stringify({
-          language: selectedLanguage,
-          entryFile: activeFile?.name,
-          debug: isDebugging,
-          profile: isProfiling,
-        }),
+      apiRequest('POST', `/api/runtime/start`, {
+        projectId,
+        language: selectedLanguage,
+        entryFile: activeFile?.name,
+        debug: isDebugging,
+        profile: isProfiling,
       }),
     onSuccess: () => {
       refetchStatus();
@@ -331,9 +329,7 @@ export function RuntimeEnvironments({
 
   const stopRuntimeMutation = useMutation({
     mutationFn: async () =>
-      apiRequest(`/api/projects/${projectId}/runtime/stop`, {
-        method: 'POST',
-      }),
+      apiRequest('POST', `/api/runtime/stop`, { projectId }),
     onSuccess: () => {
       refetchStatus();
       toast({
@@ -346,12 +342,10 @@ export function RuntimeEnvironments({
 
   const installDependencyMutation = useMutation({
     mutationFn: async (packageName: string) =>
-      apiRequest(`/api/projects/${projectId}/runtime/install`, {
-        method: 'POST',
-        body: JSON.stringify({
-          language: selectedLanguage,
-          package: packageName,
-        }),
+      apiRequest('POST', `/api/runtime/install`, {
+        projectId,
+        language: selectedLanguage,
+        package: packageName,
       }),
     onSuccess: () => {
       toast({

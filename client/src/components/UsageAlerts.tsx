@@ -112,17 +112,17 @@ export function UsageAlerts() {
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
   const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false);
 
-  // Fetch usage data
+  // Fetch usage data - REAL BACKEND
   const { data: usageData = [] } = useQuery({
     queryKey: ['/api/usage/history', selectedPeriod],
   });
 
-  // Fetch alerts
+  // Fetch alerts - REAL BACKEND
   const { data: alerts = [] } = useQuery({
     queryKey: ['/api/usage/alerts'],
   });
 
-  // Fetch budgets
+  // Fetch budgets - REAL BACKEND
   const { data: budgets = [] } = useQuery({
     queryKey: ['/api/usage/budgets'],
   });
@@ -169,69 +169,8 @@ export function UsageAlerts() {
     },
   });
 
-  // Mock data for demonstration
-  const mockUsageData: UsageData[] = Array.from({ length: 30 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (29 - i));
-    return {
-      date: date.toISOString().split('T')[0],
-      compute: Math.random() * 100,
-      storage: 20 + Math.random() * 10,
-      bandwidth: Math.random() * 50,
-      ai: Math.random() * 200,
-      database: 10 + Math.random() * 5,
-      total: 0,
-    };
-  }).map(d => ({ ...d, total: d.compute + d.storage + d.bandwidth + d.ai + d.database }));
-
-  const mockAlerts: UsageAlert[] = [
-    {
-      id: 1,
-      name: 'High AI Usage',
-      type: 'threshold',
-      metric: 'ai_tokens',
-      threshold: 1000000,
-      currentValue: 850000,
-      isActive: true,
-      frequency: 'immediate',
-      recipients: ['user@example.com'],
-      lastTriggered: '2024-01-15T10:30:00Z',
-    },
-    {
-      id: 2,
-      name: 'Monthly Budget Alert',
-      type: 'budget',
-      metric: 'total_cost',
-      threshold: 50,
-      currentValue: 42.5,
-      isActive: true,
-      frequency: 'daily',
-      recipients: ['user@example.com'],
-    },
-  ];
-
-  const mockBudgets: Budget[] = [
-    {
-      id: 1,
-      name: 'Monthly Development Budget',
-      amount: 100,
-      spent: 67.43,
-      period: 'monthly',
-      categories: ['compute', 'ai', 'database'],
-      isActive: true,
-      resetDate: '2024-02-01',
-    },
-    {
-      id: 2,
-      name: 'AI Experimentation Budget',
-      amount: 50,
-      spent: 32.10,
-      period: 'weekly',
-      categories: ['ai'],
-      isActive: true,
-      resetDate: '2024-01-22',
-    },
-  ];
+  // Use real data from backend
+  const chartData = (usageData as UsageData[]) || [];
 
   const AlertForm = () => {
     const [formData, setFormData] = useState({
@@ -459,7 +398,7 @@ export function UsageAlerts() {
         <CardContent>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockUsageData}>
+              <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
@@ -509,7 +448,7 @@ export function UsageAlerts() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockAlerts.map((alert) => (
+            {(alerts as UsageAlert[]).map((alert) => (
               <div key={alert.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-start gap-4">
                   <div className={`p-2 rounded-full ${
@@ -586,7 +525,7 @@ export function UsageAlerts() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockBudgets.map((budget) => (
+            {(budgets as Budget[]).map((budget) => (
               <div key={budget.id} className="p-4 border rounded-lg space-y-3">
                 <div className="flex items-center justify-between">
                   <div>

@@ -40,22 +40,14 @@ export function CustomRoles() {
   const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch roles
+  // Fetch roles - REAL BACKEND
   const { data: roles, isLoading: rolesLoading } = useQuery({
     queryKey: ['/api/organizations/roles'],
-    queryFn: async () => {
-      // In real implementation, would fetch from actual endpoint
-      return mockRoles;
-    }
   });
 
-  // Fetch available permissions
+  // Fetch available permissions - REAL BACKEND
   const { data: permissions, isLoading: permissionsLoading } = useQuery({
     queryKey: ['/api/permissions'],
-    queryFn: async () => {
-      // In real implementation, would fetch from actual endpoint
-      return mockPermissions;
-    }
   });
 
   // Create role mutation
@@ -463,67 +455,6 @@ export function CustomRoles() {
   );
 }
 
-// Mock data for demonstration
-const mockRoles: Role[] = [
-  {
-    id: 1,
-    name: 'Owner',
-    description: 'Full access to all resources and settings',
-    permissions: ['project:create', 'project:read', 'project:update', 'project:delete', 'user:manage_roles', 'system:manage_organization'],
-    isSystem: true,
-    userCount: 1,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 2,
-    name: 'Developer',
-    description: 'Create and manage projects, view team resources',
-    permissions: ['project:create', 'project:read', 'project:update', 'project:deploy', 'team:read'],
-    isSystem: true,
-    userCount: 5,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 3,
-    name: 'Marketing Team',
-    description: 'Access to marketing projects and analytics',
-    permissions: ['project:read', 'team:read', 'billing:view'],
-    isSystem: false,
-    userCount: 3,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
-
-const mockPermissions: Permission[] = [
-  // Project Management
-  { id: 1, resource: 'project', action: 'create', description: 'Create new projects', category: 'project_management' },
-  { id: 2, resource: 'project', action: 'read', description: 'View projects', category: 'project_management' },
-  { id: 3, resource: 'project', action: 'update', description: 'Edit project settings', category: 'project_management' },
-  { id: 4, resource: 'project', action: 'delete', description: 'Delete projects', category: 'project_management' },
-  { id: 5, resource: 'project', action: 'deploy', description: 'Deploy projects', category: 'project_management' },
-  
-  // User Management
-  { id: 6, resource: 'user', action: 'create', description: 'Create new users', category: 'user_management' },
-  { id: 7, resource: 'user', action: 'read', description: 'View user profiles', category: 'user_management' },
-  { id: 8, resource: 'user', action: 'update', description: 'Edit user information', category: 'user_management' },
-  { id: 9, resource: 'user', action: 'manage_roles', description: 'Assign/remove roles', category: 'user_management' },
-  
-  // Team Management
-  { id: 10, resource: 'team', action: 'create', description: 'Create teams', category: 'team_management' },
-  { id: 11, resource: 'team', action: 'read', description: 'View team information', category: 'team_management' },
-  { id: 12, resource: 'team', action: 'manage_members', description: 'Add/remove team members', category: 'team_management' },
-  
-  // Billing
-  { id: 13, resource: 'billing', action: 'view', description: 'View billing information', category: 'billing' },
-  { id: 14, resource: 'billing', action: 'manage', description: 'Manage payment methods', category: 'billing' },
-  
-  // System
-  { id: 15, resource: 'system', action: 'manage_sso', description: 'Configure SSO providers', category: 'system' },
-  { id: 16, resource: 'system', action: 'view_audit_logs', description: 'View audit logs', category: 'system' },
-  { id: 17, resource: 'system', action: 'manage_organization', description: 'Organization settings', category: 'system' },
-];
+// Data is now fetched from real backend endpoints
 
 export default CustomRoles;

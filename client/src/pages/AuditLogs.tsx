@@ -46,8 +46,8 @@ export function AuditLogs() {
       if (dateRange.from) params.append('from', dateRange.from.toISOString());
       if (dateRange.to) params.append('to', dateRange.to.toISOString());
       
-      const response = await apiRequest(`/api/admin/audit-logs?${params.toString()}`);
-      return response;
+      const response = await apiRequest('GET', `/api/admin/audit-logs?${params.toString()}`);
+      return response.json();
     }
   });
 
@@ -177,7 +177,7 @@ export function AuditLogs() {
         <CardHeader>
           <CardTitle>Activity Log</CardTitle>
           <CardDescription>
-            Showing {logs?.length || 0} audit log entries
+            Showing {(logs as AuditLog[])?.length || 0} audit log entries
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -185,9 +185,9 @@ export function AuditLogs() {
             <div className="text-center py-8">
               <p className="text-muted-foreground">Loading audit logs...</p>
             </div>
-          ) : logs && logs.length > 0 ? (
+          ) : logs && (logs as AuditLog[]).length > 0 ? (
             <div className="space-y-2">
-              {logs.map((log: AuditLog) => (
+              {(logs as AuditLog[]).map((log: AuditLog) => (
                 <div key={log.id} className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className={`p-2 rounded-lg ${getActionColor(log.action)}`}>
                     {getActionIcon(log.action)}

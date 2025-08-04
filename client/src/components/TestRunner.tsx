@@ -77,19 +77,19 @@ export function TestRunner({ projectId }: { projectId: string }) {
   const [expandedSuites, setExpandedSuites] = useState<Set<string>>(new Set());
   const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
 
-  // Fetch test run status
+  // Fetch test run status - REAL BACKEND
   const { data: testRun, refetch: refetchTestRun } = useQuery<TestRun>({
-    queryKey: [`/api/projects/${projectId}/tests/run`],
+    queryKey: [`/api/tests/status`, projectId],
     enabled: !!projectId,
-    refetchInterval: (data) => data?.status === 'running' ? 1000 : false
+    refetchInterval: (query) => query.data?.status === 'running' ? 1000 : false
   });
 
-  // Run tests mutation
+  // Run tests mutation - REAL BACKEND
   const runTestsMutation = useMutation({
     mutationFn: async (testPattern?: string) => {
-      return await apiRequest(`/api/projects/${projectId}/tests/run`, {
-        method: 'POST',
-        body: JSON.stringify({ pattern: testPattern })
+      return await apiRequest('POST', `/api/tests/run`, {
+        projectId,
+        pattern: testPattern
       });
     },
     onSuccess: () => {
@@ -108,12 +108,10 @@ export function TestRunner({ projectId }: { projectId: string }) {
     }
   });
 
-  // Stop tests mutation
+  // Stop tests mutation - REAL BACKEND
   const stopTestsMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/projects/${projectId}/tests/stop`, {
-        method: 'POST'
-      });
+      return await apiRequest('POST', `/api/tests/stop`, { projectId });
     },
     onSuccess: () => {
       toast({

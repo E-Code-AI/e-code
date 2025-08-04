@@ -58,10 +58,10 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
 
   // Fetch database info
   const { data: dbInfo, refetch: refetchDbInfo } = useQuery<DatabaseInfo>({
-    queryKey: [`/api/projects/${projectId}/database/info`],
+    queryKey: [`/api/database/info`, projectId],
     enabled: !!projectId,
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/database/info`);
+      const response = await fetch(`/api/database/${projectId}/info`);
       if (!response.ok) throw new Error('Failed to fetch database info');
       return response.json();
     }
@@ -69,10 +69,10 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
 
   // Fetch table data
   const { data: tableData, refetch: refetchTableData, isLoading: isLoadingTableData } = useQuery({
-    queryKey: [`/api/projects/${projectId}/database/tables/${selectedTable}`, currentPage, pageSize],
+    queryKey: [`/api/database/tables`, projectId, selectedTable, currentPage, pageSize],
     enabled: !!selectedTable,
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/database/tables/${selectedTable}?page=${currentPage}&pageSize=${pageSize}`);
+      const response = await fetch(`/api/database/${projectId}/tables/${selectedTable}?page=${currentPage}&pageSize=${pageSize}`);
       if (!response.ok) throw new Error('Failed to fetch table data');
       return response.json();
     }
@@ -81,7 +81,7 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
   // Execute query mutation
   const executeQueryMutation = useMutation({
     mutationFn: async (query: string) => {
-      const response = await fetch(`/api/projects/${projectId}/database/query`, {
+      const response = await fetch(`/api/database/${projectId}/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query })

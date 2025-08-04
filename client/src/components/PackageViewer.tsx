@@ -57,28 +57,28 @@ export function PackageViewer({ projectId }: { projectId: string }) {
 
   // Fetch installed packages
   const { data: installedPackages, isLoading: isLoadingPackages } = useQuery<PackageInfo[]>({
-    queryKey: [`/api/projects/${projectId}/packages`],
+    queryKey: [`/api/packages/installed`, projectId],
     enabled: !!projectId
   });
 
   // Fetch system packages
   const { data: systemPackages } = useQuery<SystemPackage[]>({
-    queryKey: [`/api/projects/${projectId}/packages/system`],
+    queryKey: [`/api/packages/system`, projectId],
     enabled: !!projectId
   });
 
   // Fetch package details
   const { data: packageDetails, isLoading: isLoadingDetails } = useQuery<PackageInfo>({
-    queryKey: [`/api/projects/${projectId}/packages/${selectedPackage}`],
+    queryKey: [`/api/packages/details`, projectId, selectedPackage],
     enabled: !!selectedPackage
   });
 
   // Search packages
   const { data: searchResults, isLoading: isSearching } = useQuery({
-    queryKey: [`/api/projects/${projectId}/packages/search`, searchTerm],
+    queryKey: [`/api/packages/search`, projectId, searchTerm],
     enabled: searchTerm.length > 2 && activeTab === 'search',
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/packages/search?q=${searchTerm}`);
+      const response = await fetch(`/api/packages/search?projectId=${projectId}&q=${searchTerm}`);
       if (!response.ok) throw new Error('Failed to search packages');
       return response.json();
     }

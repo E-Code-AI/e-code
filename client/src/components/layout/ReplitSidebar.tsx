@@ -67,9 +67,9 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
     enabled: !!projectId,
   });
 
-  // Récupération des projets récents
+  // Récupération des projets récents - REAL BACKEND
   const { data: recentProjects = [] } = useQuery<Project[]>({
-    queryKey: ["/api/projects/recent"],
+    queryKey: ["/api/user/projects"],
   });
 
   const toggleFolder = (path: string) => {

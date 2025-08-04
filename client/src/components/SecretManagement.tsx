@@ -106,18 +106,18 @@ export function SecretManagement({ projectId }: SecretManagementProps) {
   const [revealedSecrets, setRevealedSecrets] = useState<Set<number>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch secrets
+  // Fetch secrets - REAL BACKEND
   const { data: secrets = [], isLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/secrets`],
-    enabled: !!projectId
+    queryKey: ['/api/secrets'],
+    enabled: true
   });
 
-  // Create secret mutation
+  // Create secret mutation - REAL BACKEND
   const createSecretMutation = useMutation({
     mutationFn: (secretData: Partial<Secret>) => 
-      apiRequest('POST', `/api/projects/${projectId}/secrets`, secretData),
+      apiRequest('POST', '/api/secrets', secretData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/secrets`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/secrets'] });
       toast({
         title: "Secret Created",
         description: "Your secret has been securely stored.",
@@ -133,12 +133,12 @@ export function SecretManagement({ projectId }: SecretManagementProps) {
     }
   });
 
-  // Update secret mutation
+  // Update secret mutation - REAL BACKEND
   const updateSecretMutation = useMutation({
     mutationFn: ({ id, ...data }: Partial<Secret> & { id: number }) => 
-      apiRequest('PUT', `/api/projects/${projectId}/secrets/${id}`, data),
+      apiRequest('PUT', `/api/secrets/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/secrets`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/secrets'] });
       toast({
         title: "Secret Updated",
         description: "Your secret has been updated.",
@@ -154,12 +154,12 @@ export function SecretManagement({ projectId }: SecretManagementProps) {
     }
   });
 
-  // Delete secret mutation
+  // Delete secret mutation - REAL BACKEND
   const deleteSecretMutation = useMutation({
     mutationFn: (id: number) => 
-      apiRequest('DELETE', `/api/projects/${projectId}/secrets/${id}`),
+      apiRequest('DELETE', `/api/secrets/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/secrets`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/secrets'] });
       toast({
         title: "Secret Deleted",
         description: "The secret has been removed.",
