@@ -138,6 +138,7 @@ import { SpotlightSearch } from "@/components/SpotlightSearch";
 import { CommandPalette } from "@/components/CommandPalette";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { ApplicationIDEWrapper } from "@/components/ApplicationIDEWrapper";
 
 // Loading fallback component
 function PageLoader() {
@@ -476,15 +477,30 @@ function AppContent() {
               <MobileAdmin />
             </ReplitLayout>
           )} />
-          {/* Application Routes */}
+          {/* Application Routes - Using ApplicationIDEWrapper for full IDE interface */}
           <ProtectedRoute path="/solartech-ai-chat" component={() => (
-            <SolarTechAIChatApp />
+            <ApplicationIDEWrapper
+              projectName="SolarTech AI Chat"
+              projectDescription="Professional solar technology AI assistant"
+              projectId={1001}
+              appComponent={<SolarTechAIChatApp />}
+            />
           )} />
           <ProtectedRoute path="/solartech-crm" component={() => (
-            <SolarTechCRMApp />
+            <ApplicationIDEWrapper
+              projectName="SolarTech CRM"
+              projectDescription="Solar business customer relationship management"
+              projectId={1002}
+              appComponent={<SolarTechCRMApp />}
+            />
           )} />
           <ProtectedRoute path="/solartech-fortune500-store" component={() => (
-            <SolarTechStoreApp />
+            <ApplicationIDEWrapper
+              projectName="Fortune500 Solar Store"
+              projectDescription="E-commerce platform for solar technology products"
+              projectId={1003}
+              appComponent={<SolarTechStoreApp />}
+            />
           )} />
           <ProtectedRoute path="/admin" component={() => (
             <ReplitLayout>
