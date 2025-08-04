@@ -510,7 +510,7 @@ Would you like me to explain any part of the implementation or make adjustments?
 
     try {
       // Make real API call to backend
-      const response = await apiRequest('POST', `/api/ai/chat/${projectId}`, {
+      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
         message: input,
         context: {
           mode: 'agent',

@@ -1245,7 +1245,7 @@ What would you like me to build for you today?`,
     }
 
     try {
-      const response = await fetch(`/api/ai/chat/${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

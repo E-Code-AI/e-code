@@ -108,7 +108,7 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
     setIsLoading(true);
 
     try {
-      const response = await apiRequest('POST', `/api/ai/chat/${projectId}`, {
+      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
         message: messageContent,
         mode: 'agent',
         attachments: attachments.length > 0 ? attachments.map(f => f.name) : undefined
