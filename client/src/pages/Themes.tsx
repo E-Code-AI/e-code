@@ -14,33 +14,67 @@ import {
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
+interface Theme {
+  id: string;
+  name: string;
+  description?: string;
+  preview: {
+    bg: string;
+    fg: string;
+    accent: string;
+  };
+  category?: string;
+  rating?: number;
+  downloads?: number;
+}
+
+interface ThemeSettings {
+  activeEditorTheme: string;
+  systemTheme: string;
+  editor?: any;
+  ui?: any;
+  includes?: string[];
+  customSettings?: {
+    fontSize: string;
+    lineHeight: string;
+    tabSize: string;
+    wordWrap: string;
+  };
+}
+
+interface ThemesResponse {
+  editor: Theme[];
+  ui: Theme[];
+  includes: string[];
+}
+
 export default function Themes() {
   const { toast } = useToast();
   const [selectedTheme, setSelectedTheme] = useState('dark-pro');
   const [systemTheme, setSystemTheme] = useState('dark');
-  const [themeSettings, setThemeSettings] = useState<any>(null);
+  const [themeSettings, setThemeSettings] = useState<ThemeSettings | null>(null);
 
   // Fetch available themes
-  const { data: themes, isLoading: themesLoading } = useQuery({
+  const { data: themes, isLoading: themesLoading } = useQuery<ThemesResponse>({
     queryKey: ['/api/themes']
   });
   
   // Fetch user theme settings
-  const { data: userSettings } = useQuery({
+  const { data: userSettings } = useQuery<ThemeSettings>({
     queryKey: ['/api/themes/settings']
   });
   
   // Fetch installed themes
-  const { data: installedThemes } = useQuery({
+  const { data: installedThemes } = useQuery<Theme[]>({
     queryKey: ['/api/themes/installed']
   });
   
   // Update theme settings mutation
   const updateSettingsMutation = useMutation({
-    mutationFn: (settings: any) => apiRequest('/api/themes/settings', {
-      method: 'PUT',
-      body: JSON.stringify(settings)
-    }),
+    mutationFn: async (settings: ThemeSettings) => {
+      const response = await apiRequest('PUT', '/api/themes/settings', settings);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/themes/settings'] });
       toast({
@@ -52,10 +86,10 @@ export default function Themes() {
   
   // Install theme mutation
   const installThemeMutation = useMutation({
-    mutationFn: (themeId: string) => apiRequest('/api/themes/install', {
-      method: 'POST',
-      body: JSON.stringify({ themeId })
-    }),
+    mutationFn: async (themeId: string) => {
+      const response = await apiRequest('POST', '/api/themes/install', { themeId });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/themes/installed'] });
       toast({
@@ -85,9 +119,10 @@ export default function Themes() {
     setSelectedTheme(themeId);
     
     // Update theme settings on the server
-    const updatedSettings = {
-      ...themeSettings,
-      activeEditorTheme: themeId
+    const updatedSettings: ThemeSettings = {
+      ...(themeSettings || {}),
+      activeEditorTheme: themeId,
+      systemTheme: themeSettings?.systemTheme || systemTheme || 'dark'
     };
     
     updateSettingsMutation.mutate(updatedSettings);
@@ -108,10 +143,8 @@ export default function Themes() {
     };
     
     try {
-      await apiRequest('/api/themes/create', {
-        method: 'POST',
-        body: JSON.stringify(customTheme)
-      });
+      const response = await apiRequest('POST', '/api/themes/create', customTheme);
+      await response.json();
       
       toast({
         title: "Theme created",
@@ -171,10 +204,8 @@ export default function Themes() {
         reader.onload = async (event) => {
           try {
             const settings = JSON.parse(event.target?.result as string);
-            await apiRequest('/api/themes/import', {
-              method: 'POST',
-              body: JSON.stringify({ settings })
-            });
+            const response = await apiRequest('POST', '/api/themes/import', { settings });
+            await response.json();
             
             queryClient.invalidateQueries({ queryKey: ['/api/themes/settings'] });
             
@@ -197,16 +228,18 @@ export default function Themes() {
   };
   
   const handleSaveSettings = () => {
-    updateSettingsMutation.mutate({
-      ...themeSettings,
-      systemTheme,
+    const settingsToSave: ThemeSettings = {
+      ...(themeSettings || {}),
+      activeEditorTheme: themeSettings?.activeEditorTheme || selectedTheme || 'dark-pro',
+      systemTheme: systemTheme,
       customSettings: {
         fontSize: (document.getElementById('font-size') as HTMLInputElement)?.value || '14px',
         lineHeight: (document.getElementById('line-height') as HTMLInputElement)?.value || '1.5',
         tabSize: (document.getElementById('tab-size') as HTMLInputElement)?.value || '2',
         wordWrap: (document.getElementById('word-wrap') as HTMLInputElement)?.value || 'on'
       }
-    });
+    };
+    updateSettingsMutation.mutate(settingsToSave);
   };
   
   if (themesLoading) {
