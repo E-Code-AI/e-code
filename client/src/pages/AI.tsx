@@ -28,10 +28,17 @@ import {
 import { Link } from 'wouter';
 import { useState } from 'react';
 
-export default function AI() {
-  const [selectedFeature, setSelectedFeature] = useState('autonomous');
+type FeatureKey = 'autonomous' | 'multilingual' | 'intelligent' | 'realtime';
 
-  const features = {
+export default function AI() {
+  const [selectedFeature, setSelectedFeature] = useState<FeatureKey>('autonomous');
+
+  const features: Record<FeatureKey, {
+    title: string;
+    description: string;
+    icon: React.ComponentType<{ className?: string }>;
+    details: string[];
+  }> = {
     autonomous: {
       title: 'Autonomous Building',
       description: 'Just describe what you want. Our AI agent builds complete applications from scratch.',
@@ -129,56 +136,172 @@ export default function AI() {
     <div className="min-h-screen bg-background">
       <PublicNavbar />
 
-      {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/10 to-orange-500/10" />
+      {/* Hero Section - Fortune 500 Style */}
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-background to-muted/20">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
+          <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+        </div>
+        
         <div className="container-responsive relative">
-          <div className="text-center max-w-4xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
             >
-              <Badge variant="default" className="mb-4 text-sm px-4 py-1">
+              <Badge variant="default" className="mb-6 text-sm px-4 py-1.5 bg-primary/90">
                 <Sparkles className="h-4 w-4 mr-1" />
                 POWERED BY CLAUDE 4.0 SONNET
               </Badge>
               
-              <h1 className="text-5xl md:text-7xl font-bold mb-6">
-                AI that builds
-                <span className="block bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
-                  complete apps
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight">
+                Enterprise AI That
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-primary/60">
+                  Builds Applications
                 </span>
               </h1>
               
-              <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
-                Describe your idea in any language. Our AI agent creates the entire application 
-                automatically - no coding knowledge required.
+              <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed max-w-2xl">
+                Transform ideas into production-ready applications in minutes. 
+                Our AI understands 100+ languages and writes professional code automatically.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                <Button size="lg" asChild className="text-lg px-8">
-                  <Link href="/agent">
-                    Start Building with AI
+              <div className="flex flex-col sm:flex-row gap-4 mb-12">
+                <Button size="lg" asChild className="text-lg px-8 h-14 shadow-lg hover:shadow-xl transition-shadow">
+                  <Link href="/ai-agent">
+                    Start Building Now
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="text-lg px-8">
-                  <Link href="/templates">
-                    View AI Examples
+                <Button size="lg" variant="outline" asChild className="text-lg px-8 h-14">
+                  <Link href="#demo-video">
+                    Watch Demo
                   </Link>
                 </Button>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {stats.map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <div className="text-3xl md:text-4xl font-bold text-primary">{stat.value}</div>
-                    <div className="text-sm text-muted-foreground">{stat.label}</div>
-                  </div>
+                  <motion.div 
+                    key={stat.label} 
+                    className="text-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + stats.indexOf(stat) * 0.1 }}
+                  >
+                    <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                      {stat.value}
+                    </div>
+                    <div className="text-sm text-muted-foreground font-medium">{stat.label}</div>
+                  </motion.div>
                 ))}
               </div>
             </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative hidden lg:block"
+            >
+              <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border">
+                <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 via-transparent to-transparent" />
+                <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+                  <div className="text-center">
+                    <Brain className="h-24 w-24 text-primary/30 mb-4 mx-auto" />
+                    <p className="text-lg text-muted-foreground">AI Development Preview</p>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+              <div className="absolute -top-6 -left-6 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Video Demo Section */}
+      <section id="demo-video" className="py-20 bg-gradient-to-b from-muted/20 to-background">
+        <div className="container-responsive">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              See AI in Action
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Watch how Fortune 500 companies are building applications 10x faster with our AI technology
+            </p>
+          </div>
+
+          <div className="max-w-6xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border bg-muted"
+            >
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                title="AI Agent Demo Video"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-6 mt-12">
+              <Card className="group hover:shadow-lg transition-all cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                      <Rocket className="h-5 w-5 text-primary" />
+                    </div>
+                    <CardTitle className="text-lg">E-commerce in 5 Minutes</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">
+                    Watch AI build a complete online store with payments, inventory, and admin dashboard
+                  </p>
+                  <div className="mt-3 text-xs text-muted-foreground">Duration: 5:23</div>
+                </CardContent>
+              </Card>
+
+              <Card className="group hover:shadow-lg transition-all cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <CardTitle className="text-lg">SaaS Dashboard Demo</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">
+                    AI creates a full analytics dashboard with real-time data visualization
+                  </p>
+                  <div className="mt-3 text-xs text-muted-foreground">Duration: 3:45</div>
+                </CardContent>
+              </Card>
+
+              <Card className="group hover:shadow-lg transition-all cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                      <Globe className="h-5 w-5 text-primary" />
+                    </div>
+                    <CardTitle className="text-lg">Multilingual App Creation</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">
+                    Building apps in Japanese, Spanish, and Arabic - AI understands any language
+                  </p>
+                  <div className="mt-3 text-xs text-muted-foreground">Duration: 4:15</div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
@@ -266,7 +389,7 @@ export default function AI() {
                     className={`cursor-pointer transition-all ${
                       selectedFeature === key ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'
                     }`}
-                    onClick={() => setSelectedFeature(key)}
+                    onClick={() => setSelectedFeature(key as FeatureKey)}
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-start gap-3">
