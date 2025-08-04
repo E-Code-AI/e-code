@@ -11,8 +11,8 @@ import {
   Star, Download, Upload, Code, Sparkles,
   Brush, Eye, Settings, ChevronRight
 } from 'lucide-react';
-import { useQuery, useMutation, queryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 export default function Themes() {
   const { toast } = useToast();
