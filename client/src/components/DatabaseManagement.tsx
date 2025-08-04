@@ -183,38 +183,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
     },
   });
 
-  // Mock data for demonstration
-  const mockDatabases: DatabaseInstance[] = [
-    {
-      id: 1,
-      name: 'production-db',
-      type: 'postgresql',
-      status: 'running',
-      region: 'us-east-1',
-      plan: 'pro',
-      createdAt: '2024-01-01T00:00:00Z',
-      size: 256,
-      maxSize: 1024,
-      connections: 5,
-      maxConnections: 20,
-      backupsEnabled: true,
-      lastBackup: '2024-01-20T03:00:00Z',
-      connectionInfo: {
-        host: 'db-1234.e-code.app',
-        port: 5432,
-        database: 'myapp',
-        username: 'dbuser',
-        connectionString: 'postgresql://dbuser:****@db-1234.e-code.app:5432/myapp',
-      },
-    },
-  ];
 
-  const mockTables: TableInfo[] = [
-    { name: 'users', rowCount: 1523, size: '2.3 MB', indexes: 3 },
-    { name: 'projects', rowCount: 456, size: '1.1 MB', indexes: 2 },
-    { name: 'files', rowCount: 8921, size: '15.7 MB', indexes: 4 },
-    { name: 'sessions', rowCount: 3241, size: '0.8 MB', indexes: 1 },
-  ];
 
   const DatabaseCreateForm = () => {
     const [formData, setFormData] = useState({
@@ -370,7 +339,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
     );
   };
 
-  const database = selectedDatabase || mockDatabases[0];
+  const database = selectedDatabase || databases[0];
 
   return (
     <div className="space-y-6">
@@ -411,7 +380,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">Loading databases...</div>
-          ) : mockDatabases.length === 0 ? (
+          ) : databases.length === 0 ? (
             <Alert>
               <Database className="w-4 h-4" />
               <AlertTitle>No Databases</AlertTitle>
@@ -421,7 +390,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
             </Alert>
           ) : (
             <div className="space-y-4">
-              {mockDatabases.map((db) => (
+              {databases.map((db) => (
                 <div
                   key={db.id}
                   className={`p-4 border rounded-lg cursor-pointer transition-colors ${
