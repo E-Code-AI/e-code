@@ -3,9 +3,10 @@
 
 import { storage } from '../storage';
 import { BuildAction } from './autonomous-builder';
-import { AIProviderFactory } from './providers/ai-provider-factory';
+import { AIProviderFactory } from './ai-providers';
 import { checkpointService } from '../services/checkpoint-service';
 import { createLogger } from '../utils/logger';
+import { AnthropicProvider } from './ai-provider';
 
 const logger = createLogger('EnhancedAutonomousAgent');
 
@@ -39,12 +40,18 @@ export class EnhancedAutonomousAgent {
   private startTime: number = 0;
   private actions: BuildAction[] = [];
   private thinkingProcess: string[] = [];
+  private aiProvider: AnthropicProvider;
   
   // Tracking metrics for effort-based pricing
   private filesModified: number = 0;
   private linesOfCodeWritten: number = 0;
   private tokensUsed: number = 0;
   private apiCallsCount: number = 0;
+  
+  constructor() {
+    // Initialize with Claude Sonnet 4.0 - latest model
+    this.aiProvider = new AnthropicProvider(process.env.ANTHROPIC_API_KEY);
+  }
   
   async processRequest(context: AgentContext): Promise<AgentResponse> {
     this.startTime = Date.now();
@@ -127,18 +134,23 @@ export class EnhancedAutonomousAgent {
   
   private calculateEffortMetrics(actions: BuildAction[]): void {
     actions.forEach(action => {
-      if (action.type === 'create_file' || action.type === 'update_file') {
+      if (action.type === 'create_file') {
         this.filesModified++;
         
         // Count lines of code
-        if (action.content) {
-          this.linesOfCodeWritten += action.content.split('\n').length;
+        if (action.data && action.data.content) {
+          this.linesOfCodeWritten += action.data.content.split('\n').length;
         }
       }
     });
     
     // Estimate tokens (rough approximation)
-    const totalContent = actions.reduce((acc, action) => acc + (action.content || '').length, 0);
+    const totalContent = actions.reduce((acc, action) => {
+      if (action.data && action.data.content) {
+        return acc + action.data.content.length;
+      }
+      return acc;
+    }, 0);
     this.tokensUsed = Math.ceil(totalContent / 4); // ~4 chars per token
   }
   
@@ -570,7 +582,7 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
     const results = {
       filesCreated: 0,
       foldersCreated: 0,
-      errors: []
+      errors: [] as string[]
     };
     
     for (const action of actions) {
