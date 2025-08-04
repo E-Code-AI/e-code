@@ -47,7 +47,7 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
   const fetchSecrets = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/secrets`, {
+      const response = await fetch(`/api/secrets/${projectId}`, {
         credentials: 'include'
       });
       
@@ -78,7 +78,7 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
     }
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/secrets`, {
+      const response = await fetch(`/api/secrets/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -113,7 +113,7 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
 
   const deleteSecret = async (secretId: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/secrets/${secretId}`, {
+      const response = await fetch(`/api/secrets/${projectId}/${secretId}`, {
         method: 'DELETE',
         credentials: 'include'
       });

@@ -125,7 +125,7 @@ export function ReplitAssistant({
       };
 
       // Use Claude (Anthropic) as the provider
-      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
+      const response = await apiRequest('POST', `/api/ai/${projectId}/chat`, {
         message: userMessage.content,
         context,
         provider: 'anthropic' // Force Claude
@@ -300,11 +300,11 @@ export function ReplitAssistant({
                   <div className="prose prose-sm dark:prose-invert max-w-none">
                     <ReactMarkdown
                       components={{
-                        code({ node, inline, className, children, ...props }) {
+                        code({ node, className, children, ...props }) {
                           const match = /language-(\w+)/.exec(className || '');
                           const language = match ? match[1] : '';
                           
-                          if (!inline && language) {
+                          if (node && node.position && language) {
                             const code = String(children).replace(/\n$/, '');
                             const codeBlock = message.codeBlocks?.find(
                               block => block.code === code

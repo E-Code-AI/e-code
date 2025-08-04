@@ -77,9 +77,9 @@ export default function EditorPage() {
     isLoading: isLoadingFiles,
     error: filesError,
   } = useQuery<File[]>({
-    queryKey: ['/api/projects', projectIdNum, 'files'],
+    queryKey: ['/api/files', projectIdNum],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/projects/${projectIdNum}/files`);
+      const res = await apiRequest('GET', `/api/files/${projectIdNum}`);
       return res.json();
     },
     enabled: !!projectIdNum && !!user,
@@ -94,7 +94,7 @@ export default function EditorPage() {
     onSuccess: (data) => {
       if (projectId) {
         const projectIdNum = parseInt(projectId);
-        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectIdNum, 'files'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/files', projectIdNum] });
       }
     },
     onError: (error: Error) => {
@@ -109,7 +109,7 @@ export default function EditorPage() {
   // Create file mutation
   const createFileMutation = useMutation({
     mutationFn: async ({ name, isFolder, parentId }: { name: string, isFolder: boolean, parentId?: number | null }) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+      const res = await apiRequest('POST', `/api/files/${projectId}`, {
         name,
         isFolder,
         parentId: parentId || null,
@@ -120,7 +120,7 @@ export default function EditorPage() {
     onSuccess: (data) => {
       if (projectId) {
         const projectIdNum = parseInt(projectId);
-        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectIdNum, 'files'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/files', projectIdNum] });
       }
       toast({
         title: 'File created',
@@ -145,7 +145,7 @@ export default function EditorPage() {
     onSuccess: () => {
       if (projectId) {
         const projectIdNum = parseInt(projectId);
-        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectIdNum, 'files'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/files', projectIdNum] });
       }
       toast({
         title: 'File deleted',

@@ -76,12 +76,12 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
 
   // Fetch installed packages
   const { data: installedPackages = {} } = useQuery<Record<string, PackageInfo>>({
-    queryKey: [`/api/projects/${projectId}/packages`]
+    queryKey: [`/api/packages/${projectId}`]
   });
 
   // Fetch package tree
   const { data: packageTree } = useQuery<PackageNode>({
-    queryKey: [`/api/projects/${projectId}/packages/tree`]
+    queryKey: [`/api/packages/${projectId}/tree`]
   });
 
   // Search packages
@@ -93,13 +93,12 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
   // Install package mutation
   const installMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      return apiRequest(`/api/projects/${projectId}/packages`, {
-        method: 'POST',
-        body: JSON.stringify({ package: packageName })
+      return apiRequest('POST', `/api/packages/${projectId}`, {
+        package: packageName
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/packages`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/packages/${projectId}`] });
       toast({
         title: 'Package installed',
         description: 'Package has been installed successfully'
@@ -110,12 +109,10 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
   // Uninstall package mutation
   const uninstallMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      return apiRequest(`/api/projects/${projectId}/packages/${packageName}`, {
-        method: 'DELETE'
-      });
+      return apiRequest('DELETE', `/api/packages/${projectId}/${packageName}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/packages`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/packages/${projectId}`] });
       toast({
         title: 'Package uninstalled',
         description: 'Package has been uninstalled successfully'
@@ -175,7 +172,7 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
             ctx.beginPath();
             ctx.strokeStyle = '#4b5563';
             ctx.lineWidth = 1;
-            ctx.moveTo(node.x, node.y + nodeHeight / 2);
+            ctx.moveTo(node.x!, node.y! + nodeHeight / 2);
             ctx.lineTo(dep.x, dep.y - nodeHeight / 2);
             ctx.stroke();
           }

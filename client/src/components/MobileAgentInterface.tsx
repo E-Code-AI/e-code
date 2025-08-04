@@ -108,7 +108,7 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
     setIsLoading(true);
 
     try {
-      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
+      const response = await apiRequest('POST', `/api/ai/chat/${projectId}`, {
         message: messageContent,
         mode: 'agent',
         attachments: attachments.length > 0 ? attachments.map(f => f.name) : undefined
@@ -135,7 +135,7 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
         role: 'assistant',
         content: responseData.content || responseData.message,
         timestamp: new Date(),
-        plan: responseData.plan ? currentPlan : undefined,
+        plan: responseData.plan && currentPlan ? currentPlan : undefined,
         actions: responseData.actions
       };
 

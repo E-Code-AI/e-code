@@ -19,9 +19,9 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
 
   // Fetch active tracking
   const { data: activeTracking } = useQuery({
-    queryKey: ['/api/projects', projectId, 'time-tracking', 'active'],
+    queryKey: ['/api/time-tracking', projectId, 'active'],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/projects/${projectId}/time-tracking/active`);
+      const res = await apiRequest('GET', `/api/time-tracking/${projectId}/active`);
       if (!res.ok) return null;
       return res.json();
     }
@@ -29,9 +29,9 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
 
   // Fetch time tracking history
   const { data: trackingHistory } = useQuery({
-    queryKey: ['/api/projects', projectId, 'time-tracking'],
+    queryKey: ['/api/time-tracking', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/projects/${projectId}/time-tracking`);
+      const res = await apiRequest('GET', `/api/time-tracking/${projectId}`);
       if (!res.ok) throw new Error('Failed to fetch time tracking');
       return res.json();
     }
@@ -40,12 +40,12 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
   // Start tracking mutation
   const startTrackingMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/time-tracking/start`);
+      const res = await apiRequest('POST', `/api/time-tracking/${projectId}/start`);
       if (!res.ok) throw new Error('Failed to start tracking');
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'time-tracking'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/time-tracking', projectId] });
       toast({
         title: 'Time tracking started',
         description: 'Your work time is now being tracked'
@@ -56,12 +56,12 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
   // Stop tracking mutation
   const stopTrackingMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/time-tracking/stop`);
+      const res = await apiRequest('POST', `/api/time-tracking/${projectId}/stop`);
       if (!res.ok) throw new Error('Failed to stop tracking');
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'time-tracking'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/time-tracking', projectId] });
       toast({
         title: 'Time tracking stopped',
         description: 'Your work session has been recorded'

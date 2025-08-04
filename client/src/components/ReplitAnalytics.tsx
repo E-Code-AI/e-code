@@ -77,7 +77,7 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/analytics?period=${timeRange}`, {
+      const response = await fetch(`/api/analytics/${projectId}?period=${timeRange}`, {
         credentials: 'include'
       });
       

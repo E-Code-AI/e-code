@@ -80,7 +80,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const fetchBreakpoints = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/debug/breakpoints`, {
+      const response = await fetch(`/api/debug/${projectId}/breakpoints`, {
         credentials: 'include'
       });
       
@@ -96,7 +96,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
   const startMetricsCollection = () => {
     metricsIntervalRef.current = setInterval(async () => {
       try {
-        const response = await fetch(`/api/projects/${projectId}/metrics`, {
+        const response = await fetch(`/api/metrics/${projectId}`, {
           credentials: 'include'
         });
         
@@ -112,7 +112,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const startDebugSession = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/debug/start`, {
+      const response = await fetch(`/api/debug/${projectId}/start`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -137,7 +137,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const stopDebugSession = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/debug/stop`, {
+      const response = await fetch(`/api/debug/${projectId}/stop`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -161,7 +161,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const addBreakpoint = async (file: string, line: number) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/debug/breakpoints`, {
+      const response = await fetch(`/api/debug/${projectId}/breakpoints`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -186,7 +186,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const removeBreakpoint = async (breakpointId: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/debug/breakpoints/${breakpointId}`, {
+      const response = await fetch(`/api/debug/${projectId}/breakpoints/${breakpointId}`, {
         method: 'DELETE',
         credentials: 'include'
       });

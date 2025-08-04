@@ -19,9 +19,9 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
 
   // Fetch screenshots
   const { data: screenshots, isLoading } = useQuery({
-    queryKey: ['/api/projects', projectId, 'screenshots'],
+    queryKey: ['/api/screenshots', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/projects/${projectId}/screenshots`);
+      const res = await apiRequest('GET', `/api/screenshots/${projectId}`);
       if (!res.ok) throw new Error('Failed to fetch screenshots');
       return res.json();
     }
@@ -30,7 +30,7 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
   // Capture screenshot mutation
   const captureScreenshotMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/screenshots/capture`, {
+      const res = await apiRequest('POST', `/api/screenshots/${projectId}/capture`, {
         title: screenshotTitle || `Screenshot ${new Date().toISOString()}`,
         description: screenshotDescription
       });
@@ -38,7 +38,7 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'screenshots'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/screenshots', projectId] });
       toast({
         title: 'Screenshot captured',
         description: 'Project preview has been saved'
@@ -56,7 +56,7 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'screenshots'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/screenshots', projectId] });
       toast({
         title: 'Screenshot deleted',
         description: 'The screenshot has been removed'

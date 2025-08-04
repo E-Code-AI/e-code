@@ -47,7 +47,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
   const fetchPackages = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/packages`, {
+      const response = await fetch(`/api/packages/${projectId}`, {
         credentials: 'include'
       });
       
@@ -99,7 +99,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
     try {
       setInstalling(prev => [...prev, packageName]);
       
-      const response = await fetch(`/api/projects/${projectId}/packages`, {
+      const response = await fetch(`/api/packages/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -136,7 +136,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
 
   const uninstallPackage = async (packageName: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/packages/${encodeURIComponent(packageName)}`, {
+      const response = await fetch(`/api/packages/${projectId}/${encodeURIComponent(packageName)}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -159,7 +159,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
 
   const updateAllPackages = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/packages/update`, {
+      const response = await fetch(`/api/packages/${projectId}/update`, {
         method: 'POST',
         credentials: 'include'
       });

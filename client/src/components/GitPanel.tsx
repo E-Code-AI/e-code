@@ -272,7 +272,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
       refetchGitStatus();
       refetchCommitHistory();
       // Refresh file list to get updated contents
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
     },
     onError: (error: Error) => {
       toast({
@@ -305,7 +305,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
       refetchGitStatus();
       refetchCommitHistory();
       // Refresh file list to get updated contents
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
     },
     onError: (error: Error) => {
       toast({

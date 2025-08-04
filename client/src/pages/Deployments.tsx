@@ -55,7 +55,7 @@ export default function Deployments() {
   const redeployMutation = useMutation({
     mutationFn: async () => {
       if (!currentDeployment?.id) return;
-      return await apiRequest('POST', `/api/projects/${currentDeployment.projectId}/deploy`, {
+      return await apiRequest('POST', `/api/deployment/${currentDeployment.projectId}`, {
         type: 'autoscale',
         customDomain: null,
         sslEnabled: true,
@@ -97,7 +97,7 @@ export default function Deployments() {
     if (!currentDeployment?.projectId) return;
     
     try {
-      await apiRequest('POST', `/api/projects/${currentDeployment.projectId}/scan`);
+      await apiRequest('POST', `/api/security/${currentDeployment.projectId}/scan`);
       toast({
         title: "Security Scan Started",
         description: "Running security analysis on your deployment...",

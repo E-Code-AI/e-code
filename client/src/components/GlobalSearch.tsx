@@ -109,7 +109,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
   const performSearch = async () => {
     setIsSearching(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/search`, {
+      const response = await fetch(`/api/search/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

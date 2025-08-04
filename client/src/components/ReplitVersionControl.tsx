@@ -99,29 +99,29 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
 
   // Fetch git status
   const { data: gitStatus } = useQuery<{ changes: GitFile[] }>({
-    queryKey: [`/api/projects/${projectId}/git/status`]
+    queryKey: [`/api/git/${projectId}/status`]
   });
 
   // Fetch commit history
   const { data: commits = [] } = useQuery<GitCommit[]>({
-    queryKey: [`/api/projects/${projectId}/git/commits`]
+    queryKey: [`/api/git/${projectId}/commits`]
   });
 
   // Fetch branches
   const { data: branches = [] } = useQuery<GitBranch[]>({
-    queryKey: [`/api/projects/${projectId}/git/branches`]
+    queryKey: [`/api/git/${projectId}/branches`]
   });
 
   // Commit changes mutation
   const commitMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/projects/${projectId}/git/commit`, {
+      return apiRequest('POST', `/api/git/${projectId}/commit`, {
         message: commitMessage,
         files: Array.from(selectedFiles)
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/git`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}`] });
       setCommitMessage('');
       setSelectedFiles(new Set());
       toast({
@@ -134,10 +134,10 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
   // Pull changes mutation
   const pullMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/projects/${projectId}/git/pull`);
+      return apiRequest('POST', `/api/git/${projectId}/pull`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/git`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}`] });
       toast({
         title: 'Changes pulled',
         description: 'Latest changes have been pulled from remote'
@@ -148,10 +148,10 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
   // Push changes mutation
   const pushMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/projects/${projectId}/git/push`);
+      return apiRequest('POST', `/api/git/${projectId}/push`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/git`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}`] });
       toast({
         title: 'Changes pushed',
         description: 'Your changes have been pushed to remote'
@@ -222,7 +222,7 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/git`] })}
+                onClick={() => queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}`] })}
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>

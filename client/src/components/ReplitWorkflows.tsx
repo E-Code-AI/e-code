@@ -85,7 +85,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
   const fetchWorkflows = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/workflows`, {
+      const response = await fetch(`/api/workflows/${projectId}`, {
         credentials: 'include'
       });
       
@@ -102,7 +102,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
 
   const fetchRuns = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/workflow-runs`, {
+      const response = await fetch(`/api/workflows/${projectId}/runs`, {
         credentials: 'include'
       });
       
@@ -126,7 +126,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
     }
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/workflows`, {
+      const response = await fetch(`/api/workflows/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -159,7 +159,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
 
   const runWorkflow = async (workflowId: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/workflows/${workflowId}/run`, {
+      const response = await fetch(`/api/workflows/${projectId}/${workflowId}/run`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -183,7 +183,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
 
   const toggleWorkflow = async (workflowId: string, enabled: boolean) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/workflows/${workflowId}`, {
+      const response = await fetch(`/api/workflows/${projectId}/${workflowId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

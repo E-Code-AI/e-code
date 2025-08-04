@@ -12,13 +12,13 @@ import {
   FileArchive, 
   FileCode, 
   Github,
-  Docker,
   Package,
   Terminal,
   Settings,
   CheckCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Box
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
@@ -64,14 +64,14 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
 
   // Fetch export history
   const { data: exportHistory = [] } = useQuery<ExportJob[]>({
-    queryKey: ['/api/projects', projectId, 'exports'],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/exports`)
+    queryKey: ['/api/exports', projectId],
+    queryFn: () => apiRequest(`/api/exports/${projectId}`)
   });
 
   // Create export
   const createExportMutation = useMutation({
     mutationFn: (data: { type: ExportJob['type']; options: typeof exportOptions }) =>
-      apiRequest(`/api/projects/${projectId}/exports`, {
+      apiRequest(`/api/exports/${projectId}`, {
         method: 'POST',
         body: JSON.stringify(data)
       }),
@@ -87,7 +87,7 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
     switch (type) {
       case 'zip': return <FileArchive className="h-5 w-5" />;
       case 'github': return <Github className="h-5 w-5" />;
-      case 'docker': return <Docker className="h-5 w-5" />;
+      case 'docker': return <Box className="h-5 w-5" />;
       case 'npm': return <Package className="h-5 w-5" />;
       case 'binary': return <Terminal className="h-5 w-5" />;
       default: return <FileCode className="h-5 w-5" />;
@@ -132,7 +132,7 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
                 {[
                   { value: 'zip', label: 'ZIP Archive', icon: FileArchive, description: 'Download as compressed archive' },
                   { value: 'github', label: 'GitHub Repository', icon: Github, description: 'Push to GitHub repository' },
-                  { value: 'docker', label: 'Docker Image', icon: Docker, description: 'Build Docker container' },
+                  { value: 'docker', label: 'Docker Image', icon: Box, description: 'Build Docker container' },
                   { value: 'npm', label: 'NPM Package', icon: Package, description: 'Publish as NPM package' },
                   { value: 'binary', label: 'Binary Executable', icon: Terminal, description: 'Compile to native binary' }
                 ].map(format => (
@@ -385,7 +385,7 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
               <CardContent className="p-4">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Docker className="h-5 w-5" />
+                    <Box className="h-5 w-5" />
                     <h4 className="font-medium">Deploy Ready</h4>
                   </div>
                   <p className="text-xs text-muted-foreground">

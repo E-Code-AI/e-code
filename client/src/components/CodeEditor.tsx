@@ -199,7 +199,7 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
         onChange(newValue);
         
         // Broadcast file change to real-time service
-        fetch(`/api/projects/${file.projectId}/realtime/file-change`, {
+        fetch(`/api/realtime/${file.projectId}/file-change`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

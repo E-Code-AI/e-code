@@ -112,8 +112,8 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
     try {
       setLoading(true);
       const [systemRes, appRes] = await Promise.all([
-        fetch(`/api/projects/${projectId}/monitoring/system`, { credentials: 'include' }),
-        fetch(`/api/projects/${projectId}/monitoring/application`, { credentials: 'include' })
+        fetch(`/api/monitoring/${projectId}/system`, { credentials: 'include' }),
+        fetch(`/api/monitoring/${projectId}/application`, { credentials: 'include' })
       ]);
       
       if (systemRes.ok) {
@@ -134,7 +134,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
 
   const fetchAlerts = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/monitoring/alerts`, {
+      const response = await fetch(`/api/monitoring/${projectId}/alerts`, {
         credentials: 'include'
       });
       
@@ -149,7 +149,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
 
   const resolveAlert = async (alertId: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/monitoring/alerts/${alertId}/resolve`, {
+      const response = await fetch(`/api/monitoring/${projectId}/alerts/${alertId}/resolve`, {
         method: 'POST',
         credentials: 'include'
       });

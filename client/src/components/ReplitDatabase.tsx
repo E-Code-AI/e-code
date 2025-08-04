@@ -45,7 +45,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
   const fetchEntries = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/database`, {
+      const response = await fetch(`/api/database/${projectId}`, {
         credentials: 'include'
       });
       
@@ -110,7 +110,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
           break;
       }
 
-      const response = await fetch(`/api/projects/${projectId}/database`, {
+      const response = await fetch(`/api/database/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -141,7 +141,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
 
   const deleteEntry = async (key: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/database/${encodeURIComponent(key)}`, {
+      const response = await fetch(`/api/database/${projectId}/${encodeURIComponent(key)}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -175,7 +175,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
 
   const exportDatabase = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/database/export`, {
+      const response = await fetch(`/api/database/${projectId}/export`, {
         credentials: 'include'
       });
       

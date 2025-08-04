@@ -178,7 +178,7 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
         setIsLoading(true);
 
         try {
-          const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
+          const response = await apiRequest('POST', `/api/ai/chat/${projectId}`, {
             message: initialPrompt,
             context: {
               mode: 'agent',
@@ -234,7 +234,7 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
               // Execute the action
               if (action.type === 'create_file' && action.data.path && action.data.content) {
                 try {
-                  const fileResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+                  const fileResponse = await apiRequest('POST', `/api/files/${projectId}`, {
                     path: action.data.path,
                     content: action.data.content,
                     isFolder: false
@@ -244,7 +244,7 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
                     console.error('Failed to create file:', action.data.path, await fileResponse.text());
                   } else {
                     console.log('Successfully created file:', action.data.path);
-                    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+                    queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
                     
                     // If this is a main file, show preview
                     if (action.data.path && (
@@ -264,7 +264,7 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
                 }
               } else if (action.type === 'create_folder' && action.data.path) {
                 try {
-                  const folderResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+                  const folderResponse = await apiRequest('POST', `/api/files/${projectId}`, {
                     path: action.data.path,
                     isFolder: true
                   });
@@ -273,14 +273,14 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
                     console.error('Failed to create folder:', action.data.path, await folderResponse.text());
                   } else {
                     console.log('Successfully created folder:', action.data.path);
-                    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+                    queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
                   }
                 } catch (error) {
                   console.error('Error creating folder:', action.data.path, error);
                 }
               } else if (action.type === 'install_package' && action.data.packages) {
                 try {
-                  const packageResponse = await apiRequest('POST', `/api/projects/${projectId}/packages`, {
+                  const packageResponse = await apiRequest('POST', `/api/packages/${projectId}`, {
                     packages: action.data.packages
                   });
                   
@@ -301,7 +301,7 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
             setBuildProgress(100);
             
             // Refresh file list
-            queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+            queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
           }
 
           const assistantMessage: Message = {
@@ -493,7 +493,7 @@ Would you like me to explain any part of the implementation or make adjustments?
 
     try {
       // Make real API call to backend
-      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
+      const response = await apiRequest('POST', `/api/ai/chat/${projectId}`, {
         message: input,
         context: {
           mode: 'agent',
@@ -550,7 +550,7 @@ Would you like me to explain any part of the implementation or make adjustments?
           // Execute the action
           if (action.type === 'create_file' && action.data.path && action.data.content) {
             try {
-              const fileResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+              const fileResponse = await apiRequest('POST', `/api/files/${projectId}`, {
                 path: action.data.path,
                 content: action.data.content,
                 isFolder: false
@@ -561,14 +561,14 @@ Would you like me to explain any part of the implementation or make adjustments?
               } else {
                 console.log('Successfully created file:', action.data.path);
                 // Invalidate files cache to refresh file explorer
-                queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+                queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
               }
             } catch (error) {
               console.error('Error creating file:', action.data.path, error);
             }
           } else if (action.type === 'create_folder' && action.data.path) {
             try {
-              const folderResponse = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+              const folderResponse = await apiRequest('POST', `/api/files/${projectId}`, {
                 path: action.data.path,
                 isFolder: true
               });
@@ -578,14 +578,14 @@ Would you like me to explain any part of the implementation or make adjustments?
               } else {
                 console.log('Successfully created folder:', action.data.path);
                 // Invalidate files cache to refresh file explorer
-                queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+                queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
               }
             } catch (error) {
               console.error('Error creating folder:', action.data.path, error);
             }
           } else if (action.type === 'install_package' && action.data.packages) {
             try {
-              const packageResponse = await apiRequest('POST', `/api/projects/${projectId}/packages`, {
+              const packageResponse = await apiRequest('POST', `/api/packages/${projectId}`, {
                 packages: action.data.packages
               });
               
@@ -606,7 +606,7 @@ Would you like me to explain any part of the implementation or make adjustments?
         setBuildProgress(100);
         
         // Refresh file list
-        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
       }
 
       const assistantMessage: Message = {

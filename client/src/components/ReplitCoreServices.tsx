@@ -160,7 +160,7 @@ export function ReplitCoreServices() {
     setLoading(true);
     
     try {
-      const response = await fetch('/api/projects/1/export', {
+      const response = await fetch('/api/export/1', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

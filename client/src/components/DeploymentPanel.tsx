@@ -34,18 +34,18 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
   const [showBuildErrors, setShowBuildErrors] = React.useState(true);
 
   const { data: deployment, isLoading } = useQuery<DeploymentData>({
-    queryKey: ['/api/projects', projectId, 'deployment'],
+    queryKey: ['/api/deployment', projectId],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const handleRedeploy = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/deploy`, {
+      const response = await fetch(`/api/deployment/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
       if (response.ok) {
-        await queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'deployment'] });
+        await queryClient.invalidateQueries({ queryKey: ['/api/deployment', projectId] });
       }
     } catch (error) {
       console.error('Failed to redeploy:', error);
@@ -54,12 +54,12 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
 
   const handleSecurityScan = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/security-scan`, {
+      const response = await fetch(`/api/security/${projectId}/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
       if (response.ok) {
-        await queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'deployment'] });
+        await queryClient.invalidateQueries({ queryKey: ['/api/deployment', projectId] });
       }
     } catch (error) {
       console.error('Failed to run security scan:', error);
