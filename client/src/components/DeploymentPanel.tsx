@@ -17,12 +17,35 @@ import { cn } from '@/lib/utils';
 import { queryClient } from '@/lib/queryClient';
 
 interface DeploymentData {
-  status?: 'running' | 'failed' | 'building' | 'stopped';
+  id?: number;
+  status?: 'running' | 'failed' | 'building' | 'stopped' | 'active';
   environment?: string;
   lastDeployedAgo?: string;
   visibility?: 'public' | 'private';
   domain?: string;
+  url?: string;
   buildErrors?: any[];
+  type?: 'autoscale' | 'static' | 'reserved-vm' | 'serverless' | 'scheduled';
+  customDomain?: string;
+  sslEnabled?: boolean;
+  regions?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  metrics?: {
+    cpuUsage?: number;
+    memoryUsage?: number;
+    requestsPerSecond?: number;
+    uptime?: number;
+  };
+  resources?: {
+    cpu?: string;
+    memory?: string;
+  };
+  scaling?: {
+    minInstances?: number;
+    maxInstances?: number;
+    targetCPU?: number;
+  };
 }
 
 interface DeploymentPanelProps {
@@ -33,19 +56,32 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
   const [showAgentSuggestions, setShowAgentSuggestions] = React.useState(true);
   const [showBuildErrors, setShowBuildErrors] = React.useState(true);
 
-  const { data: deployment, isLoading } = useQuery<DeploymentData>({
-    queryKey: ['/api/deployment', projectId],
+  // Fetch deployment data from the backend
+  const { data: deploymentResponse, isLoading } = useQuery<{ deployment?: DeploymentData; deployments?: DeploymentData[] }>({
+    queryKey: [`/api/deployment/${projectId}`],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  // Get the latest deployment from the response
+  const deployment = deploymentResponse?.deployment || 
+    (deploymentResponse?.deployments && deploymentResponse.deployments.length > 0 
+      ? deploymentResponse.deployments[0] 
+      : undefined);
 
   const handleRedeploy = async () => {
     try {
       const response = await fetch(`/api/deployment/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          type: deployment?.type || 'autoscale',
+          regions: deployment?.regions || ['us-east-1'],
+          environment: deployment?.environment || 'production'
+        })
       });
       if (response.ok) {
-        await queryClient.invalidateQueries({ queryKey: ['/api/deployment', projectId] });
+        await queryClient.invalidateQueries({ queryKey: [`/api/deployment/${projectId}`] });
       }
     } catch (error) {
       console.error('Failed to redeploy:', error);
@@ -57,9 +93,10 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
       const response = await fetch(`/api/security/${projectId}/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
       });
       if (response.ok) {
-        await queryClient.invalidateQueries({ queryKey: ['/api/deployment', projectId] });
+        await queryClient.invalidateQueries({ queryKey: [`/api/deployment/${projectId}`] });
       }
     } catch (error) {
       console.error('Failed to run security scan:', error);
@@ -67,7 +104,15 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
   };
 
   if (isLoading) {
-    return <div className="p-4">Loading deployment info...</div>;
+    return (
+      <div className="p-4 space-y-3">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+        </div>
+      </div>
+    );
   }
 
   const hasErrors = deployment?.status === 'failed' || (deployment?.buildErrors?.length ?? 0) > 0;
@@ -81,16 +126,17 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
             <h3 className="font-medium">Deployment</h3>
             <span className={cn(
               "px-2 py-0.5 text-xs rounded-full font-medium",
-              deployment?.status === 'running' ? "bg-green-100 text-green-700" : 
+              deployment?.status === 'running' || deployment?.status === 'active' ? "bg-green-100 text-green-700" : 
               deployment?.status === 'failed' ? "bg-red-100 text-red-700" :
+              deployment?.status === 'building' ? "bg-blue-100 text-blue-700" :
               "bg-gray-100 text-gray-700"
             )}>
               {deployment?.environment || 'Production'}
             </span>
-            {deployment?.status === 'failed' && (
+            {deployment?.status === 'failed' && deployment?.updatedAt && (
               <span className="text-xs text-red-600 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                Simon failed to deploy {deployment?.lastDeployedAgo || '8 days ago'}
+                Deployment failed {new Date(deployment.updatedAt).toLocaleDateString()}
               </span>
             )}
           </div>
@@ -117,20 +163,35 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
           
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Domain:</span>
-            <a 
-              href={deployment?.domain || '#'} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline flex items-center gap-1"
-            >
-              {deployment?.domain || 'https://replit-clone-hemr45.replit.app'}
-              <ExternalLink className="h-3 w-3" />
-            </a>
+            {deployment?.customDomain || deployment?.domain || deployment?.url ? (
+              <a 
+                href={deployment.customDomain || deployment.domain || deployment.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline flex items-center gap-1"
+              >
+                {deployment.customDomain || deployment.domain || deployment.url}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            ) : (
+              <span className="text-muted-foreground">No domain configured</span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Type:</span>
-            <span>Autoscale (4 vCPU / 8 GiB RAM / 3 Max)</span>
+            <span>
+              {deployment?.type === 'autoscale' && deployment?.scaling ? 
+                `Autoscale (${deployment.resources?.cpu || '500m'} CPU / ${deployment.resources?.memory || '512Mi'} RAM / ${deployment.scaling.maxInstances || 3} Max)` :
+              deployment?.type === 'static' ? 
+                'Static Hosting' :
+              deployment?.type === 'reserved-vm' ?
+                `Reserved VM (${deployment.resources?.cpu || '1'} vCPU / ${deployment.resources?.memory || '2Gi'} RAM)` :
+              deployment?.type === 'serverless' ?
+                'Serverless Function' :
+                'Standard Deployment'
+              }
+            </span>
             <Button variant="link" size="sm" className="h-auto p-0 text-blue-600">
               Manage
             </Button>
@@ -142,35 +203,28 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
       </div>
 
       {/* Build Failed Alert */}
-      {hasErrors && (
+      {hasErrors && deployment?.buildErrors && deployment.buildErrors.length > 0 && (
         <div className="p-4 border-b">
           <Alert className="bg-red-50 border-red-200">
             <AlertCircle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
-              <div className="font-medium mb-2">Build process failed preventing deployment due to missing worker dependencies</div>
-              <div className="space-y-1 text-sm">
-                <div>Install the monaco-editor package as a dependency to resolve the missing worker...</div>
-                <Button variant="link" size="sm" className="h-auto p-0 text-blue-600">
-                  package.json
-                </Button>
-              </div>
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-xs">Update the monaco-config.ts to use a more compatible worker import...</span>
-                <Button variant="link" size="sm" className="h-auto p-0 text-blue-600">
-                  client/src/lib/monaco-config.ts
-                </Button>
-              </div>
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-xs">Add the configuration to properly handle Monaco Editor workers in production builds</span>
-                <Button variant="link" size="sm" className="h-auto p-0 text-blue-600">
-                  vite.config.ts
-                </Button>
-              </div>
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-xs">Consider using the vite-plugin-monaco-editor plugin that's already in dependencies to...</span>
-                <Button variant="link" size="sm" className="h-auto p-0 text-blue-600">
-                  vite.config.ts
-                </Button>
+              <div className="font-medium mb-2">Build process failed</div>
+              <div className="space-y-2 text-sm">
+                {deployment.buildErrors.slice(0, 4).map((error, index) => (
+                  <div key={index} className="space-y-1">
+                    <div>{error.message || error}</div>
+                    {error.file && (
+                      <Button variant="link" size="sm" className="h-auto p-0 text-blue-600">
+                        {error.file}
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {deployment.buildErrors.length > 4 && (
+                  <div className="text-xs text-muted-foreground">
+                    ...and {deployment.buildErrors.length - 4} more errors
+                  </div>
+                )}
               </div>
             </AlertDescription>
           </Alert>
@@ -178,7 +232,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
       )}
 
       {/* Agent Suggestions */}
-      {hasErrors && (
+      {hasErrors && deployment?.buildErrors && deployment.buildErrors.length > 0 && (
         <div className="p-4 border-b">
           <button
             onClick={() => setShowAgentSuggestions(!showAgentSuggestions)}
@@ -193,12 +247,9 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
           
           {showAgentSuggestions && (
             <div className="mt-3 space-y-2">
-              <ol className="list-decimal list-inside space-y-2 text-sm">
-                <li>Install the monaco-editor package as a dependency to resolve the missing worker...</li>
-                <li>Update the monaco-config.ts to use a more compatible worker import...</li>
-                <li>Add the configuration to properly handle Monaco Editor workers in production builds</li>
-                <li>Consider using the vite-plugin-monaco-editor plugin that's already in dependencies to...</li>
-              </ol>
+              <p className="text-sm text-muted-foreground mb-2">
+                AI Agent can help you debug and fix these deployment errors.
+              </p>
               <Button className="w-full mt-3 bg-purple-600 hover:bg-purple-700">
                 🤖 Debug with Agent
               </Button>
@@ -240,11 +291,14 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
             variant="link" 
             size="sm" 
             className="text-blue-600 p-0 h-auto flex items-center gap-1"
+            onClick={() => window.location.href = `/projects/${projectId}/deployments`}
           >
             View logs
-            <span className="bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded text-xs ml-1">
-              999+
-            </span>
+            {deployment?.id && (
+              <span className="bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded text-xs ml-1">
+                {deployment.buildErrors?.length || 0}
+              </span>
+            )}
           </Button>
         </div>
       </div>
