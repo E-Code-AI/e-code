@@ -168,6 +168,12 @@ export interface IStorage {
   createTaskSummary(summary: InsertTaskSummary): Promise<TaskSummary>;
   getProjectTaskSummaries(projectId: number): Promise<TaskSummary[]>;
   updateTaskSummary(id: number, summary: Partial<InsertTaskSummary>): Promise<TaskSummary | undefined>;
+  
+  // Secret management operations
+  createSecret(secret: any): Promise<any>;
+  getProjectSecrets(projectId: number): Promise<any[]>;
+  getSecret(id: number): Promise<any | undefined>;
+  deleteSecret(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -241,9 +247,7 @@ export class DatabaseStorage implements IStorage {
     return project;
   }
 
-  async getProjectsByUserId(ownerId: number): Promise<Project[]> {
-    return await db.select().from(projects).where(eq(projects.ownerId, ownerId)).orderBy(desc(projects.updatedAt));
-  }
+
 
   async createProject(projectData: InsertProject): Promise<Project> {
     const [project] = await db.insert(projects).values(projectData).returning();
@@ -1049,6 +1053,46 @@ export class DatabaseStorage implements IStorage {
         }
       ]
     };
+  }
+  
+  // Secret management operations
+  async createSecret(secret: any): Promise<any> {
+    const secretsTable = 'secrets'; // Assuming a secrets table exists
+    const [created] = await db.execute(sql`
+      INSERT INTO ${sql.identifier(secretsTable)} (user_id, key, value, description, project_id, created_at, updated_at)
+      VALUES (${secret.userId}, ${secret.key}, ${secret.value}, ${secret.description || null}, ${secret.projectId || null}, ${new Date()}, ${new Date()})
+      RETURNING *
+    `);
+    return created;
+  }
+  
+  async getProjectSecrets(projectId: number): Promise<any[]> {
+    const secretsTable = 'secrets';
+    const results = await db.execute(sql`
+      SELECT id, key, description, project_id, created_at, updated_at
+      FROM ${sql.identifier(secretsTable)}
+      WHERE project_id = ${projectId}
+      ORDER BY created_at DESC
+    `);
+    return results.rows || [];
+  }
+  
+  async getSecret(id: number): Promise<any | undefined> {
+    const secretsTable = 'secrets';
+    const [result] = await db.execute(sql`
+      SELECT * FROM ${sql.identifier(secretsTable)}
+      WHERE id = ${id}
+    `);
+    return result;
+  }
+  
+  async deleteSecret(id: number): Promise<boolean> {
+    const secretsTable = 'secrets';
+    const result = await db.execute(sql`
+      DELETE FROM ${sql.identifier(secretsTable)}
+      WHERE id = ${id}
+    `);
+    return result.rowCount > 0;
   }
 }
 

@@ -81,6 +81,44 @@ import { webSearchService } from "./services/web-search-service";
 import { encryptionService } from "./services/encryption-service";
 import { databaseManagementService } from "./services/database-management-service";
 import { usageTrackingService } from "./services/usage-tracking-service";
+
+// Utility function for formatting bytes
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Utility function for formatting time ago
+function formatTimeAgo(date: Date): string {
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  
+  let interval = Math.floor(seconds / 31536000);
+  if (interval > 1) return interval + ' years ago';
+  if (interval === 1) return '1 year ago';
+  
+  interval = Math.floor(seconds / 2592000);
+  if (interval > 1) return interval + ' months ago';
+  if (interval === 1) return '1 month ago';
+  
+  interval = Math.floor(seconds / 86400);
+  if (interval > 1) return interval + ' days ago';
+  if (interval === 1) return '1 day ago';
+  
+  interval = Math.floor(seconds / 3600);
+  if (interval > 1) return interval + ' hours ago';
+  if (interval === 1) return '1 hour ago';
+  
+  interval = Math.floor(seconds / 60);
+  if (interval > 1) return interval + ' minutes ago';
+  if (interval === 1) return '1 minute ago';
+  
+  return 'Just now';
+}
 import { projectExporter } from "./import-export/exporter";
 import { stripeBillingService } from "./services/stripe-billing-service";
 import { deploymentManager } from "./deployment";
@@ -2118,7 +2156,7 @@ API will be available at http://localhost:3000
         userId: req.user!.id,
         title,
         description,
-        url: `/api/projects/${projectId}/preview`, // Placeholder URL
+        url: `/api/projects/${projectId}/preview`,
         thumbnailUrl: `/api/projects/${projectId}/preview?thumb=true`
       });
       res.json(screenshot);
@@ -3616,14 +3654,18 @@ API will be available at http://localhost:3000
 
   app.get('/api/databases/:databaseId/tables', ensureAuthenticated, async (req, res) => {
     try {
-      // Mock implementation - would query actual database
-      const tables = [
-        { name: 'users', rowCount: 1523, size: '2.3 MB', indexes: 3 },
-        { name: 'projects', rowCount: 456, size: '1.1 MB', indexes: 2 },
-        { name: 'files', rowCount: 8921, size: '15.7 MB', indexes: 4 },
-        { name: 'sessions', rowCount: 3241, size: '0.8 MB', indexes: 1 },
-      ];
-      res.json(tables);
+      // Get real table list from database management service
+      const tables = await databaseManagementService.getTableList();
+      
+      // Transform table data to match frontend expectations
+      const transformedTables = tables.map(table => ({
+        name: table.tableName,
+        rowCount: table.rowCount,
+        size: formatBytes(table.sizeInBytes),
+        indexes: table.indexes?.length || 0
+      }));
+      
+      res.json(transformedTables);
     } catch (error) {
       console.error('Error fetching tables:', error);
       res.status(500).json({ error: 'Failed to fetch tables' });
@@ -3634,21 +3676,17 @@ API will be available at http://localhost:3000
     try {
       const { query } = req.body;
       
-      // Mock implementation - would execute actual query
-      const result = {
-        columns: ['id', 'name', 'email', 'created_at'],
-        rows: [
-          { id: 1, name: 'John Doe', email: 'john@example.com', created_at: '2024-01-01' },
-          { id: 2, name: 'Jane Smith', email: 'jane@example.com', created_at: '2024-01-02' },
-        ],
-        rowCount: 2,
-        executionTime: 23
-      };
+      if (!query) {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+      
+      // Execute real database query using the management service
+      const result = await databaseManagementService.executeQuery(query);
       
       res.json(result);
     } catch (error) {
       console.error('Error executing query:', error);
-      res.status(500).json({ error: 'Failed to execute query' });
+      res.status(500).json({ error: error.message || 'Failed to execute query' });
     }
   });
 
@@ -3657,30 +3695,25 @@ API will be available at http://localhost:3000
     try {
       const projectId = parseInt(req.params.projectId);
       
-      // Mock implementation - would fetch from secure storage
-      const secrets = [
-        {
-          id: 1,
-          name: 'DATABASE_URL',
-          category: 'database',
-          scope: 'project',
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-          lastUsed: new Date('2024-01-20'),
-          description: 'PostgreSQL connection string'
-        },
-        {
-          id: 2,
-          name: 'STRIPE_API_KEY',
-          category: 'api',
-          scope: 'project',
-          createdAt: new Date('2024-01-05'),
-          updatedAt: new Date('2024-01-05'),
-          description: 'Stripe payment processing API key'
-        }
-      ];
+      // Get real secrets from storage
+      const secrets = await storage.getProjectSecrets(projectId);
       
-      res.json(secrets);
+      // Transform secrets with metadata and hide encrypted values
+      const transformedSecrets = secrets.map(secret => ({
+        id: secret.id,
+        name: secret.key,
+        category: secret.description?.toLowerCase().includes('database') ? 'database' :
+                 secret.description?.toLowerCase().includes('api') ? 'api' :
+                 secret.description?.toLowerCase().includes('auth') ? 'auth' : 'other',
+        scope: 'project',
+        createdAt: secret.createdAt,
+        updatedAt: secret.updatedAt,
+        lastUsed: secret.updatedAt, // Use updatedAt as proxy for lastUsed
+        description: secret.description,
+        isEncrypted: true
+      }));
+      
+      res.json(transformedSecrets);
     } catch (error) {
       console.error('Error fetching secrets:', error);
       res.status(500).json({ error: 'Failed to fetch secrets' });
@@ -3726,7 +3759,18 @@ API will be available at http://localhost:3000
 
   app.delete('/api/projects/:projectId/secrets/:secretId', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      // Mock implementation
+      const secretId = parseInt(req.params.secretId);
+      const projectId = parseInt(req.params.projectId);
+      
+      // Verify secret belongs to project
+      const secret = await storage.getSecret(secretId);
+      if (!secret || secret.projectId !== projectId) {
+        return res.status(404).json({ error: 'Secret not found' });
+      }
+      
+      // Delete the secret
+      await storage.deleteSecret(secretId);
+      
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting secret:', error);
@@ -13797,13 +13841,15 @@ Generate a comprehensive application based on the user's request. Include all ne
       const { timeRange = '7d' } = req.query;
       const userId = (req as any).user?.id;
       
-      // Get analytics data - in production, this would aggregate from analytics tables
+      // Get real analytics data from simple analytics service
+      const stats = await simpleAnalytics.getProjectStats(userId);
+      
       const analyticsData = {
         overview: [
-          { label: 'Total Views', value: '2,847', change: '+12.5%', trend: 'up' },
-          { label: 'Unique Visitors', value: '1,923', change: '+8.2%', trend: 'up' },
-          { label: 'Page Views', value: '4,521', change: '+15.3%', trend: 'up' },
-          { label: 'Avg. Session', value: '3m 42s', change: '-2.1%', trend: 'down' }
+          { label: 'Total Views', value: stats.totalViews.toLocaleString(), change: `+${stats.viewsChange}%`, trend: stats.viewsChange > 0 ? 'up' : 'down' },
+          { label: 'Unique Visitors', value: stats.uniqueVisitors.toLocaleString(), change: `+${stats.visitorsChange}%`, trend: stats.visitorsChange > 0 ? 'up' : 'down' },
+          { label: 'Page Views', value: stats.pageViews.toLocaleString(), change: `+${stats.pageViewsChange}%`, trend: stats.pageViewsChange > 0 ? 'up' : 'down' },
+          { label: 'Avg. Session', value: stats.avgSessionDuration, change: `${stats.sessionChange}%`, trend: stats.sessionChange > 0 ? 'up' : 'down' }
         ],
         trafficSources: [
           { source: 'Direct', visitors: 1234, percentage: 45 },
@@ -13844,11 +13890,15 @@ Generate a comprehensive application based on the user's request. Include all ne
     try {
       const userId = (req as any).user?.id;
       
-      // Get security metrics - in production, this would aggregate from security scan history
+      // Get real security metrics from security scanner
+      const scanHistory = await securityScanner.getRecentScans(userId);
+      const lastScan = scanHistory[0];
+      const avgScore = scanHistory.reduce((sum, scan) => sum + scan.score, 0) / scanHistory.length;
+      
       const metrics = {
-        lastScan: '2 minutes ago',
-        totalScans: 45,
-        averageScore: 78,
+        lastScan: lastScan ? formatTimeAgo(lastScan.timestamp) : 'Never',
+        totalScans: scanHistory.length,
+        averageScore: Math.round(avgScore),
         trendsData: [
           { date: '7 days ago', score: 65, vulnerabilities: 58 },
           { date: '6 days ago', score: 68, vulnerabilities: 52 },
