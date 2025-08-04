@@ -1,4 +1,5 @@
 import { ComparisonLayout } from "@/components/ComparisonLayout";
+import { SiAmazon } from 'react-icons/si';
 
 export default function AWSCloud9Comparison() {
   const features = [
@@ -51,7 +52,7 @@ export default function AWSCloud9Comparison() {
   return (
     <ComparisonLayout
       competitorName="AWS Cloud9"
-      competitorLogo="/images/competitors/aws-cloud9.svg"
+      competitorLogo={<SiAmazon className="w-16 h-16" />}
       tagline="The Complete Development Platform vs AWS Infrastructure"
       description="E-Code provides an instant, AI-powered development environment while AWS Cloud9 offers deep AWS integration. Compare features, pricing, and capabilities."
       features={features}
