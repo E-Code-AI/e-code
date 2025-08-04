@@ -4,6 +4,12 @@
 E-Code is a comprehensive web-based Integrated Development Environment (IDE) inspired by Replit, designed to provide a professional development environment with an intuitive user interface and unique features. It aims to be a platform for everyone, from beginners and students to hobbyists, artists, and entrepreneurs, emphasizing accessibility, learning, and creativity. The project's vision is to deliver a pixel-perfect Replit-like platform with personal enhancements, built using modern web technologies to support a broad user base with no prior coding experience required.
 
 ### Recent Changes (August 4, 2025)
+- **Unified AI Agent Interface**: Created streamlined AI experience combining agent capabilities
+  - Created UnifiedAgentInterface.tsx merging ReplitAgentChat modes (Standard/Thinking/High Power) with AgentV2Interface Claude 4.0 capabilities
+  - Single interface with tab-based mode selection for all agent functionalities
+  - Preserved separate ReplitAssistant component for code assistance features (as requested by user)
+  - Agent mode shows unified interface, Assistant mode shows ReplitAssistant
+  - Removed duplicate agent components from right panel
 - **Full IDE Interface for Applications**: Fixed issue where SolarTech applications only showed preview instead of full Replit-style IDE
   - Created ApplicationIDEWrapper component to provide complete IDE layout
   - Applications now display with file explorer, code editor, preview panel, AI assistant, and terminal
