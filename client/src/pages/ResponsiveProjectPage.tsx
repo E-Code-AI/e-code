@@ -143,11 +143,11 @@ const ResponsiveProjectPage = () => {
     isLoading: filesLoading, 
     error: filesError 
   } = useQuery<File[]>({
-    queryKey: ['/api/projects', projectId, 'files'],
+    queryKey: ['/api/files', projectId],
     queryFn: async () => {
       if (!projectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('GET', `/api/projects/${projectId}/files`);
+      const res = await apiRequest('GET', `/api/files/${projectId}`);
       if (!res.ok) {
         const error = await res.text();
         if (res.status === 401) {
@@ -184,7 +184,7 @@ const ResponsiveProjectPage = () => {
       });
       
       // Update the file in cache
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
       
       toast({
         title: "File saved",
@@ -207,9 +207,9 @@ const ResponsiveProjectPage = () => {
       
       const fileData: InsertFile = {
         projectId,
-        parentId,
+        path: '/',
         name,
-        isFolder,
+        isDirectory: isFolder,
         content: isFolder ? null : ''
       };
       
@@ -220,7 +220,7 @@ const ResponsiveProjectPage = () => {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
       toast({
         title: "File created",
         description: "New file has been created successfully.",
@@ -279,7 +279,7 @@ const ResponsiveProjectPage = () => {
     mutationFn: async () => {
       if (!projectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('POST', `/api/projects/${projectId}/start`);
+      const res = await apiRequest('POST', `/api/runtime/${projectId}/start`);
       if (!res.ok) {
         throw new Error('Failed to start project');
       }
@@ -305,7 +305,7 @@ const ResponsiveProjectPage = () => {
     mutationFn: async () => {
       if (!projectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('POST', `/api/projects/${projectId}/stop`);
+      const res = await apiRequest('POST', `/api/runtime/${projectId}/stop`);
       if (!res.ok) {
         throw new Error('Failed to stop project');
       }
@@ -339,7 +339,7 @@ const ResponsiveProjectPage = () => {
   // Select the first file when files are loaded
   useEffect(() => {
     if (files && files.length > 0 && !selectedFile) {
-      const fileToSelect = files.find(file => !file.isFolder);
+      const fileToSelect = files.find(file => !file.isDirectory);
       if (fileToSelect) {
         setSelectedFile(fileToSelect);
       }
@@ -673,12 +673,10 @@ const ResponsiveProjectPage = () => {
           <FileExplorer
             files={files || []}
             selectedFile={selectedFile || undefined}
-            onSelectFile={handleFileSelect}
             onCreateFile={async (parentId, name) => { createFileMutation.mutate({ parentId, name, isFolder: false }); }}
             onCreateFolder={async (parentId, name) => { createFileMutation.mutate({ parentId, name, isFolder: true }); }}
             onRenameFile={async () => {}}
             onDeleteFile={async () => {}}
-            projectId={projectId!}
           />
         </div>
       )}
@@ -733,12 +731,10 @@ const ResponsiveProjectPage = () => {
         <FileExplorer
           files={files || []}
           selectedFile={selectedFile || undefined}
-          onSelectFile={handleFileSelect}
           onCreateFile={async (parentId, name) => { createFileMutation.mutate({ parentId, name, isFolder: false }); }}
           onCreateFolder={async (parentId, name) => { createFileMutation.mutate({ parentId, name, isFolder: true }); }}
           onRenameFile={async () => {}}
           onDeleteFile={async () => {}}
-          projectId={projectId!}
         />
       </ResizablePanel>
       

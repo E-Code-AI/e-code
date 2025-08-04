@@ -20,9 +20,9 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
 
   // Fetch checkpoints
   const { data: checkpoints, isLoading } = useQuery({
-    queryKey: ['/api/projects', projectId, 'checkpoints'],
+    queryKey: ['/api/checkpoints', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/projects/${projectId}/checkpoints`);
+      const res = await apiRequest('GET', `/api/checkpoints/${projectId}`);
       if (!res.ok) throw new Error('Failed to fetch checkpoints');
       return res.json();
     }
@@ -31,7 +31,7 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
   // Create checkpoint mutation
   const createCheckpointMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/checkpoints`, {
+      const res = await apiRequest('POST', `/api/checkpoints/${projectId}`, {
         name: checkpointName || `Checkpoint ${new Date().toISOString()}`,
         description: checkpointDescription
       });
@@ -39,7 +39,7 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'checkpoints'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/checkpoints', projectId] });
       toast({
         title: 'Checkpoint created',
         description: 'Your project state has been saved'

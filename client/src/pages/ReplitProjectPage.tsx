@@ -169,7 +169,7 @@ const ReplitProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: ['/api/projects', projectId || projectSlug],
+    queryKey: projectSlug ? ['/api/projects/by-slug', projectSlug] : ['/api/projects', projectId],
     queryFn: async () => {
       if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
       
@@ -345,7 +345,7 @@ const ReplitProjectPage = () => {
   const runProjectMutation = useMutation({
     mutationFn: async () => {
       if (!projectId) throw new Error('No project ID');
-      const res = await apiRequest('POST', `/api/projects/${projectId}/run`);
+      const res = await apiRequest('POST', `/api/runtime/${projectId}/start`);
       if (!res.ok) throw new Error('Failed to run project');
       return res.json();
     },
@@ -360,7 +360,7 @@ const ReplitProjectPage = () => {
   const stopProjectMutation = useMutation({
     mutationFn: async () => {
       if (!executionId) throw new Error('No execution ID');
-      const res = await apiRequest('POST', `/api/projects/${projectId}/stop`, { executionId });
+      const res = await apiRequest('POST', `/api/runtime/${projectId}/stop`);
       if (!res.ok) throw new Error('Failed to stop project');
       return res.json();
     },
@@ -379,7 +379,7 @@ const ReplitProjectPage = () => {
       isFolder: boolean;
       parentId?: number | null;
     }) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+      const res = await apiRequest('POST', `/api/files/${projectId}`, {
         name,
         content,
         isDirectory: isFolder,
@@ -389,7 +389,7 @@ const ReplitProjectPage = () => {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
       toast({
         title: 'Success',
         description: 'File/folder created successfully',
@@ -421,14 +421,14 @@ const ReplitProjectPage = () => {
           setSelectedFile(existingFile);
         } else {
           // Create new file
-          const response = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+          const response = await apiRequest('POST', `/api/files/${projectId}`, {
             name: fileName,
             content: code
           });
           
           if (response.ok) {
             const newFile = await response.json();
-            await queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+            await queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
             setSelectedFile(newFile);
             toast({
               title: 'File Created',
@@ -852,7 +852,7 @@ const ReplitProjectPage = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => {
                   if (project) {
-                    window.open(`/api/projects/${projectId}/export/zip`, '_blank');
+                    window.open(`/api/export/${projectId}/zip`, '_blank');
                   }
                 }}>
                   <Download className="h-4 w-4 mr-2" />
