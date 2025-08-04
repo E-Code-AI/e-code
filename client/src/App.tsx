@@ -525,6 +525,14 @@ function AppContent() {
               appComponent={<SolarTechCRMApp />}
             />
           )} />
+          <ProtectedRoute path="/salesforcepro-crm" component={() => (
+            <ApplicationIDEWrapper
+              projectName="SolarTech CRM"
+              projectDescription="Solar business customer relationship management"
+              projectId={1002}
+              appComponent={<SolarTechCRMApp />}
+            />
+          )} />
           <ProtectedRoute path="/solartech-fortune500-store" component={() => (
             <ApplicationIDEWrapper
               projectName="Fortune500 Solar Store"
