@@ -318,24 +318,30 @@ export const comments = pgTable('comments', {
 export const checkpoints = pgTable('checkpoints', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: integer('user_id').notNull().references(() => users.id), // Changed from createdBy to userId
   name: text('name').notNull(),
-  message: text('message').notNull(), // Changed from description to message
-  filesSnapshot: jsonb('files_snapshot').notNull(),
-  aiConversationContext: jsonb('ai_conversation_context'), // NEW: AI conversation history
-  databaseSnapshot: jsonb('database_snapshot'), // NEW: Database state
-  environmentVariables: jsonb('environment_variables'), // NEW: Environment snapshot
-  agentTaskDescription: text('agent_task_description'), // NEW: Agent task
-  agentActionsPerformed: jsonb('agent_actions_performed'), // NEW: Actions taken
-  filesModified: integer('files_modified').default(0), // NEW: Metrics
-  linesOfCodeWritten: integer('lines_of_code_written').default(0), // NEW: Metrics
-  effortScore: decimal('effort_score'), // NEW: Effort-based pricing
-  tokensUsed: integer('tokens_used').default(0), // NEW: AI token usage
-  executionTimeMs: integer('execution_time_ms'), // NEW: Performance metric
-  apiCallsCount: integer('api_calls_count').default(0), // NEW: API usage
-  costInCents: integer('cost_in_cents'), // NEW: Calculated cost
-  isAutomatic: boolean('is_automatic').default(false), // NEW: Auto checkpoint flag
+  description: text('description'),
+  type: varchar('type', { length: 50 }).notNull().default('manual'), // manual, automatic, before_action, error_recovery
+  createdBy: integer('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  metadata: jsonb('metadata').notNull().default({}),
+});
+
+// Checkpoint files for storing file snapshots
+export const checkpointFiles = pgTable('checkpoint_files', {
+  id: serial('id').primaryKey(),
+  checkpointId: integer('checkpoint_id').notNull().references(() => checkpoints.id, { onDelete: 'cascade' }),
+  fileId: integer('file_id').notNull(),
+  path: text('path').notNull(),
+  content: text('content'),
+  metadata: jsonb('metadata').default({}),
+});
+
+// Checkpoint database for storing database snapshots
+export const checkpointDatabase = pgTable('checkpoint_database', {
+  id: serial('id').primaryKey(),
+  checkpointId: integer('checkpoint_id').notNull().references(() => checkpoints.id, { onDelete: 'cascade' }),
+  snapshotPath: text('snapshot_path').notNull(),
+  metadata: jsonb('metadata').default({}),
 });
 
 // Time tracking for projects
@@ -428,6 +434,8 @@ export const insertMentorProfileSchema = createInsertSchema(mentorProfiles).omit
 export const insertDeploymentSchema = createInsertSchema(deployments).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCommentSchema = createInsertSchema(comments).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCheckpointSchema = createInsertSchema(checkpoints).omit({ id: true, createdAt: true });
+export const insertCheckpointFileSchema = createInsertSchema(checkpointFiles).omit({ id: true });
+export const insertCheckpointDatabaseSchema = createInsertSchema(checkpointDatabase).omit({ id: true });
 export const insertTimeTrackingSchema = createInsertSchema(projectTimeTracking).omit({ id: true, createdAt: true });
 export const insertScreenshotSchema = createInsertSchema(projectScreenshots).omit({ id: true, createdAt: true });
 export const insertTaskSummarySchema = createInsertSchema(taskSummaries).omit({ id: true, createdAt: true });

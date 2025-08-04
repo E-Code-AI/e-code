@@ -47,6 +47,9 @@ import { conversationManagementService } from "./services/conversation-managemen
 import { feedbackService } from "./services/feedback-service";
 import { agentUsageTrackingService } from "./services/agent-usage-tracking-service";
 import { advancedCapabilitiesService } from "./services/advanced-capabilities-service";
+import { checkpointService } from "./services/checkpoint-service";
+import { effortPricingService } from "./services/effort-pricing-service";
+import { agentV2Service } from "./services/agent-v2-service";
 // import { deployProject, stopDeployment, getDeploymentStatus, getDeploymentLogs } from "./deployment";
 import { realDeploymentServiceV2 } from "./deployment/real-deployment-service-v2";
 import { 
@@ -16020,6 +16023,350 @@ Generate a comprehensive application based on the user's request. Include all ne
       logger.error('Track error error:', error);
       res.status(500).json({ 
         error: error instanceof Error ? error.message : 'Failed to track error' 
+      });
+    }
+  });
+
+  // Checkpoint API Routes
+  app.post('/api/checkpoints/create', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, name, description, type, includeDatabase, includeEnvironment } = req.body;
+      
+      if (!projectId || !name) {
+        return res.status(400).json({ error: 'Project ID and name are required' });
+      }
+
+      logger.info(`Creating checkpoint for project ${projectId}`);
+      
+      const checkpoint = await checkpointService.createCheckpoint({
+        projectId,
+        userId: req.user!.id,
+        name,
+        description,
+        type: type || 'manual',
+        includeDatabase,
+        includeEnvironment
+      });
+
+      res.json({
+        success: true,
+        checkpoint
+      });
+    } catch (error) {
+      logger.error('Checkpoint creation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to create checkpoint' 
+      });
+    }
+  });
+
+  app.get('/api/checkpoints/project/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { limit } = req.query;
+      
+      const checkpoints = await checkpointService.listCheckpoints(
+        parseInt(projectId),
+        limit ? parseInt(limit as string) : undefined
+      );
+
+      res.json({
+        success: true,
+        checkpoints
+      });
+    } catch (error) {
+      logger.error('List checkpoints error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to list checkpoints' 
+      });
+    }
+  });
+
+  app.post('/api/checkpoints/restore', ensureAuthenticated, async (req, res) => {
+    try {
+      const { checkpointId, restoreFiles, restoreDatabase, restoreEnvironment } = req.body;
+      
+      if (!checkpointId) {
+        return res.status(400).json({ error: 'Checkpoint ID is required' });
+      }
+
+      logger.info(`Restoring checkpoint ${checkpointId}`);
+      
+      const result = await checkpointService.restoreCheckpoint({
+        checkpointId,
+        userId: req.user!.id,
+        restoreFiles,
+        restoreDatabase,
+        restoreEnvironment
+      });
+
+      res.json({
+        success: true,
+        result
+      });
+    } catch (error) {
+      logger.error('Checkpoint restore error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to restore checkpoint' 
+      });
+    }
+  });
+
+  app.delete('/api/checkpoints/:checkpointId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { checkpointId } = req.params;
+      
+      await checkpointService.deleteCheckpoint(parseInt(checkpointId), req.user!.id);
+
+      res.json({
+        success: true,
+        message: 'Checkpoint deleted'
+      });
+    } catch (error) {
+      logger.error('Delete checkpoint error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to delete checkpoint' 
+      });
+    }
+  });
+
+  app.post('/api/checkpoints/auto-checkpoint', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, enable } = req.body;
+      
+      if (!projectId) {
+        return res.status(400).json({ error: 'Project ID is required' });
+      }
+
+      if (enable) {
+        checkpointService.startAutoCheckpoints(projectId);
+      } else {
+        checkpointService.stopAutoCheckpoints(projectId);
+      }
+
+      res.json({
+        success: true,
+        message: enable ? 'Auto-checkpoints enabled' : 'Auto-checkpoints disabled'
+      });
+    } catch (error) {
+      logger.error('Auto-checkpoint toggle error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to toggle auto-checkpoints' 
+      });
+    }
+  });
+
+  // Effort Pricing API Routes
+  app.post('/api/effort/track', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, action, metrics, complexity } = req.body;
+      
+      if (!projectId || !action || !metrics) {
+        return res.status(400).json({ error: 'Project ID, action, and metrics are required' });
+      }
+
+      await effortPricingService.trackEffort({
+        userId: req.user!.id,
+        projectId,
+        action,
+        metrics,
+        complexity
+      });
+
+      res.json({
+        success: true,
+        message: 'Effort tracked successfully'
+      });
+    } catch (error) {
+      logger.error('Track effort error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to track effort' 
+      });
+    }
+  });
+
+  app.get('/api/effort/usage/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { startDate, endDate } = req.query;
+      
+      const report = await effortPricingService.getUsageReport({
+        userId: req.user!.id,
+        projectId: parseInt(projectId),
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined
+      });
+
+      res.json({
+        success: true,
+        report
+      });
+    } catch (error) {
+      logger.error('Get usage report error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get usage report' 
+      });
+    }
+  });
+
+  app.post('/api/effort/estimate', ensureAuthenticated, async (req, res) => {
+    try {
+      const { metrics, complexity } = req.body;
+      
+      if (!metrics) {
+        return res.status(400).json({ error: 'Metrics are required' });
+      }
+
+      const pricing = effortPricingService.calculatePricing(metrics, complexity || 'moderate');
+
+      res.json({
+        success: true,
+        pricing
+      });
+    } catch (error) {
+      logger.error('Estimate pricing error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to estimate pricing' 
+      });
+    }
+  });
+
+  app.post('/api/effort/charge', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, amount, description } = req.body;
+      
+      if (!projectId || !amount) {
+        return res.status(400).json({ error: 'Project ID and amount are required' });
+      }
+
+      const result = await effortPricingService.chargeUser({
+        userId: req.user!.id,
+        projectId,
+        amount,
+        description: description || 'AI Agent effort charge'
+      });
+
+      res.json({
+        success: true,
+        charge: result
+      });
+    } catch (error) {
+      logger.error('Charge user error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to charge user' 
+      });
+    }
+  });
+
+  // Agent v2 API Routes
+  app.post('/api/agent-v2/start-build', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, taskDescription, complexity, autoCheckpoints, realTimeUpdates } = req.body;
+      
+      if (!projectId || !taskDescription) {
+        return res.status(400).json({ error: 'Project ID and task description are required' });
+      }
+
+      logger.info(`Starting Agent v2 build for project ${projectId}`);
+      
+      const buildId = await agentV2Service.startAutonomousBuild({
+        projectId,
+        userId: req.user!.id,
+        taskDescription,
+        complexity: complexity || 'moderate',
+        autoCheckpoints: autoCheckpoints !== false,
+        realTimeUpdates: realTimeUpdates !== false
+      });
+
+      res.json({
+        success: true,
+        buildId
+      });
+    } catch (error) {
+      logger.error('Start build error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to start build' 
+      });
+    }
+  });
+
+  app.get('/api/agent-v2/build-progress/:buildId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { buildId } = req.params;
+      
+      const progress = agentV2Service.getBuildProgress(buildId);
+      
+      if (!progress) {
+        return res.status(404).json({ error: 'Build not found' });
+      }
+
+      res.json({
+        success: true,
+        progress
+      });
+    } catch (error) {
+      logger.error('Get build progress error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get build progress' 
+      });
+    }
+  });
+
+  app.post('/api/agent-v2/stop-build/:buildId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { buildId } = req.params;
+      
+      agentV2Service.stopBuild(buildId);
+
+      res.json({
+        success: true,
+        message: 'Build stopped'
+      });
+    } catch (error) {
+      logger.error('Stop build error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to stop build' 
+      });
+    }
+  });
+
+  app.get('/api/agent-v2/active-build/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      
+      const buildId = agentV2Service.getActiveBuildForProject(parseInt(projectId));
+
+      res.json({
+        success: true,
+        buildId
+      });
+    } catch (error) {
+      logger.error('Get active build error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get active build' 
+      });
+    }
+  });
+
+  app.post('/api/agent-v2/provide-context/:buildId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { buildId } = req.params;
+      const { context } = req.body;
+      
+      if (!context) {
+        return res.status(400).json({ error: 'Context is required' });
+      }
+
+      agentV2Service.provideAdditionalContext(buildId, context);
+
+      res.json({
+        success: true,
+        message: 'Context provided'
+      });
+    } catch (error) {
+      logger.error('Provide context error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to provide context' 
       });
     }
   });

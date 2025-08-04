@@ -1,333 +1,578 @@
 import { db } from '../db';
-import { checkpoints, files, projects } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { projects, files, checkpoints, checkpointFiles, checkpointDatabase } from '@shared/schema';
+import { eq, desc, and } from 'drizzle-orm';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { createLogger } from '../utils/logger';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import crypto from 'crypto';
 
-const logger = createLogger('CheckpointService');
+const execAsync = promisify(exec);
+const logger = createLogger('checkpoint-service');
 
-interface CheckpointData {
+export interface CheckpointMetadata {
+  id: number;
   projectId: number;
-  userId: number;
-  message: string;
-  agentTaskDescription?: string;
-  conversationHistory?: any[];
-  filesModified?: number;
-  linesOfCodeWritten?: number;
-  tokensUsed?: number;
-  executionTimeMs?: number;
-  apiCallsCount?: number;
+  name: string;
+  description?: string;
+  type: 'manual' | 'automatic' | 'before_action' | 'error_recovery';
+  createdAt: Date;
+  createdBy: number;
+  size: number;
+  fileCount: number;
+  databaseSnapshot: boolean;
+  environmentVars: Record<string, string>;
+  agentState?: {
+    currentTask: string;
+    completedSteps: string[];
+    errors: string[];
+    tokensUsed: number;
+  };
 }
 
-interface EffortMetrics {
-  complexity: 'simple' | 'moderate' | 'complex' | 'very_complex' | 'expert';
-  filesModified: number;
-  linesOfCode: number;
-  apiCalls: number;
-  tokensUsed: number;
-  executionTime: number;
+export interface CreateCheckpointOptions {
+  projectId: number;
+  name: string;
+  description?: string;
+  type: 'manual' | 'automatic' | 'before_action' | 'error_recovery';
+  userId: number;
+  includeDatabase?: boolean;
+  includeEnvironment?: boolean;
+  agentState?: any;
+}
+
+export interface RestoreCheckpointOptions {
+  checkpointId: number;
+  userId: number;
+  restoreFiles?: boolean;
+  restoreDatabase?: boolean;
+  restoreEnvironment?: boolean;
 }
 
 export class CheckpointService {
-  // Effort-based pricing configuration
-  private readonly BASE_PRICE_CENTS = 50; // Base price per checkpoint
-  private readonly EFFORT_MULTIPLIERS = {
-    simple: 1.0,      // Basic changes, < 50 lines
-    moderate: 2.5,    // Multiple files, 50-200 lines
-    complex: 5.0,     // Complex logic, 200-500 lines
-    very_complex: 10.0, // Architecture changes, 500+ lines
-    expert: 20.0      // Full app builds, major refactoring
-  };
+  private checkpointStoragePath: string;
+  private maxCheckpointsPerProject = 50;
+  private autoCheckpointInterval = 5 * 60 * 1000; // 5 minutes
+  private activeTimers = new Map<number, NodeJS.Timeout>();
 
-  private readonly TOKEN_COST_PER_1K = 10; // 10 cents per 1k tokens
-  private readonly API_CALL_COST = 5; // 5 cents per API call
+  constructor() {
+    this.checkpointStoragePath = path.join(process.cwd(), '.checkpoints');
+    this.initializeStorage();
+  }
 
-  async createComprehensiveCheckpoint(data: CheckpointData): Promise<any> {
+  private async initializeStorage() {
     try {
-      const startTime = Date.now();
-
-      // Capture current state
-      const [filesSnapshot, databaseSnapshot, envSnapshot, aiContext] = await Promise.all([
-        this.captureFilesSnapshot(data.projectId),
-        this.captureDatabaseSnapshot(data.projectId),
-        this.captureEnvironmentSnapshot(data.projectId),
-        this.captureAIContext(data.projectId, data.conversationHistory)
-      ]);
-
-      // Calculate effort score
-      const effortMetrics: EffortMetrics = {
-        complexity: this.calculateComplexity(data),
-        filesModified: data.filesModified || 0,
-        linesOfCode: data.linesOfCodeWritten || 0,
-        apiCalls: data.apiCallsCount || 0,
-        tokensUsed: data.tokensUsed || 0,
-        executionTime: data.executionTimeMs || (Date.now() - startTime)
-      };
-
-      const effortScore = this.EFFORT_MULTIPLIERS[effortMetrics.complexity];
-      const cost = this.calculateCost(effortMetrics, effortScore);
-
-      // Create checkpoint
-      const [checkpoint] = await db.insert(checkpoints).values({
-        projectId: data.projectId,
-        userId: data.userId,
-        message: data.message,
-        filesSnapshot,
-        aiConversationContext: aiContext,
-        databaseSnapshot,
-        environmentVariables: envSnapshot,
-        agentTaskDescription: data.agentTaskDescription,
-        agentActionsPerformed: this.extractAgentActions(data.conversationHistory),
-        filesModified: effortMetrics.filesModified,
-        linesOfCodeWritten: effortMetrics.linesOfCode,
-        effortScore: effortScore.toString(),
-        tokensUsed: effortMetrics.tokensUsed,
-        executionTimeMs: effortMetrics.executionTime,
-        apiCallsCount: effortMetrics.apiCalls,
-        costInCents: cost,
-        isAutomatic: true
-      }).returning();
-
-      // Report usage to billing service
-      await this.reportUsageToBilling(data.userId, checkpoint);
-
-      logger.info(`Created comprehensive checkpoint ${checkpoint.id} with effort score ${effortScore} (${effortMetrics.complexity}), cost: $${(cost / 100).toFixed(2)}`);
-
-      return checkpoint;
+      await fs.mkdir(this.checkpointStoragePath, { recursive: true });
+      logger.info('Checkpoint storage initialized');
     } catch (error) {
-      logger.error('Failed to create comprehensive checkpoint:', error);
-      throw error;
+      logger.error('Failed to initialize checkpoint storage:', error);
     }
   }
 
-  async restoreCheckpoint(checkpointId: number): Promise<boolean> {
+  /**
+   * Create a checkpoint for a project
+   */
+  async createCheckpoint(options: CreateCheckpointOptions): Promise<CheckpointMetadata> {
+    const startTime = Date.now();
+    logger.info(`Creating checkpoint for project ${options.projectId}`);
+
     try {
-      const [checkpoint] = await db.select().from(checkpoints).where(eq(checkpoints.id, checkpointId));
-      
+      // Create checkpoint record
+      const [checkpoint] = await db.insert(checkpoints).values({
+        projectId: options.projectId,
+        name: options.name,
+        description: options.description,
+        type: options.type,
+        createdBy: options.userId,
+        createdAt: new Date(),
+        metadata: {
+          agentState: options.agentState || {},
+          environmentIncluded: options.includeEnvironment || false,
+          databaseIncluded: options.includeDatabase || false
+        }
+      }).returning();
+
+      // Create checkpoint directory
+      const checkpointDir = path.join(
+        this.checkpointStoragePath,
+        `project-${options.projectId}`,
+        `checkpoint-${checkpoint.id}`
+      );
+      await fs.mkdir(checkpointDir, { recursive: true });
+
+      // Save project files
+      const fileCount = await this.saveProjectFiles(options.projectId, checkpoint.id, checkpointDir);
+
+      // Save database snapshot if requested
+      let databaseSnapshot = false;
+      if (options.includeDatabase) {
+        databaseSnapshot = await this.saveDatabaseSnapshot(options.projectId, checkpoint.id, checkpointDir);
+      }
+
+      // Save environment variables if requested
+      let environmentVars: Record<string, string> = {};
+      if (options.includeEnvironment) {
+        environmentVars = await this.saveEnvironmentVars(options.projectId, checkpointDir);
+      }
+
+      // Calculate checkpoint size
+      const size = await this.calculateDirectorySize(checkpointDir);
+
+      // Update checkpoint metadata
+      await db.update(checkpoints)
+        .set({
+          metadata: {
+            ...checkpoint.metadata,
+            size,
+            fileCount,
+            databaseSnapshot,
+            environmentVars: Object.keys(environmentVars).length > 0,
+            duration: Date.now() - startTime
+          }
+        })
+        .where(eq(checkpoints.id, checkpoint.id));
+
+      // Clean up old checkpoints
+      await this.cleanupOldCheckpoints(options.projectId);
+
+      logger.info(`Checkpoint ${checkpoint.id} created successfully in ${Date.now() - startTime}ms`);
+
+      return {
+        id: checkpoint.id,
+        projectId: options.projectId,
+        name: options.name,
+        description: options.description,
+        type: options.type,
+        createdAt: checkpoint.createdAt,
+        createdBy: options.userId,
+        size,
+        fileCount,
+        databaseSnapshot,
+        environmentVars,
+        agentState: options.agentState
+      };
+    } catch (error) {
+      logger.error('Failed to create checkpoint:', error);
+      throw new Error(`Failed to create checkpoint: ${error}`);
+    }
+  }
+
+  /**
+   * Restore a checkpoint
+   */
+  async restoreCheckpoint(options: RestoreCheckpointOptions): Promise<boolean> {
+    const startTime = Date.now();
+    logger.info(`Restoring checkpoint ${options.checkpointId}`);
+
+    try {
+      // Get checkpoint details
+      const [checkpoint] = await db.select()
+        .from(checkpoints)
+        .where(eq(checkpoints.id, options.checkpointId));
+
       if (!checkpoint) {
         throw new Error('Checkpoint not found');
       }
 
-      // Restore all state
-      await Promise.all([
-        this.restoreFiles(checkpoint.projectId, checkpoint.filesSnapshot as any),
-        this.restoreDatabaseState(checkpoint.projectId, checkpoint.databaseSnapshot as any),
-        this.restoreEnvironmentVariables(checkpoint.projectId, checkpoint.environmentVariables as any),
-        this.restoreAIContext(checkpoint.projectId, checkpoint.aiConversationContext as any)
-      ]);
+      const checkpointDir = path.join(
+        this.checkpointStoragePath,
+        `project-${checkpoint.projectId}`,
+        `checkpoint-${checkpoint.id}`
+      );
 
-      logger.info(`Restored checkpoint ${checkpointId} successfully`);
+      // Restore files if requested
+      if (options.restoreFiles !== false) {
+        await this.restoreProjectFiles(checkpoint.projectId, checkpoint.id, checkpointDir);
+      }
+
+      // Restore database if requested and available
+      if (options.restoreDatabase !== false && checkpoint.metadata?.databaseSnapshot) {
+        await this.restoreDatabaseSnapshot(checkpoint.projectId, checkpoint.id, checkpointDir);
+      }
+
+      // Restore environment variables if requested and available
+      if (options.restoreEnvironment !== false && checkpoint.metadata?.environmentVars) {
+        await this.restoreEnvironmentVars(checkpoint.projectId, checkpointDir);
+      }
+
+      // Log restoration
+      await db.insert(checkpoints).values({
+        projectId: checkpoint.projectId,
+        name: `Restored from: ${checkpoint.name}`,
+        description: `Restored checkpoint ${checkpoint.id} at ${new Date().toISOString()}`,
+        type: 'automatic',
+        createdBy: options.userId,
+        createdAt: new Date(),
+        metadata: {
+          restoredFrom: checkpoint.id,
+          restoreOptions: options,
+          duration: Date.now() - startTime
+        }
+      });
+
+      logger.info(`Checkpoint ${checkpoint.id} restored successfully in ${Date.now() - startTime}ms`);
       return true;
     } catch (error) {
       logger.error('Failed to restore checkpoint:', error);
-      throw error;
+      throw new Error(`Failed to restore checkpoint: ${error}`);
     }
   }
 
-  private async captureFilesSnapshot(projectId: number): Promise<any> {
-    const projectFiles = await db.select().from(files).where(eq(files.projectId, projectId));
-    
-    return projectFiles.reduce((snapshot: any, file) => {
-      snapshot[file.path] = {
-        content: file.content,
-        name: file.name,
-        isDirectory: file.isDirectory,
-        lastModified: file.updatedAt
-      };
-      return snapshot;
-    }, {});
-  }
-
-  private async captureDatabaseSnapshot(projectId: number): Promise<any> {
-    // Capture database schema and sample data
-    // In production, this would capture actual database state
-    return {
-      schema: {
-        tables: ['users', 'posts', 'comments'],
-        version: '1.0.0'
-      },
-      sampleData: {
-        recordCount: 150,
-        lastModified: new Date()
-      }
-    };
-  }
-
-  private async captureEnvironmentSnapshot(projectId: number): Promise<any> {
-    // Capture environment variables (excluding sensitive values)
-    return {
-      NODE_ENV: 'development',
-      API_ENDPOINTS: ['localhost:5000'],
-      FEATURES_ENABLED: ['ai_agent', 'collaboration', 'deployment']
-    };
-  }
-
-  private async captureAIContext(projectId: number, conversationHistory?: any[]): Promise<any> {
-    // Capture full AI conversation context
-    const context = {
-      conversationHistory: conversationHistory || [],
-      activeModel: 'claude-sonnet-4-20250514',
-      totalMessages: conversationHistory?.length || 0,
-      lastActivity: new Date(),
-      contextWindow: {
-        tokens: 0,
-        messages: []
-      }
-    };
-
-    // Include last 20 messages for context window
-    if (conversationHistory && conversationHistory.length > 0) {
-      context.contextWindow.messages = conversationHistory.slice(-20);
-      context.contextWindow.tokens = this.estimateTokenCount(conversationHistory.slice(-20));
-    }
-
-    return context;
-  }
-
-  private calculateComplexity(data: CheckpointData): EffortMetrics['complexity'] {
-    const lines = data.linesOfCodeWritten || 0;
-    const files = data.filesModified || 0;
-    const hasArchitectureChanges = data.agentTaskDescription?.toLowerCase().includes('architecture') ||
-                                   data.agentTaskDescription?.toLowerCase().includes('refactor');
-    const isFullApp = data.agentTaskDescription?.toLowerCase().includes('create app') ||
-                      data.agentTaskDescription?.toLowerCase().includes('build app');
-
-    if (isFullApp || lines > 1000) return 'expert';
-    if (hasArchitectureChanges || lines > 500) return 'very_complex';
-    if (lines > 200 || files > 5) return 'complex';
-    if (lines > 50 || files > 2) return 'moderate';
-    return 'simple';
-  }
-
-  private calculateCost(metrics: EffortMetrics, effortScore: number): number {
-    // Base cost with effort multiplier
-    let cost = this.BASE_PRICE_CENTS * effortScore;
-    
-    // Add token costs
-    cost += Math.ceil(metrics.tokensUsed / 1000) * this.TOKEN_COST_PER_1K;
-    
-    // Add API call costs
-    cost += metrics.apiCalls * this.API_CALL_COST;
-    
-    // Add time-based costs for very long operations (> 5 minutes)
-    if (metrics.executionTime > 300000) {
-      const extraMinutes = Math.ceil((metrics.executionTime - 300000) / 60000);
-      cost += extraMinutes * 10; // 10 cents per extra minute
-    }
-    
-    return Math.round(cost);
-  }
-
-  private extractAgentActions(conversationHistory?: any[]): any {
-    if (!conversationHistory) return [];
-    
-    const actions: any[] = [];
-    
-    conversationHistory.forEach(msg => {
-      if (msg.role === 'assistant' && msg.actions) {
-        actions.push(...msg.actions);
-      }
-    });
-    
-    return actions;
-  }
-
-  private estimateTokenCount(messages: any[]): number {
-    // Simple estimation: ~4 characters per token
-    let totalChars = 0;
-    messages.forEach(msg => {
-      totalChars += (msg.content || '').length;
-    });
-    return Math.ceil(totalChars / 4);
-  }
-
-  private async reportUsageToBilling(userId: number, checkpoint: any): Promise<void> {
+  /**
+   * List checkpoints for a project
+   */
+  async listCheckpoints(projectId: number, limit = 20): Promise<CheckpointMetadata[]> {
     try {
-      // Report to Stripe for metered billing
-      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-      
-      await stripe.subscriptionItems.createUsageRecord(
-        'si_agent_usage', // Subscription item ID for agent usage
-        {
-          quantity: checkpoint.costInCents,
-          timestamp: Math.floor(Date.now() / 1000),
-          action: 'set'
-        }
-      );
-      
-      logger.info(`Reported agent usage to billing: ${checkpoint.costInCents} cents for user ${userId}`);
+      const checkpointRecords = await db.select()
+        .from(checkpoints)
+        .where(eq(checkpoints.projectId, projectId))
+        .orderBy(desc(checkpoints.createdAt))
+        .limit(limit);
+
+      return checkpointRecords.map(cp => ({
+        id: cp.id,
+        projectId: cp.projectId,
+        name: cp.name,
+        description: cp.description || undefined,
+        type: cp.type as any,
+        createdAt: cp.createdAt,
+        createdBy: cp.createdBy,
+        size: cp.metadata?.size || 0,
+        fileCount: cp.metadata?.fileCount || 0,
+        databaseSnapshot: cp.metadata?.databaseSnapshot || false,
+        environmentVars: cp.metadata?.environmentVars || {},
+        agentState: cp.metadata?.agentState
+      }));
     } catch (error) {
-      logger.error('Failed to report usage to billing:', error);
+      logger.error('Failed to list checkpoints:', error);
+      throw new Error(`Failed to list checkpoints: ${error}`);
     }
   }
 
-  private async restoreFiles(projectId: number, filesSnapshot: any): Promise<void> {
-    // Delete current files
+  /**
+   * Delete a checkpoint
+   */
+  async deleteCheckpoint(checkpointId: number): Promise<boolean> {
+    try {
+      const [checkpoint] = await db.select()
+        .from(checkpoints)
+        .where(eq(checkpoints.id, checkpointId));
+
+      if (!checkpoint) {
+        return false;
+      }
+
+      // Delete checkpoint directory
+      const checkpointDir = path.join(
+        this.checkpointStoragePath,
+        `project-${checkpoint.projectId}`,
+        `checkpoint-${checkpoint.id}`
+      );
+      await fs.rm(checkpointDir, { recursive: true, force: true });
+
+      // Delete database records
+      await db.delete(checkpointFiles).where(eq(checkpointFiles.checkpointId, checkpointId));
+      await db.delete(checkpointDatabase).where(eq(checkpointDatabase.checkpointId, checkpointId));
+      await db.delete(checkpoints).where(eq(checkpoints.id, checkpointId));
+
+      logger.info(`Checkpoint ${checkpointId} deleted successfully`);
+      return true;
+    } catch (error) {
+      logger.error('Failed to delete checkpoint:', error);
+      throw new Error(`Failed to delete checkpoint: ${error}`);
+    }
+  }
+
+  /**
+   * Enable automatic checkpointing for a project
+   */
+  enableAutoCheckpoints(projectId: number, userId: number) {
+    if (this.activeTimers.has(projectId)) {
+      return;
+    }
+
+    const timer = setInterval(async () => {
+      try {
+        await this.createCheckpoint({
+          projectId,
+          name: `Auto checkpoint - ${new Date().toLocaleString()}`,
+          description: 'Automatic checkpoint',
+          type: 'automatic',
+          userId,
+          includeDatabase: true,
+          includeEnvironment: true
+        });
+      } catch (error) {
+        logger.error(`Failed to create auto checkpoint for project ${projectId}:`, error);
+      }
+    }, this.autoCheckpointInterval);
+
+    this.activeTimers.set(projectId, timer);
+    logger.info(`Auto checkpoints enabled for project ${projectId}`);
+  }
+
+  /**
+   * Disable automatic checkpointing for a project
+   */
+  disableAutoCheckpoints(projectId: number) {
+    const timer = this.activeTimers.get(projectId);
+    if (timer) {
+      clearInterval(timer);
+      this.activeTimers.delete(projectId);
+      logger.info(`Auto checkpoints disabled for project ${projectId}`);
+    }
+  }
+
+  /**
+   * Create checkpoint before AI agent action
+   */
+  async createAgentCheckpoint(
+    projectId: number,
+    userId: number,
+    action: string,
+    agentState: any
+  ): Promise<CheckpointMetadata> {
+    return this.createCheckpoint({
+      projectId,
+      name: `Before: ${action}`,
+      description: `Checkpoint before AI agent action: ${action}`,
+      type: 'before_action',
+      userId,
+      includeDatabase: true,
+      includeEnvironment: true,
+      agentState
+    });
+  }
+
+  /**
+   * Create error recovery checkpoint
+   */
+  async createErrorRecoveryCheckpoint(
+    projectId: number,
+    userId: number,
+    error: string,
+    agentState: any
+  ): Promise<CheckpointMetadata> {
+    return this.createCheckpoint({
+      projectId,
+      name: `Error recovery - ${new Date().toLocaleString()}`,
+      description: `Checkpoint after error: ${error}`,
+      type: 'error_recovery',
+      userId,
+      includeDatabase: true,
+      includeEnvironment: true,
+      agentState: {
+        ...agentState,
+        lastError: error,
+        errorTimestamp: new Date().toISOString()
+      }
+    });
+  }
+
+  // Private helper methods
+
+  private async saveProjectFiles(projectId: number, checkpointId: number, checkpointDir: string): Promise<number> {
+    const projectFiles = await db.select()
+      .from(files)
+      .where(eq(files.projectId, projectId));
+
+    const filesDir = path.join(checkpointDir, 'files');
+    await fs.mkdir(filesDir, { recursive: true });
+
+    let fileCount = 0;
+
+    for (const file of projectFiles) {
+      const filePath = path.join(filesDir, file.path);
+      const fileDir = path.dirname(filePath);
+      
+      await fs.mkdir(fileDir, { recursive: true });
+      
+      if (!file.isDirectory && file.content) {
+        await fs.writeFile(filePath, file.content);
+        fileCount++;
+      }
+
+      // Save file metadata
+      await db.insert(checkpointFiles).values({
+        checkpointId,
+        fileId: file.id,
+        path: file.path,
+        content: file.content,
+        metadata: {
+          originalCreatedAt: file.createdAt,
+          originalUpdatedAt: file.updatedAt
+        }
+      });
+    }
+
+    return fileCount;
+  }
+
+  private async restoreProjectFiles(projectId: number, checkpointId: number, checkpointDir: string): Promise<void> {
+    const checkpointFileRecords = await db.select()
+      .from(checkpointFiles)
+      .where(eq(checkpointFiles.checkpointId, checkpointId));
+
+    // Clear existing files
     await db.delete(files).where(eq(files.projectId, projectId));
-    
-    // Restore from snapshot
-    for (const [path, fileData] of Object.entries(filesSnapshot)) {
+
+    // Restore files
+    for (const record of checkpointFileRecords) {
       await db.insert(files).values({
         projectId,
-        path,
-        name: (fileData as any).name,
-        content: (fileData as any).content,
-        isDirectory: (fileData as any).isDirectory || false
+        path: record.path,
+        name: path.basename(record.path),
+        content: record.content,
+        isDirectory: !record.content,
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
     }
   }
 
-  private async restoreDatabaseState(projectId: number, snapshot: any): Promise<void> {
-    // In production, this would restore actual database state
-    logger.info(`Restoring database state for project ${projectId}`);
+  private async saveDatabaseSnapshot(projectId: number, checkpointId: number, checkpointDir: string): Promise<boolean> {
+    try {
+      const dbDir = path.join(checkpointDir, 'database');
+      await fs.mkdir(dbDir, { recursive: true });
+
+      // Export database using pg_dump
+      const dumpFile = path.join(dbDir, 'snapshot.sql');
+      const databaseUrl = process.env.DATABASE_URL;
+      
+      if (!databaseUrl) {
+        logger.warn('DATABASE_URL not configured, skipping database snapshot');
+        return false;
+      }
+
+      // Use pg_dump to create snapshot
+      await execAsync(`pg_dump ${databaseUrl} -f ${dumpFile} --schema=public --no-owner --no-acl`);
+
+      // Save snapshot metadata
+      await db.insert(checkpointDatabase).values({
+        checkpointId,
+        snapshotPath: dumpFile,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          size: (await fs.stat(dumpFile)).size
+        }
+      });
+
+      return true;
+    } catch (error) {
+      logger.error('Failed to save database snapshot:', error);
+      return false;
+    }
   }
 
-  private async restoreEnvironmentVariables(projectId: number, snapshot: any): Promise<void> {
-    // Restore environment variables
-    logger.info(`Restoring environment variables for project ${projectId}`);
+  private async restoreDatabaseSnapshot(projectId: number, checkpointId: number, checkpointDir: string): Promise<boolean> {
+    try {
+      const [snapshot] = await db.select()
+        .from(checkpointDatabase)
+        .where(eq(checkpointDatabase.checkpointId, checkpointId));
+
+      if (!snapshot) {
+        logger.warn('No database snapshot found for checkpoint');
+        return false;
+      }
+
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        logger.warn('DATABASE_URL not configured, skipping database restore');
+        return false;
+      }
+
+      // Restore database using psql
+      await execAsync(`psql ${databaseUrl} -f ${snapshot.snapshotPath}`);
+
+      return true;
+    } catch (error) {
+      logger.error('Failed to restore database snapshot:', error);
+      return false;
+    }
   }
 
-  private async restoreAIContext(projectId: number, context: any): Promise<void> {
-    // Restore AI conversation context
-    logger.info(`Restoring AI context for project ${projectId}`);
-  }
+  private async saveEnvironmentVars(projectId: number, checkpointDir: string): Promise<Record<string, string>> {
+    // In a real implementation, this would save project-specific environment variables
+    // For now, we'll save a subset of safe environment variables
+    const safeEnvVars = [
+      'NODE_ENV',
+      'PORT',
+      'API_BASE_URL',
+      // Add other safe variables
+    ];
 
-  async getCheckpointPricingInfo(checkpointId: number): Promise<any> {
-    const [checkpoint] = await db.select().from(checkpoints).where(eq(checkpoints.id, checkpointId));
+    const envVars: Record<string, string> = {};
     
-    if (!checkpoint) {
-      throw new Error('Checkpoint not found');
+    for (const key of safeEnvVars) {
+      if (process.env[key]) {
+        envVars[key] = process.env[key];
+      }
     }
 
-    const complexity = this.getComplexityFromScore(parseFloat(checkpoint.effortScore as string));
-    
-    return {
-      checkpointId,
-      complexity,
-      effortScore: checkpoint.effortScore,
-      costInCents: checkpoint.costInCents,
-      costInDollars: (checkpoint.costInCents! / 100).toFixed(2),
-      breakdown: {
-        baseCost: this.BASE_PRICE_CENTS,
-        effortMultiplier: checkpoint.effortScore,
-        tokenCost: Math.ceil(checkpoint.tokensUsed! / 1000) * this.TOKEN_COST_PER_1K,
-        apiCallCost: checkpoint.apiCallsCount! * this.API_CALL_COST
-      },
-      metrics: {
-        filesModified: checkpoint.filesModified,
-        linesOfCode: checkpoint.linesOfCodeWritten,
-        tokensUsed: checkpoint.tokensUsed,
-        apiCalls: checkpoint.apiCallsCount,
-        executionTimeMs: checkpoint.executionTimeMs
-      }
-    };
+    const envFile = path.join(checkpointDir, 'environment.json');
+    await fs.writeFile(envFile, JSON.stringify(envVars, null, 2));
+
+    return envVars;
   }
 
-  private getComplexityFromScore(score: number): EffortMetrics['complexity'] {
-    if (score >= 20) return 'expert';
-    if (score >= 10) return 'very_complex';
-    if (score >= 5) return 'complex';
-    if (score >= 2.5) return 'moderate';
-    return 'simple';
+  private async restoreEnvironmentVars(projectId: number, checkpointDir: string): Promise<void> {
+    try {
+      const envFile = path.join(checkpointDir, 'environment.json');
+      const envData = await fs.readFile(envFile, 'utf-8');
+      const envVars = JSON.parse(envData);
+
+      // In a real implementation, this would restore project-specific environment
+      // For now, we'll log what would be restored
+      logger.info(`Would restore environment variables:`, Object.keys(envVars));
+    } catch (error) {
+      logger.error('Failed to restore environment variables:', error);
+    }
+  }
+
+  private async calculateDirectorySize(dir: string): Promise<number> {
+    let size = 0;
+    
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.isDirectory()) {
+        size += await this.calculateDirectorySize(fullPath);
+      } else {
+        const stats = await fs.stat(fullPath);
+        size += stats.size;
+      }
+    }
+    
+    return size;
+  }
+
+  private async cleanupOldCheckpoints(projectId: number): Promise<void> {
+    try {
+      const allCheckpoints = await db.select()
+        .from(checkpoints)
+        .where(eq(checkpoints.projectId, projectId))
+        .orderBy(desc(checkpoints.createdAt));
+
+      if (allCheckpoints.length <= this.maxCheckpointsPerProject) {
+        return;
+      }
+
+      // Keep manual checkpoints and recent automatic ones
+      const checkpointsToDelete = allCheckpoints
+        .slice(this.maxCheckpointsPerProject)
+        .filter(cp => cp.type === 'automatic');
+
+      for (const checkpoint of checkpointsToDelete) {
+        await this.deleteCheckpoint(checkpoint.id);
+      }
+
+      logger.info(`Cleaned up ${checkpointsToDelete.length} old checkpoints for project ${projectId}`);
+    } catch (error) {
+      logger.error('Failed to cleanup old checkpoints:', error);
+    }
   }
 }
 

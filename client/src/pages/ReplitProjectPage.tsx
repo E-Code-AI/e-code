@@ -90,6 +90,11 @@ import { EnhancedPreview } from '@/components/EnhancedPreview';
 import { DeploymentPanel } from '@/components/DeploymentPanel';
 import { ToolsDropdown } from '@/components/ToolsDropdown';
 
+// Import critical new features
+import { CheckpointManager } from '@/components/CheckpointManager';
+import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
+import { AgentV2Interface } from '@/components/AgentV2Interface';
+
 // Import advanced UI components
 import { ReplitForkGraph } from '@/components/ReplitForkGraph';
 import { ReplitVersionControl } from '@/components/ReplitVersionControl';
@@ -118,7 +123,7 @@ const ReplitProjectPage = () => {
   const [showTerminal, setShowTerminal] = useState(false); // Hide terminal by default like Replit
   const [mobileTab, setMobileTab] = useState<MobileTab>('agent'); // Default to agent on mobile like Replit
   const [showCollaboration, setShowCollaboration] = useState(false);
-  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions' | 'deployments' | 'shell' | 'database' | 'secrets' | 'workflows' | 'console' | 'authentication' | 'preview' | 'git' | 'ssh' | 'vnc' | 'threads' | 'object-storage' | 'problems' | 'security-scanner' | 'networking' | 'integrations' | 'user-settings' | 'fork-graph' | 'version-control' | 'package-explorer' | 'resource-monitor' | 'deployment-pipeline' | 'checkpoints' | 'time-tracking' | 'screenshots' | 'task-summaries'>('ai');
+  const [rightPanelMode, setRightPanelMode] = useState<'ai' | 'collaboration' | 'comments' | 'history' | 'extensions' | 'deployments' | 'shell' | 'database' | 'secrets' | 'workflows' | 'console' | 'authentication' | 'preview' | 'git' | 'ssh' | 'vnc' | 'threads' | 'object-storage' | 'problems' | 'security-scanner' | 'networking' | 'integrations' | 'user-settings' | 'fork-graph' | 'version-control' | 'package-explorer' | 'resource-monitor' | 'deployment-pipeline' | 'checkpoints' | 'time-tracking' | 'screenshots' | 'task-summaries' | 'effort-pricing' | 'agent-v2'>('ai');
   const [aiMode, setAIMode] = useState<'agent' | 'advanced'>('agent'); // Default to agent mode
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
   const [openTools, setOpenTools] = useState<string[]>(['agent', 'preview']);
@@ -1117,6 +1122,29 @@ const ReplitProjectPage = () => {
                     <FileCode className="h-4 w-4 mr-2" />
                     Task Summaries
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('agent-v2')) {
+                      setOpenTools([...openTools, 'agent-v2']);
+                      setRightPanelMode('agent-v2');
+                    } else {
+                      setRightPanelMode('agent-v2');
+                    }
+                  }}>
+                    <Bot className="h-4 w-4 mr-2" />
+                    Agent v2 (Claude 4.0)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    if (!openTools.includes('effort-pricing')) {
+                      setOpenTools([...openTools, 'effort-pricing']);
+                      setRightPanelMode('effort-pricing');
+                    } else {
+                      setRightPanelMode('effort-pricing');
+                    }
+                  }}>
+                    <Activity className="h-4 w-4 mr-2" />
+                    Effort Pricing
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -1155,7 +1183,7 @@ const ReplitProjectPage = () => {
             <CommentsPanel projectId={projectId} />
           )}
           {rightPanelMode === 'checkpoints' && (
-            <CheckpointsPanel projectId={projectId} />
+            <CheckpointManager projectId={projectId} />
           )}
           {rightPanelMode === 'time-tracking' && (
             <TimeTrackingPanel projectId={projectId} userId={user?.id || 0} />
@@ -1186,6 +1214,12 @@ const ReplitProjectPage = () => {
           )}
           {rightPanelMode === 'deployment-pipeline' && (
             <ReplitDeploymentPipeline projectId={projectId} />
+          )}
+          {rightPanelMode === 'effort-pricing' && (
+            <EffortPricingDisplay projectId={projectId} />
+          )}
+          {rightPanelMode === 'agent-v2' && (
+            <AgentV2Interface projectId={projectId} />
           )}
         </div>
       </div>
