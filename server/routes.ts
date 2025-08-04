@@ -73,6 +73,7 @@ import { replitDB } from "./database/replitdb";
 import { searchEngine } from "./search/search-engine";
 import { extensionManager } from "./extensions/extension-manager";
 import { apiManager } from "./api/api-manager";
+import { webSearchService } from "./services/web-search-service";
 import { projectExporter } from "./import-export/exporter";
 import { stripeBillingService } from "./services/stripe-billing-service";
 import { deploymentManager } from "./deployment";
@@ -5242,11 +5243,65 @@ Generate a comprehensive application based on the user's request. Include all ne
             }
           }
           
+          // 6. Web Search Integration (NEW FEATURE)
+          const searchKeywords = ['search', 'find', 'look up', 'documentation', 'latest', 'current', 'news', 'update', 'how to', 'what is'];
+          const needsWebSearch = searchKeywords.some(keyword => message.toLowerCase().includes(keyword)) ||
+                                message.includes('?') && (message.toLowerCase().includes('api') || message.toLowerCase().includes('library'));
+          
+          if (needsWebSearch || context.webSearchEnabled) {
+            logger.info('Web search triggered for query:', message);
+            
+            try {
+              // Determine search type
+              let searchResults;
+              if (message.toLowerCase().includes('documentation') || message.toLowerCase().includes('docs')) {
+                searchResults = await webSearchService.searchForDocs(message);
+              } else if (message.toLowerCase().includes('code') || message.toLowerCase().includes('example')) {
+                searchResults = await webSearchService.searchForCode(message, project.language);
+              } else if (message.toLowerCase().includes('news') || message.toLowerCase().includes('latest')) {
+                searchResults = await webSearchService.searchForNews(message);
+              } else {
+                searchResults = await webSearchService.search(message);
+              }
+              
+              if (searchResults.length > 0) {
+                responseContent += `\n\n**Web Search Results:**\n`;
+                searchResults.slice(0, 5).forEach((result, index) => {
+                  responseContent += `${index + 1}. [${result.title}](${result.url})\n`;
+                  responseContent += `   ${result.snippet}\n\n`;
+                });
+                
+                // If searching for specific libraries or APIs, suggest installation
+                if (message.toLowerCase().includes('install') || message.toLowerCase().includes('use')) {
+                  const packageMatch = message.match(/(?:install|use|import)\s+(\S+)/i);
+                  if (packageMatch) {
+                    actions.push({
+                      type: 'install_package',
+                      package: packageMatch[1]
+                    });
+                    responseContent += `\nI'll also install **${packageMatch[1]}** for you.`;
+                  }
+                }
+                
+                // Add search metadata
+                responseMetadata = {
+                  ...responseMetadata,
+                  webSearchPerformed: true,
+                  searchResultsCount: searchResults.length
+                };
+              }
+            } catch (error) {
+              logger.error('Web search failed:', error);
+              // Continue without web search results
+            }
+          }
+          
           logger.info('Returning enhanced agent response with integrations:', {
             actionsCount: actions.length,
             responseContentLength: responseContent.length,
             hasPreview: hasWebFiles,
-            hasDatabase: message.toLowerCase().includes('database')
+            hasDatabase: message.toLowerCase().includes('database'),
+            webSearchPerformed: responseMetadata?.webSearchPerformed || false
           });
           
           // Track AI usage for agent mode
