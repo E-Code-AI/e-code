@@ -73,6 +73,10 @@ import { replitDB } from "./database/replitdb";
 import { searchEngine } from "./search/search-engine";
 import { extensionManager } from "./extensions/extension-manager";
 import { apiManager } from "./api/api-manager";
+import { mobileAPIService } from './mobile/mobile-api-service';
+import { enterpriseSSOService } from './sso/enterprise-sso-service';
+import { advancedCollaborationService } from './collaboration/advanced-collaboration-service';
+import { communityService } from './community/community-service';
 import { webSearchService } from "./services/web-search-service";
 import { projectExporter } from "./import-export/exporter";
 import { stripeBillingService } from "./services/stripe-billing-service";
@@ -9264,6 +9268,142 @@ Generate a comprehensive application based on the user's request. Include all ne
   // File upload routes
   const fileUploadRoutesModule = await import('./routes/file-upload');
   app.use(fileUploadRoutesModule.default);
+
+  // Mobile API routes
+  app.post('/api/mobile/auth', async (req, res) => {
+    await mobileAPIService.authenticateDevice(req, res);
+  });
+
+  app.get('/api/mobile/projects', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.getMobileProjects(req, res);
+  });
+
+  app.get('/api/mobile/projects/:id', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.getMobileProject(req, res);
+  });
+
+  app.post('/api/mobile/projects/:id/run', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.runMobileProject(req, res);
+  });
+
+  app.get('/api/mobile/projects/:projectId/files/:fileName', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.getMobileFile(req, res);
+  });
+
+  app.put('/api/mobile/projects/:projectId/files/:fileName', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.updateMobileFile(req, res);
+  });
+
+  app.get('/api/mobile/devices', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.getMobileDevices(req, res);
+  });
+
+  app.post('/api/mobile/push', ensureAuthenticated, async (req, res) => {
+    await mobileAPIService.sendPushNotification(req, res);
+  });
+
+  // Enterprise SSO routes
+  app.post('/api/sso/providers', ensureAuthenticated, async (req, res) => {
+    await enterpriseSSOService.createSSOProvider(req, res);
+  });
+
+  app.get('/api/sso/providers', ensureAuthenticated, async (req, res) => {
+    await enterpriseSSOService.getSSOProviders(req, res);
+  });
+
+  app.put('/api/sso/providers/:id', ensureAuthenticated, async (req, res) => {
+    await enterpriseSSOService.updateSSOProvider(req, res);
+  });
+
+  app.post('/api/auth/saml/:providerId', async (req, res) => {
+    await enterpriseSSOService.initiateSAMLLogin(req, res);
+  });
+
+  app.post('/api/auth/saml/callback/:providerId', async (req, res) => {
+    await enterpriseSSOService.handleSAMLCallback(req, res);
+  });
+
+  // SCIM 2.0 routes
+  app.get('/scim/v2/Users', async (req, res) => {
+    await enterpriseSSOService.getSCIMUsers(req, res);
+  });
+
+  app.post('/scim/v2/Users', async (req, res) => {
+    await enterpriseSSOService.createSCIMUser(req, res);
+  });
+
+  app.get('/scim/v2/Users/:id', async (req, res) => {
+    await enterpriseSSOService.getSCIMUser(req, res);
+  });
+
+  app.put('/scim/v2/Users/:id', async (req, res) => {
+    await enterpriseSSOService.updateSCIMUser(req, res);
+  });
+
+  app.delete('/scim/v2/Users/:id', async (req, res) => {
+    await enterpriseSSOService.deleteSCIMUser(req, res);
+  });
+
+  app.get('/scim/v2/Groups', async (req, res) => {
+    await enterpriseSSOService.getSCIMGroups(req, res);
+  });
+
+  app.post('/scim/v2/Groups', async (req, res) => {
+    await enterpriseSSOService.createSCIMGroup(req, res);
+  });
+
+  app.get('/scim/v2/ServiceProviderConfig', async (req, res) => {
+    await enterpriseSSOService.getSCIMConfig(req, res);
+  });
+
+  app.get('/scim/v2/ResourceTypes', async (req, res) => {
+    await enterpriseSSOService.getSCIMResourceTypes(req, res);
+  });
+
+  // Community features routes
+  app.get('/api/community/posts', async (req, res) => {
+    await communityService.getCommunityPosts(req, res);
+  });
+
+  app.post('/api/community/posts', ensureAuthenticated, async (req, res) => {
+    await communityService.createCommunityPost(req, res);
+  });
+
+  app.get('/api/community/posts/:id', async (req, res) => {
+    await communityService.getCommunityPost(req, res);
+  });
+
+  app.post('/api/community/posts/:id/like', ensureAuthenticated, async (req, res) => {
+    await communityService.likeCommunityPost(req, res);
+  });
+
+  app.post('/api/community/posts/:postId/replies', ensureAuthenticated, async (req, res) => {
+    await communityService.createCommunityReply(req, res);
+  });
+
+  app.get('/api/community/users/:username', async (req, res) => {
+    await communityService.getUserProfile(req, res);
+  });
+
+  app.put('/api/community/profile', ensureAuthenticated, async (req, res) => {
+    await communityService.updateUserProfile(req, res);
+  });
+
+  app.get('/api/community/showcases', async (req, res) => {
+    await communityService.getCodeShowcases(req, res);
+  });
+
+  app.post('/api/community/showcases', ensureAuthenticated, async (req, res) => {
+    await communityService.createCodeShowcase(req, res);
+  });
+
+  app.get('/api/community/stats', async (req, res) => {
+    await communityService.getCommunityStats(req, res);
+  });
+
+  app.post('/api/community/follow/:targetUserId', ensureAuthenticated, async (req, res) => {
+    await communityService.followUser(req, res);
+  });
 
   // Simple preview route for HTML/CSS/JS projects (no auth required for preview)
   app.get('/preview/:projectId/*', async (req, res) => {

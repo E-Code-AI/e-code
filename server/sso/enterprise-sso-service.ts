@@ -1,422 +1,687 @@
-/**
- * Enterprise SSO Service
- * Provides SAML, OIDC, and OAuth2 single sign-on capabilities
- */
-
-import { db } from '../db';
-// // import { ssoProviders, auditLogs, users } from '@shared/schema';
-import { eq } from 'drizzle-orm';
-import * as crypto from 'crypto';
+import { Request, Response } from 'express';
+import { createLogger } from '../utils/logger';
 import * as saml from 'samlify';
-import * as openidClient from 'openid-client';
-import * as jwt from 'jsonwebtoken';
+import { storage } from '../storage';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
-interface SSOConfig {
-  providerType: 'saml' | 'oidc' | 'oauth2';
-  providerName: string;
-  entityId?: string;
-  ssoUrl?: string;
-  certificateData?: string;
-  clientId?: string;
-  clientSecret?: string;
-  discoveryUrl?: string;
-  metadata?: any;
+const logger = createLogger('enterprise-sso');
+
+interface SSOProvider {
+  id: string;
+  name: string;
+  type: 'saml' | 'oidc' | 'ldap';
+  domain: string;
+  enabled: boolean;
+  config: any;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface SCIMUser {
+  id: string;
+  userName: string;
+  name: {
+    givenName: string;
+    familyName: string;
+    formatted: string;
+  };
+  emails: Array<{
+    value: string;
+    type: string;
+    primary: boolean;
+  }>;
+  active: boolean;
+  groups: string[];
+  externalId?: string;
+  meta: {
+    resourceType: string;
+    created: string;
+    lastModified: string;
+    version: string;
+  };
+}
+
+interface SCIMGroup {
+  id: string;
+  displayName: string;
+  members: Array<{
+    value: string;
+    display: string;
+    type: string;
+  }>;
+  meta: {
+    resourceType: string;
+    created: string;
+    lastModified: string;
+    version: string;
+  };
 }
 
 export class EnterpriseSSOService {
-  private samlProviders: Map<number, any> = new Map();
-  private oidcProviders: Map<number, any> = new Map();
+  private ssoProviders: Map<string, SSOProvider> = new Map();
+  private scimUsers: Map<string, SCIMUser> = new Map();
+  private scimGroups: Map<string, SCIMGroup> = new Map();
+  private samlProviders: Map<string, any> = new Map();
 
-  async configureSSOProvider(
-    organizationId: number,
-    config: SSOConfig
-  ): Promise<any> {
-    // Create or update SSO provider
-    const existingProvider = await db.select()
-      .from(ssoProviders)
-      .where(eq(ssoProviders.organizationId, organizationId))
-      .limit(1);
-
-    let providerId: number;
-
-    if (existingProvider.length > 0) {
-      // Update existing
-      await db.update(ssoProviders)
-        .set({
-          providerType: config.providerType,
-          providerName: config.providerName,
-          entityId: config.entityId,
-          ssoUrl: config.ssoUrl,
-          certificateData: config.certificateData,
-          metadata: config.metadata,
-          updatedAt: new Date(),
-        })
-        .where(eq(ssoProviders.id, existingProvider[0].id));
-      
-      providerId = existingProvider[0].id;
-    } else {
-      // Create new
-      const [provider] = await db.insert(ssoProviders).values({
-        organizationId,
-        providerType: config.providerType,
-        providerName: config.providerName,
-        entityId: config.entityId,
-        ssoUrl: config.ssoUrl,
-        certificateData: config.certificateData,
-        metadata: config.metadata,
-        isActive: true,
-      }).returning();
-      
-      providerId = provider.id;
-    }
-
-    // Initialize provider
-    await this.initializeProvider(providerId, config);
-
-    // Log configuration
-    await this.logAuditEvent(organizationId, null, 'sso_configured', {
-      providerId,
-      providerType: config.providerType,
-    });
-
-    return { providerId, success: true };
+  constructor() {
+    this.initializeDefaultProviders();
   }
 
-  private async initializeProvider(
-    providerId: number,
-    config: SSOConfig
-  ): Promise<void> {
-    switch (config.providerType) {
-      case 'saml':
-        await this.initializeSAMLProvider(providerId, config);
-        break;
-      case 'oidc':
-        await this.initializeOIDCProvider(providerId, config);
-        break;
-      case 'oauth2':
-        // OAuth2 doesn't require initialization
-        break;
-    }
-  }
-
-  private async initializeSAMLProvider(
-    providerId: number,
-    config: SSOConfig
-  ): Promise<void> {
-    const sp = saml.ServiceProvider({
-      entityID: `https://e-code.com/saml/sp/${providerId}`,
-      authnRequestsSigned: false,
-      wantAssertionsSigned: true,
-      wantMessageSigned: true,
-      wantLogoutResponseSigned: true,
-      wantLogoutRequestSigned: true,
-      privateKey: this.getPrivateKey(),
-      privateKeyPass: process.env.SAML_KEY_PASS,
-      isAssertionEncrypted: false,
-      assertionConsumerService: [{
-        Binding: saml.Constants.namespace.binding.post,
-        Location: `https://e-code.com/api/sso/saml/${providerId}/acs`,
-      }],
-    });
-
-    const idp = saml.IdentityProvider({
-      entityID: config.entityId!,
-      singleSignOnService: [{
-        Binding: saml.Constants.namespace.binding.redirect,
-        Location: config.ssoUrl!,
-      }],
-      singleLogoutService: [{
-        Binding: saml.Constants.namespace.binding.redirect,
-        Location: config.ssoUrl!.replace('/sso', '/slo'),
-      }],
-      isAssertionEncrypted: false,
-      messageSigningOrder: 'sign-then-encrypt',
-      wantLogoutRequestSigned: true,
-      wantAuthnRequestsSigned: false,
-      wantMessageSigned: true,
-      signingCert: config.certificateData!,
-    });
-
-    this.samlProviders.set(providerId, { sp, idp });
-  }
-
-  private async initializeOIDCProvider(
-    providerId: number,
-    config: SSOConfig
-  ): Promise<void> {
-    const issuer = await openidClient.Issuer.discover(config.discoveryUrl || config.ssoUrl!);
-    
-    const client = new issuer.Client({
-      client_id: config.metadata?.clientId,
-      client_secret: config.metadata?.clientSecret,
-      redirect_uris: [`https://e-code.com/api/sso/oidc/${providerId}/callback`],
-      response_types: ['code'],
-    });
-
-    this.oidcProviders.set(providerId, client);
-  }
-
-  async generateSAMLRequest(providerId: number): Promise<string> {
-    const provider = this.samlProviders.get(providerId);
-    if (!provider) {
-      throw new Error('SAML provider not configured');
-    }
-
-    const { sp, idp } = provider;
-    const request = sp.createLoginRequest(idp, 'redirect');
-    
-    return request;
-  }
-
-  async processSAMLResponse(
-    providerId: number,
-    samlResponse: string
-  ): Promise<any> {
-    const provider = this.samlProviders.get(providerId);
-    if (!provider) {
-      throw new Error('SAML provider not configured');
-    }
-
-    const { sp, idp } = provider;
-    
-    try {
-      const parseResult = await sp.parseLoginResponse(idp, 'post', {
-        body: { SAMLResponse: samlResponse },
-      });
-
-      const claims = parseResult.extract;
-      
-      // Find or create user
-      const email = claims.attributes.email || claims.nameID;
-      const user = await this.findOrCreateSSOUser(email, claims);
-
-      // Log successful login
-      const [providerData] = await db.select()
-        .from(ssoProviders)
-        .where(eq(ssoProviders.id, providerId));
-
-      await this.logAuditEvent(
-        providerData.organizationId,
-        user.id,
-        'sso_login_success',
-        { providerId, method: 'saml' }
-      );
-
-      return { user, claims };
-    } catch (error) {
-      await this.logAuditEvent(null, null, 'sso_login_failed', {
-        providerId,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-      throw error;
-    }
-  }
-
-  async generateOIDCAuthUrl(providerId: number): Promise<string> {
-    const client = this.oidcProviders.get(providerId);
-    if (!client) {
-      throw new Error('OIDC provider not configured');
-    }
-
-    const authUrl = client.authorizationUrl({
-      scope: 'openid email profile',
-      state: crypto.randomBytes(16).toString('hex'),
-      nonce: crypto.randomBytes(16).toString('hex'),
-    });
-
-    return authUrl;
-  }
-
-  async processOIDCCallback(
-    providerId: number,
-    code: string,
-    state: string
-  ): Promise<any> {
-    const client = this.oidcProviders.get(providerId);
-    if (!client) {
-      throw new Error('OIDC provider not configured');
-    }
-
-    try {
-      const tokenSet = await client.callback(
-        `https://e-code.com/api/sso/oidc/${providerId}/callback`,
-        { code, state }
-      );
-
-      const userInfo = await client.userinfo(tokenSet.access_token!);
-      
-      // Find or create user
-      const user = await this.findOrCreateSSOUser(userInfo.email, userInfo);
-
-      // Log successful login
-      const [providerData] = await db.select()
-        .from(ssoProviders)
-        .where(eq(ssoProviders.id, providerId));
-
-      await this.logAuditEvent(
-        providerData.organizationId,
-        user.id,
-        'sso_login_success',
-        { providerId, method: 'oidc' }
-      );
-
-      return { user, tokenSet, userInfo };
-    } catch (error) {
-      await this.logAuditEvent(null, null, 'sso_login_failed', {
-        providerId,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-      throw error;
-    }
-  }
-
-  private async findOrCreateSSOUser(
-    email: string,
-    claims: any
-  ): Promise<any> {
-    let [user] = await db.select()
-      .from(users)
-      .where(eq(users.email, email));
-
-    if (!user) {
-      // Create new user from SSO
-      const username = email.split('@')[0] + '-' + Date.now();
-      
-      [user] = await db.insert(users).values({
-        username,
-        email,
-        displayName: claims.name || claims.displayName || username,
-        emailVerified: true,
-        password: crypto.randomBytes(32).toString('hex'), // Random password
-      }).returning();
-    }
-
-    return user;
-  }
-
-  async logAuditEvent(
-    organizationId: number | null,
-    userId: number | null,
-    action: string,
-    details: any,
-    status: 'success' | 'failure' = 'success'
-  ): Promise<void> {
-    await db.insert(auditLogs).values({
-      organizationId,
-      userId,
-      action,
-      resourceType: 'authentication',
-      details,
-      status,
-      ipAddress: details.ipAddress || null,
-      userAgent: details.userAgent || null,
-    });
-  }
-
-  async getAuditLogs(
-    organizationId: number,
-    filters?: {
-      userId?: number;
-      action?: string;
-      startDate?: Date;
-      endDate?: Date;
-    }
-  ) {
-    let query = db.select()
-      .from(auditLogs)
-      .where(eq(auditLogs.organizationId, organizationId));
-
-    // Apply filters
-    // In production, add proper filtering logic
-
-    return await query.orderBy(auditLogs.timestamp);
-  }
-
-  async generateAuditReport(
-    organizationId: number,
-    startDate: Date,
-    endDate: Date
-  ): Promise<any> {
-    const logs = await this.getAuditLogs(organizationId, {
-      startDate,
-      endDate,
-    });
-
-    // Generate report
-    const report = {
-      organizationId,
-      period: { startDate, endDate },
-      totalEvents: logs.length,
-      successfulLogins: logs.filter(l => l.action === 'sso_login_success').length,
-      failedLogins: logs.filter(l => l.action === 'sso_login_failed').length,
-      configurationChanges: logs.filter(l => l.action === 'sso_configured').length,
-      uniqueUsers: new Set(logs.map(l => l.userId).filter(Boolean)).size,
-      eventsByDay: this.groupEventsByDay(logs),
-      topActions: this.getTopActions(logs),
-    };
-
-    return report;
-  }
-
-  private groupEventsByDay(logs: any[]): any {
-    // Group events by day for chart visualization
-    const grouped = {};
-    logs.forEach(log => {
-      const day = log.timestamp.toISOString().split('T')[0];
-      grouped[day] = (grouped[day] || 0) + 1;
-    });
-    return grouped;
-  }
-
-  private getTopActions(logs: any[]): any {
-    // Get top actions for summary
-    const actionCounts = {};
-    logs.forEach(log => {
-      actionCounts[log.action] = (actionCounts[log.action] || 0) + 1;
-    });
-    
-    return Object.entries(actionCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 10)
-      .map(([action, count]) => ({ action, count }));
-  }
-
-  private getPrivateKey(): string {
-    // In production, load from secure storage
-    return process.env.SAML_PRIVATE_KEY || `-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDN...
------END PRIVATE KEY-----`;
-  }
-
-  async testSSOConnection(providerId: number): Promise<any> {
-    const [provider] = await db.select()
-      .from(ssoProviders)
-      .where(eq(ssoProviders.id, providerId));
-
-    if (!provider) {
-      throw new Error('Provider not found');
-    }
-
-    try {
-      switch (provider.providerType) {
-        case 'saml':
-          // Test SAML metadata endpoint
-          const response = await fetch(provider.ssoUrl + '/metadata');
-          return { success: response.ok, metadata: await response.text() };
-        
-        case 'oidc':
-          // Test OIDC discovery
-          const issuer = await openidClient.Issuer.discover((provider.metadata as any)?.discoveryUrl);
-          return { success: true, issuer: issuer.metadata };
-        
-        default:
-          return { success: true };
+  private initializeDefaultProviders() {
+    // Initialize common SSO providers
+    const defaultProviders: Partial<SSOProvider>[] = [
+      {
+        id: 'okta',
+        name: 'Okta',
+        type: 'saml',
+        domain: '',
+        enabled: false,
+        config: {
+          entryPoint: '',
+          issuer: '',
+          cert: '',
+          callbackUrl: '/auth/saml/callback'
+        }
+      },
+      {
+        id: 'azure-ad',
+        name: 'Azure Active Directory',
+        type: 'oidc',
+        domain: '',
+        enabled: false,
+        config: {
+          clientId: '',
+          clientSecret: '',
+          tenantId: '',
+          redirectUri: '/auth/oidc/callback'
+        }
+      },
+      {
+        id: 'google-workspace',
+        name: 'Google Workspace',
+        type: 'oidc',
+        domain: '',
+        enabled: false,
+        config: {
+          clientId: '',
+          clientSecret: '',
+          domain: '',
+          redirectUri: '/auth/google/callback'
+        }
       }
+    ];
+
+    defaultProviders.forEach(provider => {
+      const ssoProvider: SSOProvider = {
+        ...provider,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      } as SSOProvider;
+      
+      this.ssoProviders.set(provider.id!, ssoProvider);
+    });
+  }
+
+  // SSO Provider Management
+  async createSSOProvider(req: Request, res: Response) {
+    try {
+      const { name, type, domain, config } = req.body;
+
+      if (!name || !type || !domain) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const id = crypto.randomUUID();
+      const provider: SSOProvider = {
+        id,
+        name,
+        type,
+        domain,
+        enabled: false,
+        config,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      this.ssoProviders.set(id, provider);
+
+      // Initialize SAML provider if needed
+      if (type === 'saml' && config.cert && config.entryPoint) {
+        try {
+          const sp = saml.ServiceProvider({
+            entityID: `${process.env.BASE_URL || 'http://localhost:5000'}/metadata/${id}`,
+            authnRequestsSigned: false,
+            wantAssertionsSigned: true,
+            wantMessageSigned: true,
+            wantLogoutResponseSigned: false,
+            wantLogoutRequestSigned: false,
+            allowCreate: true,
+            contactPerson: [{
+              contactType: 'technical',
+              givenName: 'E-Code Support',
+              emailAddress: 'support@e-code.com'
+            }],
+            assertionConsumerService: [{
+              Binding: saml.Constants.namespace.binding.post,
+              Location: `${process.env.BASE_URL || 'http://localhost:5000'}/auth/saml/callback/${id}`
+            }]
+          });
+
+          const idp = saml.IdentityProvider({
+            entityID: config.issuer,
+            singleSignOnService: [{
+              Binding: saml.Constants.namespace.binding.redirect,
+              Location: config.entryPoint
+            }],
+            singleLogoutService: [{
+              Binding: saml.Constants.namespace.binding.redirect,
+              Location: config.logoutUrl || config.entryPoint
+            }],
+            signingCerts: [config.cert]
+          });
+
+          this.samlProviders.set(id, { sp, idp });
+          logger.info(`SAML provider ${name} initialized successfully`);
+        } catch (samlError) {
+          logger.error(`Failed to initialize SAML provider ${name}:`, samlError);
+        }
+      }
+
+      logger.info(`SSO provider ${name} created with ID ${id}`);
+
+      res.json({
+        success: true,
+        provider: {
+          id,
+          name,
+          type,
+          domain,
+          enabled: false,
+          createdAt: provider.createdAt
+        }
+      });
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      logger.error('Error creating SSO provider:', error);
+      res.status(500).json({ error: 'Failed to create SSO provider' });
     }
+  }
+
+  async getSSOProviders(req: Request, res: Response) {
+    try {
+      const providers = Array.from(this.ssoProviders.values()).map(p => ({
+        id: p.id,
+        name: p.name,
+        type: p.type,
+        domain: p.domain,
+        enabled: p.enabled,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        usersCount: Array.from(this.scimUsers.values())
+          .filter(u => u.emails.some(e => e.value.endsWith(`@${p.domain}`))).length
+      }));
+
+      res.json({
+        providers,
+        totalCount: providers.length,
+        enabledCount: providers.filter(p => p.enabled).length
+      });
+    } catch (error) {
+      logger.error('Error fetching SSO providers:', error);
+      res.status(500).json({ error: 'Failed to fetch SSO providers' });
+    }
+  }
+
+  async updateSSOProvider(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const provider = this.ssoProviders.get(id);
+      if (!provider) {
+        return res.status(404).json({ error: 'SSO provider not found' });
+      }
+
+      const updatedProvider = {
+        ...provider,
+        ...updates,
+        updatedAt: new Date()
+      };
+
+      this.ssoProviders.set(id, updatedProvider);
+
+      logger.info(`SSO provider ${id} updated`);
+
+      res.json({
+        success: true,
+        provider: {
+          id: updatedProvider.id,
+          name: updatedProvider.name,
+          type: updatedProvider.type,
+          domain: updatedProvider.domain,
+          enabled: updatedProvider.enabled,
+          updatedAt: updatedProvider.updatedAt
+        }
+      });
+    } catch (error) {
+      logger.error('Error updating SSO provider:', error);
+      res.status(500).json({ error: 'Failed to update SSO provider' });
+    }
+  }
+
+  // SAML Authentication
+  async initiateSAMLLogin(req: Request, res: Response) {
+    try {
+      const { providerId } = req.params;
+      const provider = this.ssoProviders.get(providerId);
+      
+      if (!provider || !provider.enabled || provider.type !== 'saml') {
+        return res.status(404).json({ error: 'SAML provider not found or not enabled' });
+      }
+
+      const samlProvider = this.samlProviders.get(providerId);
+      if (!samlProvider) {
+        return res.status(500).json({ error: 'SAML provider not properly configured' });
+      }
+
+      const { sp, idp } = samlProvider;
+      const { context } = sp.createLoginRequest(idp, 'redirect');
+
+      logger.info(`SAML login initiated for provider ${provider.name}`);
+
+      res.json({
+        redirectUrl: context,
+        providerId,
+        providerName: provider.name
+      });
+    } catch (error) {
+      logger.error('Error initiating SAML login:', error);
+      res.status(500).json({ error: 'Failed to initiate SAML login' });
+    }
+  }
+
+  async handleSAMLCallback(req: Request, res: Response) {
+    try {
+      const { providerId } = req.params;
+      const { SAMLResponse } = req.body;
+
+      const provider = this.ssoProviders.get(providerId);
+      if (!provider || provider.type !== 'saml') {
+        return res.status(404).json({ error: 'SAML provider not found' });
+      }
+
+      const samlProvider = this.samlProviders.get(providerId);
+      if (!samlProvider) {
+        return res.status(500).json({ error: 'SAML provider not configured' });
+      }
+
+      const { sp, idp } = samlProvider;
+      const { extract } = await sp.parseLoginResponse(idp, 'post', {
+        body: { SAMLResponse }
+      });
+
+      const userInfo = extract.attributes;
+      const email = userInfo.email || userInfo['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
+      const name = userInfo.name || userInfo['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
+
+      if (!email) {
+        return res.status(400).json({ error: 'Email not provided by SAML provider' });
+      }
+
+      // Find or create user
+      let user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Auto-provision user
+        user = await storage.createUser({
+          username: email.split('@')[0],
+          email,
+          hashedPassword: '', // SSO users don't have passwords
+          ssoProvider: providerId,
+          ssoId: extract.nameID
+        });
+        
+        logger.info(`Auto-provisioned user ${email} via SAML`);
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, ssoProvider: providerId },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
+      logger.info(`SAML authentication successful for ${email}`);
+
+      res.json({
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          ssoProvider: providerId
+        }
+      });
+    } catch (error) {
+      logger.error('Error handling SAML callback:', error);
+      res.status(500).json({ error: 'SAML authentication failed' });
+    }
+  }
+
+  // SCIM 2.0 Implementation
+  async getSCIMUsers(req: Request, res: Response) {
+    try {
+      const { startIndex = 1, count = 20, filter } = req.query;
+      const start = parseInt(startIndex as string) - 1;
+      const limit = parseInt(count as string);
+
+      let users = Array.from(this.scimUsers.values());
+
+      // Apply filter if provided
+      if (filter) {
+        const filterStr = filter as string;
+        if (filterStr.includes('userName eq')) {
+          const userName = filterStr.match(/userName eq "([^"]+)"/)?.[1];
+          if (userName) {
+            users = users.filter(u => u.userName === userName);
+          }
+        }
+      }
+
+      const totalResults = users.length;
+      const paginatedUsers = users.slice(start, start + limit);
+
+      res.json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+        totalResults,
+        startIndex: parseInt(startIndex as string),
+        itemsPerPage: paginatedUsers.length,
+        Resources: paginatedUsers
+      });
+    } catch (error) {
+      logger.error('Error fetching SCIM users:', error);
+      res.status(500).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '500',
+        detail: 'Internal server error'
+      });
+    }
+  }
+
+  async createSCIMUser(req: Request, res: Response) {
+    try {
+      const userData = req.body;
+      const id = crypto.randomUUID();
+
+      const scimUser: SCIMUser = {
+        id,
+        userName: userData.userName,
+        name: userData.name || {
+          givenName: '',
+          familyName: '',
+          formatted: userData.userName
+        },
+        emails: userData.emails || [{
+          value: userData.userName,
+          type: 'work',
+          primary: true
+        }],
+        active: userData.active !== false,
+        groups: [],
+        externalId: userData.externalId,
+        meta: {
+          resourceType: 'User',
+          created: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          version: '1'
+        }
+      };
+
+      this.scimUsers.set(id, scimUser);
+
+      // Also create internal user
+      try {
+        const email = scimUser.emails.find(e => e.primary)?.value || scimUser.emails[0]?.value;
+        if (email) {
+          await storage.createUser({
+            username: scimUser.userName,
+            email,
+            hashedPassword: '', // SCIM users don't have passwords
+            scimId: id,
+            isActive: scimUser.active
+          });
+        }
+      } catch (userError) {
+        logger.warn('Failed to create internal user for SCIM user:', userError);
+      }
+
+      logger.info(`SCIM user ${scimUser.userName} created with ID ${id}`);
+
+      res.status(201).json(scimUser);
+    } catch (error) {
+      logger.error('Error creating SCIM user:', error);
+      res.status(500).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '500',
+        detail: 'Failed to create user'
+      });
+    }
+  }
+
+  async getSCIMUser(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const user = this.scimUsers.get(id);
+
+      if (!user) {
+        return res.status(404).json({
+          schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+          status: '404',
+          detail: 'User not found'
+        });
+      }
+
+      res.json(user);
+    } catch (error) {
+      logger.error('Error fetching SCIM user:', error);
+      res.status(500).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '500',
+        detail: 'Internal server error'
+      });
+    }
+  }
+
+  async updateSCIMUser(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const user = this.scimUsers.get(id);
+      if (!user) {
+        return res.status(404).json({
+          schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+          status: '404',
+          detail: 'User not found'
+        });
+      }
+
+      const updatedUser = {
+        ...user,
+        ...updates,
+        id, // Preserve ID
+        meta: {
+          ...user.meta,
+          lastModified: new Date().toISOString(),
+          version: (parseInt(user.meta.version) + 1).toString()
+        }
+      };
+
+      this.scimUsers.set(id, updatedUser);
+
+      logger.info(`SCIM user ${id} updated`);
+
+      res.json(updatedUser);
+    } catch (error) {
+      logger.error('Error updating SCIM user:', error);
+      res.status(500).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '500',
+        detail: 'Failed to update user'
+      });
+    }
+  }
+
+  async deleteSCIMUser(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      
+      if (!this.scimUsers.has(id)) {
+        return res.status(404).json({
+          schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+          status: '404',
+          detail: 'User not found'
+        });
+      }
+
+      this.scimUsers.delete(id);
+
+      logger.info(`SCIM user ${id} deleted`);
+
+      res.status(204).send();
+    } catch (error) {
+      logger.error('Error deleting SCIM user:', error);
+      res.status(500).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '500',
+        detail: 'Failed to delete user'
+      });
+    }
+  }
+
+  // SCIM Groups
+  async getSCIMGroups(req: Request, res: Response) {
+    try {
+      const { startIndex = 1, count = 20 } = req.query;
+      const start = parseInt(startIndex as string) - 1;
+      const limit = parseInt(count as string);
+
+      const groups = Array.from(this.scimGroups.values());
+      const totalResults = groups.length;
+      const paginatedGroups = groups.slice(start, start + limit);
+
+      res.json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+        totalResults,
+        startIndex: parseInt(startIndex as string),
+        itemsPerPage: paginatedGroups.length,
+        Resources: paginatedGroups
+      });
+    } catch (error) {
+      logger.error('Error fetching SCIM groups:', error);
+      res.status(500).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '500',
+        detail: 'Internal server error'
+      });
+    }
+  }
+
+  async createSCIMGroup(req: Request, res: Response) {
+    try {
+      const groupData = req.body;
+      const id = crypto.randomUUID();
+
+      const scimGroup: SCIMGroup = {
+        id,
+        displayName: groupData.displayName,
+        members: groupData.members || [],
+        meta: {
+          resourceType: 'Group',
+          created: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          version: '1'
+        }
+      };
+
+      this.scimGroups.set(id, scimGroup);
+
+      logger.info(`SCIM group ${scimGroup.displayName} created with ID ${id}`);
+
+      res.status(201).json(scimGroup);
+    } catch (error) {
+      logger.error('Error creating SCIM group:', error);
+      res.status(500).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '500',
+        detail: 'Failed to create group'
+      });
+    }
+  }
+
+  // Configuration endpoints
+  async getSCIMConfig(req: Request, res: Response) {
+    try {
+      res.json({
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'],
+        documentationUri: 'https://e-code.com/docs/scim',
+        patch: {
+          supported: true
+        },
+        bulk: {
+          supported: false
+        },
+        filter: {
+          supported: true,
+          maxResults: 200
+        },
+        changePassword: {
+          supported: false
+        },
+        sort: {
+          supported: false
+        },
+        etag: {
+          supported: false
+        },
+        authenticationSchemes: [{
+          type: 'httpbearer',
+          name: 'Bearer Token',
+          description: 'Authentication scheme using HTTP Bearer Token',
+          specUri: 'https://tools.ietf.org/html/draft-ietf-oauth-v2-bearer-01',
+          documentationUri: 'https://e-code.com/docs/scim-auth'
+        }]
+      });
+    } catch (error) {
+      logger.error('Error fetching SCIM config:', error);
+      res.status(500).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '500',
+        detail: 'Internal server error'
+      });
+    }
+  }
+
+  async getSCIMResourceTypes(req: Request, res: Response) {
+    res.json([
+      {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
+        id: 'User',
+        name: 'User',
+        endpoint: '/scim/v2/Users',
+        description: 'User Account',
+        schema: 'urn:ietf:params:scim:schemas:core:2.0:User'
+      },
+      {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
+        id: 'Group',
+        name: 'Group',
+        endpoint: '/scim/v2/Groups',
+        description: 'Group',
+        schema: 'urn:ietf:params:scim:schemas:core:2.0:Group'
+      }
+    ]);
   }
 }
 
-// Export singleton instance
 export const enterpriseSSOService = new EnterpriseSSOService();
