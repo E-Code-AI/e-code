@@ -95,6 +95,9 @@ const SecurityScanner = lazy(() => import("@/pages/SecurityScanner"));
 const Dependencies = lazy(() => import("@/pages/Dependencies"));
 const ObjectStorage = lazy(() => import("@/pages/ObjectStorage"));
 const ReplitDemo = lazy(() => import("@/pages/ReplitDemo"));
+const DatabaseManagement = lazy(() => import("@/pages/DatabaseManagement"));
+const SecretManagement = lazy(() => import("@/pages/SecretManagement"));
+const UsageAlerts = lazy(() => import("@/pages/UsageAlerts"));
 // Newsletter pages
 const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
 // Comparison pages
@@ -405,6 +408,15 @@ function AppContent() {
             <ReplitLayout>
               <ObjectStorage />
             </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/projects/:id/database" component={() => (
+            <DatabaseManagement />
+          )} />
+          <ProtectedRoute path="/projects/:id/secrets" component={() => (
+            <SecretManagement />
+          )} />
+          <ProtectedRoute path="/usage-alerts" component={() => (
+            <UsageAlerts />
           )} />
           <ProtectedRoute path="/admin" component={() => (
             <ReplitLayout>
