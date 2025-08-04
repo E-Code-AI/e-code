@@ -344,6 +344,52 @@ export const checkpointDatabase = pgTable('checkpoint_database', {
   metadata: jsonb('metadata').default({}),
 });
 
+// WebRTC Voice/Video Session Tables
+export const webrtcSessions = pgTable('webrtc_sessions', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  roomId: varchar('room_id').notNull().unique(),
+  sessionType: varchar('session_type').notNull().default('video'), // video, voice, screen-share
+  maxParticipants: integer('max_participants').notNull().default(10),
+  isActive: boolean('is_active').notNull().default(true),
+  createdBy: integer('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  endedAt: timestamp('ended_at'),
+});
+
+export const webrtcParticipants = pgTable('webrtc_participants', {
+  id: serial('id').primaryKey(),
+  sessionId: integer('session_id').notNull().references(() => webrtcSessions.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id),
+  joinedAt: timestamp('joined_at').defaultNow().notNull(),
+  leftAt: timestamp('left_at'),
+  connectionId: varchar('connection_id').notNull(),
+  isHost: boolean('is_host').notNull().default(false),
+  audioEnabled: boolean('audio_enabled').notNull().default(true),
+  videoEnabled: boolean('video_enabled').notNull().default(true),
+});
+
+export const webrtcRecordings = pgTable('webrtc_recordings', {
+  id: serial('id').primaryKey(),
+  sessionId: integer('session_id').notNull().references(() => webrtcSessions.id),
+  recordingUrl: text('recording_url').notNull(),
+  duration: integer('duration'), // in seconds
+  fileSize: integer('file_size'), // in bytes
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Collaboration Presence Tables
+export const collaborationPresence = pgTable('collaboration_presence', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  fileId: integer('file_id').references(() => files.id),
+  cursorPosition: jsonb('cursor_position').default({}), // {line: number, column: number}
+  selection: jsonb('selection').default({}), // {start: {line, column}, end: {line, column}}
+  isActive: boolean('is_active').notNull().default(true),
+  lastSeen: timestamp('last_seen').defaultNow().notNull(),
+});
+
 // Time tracking for projects
 export const projectTimeTracking = pgTable('project_time_tracking', {
   id: serial('id').primaryKey(),
@@ -439,6 +485,10 @@ export const insertCheckpointDatabaseSchema = createInsertSchema(checkpointDatab
 export const insertTimeTrackingSchema = createInsertSchema(projectTimeTracking).omit({ id: true, createdAt: true });
 export const insertScreenshotSchema = createInsertSchema(projectScreenshots).omit({ id: true, createdAt: true });
 export const insertTaskSummarySchema = createInsertSchema(taskSummaries).omit({ id: true, createdAt: true });
+export const insertWebrtcSessionSchema = createInsertSchema(webrtcSessions).omit({ id: true, createdAt: true });
+export const insertWebrtcParticipantSchema = createInsertSchema(webrtcParticipants).omit({ id: true, joinedAt: true });
+export const insertWebrtcRecordingSchema = createInsertSchema(webrtcRecordings).omit({ id: true, createdAt: true });
+export const insertCollaborationPresenceSchema = createInsertSchema(collaborationPresence).omit({ id: true, lastSeen: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -486,3 +536,15 @@ export type InsertScreenshot = z.infer<typeof insertScreenshotSchema>;
 
 export type TaskSummary = typeof taskSummaries.$inferSelect;
 export type InsertTaskSummary = z.infer<typeof insertTaskSummarySchema>;
+
+export type WebrtcSession = typeof webrtcSessions.$inferSelect;
+export type InsertWebrtcSession = z.infer<typeof insertWebrtcSessionSchema>;
+
+export type WebrtcParticipant = typeof webrtcParticipants.$inferSelect;
+export type InsertWebrtcParticipant = z.infer<typeof insertWebrtcParticipantSchema>;
+
+export type WebrtcRecording = typeof webrtcRecordings.$inferSelect;
+export type InsertWebrtcRecording = z.infer<typeof insertWebrtcRecordingSchema>;
+
+export type CollaborationPresence = typeof collaborationPresence.$inferSelect;
+export type InsertCollaborationPresence = z.infer<typeof insertCollaborationPresenceSchema>;
