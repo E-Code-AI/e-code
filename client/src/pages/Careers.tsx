@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { PublicNavbar } from '@/components/PublicNavbar';
-import { PublicFooter } from '@/components/PublicFooter';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { PublicFooter } from '@/components/layout/PublicFooter';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { 
