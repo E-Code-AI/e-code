@@ -57,7 +57,7 @@ export function EdgeDeployment({ projectId }: { projectId: string }) {
   // Deploy to edge mutation
   const deployMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/edge-deploy`, {
+      const response = await fetch(`/api/edge-deployment/${projectId}/deploy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ export function EdgeDeployment({ projectId }: { projectId: string }) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/edge-deployments`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/edge-deployment/${projectId}/status`] });
       toast({
         title: 'Edge Deployment Started',
         description: `Deploying to ${config.edgeLocations.length} global locations`

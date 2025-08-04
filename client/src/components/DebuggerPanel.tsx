@@ -72,15 +72,15 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
 
   // Fetch debug session
   const { data: debugSession, refetch: refetchSession } = useQuery<DebugSession>({
-    queryKey: [`/api/projects/${projectId}/debug/session`],
+    queryKey: [`/api/debug/${projectId}/session`],
     enabled: !!projectId,
-    refetchInterval: debugSession?.status === 'running' ? 1000 : false
+    refetchInterval: (data) => data?.status === 'running' ? 1000 : false
   });
 
   // Start debugging
   const startDebugMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/debug/start`, {
+      const response = await fetch(`/api/debug/${projectId}/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -106,7 +106,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
   // Debug control mutations
   const debugControlMutation = useMutation({
     mutationFn: async (action: 'continue' | 'pause' | 'stop' | 'step_over' | 'step_into' | 'step_out') => {
-      const response = await fetch(`/api/projects/${projectId}/debug/${action}`, {
+      const response = await fetch(`/api/debug/${projectId}/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -121,7 +121,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
   // Toggle breakpoint
   const toggleBreakpointMutation = useMutation({
     mutationFn: async ({ file, line }: { file: string; line: number }) => {
-      const response = await fetch(`/api/projects/${projectId}/debug/breakpoints/toggle`, {
+      const response = await fetch(`/api/debug/${projectId}/breakpoints/toggle`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file, line })

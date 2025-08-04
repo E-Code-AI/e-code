@@ -49,7 +49,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
 
   const fetchCollaborators = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/collaborators`, {
+      const response = await fetch(`/api/collaboration/${projectId}/users`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -71,7 +71,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
     if (!inviteEmail.trim()) return;
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/invite`, {
+      const response = await fetch(`/api/collaboration/${projectId}/invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -100,7 +100,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
 
   const updateCollaboratorRole = async (collaboratorId: string, role: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/collaborators/${collaboratorId}`, {
+      const response = await fetch(`/api/collaboration/${projectId}/users/${collaboratorId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -125,7 +125,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
 
   const removeCollaborator = async (collaboratorId: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/collaborators/${collaboratorId}`, {
+      const response = await fetch(`/api/collaboration/${projectId}/users/${collaboratorId}`, {
         method: 'DELETE',
         credentials: 'include'
       });

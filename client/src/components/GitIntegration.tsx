@@ -85,7 +85,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const checkGitStatus = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/status`);
+      const response = await fetch(`/api/git/${projectId}/status`);
       if (response.ok) {
         const data = await response.json();
         // Transform data to match GitStatus interface
@@ -110,7 +110,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const loadBranches = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/branches`);
+      const response = await fetch(`/api/git/${projectId}/branches`);
       if (response.ok) {
         const data = await response.json();
         const currentBranch = gitStatus?.branch || 'main';
@@ -127,7 +127,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const loadCommits = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/commits`);
+      const response = await fetch(`/api/git/${projectId}/commits`);
       if (response.ok) {
         const data = await response.json();
         setCommits(data.map((commit: any) => ({
@@ -142,7 +142,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleInit = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/init`, {
+      const response = await fetch(`/api/git/${projectId}/init`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -166,7 +166,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
     if (!cloneUrl) return;
     
     try {
-      const response = await fetch(`/api/projects/${projectId}/git/clone`, {
+      const response = await fetch(`/api/git/${projectId}/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: cloneUrl })
