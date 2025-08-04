@@ -381,6 +381,31 @@ function AppContent() {
               <BookScanner />
             </ReplitLayout>
           )} />
+          {/* SolarTech Applications with Replit-style URLs */}
+          <ProtectedRoute path="/@admin/solartech-ai-chat" component={() => (
+            <ApplicationIDEWrapper
+              projectName="SolarTech AI Chat"
+              projectDescription="Professional solar technology AI assistant"
+              projectId={1001}
+              appComponent={<SolarTechAIChatApp />}
+            />
+          )} />
+          <ProtectedRoute path="/@admin/solartech-crm" component={() => (
+            <ApplicationIDEWrapper
+              projectName="SolarTech CRM"
+              projectDescription="Solar business customer relationship management"
+              projectId={1002}
+              appComponent={<SolarTechCRMApp />}
+            />
+          )} />
+          <ProtectedRoute path="/@admin/solartech-fortune500-store" component={() => (
+            <ApplicationIDEWrapper
+              projectName="Fortune500 Solar Store"
+              projectDescription="E-commerce platform for solar technology products"
+              projectId={1003}
+              appComponent={<SolarTechStoreApp />}
+            />
+          )} />
           <Route path="/@:username" component={() => (
             <ReplitLayout showSidebar={false}>
               <UserProfile />
