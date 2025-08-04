@@ -46,9 +46,9 @@ export function ResponsiveWebPreview({
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Get preview URL from the backend
+  // Get preview URL from the backend - REAL BACKEND
   const { data: previewData } = useQuery<{ previewUrl: string }>({
-    queryKey: [`/api/projects/${projectId}/preview-url`],
+    queryKey: [`/api/preview/url`, projectId],
     enabled: !!projectId
   });
 

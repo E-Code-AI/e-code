@@ -27,7 +27,7 @@ export function FileUpload({ projectId, parentId, onClose, className }: FileUplo
         formData.append('parentId', parentId.toString());
       }
 
-      const res = await fetch(`/api/projects/${projectId}/upload`, {
+      const res = await fetch(`/api/files/upload`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -40,7 +40,7 @@ export function FileUpload({ projectId, parentId, onClose, className }: FileUplo
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       toast({
         title: 'Files uploaded',
         description: 'Your files have been uploaded successfully',

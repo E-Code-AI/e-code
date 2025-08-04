@@ -26,10 +26,11 @@ export function RunButton({
   const [isRunning, setIsRunning] = useState(false);
   const { toast } = useToast();
 
-  // Start project execution
+  // Start project execution - REAL BACKEND
   const runProjectMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/execute`, {
+      const res = await apiRequest('POST', `/api/runtime/start`, {
+        projectId,
         mainFile: undefined, // Will use auto-detection
         timeout: 30000 // 30 seconds timeout
       });
@@ -56,11 +57,12 @@ export function RunButton({
     },
   });
 
-  // Stop project execution
+  // Stop project execution - REAL BACKEND
   const stopProjectMutation = useMutation({
     mutationFn: async () => {
       const executionId = (window as any).__currentExecutionId;
-      const res = await apiRequest('POST', `/api/projects/${projectId}/stop`, {
+      const res = await apiRequest('POST', `/api/runtime/stop`, {
+        projectId,
         executionId
       });
       return res.json();

@@ -38,15 +38,15 @@ export function CollaborationPresence({
 }: CollaborationPresenceProps) {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
 
-  // Fetch active collaborators
+  // Fetch active collaborators - REAL BACKEND
   const { data: activeCollaborators } = useQuery<Collaborator[]>({
-    queryKey: [`/api/projects/${projectId}/collaborators/active`],
+    queryKey: [`/api/collaboration/active`, projectId],
     refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   // WebSocket connection for real-time presence
   useEffect(() => {
-    const ws = new WebSocket(`ws://${window.location.host}/api/projects/${projectId}/collaboration`);
+    const ws = new WebSocket(`ws://${window.location.host}/api/collaboration/ws?projectId=${projectId}`);
     
     ws.onopen = () => {
       // Send initial presence

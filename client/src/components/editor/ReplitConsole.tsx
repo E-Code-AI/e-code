@@ -27,9 +27,9 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef(true);
 
-  // Fetch initial logs
+  // Fetch initial logs - REAL BACKEND
   const { data: initialLogs } = useQuery<ConsoleLog[]>({
-    queryKey: [`/api/projects/${projectId}/logs`],
+    queryKey: [`/api/terminal/logs`, projectId],
     enabled: !!projectId,
   });
 
@@ -37,7 +37,7 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
   useEffect(() => {
     if (!isRunning || !executionId) return;
 
-    const ws = new WebSocket(`ws://${window.location.host}/api/projects/${projectId}/logs/stream?executionId=${executionId}`);
+    const ws = new WebSocket(`ws://${window.location.host}/api/terminal/ws?projectId=${projectId}&executionId=${executionId}`);
     
     ws.onmessage = (event) => {
       const log = JSON.parse(event.data);

@@ -101,21 +101,18 @@ export function ReplitFileExplorer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Fetch files from API
+  // Fetch files from API - REAL BACKEND
   const { data: files = [], isLoading, refetch } = useQuery<FileNode[]>({
-    queryKey: [`/api/projects/${projectId}/files`],
+    queryKey: [`/api/files/${projectId}`],
     enabled: !!projectId,
   });
 
-  // File operations mutations
+  // File operations mutations - REAL BACKEND
   const createFileMutation = useMutation({
     mutationFn: async (data: { name: string; isFolder: boolean; parentId: number | null; content?: string }) => 
-      apiRequest(`/api/projects/${projectId}/files`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
+      apiRequest("POST", `/api/files`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       toast({ title: "Success", description: "File created successfully" });
       setNewItemDialog(null);
     },
@@ -126,12 +123,9 @@ export function ReplitFileExplorer({
 
   const updateFileMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: number; name?: string; content?: string }) =>
-      apiRequest(`/api/files/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      }),
+      apiRequest("PATCH", `/api/files/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       toast({ title: "Success", description: "File updated successfully" });
       setRenameDialog(null);
     },
@@ -142,9 +136,9 @@ export function ReplitFileExplorer({
 
   const deleteFileMutation = useMutation({
     mutationFn: async (id: number) =>
-      apiRequest(`/api/files/${id}`, { method: "DELETE" }),
+      apiRequest("DELETE", `/api/files/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       toast({ title: "Success", description: "File deleted successfully" });
       setDeleteConfirmDialog(null);
     },

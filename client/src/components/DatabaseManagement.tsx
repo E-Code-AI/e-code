@@ -131,24 +131,24 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
   const [isQueryLoading, setIsQueryLoading] = useState(false);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
 
-  // Fetch databases
+  // Fetch databases - REAL BACKEND
   const { data: databases = [], isLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/databases`],
-    enabled: !!projectId,
+    queryKey: ['/api/database/instances'],
+    enabled: true,
   });
 
-  // Fetch tables for selected database
+  // Fetch tables for selected database - REAL BACKEND
   const { data: tables = [] } = useQuery({
     queryKey: [`/api/databases/${selectedDatabase?.id}/tables`],
     enabled: !!selectedDatabase,
   });
 
-  // Create database mutation
+  // Create database mutation - REAL BACKEND
   const createDatabaseMutation = useMutation({
     mutationFn: (data: any) => 
-      apiRequest('POST', `/api/projects/${projectId}/databases`, data),
+      apiRequest('POST', '/api/database/create', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/databases`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/database/instances'] });
       toast({
         title: "Database Created",
         description: "Your database is being provisioned.",

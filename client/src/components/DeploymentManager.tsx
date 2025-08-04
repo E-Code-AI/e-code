@@ -101,7 +101,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
 
   const loadDeployments = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/deployments`, {
+      const response = await fetch(`/api/deployment/${projectId}`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -127,7 +127,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
 
   const loadStats = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/deployments/stats`);
+      const response = await fetch(`/api/deployment/${projectId}/stats`);
       if (response.ok) {
         const data = await response.json();
         setStats(data);
@@ -172,8 +172,8 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
 
   const loadEnvVars = async (deploymentId: number) => {
     try {
-      // Load environment variables from project, not deployment
-      const response = await fetch(`/api/projects/${projectId}/environment`, {
+      // Load environment variables from project - REAL BACKEND
+      const response = await fetch(`/api/environment/${projectId}`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -197,7 +197,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   const handleDeploy = async () => {
     setIsDeploying(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/deploy`, {
+      const response = await fetch(`/api/deployment/${projectId}/deploy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -235,8 +235,8 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
 
   const handleRedeploy = async (deployment: Deployment) => {
     try {
-      // Redeploy by calling the deploy endpoint again
-      const response = await fetch(`/api/projects/${projectId}/deploy`, {
+      // Redeploy by calling the deploy endpoint again - REAL BACKEND
+      const response = await fetch(`/api/deployment/${projectId}/redeploy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -286,7 +286,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
     if (!newEnvKey.trim()) return;
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/environment`, {
+      const response = await fetch(`/api/environment/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

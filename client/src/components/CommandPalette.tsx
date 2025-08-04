@@ -232,10 +232,10 @@ export function CommandPalette() {
         <CommandEmpty>No results found.</CommandEmpty>
         
         {/* Recent Projects */}
-        {recentProjects && recentProjects.length > 0 && (
+        {Array.isArray(recentProjects) && recentProjects.length > 0 && (
           <>
             <CommandGroup heading="Recent Projects">
-              {recentProjects.slice(0, 5).map((project: any) => (
+              {recentProjects.slice(0, 5).map((project) => (
                 <CommandItem
                   key={project.id}
                   onSelect={() => {
