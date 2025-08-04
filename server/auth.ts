@@ -458,16 +458,28 @@ export function setupAuth(app: Express) {
 
   // Logout route
   app.post("/api/logout", (req, res, next) => {
+    console.log('[Logout] Request received');
+    console.log('[Logout] Session ID:', req.sessionID);
+    console.log('[Logout] User authenticated:', req.isAuthenticated());
+    console.log('[Logout] User:', req.user?.username);
+    
     // First logout using Passport
     req.logout((err) => {
-      if (err) return next(err);
+      if (err) {
+        console.error('[Logout] Passport logout error:', err);
+        return next(err);
+      }
+      
+      console.log('[Logout] Passport logout successful');
       
       // Then destroy the session completely
       req.session.destroy((sessionErr) => {
         if (sessionErr) {
-          console.error('Session destroy error:', sessionErr);
+          console.error('[Logout] Session destroy error:', sessionErr);
           return next(sessionErr);
         }
+        
+        console.log('[Logout] Session destroyed');
         
         // Clear the session cookie
         res.clearCookie('plot.sid', {
@@ -477,7 +489,7 @@ export function setupAuth(app: Express) {
           sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
         });
         
-        console.log('User logged out successfully');
+        console.log('[Logout] Cookie cleared, logout complete');
         res.sendStatus(200);
       });
     });

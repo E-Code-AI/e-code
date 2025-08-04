@@ -87,12 +87,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      console.log('Attempting logout...');
       const res = await apiRequest("POST", "/api/logout");
+      console.log('Logout response:', res.status, res.ok);
       if (!res.ok) {
-        throw new Error('Logout failed');
+        const text = await res.text();
+        console.error('Logout failed:', text);
+        throw new Error(text || 'Logout failed');
       }
+      return res;
     },
     onSuccess: () => {
+      console.log('Logout successful, clearing cache...');
       // Clear all cached data
       queryClient.clear();
       // Set user to null
@@ -107,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 500);
     },
     onError: (error: Error) => {
+      console.error('Logout error:', error);
       toast({
         title: "Logout failed",
         description: error.message,
