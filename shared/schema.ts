@@ -790,3 +790,106 @@ export type InsertWebrtcRecording = z.infer<typeof insertWebrtcRecordingSchema>;
 
 export type CollaborationPresence = typeof collaborationPresence.$inferSelect;
 export type InsertCollaborationPresence = z.infer<typeof insertCollaborationPresenceSchema>;
+
+// Voice/Video Sessions
+export const voiceVideoSessions = pgTable("voice_video_sessions", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  projectId: integer("project_id").notNull().references(() => projects.id),
+  type: varchar("type").notNull(), // 'voice' or 'video'
+  status: varchar("status").notNull().default('active'), // 'active', 'ended'
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  endedAt: timestamp("ended_at"),
+  recordingUrl: text("recording_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const voiceVideoParticipants = pgTable("voice_video_participants", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  sessionId: integer("session_id").notNull().references(() => voiceVideoSessions.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  leftAt: timestamp("left_at"),
+  isMuted: boolean("is_muted").notNull().default(false),
+  isVideoEnabled: boolean("is_video_enabled").notNull().default(true),
+});
+
+// GPU Resources
+export const gpuInstances = pgTable("gpu_instances", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  projectId: integer("project_id").notNull().references(() => projects.id),
+  gpuType: varchar("gpu_type").notNull(), // 'T4', 'A100', etc.
+  instanceId: varchar("instance_id").notNull().unique(),
+  status: varchar("status").notNull().default('provisioning'), // 'provisioning', 'active', 'stopped', 'terminated'
+  region: varchar("region").notNull(),
+  costPerHour: decimal("cost_per_hour", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const gpuUsage = pgTable("gpu_usage", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  instanceId: integer("instance_id").notNull().references(() => gpuInstances.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time"),
+  gpuUtilization: integer("gpu_utilization"), // percentage
+  memoryUsed: integer("memory_used"), // MB
+  totalCost: decimal("total_cost", { precision: 10, scale: 2 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Education Assignments
+export const assignments = pgTable("assignments", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  courseId: integer("course_id"), // References to a course if part of structured learning
+  createdBy: integer("created_by").notNull().references(() => users.id),
+  dueDate: timestamp("due_date"),
+  points: integer("points").default(100),
+  isPublished: boolean("is_published").default(false),
+  instructions: text("instructions"),
+  rubric: jsonb("rubric"), // Grading criteria
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const submissions = pgTable("submissions", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  assignmentId: integer("assignment_id").notNull().references(() => assignments.id),
+  studentId: integer("student_id").notNull().references(() => users.id),
+  projectId: integer("project_id").references(() => projects.id), // Link to the project containing the submission
+  submittedAt: timestamp("submitted_at").notNull().defaultNow(),
+  grade: integer("grade"),
+  feedback: text("feedback"),
+  status: varchar("status").notNull().default('submitted'), // 'submitted', 'graded', 'returned'
+  gradedBy: integer("graded_by").references(() => users.id),
+  gradedAt: timestamp("graded_at"),
+});
+
+// Insert schemas
+export const insertVoiceVideoSessionSchema = createInsertSchema(voiceVideoSessions).omit({ id: true, createdAt: true });
+export const insertVoiceVideoParticipantSchema = createInsertSchema(voiceVideoParticipants).omit({ id: true });
+export const insertGpuInstanceSchema = createInsertSchema(gpuInstances).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGpuUsageSchema = createInsertSchema(gpuUsage).omit({ id: true, createdAt: true });
+export const insertAssignmentSchema = createInsertSchema(assignments).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSubmissionSchema = createInsertSchema(submissions).omit({ id: true });
+
+// Types
+export type VoiceVideoSession = typeof voiceVideoSessions.$inferSelect;
+export type InsertVoiceVideoSession = z.infer<typeof insertVoiceVideoSessionSchema>;
+
+export type VoiceVideoParticipant = typeof voiceVideoParticipants.$inferSelect;
+export type InsertVoiceVideoParticipant = z.infer<typeof insertVoiceVideoParticipantSchema>;
+
+export type GpuInstance = typeof gpuInstances.$inferSelect;
+export type InsertGpuInstance = z.infer<typeof insertGpuInstanceSchema>;
+
+export type GpuUsage = typeof gpuUsage.$inferSelect;
+export type InsertGpuUsage = z.infer<typeof insertGpuUsageSchema>;
+
+export type Assignment = typeof assignments.$inferSelect;
+export type InsertAssignment = z.infer<typeof insertAssignmentSchema>;
+
+export type Submission = typeof submissions.$inferSelect;
+export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
