@@ -189,11 +189,23 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   const handleDeploy = async () => {
     setIsDeploying(true);
     try {
-      const response = await fetch(`/api/deployment/${projectId}/deploy`, {
+      const response = await fetch(`/api/projects/${projectId}/deploy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({})
+        body: JSON.stringify({
+          type: 'autoscale',
+          regions: ['us-east-1'],
+          environment: 'production',
+          sslEnabled: true,
+          customDomain: customDomain || undefined,
+          scaling: {
+            minInstances: 1,
+            maxInstances: 3,
+            targetCPU: 70,
+            targetMemory: 70
+          }
+        })
       });
 
       if (response.ok) {

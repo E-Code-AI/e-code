@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface Deployment {
   url: string;
@@ -28,6 +29,7 @@ interface PreviewPanelProps {
 }
 
 export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelProps) {
+  const { toast } = useToast();
   const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [customDomain, setCustomDomain] = useState('');
@@ -45,13 +47,24 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
 
   const handleDeploy = async () => {
     try {
-      await apiRequest('POST', `/api/deployment/${projectId}`, {
+      await apiRequest('POST', `/api/projects/${projectId}/deploy`, {
         type: 'static',
-        customDomain: customDomain || null,
+        regions: ['us-east-1'],
+        environment: 'production',
+        customDomain: customDomain || undefined,
         sslEnabled: true,
+      });
+      toast({
+        title: "Deployment Started",
+        description: "Your application is being deployed.",
       });
     } catch (error) {
       console.error('Deployment failed:', error);
+      toast({
+        title: "Deployment Failed",
+        description: "Failed to start deployment. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
