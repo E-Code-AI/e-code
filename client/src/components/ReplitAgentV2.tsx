@@ -98,6 +98,7 @@ export const ReplitAgentV2: React.FC<ReplitAgentV2Props> = ({
   const [workSummary, setWorkSummary] = useState<WorkSummary | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const [sessionId] = useState(() => `session-${Date.now()}`);
+  const [ws, setWs] = useState<WebSocket | null>(null);
   const { toast } = useToast();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -124,6 +125,59 @@ export const ReplitAgentV2: React.FC<ReplitAgentV2Props> = ({
     
     loadAgentTools();
   }, [projectId]);
+  
+  // Connect to WebSocket for real-time updates
+  useEffect(() => {
+    if (isWorking && !ws) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws/agent`;
+      const websocket = new WebSocket(wsUrl);
+      
+      websocket.onopen = () => {
+        console.log('Connected to agent WebSocket');
+        // Send connection info
+        websocket.send(JSON.stringify({
+          type: 'connect',
+          projectId,
+          sessionId
+        }));
+      };
+      
+      websocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'step_update') {
+          setWorkSteps(prev => [...prev, data.step]);
+        } else if (data.type === 'error') {
+          toast({
+            title: 'Agent Error',
+            description: data.error,
+            variant: 'destructive'
+          });
+        } else if (data.type === 'progress') {
+          // Handle other progress updates
+        }
+      };
+      
+      websocket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+      
+      websocket.onclose = () => {
+        console.log('WebSocket closed');
+        setWs(null);
+      };
+      
+      setWs(websocket);
+    }
+    
+    return () => {
+      if (ws) {
+        ws.close();
+        setWs(null);
+      }
+    };
+  }, [isWorking, projectId, sessionId]);
 
   // Start work when initial prompt is provided
   useEffect(() => {
