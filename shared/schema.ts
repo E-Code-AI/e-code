@@ -19,7 +19,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Enums
-export const visibilityEnum = pgEnum('visibility', ['public', 'private']);
+export const visibilityEnum = pgEnum('visibility', ['public', 'private', 'unlisted']);
 export const languageEnum = pgEnum('language', [
   'javascript', 'typescript', 'python', 'java', 'cpp', 'c', 'csharp', 'go', 
   'rust', 'php', 'ruby', 'swift', 'kotlin', 'html', 'css', 'sql', 'bash', 'other'
