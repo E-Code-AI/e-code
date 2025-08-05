@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Logout failed:', text);
         throw new Error(text || 'Logout failed');
       }
-      return res;
+      return;
     },
     onSuccess: () => {
       console.log('Logout successful, clearing cache...');
