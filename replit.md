@@ -29,6 +29,14 @@ An advanced AI-powered development platform that streamlines software creation t
   - Preview generated code before applying to project
   - Automatic technology detection and feature extraction
   - Integration with effort-based pricing and billing system
+  - Added deployment readiness checker with instructions
+  - Code metrics tracking (lines of code, files, token usage)
+  - Enhanced UI with 4-tab layout (Files, Preview, Features, Deploy)
+  - Export functionality for generated code
+- ✅ **Fixed project slug routing system**
+  - Projects now accessible via `/@username/projectname` URLs
+  - Fixed API endpoint to properly handle username/slug combination
+  - Updated ProjectPage to correctly fetch projects by slug
 
 **Model Integration Details:**
 - UserCredits & BudgetLimits: Full credit management and budget alerts

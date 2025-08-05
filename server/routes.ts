@@ -3949,9 +3949,51 @@ API will be available at http://localhost:3000
       if (prompt.toLowerCase().includes('chart')) features.push('Data Visualization');
       if (prompt.toLowerCase().includes('responsive')) features.push('Responsive Design');
 
-      // Determine complexity
-      const complexity = files.length > 5 ? 'complex' : files.length > 2 ? 'moderate' : 'simple';
-      const estimatedTime = files.length * 2;
+      // Calculate metrics
+      let totalLinesOfCode = 0;
+      let hasTests = false;
+      let hasDocumentation = false;
+      let deploymentReady = true;
+      const requiredFiles = new Set(['package.json', 'README.md']);
+      const presentFiles = new Set();
+      
+      for (const file of files) {
+        totalLinesOfCode += file.content.split('\n').length;
+        presentFiles.add(file.fileName.toLowerCase());
+        
+        if (file.fileName.includes('test') || file.fileName.includes('spec')) {
+          hasTests = true;
+        }
+        if (file.fileName.toLowerCase() === 'readme.md' || file.content.includes('/**')) {
+          hasDocumentation = true;
+        }
+        
+        // Detect more technologies
+        if (file.content.includes('useState') || file.content.includes('useEffect')) technologies.add('React Hooks');
+        if (file.content.includes('redux')) technologies.add('Redux');
+        if (file.content.includes('axios')) technologies.add('Axios');
+        if (file.content.includes('mongodb')) technologies.add('MongoDB');
+        if (file.content.includes('postgresql')) technologies.add('PostgreSQL');
+        if (file.content.includes('docker')) technologies.add('Docker');
+      }
+      
+      // Check deployment readiness
+      for (const req of requiredFiles) {
+        if (!presentFiles.has(req)) {
+          deploymentReady = false;
+          break;
+        }
+      }
+      
+      // Enhanced features detection
+      if (hasTests) features.push('Unit Tests');
+      if (hasDocumentation) features.push('Documentation');
+      if (deploymentReady) features.push('Deployment Ready');
+      
+      // Determine complexity based on multiple factors
+      const complexityScore = files.length * 0.3 + (totalLinesOfCode / 100) * 0.4 + technologies.size * 0.3;
+      const complexity = complexityScore > 10 ? 'complex' : complexityScore > 5 ? 'moderate' : 'simple';
+      const estimatedTime = Math.ceil(complexityScore * 0.5);
 
       res.json({
         id: `preview-${Date.now()}`,
@@ -3961,7 +4003,18 @@ API will be available at http://localhost:3000
         estimatedTime,
         complexity,
         technologies: Array.from(technologies),
-        features: features.length > 0 ? features : ['Code Generation', 'Modern Architecture', 'Best Practices']
+        features: features.length > 0 ? features : ['Code Generation', 'Modern Architecture', 'Best Practices'],
+        deployment: {
+          ready: deploymentReady,
+          instructions: deploymentReady 
+            ? ['Run npm install', 'Run npm start', 'Deploy to cloud']
+            : ['Add missing configuration files', 'Complete setup requirements']
+        },
+        metrics: {
+          filesGenerated: files.length,
+          totalLinesOfCode,
+          estimatedTokens: response.checkpoint?.tokensUsed || Math.ceil(totalLinesOfCode * 2)
+        }
       });
     } catch (error) {
       console.error('Code generation preview error:', error);

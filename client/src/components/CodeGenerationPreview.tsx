@@ -23,7 +23,12 @@ import {
   CheckCircle,
   Clock,
   Terminal,
-  Globe
+  Globe,
+  Package,
+  Hash,
+  FileCode,
+  Rocket,
+  AlertCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
@@ -52,6 +57,15 @@ interface PreviewResponse {
   complexity: 'simple' | 'moderate' | 'complex';
   technologies: string[];
   features: string[];
+  deployment?: {
+    ready: boolean;
+    instructions: string[];
+  };
+  metrics?: {
+    filesGenerated: number;
+    totalLinesOfCode: number;
+    estimatedTokens: number;
+  };
 }
 
 const QUICK_PROMPTS = [
@@ -371,7 +385,7 @@ export function CodeGenerationPreview({ projectId, className }: CodeGenerationPr
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="files" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Files ({preview.files.length})
@@ -384,10 +398,42 @@ export function CodeGenerationPreview({ projectId, className }: CodeGenerationPr
                   <Settings className="h-4 w-4" />
                   Features
                 </TabsTrigger>
+                <TabsTrigger value="deployment" className="flex items-center gap-2">
+                  <Rocket className="h-4 w-4" />
+                  Deploy
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="files" className="mt-4">
                 <div className="space-y-4">
+                  {/* Metrics Header */}
+                  {preview.metrics && (
+                    <Card className="bg-muted/30">
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-6 text-sm">
+                            <div className="flex items-center gap-2">
+                              <FileCode className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">{preview.metrics.filesGenerated} files</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Hash className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">{preview.metrics.totalLinesOfCode} lines</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Zap className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">~{preview.metrics.estimatedTokens} tokens</span>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline">
+                            <Download className="h-3 w-3 mr-1" />
+                            Export All
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  
                   {preview.files.map((file) => (
                     <Card key={file.id} className="relative">
                       <CardHeader className="pb-2">
@@ -496,6 +542,67 @@ export function CodeGenerationPreview({ projectId, className }: CodeGenerationPr
                     </CardContent>
                   </Card>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="deployment" className="mt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      {preview.deployment?.ready ? (
+                        <>
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          Ready for Deployment
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="h-5 w-5 text-yellow-500" />
+                          Deployment Preparation Required
+                        </>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {preview.deployment && (
+                        <>
+                          <Alert variant={preview.deployment.ready ? "default" : "warning"}>
+                            <AlertDescription>
+                              {preview.deployment.ready 
+                                ? "Your code is ready to deploy! Follow the instructions below to get started."
+                                : "Some setup is required before deployment. Please complete the following steps."}
+                            </AlertDescription>
+                          </Alert>
+                          
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-sm">Deployment Instructions:</h4>
+                            <ol className="space-y-2">
+                              {preview.deployment.instructions.map((instruction, index) => (
+                                <li key={index} className="flex items-start gap-2">
+                                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-medium">
+                                    {index + 1}
+                                  </span>
+                                  <span className="text-sm">{instruction}</span>
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                          
+                          <Separator />
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-muted-foreground">
+                              Deployment type: <span className="font-medium">Autoscale</span>
+                            </div>
+                            <Button variant="default" size="sm">
+                              <Rocket className="h-4 w-4 mr-2" />
+                              Deploy Now
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
 
