@@ -130,7 +130,7 @@ export const ReplitAgentV2: React.FC<ReplitAgentV2Props> = ({
   useEffect(() => {
     if (isWorking && !ws) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws/agent`;
+      const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${projectId}&sessionId=${sessionId}`;
       const websocket = new WebSocket(wsUrl);
       
       websocket.onopen = () => {
