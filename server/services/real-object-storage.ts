@@ -47,6 +47,15 @@ export class RealObjectStorageService {
 
   private initialize() {
     try {
+      // Skip initialization if not in production and no credentials provided
+      const hasCredentials = process.env.GCS_CREDENTIALS || process.env.GOOGLE_APPLICATION_CREDENTIALS;
+      const isProduction = process.env.NODE_ENV === 'production';
+      
+      if (!hasCredentials && !isProduction) {
+        logger.info('Skipping Google Cloud Storage initialization in development without credentials');
+        return;
+      }
+
       // Initialize Google Cloud Storage
       if (process.env.GCS_CREDENTIALS) {
         // Use service account credentials from environment
