@@ -52,31 +52,42 @@ export function ProjectSearch({ projectId, onFileSelect, className }: ProjectSea
 
     setIsSearching(true);
     try {
-      // Simulate search results
-      const mockResults: SearchResult[] = [
-        {
-          fileId: 1,
-          fileName: 'App.tsx',
-          filePath: '/src/App.tsx',
-          matches: [
-            { line: 12, content: '  const [searchQuery, setSearchQuery] = useState("");', startIndex: 10, endIndex: 21 },
-            { line: 45, content: '  const filtered = items.filter(item => item.includes(searchQuery));', startIndex: 56, endIndex: 67 }
-          ]
+      // Use real search API
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          fileId: 2,
-          fileName: 'utils.ts',
-          filePath: '/src/utils.ts',
-          matches: [
-            { line: 8, content: 'export function performSearch(query: string) {', startIndex: 15, endIndex: 21 }
-          ]
-        }
-      ];
+        credentials: 'include',
+        body: JSON.stringify({
+          query: searchQuery,
+          projectId,
+          type: 'files',
+          caseSensitive,
+          useRegex
+        })
+      });
       
-      setResults(mockResults);
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+      
+      const data = await response.json();
+      
+      // Transform API results to match our interface
+      const transformedResults: SearchResult[] = data.results?.map((result: any) => ({
+        fileId: result.fileId || result.id,
+        fileName: result.fileName || result.name,
+        filePath: result.filePath || result.path,
+        matches: result.matches || []
+      })) || [];
+      
+      setResults(transformedResults);
+      
+      const totalMatches = transformedResults.reduce((acc, r) => acc + r.matches.length, 0);
       toast({
         title: 'Search Complete',
-        description: `Found ${mockResults.reduce((acc, r) => acc + r.matches.length, 0)} matches in ${mockResults.length} files`,
+        description: `Found ${totalMatches} matches in ${transformedResults.length} files`,
       });
     } catch (error) {
       toast({
@@ -87,7 +98,7 @@ export function ProjectSearch({ projectId, onFileSelect, className }: ProjectSea
     } finally {
       setIsSearching(false);
     }
-  }, [searchQuery, caseSensitive, useRegex, toast]);
+  }, [searchQuery, projectId, caseSensitive, useRegex, toast]);
 
   const handleReplace = useCallback(async () => {
     if (!replaceQuery || selectedFiles.size === 0) {

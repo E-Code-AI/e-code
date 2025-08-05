@@ -60,7 +60,9 @@ export function FileUploadDropzone({
     setUploadFiles(prev => [...prev, ...newFiles]);
     setIsUploading(true);
 
-    // Simulate file upload
+    let successCount = 0;
+    
+    // Upload files using real API
     for (const uploadFile of newFiles) {
       try {
         // Update status to uploading
@@ -68,24 +70,57 @@ export function FileUploadDropzone({
           f.id === uploadFile.id ? { ...f, status: 'uploading' } : f
         ));
 
-        // Simulate progress
-        for (let i = 0; i <= 100; i += 20) {
-          await new Promise(resolve => setTimeout(resolve, 200));
-          setUploadFiles(prev => prev.map(f => 
-            f.id === uploadFile.id ? { ...f, progress: i } : f
-          ));
+        // Read file content
+        const content = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = reject;
+          
+          // Check if file is text or binary
+          if (uploadFile.file.type.startsWith('text/') || 
+              uploadFile.file.name.match(/\.(txt|js|jsx|ts|tsx|html|css|json|md|py|java|cpp|go|rs|xml|yaml|yml)$/i)) {
+            reader.readAsText(uploadFile.file);
+          } else {
+            // For binary files, convert to base64
+            reader.readAsDataURL(uploadFile.file);
+          }
+        });
+
+        // Update progress to 50% after reading
+        setUploadFiles(prev => prev.map(f => 
+          f.id === uploadFile.id ? { ...f, progress: 50 } : f
+        ));
+
+        // Upload to server
+        const response = await fetch(`/api/projects/${projectId}/files`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: uploadFile.file.name,
+            content: content,
+            isFolder: false,
+            parentId: currentPath ? parseInt(currentPath) : null
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
         }
 
         // Mark as success
         setUploadFiles(prev => prev.map(f => 
           f.id === uploadFile.id ? { ...f, status: 'success', progress: 100 } : f
         ));
+        successCount++;
       } catch (error) {
         setUploadFiles(prev => prev.map(f => 
           f.id === uploadFile.id ? { 
             ...f, 
             status: 'error', 
-            error: 'Upload failed' 
+            error: error instanceof Error ? error.message : 'Upload failed' 
           } : f
         ));
       }
@@ -94,10 +129,12 @@ export function FileUploadDropzone({
     setIsUploading(false);
     onUploadComplete?.();
     
-    toast({
-      title: 'Upload Complete',
-      description: `Successfully uploaded ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}`,
-    });
+    if (successCount > 0) {
+      toast({
+        title: 'Upload Complete',
+        description: `Successfully uploaded ${successCount} file${successCount > 1 ? 's' : ''}`,
+      });
+    }
   }, [projectId, currentPath, onUploadComplete, toast]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
