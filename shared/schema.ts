@@ -135,6 +135,38 @@ export const usageTracking = pgTable("usage_tracking", {
   billingPeriodEnd: timestamp("billing_period_end").notNull(),
 });
 
+// Credits and billing system
+export const userCredits = pgTable("user_credits", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  userId: integer("user_id").notNull().references(() => users.id).unique(),
+  monthlyCredits: decimal("monthly_credits", { precision: 10, scale: 2 }).notNull().default('25.00'),
+  remainingCredits: decimal("remaining_credits", { precision: 10, scale: 2 }).notNull().default('25.00'),
+  extraCredits: decimal("extra_credits", { precision: 10, scale: 2 }).notNull().default('0.00'),
+  resetDate: timestamp("reset_date").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const budgetLimits = pgTable("budget_limits", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  userId: integer("user_id").notNull().references(() => users.id).unique(),
+  monthlyLimit: decimal("monthly_limit", { precision: 10, scale: 2 }),
+  alertThreshold: integer("alert_threshold").default(80), // percentage
+  hardStop: boolean("hard_stop").default(true),
+  notificationEmail: varchar("notification_email"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const usageAlerts = pgTable("usage_alerts", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  alertType: varchar("alert_type").notNull(), // threshold_reached, limit_exceeded, etc.
+  threshold: integer("threshold").notNull(),
+  sent: boolean("sent").default(false),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Code Review Tables
 export const codeReviews = pgTable("code_reviews", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -277,6 +309,50 @@ export const deployments = pgTable("deployments", {
   metadata: jsonb("metadata").default({}),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Deployment type specific configurations
+export const autoscaleDeployments = pgTable("autoscale_deployments", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  deploymentId: integer("deployment_id").notNull().references(() => deployments.id).unique(),
+  minInstances: integer("min_instances").notNull().default(1),
+  maxInstances: integer("max_instances").notNull().default(10),
+  targetCpuUtilization: integer("target_cpu_utilization").default(70),
+  scaleDownDelay: integer("scale_down_delay").default(300), // seconds
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const reservedVmDeployments = pgTable("reserved_vm_deployments", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  deploymentId: integer("deployment_id").notNull().references(() => deployments.id).unique(),
+  vmSize: varchar("vm_size").notNull(), // small, medium, large, xlarge
+  cpuCores: integer("cpu_cores").notNull(),
+  memoryGb: integer("memory_gb").notNull(),
+  diskGb: integer("disk_gb").notNull(),
+  region: varchar("region").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const scheduledDeployments = pgTable("scheduled_deployments", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  deploymentId: integer("deployment_id").notNull().references(() => deployments.id).unique(),
+  cronExpression: varchar("cron_expression").notNull(),
+  timezone: varchar("timezone").notNull().default('UTC'),
+  lastRun: timestamp("last_run"),
+  nextRun: timestamp("next_run"),
+  maxRuntime: integer("max_runtime").default(3600), // seconds
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const staticDeployments = pgTable("static_deployments", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  deploymentId: integer("deployment_id").notNull().references(() => deployments.id).unique(),
+  cdnEnabled: boolean("cdn_enabled").default(true),
+  buildCommand: varchar("build_command"),
+  outputDirectory: varchar("output_directory").default('dist'),
+  headers: jsonb("headers").default({}),
+  redirects: jsonb("redirects").default([]),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Team and collaboration tables (existing from previous implementation)
@@ -430,6 +506,152 @@ export const taskSummaries = pgTable('task_summaries', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Object Storage tables (Google Cloud Storage)
+export const objectStorageBuckets = pgTable('object_storage_buckets', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  bucketName: varchar('bucket_name').notNull().unique(),
+  region: varchar('region').notNull().default('us-central1'),
+  storageClass: varchar('storage_class').notNull().default('STANDARD'),
+  publicAccess: boolean('public_access').default(false),
+  corsEnabled: boolean('cors_enabled').default(true),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const objectStorageFiles = pgTable('object_storage_files', {
+  id: serial('id').primaryKey(),
+  bucketId: integer('bucket_id').notNull().references(() => objectStorageBuckets.id),
+  fileName: text('file_name').notNull(),
+  filePath: text('file_path').notNull(),
+  contentType: varchar('content_type').notNull(),
+  size: integer('size').notNull(), // bytes
+  url: text('url').notNull(),
+  metadata: jsonb('metadata').default({}),
+  uploadedBy: integer('uploaded_by').notNull().references(() => users.id),
+  uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
+});
+
+// Key-Value Store
+export const keyValueStore = pgTable('key_value_store', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  key: varchar('key').notNull(),
+  value: jsonb('value').notNull(),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  unique().on(table.projectId, table.key),
+]);
+
+// AI Agent Conversations
+export const aiConversations = pgTable('ai_conversations', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  conversationId: varchar('conversation_id').notNull().unique(),
+  messages: jsonb('messages').notNull().default([]),
+  context: jsonb('context').default({}),
+  totalTokensUsed: integer('total_tokens_used').default(0),
+  model: varchar('model').notNull().default('claude-3-sonnet'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Dynamic Intelligence settings
+export const dynamicIntelligence = pgTable('dynamic_intelligence', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id).unique(),
+  extendedThinking: boolean('extended_thinking').default(false),
+  highPowerMode: boolean('high_power_mode').default(false),
+  autoWebSearch: boolean('auto_web_search').default(true),
+  preferredModel: varchar('preferred_model').default('claude-3-sonnet'),
+  customInstructions: text('custom_instructions'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Web Search History
+export const webSearchHistory = pgTable('web_search_history', {
+  id: serial('id').primaryKey(),
+  conversationId: integer('conversation_id').notNull().references(() => aiConversations.id),
+  query: text('query').notNull(),
+  results: jsonb('results').notNull(),
+  selectedUrls: jsonb('selected_urls').default([]),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+});
+
+// Secrets Management
+export const secrets = pgTable('secrets', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  key: varchar('key').notNull(),
+  encryptedValue: text('encrypted_value').notNull(),
+  description: text('description'),
+  createdBy: integer('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  unique().on(table.projectId, table.key),
+]);
+
+// Environment Variables
+export const environmentVariables = pgTable('environment_variables', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  key: varchar('key').notNull(),
+  value: text('value').notNull(),
+  environment: varchar('environment').notNull().default('development'), // development, staging, production
+  isSecret: boolean('is_secret').default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  unique().on(table.projectId, table.key, table.environment),
+]);
+
+// Git Integration
+export const gitRepositories = pgTable('git_repositories', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id).unique(),
+  provider: varchar('provider').notNull(), // github, gitlab, bitbucket
+  repositoryUrl: text('repository_url').notNull(),
+  defaultBranch: varchar('default_branch').notNull().default('main'),
+  isPrivate: boolean('is_private').default(true),
+  deployKey: text('deploy_key'), // encrypted
+  webhookSecret: varchar('webhook_secret'),
+  autoSync: boolean('auto_sync').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const gitCommits = pgTable('git_commits', {
+  id: serial('id').primaryKey(),
+  repositoryId: integer('repository_id').notNull().references(() => gitRepositories.id),
+  commitHash: varchar('commit_hash').notNull(),
+  message: text('message').notNull(),
+  author: varchar('author').notNull(),
+  authorEmail: varchar('author_email').notNull(),
+  timestamp: timestamp('timestamp').notNull(),
+  branch: varchar('branch').notNull(),
+  syncedAt: timestamp('synced_at').defaultNow().notNull(),
+});
+
+// Custom Domains
+export const customDomains = pgTable('custom_domains', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+  domain: varchar('domain').notNull().unique(),
+  subdomain: varchar('subdomain'),
+  sslStatus: varchar('ssl_status').notNull().default('pending'), // pending, active, failed
+  sslCertificate: text('ssl_certificate'),
+  verificationStatus: varchar('verification_status').notNull().default('pending'),
+  verificationToken: varchar('verification_token'),
+  dnsRecords: jsonb('dns_records').default([]),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   projects: many(projects),
@@ -491,6 +713,24 @@ export const insertWebrtcSessionSchema = createInsertSchema(webrtcSessions).omit
 export const insertWebrtcParticipantSchema = createInsertSchema(webrtcParticipants).omit({ id: true, joinedAt: true });
 export const insertWebrtcRecordingSchema = createInsertSchema(webrtcRecordings).omit({ id: true, createdAt: true });
 export const insertCollaborationPresenceSchema = createInsertSchema(collaborationPresence).omit({ id: true, lastSeen: true });
+export const insertUserCreditsSchema = createInsertSchema(userCredits).omit({ id: true, updatedAt: true });
+export const insertBudgetLimitSchema = createInsertSchema(budgetLimits).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertUsageAlertSchema = createInsertSchema(usageAlerts).omit({ id: true, createdAt: true });
+export const insertAutoscaleDeploymentSchema = createInsertSchema(autoscaleDeployments).omit({ id: true, createdAt: true });
+export const insertReservedVmDeploymentSchema = createInsertSchema(reservedVmDeployments).omit({ id: true, createdAt: true });
+export const insertScheduledDeploymentSchema = createInsertSchema(scheduledDeployments).omit({ id: true, createdAt: true });
+export const insertStaticDeploymentSchema = createInsertSchema(staticDeployments).omit({ id: true, createdAt: true });
+export const insertObjectStorageBucketSchema = createInsertSchema(objectStorageBuckets).omit({ id: true, createdAt: true });
+export const insertObjectStorageFileSchema = createInsertSchema(objectStorageFiles).omit({ id: true, uploadedAt: true });
+export const insertKeyValueStoreSchema = createInsertSchema(keyValueStore).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertAiConversationSchema = createInsertSchema(aiConversations).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDynamicIntelligenceSchema = createInsertSchema(dynamicIntelligence).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertWebSearchHistorySchema = createInsertSchema(webSearchHistory).omit({ id: true, timestamp: true });
+export const insertSecretSchema = createInsertSchema(secrets).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertEnvironmentVariableSchema = createInsertSchema(environmentVariables).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGitRepositorySchema = createInsertSchema(gitRepositories).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGitCommitSchema = createInsertSchema(gitCommits).omit({ id: true, syncedAt: true });
+export const insertCustomDomainSchema = createInsertSchema(customDomains).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
