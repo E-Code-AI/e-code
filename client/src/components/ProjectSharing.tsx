@@ -95,42 +95,41 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
       return;
     }
 
-    setIsInviting(true);
-    try {
-      // Simulate inviting
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newCollaborator: Collaborator = {
-        id: Math.random().toString(36).substr(2, 9),
-        username: inviteEmail.split('@')[0],
-        email: inviteEmail,
-        role: inviteRole,
-        status: 'pending'
-      };
-      
-      setCollaborators(prev => [...prev, newCollaborator]);
-      setInviteEmail('');
-      
-      toast({
-        title: 'Invitation Sent',
-        description: `Invitation sent to ${inviteEmail}`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Invite Failed',
-        description: 'Failed to send invitation',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsInviting(false);
-    }
+    // Show information about team-based collaboration
+    toast({
+      title: 'Team Collaboration',
+      description: 'Project sharing is managed through Teams. Create or join a team to collaborate on projects.',
+      action: (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            // Navigate to teams page
+            window.location.href = '/teams';
+          }}
+        >
+          Go to Teams
+        </Button>
+      ),
+    });
+    setInviteEmail('');
   };
 
   const removeCollaborator = (id: string) => {
-    setCollaborators(prev => prev.filter(c => c.id !== id));
     toast({
-      title: 'Collaborator Removed',
-      description: 'Successfully removed collaborator',
+      title: 'Team Management',
+      description: 'To remove collaborators, please manage team members through the Teams page.',
+      action: (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            window.location.href = '/teams';
+          }}
+        >
+          Go to Teams
+        </Button>
+      ),
     });
   };
 

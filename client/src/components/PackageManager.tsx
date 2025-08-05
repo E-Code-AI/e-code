@@ -63,14 +63,21 @@ export function PackageManager({ projectId, language = 'javascript', className }
 
     setIsSearching(true);
     try {
-      // Simulate package search
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use real API endpoint
+      const response = await fetch(`/api/packages/search?q=${encodeURIComponent(searchQuery)}&language=${language}`, {
+        credentials: 'include'
+      });
       
-      setSearchResults([
-        { name: 'lodash', version: '4.17.21', description: 'Lodash modular utilities' },
-        { name: 'axios', version: '1.4.0', description: 'Promise based HTTP client for the browser and node.js' },
-        { name: 'express', version: '4.18.2', description: 'Fast, unopinionated, minimalist web framework' }
-      ]);
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+      
+      const results = await response.json();
+      setSearchResults(results.map((pkg: any) => ({
+        name: pkg.name,
+        version: pkg.version,
+        description: pkg.description
+      })));
     } catch (error) {
       toast({
         title: 'Search Failed',
@@ -86,13 +93,25 @@ export function PackageManager({ projectId, language = 'javascript', className }
     setInstallingPackages(prev => new Set([...prev, packageName]));
     
     try {
-      // Simulate package installation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Use real API endpoint
+      const response = await fetch(`/api/projects/${projectId}/packages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ name: packageName, version, language })
+      });
       
+      if (!response.ok) {
+        throw new Error('Installation failed');
+      }
+      
+      const result = await response.json();
       const newPackage: PackageInfo = {
         name: packageName,
-        version: version || 'latest',
-        description: 'Newly installed package'
+        version: version || result.version || 'latest',
+        description: result.description || ''
       };
       
       setPackages(prev => [...prev, newPackage]);
@@ -117,6 +136,16 @@ export function PackageManager({ projectId, language = 'javascript', className }
 
   const handleUninstall = async (packageName: string) => {
     try {
+      // Use real API endpoint
+      const response = await fetch(`/api/projects/${projectId}/packages/${encodeURIComponent(packageName)}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Uninstall failed');
+      }
+      
       setPackages(prev => prev.filter(p => p.name !== packageName));
       toast({
         title: 'Package Uninstalled',
@@ -135,7 +164,19 @@ export function PackageManager({ projectId, language = 'javascript', className }
     setInstallingPackages(prev => new Set([...prev, packageName]));
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Use real API endpoint
+      const response = await fetch(`/api/projects/${projectId}/packages/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ packages: [packageName] })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Update failed');
+      }
       
       setPackages(prev => prev.map(p => 
         p.name === packageName 
