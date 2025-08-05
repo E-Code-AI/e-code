@@ -867,6 +867,47 @@ export const submissions = pgTable("submissions", {
   gradedAt: timestamp("graded_at"),
 });
 
+// Monitoring Tables (Fortune 500 Production Standards)
+export const monitoringEvents = pgTable("monitoring_events", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  eventType: varchar("event_type").notNull(), // 'user_action', 'system_event', etc.
+  eventData: jsonb("event_data").notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  userId: integer("user_id").references(() => users.id),
+  sessionId: varchar("session_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const performanceMetrics = pgTable("performance_metrics", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  name: varchar("name").notNull(),
+  value: decimal("value", { precision: 20, scale: 4 }).notNull(),
+  unit: varchar("unit").notNull(), // 'ms', 'bytes', 'count', 'percentage'
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  userId: integer("user_id").references(() => users.id),
+  sessionId: varchar("session_id"),
+  tags: jsonb("tags"), // Additional metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const errorLogs = pgTable("error_logs", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  message: text("message").notNull(),
+  stack: text("stack"),
+  type: varchar("type").notNull(), // 'error', 'unhandledRejection', etc.
+  severity: varchar("severity").notNull().default('medium'), // 'low', 'medium', 'high', 'critical'
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  userAgent: text("user_agent"),
+  url: text("url"),
+  userId: integer("user_id").references(() => users.id),
+  sessionId: varchar("session_id"),
+  metadata: jsonb("metadata"), // Additional context
+  resolved: boolean("resolved").notNull().default(false),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: integer("resolved_by").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Insert schemas
 export const insertVoiceVideoSessionSchema = createInsertSchema(voiceVideoSessions).omit({ id: true, createdAt: true });
 export const insertVoiceVideoParticipantSchema = createInsertSchema(voiceVideoParticipants).omit({ id: true });
@@ -874,6 +915,9 @@ export const insertGpuInstanceSchema = createInsertSchema(gpuInstances).omit({ i
 export const insertGpuUsageSchema = createInsertSchema(gpuUsage).omit({ id: true, createdAt: true });
 export const insertAssignmentSchema = createInsertSchema(assignments).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertSubmissionSchema = createInsertSchema(submissions).omit({ id: true });
+export const insertMonitoringEventSchema = createInsertSchema(monitoringEvents).omit({ id: true, createdAt: true });
+export const insertPerformanceMetricSchema = createInsertSchema(performanceMetrics).omit({ id: true, createdAt: true });
+export const insertErrorLogSchema = createInsertSchema(errorLogs).omit({ id: true, createdAt: true, resolved: true });
 
 // Types
 export type VoiceVideoSession = typeof voiceVideoSessions.$inferSelect;
@@ -893,3 +937,12 @@ export type InsertAssignment = z.infer<typeof insertAssignmentSchema>;
 
 export type Submission = typeof submissions.$inferSelect;
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
+
+export type MonitoringEvent = typeof monitoringEvents.$inferSelect;
+export type InsertMonitoringEvent = z.infer<typeof insertMonitoringEventSchema>;
+
+export type PerformanceMetric = typeof performanceMetrics.$inferSelect;
+export type InsertPerformanceMetric = z.infer<typeof insertPerformanceMetricSchema>;
+
+export type ErrorLog = typeof errorLogs.$inferSelect;
+export type InsertErrorLog = z.infer<typeof insertErrorLogSchema>;
