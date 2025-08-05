@@ -119,7 +119,16 @@ export class EnhancedAutonomousAgent {
       const checkpoint = await checkpointService.createCheckpoint({
         projectId: context.projectId,
         userId: context.userId,
-        message: `AI Agent: ${context.message.substring(0, 100)}...`
+        name: `AI Agent: ${context.message.substring(0, 50)}`,
+        description: `AI Agent response to: ${context.message.substring(0, 100)}...`,
+        type: 'automatic',
+        includeDatabase: false,
+        includeEnvironment: false,
+        agentState: {
+          filesModified: this.filesModified,
+          linesOfCodeWritten: this.linesOfCodeWritten,
+          actions: buildActions.length
+        }
       });
       
       // Calculate pricing based on effort
