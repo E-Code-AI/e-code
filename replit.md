@@ -14,7 +14,7 @@ An advanced AI-powered development platform that streamlines software creation t
 
 ## Recent Changes
 
-### 2025-08-05 - Complete Model Integration & 100% Functional Completion
+### 2025-08-05 - Complete Model Integration & One-Click Code Generation
 - ✅ Successfully integrated all 16 new database models with full functionality
 - ✅ Implemented comprehensive credit-based billing system with usage tracking
 - ✅ Created type-specific deployment configurations (autoscale, VM, scheduled, static)
@@ -24,6 +24,11 @@ An advanced AI-powered development platform that streamlines software creation t
 - ✅ Deployment manager now uses type-specific configurations
 - ✅ Billing service tracks resource usage and manages credit system
 - ✅ Object storage service integrated with database and billing tracking
+- ✅ **NEW: Implemented one-click code generation preview feature**
+  - Leverages existing AI agent infrastructure for code generation
+  - Preview generated code before applying to project
+  - Automatic technology detection and feature extraction
+  - Integration with effort-based pricing and billing system
 
 **Model Integration Details:**
 - UserCredits & BudgetLimits: Full credit management and budget alerts
@@ -32,6 +37,7 @@ An advanced AI-powered development platform that streamlines software creation t
 - Key-Value Store: Expiration-aware distributed storage
 - AI Features: Conversation tracking, dynamic intelligence, web search history
 - Infrastructure: Git repos, commits, custom domains, secrets management
+- Code Generation: One-click preview with existing AI agent system
 
 ### 2025-08-05 - Deployment Optimization & Error Fixes
 - ✅ Fixed all major deployment issues for Cloud Run compatibility

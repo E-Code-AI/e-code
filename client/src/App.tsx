@@ -126,6 +126,7 @@ const BoltImport = lazy(() => import("@/pages/BoltImport"));
 const LovableImport = lazy(() => import("@/pages/LovableImport"));
 const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
 const BookScanner = lazy(() => import("@/pages/BookScanner"));
+const CodeGeneration = lazy(() => import("@/pages/CodeGeneration"));
 // Application Pages
 const SolarTechAIChatApp = lazy(() => import("@/pages/SolarTechAIChatApp"));
 const SolarTechCRMApp = lazy(() => import("@/pages/SolarTechCRMApp"));
@@ -184,6 +185,7 @@ function AppContent() {
           <Route path="/mobile" component={PublicMobilePage} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-agent" component={AIAgent} />
+          <Route path="/code-generation" component={CodeGeneration} />
           <Route path="/press" component={Press} />
           <Route path="/partners" component={Partners} />
           <Route path="/security" component={Security} />
