@@ -110,6 +110,7 @@ import { realKubernetesDeployment } from "./deployment/real-kubernetes-deploymen
 import { dockerExecutor } from "./execution/docker-executor";
 import { realCodeGenerator } from "./ai/real-code-generator";
 import { realCollaborationService } from "./collaboration/real-collaboration";
+import { agentWebSocketService } from './services/agent-websocket-service';
 
 // Utility function for formatting bytes
 function formatBytes(bytes: number): string {
@@ -4865,6 +4866,7 @@ npx http-server .
         projectId,
         userId,
         message,
+        sessionId: context?.sessionId,
         existingFiles: context?.files || [],
         buildHistory: context?.history || [],
         conversationHistory: context?.conversationHistory || [],
@@ -6516,6 +6518,9 @@ npx http-server .
   
   // WebSocket for shell
   const shellWss = setupShellWebSocket(httpServer);
+  
+  // WebSocket for AI Agent real-time updates
+  agentWebSocketService.initialize(httpServer);
   
   // Old collaboration WebSocket code removed - replaced with CollaborationServer using Yjs
   

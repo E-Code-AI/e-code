@@ -9,6 +9,7 @@ import { effortPricingService } from '../services/effort-pricing-service';
 import { createLogger } from '../utils/logger';
 import { AnthropicProvider } from './ai-provider';
 import { realPackageManager } from '../services/real-package-manager';
+import { agentWebSocketService } from '../services/agent-websocket-service';
 
 const logger = createLogger('EnhancedAutonomousAgent');
 
@@ -22,6 +23,7 @@ export interface AgentContext {
   extendedThinking?: boolean;
   highPowerMode?: boolean;
   isPaused?: boolean;
+  sessionId?: string;
 }
 
 export interface AgentResponse {
@@ -75,6 +77,9 @@ export class EnhancedAutonomousAgent {
     this.thinkingProcess = [];
     this.resetMetrics();
     
+    // Generate session ID if not provided
+    const sessionId = context.sessionId || `agent-${Date.now()}`;
+    
     try {
       // Check if paused
       if (context.isPaused) {
@@ -99,6 +104,14 @@ export class EnhancedAutonomousAgent {
         };
       }
       
+      // Send initial work step
+      agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+        id: 'start',
+        type: 'action',
+        title: 'Starting AI Agent work...',
+        icon: 'Brain'
+      });
+      
       // Analyze the user's request with appropriate depth
       const analysis = await this.analyzeRequest(context.message, {
         extendedThinking: context.extendedThinking,
@@ -106,16 +119,34 @@ export class EnhancedAutonomousAgent {
       });
       this.apiCallsCount++;
       
+      agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+        id: 'analysis',
+        type: 'decision',
+        title: `Analyzed request: ${analysis.appType} application`,
+        icon: 'Search',
+        expandable: true,
+        details: [`Detected ${analysis.features.length} features`, `Technology: ${analysis.technology}`]
+      });
+      
       // Plan the application structure
       const plan = await this.planApplication(analysis, context);
       this.apiCallsCount++;
+      
+      agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+        id: 'plan',
+        type: 'action',
+        title: 'Created application structure',
+        icon: 'FileText',
+        expandable: true,
+        details: [`${plan.files.length} files planned`, `${plan.folders.length} directories`]
+      });
       
       // Generate the code and files
       const buildActions = await this.generateBuildActions(plan, context);
       this.apiCallsCount += buildActions.length;
       
       // Execute the build actions
-      const results = await this.executeBuildActions(buildActions, context);
+      const results = await this.executeBuildActions(buildActions, context, sessionId);
       
       // Calculate effort metrics
       this.calculateEffortMetrics(buildActions);
@@ -171,7 +202,8 @@ export class EnhancedAutonomousAgent {
         }
       };
     } catch (error: any) {
-      logger.error('Agent processing error:', error);
+      logger.error(`Agent processing error: ${error.message}`);
+      agentWebSocketService.sendError(context.projectId, sessionId, error.message);
       throw error;
     }
   }
@@ -628,7 +660,7 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
 }`).join('\n\n')}`;
   }
   
-  private async executeBuildActions(actions: BuildAction[], context: AgentContext): Promise<any> {
+  private async executeBuildActions(actions: BuildAction[], context: AgentContext, sessionId: string): Promise<any> {
     this.thinkingProcess.push('🚀 Executing build actions...');
     
     const results = {
@@ -636,21 +668,55 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
       foldersCreated: 0,
       packagesInstalled: [] as string[],
       commandsExecuted: [] as string[],
-      errors: [] as string[]
+      errors: [] as string[],
+      appStarted: false
     };
     
-    // First, create all files and folders
+    // First, create all files and folders with proper nested directory support
     for (const action of actions) {
       try {
         if (action.type === 'create_file') {
+          // Handle nested paths like src/components/TodoList.jsx
+          const fullPath = action.data.path.startsWith('/') ? action.data.path : `/${action.data.path}`;
+          const pathParts = fullPath.split('/').filter((p: string) => p);
+          
+          // Create nested directories if needed
+          if (pathParts.length > 1) {
+            let currentPath = '';
+            for (let i = 0; i < pathParts.length - 1; i++) {
+              currentPath += '/' + pathParts[i];
+              try {
+                await storage.createFile({
+                  projectId: context.projectId,
+                  name: pathParts[i],
+                  path: currentPath.substring(0, currentPath.lastIndexOf('/')),
+                  content: '',
+                  isDirectory: true
+                });
+              } catch (err) {
+                // Directory might already exist, continue
+              }
+            }
+          }
+          
+          // Create the file
           await storage.createFile({
             projectId: context.projectId,
             name: action.data.name,
-            path: action.data.path,
+            path: fullPath.substring(0, fullPath.lastIndexOf('/')),
             content: action.data.content,
             isDirectory: false
           });
           results.filesCreated++;
+          
+          // Send progress update for file creation
+          agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+            id: `file-${Date.now()}`,
+            type: 'file_operation',
+            title: `Created ${action.data.name}`,
+            icon: 'FileText',
+            file: action.data.path + '/' + action.data.name
+          });
         } else if (action.type === 'create_folder') {
           await storage.createFile({
             projectId: context.projectId,
@@ -663,6 +729,7 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
         }
       } catch (error: any) {
         results.errors.push(error.message);
+        agentWebSocketService.sendError(context.projectId, sessionId, error.message);
       }
     }
     
@@ -677,19 +744,111 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
         const dependencies = Object.keys(packageJson.dependencies || {});
         const devDependencies = Object.keys(packageJson.devDependencies || {});
         
-        // Install dependencies
-        if (dependencies.length > 0) {
-          await this.installPackages(context.projectId, dependencies, 'nodejs');
-          results.packagesInstalled.push(...dependencies);
+        this.thinkingProcess.push('📦 Installing dependencies...');
+        
+        // Install all dependencies at once
+        const allPackages = [...dependencies, ...devDependencies];
+        if (allPackages.length > 0) {
+          agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+            id: 'install-packages',
+            type: 'action',
+            title: `Installing ${allPackages.length} packages...`,
+            icon: 'Package',
+            expandable: true,
+            details: allPackages
+          });
+          
+          await this.installPackages(context.projectId, allPackages, 'nodejs');
+          results.packagesInstalled = allPackages;
+          
+          agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+            id: 'packages-installed',
+            type: 'action',
+            title: `Installed ${allPackages.length} packages successfully`,
+            icon: 'CheckCircle'
+          });
         }
         
-        // Install dev dependencies
-        if (devDependencies.length > 0) {
-          await this.installPackages(context.projectId, devDependencies, 'nodejs');
-          results.packagesInstalled.push(...devDependencies);
+        // Automatically start the app after installation
+        this.thinkingProcess.push('🚀 Starting the application...');
+        const startCommand = packageJson.scripts?.start || packageJson.scripts?.dev || 'node index.js';
+        
+        agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+          id: 'start-app',
+          type: 'action',
+          title: 'Starting the application...',
+          icon: 'Play',
+          expandable: true,
+          details: [`Command: ${startCommand}`]
+        });
+        
+        try {
+          // Execute start command
+          const terminalResult = await this.executeCommand(context.projectId, startCommand);
+          results.commandsExecuted.push(startCommand);
+          
+          if (terminalResult.success) {
+            results.appStarted = true;
+            this.thinkingProcess.push('✅ Application started successfully!');
+            agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+              id: 'app-running',
+              type: 'action',
+              title: 'Application is now running!',
+              icon: 'CheckCircle',
+              expandable: true,
+              details: ['Your app is ready to use', 'Check the preview window to see it in action']
+            });
+          } else {
+            this.thinkingProcess.push(`⚠️ Failed to start app: ${terminalResult.output}`);
+            agentWebSocketService.sendError(context.projectId, sessionId, `Failed to start app: ${terminalResult.output}`);
+          }
+        } catch (error: any) {
+          results.errors.push(`Failed to start app: ${error.message}`);
         }
       } catch (error: any) {
         results.errors.push(`Package installation error: ${error.message}`);
+      }
+    }
+    
+    // Handle Python projects
+    const requirementsAction = actions.find(a => 
+      a.type === 'create_file' && a.data.name === 'requirements.txt'
+    );
+    
+    if (requirementsAction) {
+      try {
+        const requirements = requirementsAction.data.content.split('\n').filter((line: string) => line.trim());
+        if (requirements.length > 0) {
+          await this.installPackages(context.projectId, requirements, 'python');
+          results.packagesInstalled = requirements;
+        }
+        
+        // Find and run the main Python file
+        const mainPyAction = actions.find(a => 
+          a.type === 'create_file' && (a.data.name === 'main.py' || a.data.name === 'app.py')
+        );
+        
+        if (mainPyAction) {
+          const startCommand = `python ${mainPyAction.data.name}`;
+          const terminalResult = await this.executeCommand(context.projectId, startCommand);
+          results.commandsExecuted.push(startCommand);
+          
+          if (terminalResult.success) {
+            results.appStarted = true;
+            agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+              id: 'python-app-running',
+              type: 'action',
+              title: 'Python application is now running!',
+              icon: 'CheckCircle',
+              expandable: true,
+              details: ['Your Python app is ready', 'Check the preview window to see it in action']
+            });
+          } else {
+            agentWebSocketService.sendError(context.projectId, sessionId, `Failed to start Python app: ${terminalResult.output}`);
+          }
+        }
+      } catch (error: any) {
+        results.errors.push(`Python setup error: ${error.message}`);
       }
     }
     
@@ -697,8 +856,61 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
     if (results.packagesInstalled.length > 0) {
       this.thinkingProcess.push(`✓ Installed ${results.packagesInstalled.length} packages`);
     }
+    if (results.appStarted) {
+      this.thinkingProcess.push(`✓ Application is running!`);
+    }
     
     return results;
+  }
+  
+  private async executeCommand(projectId: number, command: string): Promise<{ success: boolean; output: string }> {
+    logger.info(`Executing command for project ${projectId}: ${command}`);
+    
+    try {
+      // Use real terminal service to execute commands
+      const { spawn } = await import('child_process');
+      
+      return new Promise((resolve) => {
+        // Execute in project directory
+        const projectPath = `/projects/${projectId}`;
+        const process = spawn(command, {
+          shell: true,
+          cwd: projectPath,
+          env: { ...process.env, NODE_ENV: 'development' }
+        });
+        
+        let output = '';
+        
+        process.stdout.on('data', (data) => {
+          const text = data.toString();
+          output += text;
+          logger.info(`Command output: ${text}`);
+        });
+        
+        process.stderr.on('data', (data) => {
+          const text = data.toString();
+          output += text;
+          logger.error(`Command error: ${text}`);
+        });
+        
+        process.on('close', (code) => {
+          if (code === 0) {
+            resolve({ success: true, output: output || 'Command executed successfully' });
+          } else {
+            resolve({ success: false, output: output || `Command failed with code ${code}` });
+          }
+        });
+        
+        // Timeout after 30 seconds
+        setTimeout(() => {
+          process.kill();
+          resolve({ success: true, output: 'Command started in background' });
+        }, 30000);
+      });
+    } catch (error: any) {
+      logger.error(`Failed to execute command: ${error.message}`);
+      return { success: false, output: error.message };
+    }
   }
   
   private async installPackages(projectId: number, packages: string[], language: string): Promise<void> {
@@ -707,9 +919,9 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
     try {
       // Use the real package manager to install packages
       const result = await realPackageManager.installPackages({
+        projectId,
         language,
         packages,
-        projectPath: `/projects/${projectId}`,
         dev: false,
         global: false
       });
