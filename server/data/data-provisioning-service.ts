@@ -320,7 +320,14 @@ export class DataProvisioningService {
 
   private generateCustom(field: DataField): any {
     if (field.generator) {
-      return eval(field.generator);
+      // Use Function constructor instead of eval for better security
+      try {
+        const generatorFunction = new Function('faker', `return ${field.generator}`);
+        return generatorFunction(faker);
+      } catch (error) {
+        console.warn('Invalid generator function:', field.generator);
+        return null;
+      }
     }
     return null;
   }

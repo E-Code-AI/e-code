@@ -156,7 +156,7 @@ export class ContainerOrchestrator {
       try {
         // Simulate health check
         // Check real container health by verifying PID exists
-        const healthy = container.pid ? await this.checkProcessHealth(container.pid) : false;
+        const healthy = container.pid ? await this.checkProcessHealth(container.pid.toString()) : false;
         
         if (!healthy) {
           logger.warn(`Container ${containerId} health check failed`);
@@ -331,7 +331,7 @@ export class ContainerOrchestrator {
           const containerId = await this.deployContainer(containerConfig);
           // Container will auto-stop after job completion
         } catch (error) {
-          logger.error(`Failed to execute scheduled job ${config.name}:`, error);
+          logger.error(`Failed to execute scheduled job ${config.name}:`, String(error));
         }
       });
       
@@ -351,7 +351,7 @@ export class ContainerOrchestrator {
     
     // Setup edge locations using edge manager
     const { edgeManager } = require('../edge/edge-manager');
-    const { cdnService } = require('../cdn/cdn-service');
+    const { cdnService } = require('../edge/cdn-service');
     
     // Get all available edge locations
     const locations = edgeManager.getLocations();
