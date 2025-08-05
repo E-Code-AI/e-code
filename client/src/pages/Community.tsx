@@ -73,14 +73,22 @@ interface LeaderboardUser {
   streakDays: number;
 }
 
-const CATEGORIES = [
-  { id: 'all', name: 'All Posts', icon: TrendingUp },
-  { id: 'showcase', name: 'Showcase', icon: Star },
-  { id: 'help', name: 'Help', icon: MessageSquare },
-  { id: 'tutorials', name: 'Tutorials', icon: Code },
-  { id: 'challenges', name: 'Challenges', icon: Trophy },
-  { id: 'discussions', name: 'Discussions', icon: Users },
-];
+// Icon mapping for categories
+const iconMap: Record<string, any> = {
+  TrendingUp,
+  Star,
+  MessageSquare,
+  Code,
+  Trophy,
+  Users
+};
+
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  postCount: number;
+}
 
 
 
@@ -89,15 +97,21 @@ export default function Community() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Fetch categories
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['/api/community/categories']
+  });
+
+  // Build query string for posts
+  const queryParams = new URLSearchParams();
+  if (activeCategory !== 'all') queryParams.set('category', activeCategory);
+  if (searchQuery) queryParams.set('search', searchQuery);
+  const queryString = queryParams.toString();
+
   // Fetch community posts
-  const { data: posts = [], isLoading: postsLoading } = useQuery({
-    queryKey: activeCategory !== 'all' || searchQuery 
-      ? [`/api/community/posts?${new URLSearchParams(
-          Object.assign(
-            activeCategory !== 'all' ? { category: activeCategory } : {},
-            searchQuery ? { search: searchQuery } : {}
-          )
-        )}`]
+  const { data: posts = [], isLoading: postsLoading } = useQuery<CommunityPost[]>({
+    queryKey: queryString 
+      ? [`/api/community/posts?${queryString}`]
       : ['/api/community/posts']
   });
 
@@ -194,16 +208,24 @@ export default function Community() {
               <ScrollArea className="w-full -mx-3 sm:-mx-0 px-3 sm:px-0">
                 <TabsList className="inline-flex h-auto p-1 bg-muted rounded-lg">
                   <div className="flex space-x-1">
-                    {CATEGORIES.map(category => (
-                      <TabsTrigger 
-                        key={category.id} 
-                        value={category.id}
-                        className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-md whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-xs sm:text-sm"
-                      >
-                        <category.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        <span>{category.name}</span>
-                      </TabsTrigger>
-                    ))}
+                    {categories.map(category => {
+                      const IconComponent = iconMap[category.icon] || TrendingUp;
+                      return (
+                        <TabsTrigger 
+                          key={category.id} 
+                          value={category.id}
+                          className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-md whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-xs sm:text-sm"
+                        >
+                          <IconComponent className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <span>{category.name}</span>
+                          {category.postCount > 0 && (
+                            <span className="text-xs text-muted-foreground ml-1">
+                              ({category.postCount})
+                            </span>
+                          )}
+                        </TabsTrigger>
+                      );
+                    })}
                   </div>
                 </TabsList>
               </ScrollArea>

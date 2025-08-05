@@ -17,22 +17,7 @@ import {
   TimeTracking, InsertTimeTracking,
   Screenshot, InsertScreenshot,
   TaskSummary, InsertTaskSummary,
-  UserCredits, InsertUserCredits,
-  BudgetLimit, InsertBudgetLimit,
-  UsageAlert, InsertUsageAlert,
-  AutoscaleDeployment, InsertAutoscaleDeployment,
-  ReservedVmDeployment, InsertReservedVmDeployment,
-  ScheduledDeployment, InsertScheduledDeployment,
-  StaticDeployment, InsertStaticDeployment,
-  ObjectStorageBucket, InsertObjectStorageBucket,
-  ObjectStorageFile, InsertObjectStorageFile,
-  KeyValueStore, InsertKeyValueStore,
-  AiConversation, InsertAiConversation,
-  DynamicIntelligence, InsertDynamicIntelligence,
-  WebSearchHistory, InsertWebSearchHistory,
-  GitRepository, InsertGitRepository,
-  GitCommit, InsertGitCommit,
-  CustomDomain, InsertCustomDomain,
+
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
   mobileDevices, pushNotifications, teams, teamMembers, deployments,
@@ -40,8 +25,51 @@ import {
   userCredits, budgetLimits, usageAlerts, autoscaleDeployments, reservedVmDeployments,
   scheduledDeployments, staticDeployments, objectStorageBuckets, objectStorageFiles,
   keyValueStore, aiConversations, dynamicIntelligence, webSearchHistory,
-  gitRepositories, gitCommits, customDomains
+  gitRepositories, gitCommits, customDomains,
+  insertUserCreditsSchema, insertBudgetLimitsSchema, insertUsageAlertSchema,
+  insertAutoscaleDeploymentSchema, insertReservedVmDeploymentSchema,
+  insertScheduledDeploymentSchema, insertStaticDeploymentSchema,
+  insertObjectStorageBucketSchema, insertObjectStorageFileSchema,
+  insertKeyValueStoreSchema, insertAiConversationSchema,
+  insertDynamicIntelligenceSchema, insertWebSearchHistorySchema,
+  insertGitRepositorySchema, insertGitCommitSchema, insertCustomDomainSchema
 } from "@shared/schema";
+import { z } from "zod";
+
+// Define the types that were missing
+type UserCredits = typeof userCredits.$inferSelect;
+type InsertUserCredits = z.infer<typeof insertUserCreditsSchema>;
+type BudgetLimit = typeof budgetLimits.$inferSelect;
+type InsertBudgetLimit = z.infer<typeof insertBudgetLimitsSchema>;
+type UsageAlert = typeof usageAlerts.$inferSelect;
+type InsertUsageAlert = z.infer<typeof insertUsageAlertSchema>;
+type AutoscaleDeployment = typeof autoscaleDeployments.$inferSelect;
+type InsertAutoscaleDeployment = z.infer<typeof insertAutoscaleDeploymentSchema>;
+type ReservedVmDeployment = typeof reservedVmDeployments.$inferSelect;
+type InsertReservedVmDeployment = z.infer<typeof insertReservedVmDeploymentSchema>;
+type ScheduledDeployment = typeof scheduledDeployments.$inferSelect;
+type InsertScheduledDeployment = z.infer<typeof insertScheduledDeploymentSchema>;
+type StaticDeployment = typeof staticDeployments.$inferSelect;
+type InsertStaticDeployment = z.infer<typeof insertStaticDeploymentSchema>;
+type ObjectStorageBucket = typeof objectStorageBuckets.$inferSelect;
+type InsertObjectStorageBucket = z.infer<typeof insertObjectStorageBucketSchema>;
+type ObjectStorageFile = typeof objectStorageFiles.$inferSelect;
+type InsertObjectStorageFile = z.infer<typeof insertObjectStorageFileSchema>;
+type KeyValueStore = typeof keyValueStore.$inferSelect;
+type InsertKeyValueStore = z.infer<typeof insertKeyValueStoreSchema>;
+type AiConversation = typeof aiConversations.$inferSelect;
+type InsertAiConversation = z.infer<typeof insertAiConversationSchema>;
+type DynamicIntelligence = typeof dynamicIntelligence.$inferSelect;
+type InsertDynamicIntelligence = z.infer<typeof insertDynamicIntelligenceSchema>;
+type WebSearchHistory = typeof webSearchHistory.$inferSelect;
+type InsertWebSearchHistory = z.infer<typeof insertWebSearchHistorySchema>;
+type GitRepository = typeof gitRepositories.$inferSelect;
+type InsertGitRepository = z.infer<typeof insertGitRepositorySchema>;
+type GitCommit = typeof gitCommits.$inferSelect;
+type InsertGitCommit = z.infer<typeof insertGitCommitSchema>;
+type CustomDomain = typeof customDomains.$inferSelect;
+type InsertCustomDomain = z.infer<typeof insertCustomDomainSchema>;
+
 import { eq, and, desc, isNull, sql, inArray, gte, lte } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";

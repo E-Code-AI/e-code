@@ -30,12 +30,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Quick action templates
-const quickActions = [
-  { icon: BookOpen, label: 'Book scanner' },
-  { icon: FileText, label: 'Personal blog' },
-  { icon: BarChart3, label: 'Statistics' },
-];
+// Icon mapping for quick actions
+const iconMap: Record<string, any> = {
+  BookOpen,
+  FileText,
+  BarChart3
+};
 
 // Get project icon based on project details
 function getProjectIcon(project: Project) {
@@ -72,10 +72,29 @@ function getTimeAgo(date: Date | string) {
   return 'Just now';
 }
 
-// Check if project is deployed
-function isDeployed(project: Project) {
-  // In real implementation, this would check deployment status
-  return project.id % 3 === 0;
+
+
+interface ProjectWithDeployment extends Project {
+  isDeployed?: boolean;
+  deploymentUrl?: string;
+  deploymentStatus?: string;
+}
+
+interface QuickAction {
+  id: string;
+  icon: string;
+  label: string;
+  description: string;
+  template: string;
+}
+
+interface DashboardSummary {
+  totalProjects: number;
+  activeDeployments: number;
+  totalDeployments: number;
+  storageUsed: number;
+  computeHours: number;
+  lastActivityDate: Date;
 }
 
 export default function Dashboard() {
@@ -84,9 +103,21 @@ export default function Dashboard() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [showBanner, setShowBanner] = useState(true);
 
-  // Fetch recent projects
-  const { data: recentProjects = [], isLoading } = useQuery<Project[]>({
+  // Fetch recent projects with deployment status
+  const { data: recentProjects = [], isLoading } = useQuery<ProjectWithDeployment[]>({
     queryKey: ['/api/projects/recent'],
+    enabled: !!user,
+  });
+
+  // Fetch quick actions
+  const { data: quickActions = [] } = useQuery<QuickAction[]>({
+    queryKey: ['/api/dashboard/quick-actions'],
+    enabled: !!user,
+  });
+
+  // Fetch dashboard summary
+  const { data: dashboardSummary } = useQuery<DashboardSummary>({
+    queryKey: ['/api/dashboard/summary'],
     enabled: !!user,
   });
 
@@ -120,14 +151,9 @@ export default function Dashboard() {
     }
   };
 
-  const handleQuickAction = async (action: typeof quickActions[0]) => {
-    // Create project with predefined prompt
-    const prompts: Record<string, string> = {
-      'Book scanner': 'Build a book scanner app that uses the camera to scan ISBN codes and fetch book details',
-      'Personal blog': 'Create a personal blog website with posts, categories, and comments',
-      'Statistics': 'Build a statistics dashboard with charts and data visualization',
-    };
-    const prompt = prompts[action.label];
+  const handleQuickAction = async (action: QuickAction) => {
+    // Use the description from the API or fallback to action label
+    const prompt = action.description || action.label;
     
     try {
       const response = await fetch('/api/projects', {
@@ -137,6 +163,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           name: action.label,
           description: prompt,
+          template: action.template, // Use the template ID from the API
           language: 'javascript',
           visibility: 'private'
         }),
@@ -255,18 +282,21 @@ export default function Dashboard() {
             Or try these popular examples:
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
-            {quickActions.map((action) => (
-              <Button
-                key={action.label}
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickAction(action)}
-                className="h-10 px-5 gap-2 text-sm font-medium text-[var(--ecode-text-secondary)] border-[var(--ecode-border)] hover:bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/50 rounded-xl transition-all shadow-sm hover:shadow-md"
-              >
-                <action.icon className="h-4 w-4" />
-                {action.label}
-              </Button>
-            ))}
+            {quickActions.map((action) => {
+              const IconComponent = iconMap[action.icon] || FileText;
+              return (
+                <Button
+                  key={action.id}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickAction(action)}
+                  className="h-10 px-5 gap-2 text-sm font-medium text-[var(--ecode-text-secondary)] border-[var(--ecode-border)] hover:bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/50 rounded-xl transition-all shadow-sm hover:shadow-md"
+                >
+                  <IconComponent className="h-4 w-4" />
+                  {action.label}
+                </Button>
+              );
+            })}
           </div>
         </div>
 
@@ -313,7 +343,7 @@ export default function Dashboard() {
                     </div>
                     
                     <div className="flex items-center gap-3">
-                      {isDeployed(project) && (
+                      {project.isDeployed && (
                         <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
                           <CheckCircle2 className="h-4 w-4" />
                           <span className="text-sm">Deployed</span>

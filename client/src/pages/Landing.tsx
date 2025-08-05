@@ -19,6 +19,7 @@ import { MobileChatInterface } from '@/components/MobileChatInterface';
 import { AnimatedPlatformDemo } from '@/components/AnimatedPlatformDemo';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
+import { Spinner } from '@/components/ui/spinner';
 import { 
   SiPython, SiJavascript, SiHtml5, SiCss3,
   SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
@@ -38,8 +39,44 @@ export default function Landing() {
     queryKey: ['/api/templates'],
     enabled: true
   });
+  
+  // Fetch landing page data from backend
+  const { data: landingData, isLoading: landingLoading } = useQuery<{
+    features: Array<{
+      icon: string;
+      title: string;
+      description: string;
+    }>;
+    testimonials: Array<{
+      quote: string;
+      author: string;
+      role: string;
+      avatar: string;
+    }>;
+    stats: {
+      developers: string;
+      projects: string;
+      deployments: string;
+      languages: string;
+    };
+  }>({
+    queryKey: ['/api/landing']
+  });
 
-  const features = [
+  // Icon mapping
+  const iconMap: Record<string, React.ReactNode> = {
+    'Zap': <Zap className="h-6 w-6" />,
+    'Globe': <Globe className="h-6 w-6" />,
+    'Users': <Users className="h-6 w-6" />,
+    'Shield': <Shield className="h-6 w-6" />,
+    'Package': <Package className="h-6 w-6" />,
+    'Rocket': <Rocket className="h-6 w-6" />
+  };
+
+  const features = landingData ? landingData.features.map(feature => ({
+    ...feature,
+    icon: iconMap[feature.icon] || <Zap className="h-6 w-6" />
+  })) : [
     {
       icon: <Zap className="h-6 w-6" />,
       title: 'Start in Seconds',
@@ -72,7 +109,7 @@ export default function Landing() {
     }
   ];
 
-  const testimonials = [
+  const testimonials = landingData ? landingData.testimonials : [
     {
       quote: "I went from knowing nothing about code to building my first website in a week!",
       author: "Maria Garcia",
