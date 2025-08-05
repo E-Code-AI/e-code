@@ -93,12 +93,12 @@ const ProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: projectSlug ? ['/api/projects/by-slug', projectSlug] : ['/api/projects', projectId],
+    queryKey: projectSlug ? ['/api/users', paramsSlug?.username, 'projects', paramsSlug?.projectname] : ['/api/projects', projectId],
     queryFn: async () => {
       if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
       
       const url = projectSlug 
-        ? `/api/projects/by-slug/${encodeURIComponent(projectSlug)}`
+        ? `/api/users/${paramsSlug?.username}/projects/${paramsSlug?.projectname}`
         : `/api/projects/${projectId}`;
       
       const res = await apiRequest('GET', url);
