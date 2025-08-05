@@ -77,7 +77,12 @@ export default function Home() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setIsCreateModalOpen(false);
-      navigate(`/${data.slug}`);
+      
+      // Use window.location for full page reload to ensure auth state is fresh
+      const projectUrl = `/@${user?.username || 'admin'}/${data.slug}`;
+      console.log(`Navigating to: ${projectUrl}`);
+      window.location.href = projectUrl;
+      
       toast({
         title: "Project created!",
         description: `${data.name} has been created successfully.`,
@@ -237,7 +242,7 @@ export default function Home() {
                     <Card 
                       key={project.id} 
                       className="bg-card border border-border hover:border-primary transition-colors cursor-pointer"
-                      onClick={() => navigate(`/@${project.owner?.username || user?.username}/${project.slug}`)}
+                      onClick={() => navigate(`/@${user?.username || 'admin'}/${project.slug}`)}
                     >
                       <CardHeader className="pb-2">
                         <CardTitle className="flex items-center justify-between text-lg">
@@ -313,7 +318,7 @@ export default function Home() {
                     <div 
                       key={project.id}
                       className="flex items-center p-3 border rounded-md hover:bg-accent cursor-pointer"
-                      onClick={() => navigate(`/@${project.owner?.username || user?.username}/${project.slug}`)}
+                      onClick={() => navigate(`/@${user?.username || 'admin'}/${project.slug}`)}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
