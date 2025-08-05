@@ -165,8 +165,11 @@ export default function Landing() {
           const projectUrl = `/@${ownerUsername}/${project.slug}`;
           console.log(`Navigating to: ${projectUrl}`);
           
-          // Use window.location for full page reload to ensure auth state is fresh
-          window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`;
+          // Add a small delay to ensure project is fully created and indexed
+          setTimeout(() => {
+            // Use window.location for full page reload to ensure auth state is fresh
+            window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`;
+          }, 500);
         } else {
           const errorText = await response.text();
           console.error('Failed to create project:', response.status, errorText);

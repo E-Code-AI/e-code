@@ -153,8 +153,11 @@ export default function Dashboard() {
         const projectUrl = `/@${ownerUsername}/${project.slug}`;
         console.log(`Navigating to: ${projectUrl}`);
         
-        // Use window.location for full page reload to ensure auth state is fresh
-        window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(aiPrompt)}`;
+        // Add a small delay to ensure project is fully created and indexed
+        setTimeout(() => {
+          // Use window.location for full page reload to ensure auth state is fresh
+          window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(aiPrompt)}`;
+        }, 500);
       } else {
         const errorText = await response.text();
         console.error('Failed to create project:', response.status, errorText);
@@ -199,8 +202,11 @@ export default function Dashboard() {
         const projectUrl = `/@${ownerUsername}/${project.slug}`;
         console.log(`Navigating to: ${projectUrl}`);
         
-        // Use window.location for full page reload to ensure auth state is fresh
-        window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(prompt)}`;
+        // Add a small delay to ensure project is fully created and indexed
+        setTimeout(() => {
+          // Use window.location for full page reload to ensure auth state is fresh
+          window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(prompt)}`;
+        }, 500);
       } else {
         const errorText = await response.text();
         console.error('Failed to create project:', response.status, errorText);

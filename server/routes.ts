@@ -2714,7 +2714,7 @@ npx http-server .
   });
 
   // Get project by username and slug (for Replit-style URLs)
-  app.get('/api/users/:username/projects/:slug', async (req, res) => {
+  app.get('/api/users/:username/projects/:slug', ensureAuthenticated, async (req, res) => {
     try {
       const { username, slug } = req.params;
       
