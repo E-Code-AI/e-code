@@ -63,10 +63,12 @@ router.post('/register', async (req, res) => {
     
     // Generate verification token
     const verificationToken = generateEmailVerificationToken();
-    await storage.saveEmailVerificationToken(user.id, verificationToken);
+    await storage.saveEmailVerificationToken(email, verificationToken);
     
-    // Send verification email
-    await sendVerificationEmail(email, verificationToken);
+    // Send verification email (skip in development)
+    if (process.env.NODE_ENV !== 'development') {
+      await sendVerificationEmail(email, verificationToken);
+    }
     
     res.status(201).json({
       message: 'Registration successful. Please check your email to verify your account.',

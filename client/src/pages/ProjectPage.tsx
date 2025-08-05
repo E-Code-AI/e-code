@@ -424,15 +424,34 @@ const ProjectPage = () => {
     }
   };
   
-  // Listen for Agent open event from sidebar
+  // Listen for Agent open event from sidebar and check URL params
   useEffect(() => {
+    // Check URL params for agent mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const agentMode = urlParams.get('agent') === 'true';
+    const prompt = urlParams.get('prompt');
+    
+    if (agentMode) {
+      setAiPanelVisible(true);
+      setRightPanelVisible(true);
+      setRightPanelTab('ai');
+      
+      // Store prompt for the AI agent if provided
+      if (prompt && projectId) {
+        window.sessionStorage.setItem(`agent-prompt-${projectId}`, decodeURIComponent(prompt));
+      }
+    }
+    
+    // Listen for openAgent event
     const handleOpenAgent = () => {
       setAiPanelVisible(true);
+      setRightPanelVisible(true);
+      setRightPanelTab('ai');
     };
     
     window.addEventListener('openAgent', handleOpenAgent);
     return () => window.removeEventListener('openAgent', handleOpenAgent);
-  }, []);
+  }, [projectId]);
 
   // Check project status on load
   useEffect(() => {
