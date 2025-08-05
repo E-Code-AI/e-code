@@ -342,7 +342,7 @@ export class DatabaseStorage implements IStorage {
 
   // API Key operations
   async createApiKey(apiKeyData: InsertApiKey): Promise<ApiKey> {
-    const [apiKey] = await db.insert(apiKeys).values([apiKeyData]).returning();
+    const [apiKey] = await db.insert(apiKeys).values(apiKeyData).returning();
     return apiKey;
   }
 
@@ -371,7 +371,7 @@ export class DatabaseStorage implements IStorage {
 
   // Code Review operations
   async createCodeReview(reviewData: InsertCodeReview): Promise<CodeReview> {
-    const [review] = await db.insert(codeReviews).values([reviewData]).returning();
+    const [review] = await db.insert(codeReviews).values(reviewData).returning();
     return review;
   }
 
@@ -395,7 +395,7 @@ export class DatabaseStorage implements IStorage {
 
   // Challenge operations
   async createChallenge(challengeData: InsertChallenge): Promise<Challenge> {
-    const [challenge] = await db.insert(challenges).values([challengeData]).returning();
+    const [challenge] = await db.insert(challenges).values(challengeData).returning();
     return challenge;
   }
 
@@ -419,7 +419,7 @@ export class DatabaseStorage implements IStorage {
 
   // Mentorship operations
   async createMentorProfile(profileData: InsertMentorProfile): Promise<MentorProfile> {
-    const [profile] = await db.insert(mentorProfiles).values([profileData]).returning();
+    const [profile] = await db.insert(mentorProfiles).values(profileData).returning();
     return profile;
   }
 
@@ -794,7 +794,7 @@ export class DatabaseStorage implements IStorage {
 
   // Time tracking operations
   async startTimeTracking(tracking: InsertTimeTracking): Promise<TimeTracking> {
-    const [newTracking] = await db.insert(projectTimeTracking).values([tracking]).returning();
+    const [newTracking] = await db.insert(projectTimeTracking).values(tracking).returning();
     return newTracking;
   }
 
@@ -1157,24 +1157,7 @@ export class DatabaseStorage implements IStorage {
     return null;
   }
 
-  async getProjectDeployments(projectId: number): Promise<any[]> {
-    // Get all deployments for a project
-    return [];
-  }
 
-  async getRecentDeployments(userId: number, limit: number = 10): Promise<any[]> {
-    const userProjects = await this.getProjectsByUserId(userId);
-    const projectIds = userProjects.map(p => p.id);
-    
-    if (projectIds.length === 0) return [];
-    
-    return await db
-      .select()
-      .from(deployments)
-      .where(inArray(deployments.projectId, projectIds))
-      .orderBy(desc(deployments.createdAt))
-      .limit(limit);
-  }
   
   // Collaboration methods
   async getProjectCollaborators(projectId: number): Promise<any[]> {
@@ -1319,14 +1302,6 @@ export class DatabaseStorage implements IStorage {
   
   async getUserMobileSessions(userId: number): Promise<any[]> {
     return [];
-  }
-  
-  async getProjectDeployments(projectId: number): Promise<any[]> {
-    return await db
-      .select()
-      .from(deployments)
-      .where(eq(deployments.projectId, projectId))
-      .orderBy(desc(deployments.createdAt));
   }
 }
 

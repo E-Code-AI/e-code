@@ -400,6 +400,7 @@ export const projectTimeTracking = pgTable('project_time_tracking', {
   duration: integer('duration'),
   taskDescription: text('task_description'),
   active: boolean('active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Screenshots for projects
