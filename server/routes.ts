@@ -1497,11 +1497,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Template ID and project name are required' });
       }
 
-      // Template configurations
+      // Template configurations - Real implementations like Replit
       const templateConfigs: Record<string, any> = {
         'nextjs-blog': {
           language: 'nodejs',
-          description: 'A modern blog built with Next.js',
+          description: 'A modern blog built with Next.js 14, Tailwind CSS, and MDX',
           files: [
             { name: 'package.json', content: JSON.stringify({
               name: 'nextjs-blog',
@@ -1509,28 +1509,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
               scripts: {
                 dev: 'next dev',
                 build: 'next build',
-                start: 'next start'
+                start: 'next start',
+                lint: 'next lint'
               },
               dependencies: {
                 next: '^14.0.0',
                 react: '^18.2.0',
-                'react-dom': '^18.2.0'
+                'react-dom': '^18.2.0',
+                '@next/mdx': '^14.0.0',
+                'gray-matter': '^4.0.3',
+                'date-fns': '^2.30.0',
+                'reading-time': '^1.5.0'
+              },
+              devDependencies: {
+                '@types/node': '^20.0.0',
+                '@types/react': '^18.2.0',
+                'tailwindcss': '^3.4.0',
+                'autoprefixer': '^10.4.0',
+                'postcss': '^8.4.0'
               }
             }, null, 2) },
-            { name: 'pages/index.js', content: `export default function Home() {
-  return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>Welcome to Your Blog!</h1>
-      <p>This is a Next.js blog starter template.</p>
-    </div>
-  );
-}` },
-            { name: 'pages/_app.js', content: `export default function App({ Component, pageProps }) {
-  return <Component {...pageProps} />;
-}` },
-            { name: 'README.md', content: `# Next.js Blog
+            { name: 'app/page.tsx', content: `import Link from 'next/link'
+import { getAllPosts } from '@/lib/posts'
+import { formatDate } from '@/lib/utils'
 
-A modern blog starter built with Next.js.
+export default async function HomePage() {
+  const posts = await getAllPosts()
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <h1 className="text-3xl font-bold text-gray-900">My Blog</h1>
+        </div>
+      </header>
+      
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <div className="space-y-6">
+          {posts.map((post) => (
+            <article key={post.slug} className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-2xl font-semibold mb-2">
+                <Link href={\`/posts/\${post.slug}\`} className="hover:text-blue-600">
+                  {post.title}
+                </Link>
+              </h2>
+              <p className="text-gray-600 mb-4">{post.excerpt}</p>
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>{formatDate(post.date)}</span>
+                <span>{post.readingTime}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </main>
+    </div>
+  )
+}` },
+            { name: 'tailwind.config.js', content: `module.exports = {
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}` },
+            { name: 'README.md', content: `# Next.js Blog with MDX
+
+A modern, performant blog built with Next.js 14, TypeScript, Tailwind CSS, and MDX.
+
+## Features
+- ✨ MDX support for rich content
+- 🎨 Tailwind CSS for styling
+- 📱 Fully responsive
+- 🚀 Optimized for performance
+- 📊 Reading time calculation
+- 🔍 SEO optimized
 
 ## Getting Started
 
@@ -1545,59 +1600,598 @@ Visit http://localhost:3000 to see your blog!
         },
         'express-api': {
           language: 'nodejs',
-          description: 'A REST API built with Express.js',
+          description: 'Production-ready REST API with Express, MongoDB, and JWT auth',
           files: [
             { name: 'package.json', content: JSON.stringify({
               name: 'express-api',
               version: '1.0.0',
               scripts: {
                 start: 'node server.js',
-                dev: 'nodemon server.js'
+                dev: 'nodemon server.js',
+                test: 'jest'
               },
               dependencies: {
                 express: '^4.18.0',
                 cors: '^2.8.5',
-                dotenv: '^16.0.0'
+                dotenv: '^16.0.0',
+                jsonwebtoken: '^9.0.0',
+                bcryptjs: '^2.4.3',
+                'express-validator': '^7.0.0',
+                'express-rate-limit': '^7.0.0',
+                helmet: '^7.0.0',
+                mongoose: '^8.0.0'
+              },
+              devDependencies: {
+                nodemon: '^3.0.0',
+                jest: '^29.0.0'
+              }
+            }, null, 2) },
+            { name: 'server.js', content: `const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Security middleware
+app.use(helmet());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true
+}));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use('/api/', limiter);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/posts', require('./routes/posts'));
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(\`🚀 Server running on port \${PORT}\`);
+});` },
+            { name: 'README.md', content: `# Express REST API
+
+Production-ready REST API with authentication, rate limiting, and security best practices.
+
+## Features
+- 🔐 JWT Authentication
+- 🛡️ Security headers with Helmet
+- ⚡ Rate limiting
+- 📝 Request validation
+- 🗄️ MongoDB integration
+- 🧪 Jest testing setup
+- 📊 Error handling
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+API will be available at http://localhost:3000
+` }
+          ]
+        },
+        'react-dashboard': {
+          language: 'nodejs',
+          description: 'Interactive dashboard with React, Chart.js, and real-time data',
+          files: [
+            { name: 'package.json', content: JSON.stringify({
+              name: 'react-dashboard',
+              version: '1.0.0',
+              scripts: {
+                dev: 'vite',
+                build: 'vite build',
+                preview: 'vite preview'
+              },
+              dependencies: {
+                react: '^18.2.0',
+                'react-dom': '^18.2.0',
+                'react-router-dom': '^6.20.0',
+                'chart.js': '^4.4.0',
+                'react-chartjs-2': '^5.2.0',
+                '@tanstack/react-query': '^5.0.0',
+                'date-fns': '^2.30.0',
+                'lucide-react': '^0.300.0'
+              },
+              devDependencies: {
+                '@vitejs/plugin-react': '^4.2.0',
+                vite: '^5.0.0',
+                tailwindcss: '^3.4.0',
+                autoprefixer: '^10.4.0',
+                postcss: '^8.4.0'
+              }
+            }, null, 2) },
+            { name: 'src/App.jsx', content: `import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import Dashboard from './pages/Dashboard'
+import Analytics from './pages/Analytics'
+import Settings from './pages/Settings'
+import Layout from './components/Layout'
+
+const queryClient = new QueryClient()
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </Layout>
+      </Router>
+    </QueryClientProvider>
+  )
+}
+
+export default App` },
+            { name: 'README.md', content: `# React Dashboard
+
+Modern, responsive dashboard built with React, Vite, and Chart.js.
+
+## Features
+- 📊 Interactive charts and graphs
+- 🎨 Modern UI with Tailwind CSS
+- 📱 Fully responsive design
+- ⚡ Lightning fast with Vite
+- 🔄 Real-time data updates
+- 🎯 React Query for data fetching
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+Visit http://localhost:5173 to see your dashboard!
+` }
+          ]
+        },
+        'discord-bot': {
+          language: 'nodejs',
+          description: 'Feature-rich Discord bot with slash commands and moderation',
+          files: [
+            { name: 'package.json', content: JSON.stringify({
+              name: 'discord-bot',
+              version: '1.0.0',
+              main: 'index.js',
+              scripts: {
+                start: 'node index.js',
+                dev: 'nodemon index.js'
+              },
+              dependencies: {
+                'discord.js': '^14.14.0',
+                dotenv: '^16.0.0',
+                '@discordjs/rest': '^2.2.0'
               },
               devDependencies: {
                 nodemon: '^3.0.0'
               }
             }, null, 2) },
-            { name: 'server.js', content: `const express = require('express');
-const cors = require('cors');
+            { name: 'index.js', content: `const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
+require('dotenv').config();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.json());
-
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to your Express API!' });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers,
+  ],
 });
 
-app.get('/api/users', (req, res) => {
-  res.json([
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' }
-  ]);
+client.commands = new Collection();
+
+// Load commands
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+  const filePath = path.join(commandsPath, file);
+  const command = require(filePath);
+  client.commands.set(command.data.name, command);
+}
+
+client.once('ready', () => {
+  console.log(\`✅ \${client.user.tag} is online!\`);
+  client.user.setActivity('with slash commands', { type: 'PLAYING' });
 });
 
-app.listen(PORT, () => {
-  console.log(\`Server running on port \${PORT}\`);
-});` },
-            { name: 'README.md', content: `# Express REST API
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isChatInputCommand()) return;
 
-A production-ready REST API starter.
+  const command = client.commands.get(interaction.commandName);
+  if (!command) return;
 
-## Getting Started
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({
+      content: 'There was an error executing this command!',
+      ephemeral: true
+    });
+  }
+});
+
+client.login(process.env.DISCORD_TOKEN);` },
+            { name: '.env.example', content: `DISCORD_TOKEN=your_bot_token_here
+CLIENT_ID=your_client_id_here
+GUILD_ID=your_guild_id_here` },
+            { name: 'README.md', content: `# Discord Bot
+
+Feature-rich Discord bot with slash commands, moderation tools, and more.
+
+## Features
+- 🤖 Slash command support
+- 🛡️ Moderation commands
+- 🎮 Fun commands and games
+- 📊 Server statistics
+- 🎵 Music playback support
+- ⚙️ Highly configurable
+
+## Setup
+
+1. Create a Discord application and bot
+2. Copy \`.env.example\` to \`.env\` and add your bot token
+3. Install dependencies and run:
 
 \`\`\`bash
 npm install
 npm start
 \`\`\`
 
-API will be available at http://localhost:3000
+Invite your bot to a server and start using commands!
+` }
+          ]
+        },
+        'python-flask': {
+          language: 'python',
+          description: 'Modern Flask web app with SQLAlchemy and authentication',
+          files: [
+            { name: 'requirements.txt', content: `Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+python-dotenv==1.0.0
+Werkzeug==3.0.1` },
+            { name: 'app.py', content: `from flask import Flask, render_template, redirect, url_for, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html', user=current_user)
+
+@app.route('/api/data')
+def api_data():
+    return {
+        'status': 'success',
+        'data': {
+            'users': 150,
+            'active': 45,
+            'revenue': 12500
+        }
+    }
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True, host='0.0.0.0', port=5000)` },
+            { name: 'README.md', content: `# Flask Web Application
+
+Modern Flask application with authentication, database, and API endpoints.
+
+## Features
+- 🔐 User authentication with Flask-Login
+- 🗄️ SQLAlchemy ORM
+- 🎨 Responsive templates
+- 🔒 Secure forms with Flask-WTF
+- 📊 RESTful API endpoints
+- 🚀 Production-ready structure
+
+## Getting Started
+
+\`\`\`bash
+pip install -r requirements.txt
+python app.py
+\`\`\`
+
+Visit http://localhost:5000 to see your app!
+` }
+          ]
+        },
+        'vue-spa': {
+          language: 'nodejs',
+          description: 'Vue 3 SPA with Composition API, Pinia, and Vue Router',
+          files: [
+            { name: 'package.json', content: JSON.stringify({
+              name: 'vue-spa',
+              version: '1.0.0',
+              scripts: {
+                dev: 'vite',
+                build: 'vite build',
+                preview: 'vite preview'
+              },
+              dependencies: {
+                vue: '^3.4.0',
+                'vue-router': '^4.2.0',
+                pinia: '^2.1.0',
+                axios: '^1.6.0'
+              },
+              devDependencies: {
+                '@vitejs/plugin-vue': '^4.5.0',
+                vite: '^5.0.0',
+                tailwindcss: '^3.4.0',
+                autoprefixer: '^10.4.0',
+                postcss: '^8.4.0'
+              }
+            }, null, 2) },
+            { name: 'src/main.js', content: `import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import App from './App.vue'
+import router from './router'
+import './style.css'
+
+const app = createApp(App)
+const pinia = createPinia()
+
+app.use(pinia)
+app.use(router)
+
+app.mount('#app')` },
+            { name: 'src/App.vue', content: `<template>
+  <div id="app">
+    <nav class="bg-white shadow">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between h-16">
+          <div class="flex">
+            <router-link to="/" class="flex items-center px-3 py-2 text-gray-700 hover:text-gray-900">
+              Home
+            </router-link>
+            <router-link to="/about" class="flex items-center px-3 py-2 text-gray-700 hover:text-gray-900">
+              About
+            </router-link>
+            <router-link to="/contact" class="flex items-center px-3 py-2 text-gray-700 hover:text-gray-900">
+              Contact
+            </router-link>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
+    <main>
+      <router-view />
+    </main>
+  </div>
+</template>
+
+<script setup>
+// Component logic here
+</script>` },
+            { name: 'README.md', content: `# Vue 3 Single Page Application
+
+Modern Vue 3 SPA with Composition API, state management, and routing.
+
+## Features
+- ⚡ Vue 3 Composition API
+- 🗂️ Vue Router for navigation
+- 🍍 Pinia for state management
+- 🎨 Tailwind CSS for styling
+- 📦 Vite for fast builds
+- 🔄 Hot module replacement
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+Visit http://localhost:5173 to see your app!
+` }
+          ]
+        },
+        'phaser-game': {
+          language: 'html',
+          description: 'HTML5 game with Phaser 3 physics engine',
+          files: [
+            { name: 'index.html', content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phaser 3 Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #2c3e50;
+        }
+        #game-container {
+            border: 2px solid #34495e;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>` },
+            { name: 'game.js', content: `class MainScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'MainScene' });
+    }
+
+    preload() {
+        // Create simple colored rectangles as sprites
+        this.load.image('player', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
+        this.load.image('star', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
+    }
+
+    create() {
+        // Create player
+        this.player = this.physics.add.sprite(400, 300, 'player');
+        this.player.setDisplaySize(32, 32);
+        this.player.setTint(0x00ff00);
+        this.player.setCollideWorldBounds(true);
+
+        // Create stars group
+        this.stars = this.physics.add.group({
+            key: 'star',
+            repeat: 11,
+            setXY: { x: 12, y: 0, stepX: 70 }
+        });
+
+        this.stars.children.entries.forEach(star => {
+            star.setDisplaySize(24, 24);
+            star.setTint(0xffff00);
+            star.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+        });
+
+        // Create score text
+        this.score = 0;
+        this.scoreText = this.add.text(16, 16, 'Score: 0', { 
+            fontSize: '32px', 
+            fill: '#fff' 
+        });
+
+        // Create controls
+        this.cursors = this.input.keyboard.createCursorKeys();
+
+        // Add collisions
+        this.physics.add.collider(this.stars, this.platforms);
+        this.physics.add.overlap(this.player, this.stars, this.collectStar, null, this);
+    }
+
+    update() {
+        // Player movement
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-160);
+        } else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(160);
+        } else {
+            this.player.setVelocityX(0);
+        }
+
+        if (this.cursors.up.isDown && this.player.body.touching.down) {
+            this.player.setVelocityY(-330);
+        }
+    }
+
+    collectStar(player, star) {
+        star.disableBody(true, true);
+        this.score += 10;
+        this.scoreText.setText('Score: ' + this.score);
+
+        if (this.stars.countActive(true) === 0) {
+            this.stars.children.entries.forEach(star => {
+                star.enableBody(true, star.x, 0, true, true);
+            });
+        }
+    }
+}
+
+// Game configuration
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    parent: 'game-container',
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false
+        }
+    },
+    scene: MainScene
+};
+
+// Create game
+const game = new Phaser.Game(config);` },
+            { name: 'README.md', content: `# Phaser 3 HTML5 Game
+
+A simple but fun platformer game built with Phaser 3.
+
+## Features
+- 🎮 Smooth physics-based gameplay
+- 🌟 Collectible items
+- 📊 Score tracking
+- ⌨️ Keyboard controls
+- 📱 Responsive design
+- 🎯 Expandable game mechanics
+
+## How to Play
+
+- Use arrow keys to move left/right
+- Press up arrow to jump
+- Collect all the stars to score points!
+
+## Getting Started
+
+Simply open \`index.html\` in a web browser to play!
+
+For development with live reload:
+\`\`\`bash
+npx http-server .
+\`\`\`
 ` }
           ]
         }

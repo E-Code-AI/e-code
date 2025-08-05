@@ -48,20 +48,24 @@ export class EnhancedAutonomousAgent {
   
   // Tracking metrics for effort-based pricing
   private filesModified: number = 0;
+  private filesCreated: number = 0;
   private linesOfCodeWritten: number = 0;
   private tokensUsed: number = 0;
   private apiCallsCount: number = 0;
   
   constructor(apiKey?: string) {
-    // Initialize with Claude Sonnet 4.0 - latest model
-    // API key will be provided dynamically from admin keys
+    // Initialize with Claude Sonnet 4.0 - latest model with agentic coding capabilities
+    // Using the newest model: claude-sonnet-4-20250514
+    // This enables advanced code understanding, generation, and autonomous building
     if (apiKey) {
       this.aiProvider = new AnthropicProvider(apiKey);
+      logger.info('Enhanced AI Agent initialized with Anthropic API key');
     }
   }
   
   setApiKey(apiKey: string) {
     this.aiProvider = new AnthropicProvider(apiKey);
+    logger.info('AI Agent API key updated');
   }
   
   async processRequest(context: AgentContext): Promise<AgentResponse> {
@@ -131,15 +135,14 @@ export class EnhancedAutonomousAgent {
         }
       });
       
-      // Calculate pricing based on effort
+      // Calculate pricing based on effort with correct interface
       const pricingInfo = effortPricingService.calculatePricing({
-        filesCreated: this.filesModified,
-        filesModified: 0,
-        linesAdded: this.linesOfCodeWritten,
-        linesDeleted: 0,
+        filesProcessed: this.filesModified,
+        codeGenerated: this.linesOfCodeWritten,
         tokensUsed: this.tokensUsed,
-        executionTimeMs: Date.now() - this.startTime,
-        apiCallsCount: this.apiCallsCount
+        computeTime: Math.round((Date.now() - this.startTime) / 1000), // Convert to seconds
+        apiCalls: this.apiCallsCount,
+        checkpointsCreated: 1 // We created one checkpoint
       });
       
       // Generate summary and screenshot
@@ -160,10 +163,10 @@ export class EnhancedAutonomousAgent {
         screenshot,
         checkpoint,
         pricing: {
-          complexity: pricingInfo.tier.name,
-          costInCents: pricingInfo.totalCents,
-          costInDollars: pricingInfo.formattedPrice,
-          effortScore: pricingInfo.metrics.filesCreated + pricingInfo.metrics.linesAdded
+          complexity: 'moderate', // Default complexity
+          costInCents: pricingInfo.totalCost,
+          costInDollars: `$${(pricingInfo.totalCost / 100).toFixed(2)}`,
+          effortScore: this.filesModified * 5 + Math.ceil(this.linesOfCodeWritten / 10)
         }
       };
     } catch (error: any) {
@@ -174,6 +177,7 @@ export class EnhancedAutonomousAgent {
   
   private resetMetrics(): void {
     this.filesModified = 0;
+    this.filesCreated = 0;
     this.linesOfCodeWritten = 0;
     this.tokensUsed = 0;
     this.apiCallsCount = 0;
