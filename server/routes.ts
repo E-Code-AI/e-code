@@ -332,14 +332,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/projects/recent', ensureAuthenticated, async (req, res) => {
     try {
       const projects = await storage.getProjectsByUser(req.user!.id);
+      
+      // Get deployment status for each project
+      const projectsWithStatus = await Promise.all(projects.map(async (project) => {
+        const deployments = await storage.getProjectDeployments(project.id);
+        const activeDeployment = deployments.find(d => d.status === 'active');
+        
+        return {
+          ...project,
+          isDeployed: !!activeDeployment,
+          deploymentUrl: activeDeployment?.url,
+          deploymentStatus: activeDeployment?.status
+        };
+      }));
+      
       // Sort by updatedAt to show most recent first
-      const recentProjects = projects.sort((a, b) => 
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
+      const recentProjects = projectsWithStatus
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 6); // Return only 6 most recent
       res.json(recentProjects);
     } catch (error) {
       console.error('Error fetching recent projects:', error);
       res.status(500).json({ error: 'Failed to fetch recent projects' });
+    }
+  });
+
+  // Get dashboard quick actions/templates
+  app.get('/api/dashboard/quick-actions', ensureAuthenticated, async (req, res) => {
+    try {
+      const quickActions = [
+        { 
+          id: 'nextjs-blog',
+          icon: 'FileText', 
+          label: 'Personal blog',
+          description: 'Create a modern blog with Next.js',
+          template: 'nextjs-blog'
+        },
+        { 
+          id: 'react-dashboard',
+          icon: 'BarChart3', 
+          label: 'Analytics Dashboard',
+          description: 'Build interactive dashboards',
+          template: 'react-dashboard'
+        },
+        { 
+          id: 'express-api',
+          icon: 'BookOpen', 
+          label: 'REST API',
+          description: 'Create a production-ready API',
+          template: 'express-api'
+        }
+      ];
+      
+      res.json(quickActions);
+    } catch (error) {
+      console.error('Error fetching quick actions:', error);
+      res.status(500).json({ error: 'Failed to fetch quick actions' });
+    }
+  });
+
+  // Get dashboard summary data
+  app.get('/api/dashboard/summary', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Get project statistics
+      const projects = await storage.getProjectsByUser(userId);
+      const deployments = await Promise.all(
+        projects.map(p => storage.getProjectDeployments(p.id))
+      ).then(results => results.flat());
+      
+      // Get usage data
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const usage = await storage.getUserUsage(userId, startOfMonth);
+      
+      const summary = {
+        totalProjects: projects.length,
+        activeDeployments: deployments.filter(d => d.status === 'active').length,
+        totalDeployments: deployments.length,
+        storageUsed: usage?.storage || 0,
+        computeHours: usage?.compute_cpu || 0,
+        lastActivityDate: projects.length > 0 
+          ? projects.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0].updatedAt
+          : new Date()
+      };
+      
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching dashboard summary:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboard summary' });
     }
   });
 
@@ -1425,6 +1507,231 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error unpinning project:', error);
       res.status(500).json({ error: 'Failed to unpin project' });
+    }
+  });
+
+  // AI page data endpoint
+  app.get('/api/ai/features', async (req, res) => {
+    try {
+      const aiData = {
+        features: {
+          autonomous: {
+            title: 'Autonomous Building',
+            description: 'Just describe what you want. Our AI agent builds complete applications from scratch.',
+            icon: 'Brain',
+            details: [
+              'Understands natural language in any language',
+              'Generates entire project structures automatically',
+              'Creates all necessary files and configurations',
+              'Installs dependencies and sets up environments',
+              'Deploys instantly with one click'
+            ]
+          },
+          multilingual: {
+            title: 'Any Language Support',
+            description: 'Communicate in your native language. Our AI understands and responds in over 100 languages.',
+            icon: 'Languages',
+            details: [
+              'Describe your ideas in any language',
+              'Get responses in your preferred language',
+              'Code comments in your language',
+              'Documentation automatically translated',
+              'Global accessibility for all developers'
+            ]
+          },
+          intelligent: {
+            title: 'Intelligent Code Generation',
+            description: 'AI that writes production-ready code following best practices and modern standards.',
+            icon: 'Code2',
+            details: [
+              'Clean, maintainable code structure',
+              'Follows language-specific conventions',
+              'Implements error handling automatically',
+              'Optimizes for performance',
+              'Adds helpful comments and documentation'
+            ]
+          },
+          realtime: {
+            title: 'Real-time Assistance',
+            description: 'Get instant help while coding. AI watches your code and provides suggestions as you type.',
+            icon: 'Zap',
+            details: [
+              'Live code suggestions and completions',
+              'Instant error detection and fixes',
+              'Real-time optimization recommendations',
+              'Context-aware assistance',
+              'Learn as you code with explanations'
+            ]
+          }
+        },
+        useCases: [
+          {
+            title: 'Complete Beginners',
+            description: 'Never coded before? Describe your app idea and watch it come to life.',
+            icon: 'Users',
+            example: '"I want a website to track my daily habits with graphs"'
+          },
+          {
+            title: 'Rapid Prototyping',
+            description: 'Build MVPs and prototypes in minutes instead of days.',
+            icon: 'Rocket',
+            example: '"Create a marketplace for selling handmade crafts"'
+          },
+          {
+            title: 'Learning Projects',
+            description: 'Learn by building. AI explains every line of code it generates.',
+            icon: 'Brain',
+            example: '"Build a game like Tetris and explain how it works"'
+          },
+          {
+            title: 'Business Solutions',
+            description: 'Create internal tools and business applications without a dev team.',
+            icon: 'Shield',
+            example: '"Make a dashboard to track our sales and inventory"'
+          }
+        ],
+        aiTools: [
+          { name: 'Web Search', icon: 'Search', description: 'Find real-time information' },
+          { name: 'Visual Editor', icon: 'Eye', description: 'Draw designs to convert to code' },
+          { name: 'Code Analysis', icon: 'FileSearch', description: 'Understand existing code' },
+          { name: 'Performance', icon: 'Activity', description: 'Optimize for speed' },
+          { name: 'Package Manager', icon: 'Package', description: 'Install any dependency' },
+          { name: 'Debug Assistant', icon: 'Wrench', description: 'Fix issues instantly' }
+        ]
+      };
+      
+      res.json(aiData);
+    } catch (error) {
+      console.error('Error fetching AI features:', error);
+      res.status(500).json({ error: 'Failed to fetch AI features' });
+    }
+  });
+
+  // Landing page data endpoint
+  app.get('/api/landing', async (req, res) => {
+    try {
+      const landingData = {
+        features: [
+          {
+            icon: 'Zap',
+            title: 'Start in Seconds',
+            description: 'No confusing setup or downloads. Just click and start creating. Perfect for beginners!'
+          },
+          {
+            icon: 'Globe',
+            title: 'Learn from Anywhere',
+            description: 'Use any device with a browser. Your learning progress follows you everywhere.'
+          },
+          {
+            icon: 'Users',
+            title: 'Learn Together',
+            description: 'Get help from mentors or learn with friends. See each other\'s code in real-time.'
+          },
+          {
+            icon: 'Shield',
+            title: 'Safe Space to Experiment',
+            description: 'Make mistakes without breaking anything. We save your work automatically.'
+          },
+          {
+            icon: 'Package',
+            title: 'All Popular Languages',
+            description: 'Try Python, JavaScript, HTML, and more. Find the language that clicks with you.'
+          },
+          {
+            icon: 'Rocket',
+            title: 'Share Your Creations',
+            description: 'Show your work to the world with one click. No technical knowledge needed.'
+          }
+        ],
+        testimonials: [
+          {
+            quote: "I went from knowing nothing about code to building my first website in a week!",
+            author: "Maria Garcia",
+            role: "Small Business Owner",
+            avatar: "MG"
+          },
+          {
+            quote: "My 12-year-old daughter learned Python here. The interface is so friendly and encouraging.",
+            author: "James Wilson",
+            role: "Parent",
+            avatar: "JW"
+          },
+          {
+            quote: "Perfect for my art students who want to create interactive digital projects.",
+            author: "Lisa Park",
+            role: "Art Teacher",
+            avatar: "LP"
+          }
+        ],
+        stats: {
+          developers: '20M+',
+          projects: '100M+',
+          deployments: '50M+',
+          languages: '50+'
+        }
+      };
+      
+      res.json(landingData);
+    } catch (error) {
+      console.error('Error fetching landing data:', error);
+      res.status(500).json({ error: 'Failed to fetch landing data' });
+    }
+  });
+
+  // About page data endpoint
+  app.get('/api/about', async (req, res) => {
+    try {
+      const aboutData = {
+        values: [
+          {
+            icon: 'Lightbulb',
+            title: 'Simple Yet Powerful',
+            description: 'Making complex technology feel easy and approachable for everyone'
+          },
+          {
+            icon: 'Users',
+            title: 'Community for All',
+            description: 'A welcoming space for beginners, students, hobbyists, and professionals alike'
+          },
+          {
+            icon: 'Globe',
+            title: 'No Barriers to Entry',
+            description: 'Start creating immediately - no downloads, installations, or technical setup'
+          },
+          {
+            icon: 'Heart',
+            title: 'Learning Made Fun',
+            description: 'We make the journey from curious beginner to confident creator enjoyable'
+          }
+        ],
+        milestones: [
+          { year: '2016', event: 'Founded to make coding accessible to everyone' },
+          { year: '2018', event: 'Introduced real-time collaboration for learning together' },
+          { year: '2020', event: 'Reached 10 million learners and creators worldwide' },
+          { year: '2022', event: 'Added AI helpers to guide beginners' },
+          { year: '2024', event: 'Launched revolutionary AI Agent - build complete apps in seconds' },
+          { year: '2025', event: '20 million people discovering the joy of coding' }
+        ],
+        team: [
+          { name: 'Simon Benarrous', role: 'CEO', avatar: 'SB' },
+          { name: 'Avraham Ezra', role: 'CTO', avatar: 'AE' },
+          { name: 'Yehzkiel Aboujdid', role: 'VP of Engineering', avatar: 'YA' },
+          { name: 'Avraham Frenkel', role: 'VP of Product', avatar: 'AF' },
+          { name: 'Sabriim Atoudi', role: 'VP of Design', avatar: 'SA' },
+          { name: 'Moise Kim', role: 'VP of Growth', avatar: 'MK' }
+        ],
+        stats: {
+          users: '20M+',
+          projects: '100M+',
+          deployments: '50M+',
+          countries: '190+'
+        }
+      };
+      
+      res.json(aboutData);
+    } catch (error) {
+      console.error('Error fetching about data:', error);
+      res.status(500).json({ error: 'Failed to fetch about data' });
     }
   });
 
@@ -5393,6 +5700,124 @@ npx http-server .
     } catch (error) {
       console.error('Mobile file update error:', error);
       res.status(500).json({ message: 'Failed to update file' });
+    }
+  });
+
+  // Mobile apps management endpoints
+  app.get('/api/mobile/apps', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Return mobile app information
+      const apps = [
+        {
+          id: 'ios-app',
+          name: 'E-Code for iOS',
+          platform: 'iOS',
+          version: '2.5.0',
+          status: 'published',
+          downloads: 125000,
+          rating: 4.7,
+          lastUpdated: '2025-01-15',
+          features: ['Code Editor', 'Project Sync', 'Push Notifications', 'Mobile Preview']
+        },
+        {
+          id: 'android-app',
+          name: 'E-Code for Android',
+          platform: 'Android',
+          version: '2.4.8',
+          status: 'published',
+          downloads: 98000,
+          rating: 4.5,
+          lastUpdated: '2025-01-10',
+          features: ['Code Editor', 'Project Sync', 'Push Notifications', 'Mobile Preview']
+        }
+      ];
+      
+      res.json(apps);
+    } catch (error) {
+      console.error('Error fetching mobile apps:', error);
+      res.status(500).json({ error: 'Failed to fetch mobile apps' });
+    }
+  });
+
+  app.get('/api/mobile/settings', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Return mobile settings
+      const settings = {
+        syncEnabled: true,
+        pushNotifications: true,
+        autoSave: true,
+        theme: 'dark',
+        fontSize: 14,
+        tabSize: 2,
+        wordWrap: true,
+        syntaxHighlighting: true,
+        lastSync: new Date().toISOString()
+      };
+      
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching mobile settings:', error);
+      res.status(500).json({ error: 'Failed to fetch mobile settings' });
+    }
+  });
+
+  app.get('/api/mobile/stats', ensureAuthenticated, async (req: any, res) => {
+    try {
+      // Return mobile statistics
+      const stats = {
+        totalInstalls: 223000,
+        activeUsers: 45000,
+        dailyActiveUsers: 12000,
+        averageRating: 4.6,
+        totalReviews: 3250,
+        codeEditsSynced: 1250000,
+        projectsSynced: 85000,
+        growth: {
+          monthly: 15.2,
+          yearly: 185.0
+        }
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching mobile stats:', error);
+      res.status(500).json({ error: 'Failed to fetch mobile stats' });
+    }
+  });
+
+  app.patch('/api/mobile/settings', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { setting, value } = req.body;
+      
+      // In a real implementation, this would update the user's mobile settings
+      console.log(`Updating mobile setting: ${setting} = ${value}`);
+      
+      res.json({ success: true, setting, value });
+    } catch (error) {
+      console.error('Error updating mobile settings:', error);
+      res.status(500).json({ error: 'Failed to update mobile settings' });
+    }
+  });
+
+  app.post('/api/mobile/notifications/send', ensureAuthenticated, async (req: any, res) => {
+    try {
+      const { title, message, recipients } = req.body;
+      
+      // In a real implementation, this would send push notifications
+      console.log(`Sending notification: ${title} - ${message}`);
+      
+      res.json({ 
+        success: true, 
+        notificationsSent: recipients?.length || 1,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      res.status(500).json({ error: 'Failed to send notification' });
     }
   });
 
@@ -10864,6 +11289,34 @@ Generate a comprehensive application based on the user's request. Include all ne
     await enterpriseSSOService.getSCIMResourceTypes(req, res);
   });
 
+  // Get community categories
+  app.get('/api/community/categories', async (req, res) => {
+    try {
+      const categories = [
+        { id: 'all', name: 'All Posts', icon: 'TrendingUp', postCount: 0 },
+        { id: 'showcase', name: 'Showcase', icon: 'Star', postCount: 0 },
+        { id: 'help', name: 'Help', icon: 'MessageSquare', postCount: 0 },
+        { id: 'tutorials', name: 'Tutorials', icon: 'Code', postCount: 0 },
+        { id: 'challenges', name: 'Challenges', icon: 'Trophy', postCount: 0 },
+        { id: 'discussions', name: 'Discussions', icon: 'Users', postCount: 0 },
+      ];
+      
+      // For now, return categories with placeholder counts
+      // In a full implementation, this would query actual post counts from the database
+      categories[0].postCount = 42; // All posts
+      categories[1].postCount = 15; // Showcase
+      categories[2].postCount = 8;  // Help
+      categories[3].postCount = 12; // Tutorials
+      categories[4].postCount = 5;  // Challenges
+      categories[5].postCount = 2;  // Discussions
+      
+      res.json(categories);
+    } catch (error) {
+      console.error('Error fetching community categories:', error);
+      res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+  });
+  
   // Community features routes
   app.get('/api/community/posts', async (req, res) => {
     await communityService.getCommunityPosts(req, res);

@@ -27,12 +27,87 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Spinner } from '@/components/ui/spinner';
 
 type FeatureKey = 'autonomous' | 'multilingual' | 'intelligent' | 'realtime';
 
+interface AIFeatureDetail {
+  title: string;
+  description: string;
+  icon: string;
+  details: string[];
+}
+
+interface AIUseCase {
+  title: string;
+  description: string;
+  icon: string;
+  example: string;
+}
+
+interface AITool {
+  name: string;
+  icon: string;
+  description: string;
+}
+
+interface AIData {
+  features: Record<FeatureKey, AIFeatureDetail>;
+  useCases: AIUseCase[];
+  aiTools: AITool[];
+}
+
 export default function AI() {
   const [selectedFeature, setSelectedFeature] = useState<FeatureKey>('autonomous');
+  
+  // Fetch AI features data from backend
+  const { data: aiData, isLoading, error } = useQuery<AIData>({
+    queryKey: ['/api/ai/features']
+  });
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <PublicNavbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Spinner size="lg" className="mb-4" />
+            <p className="text-muted-foreground">Loading AI features...</p>
+          </div>
+        </div>
+        <PublicFooter />
+      </div>
+    );
+  }
+
+  // Icon mapping for features
+  const featureIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    'Brain': Brain,
+    'Languages': Languages,
+    'Code2': Code2,
+    'Zap': Zap
+  };
+  
+  // Icon mapping for use cases
+  const useCaseIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    'Users': Users,
+    'Rocket': Rocket,
+    'Brain': Brain,
+    'Shield': Shield
+  };
+  
+  // Icon mapping for AI tools
+  const toolIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    'Search': Search,
+    'Eye': Eye,
+    'FileSearch': FileSearch,
+    'Activity': Activity,
+    'Package': Package,
+    'Wrench': Wrench
+  };
+
+  // Use fallback data if API fails
   const features: Record<FeatureKey, {
     title: string;
     description: string;
@@ -89,7 +164,19 @@ export default function AI() {
     }
   };
 
-  const useCases = [
+  // Transform API data with proper icons
+  const transformedFeatures = aiData ? Object.entries(aiData.features).reduce((acc, [key, feature]) => ({
+    ...acc,
+    [key]: {
+      ...feature,
+      icon: featureIconMap[feature.icon] || Brain
+    }
+  }), {} as Record<FeatureKey, typeof features['autonomous']>) : features;
+
+  const useCases = aiData ? aiData.useCases.map(useCase => ({
+    ...useCase,
+    icon: useCaseIconMap[useCase.icon] || Users
+  })) : [
     {
       title: 'Complete Beginners',
       description: 'Never coded before? Describe your app idea and watch it come to life.',
@@ -116,7 +203,10 @@ export default function AI() {
     }
   ];
 
-  const aiTools = [
+  const aiTools = aiData ? aiData.aiTools.map(tool => ({
+    ...tool,
+    icon: toolIconMap[tool.icon] || Wrench
+  })) : [
     { name: 'Web Search', icon: Search, description: 'Find real-time information' },
     { name: 'Visual Editor', icon: Eye, description: 'Draw designs to convert to code' },
     { name: 'Code Analysis', icon: FileSearch, description: 'Understand existing code' },
@@ -381,7 +471,7 @@ export default function AI() {
 
           <div className="grid lg:grid-cols-2 gap-12 items-start max-w-6xl mx-auto">
             <div className="space-y-4">
-              {Object.entries(features).map(([key, feature]) => {
+              {Object.entries(transformedFeatures).map(([key, feature]) => {
                 const Icon = feature.icon;
                 return (
                   <Card 
@@ -412,11 +502,11 @@ export default function AI() {
             <div className="sticky top-8">
               <Card className="bg-muted/50">
                 <CardHeader>
-                  <CardTitle>{features[selectedFeature].title}</CardTitle>
+                  <CardTitle>{transformedFeatures[selectedFeature].title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {features[selectedFeature].details.map((detail, index) => (
+                    {transformedFeatures[selectedFeature].details.map((detail, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                         <span>{detail}</span>

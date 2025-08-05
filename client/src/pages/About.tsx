@@ -9,51 +9,82 @@ import {
 } from 'lucide-react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+import { useQuery } from '@tanstack/react-query';
+import { Spinner } from '@/components/ui/spinner';
+
+interface AboutData {
+  values: Array<{
+    icon: string;
+    title: string;
+    description: string;
+  }>;
+  milestones: Array<{
+    year: string;
+    event: string;
+  }>;
+  team: Array<{
+    name: string;
+    role: string;
+    avatar: string;
+  }>;
+  stats: {
+    users: string;
+    projects: string;
+    deployments: string;
+    countries: string;
+  };
+}
 
 export default function About() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  
+  // Fetch about data from backend
+  const { data: aboutData, isLoading, error } = useQuery<AboutData>({
+    queryKey: ['/api/about']
+  });
 
-  const values = [
-    {
-      icon: <Lightbulb className="h-6 w-6" />,
-      title: 'Simple Yet Powerful',
-      description: 'Making complex technology feel easy and approachable for everyone'
-    },
-    {
-      icon: <Users className="h-6 w-6" />,
-      title: 'Community for All',
-      description: 'A welcoming space for beginners, students, hobbyists, and professionals alike'
-    },
-    {
-      icon: <Globe className="h-6 w-6" />,
-      title: 'No Barriers to Entry',
-      description: 'Start creating immediately - no downloads, installations, or technical setup'
-    },
-    {
-      icon: <Heart className="h-6 w-6" />,
-      title: 'Learning Made Fun',
-      description: 'We make the journey from curious beginner to confident creator enjoyable'
-    }
-  ];
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <PublicNavbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Spinner size="lg" className="mb-4" />
+            <p className="text-muted-foreground">Loading about information...</p>
+          </div>
+        </div>
+        <PublicFooter />
+      </div>
+    );
+  }
 
-  const milestones = [
-    { year: '2016', event: 'Founded to make coding accessible to everyone' },
-    { year: '2018', event: 'Introduced real-time collaboration for learning together' },
-    { year: '2020', event: 'Reached 10 million learners and creators worldwide' },
-    { year: '2022', event: 'Added AI helpers to guide beginners' },
-    { year: '2024', event: 'Launched revolutionary AI Agent - build complete apps in seconds' },
-    { year: '2025', event: '20 million people discovering the joy of coding' }
-  ];
+  if (error || !aboutData) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <PublicNavbar />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Failed to load about information.</p>
+        </div>
+        <PublicFooter />
+      </div>
+    );
+  }
 
-  const team = [
-    { name: 'Simon Benarrous', role: 'CEO', avatar: 'SB' },
-    { name: 'Avraham Ezra', role: 'CTO', avatar: 'AE' },
-    { name: 'Yehzkiel Aboujdid', role: 'VP of Engineering', avatar: 'YA' },
-    { name: 'Avraham Frenkel', role: 'VP of Product', avatar: 'AF' },
-    { name: 'Sabriim Atoudi', role: 'VP of Design', avatar: 'SA' },
-    { name: 'Moise Kim', role: 'VP of Growth', avatar: 'MK' }
-  ];
+  const { values, milestones, team } = aboutData;
+  
+  // Transform icon names to components
+  const iconMap: Record<string, React.ReactNode> = {
+    'Lightbulb': <Lightbulb className="h-6 w-6" />,
+    'Users': <Users className="h-6 w-6" />,
+    'Globe': <Globe className="h-6 w-6" />,
+    'Heart': <Heart className="h-6 w-6" />
+  };
+  
+  const valuesWithIcons = values.map((value) => ({
+    ...value,
+    icon: iconMap[value.icon] || <Lightbulb className="h-6 w-6" />
+  }));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -245,7 +276,7 @@ export default function About() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {values.map((value, index) => (
+            {valuesWithIcons.map((value, index: number) => (
               <Card key={index}>
                 <CardHeader>
                   <div className="p-2 bg-primary/10 rounded-lg w-fit mb-2">
@@ -272,7 +303,7 @@ export default function About() {
             </p>
           </div>
           <div className="space-y-8">
-            {milestones.map((milestone, index) => (
+            {milestones.map((milestone, index: number) => (
               <div key={index} className="flex gap-8 items-start">
                 <div className="flex-shrink-0">
                   <Badge variant="outline" className="px-4 py-2">
@@ -303,7 +334,7 @@ export default function About() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {team.map((member, index) => (
+            {team.map((member, index: number) => (
               <Card key={index}>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-4">
