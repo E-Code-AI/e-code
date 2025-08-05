@@ -58,7 +58,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
 
   // Fetch deployment data from the backend
   const { data: deploymentResponse, isLoading } = useQuery<{ deployment?: DeploymentData; deployments?: DeploymentData[] }>({
-    queryKey: [`/api/deployment/${projectId}`],
+    queryKey: [`/api/projects/${projectId}/deployments`],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
@@ -70,18 +70,19 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
 
   const handleRedeploy = async () => {
     try {
-      const response = await fetch(`/api/deployment/${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}/deploy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           type: deployment?.type || 'autoscale',
           regions: deployment?.regions || ['us-east-1'],
-          environment: deployment?.environment || 'production'
+          environment: deployment?.environment || 'production',
+          sslEnabled: true
         })
       });
       if (response.ok) {
-        await queryClient.invalidateQueries({ queryKey: [`/api/deployment/${projectId}`] });
+        await queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/deployments`] });
       }
     } catch (error) {
       console.error('Failed to redeploy:', error);
