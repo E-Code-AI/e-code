@@ -21,6 +21,7 @@ import {
   SlidersHorizontal, MoreHorizontal, Link, Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -28,6 +29,7 @@ import type { Deployment } from '@shared/schema';
 
 export default function Deployments() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const params = useParams();
   const [, navigate] = useLocation();
   const [showBottomMenu, setShowBottomMenu] = useState(false);
@@ -328,7 +330,12 @@ export default function Deployments() {
                     <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Globe className="h-3 w-3" />
-                        <a href="#" className="hover:text-primary flex items-center gap-1">
+                        <a 
+                          href="https://my-awesome-app.e-code.app" 
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-primary flex items-center gap-1"
+                        >
                           my-awesome-app.e-code.app
                           <ExternalLink className="h-3 w-3" />
                         </a>

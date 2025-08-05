@@ -757,12 +757,11 @@ export default function Docs() {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-1 ml-6 space-y-1">
                     {category.items.map(item => (
-                      <a
+                      <button
                         key={item.href}
-                        href="#"
-                        onClick={(e) => handleDocClick(e, item.title, item.href)}
+                        onClick={() => handleDocClick(null as any, item.title, item.href)}
                         className={cn(
-                          "group flex items-center justify-between px-2 py-1 text-sm rounded-md transition-colors cursor-pointer",
+                          "group flex items-center justify-between px-2 py-1 text-sm rounded-md transition-colors cursor-pointer w-full text-left",
                           selectedDoc === item.title
                             ? "bg-accent text-foreground font-medium"
                             : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -774,7 +773,7 @@ export default function Docs() {
                             {item.badge}
                           </Badge>
                         )}
-                      </a>
+                      </button>
                     ))}
                   </CollapsibleContent>
                 </Collapsible>
