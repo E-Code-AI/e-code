@@ -191,21 +191,74 @@ export function ReplitHeader() {
                 <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
                 <DropdownMenuItem 
                   className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-                  onClick={() => {/* TODO: Fork project */}}
+                  onClick={async () => {
+                    try {
+                      const response = await apiRequest('POST', `/api/projects/${projectId}/fork`);
+                      const forkedProject = await response.json();
+                      toast({
+                        title: "Project Forked",
+                        description: `Successfully forked project as "${forkedProject.name}"`,
+                      });
+                      navigate(`/projects/${forkedProject.id}`);
+                    } catch (error) {
+                      toast({
+                        title: "Fork Failed",
+                        description: "Failed to fork project. Please try again.",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
                 >
                   <Copy className="mr-2 h-4 w-4" />
                   Fork project
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-                  onClick={() => {/* TODO: Share project */}}
+                  onClick={() => {
+                    // Generate shareable link
+                    const shareUrl = window.location.origin + window.location.pathname;
+                    navigator.clipboard.writeText(shareUrl);
+                    toast({
+                      title: "Link Copied",
+                      description: "Project link copied to clipboard",
+                    });
+                  }}
                 >
                   <Share2 className="mr-2 h-4 w-4" />
                   Share
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-                  onClick={() => {/* TODO: Download project */}}
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/projects/${projectId}/download`, {
+                        credentials: 'include'
+                      });
+                      if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = `${projectInfo?.name || 'project'}.zip`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        toast({
+                          title: "Download Started",
+                          description: "Your project is being downloaded",
+                        });
+                      } else {
+                        throw new Error('Download failed');
+                      }
+                    } catch (error) {
+                      toast({
+                        title: "Download Failed",
+                        description: "Failed to download project. Please try again.",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Download
