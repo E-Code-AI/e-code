@@ -57,44 +57,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// Start the server immediately to open port 5000 ASAP for deployment
 (async () => {
-  try {
-    // Initialize the database first
-    await initializeDatabase();
-    console.log("Database setup complete");
-    
-    // Seed database with test user in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Seeding database with test user...");
-      const { seedDatabase } = await import("./db-seed");
-      await seedDatabase();
-    }
-    
-    // Initialize Nix package manager
-    try {
-      console.log("Initializing Nix package manager...");
-      const { nixPackageManager } = await import("./package-management/nix-package-manager");
-      await nixPackageManager.initialize();
-      console.log("Nix package manager initialized");
-    } catch (nixError) {
-      console.warn("Warning: Nix package manager initialization failed:", nixError);
-      console.warn("Package management features may be limited");
-    }
-    
-    // Start the preview server
-    try {
-      const { startPreviewServer } = await import("./preview/preview-service");
-      startPreviewServer();
-      console.log("Preview server started on port 3100");
-    } catch (previewError) {
-      console.warn("Warning: Preview server failed to start:", previewError);
-    }
-  } catch (error) {
-    console.error("Failed to initialize:", error);
-  }
-  
+  // Register routes first
   const server = await registerRoutes(app);
 
+  // Error handling middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -103,9 +71,7 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Setup Vite or static serving
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
@@ -113,9 +79,9 @@ app.use((req, res, next) => {
   }
 
   // Cloud Run provides PORT environment variable, fallback to 5000 for development
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
+  // This serves both the API and the client - the only port that is not firewalled
   const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+  
   server.listen({
     port,
     host: "0.0.0.0",
@@ -123,4 +89,38 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
+
+  // Initialize services asynchronously after the server is running and port is open
+  // This prevents blocking the port opening which was causing deployment failures
+  (async () => {
+    try {
+      // Initialize the database first
+      await initializeDatabase();
+      console.log("Database setup complete");
+      
+      // Seed database with test user in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Seeding database with test user...");
+        const { seedDatabase } = await import("./db-seed");
+        await seedDatabase();
+      }
+      
+      // Start optional services in background without blocking port opening
+      // Removed Nix package manager initialization that was causing ENOENT errors
+      
+      // Start the preview server (optional service) - delayed to not block startup
+      setTimeout(async () => {
+        try {
+          const { startPreviewServer } = await import("./preview/preview-service");
+          startPreviewServer();
+          console.log("Preview server started on port 3100");
+        } catch (previewError) {
+          console.warn("Warning: Preview server failed to start:", previewError);
+        }
+      }, 1000); // 1 second delay to ensure main server is fully ready
+      
+    } catch (error) {
+      console.error("Failed to initialize background services:", error);
+    }
+  })();
 })();
