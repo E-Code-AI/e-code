@@ -237,7 +237,7 @@ export default function Home() {
                     <Card 
                       key={project.id} 
                       className="bg-card border border-border hover:border-primary transition-colors cursor-pointer"
-                      onClick={() => navigate(`/project/${project.id}`)}
+                      onClick={() => navigate(`/@${project.owner?.username || user?.username}/${project.slug}`)}
                     >
                       <CardHeader className="pb-2">
                         <CardTitle className="flex items-center justify-between text-lg">
@@ -313,7 +313,7 @@ export default function Home() {
                     <div 
                       key={project.id}
                       className="flex items-center p-3 border rounded-md hover:bg-accent cursor-pointer"
-                      onClick={() => navigate(`/project/${project.id}`)}
+                      onClick={() => navigate(`/@${project.owner?.username || user?.username}/${project.slug}`)}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">

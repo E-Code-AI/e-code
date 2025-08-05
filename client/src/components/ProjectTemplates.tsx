@@ -122,7 +122,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
         description: `"${project.name}" has been created successfully.`,
       });
       // Navigate to the project with AI agent activated
-      navigate(`/project/${project.id}?agent=true&prompt=Enhance this ${project.name} template`);
+      navigate(`/@${project.owner?.username || user?.username}/${project.slug}?agent=true&prompt=Enhance this ${project.name} template`);
       setShowCreateDialog(false);
       setShowPreviewDialog(false);
       setProjectName('');

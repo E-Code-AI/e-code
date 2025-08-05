@@ -46,6 +46,7 @@ export default function ReplitAIAgentPage() {
   const [prompt, setPrompt] = useState('');
   const [showAgent, setShowAgent] = useState(false);
   const [projectId, setProjectId] = useState<number | null>(null);
+  const [project, setProject] = useState<any>(null);
 
   // Get prompt from URL params and auto-submit
   useEffect(() => {
@@ -79,8 +80,9 @@ export default function ReplitAIAgentPage() {
       });
 
       if (response.ok) {
-        const project = await response.json();
-        setProjectId(project.id);
+        const projectData = await response.json();
+        setProjectId(projectData.id);
+        setProject(projectData);
         setShowAgent(true);
       } else {
         const error = await response.json();
@@ -116,9 +118,10 @@ export default function ReplitAIAgentPage() {
       });
 
       if (response.ok) {
-        const project = await response.json();
-        console.log('Project created successfully:', project);
-        setProjectId(project.id);
+        const projectData = await response.json();
+        console.log('Project created successfully:', projectData);
+        setProjectId(projectData.id);
+        setProject(projectData);
         setShowAgent(true);
       } else {
         const errorData = await response.json();
@@ -158,7 +161,7 @@ export default function ReplitAIAgentPage() {
                 </div>
               </div>
               <Button
-                onClick={() => navigate(`/project/${projectId}`)}
+                onClick={() => navigate(`/@${project?.owner?.username || user?.username}/${project?.slug}`)}
                 className="gap-2"
               >
                 <FileText className="h-4 w-4" />

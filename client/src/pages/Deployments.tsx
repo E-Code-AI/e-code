@@ -80,7 +80,7 @@ export default function Deployments() {
 
   const handleDebugWithAgent = () => {
     if (currentDeployment?.project) {
-      navigate(`/project/${currentDeployment.projectId}?mode=agent&debug=true`);
+      navigate(`/@${currentDeployment.project?.owner?.username || user?.username}/${currentDeployment.project?.slug}?mode=agent&debug=true`);
     } else {
       toast({
         title: "Starting AI Agent",
