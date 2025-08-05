@@ -127,7 +127,7 @@ export class RealtimeService {
   private async sendProjectState(socket: Socket, projectId: number) {
     try {
       // Send current project files
-      const files = await storage.getFilesByProject(projectId);
+      const files = await storage.getFilesByProjectId(projectId);
       socket.emit('project:state', {
         files,
         projectId,

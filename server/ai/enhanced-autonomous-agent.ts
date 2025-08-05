@@ -7,7 +7,7 @@ import { AIProviderFactory } from './ai-providers';
 import { checkpointService } from '../services/checkpoint-service';
 import { effortPricingService } from '../services/effort-pricing-service';
 import { createLogger } from '../utils/logger';
-import { AnthropicProvider } from './ai-provider';
+import { AnthropicProvider } from './ai-providers';
 import { realPackageManager } from '../services/real-package-manager';
 import { agentWebSocketService } from '../services/agent-websocket-service';
 
@@ -873,7 +873,7 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
       return new Promise((resolve) => {
         // Execute in project directory
         const projectPath = `/projects/${projectId}`;
-        const process = spawn(command, {
+        const childProcess = spawn(command, {
           shell: true,
           cwd: projectPath,
           env: { ...process.env, NODE_ENV: 'development' }
@@ -881,19 +881,19 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
         
         let output = '';
         
-        process.stdout.on('data', (data) => {
+        childProcess.stdout.on('data', (data: Buffer) => {
           const text = data.toString();
           output += text;
           logger.info(`Command output: ${text}`);
         });
         
-        process.stderr.on('data', (data) => {
+        childProcess.stderr.on('data', (data: Buffer) => {
           const text = data.toString();
           output += text;
           logger.error(`Command error: ${text}`);
         });
         
-        process.on('close', (code) => {
+        childProcess.on('close', (code: number | null) => {
           if (code === 0) {
             resolve({ success: true, output: output || 'Command executed successfully' });
           } else {
@@ -903,7 +903,7 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
         
         // Timeout after 30 seconds
         setTimeout(() => {
-          process.kill();
+          childProcess.kill();
           resolve({ success: true, output: 'Command started in background' });
         }, 30000);
       });
@@ -1000,7 +1000,7 @@ export async function initializeEnhancedAgent() {
   }
   
   // Fallback to database
-  const adminApiKey = await storage.getActiveAdminApiKey('anthropic');
+  const adminApiKey = await storage.getActiveAdminApiKey();
   if (adminApiKey) {
     enhancedAgent.setApiKey(adminApiKey.apiKey);
     logger.info('Enhanced AI Agent initialized with Anthropic API key from database');
