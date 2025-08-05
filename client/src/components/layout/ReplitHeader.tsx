@@ -60,6 +60,7 @@ import { useIsMobile } from "@/hooks/use-media-query";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 import { ECodeLogo } from "@/components/ECodeLogo";
 import { MobileMenu } from "./MobileMenu";
@@ -72,6 +73,7 @@ export function ReplitHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [projectInfo, setProjectInfo] = useState<any>(null);
   const isMobile = useIsMobile();
+  const { toast } = useToast();
 
   // Get project info from URL - supports both formats: /projects/:id and /@:username/:project
   const pathMatch = location.match(/^\/projects\/(\d+)/);
