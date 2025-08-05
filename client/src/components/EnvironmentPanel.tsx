@@ -43,12 +43,14 @@ import { Copy, Eye, EyeOff, HelpCircle, KeyRound, MoreVertical, Plus, Trash2 } f
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 
 interface EnvironmentPanelProps {
   projectId: number;
 }
 
 export default function EnvironmentPanel({ projectId }: EnvironmentPanelProps) {
+  const { toast } = useToast();
   const {
     variables,
     isLoading,
@@ -388,7 +390,12 @@ export default function EnvironmentPanel({ projectId }: EnvironmentPanelProps) {
                               variant="ghost"
                               size="icon" 
                               className="h-8 w-8 rounded-full"
-                              onClick={() => {}}
+                              onClick={() => {
+                                toast({
+                                  title: "System Secret",
+                                  description: "System secrets are protected and cannot be viewed for security reasons."
+                                });
+                              }}
                               disabled
                             >
                               <Eye className="h-4 w-4" />
@@ -397,7 +404,12 @@ export default function EnvironmentPanel({ projectId }: EnvironmentPanelProps) {
                               variant="ghost"
                               size="icon" 
                               className="h-8 w-8 rounded-full"
-                              onClick={() => {}}
+                              onClick={() => {
+                                toast({
+                                  title: "System Secret",
+                                  description: "System secrets are protected and cannot be copied for security reasons."
+                                });
+                              }}
                               disabled
                             >
                               <Copy className="h-4 w-4" />
