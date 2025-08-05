@@ -83,9 +83,10 @@ export class CheckpointService {
         projectId: options.projectId,
         name: options.name,
         description: options.description,
-        type: options.type,
+        type: options.type || 'manual',
         createdBy: options.userId,
         createdAt: new Date(),
+        filesSnapshot: {}, // Start with empty snapshot, will be updated after saving files
         metadata: {
           agentState: options.agentState || {},
           environmentIncluded: options.includeEnvironment || false,

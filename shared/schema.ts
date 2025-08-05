@@ -320,6 +320,7 @@ export const checkpoints = pgTable('checkpoints', {
   projectId: integer('project_id').notNull().references(() => projects.id),
   name: text('name').notNull(),
   description: text('description'),
+  filesSnapshot: jsonb('files_snapshot').notNull().default({}),
   type: varchar('type', { length: 50 }).notNull().default('manual'), // manual, automatic, before_action, error_recovery
   createdBy: integer('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
