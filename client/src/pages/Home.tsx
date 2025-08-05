@@ -78,10 +78,13 @@ export default function Home() {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setIsCreateModalOpen(false);
       
-      // Use window.location for full page reload to ensure auth state is fresh
-      const projectUrl = `/@${user?.username || 'admin'}/${data.slug}`;
-      console.log(`Navigating to: ${projectUrl}`);
-      window.location.href = projectUrl;
+      // Add a small delay to ensure project is fully created and indexed
+      setTimeout(() => {
+        // Use window.location for full page reload to ensure auth state is fresh
+        const projectUrl = `/@${user?.username || 'admin'}/${data.slug}`;
+        console.log(`Navigating to: ${projectUrl}`);
+        window.location.href = projectUrl;
+      }, 500);
       
       toast({
         title: "Project created!",
