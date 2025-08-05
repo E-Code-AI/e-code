@@ -11,7 +11,8 @@ import {
   Settings, Users, Shield, Database, Activity, 
   FileText, Cpu, GitBranch, Package, Globe,
   Lock, BarChart3, CheckCircle, XCircle,
-  DollarSign, TrendingUp, Palette, Zap, Heart
+  DollarSign, TrendingUp, Palette, Zap, Heart,
+  Presentation
 } from 'lucide-react';
 import { Link } from 'wouter';
 import PerformanceMonitor from '@/pages/admin/PerformanceMonitor';
@@ -112,10 +113,18 @@ export default function AdminDashboard() {
             System administration and monitoring
           </p>
         </div>
-        <Badge variant="outline" className="flex items-center gap-2">
-          <Shield className="h-4 w-4" />
-          Admin Access
-        </Badge>
+        <div className="flex items-center gap-4">
+          <Badge variant="outline" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Admin Access
+          </Badge>
+          <Link href="/admin/pitch-deck">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Presentation className="h-4 w-4" />
+              View Pitch Deck
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
