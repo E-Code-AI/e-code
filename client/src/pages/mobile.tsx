@@ -1,678 +1,597 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { PublicFooter } from '@/components/layout/PublicFooter';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { apiRequest, queryClient } from '@/lib/queryClient';
 import { 
-  Smartphone, 
-  Code2, 
-  PlayCircle, 
-  FolderOpen, 
-  Download, 
-  Upload,
-  Cpu,
-  MemoryStick,
-  Wifi,
-  Battery,
-  Shield,
-  RefreshCw,
-  Terminal,
-  FileCode,
-  Activity,
-  Settings,
-  QrCode,
-  Check,
-  X
+  Smartphone, Code, Cloud, Users, Zap, Shield, 
+  Terminal, Sparkles, Globe, Palette, Play, 
+  FileCode, Package, GitBranch, Layers, 
+  Wifi, Download, Star, ChevronRight, QrCode,
+  Apple, Chrome, ArrowRight, Check
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useLocation } from 'wouter';
 
-interface MobileDevice {
-  id: string;
-  platform: 'ios' | 'android';
-  appVersion: string;
-  osVersion: string;
-  deviceModel: string;
-  lastActive: string;
-  isActive: boolean;
-  pushToken?: string;
-}
+export default function Mobile() {
+  const [, navigate] = useLocation();
+  const [activeFeature, setActiveFeature] = useState(0);
 
-interface MobileProject {
-  id: number;
-  name: string;
-  slug: string;
-  language: string;
-  lastOpened?: string;
-  isPublic: boolean;
-  canRun: boolean;
-  fileCount: number;
-  description?: string;
-}
+  // Auto-rotate features every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveFeature((prev) => (prev + 1) % 6);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
-interface MobileFile {
-  id: number;
-  name: string;
-  isFolder: boolean;
-  size: number;
-  language: string;
-  lastModified: string;
-  content?: string;
-  canEdit: boolean;
-}
-
-interface ExecutionResult {
-  success: boolean;
-  output?: string;
-  error?: string;
-  executionTime?: number;
-  memoryUsed?: number;
-  exitCode?: number;
-}
-
-export default function MobilePage() {
-  const { toast } = useToast();
-  const [selectedProject, setSelectedProject] = useState<MobileProject | null>(null);
-  const [selectedFile, setSelectedFile] = useState<MobileFile | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const [showQRCode, setShowQRCode] = useState(false);
-  const [showFileEditor, setShowFileEditor] = useState(false);
-  const [editedContent, setEditedContent] = useState('');
-
-  // Fetch mobile devices
-  const { data: devicesData, isLoading: devicesLoading } = useQuery({
-    queryKey: ['/api/mobile/devices'],
-    queryFn: () => apiRequest('GET', '/api/mobile/devices').then(res => res.json())
-  });
-
-  // Fetch mobile projects
-  const { data: projectsData, isLoading: projectsLoading } = useQuery({
-    queryKey: ['/api/mobile/projects'],
-    queryFn: () => apiRequest('GET', '/api/mobile/projects').then(res => res.json())
-  });
-
-  // Fetch project details
-  const { data: projectDetails, isLoading: detailsLoading } = useQuery({
-    queryKey: selectedProject ? [`/api/mobile/projects/${selectedProject.id}`] : null,
-    queryFn: () => selectedProject 
-      ? apiRequest('GET', `/api/mobile/projects/${selectedProject.id}`).then(res => res.json())
-      : null,
-    enabled: !!selectedProject
-  });
-
-  // Run project mutation
-  const runProjectMutation = useMutation({
-    mutationFn: async ({ projectId, input }: { projectId: number; input?: string }) => {
-      const response = await apiRequest('POST', `/api/mobile/projects/${projectId}/run`, { input });
-      if (!response.ok) throw new Error('Failed to run project');
-      return response.json();
+  const features = [
+    {
+      id: 'editor',
+      icon: <Code className="h-6 w-6" />,
+      title: 'Full-Featured Editor',
+      description: 'Syntax highlighting, autocomplete, and multi-file editing',
+      image: '/mobile-editor.png',
+      color: 'from-blue-500 to-cyan-500'
     },
-    onSuccess: (data: ExecutionResult) => {
-      if (data.success) {
-        toast({
-          title: "Execution Complete",
-          description: `Finished in ${data.executionTime}ms`,
-        });
-      } else {
-        toast({
-          title: "Execution Failed",
-          description: data.error || "Unknown error occurred",
-          variant: "destructive"
-        });
-      }
-    }
-  });
-
-  // Update file mutation
-  const updateFileMutation = useMutation({
-    mutationFn: async ({ projectId, fileName, content }: { projectId: number; fileName: string; content: string }) => {
-      const response = await apiRequest('PUT', `/api/mobile/projects/${projectId}/files/${fileName}`, { content });
-      if (!response.ok) throw new Error('Failed to update file');
-      return response.json();
+    {
+      id: 'terminal',
+      icon: <Terminal className="h-6 w-6" />,
+      title: 'Integrated Terminal',
+      description: 'Run commands, install packages, and debug your code',
+      image: '/mobile-terminal.png',
+      color: 'from-green-500 to-emerald-500'
     },
-    onSuccess: () => {
-      toast({
-        title: "File Updated",
-        description: "Changes saved successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: [`/api/mobile/projects/${selectedProject?.id}`] });
-      setShowFileEditor(false);
-    }
-  });
-
-  // Sync project mutation
-  const syncProjectMutation = useMutation({
-    mutationFn: async (projectId: number) => {
-      const response = await apiRequest('POST', `/api/mobile/projects/${projectId}/sync`);
-      if (!response.ok) throw new Error('Failed to sync project');
-      return response.json();
+    {
+      id: 'ai',
+      icon: <Sparkles className="h-6 w-6" />,
+      title: 'AI Assistant',
+      description: 'Get code suggestions and explanations on the go',
+      image: '/mobile-ai.png',
+      color: 'from-purple-500 to-pink-500'
     },
-    onSuccess: () => {
-      toast({
-        title: "Sync Complete",
-        description: "Project synchronized successfully",
-      });
+    {
+      id: 'preview',
+      icon: <Globe className="h-6 w-6" />,
+      title: 'Live Preview',
+      description: 'See your web apps running in real-time',
+      image: '/mobile-preview.png',
+      color: 'from-orange-500 to-red-500'
+    },
+    {
+      id: 'collab',
+      icon: <Users className="h-6 w-6" />,
+      title: 'Real-time Collaboration',
+      description: 'Code together with your team from anywhere',
+      image: '/mobile-collab.png',
+      color: 'from-indigo-500 to-purple-500'
+    },
+    {
+      id: 'git',
+      icon: <GitBranch className="h-6 w-6" />,
+      title: 'Version Control',
+      description: 'Commit, push, and manage branches on mobile',
+      image: '/mobile-git.png',
+      color: 'from-teal-500 to-blue-500'
     }
-  });
+  ];
 
-  const handleRunProject = () => {
-    if (!selectedProject) return;
-    setIsRunning(true);
-    runProjectMutation.mutate(
-      { projectId: selectedProject.id },
-      {
-        onSettled: () => setIsRunning(false)
-      }
-    );
-  };
-
-  const handleEditFile = (file: MobileFile) => {
-    if (!file.canEdit) {
-      toast({
-        title: "Cannot Edit",
-        description: "This file type cannot be edited on mobile",
-        variant: "destructive"
-      });
-      return;
+  const capabilities = [
+    {
+      icon: <FileCode className="h-5 w-5" />,
+      title: '50+ Languages',
+      description: 'Python, JavaScript, Go, Rust, and more'
+    },
+    {
+      icon: <Package className="h-5 w-5" />,
+      title: 'Package Management',
+      description: 'npm, pip, cargo - all at your fingertips'
+    },
+    {
+      icon: <Layers className="h-5 w-5" />,
+      title: 'Multi-file Projects',
+      description: 'Work with complex codebases on mobile'
+    },
+    {
+      icon: <Wifi className="h-5 w-5" />,
+      title: 'Offline Mode',
+      description: 'Code without internet, sync when connected'
+    },
+    {
+      icon: <Shield className="h-5 w-5" />,
+      title: 'Secure Storage',
+      description: 'Your code is encrypted and protected'
+    },
+    {
+      icon: <Cloud className="h-5 w-5" />,
+      title: 'Cloud Sync',
+      description: 'Seamless sync across all devices'
     }
-    setSelectedFile(file);
-    setEditedContent(file.content || '');
-    setShowFileEditor(true);
-  };
+  ];
 
-  const handleSaveFile = () => {
-    if (!selectedProject || !selectedFile) return;
-    updateFileMutation.mutate({
-      projectId: selectedProject.id,
-      fileName: selectedFile.name,
-      content: editedContent
-    });
-  };
+  const testimonials = [
+    {
+      name: 'Sarah Chen',
+      role: 'Full Stack Developer',
+      avatar: 'SC',
+      content: 'I can review PRs and fix bugs during my commute. The mobile experience is incredibly smooth!',
+      rating: 5
+    },
+    {
+      name: 'Alex Rivera',
+      role: 'Student',
+      avatar: 'AR',
+      content: 'Perfect for learning on the go. I practice coding problems between classes.',
+      rating: 5
+    },
+    {
+      name: 'Marcus Johnson',
+      role: 'DevOps Engineer',
+      avatar: 'MJ',
+      content: 'Being able to SSH and run scripts from my phone has saved me countless times.',
+      rating: 5
+    }
+  ];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Smartphone className="h-8 w-8" />
-            Mobile Development
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Build, test, and deploy mobile apps from anywhere
-          </p>
-        </div>
-        <Button onClick={() => setShowQRCode(true)} variant="outline">
-          <QrCode className="mr-2 h-4 w-4" />
-          Get Mobile App
-        </Button>
-      </div>
-
-      {/* Connected Devices */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wifi className="h-5 w-5" />
-            Connected Devices
-          </CardTitle>
-          <CardDescription>
-            Your mobile devices connected to E-Code
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {devicesLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : devicesData?.devices?.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {devicesData.devices.map((device: MobileDevice) => (
-                <Card key={device.id} className={device.isActive ? 'border-green-500' : ''}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Smartphone className={`h-4 w-4 ${device.platform === 'ios' ? 'text-gray-600' : 'text-green-600'}`} />
-                          <span className="font-medium">{device.deviceModel}</span>
-                        </div>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={device.platform === 'ios' ? 'default' : 'secondary'}>
-                              {device.platform.toUpperCase()}
-                            </Badge>
-                            <span className="text-muted-foreground">{device.osVersion}</span>
-                          </div>
-                          <div className="text-muted-foreground">
-                            App v{device.appVersion}
-                          </div>
+    <div className="min-h-screen bg-background">
+      <PublicNavbar />
+      
+      <main>
+        {/* Hero Section */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-purple-600/20 to-pink-600/20" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(var(--primary),0.2),transparent_50%)]" />
+          
+          <div className="relative py-20 px-4">
+            <div className="container mx-auto max-w-7xl">
+              <div className="grid lg:grid-cols-2 gap-12 items-center">
+                <div className="text-center lg:text-left space-y-8">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                    <Smartphone className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Available on iOS & Android</span>
+                  </div>
+                  
+                  <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold">
+                    Code on the go with
+                    <span className="block mt-2 bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      E-Code Mobile
+                    </span>
+                  </h1>
+                  
+                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
+                    The full power of E-Code in your pocket. Write, run, and deploy code 
+                    from anywhere with our native mobile apps.
+                  </p>
+                  
+                  {/* Download buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <a 
+                      href="https://apps.apple.com/app/ecode" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="group relative overflow-hidden rounded-lg bg-black p-[1px] transition-all hover:scale-105"
+                    >
+                      <div className="relative flex items-center gap-3 bg-black px-6 py-3 rounded-lg">
+                        <Apple className="h-8 w-8 text-white" />
+                        <div className="text-left">
+                          <p className="text-xs text-gray-300">Download on the</p>
+                          <p className="text-lg font-semibold text-white">App Store</p>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge variant={device.isActive ? 'default' : 'outline'}>
-                          {device.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <Battery className={`h-4 w-4 ${device.isActive ? 'text-green-500' : 'text-gray-400'}`} />
+                    </a>
+                    
+                    <a 
+                      href="https://play.google.com/store/apps/details?id=com.ecode.app" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="group relative overflow-hidden rounded-lg bg-black p-[1px] transition-all hover:scale-105"
+                    >
+                      <div className="relative flex items-center gap-3 bg-black px-6 py-3 rounded-lg">
+                        <Chrome className="h-8 w-8 text-white" />
+                        <div className="text-left">
+                          <p className="text-xs text-gray-300">Get it on</p>
+                          <p className="text-lg font-semibold text-white">Google Play</p>
+                        </div>
+                      </div>
+                    </a>
+                  </div>
+                  
+                  {/* QR Code section */}
+                  <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg max-w-fit mx-auto lg:mx-0">
+                    <QrCode className="h-16 w-16 text-muted-foreground" />
+                    <div className="text-left">
+                      <p className="text-sm font-medium">Scan to download</p>
+                      <p className="text-xs text-muted-foreground">Or visit ecode.com/mobile</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Interactive Phone Mockup */}
+                <div className="relative">
+                  <div className="relative mx-auto w-[320px] h-[640px]">
+                    {/* Phone frame */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-gray-800 rounded-[3rem] shadow-2xl">
+                      {/* Screen */}
+                      <div className="absolute inset-[14px] bg-black rounded-[2.5rem] overflow-hidden">
+                        {/* Dynamic content based on active feature */}
+                        <div className="relative w-full h-full bg-gradient-to-br from-gray-900 to-black">
+                          {/* Status bar */}
+                          <div className="absolute top-0 left-0 right-0 h-10 bg-black/50 flex items-center justify-between px-6 text-white text-xs">
+                            <span>9:41</span>
+                            <div className="flex gap-1">
+                              <div className="w-4 h-3 bg-white rounded-sm"></div>
+                              <div className="w-4 h-3 bg-white rounded-sm"></div>
+                              <div className="w-4 h-3 bg-white rounded-sm"></div>
+                            </div>
+                          </div>
+                          
+                          {/* App content */}
+                          <div className="pt-10 h-full">
+                            <div className={`absolute inset-x-0 top-10 bottom-0 bg-gradient-to-br ${features[activeFeature].color} opacity-20`} />
+                            <div className="relative p-6 text-white">
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className="p-3 bg-white/20 rounded-xl">
+                                  {features[activeFeature].icon}
+                                </div>
+                                <h3 className="text-xl font-semibold">{features[activeFeature].title}</h3>
+                              </div>
+                              <p className="text-sm text-gray-300">{features[activeFeature].description}</p>
+                              
+                              {/* Feature-specific content */}
+                              <div className="mt-6 bg-black/30 rounded-lg p-4">
+                                {activeFeature === 0 && (
+                                  <pre className="text-xs text-green-400">
+{`function hello() {
+  console.log("Hello from mobile!");
+  return "E-Code Mobile";
+}`}
+                                  </pre>
+                                )}
+                                {activeFeature === 1 && (
+                                  <div className="text-xs text-green-400 font-mono">
+                                    $ npm install express<br />
+                                    $ node server.js<br />
+                                    Server running on port 3000...
+                                  </div>
+                                )}
+                                {activeFeature === 2 && (
+                                  <div className="text-xs space-y-2">
+                                    <div className="bg-purple-500/20 p-2 rounded">
+                                      <Sparkles className="h-3 w-3 inline mr-1" />
+                                      AI: "Here's how to optimize this function..."
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                    
+                    {/* Phone details */}
+                    <div className="absolute -left-[2px] top-[120px] w-[3px] h-[60px] bg-gray-700 rounded-r-lg"></div>
+                    <div className="absolute -left-[2px] top-[200px] w-[3px] h-[60px] bg-gray-700 rounded-r-lg"></div>
+                    <div className="absolute -right-[2px] top-[160px] w-[3px] h-[80px] bg-gray-700 rounded-l-lg"></div>
+                  </div>
+                  
+                  {/* Feature selector dots */}
+                  <div className="flex justify-center gap-2 mt-8">
+                    {features.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setActiveFeature(index)}
+                        className={`h-2 w-2 rounded-full transition-all ${
+                          index === activeFeature 
+                            ? 'w-8 bg-primary' 
+                            : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Showcase */}
+        <section className="py-24 px-4">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-sm font-medium mb-4">
+                <Sparkles className="h-4 w-4" />
+                Mobile Features
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                Everything you need, <span className="text-primary">anywhere you are</span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                Our mobile apps are built from the ground up for touch, with all the power of the desktop experience
+              </p>
+            </div>
+
+            <Tabs defaultValue="editor" className="w-full">
+              <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full max-w-4xl mx-auto mb-12">
+                {features.map((feature) => (
+                  <TabsTrigger key={feature.id} value={feature.id} className="gap-2">
+                    {feature.icon}
+                    <span className="hidden md:inline">{feature.title.split(' ')[0]}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {features.map((feature) => (
+                <TabsContent key={feature.id} value={feature.id} className="mt-0">
+                  <div className="grid lg:grid-cols-2 gap-12 items-center">
+                    <div className="space-y-6">
+                      <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.color}`}>
+                        {feature.icon}
+                      </div>
+                      <h3 className="text-3xl font-bold">{feature.title}</h3>
+                      <p className="text-lg text-muted-foreground">{feature.description}</p>
+                      
+                      {/* Feature-specific details */}
+                      <ul className="space-y-3">
+                        {feature.id === 'editor' && (
+                          <>
+                            <li className="flex items-center gap-3">
+                              <Check className="h-5 w-5 text-primary" />
+                              <span>IntelliSense and autocomplete</span>
+                            </li>
+                            <li className="flex items-center gap-3">
+                              <Check className="h-5 w-5 text-primary" />
+                              <span>Multi-cursor editing</span>
+                            </li>
+                            <li className="flex items-center gap-3">
+                              <Check className="h-5 w-5 text-primary" />
+                              <span>Find and replace with regex</span>
+                            </li>
+                          </>
+                        )}
+                        {feature.id === 'terminal' && (
+                          <>
+                            <li className="flex items-center gap-3">
+                              <Check className="h-5 w-5 text-primary" />
+                              <span>Full Linux terminal</span>
+                            </li>
+                            <li className="flex items-center gap-3">
+                              <Check className="h-5 w-5 text-primary" />
+                              <span>Package manager support</span>
+                            </li>
+                            <li className="flex items-center gap-3">
+                              <Check className="h-5 w-5 text-primary" />
+                              <span>SSH and remote access</span>
+                            </li>
+                          </>
+                        )}
+                      </ul>
+                    </div>
+                    
+                    {/* Feature mockup */}
+                    <div className="relative">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} blur-3xl opacity-20`} />
+                      <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 shadow-2xl">
+                        <div className="bg-black rounded-lg p-4 min-h-[400px] flex items-center justify-center">
+                          <div className="text-center text-white/50">
+                            {feature.icon}
+                            <p className="mt-4">{feature.title} Demo</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </div>
+        </section>
+
+        {/* Capabilities Grid */}
+        <section className="py-24 px-4 bg-muted/50">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                Professional development, <span className="text-primary">pocket-sized</span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                No compromises. Get the full development experience on your mobile device.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {capabilities.map((capability, index) => (
+                <Card key={index} className="group hover:shadow-xl transition-all duration-300">
+                  <CardContent className="pt-6">
+                    <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4 group-hover:scale-110 transition-transform">
+                      {capability.icon}
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">{capability.title}</h3>
+                    <p className="text-muted-foreground">{capability.description}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Smartphone className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No devices connected</p>
-              <p className="text-sm mt-2">Install the E-Code mobile app to get started</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        </section>
 
-      {/* Mobile Projects */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Projects List */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FolderOpen className="h-5 w-5" />
-              Mobile Projects
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px]">
-              {projectsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        {/* Platform Comparison */}
+        <section className="py-24 px-4">
+          <div className="container mx-auto max-w-5xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                Why developers choose <span className="text-primary">E-Code Mobile</span>
+              </h2>
+            </div>
+
+            <div className="bg-muted/50 rounded-2xl p-8">
+              <div className="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-2xl font-bold mb-6 text-red-500">Other Mobile Code Editors</h3>
+                  <ul className="space-y-4">
+                    <li className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-red-500/20 flex items-center justify-center mt-0.5">
+                        <span className="text-red-500 text-sm">✗</span>
+                      </div>
+                      <span className="text-muted-foreground">Limited language support</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-red-500/20 flex items-center justify-center mt-0.5">
+                        <span className="text-red-500 text-sm">✗</span>
+                      </div>
+                      <span className="text-muted-foreground">No package management</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-red-500/20 flex items-center justify-center mt-0.5">
+                        <span className="text-red-500 text-sm">✗</span>
+                      </div>
+                      <span className="text-muted-foreground">Basic text editing only</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-red-500/20 flex items-center justify-center mt-0.5">
+                        <span className="text-red-500 text-sm">✗</span>
+                      </div>
+                      <span className="text-muted-foreground">No collaboration features</span>
+                    </li>
+                  </ul>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {projectsData?.projects?.map((project: MobileProject) => (
-                    <Card 
-                      key={project.id}
-                      className={`cursor-pointer transition-colors ${
-                        selectedProject?.id === project.id ? 'border-primary' : ''
-                      }`}
-                      onClick={() => setSelectedProject(project)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <h4 className="font-medium">{project.name}</h4>
-                            <div className="flex items-center gap-2 text-xs">
-                              <Badge variant="outline">{project.language}</Badge>
-                              {project.canRun && (
-                                <Badge variant="secondary">
-                                  <PlayCircle className="h-3 w-3 mr-1" />
-                                  Mobile Ready
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <FileCode className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        {project.description && (
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {project.description}
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
+
+                <div>
+                  <h3 className="text-2xl font-bold mb-6 text-primary">E-Code Mobile</h3>
+                  <ul className="space-y-4">
+                    <li className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center mt-0.5">
+                        <Check className="h-4 w-4 text-primary" />
+                      </div>
+                      <span>50+ languages with full IDE features</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center mt-0.5">
+                        <Check className="h-4 w-4 text-primary" />
+                      </div>
+                      <span>Built-in package managers</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center mt-0.5">
+                        <Check className="h-4 w-4 text-primary" />
+                      </div>
+                      <span>Full terminal and debugging</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center mt-0.5">
+                        <Check className="h-4 w-4 text-primary" />
+                      </div>
+                      <span>Real-time collaboration</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="py-24 px-4 bg-gradient-to-b from-background to-muted/50">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                Loved by <span className="text-primary">2M+ developers</span>
+              </h2>
+              <div className="flex items-center justify-center gap-3 mt-6">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-6 w-6 text-yellow-500 fill-yellow-500" />
                   ))}
                 </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                <span className="text-lg font-semibold">4.8/5</span>
+                <span className="text-muted-foreground">(10,000+ reviews)</span>
+              </div>
+            </div>
 
-        {/* Project Details */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>
-              {selectedProject ? selectedProject.name : 'Select a Project'}
-            </CardTitle>
-            {selectedProject && (
-              <CardDescription>
-                {selectedProject.description || 'Mobile-optimized project'}
-              </CardDescription>
-            )}
-          </CardHeader>
-          <CardContent>
-            {selectedProject && projectDetails ? (
-              <Tabs defaultValue="files" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="files">Files</TabsTrigger>
-                  <TabsTrigger value="run">Run</TabsTrigger>
-                  <TabsTrigger value="stats">Stats</TabsTrigger>
-                  <TabsTrigger value="settings">Settings</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="files" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium">Project Files</h3>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => syncProjectMutation.mutate(selectedProject.id)}
-                    >
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                      Sync
-                    </Button>
-                  </div>
-                  <ScrollArea className="h-[300px] rounded-md border p-4">
-                    <div className="space-y-2">
-                      {projectDetails.files?.map((file: MobileFile) => (
-                        <div
-                          key={file.id}
-                          className="flex items-center justify-between p-2 rounded-md hover:bg-accent cursor-pointer"
-                          onClick={() => !file.isFolder && handleEditFile(file)}
-                        >
-                          <div className="flex items-center gap-2">
-                            {file.isFolder ? (
-                              <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <FileCode className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            <span className="text-sm">{file.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{(file.size / 1024).toFixed(1)} KB</span>
-                            {file.canEdit && <Settings className="h-3 w-3" />}
-                          </div>
-                        </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              {testimonials.map((testimonial, index) => (
+                <Card key={index} className="hover:shadow-xl transition-all duration-300">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center font-semibold">
+                        {testimonial.avatar}
+                      </div>
+                      <div>
+                        <p className="font-semibold">{testimonial.name}</p>
+                        <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                      </div>
+                    </div>
+                    <div className="flex mb-3">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                       ))}
                     </div>
-                  </ScrollArea>
-                </TabsContent>
-
-                <TabsContent value="run" className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium">Mobile Execution</h3>
-                      <Badge variant={selectedProject.canRun ? 'default' : 'secondary'}>
-                        {selectedProject.canRun ? 'Supported' : 'Not Supported'}
-                      </Badge>
-                    </div>
-                    
-                    {selectedProject.canRun ? (
-                      <>
-                        <div className="space-y-2">
-                          <Label>Input (optional)</Label>
-                          <Textarea 
-                            placeholder="Enter input for your program..."
-                            className="min-h-[100px]"
-                          />
-                        </div>
-
-                        <Button 
-                          onClick={handleRunProject}
-                          disabled={isRunning}
-                          className="w-full"
-                        >
-                          {isRunning ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                              Running...
-                            </>
-                          ) : (
-                            <>
-                              <PlayCircle className="mr-2 h-4 w-4" />
-                              Run on Mobile
-                            </>
-                          )}
-                        </Button>
-
-                        {runProjectMutation.data && (
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="text-sm">Execution Result</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-2">
-                                {runProjectMutation.data.output && (
-                                  <div>
-                                    <Label>Output</Label>
-                                    <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
-                                      {runProjectMutation.data.output}
-                                    </pre>
-                                  </div>
-                                )}
-                                {runProjectMutation.data.error && (
-                                  <div>
-                                    <Label className="text-destructive">Error</Label>
-                                    <pre className="bg-destructive/10 p-2 rounded text-xs overflow-x-auto text-destructive">
-                                      {runProjectMutation.data.error}
-                                    </pre>
-                                  </div>
-                                )}
-                                <div className="flex gap-4 text-xs text-muted-foreground">
-                                  <span>Time: {runProjectMutation.data.executionTime}ms</span>
-                                  <span>Memory: {(runProjectMutation.data.memoryUsed! / 1024 / 1024).toFixed(2)}MB</span>
-                                  <span>Exit Code: {runProjectMutation.data.exitCode}</span>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </>
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Terminal className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>This language is not supported on mobile devices</p>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="stats" className="space-y-4">
-                  <div className="grid gap-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Total Files</p>
-                              <p className="text-2xl font-bold">{projectDetails.stats?.totalFiles || 0}</p>
-                            </div>
-                            <FileCode className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Total Lines</p>
-                              <p className="text-2xl font-bold">{projectDetails.stats?.totalLines || 0}</p>
-                            </div>
-                            <Code2 className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm">Languages Used</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                          {projectDetails.stats?.languages?.map((lang: string) => (
-                            <Badge key={lang} variant="secondary">
-                              {lang}
-                            </Badge>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm">Mobile Performance</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span>CPU Usage</span>
-                            <span>12%</span>
-                          </div>
-                          <Progress value={12} className="h-2" />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span>Memory Usage</span>
-                            <span>64 MB</span>
-                          </div>
-                          <Progress value={25} className="h-2" />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span>Battery Impact</span>
-                            <span>Low</span>
-                          </div>
-                          <Progress value={15} className="h-2" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="settings" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-sm">Mobile Settings</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Push Notifications</Label>
-                        <Select defaultValue="all">
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Notifications</SelectItem>
-                            <SelectItem value="errors">Errors Only</SelectItem>
-                            <SelectItem value="none">Disabled</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Sync Mode</Label>
-                        <Select defaultValue="auto">
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="auto">Automatic</SelectItem>
-                            <SelectItem value="wifi">Wi-Fi Only</SelectItem>
-                            <SelectItem value="manual">Manual</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Offline Mode</Label>
-                        <div className="flex items-center gap-2">
-                          <Shield className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
-                            Enable offline editing and execution
-                          </span>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Export to Mobile
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Upload className="h-4 w-4 mr-2" />
-                          Import from Mobile
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            ) : (
-              <div className="text-center py-16 text-muted-foreground">
-                <Smartphone className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p>Select a project to view details</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Mobile App Download Dialog */}
-      <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Download E-Code Mobile</DialogTitle>
-            <DialogDescription>
-              Scan the QR code with your mobile device to download the app
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center space-y-4 py-4">
-            <div className="w-48 h-48 bg-muted rounded-lg flex items-center justify-center">
-              <QrCode className="h-32 w-32 text-muted-foreground" />
-            </div>
-            <div className="text-center space-y-2">
-              <p className="text-sm text-muted-foreground">Available on</p>
-              <div className="flex gap-4">
-                <Button variant="outline" size="sm">
-                  <Smartphone className="h-4 w-4 mr-2" />
-                  App Store
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Smartphone className="h-4 w-4 mr-2" />
-                  Google Play
-                </Button>
-              </div>
+                    <p className="text-muted-foreground">{testimonial.content}</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </section>
 
-      {/* File Editor Dialog */}
-      <Dialog open={showFileEditor} onOpenChange={setShowFileEditor}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Edit {selectedFile?.name}</DialogTitle>
-            <DialogDescription>
-              Make changes to your file directly from mobile
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Textarea
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              className="min-h-[400px] font-mono text-sm"
-              placeholder="Enter your code here..."
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowFileEditor(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveFile}>
-                Save Changes
-              </Button>
+        {/* CTA Section */}
+        <section className="py-24 px-4">
+          <div className="container mx-auto max-w-4xl text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Ready to code anywhere?
+            </h2>
+            <p className="text-xl text-muted-foreground mb-12">
+              Join millions of developers who code on the go with E-Code Mobile
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
+              <a 
+                href="https://apps.apple.com/app/ecode" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="group relative overflow-hidden rounded-lg bg-black p-[1px] transition-all hover:scale-105"
+              >
+                <div className="relative flex items-center gap-3 bg-black px-8 py-4 rounded-lg">
+                  <Apple className="h-10 w-10 text-white" />
+                  <div className="text-left">
+                    <p className="text-sm text-gray-300">Download on the</p>
+                    <p className="text-xl font-semibold text-white">App Store</p>
+                  </div>
+                </div>
+              </a>
+              
+              <a 
+                href="https://play.google.com/store/apps/details?id=com.ecode.app" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="group relative overflow-hidden rounded-lg bg-black p-[1px] transition-all hover:scale-105"
+              >
+                <div className="relative flex items-center gap-3 bg-black px-8 py-4 rounded-lg">
+                  <Chrome className="h-10 w-10 text-white" />
+                  <div className="text-left">
+                    <p className="text-sm text-gray-300">Get it on</p>
+                    <p className="text-xl font-semibold text-white">Google Play</p>
+                  </div>
+                </div>
+              </a>
             </div>
+
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => navigate('/features')}
+              className="gap-2"
+            >
+              Explore all features
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </section>
+      </main>
+
+      <PublicFooter />
     </div>
   );
 }

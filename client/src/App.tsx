@@ -13,23 +13,23 @@ const Home = lazy(() => import("@/pages/Home"));
 const Editor = lazy(() => import("@/pages/Editor"));
 const AuthPage = lazy(() => import("@/pages/auth-page"));
 const ProjectsPage = lazy(() => import("@/pages/ProjectsPage"));
-const DevLogin = lazy(() => import("@/pages/DevLogin"));
+
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const ProjectPage = lazy(() => import("@/pages/ReplitProjectPage"));
 const RuntimesPage = lazy(() => import("@/pages/RuntimesPage"));
 const RuntimeDiagnosticsPage = lazy(() => import("@/pages/RuntimeDiagnosticsPage"));
 const RuntimePublicPage = lazy(() => import("@/pages/RuntimePublicPage"));
-const RuntimeTest = lazy(() => import("@/pages/RuntimeTest"));
+
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Explore = lazy(() => import("@/pages/Explore"));
 const Teams = lazy(() => import("@/pages/Teams"));
 const Notifications = lazy(() => import("@/pages/Notifications"));
 const Analytics = lazy(() => import("@/pages/Analytics"));
-const Badges = lazy(() => import("@/pages/Badges"));
+
 const Education = lazy(() => import("@/pages/Education"));
 const Marketplace = lazy(() => import("@/pages/Marketplace"));
-const PowerUps = lazy(() => import("@/pages/PowerUps"));
+
 const TeamPage = lazy(() => import("@/pages/TeamPage"));
 const TeamSettings = lazy(() => import("@/pages/TeamSettings"));
 const Settings = lazy(() => import("@/pages/Settings"));
@@ -56,27 +56,26 @@ const ContactSales = lazy(() => import("@/pages/ContactSales"));
 const Terms = lazy(() => import("@/pages/Terms"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const Status = lazy(() => import("@/pages/Status"));
-const PublicMobilePage = lazy(() => import("@/pages/PublicMobilePage"));
-const MobileAdmin = lazy(() => import("@/pages/Mobile"));
+
+const MobileAdmin = lazy(() => import("@/pages/mobile"));
 const AI = lazy(() => import("@/pages/AI"));
 const Press = lazy(() => import("@/pages/Press"));
 const Partners = lazy(() => import("@/pages/Partners"));
 const Security = lazy(() => import("@/pages/Security"));
 const Desktop = lazy(() => import("@/pages/Desktop"));
-const Forum = lazy(() => import("@/pages/Forum"));
+
 const AIAgent = lazy(() => import("@/pages/AIAgent"));
 const ReplitAIAgentPage = lazy(() => import("@/pages/ReplitAIAgentPage"));
 const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
 const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
 // User area pages
 const Account = lazy(() => import("@/pages/Account"));
-const Cycles = lazy(() => import("@/pages/Cycles"));
-const Bounties = lazy(() => import("@/pages/Bounties"));
+
 const Deployments = lazy(() => import("@/pages/Deployments"));
 const Learn = lazy(() => import("@/pages/Learn"));
 const Support = lazy(() => import("@/pages/Support"));
 const Themes = lazy(() => import("@/pages/Themes"));
-const Referrals = lazy(() => import("@/pages/Referrals"));
+
 const Usage = lazy(() => import("@/pages/Usage"));
 const Subscribe = lazy(() => import("@/pages/Subscribe"));
 const Plans = lazy(() => import("@/pages/Plans"));
@@ -90,25 +89,20 @@ const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
 const Languages = lazy(() => import("@/pages/Languages"));
 const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
 const Git = lazy(() => import("@/pages/Git"));
-const Shell = lazy(() => import("@/pages/ResponsiveShell"));
+
 const Secrets = lazy(() => import("@/pages/Secrets"));
 const Workflows = lazy(() => import("@/pages/Workflows"));
 const SSH = lazy(() => import("@/pages/SSH"));
 const SecurityScanner = lazy(() => import("@/pages/SecurityScanner"));
 const Dependencies = lazy(() => import("@/pages/Dependencies"));
 const ObjectStorage = lazy(() => import("@/pages/ObjectStorage"));
-const ReplitDemo = lazy(() => import("@/pages/ReplitDemo"));
+
 const DatabaseManagement = lazy(() => import("@/pages/DatabaseManagement"));
 const SecretManagement = lazy(() => import("@/pages/SecretManagement"));
 const UsageAlerts = lazy(() => import("@/pages/UsageAlerts"));
 // Newsletter pages
 const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
-// Comparison pages
-const AWSCloud9Comparison = lazy(() => import("@/pages/compare/AWSCloud9"));
-const GitHubCodespacesComparison = lazy(() => import("@/pages/compare/GitHubCodespaces"));
-const GlitchComparison = lazy(() => import("@/pages/compare/Glitch"));
-const HerokuComparison = lazy(() => import("@/pages/compare/Heroku"));
-const CodeSandboxComparison = lazy(() => import("@/pages/compare/CodeSandbox"));
+
 // Legal pages
 const DPA = lazy(() => import("@/pages/DPA"));
 const CommercialAgreement = lazy(() => import("@/pages/CommercialAgreement"));
@@ -117,15 +111,12 @@ const ReportAbuse = lazy(() => import("@/pages/ReportAbuse"));
 const SharedSnippet = lazy(() => import("@/pages/SharedSnippet"));
 // New feature pages
 const APISDKPage = lazy(() => import("@/pages/APISDKPage"));
-const CodeReviewsPage = lazy(() => import("@/pages/CodeReviewsPage"));
-const MentorshipPage = lazy(() => import("@/pages/MentorshipPage"));
-const ChallengesPage = lazy(() => import("@/pages/ChallengesPage"));
 const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
 const FigmaImport = lazy(() => import("@/pages/FigmaImport"));
 const BoltImport = lazy(() => import("@/pages/BoltImport"));
 const LovableImport = lazy(() => import("@/pages/LovableImport"));
 const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
-const BookScanner = lazy(() => import("@/pages/BookScanner"));
+
 const CodeGeneration = lazy(() => import("@/pages/CodeGeneration"));
 // Application Pages
 const SolarTechAIChatApp = lazy(() => import("@/pages/SolarTechAIChatApp"));
@@ -157,15 +148,15 @@ function AppContent() {
           <Toaster />
           <SpotlightSearch />
           <CommandPalette />
-          <KeyboardShortcuts />
+
           <Suspense fallback={<PageLoader />}>
             <Switch>
           <Route path="/auth" component={AuthPage} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
-          <Route path="/dev-login" component={DevLogin} />
+
           <Route path="/runtime-test" component={RuntimePublicPage} />
-          <Route path="/runtime-dependencies" component={RuntimeTest} />
+
           {/* Public Routes */}
           <Route path="/" component={Landing} />
           <Route path="/pricing" component={Pricing} />
@@ -182,7 +173,7 @@ function AppContent() {
           <Route path="/commercial-agreement" component={CommercialAgreement} />
           <Route path="/report-abuse" component={ReportAbuse} />
           <Route path="/status" component={Status} />
-          <Route path="/mobile" component={PublicMobilePage} />
+          <Route path="/mobile" component={MobileAdmin} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-agent" component={AIAgent} />
           <Route path="/code-generation" component={CodeGeneration} />
@@ -190,7 +181,7 @@ function AppContent() {
           <Route path="/partners" component={Partners} />
           <Route path="/security" component={Security} />
           <Route path="/desktop" component={Desktop} />
-          <Route path="/forum" component={Forum} />
+
           <Route path="/subprocessors" component={Subprocessors} />
           <Route path="/student-dpa" component={StudentDPA} />
           <Route path="/languages" component={Languages} />
@@ -198,17 +189,7 @@ function AppContent() {
           <Route path="/team" component={PublicTeamPage} />
           <Route path="/collaboration" component={PublicTeamPage} />
           <Route path="/deployments" component={PublicDeploymentsPage} />
-          {/* Solution Pages */}
-          <Route path="/solutions/app-builder" component={lazy(() => import('@/pages/solutions/AppBuilder'))} />
-          <Route path="/solutions/website-builder" component={lazy(() => import('@/pages/solutions/WebsiteBuilder'))} />
-          <Route path="/solutions/game-builder" component={lazy(() => import('@/pages/solutions/GameBuilder'))} />
-          <Route path="/solutions/dashboard-builder" component={lazy(() => import('@/pages/solutions/DashboardBuilder'))} />
-          <Route path="/solutions/chatbot-builder" component={lazy(() => import('@/pages/solutions/ChatbotBuilder'))} />
-          <Route path="/solutions/internal-ai-builder" component={lazy(() => import('@/pages/solutions/InternalAIBuilder'))} />
-          {/* Marketing Pages */}
-          <Route path="/marketing/bounties" component={lazy(() => import('@/pages/marketing/BountiesMarketing'))} />
-          <Route path="/marketing/teams" component={lazy(() => import('@/pages/marketing/TeamsMarketing'))} />
-          <Route path="/marketing/deployments" component={lazy(() => import('@/pages/marketing/DeploymentsMarketing'))} />
+
           <ProtectedRoute path="/github-import" component={() => (
             <ReplitLayout showSidebar={false}>
               <GitHubImport />
@@ -234,12 +215,7 @@ function AppContent() {
           <Route path="/newsletter-confirmed" component={NewsletterConfirmed} />
           {/* Shared snippet page */}
           <Route path="/share/:shareId" component={SharedSnippet} />
-          {/* Comparison pages */}
-          <Route path="/compare/aws-cloud9" component={AWSCloud9Comparison} />
-          <Route path="/compare/github-codespaces" component={GitHubCodespacesComparison} />
-          <Route path="/compare/glitch" component={GlitchComparison} />
-          <Route path="/compare/heroku" component={HerokuComparison} />
-          <Route path="/compare/codesandbox" component={CodeSandboxComparison} />
+
           <ProtectedRoute path="/dashboard" component={() => (
             <ReplitLayout showSidebar={false}>
               <Dashboard />
@@ -275,11 +251,7 @@ function AppContent() {
               <Analytics />
             </ReplitLayout>
           )} />
-          <ProtectedRoute path="/badges" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <Badges />
-            </ReplitLayout>
-          )} />
+
           <ProtectedRoute path="/education" component={() => (
             <ReplitLayout showSidebar={false}>
               <Education />
@@ -290,32 +262,14 @@ function AppContent() {
               <Marketplace />
             </ReplitLayout>
           )} />
-          <ProtectedRoute path="/powerups" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <PowerUps />
-            </ReplitLayout>
-          )} />
+
           {/* New Feature Routes */}
           <ProtectedRoute path="/api-sdk" component={() => (
             <ReplitLayout showSidebar={false}>
               <APISDKPage />
             </ReplitLayout>
           )} />
-          <ProtectedRoute path="/code-reviews" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <CodeReviewsPage />
-            </ReplitLayout>
-          )} />
-          <ProtectedRoute path="/mentorship" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <MentorshipPage />
-            </ReplitLayout>
-          )} />
-          <ProtectedRoute path="/challenges" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <ChallengesPage />
-            </ReplitLayout>
-          )} />
+
           <ProtectedRoute path="/mobile-apps" component={() => (
             <ReplitLayout showSidebar={false}>
               <MobileAppsPage />
@@ -378,11 +332,7 @@ function AppContent() {
           <ProtectedRoute path="/@:username/:projectname" component={() => (
             <ProjectPage />
           )} />
-          <ProtectedRoute path="/@admin/book-scanner" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <BookScanner />
-            </ReplitLayout>
-          )} />
+
           {/* SolarTech Applications with Replit-style URLs */}
           <ProtectedRoute path="/@admin/solartech-ai-chat" component={() => (
             <ApplicationIDEWrapper
@@ -458,11 +408,7 @@ function AppContent() {
               <SearchPage />
             </ReplitLayout>
           )} />
-          <ProtectedRoute path="/shell" component={() => (
-            <ReplitLayout>
-              <Shell />
-            </ReplitLayout>
-          )} />
+
           <ProtectedRoute path="/secrets" component={() => (
             <ReplitLayout>
               <Secrets />
@@ -563,16 +509,8 @@ function AppContent() {
               <Account />
             </ReplitLayout>
           )} />
-          <ProtectedRoute path="/cycles" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <Cycles />
-            </ReplitLayout>
-          )} />
-          <ProtectedRoute path="/bounties" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <Bounties />
-            </ReplitLayout>
-          )} />
+
+
           <ProtectedRoute path="/deployments" component={() => (
             <ReplitLayout showSidebar={false}>
               <Deployments />
@@ -613,11 +551,7 @@ function AppContent() {
               <HealthDashboard />
             </ReplitLayout>
           )} />
-          <ProtectedRoute path="/referrals" component={() => (
-            <ReplitLayout>
-              <Referrals />
-            </ReplitLayout>
-          )} />
+
           <ProtectedRoute path="/sso-configuration" component={() => (
             <ReplitLayout showSidebar={false}>
               <SSOConfiguration />
