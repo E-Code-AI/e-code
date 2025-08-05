@@ -106,7 +106,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
   // Create project from template mutation
   const createProjectMutation = useMutation({
     mutationFn: async ({ template, name }: { template: Template; name: string }) => {
-      const response = await apiRequest('POST', '/api/templates/create-from-template', {
+      const response = await apiRequest('POST', '/api/projects/from-template', {
         templateId: template.id,
         name: name || `My ${template.name}`,
       });
@@ -121,7 +121,8 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
         title: 'Project created!',
         description: `"${project.name}" has been created successfully.`,
       });
-      navigate(`/${project.slug}`);
+      // Navigate to the project with AI agent activated
+      navigate(`/project/${project.id}?agent=true&prompt=Enhance this ${project.name} template`);
       setShowCreateDialog(false);
       setShowPreviewDialog(false);
       setProjectName('');

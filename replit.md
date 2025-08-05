@@ -14,6 +14,24 @@ An advanced AI-powered development platform that streamlines software creation t
 
 ## Recent Changes
 
+### 2025-08-05 - Anthropic Claude 4 Integration & Real Templates
+- ✅ **Integrated Anthropic's Claude 4 Sonnet agentic coding tool**
+  - Updated AI agent to use claude-sonnet-4-20250514 model
+  - Enhanced with advanced code understanding and generation capabilities
+  - Supports 100+ languages for natural language understanding
+  - Autonomous full-stack application building with best practices
+  - Faster idea-to-code transformation as requested by user
+- ✅ **Fixed Usage page route** - The /usage route now works correctly
+- ✅ **Implemented real, functional templates like Replit**
+  - Next.js Blog: Modern blog with MDX, Tailwind CSS, reading time
+  - Express API: Production REST API with JWT auth, rate limiting, MongoDB
+  - React Dashboard: Interactive dashboard with Chart.js, real-time data
+  - Discord Bot: Feature-rich bot with slash commands and moderation
+  - Python Flask: Modern web app with SQLAlchemy and authentication
+  - Vue 3 SPA: Composition API, Pinia state management, Vue Router
+  - Phaser Game: HTML5 game with physics engine
+  - All templates include complete file structures and are ready to run
+
 ### 2025-08-05 - Complete Model Integration & One-Click Code Generation
 - ✅ Successfully integrated all 16 new database models with full functionality
 - ✅ Implemented comprehensive credit-based billing system with usage tracking
