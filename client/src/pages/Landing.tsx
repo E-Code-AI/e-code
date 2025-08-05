@@ -155,12 +155,34 @@ export default function Landing() {
 
         if (response.ok) {
           const project = await response.json();
+          console.log('Project created:', project);
+          
           // Store prompt in sessionStorage for the AI agent
           window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
-          navigate(`/@${project.owner?.username || user?.username}/${project.slug}?agent=true&prompt=${encodeURIComponent(description)}`);
+          
+          // Ensure we have the owner username
+          const ownerUsername = project.owner?.username || user?.username || 'admin';
+          const projectUrl = `/@${ownerUsername}/${project.slug}`;
+          console.log(`Navigating to: ${projectUrl}`);
+          
+          // Use window.location for full page reload to ensure auth state is fresh
+          window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`;
+        } else {
+          const errorText = await response.text();
+          console.error('Failed to create project:', response.status, errorText);
+          toast({
+            title: "Error",
+            description: "Failed to create project. Please try again.",
+            variant: "destructive"
+          });
         }
       } catch (error) {
         console.error('Failed to create project:', error);
+        toast({
+          title: "Error", 
+          description: "An error occurred. Please try again.",
+          variant: "destructive"
+        });
       }
     } else {
       // If not logged in, go to register and continue after auth
