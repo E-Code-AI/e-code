@@ -2095,10 +2095,20 @@ export class DatabaseStorage implements IStorage {
 // Initialize storage
 export const storage = new DatabaseStorage();
 
-// Session store
+// Session store with pg pool
+import { Pool } from 'pg';
+
+// Create a native pg pool for session store
+const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
+
 const pgStore = connectPg(session);
 export const sessionStore = new pgStore({
-  pool: client as any,
+  pool: pgPool,
   createTableIfMissing: true,
   ttl: 7 * 24 * 60 * 60, // 7 days
 });

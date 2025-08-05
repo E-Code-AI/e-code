@@ -70,12 +70,12 @@ export class NixPackageManager extends EventEmitter {
       await fs.mkdir(profilesDir, { recursive: true });
       logger.info('Nix profiles directory initialized');
     } catch (error) {
-      logger.error('Failed to initialize Nix profiles directory:', error);
+      logger.error(`Failed to initialize Nix profiles directory: ${error}`);
     }
   }
 
   async createEnvironment(projectId: string, packages: string[]): Promise<NixEnvironment> {
-    logger.info(`Creating Nix environment for project ${projectId} with packages:`, packages);
+    logger.info(`Creating Nix environment for project ${projectId} with packages: ${JSON.stringify(packages)}`);
     
     const profilePath = await this.getOrCreateProfile(projectId);
     
@@ -144,7 +144,7 @@ export class NixPackageManager extends EventEmitter {
       
       return packages.slice(0, 50); // Limit results
     } catch (error) {
-      logger.error('Failed to search packages:', error);
+      logger.error(`Failed to search packages: ${error}`);
       
       // If Nix search fails, try alternative approach
       try {
@@ -164,7 +164,7 @@ export class NixPackageManager extends EventEmitter {
           installed: false
         }));
       } catch (fallbackError) {
-        logger.error('Fallback search also failed:', fallbackError);
+        logger.error(`Fallback search also failed: ${fallbackError}`);
         return [];
       }
     }
@@ -241,7 +241,7 @@ export class NixPackageManager extends EventEmitter {
           try {
             await this.installPackage(profileOrProjectId, pkg);
           } catch (err) {
-            logger.warn(`Failed to install basic package ${pkg}:`, err);
+            logger.warn(`Failed to install basic package ${pkg}: ${err}`);
           }
         }
         
@@ -269,7 +269,7 @@ export class NixPackageManager extends EventEmitter {
       
       return packages;
     } catch (error) {
-      logger.error('Failed to get installed packages:', error);
+      logger.error(`Failed to get installed packages: ${error}`);
       
       // Return basic packages as absolute fallback
       return [
@@ -369,7 +369,7 @@ pkgs.mkShell {
       
       return env;
     } catch (error) {
-      logger.error('Failed to get environment variables:', error);
+      logger.error(`Failed to get environment variables: ${error}`);
       return {};
     }
   }

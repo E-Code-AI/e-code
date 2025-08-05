@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import bcrypt from "bcrypt";
-import { storage } from "./storage";
+import { storage, sessionStore } from "./storage";
 import { User } from "@shared/schema";
 import { client } from "./db";
 import { 
@@ -121,7 +121,7 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || 'plot-secret-key-strong-enough-for-development',
     resave: false, // Changed to false as we're using a store that implements touch
     saveUninitialized: true, // Set to true to create sessions for authentication
-    // store: storage.sessionStore, // Commented out since sessionStore doesn't exist
+    store: sessionStore, // Using PostgreSQL session store
     name: 'plot.sid', // Custom name to avoid using the default
     cookie: {
       secure: process.env.NODE_ENV === 'production', // Only secure in production
