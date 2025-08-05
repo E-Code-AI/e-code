@@ -9,6 +9,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { LivePreview } from '@/components/LivePreview';
+import { TemplateGallery } from '@/components/TemplateGallery';
 import { 
   Wand2, 
   Code2, 
@@ -118,13 +120,16 @@ export function CodeGenerationPreview({ projectId, className }: CodeGenerationPr
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('files');
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
   const { toast } = useToast();
   const progressInterval = useRef<NodeJS.Timeout>();
 
   // Generate preview mutation
   const generatePreview = useMutation({
-    mutationFn: (data: { prompt: string; language: string; projectId?: number }) => 
-      apiRequest('POST', '/api/ai/generate-preview', data),
+    mutationFn: async (data: { prompt: string; language: string; projectId?: number }) => {
+      const response = await apiRequest('POST', '/api/ai/generate-preview', data);
+      return response.json();
+    },
     onSuccess: (data: PreviewResponse) => {
       setPreview(data);
       setIsGenerating(false);
@@ -237,8 +242,26 @@ export function CodeGenerationPreview({ projectId, className }: CodeGenerationPr
     };
   }, []);
 
+  const handleTemplateSelect = (template: any) => {
+    setPrompt(template.prompt);
+    setSelectedLanguage(template.language);
+    setShowTemplates(false);
+    toast({
+      title: 'Template Selected',
+      description: `Using ${template.name} template. Click generate to create your project.`,
+    });
+  };
+
   return (
     <div className={`space-y-6 ${className}`}>
+      {/* Show Template Gallery */}
+      {showTemplates && (
+        <TemplateGallery 
+          onSelectTemplate={handleTemplateSelect}
+          className="mb-6"
+        />
+      )}
+
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2 mb-2">
@@ -261,7 +284,16 @@ export function CodeGenerationPreview({ projectId, className }: CodeGenerationPr
         <CardContent className="space-y-4">
           {/* Quick Prompts */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Quick Ideas</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium">Quick Ideas</label>
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={() => setShowTemplates(!showTemplates)}
+              >
+                {showTemplates ? 'Hide' : 'Browse'} Templates
+              </Button>
+            </div>
             <div className="flex flex-wrap gap-2">
               {QUICK_PROMPTS.map((item, index) => (
                 <Button
@@ -493,19 +525,11 @@ export function CodeGenerationPreview({ projectId, className }: CodeGenerationPr
               </TabsContent>
 
               <TabsContent value="preview" className="mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Globe className="h-5 w-5" />
-                      Live Preview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="border rounded-lg p-4 bg-white min-h-[400px]">
-                      <div dangerouslySetInnerHTML={{ __html: preview.preview }} />
-                    </div>
-                  </CardContent>
-                </Card>
+                <LivePreview 
+                  projectId={projectId || 0}
+                  content={preview.preview}
+                  className="h-[600px]"
+                />
               </TabsContent>
 
               <TabsContent value="features" className="mt-4">
@@ -565,7 +589,7 @@ export function CodeGenerationPreview({ projectId, className }: CodeGenerationPr
                     <div className="space-y-4">
                       {preview.deployment && (
                         <>
-                          <Alert variant={preview.deployment.ready ? "default" : "warning"}>
+                          <Alert>
                             <AlertDescription>
                               {preview.deployment.ready 
                                 ? "Your code is ready to deploy! Follow the instructions below to get started."

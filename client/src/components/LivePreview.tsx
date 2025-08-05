@@ -1,248 +1,183 @@
-import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
+import { useState, useEffect, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, ExternalLink, Monitor, Smartphone, Tablet } from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-
-interface PreviewStatus {
-  projectId: number;
-  port: number;
-  url: string;
-  status: 'starting' | 'running' | 'stopped' | 'error';
-  logs: string[];
-}
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  RefreshCw, 
+  ExternalLink, 
+  Smartphone, 
+  Monitor, 
+  Tablet,
+  AlertCircle,
+  Globe,
+  Lock,
+  Zap
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface LivePreviewProps {
   projectId: number;
-  onPreviewReady?: (url: string) => void;
+  content?: string;
+  url?: string;
+  className?: string;
 }
 
-export const LivePreview: React.FC<LivePreviewProps> = ({ projectId, onPreviewReady }) => {
-  const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
-  // Query to get preview status
-  const { data: previewStatus, refetch } = useQuery<PreviewStatus>({
-    queryKey: [`/api/preview/${projectId}/status`],
-    refetchInterval: 2000
-  });
+const DEVICE_SIZES = {
+  desktop: { width: '100%', height: '100%' },
+  tablet: { width: '768px', height: '1024px' },
+  mobile: { width: '375px', height: '667px' }
+};
 
-  // Mutation to start preview
-  const startPreviewMutation = useMutation({
-    mutationFn: () => apiRequest('POST', `/api/preview/${projectId}/start`),
-    onSuccess: (data) => {
-      toast({
-        title: "Preview Started",
-        description: "Your app is starting up..."
-      });
-      queryClient.invalidateQueries({ queryKey: [`/api/preview/${projectId}/status`] });
-      if (data.url && onPreviewReady) {
-        onPreviewReady(data.url);
-      }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Preview Error",
-        description: error?.message || "Failed to start preview",
-        variant: "destructive"
-      });
-    }
-  });
+export function LivePreview({ projectId, content, url, className }: LivePreviewProps) {
+  const [device, setDevice] = useState<DeviceType>('desktop');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Mutation to stop preview
-  const stopPreviewMutation = useMutation({
-    mutationFn: () => apiRequest('POST', `/api/preview/${projectId}/stop`),
-    onSuccess: () => {
-      toast({
-        title: "Preview Stopped",
-        description: "The preview has been stopped."
-      });
-      queryClient.invalidateQueries({ queryKey: [`/api/preview/${projectId}/status`] });
-    }
-  });
-
-  // Auto-start preview on mount if not running
   useEffect(() => {
-    if (previewStatus?.status === 'stopped' || !previewStatus) {
-      startPreviewMutation.mutate();
+    if (url) {
+      setPreviewUrl(url);
+    } else if (projectId) {
+      // Use the preview server URL for the project
+      setPreviewUrl(`/preview/${projectId}`);
     }
-  }, []);
-
-  const getDeviceClass = () => {
-    switch (device) {
-      case 'tablet':
-        return 'max-w-[768px] mx-auto';
-      case 'mobile':
-        return 'max-w-[375px] mx-auto';
-      default:
-        return 'w-full';
-    }
-  };
+  }, [projectId, url]);
 
   const handleRefresh = () => {
-    const iframe = document.getElementById(`preview-${projectId}`) as HTMLIFrameElement;
-    if (iframe) {
-      iframe.src = iframe.src;
+    if (iframeRef.current) {
+      iframeRef.current.src = iframeRef.current.src;
+      setIsLoading(true);
     }
   };
 
-  const getPreviewUrl = () => {
-    if (!previewStatus || previewStatus.status !== 'running') return '';
-    // Use proxy URL that routes through our server
-    return `/preview/${projectId}/`;
+  const handleOpenExternal = () => {
+    window.open(previewUrl, '_blank');
   };
 
-  const renderPreviewContent = () => {
-    if (previewStatus?.status === 'starting') {
-      return (
-        <div className="flex flex-col items-center justify-center h-full space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Starting preview server...</p>
-          {previewStatus.logs.length > 0 && (
-            <div className="max-w-md w-full mt-4">
-              <div className="bg-secondary/50 rounded-md p-3 max-h-32 overflow-y-auto">
-                {previewStatus.logs.map((log, i) => (
-                  <p key={i} className="text-xs font-mono text-muted-foreground">{log}</p>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
+  const handleIframeLoad = () => {
+    setIsLoading(false);
+    setError(null);
+  };
 
-    if (previewStatus?.status === 'error') {
-      return (
-        <div className="flex flex-col items-center justify-center h-full space-y-4">
-          <div className="text-red-500">
-            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <p className="text-sm text-muted-foreground">Preview failed to start</p>
-          {previewStatus.logs.length > 0 && (
-            <div className="max-w-md w-full mt-4">
-              <div className="bg-red-500/10 rounded-md p-3 max-h-32 overflow-y-auto">
-                {previewStatus.logs.map((log, i) => (
-                  <p key={i} className="text-xs font-mono text-red-500">{log}</p>
-                ))}
-              </div>
-            </div>
-          )}
-          <Button onClick={() => startPreviewMutation.mutate()} size="sm">
-            Retry
-          </Button>
-        </div>
-      );
-    }
-
-    if (previewStatus?.status === 'running') {
-      const previewUrl = getPreviewUrl();
-      return (
-        <iframe
-          id={`preview-${projectId}`}
-          src={previewUrl}
-          className="w-full h-full border-0 bg-white"
-          title="Live Preview"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-        />
-      );
-    }
-
-    // Not started yet
-    return (
-      <div className="flex flex-col items-center justify-center h-full space-y-4">
-        <Monitor className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Preview not started</p>
-        <Button onClick={() => startPreviewMutation.mutate()} size="sm">
-          Start Preview
-        </Button>
-      </div>
-    );
+  const handleIframeError = () => {
+    setIsLoading(false);
+    setError('Failed to load preview. The server might be starting up.');
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Preview Controls */}
-      <div className="border-b p-2 flex items-center justify-between bg-background">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setDevice('desktop')}
-            className={device === 'desktop' ? 'bg-secondary' : ''}
-          >
-            <Monitor className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setDevice('tablet')}
-            className={device === 'tablet' ? 'bg-secondary' : ''}
-          >
-            <Tablet className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setDevice('mobile')}
-            className={device === 'mobile' ? 'bg-secondary' : ''}
-          >
-            <Smartphone className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {previewStatus?.status === 'running' && (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefresh}
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.open(getPreviewUrl(), '_blank')}
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-          {previewStatus?.status === 'running' && (
+    <Card className={cn("h-full flex flex-col", className)}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Live Preview
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              <Zap className="h-3 w-3 mr-1" />
+              Auto-refresh
+            </Badge>
             <Button
-              variant="ghost"
               size="sm"
-              onClick={() => stopPreviewMutation.mutate()}
-              disabled={stopPreviewMutation.isPending}
+              variant="ghost"
+              onClick={handleRefresh}
+              disabled={isLoading}
             >
-              Stop
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleOpenExternal}
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col gap-3 pb-3">
+        {/* Device Selector */}
+        <Tabs value={device} onValueChange={(v) => setDevice(v as DeviceType)}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="desktop" className="flex items-center gap-2">
+              <Monitor className="h-4 w-4" />
+              Desktop
+            </TabsTrigger>
+            <TabsTrigger value="tablet" className="flex items-center gap-2">
+              <Tablet className="h-4 w-4" />
+              Tablet
+            </TabsTrigger>
+            <TabsTrigger value="mobile" className="flex items-center gap-2">
+              <Smartphone className="h-4 w-4" />
+              Mobile
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* Preview Area */}
+        <div className="flex-1 relative bg-muted/20 rounded-lg overflow-hidden">
+          {error && (
+            <Alert variant="destructive" className="absolute top-4 left-4 right-4 z-10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
-        </div>
-      </div>
+          
+          <div className="absolute inset-0 flex items-center justify-center">
+            {isLoading && (
+              <div className="flex flex-col items-center gap-2">
+                <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+                <span className="text-sm text-muted-foreground">Loading preview...</span>
+              </div>
+            )}
+          </div>
 
-      {/* Preview Container */}
-      <div className="flex-1 bg-gray-100 overflow-hidden">
-        <div className={`h-full ${getDeviceClass()} bg-white shadow-lg`}>
-          {renderPreviewContent()}
+          <div 
+            className={cn(
+              "relative mx-auto h-full transition-all duration-300",
+              device === 'desktop' ? 'w-full' : 'border-x border-muted'
+            )}
+            style={{
+              width: device === 'desktop' ? '100%' : DEVICE_SIZES[device].width,
+              maxHeight: device === 'desktop' ? '100%' : DEVICE_SIZES[device].height
+            }}
+          >
+            {content ? (
+              <div 
+                className="w-full h-full overflow-auto bg-white"
+                dangerouslySetInnerHTML={{ __html: content }}
+              />
+            ) : (
+              <iframe
+                ref={iframeRef}
+                src={previewUrl}
+                className="w-full h-full border-0"
+                onLoad={handleIframeLoad}
+                onError={handleIframeError}
+                title="Live Preview"
+                sandbox="allow-scripts allow-same-origin allow-forms"
+              />
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Status Bar */}
-      {previewStatus?.status === 'running' && (
-        <div className="border-t p-2 bg-background text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            Preview running at {getPreviewUrl()}
-          </span>
+        {/* Preview Info */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1">
+              <Lock className="h-3 w-3" />
+              Secure sandbox
+            </span>
+            <span>{DEVICE_SIZES[device].width} × {DEVICE_SIZES[device].height}</span>
+          </div>
+          <span className="font-mono">{previewUrl}</span>
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
-};
+}

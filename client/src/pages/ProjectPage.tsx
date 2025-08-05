@@ -20,6 +20,8 @@ import { ReplitAgentChat } from '@/components/ReplitAgentChat';
 import { ReplitSidebar } from '@/components/layout/ReplitSidebar';
 import EnvironmentPanel from '@/components/EnvironmentPanel';
 import { EnvironmentProvider } from '@/hooks/useEnvironment';
+import { ResourceMonitor } from '@/components/ResourceMonitor';
+import { CollaborativePresence } from '@/components/CollaborativePresence';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -83,6 +85,7 @@ const ProjectPage = () => {
   const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'console' | 'deployment' | 'git' | 'env'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [aiPanelVisible, setAiPanelVisible] = useState(false);
+  const [rightPanelTab, setRightPanelTab] = useState<'ai' | 'collaborate' | 'resources' | 'presence'>('ai');
   
   // Get current user for collaboration
   const { user } = useAuth();
@@ -190,10 +193,10 @@ const ProjectPage = () => {
     mutationFn: async ({ parentId, name, isFolder }: { parentId: number | null, name: string, isFolder: boolean }) => {
       if (!projectId) return Promise.reject(new Error('No project ID provided'));
       
-      const newFile: Partial<InsertFile> = {
+      const newFile = {
         name,
         isDirectory: isFolder,
-        parentId,
+        path: parentId ? `${parentId}/${name}` : name,
         projectId,
         content: isFolder ? null : '',
       };
@@ -680,7 +683,7 @@ const ProjectPage = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar with Files, Agent, Tools, etc. */}
         <div className="w-64 overflow-auto border-r">
-          <ReplitSidebar projectId={projectId} />
+          <ReplitSidebar projectId={projectId || 0} />
         </div>
         
         {/* Middle Section: Editor and Terminal */}
@@ -775,43 +778,59 @@ const ProjectPage = () => {
           )}
         </div>
         
-        {/* Right Panel: AI Assistant */}
+        {/* Right Panel: AI/Chat/Collaboration/Resources/Presence */}
         {aiPanelVisible && projectId && (
           <div className="w-[400px] border-l border-border overflow-hidden flex flex-col">
-            <ReplitAgentChat 
-              projectId={projectId}
-            />
+            <Tabs value={rightPanelTab} onValueChange={(value: any) => setRightPanelTab(value)} className="h-full flex flex-col">
+              <div className="h-12 border-b border-border px-4 flex items-center justify-between bg-muted/30">
+                <TabsList className="h-8 bg-transparent">
+                  <TabsTrigger value="ai" className="h-8">AI Agent</TabsTrigger>
+                  <TabsTrigger value="collaborate" className="h-8">Collaborate</TabsTrigger>
+                  <TabsTrigger value="resources" className="h-8">Resources</TabsTrigger>
+                  <TabsTrigger value="presence" className="h-8">Presence</TabsTrigger>
+                </TabsList>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={toggleAiPanel}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+              <TabsContent value="ai" className="flex-1 overflow-hidden">
+                <ReplitAgentChat projectId={projectId} />
+              </TabsContent>
+              <TabsContent value="collaborate" className="flex-1 overflow-hidden">
+                {user && <Collaboration 
+                  projectId={projectId} 
+                  fileId={selectedFile?.id || null} 
+                  currentUser={user}
+                  onToggle={() => {}}
+                />}
+              </TabsContent>
+              <TabsContent value="resources" className="flex-1 overflow-hidden p-4">
+                <ResourceMonitor projectId={projectId} />
+              </TabsContent>
+              <TabsContent value="presence" className="flex-1 overflow-hidden p-4">
+                {user && <CollaborativePresence 
+                  projectId={projectId} 
+                  currentUser={{
+                    id: user.id.toString(),
+                    username: user.username,
+                    avatar: user.avatarUrl || undefined
+                  }}
+                />}
+              </TabsContent>
+            </Tabs>
           </div>
         )}
         
-        {/* Right Panel: Collaboration */}
-        {rightPanelVisible && user && projectId && !aiPanelVisible && (
-          <div className="w-80 flex flex-col">
-            <Collaboration 
-              projectId={projectId} 
-              fileId={selectedFile?.id || null} 
-              currentUser={user}
-              onToggle={() => setRightPanelVisible(false)}
-            />
-          </div>
-        )}
-        
-        {/* Collapsed Collaboration Panel Toggle */}
-        {!rightPanelVisible && user && projectId && !aiPanelVisible && (
-          <Button
-            variant="ghost" 
-            className="fixed bottom-4 right-4 p-2 rounded-full shadow-md"
-            onClick={() => setRightPanelVisible(true)}
-          >
-            <Users className="h-5 w-5" />
-          </Button>
-        )}
-        
-        {/* Collapsed AI Panel Toggle */}
+        {/* Collapsed Right Panel Toggle */}
         {!aiPanelVisible && (
           <Button
             variant="ghost" 
-            className="fixed bottom-4 right-20 p-2 rounded-full shadow-md"
+            className="fixed bottom-4 right-4 p-2 rounded-full shadow-md"
             onClick={toggleAiPanel}
           >
             <Sparkles className="h-5 w-5 text-primary" />
