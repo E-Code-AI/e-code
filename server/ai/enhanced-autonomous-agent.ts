@@ -8,6 +8,7 @@ import { checkpointService } from '../services/checkpoint-service';
 import { effortPricingService } from '../services/effort-pricing-service';
 import { createLogger } from '../utils/logger';
 import { AnthropicProvider } from './ai-provider';
+import { realPackageManager } from '../services/real-package-manager';
 
 const logger = createLogger('EnhancedAutonomousAgent');
 
@@ -633,9 +634,12 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
     const results = {
       filesCreated: 0,
       foldersCreated: 0,
+      packagesInstalled: [] as string[],
+      commandsExecuted: [] as string[],
       errors: [] as string[]
     };
     
+    // First, create all files and folders
     for (const action of actions) {
       try {
         if (action.type === 'create_file') {
@@ -662,9 +666,64 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
       }
     }
     
+    // Detect and install required packages
+    const packageJsonAction = actions.find(a => 
+      a.type === 'create_file' && a.data.name === 'package.json'
+    );
+    
+    if (packageJsonAction) {
+      try {
+        const packageJson = JSON.parse(packageJsonAction.data.content);
+        const dependencies = Object.keys(packageJson.dependencies || {});
+        const devDependencies = Object.keys(packageJson.devDependencies || {});
+        
+        // Install dependencies
+        if (dependencies.length > 0) {
+          await this.installPackages(context.projectId, dependencies, 'nodejs');
+          results.packagesInstalled.push(...dependencies);
+        }
+        
+        // Install dev dependencies
+        if (devDependencies.length > 0) {
+          await this.installPackages(context.projectId, devDependencies, 'nodejs');
+          results.packagesInstalled.push(...devDependencies);
+        }
+      } catch (error: any) {
+        results.errors.push(`Package installation error: ${error.message}`);
+      }
+    }
+    
     this.thinkingProcess.push(`✓ Created ${results.filesCreated} files and ${results.foldersCreated} folders`);
+    if (results.packagesInstalled.length > 0) {
+      this.thinkingProcess.push(`✓ Installed ${results.packagesInstalled.length} packages`);
+    }
     
     return results;
+  }
+  
+  private async installPackages(projectId: number, packages: string[], language: string): Promise<void> {
+    logger.info(`Installing packages for project ${projectId}: ${packages.join(', ')}`);
+    
+    try {
+      // Use the real package manager to install packages
+      const result = await realPackageManager.installPackages({
+        language,
+        packages,
+        projectPath: `/projects/${projectId}`,
+        dev: false,
+        global: false
+      });
+      
+      if (result.success) {
+        logger.info(`Successfully installed packages: ${packages.join(', ')}`);
+      } else {
+        logger.error(`Failed to install packages: ${result.error}`);
+        throw new Error(result.error);
+      }
+    } catch (error: any) {
+      logger.error(`Package installation error: ${error.message}`);
+      throw error;
+    }
   }
   
   private async createCheckpoint(projectId: number, message: string): Promise<void> {
@@ -720,10 +779,19 @@ export const enhancedAgent = new EnhancedAutonomousAgent();
 
 // Function to initialize the agent with API key
 export async function initializeEnhancedAgent() {
+  // First try environment variable
+  const envApiKey = process.env.ANTHROPIC_API_KEY;
+  if (envApiKey) {
+    enhancedAgent.setApiKey(envApiKey);
+    logger.info('Enhanced AI Agent initialized with Anthropic API key from environment');
+    return;
+  }
+  
+  // Fallback to database
   const adminApiKey = await storage.getActiveAdminApiKey('anthropic');
   if (adminApiKey) {
     enhancedAgent.setApiKey(adminApiKey.apiKey);
-    logger.info('Enhanced AI Agent initialized with Anthropic API key');
+    logger.info('Enhanced AI Agent initialized with Anthropic API key from database');
   } else {
     logger.warn('No Anthropic API key found - AI Agent will not function until API key is set');
   }
