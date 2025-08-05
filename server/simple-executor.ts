@@ -344,3 +344,132 @@ export function getProjectLogs(projectId: number): string[] {
   const project = activeProjects.get(projectId);
   return project?.logs || [];
 }
+
+/**
+ * SimpleCodeExecutor class for education auto-grading
+ */
+export class SimpleCodeExecutor {
+  async executeCode(code: string, language: string, testInput?: string): Promise<{
+    success: boolean;
+    output?: string;
+    error?: string;
+    executionTime?: number;
+  }> {
+    const startTime = Date.now();
+    
+    try {
+      // Create temporary file for code execution
+      const tempDir = path.join(process.cwd(), 'temp', 'grading');
+      await fs.promises.mkdir(tempDir, { recursive: true });
+      
+      let fileName: string;
+      let command: string;
+      let args: string[];
+      
+      // Determine file extension and execution command based on language
+      switch (language.toLowerCase()) {
+        case 'javascript':
+        case 'js':
+          fileName = `code-${Date.now()}.js`;
+          command = 'node';
+          args = [fileName];
+          break;
+        case 'python':
+        case 'py':
+          fileName = `code-${Date.now()}.py`;
+          command = 'python';
+          args = [fileName];
+          break;
+        case 'java':
+          fileName = `Code${Date.now()}.java`;
+          command = 'javac';
+          args = [fileName];
+          break;
+        default:
+          throw new Error(`Unsupported language: ${language}`);
+      }
+      
+      const filePath = path.join(tempDir, fileName);
+      await fs.promises.writeFile(filePath, code);
+      
+      return await new Promise((resolve) => {
+        const childProcess = spawn(command, args, {
+          cwd: tempDir,
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+        
+        let output = '';
+        let error = '';
+        
+        // Send test input if provided
+        if (testInput) {
+          childProcess.stdin.write(testInput);
+          childProcess.stdin.end();
+        }
+        
+        childProcess.stdout.on('data', (data: Buffer) => {
+          output += data.toString();
+        });
+        
+        childProcess.stderr.on('data', (data: Buffer) => {
+          error += data.toString();
+        });
+        
+        childProcess.on('exit', async (code: number | null) => {
+          const executionTime = Date.now() - startTime;
+          
+          // Clean up temporary file
+          try {
+            await fs.promises.unlink(filePath);
+          } catch {}
+          
+          if (code === 0) {
+            resolve({
+              success: true,
+              output: output.trim(),
+              executionTime
+            });
+          } else {
+            resolve({
+              success: false,
+              error: error.trim() || `Process exited with code ${code}`,
+              executionTime
+            });
+          }
+        });
+        
+        childProcess.on('error', async (err: Error) => {
+          const executionTime = Date.now() - startTime;
+          
+          // Clean up temporary file
+          try {
+            await fs.promises.unlink(filePath);
+          } catch {}
+          
+          resolve({
+            success: false,
+            error: err.message,
+            executionTime
+          });
+        });
+        
+        // Set timeout for execution (10 seconds)
+        setTimeout(() => {
+          childProcess.kill();
+          resolve({
+            success: false,
+            error: 'Execution timeout',
+            executionTime: Date.now() - startTime
+          });
+        }, 10000);
+      });
+      
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        executionTime: Date.now() - startTime
+      };
+    }
+  }
+}
