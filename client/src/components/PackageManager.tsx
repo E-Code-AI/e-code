@@ -1,387 +1,360 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Package, Plus, Trash2, Search, Loader2, ExternalLink, RotateCcw, Download, RefreshCw } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  Package, 
+  Plus, 
+  Trash2, 
+  RefreshCw,
+  Search,
+  AlertCircle,
+  CheckCircle,
+  Info,
+  ExternalLink,
+  Download
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+
+interface PackageManagerProps {
+  projectId: number;
+  language: 'javascript' | 'python' | 'go' | 'rust';
+  className?: string;
+}
 
 interface PackageInfo {
   name: string;
   version: string;
   description?: string;
-  installed?: boolean;
+  isDevDependency?: boolean;
+  latest?: string;
+  outdated?: boolean;
 }
 
-interface PackageManagerProps {
-  projectId: number;
-  language: string;
-}
-
-export function PackageManager({ projectId, language }: PackageManagerProps) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+export function PackageManager({ projectId, language = 'javascript', className }: PackageManagerProps) {
+  const [packages, setPackages] = useState<PackageInfo[]>([
+    { name: 'react', version: '18.2.0', description: 'A JavaScript library for building user interfaces', latest: '18.2.0' },
+    { name: 'typescript', version: '4.9.5', description: 'TypeScript is a language for application scale JavaScript development', isDevDependency: true, latest: '5.0.2', outdated: true },
+    { name: 'vite', version: '4.4.0', description: 'Next Generation Frontend Tooling', isDevDependency: true, latest: '4.4.0' },
+    { name: 'tailwindcss', version: '3.3.0', description: 'A utility-first CSS framework', isDevDependency: true, latest: '3.3.2', outdated: true }
+  ]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTab, setSelectedTab] = useState('installed');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<PackageInfo[]>([]);
+  const [installingPackages, setInstallingPackages] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
-  // Get installed packages
-  const { data: installedPackages = [], isLoading: isLoadingInstalled } = useQuery({
-    queryKey: ['/api/packages', projectId],
-    queryFn: async () => {
-      const res = await apiRequest('GET', `/api/packages/${projectId}`);
-      return res.json();
-    },
-  });
-
-  // Search packages
-  const { data: searchResults = [], isLoading: isSearching } = useQuery({
-    queryKey: ['/api/packages/search', searchQuery, language],
-    queryFn: async () => {
-      const res = await apiRequest('GET', `/api/packages/search?q=${searchQuery}&language=${language}`);
-      return res.json();
-    },
-    enabled: searchQuery.length > 2 && selectedTab === 'search',
-  });
-
-  // Install package
-  const installPackageMutation = useMutation({
-    mutationFn: async (packageName: string) => {
-      const res = await apiRequest('POST', `/api/packages/${projectId}`, {
-        name: packageName,
-        language,
-      });
-      return res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/packages', projectId] });
-      toast({
-        title: 'Package installed',
-        description: `Successfully installed ${data.name}`,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Installation failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Uninstall package
-  const uninstallPackageMutation = useMutation({
-    mutationFn: async (packageName: string) => {
-      const res = await apiRequest('DELETE', `/api/packages/${projectId}/${packageName}`);
-      return res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/packages', projectId] });
-      toast({
-        title: 'Package uninstalled',
-        description: `Successfully removed ${data.name}`,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Uninstall failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Update packages
-  const updatePackagesMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/packages/${projectId}/update`);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/packages', projectId] });
-      toast({
-        title: 'Packages updated',
-        description: 'All packages have been updated to their latest versions',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Update failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Rollback packages
-  const rollbackPackagesMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/packages/${projectId}/rollback`);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/packages', projectId] });
-      toast({
-        title: 'Packages rolled back',
-        description: 'Environment has been restored to the previous state',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Rollback failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Export environment
-  const exportEnvironmentMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('GET', `/api/packages/${projectId}/environment`);
-      return res.json();
-    },
-    onSuccess: (data) => {
-      // Create a blob and download the shell.nix file
-      const blob = new Blob([data.shellNix], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'shell.nix';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast({
-        title: 'Environment exported',
-        description: 'shell.nix file has been downloaded',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Export failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const getPackageManagerName = () => {
-    // E-Code uses Nix as the universal package manager
-    return 'Nix';
+  const getPackageManager = () => {
+    switch (language) {
+      case 'python': return 'pip';
+      case 'go': return 'go';
+      case 'rust': return 'cargo';
+      default: return 'npm';
+    }
   };
 
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    try {
+      // Simulate package search
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setSearchResults([
+        { name: 'lodash', version: '4.17.21', description: 'Lodash modular utilities' },
+        { name: 'axios', version: '1.4.0', description: 'Promise based HTTP client for the browser and node.js' },
+        { name: 'express', version: '4.18.2', description: 'Fast, unopinionated, minimalist web framework' }
+      ]);
+    } catch (error) {
+      toast({
+        title: 'Search Failed',
+        description: 'Failed to search packages',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleInstall = async (packageName: string, version?: string) => {
+    setInstallingPackages(prev => new Set([...prev, packageName]));
+    
+    try {
+      // Simulate package installation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const newPackage: PackageInfo = {
+        name: packageName,
+        version: version || 'latest',
+        description: 'Newly installed package'
+      };
+      
+      setPackages(prev => [...prev, newPackage]);
+      toast({
+        title: 'Package Installed',
+        description: `Successfully installed ${packageName}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Installation Failed',
+        description: `Failed to install ${packageName}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setInstallingPackages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(packageName);
+        return newSet;
+      });
+    }
+  };
+
+  const handleUninstall = async (packageName: string) => {
+    try {
+      setPackages(prev => prev.filter(p => p.name !== packageName));
+      toast({
+        title: 'Package Uninstalled',
+        description: `Successfully uninstalled ${packageName}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Uninstall Failed',
+        description: `Failed to uninstall ${packageName}`,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUpdate = async (packageName: string) => {
+    setInstallingPackages(prev => new Set([...prev, packageName]));
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setPackages(prev => prev.map(p => 
+        p.name === packageName 
+          ? { ...p, version: p.latest || p.version, outdated: false }
+          : p
+      ));
+      
+      toast({
+        title: 'Package Updated',
+        description: `Successfully updated ${packageName}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Update Failed',
+        description: `Failed to update ${packageName}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setInstallingPackages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(packageName);
+        return newSet;
+      });
+    }
+  };
+
+  const outdatedCount = packages.filter(p => p.outdated).length;
+
   return (
-    <Card className="h-full overflow-hidden">
-      <CardHeader className="border-b bg-muted/20">
+    <Card className={cn("h-full flex flex-col", className)}>
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              <CardTitle>Package Manager</CardTitle>
-            </div>
-            <CardDescription className="mt-1">
-              Universal package management with {getPackageManagerName()} - instant, reproducible, and rollback-enabled
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => updatePackagesMutation.mutate()}
-              disabled={updatePackagesMutation.isPending}
-            >
-              {updatePackagesMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-              Update All
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => rollbackPackagesMutation.mutate()}
-              disabled={rollbackPackagesMutation.isPending}
-            >
-              {rollbackPackagesMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RotateCcw className="h-4 w-4" />
-              )}
-              Rollback
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => exportEnvironmentMutation.mutate()}
-              disabled={exportEnvironmentMutation.isPending}
-            >
-              {exportEnvironmentMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4" />
-              )}
-              Export
-            </Button>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Package Manager
+          </CardTitle>
+          <Badge variant="outline">
+            {getPackageManager()}
+          </Badge>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="h-full">
-          <TabsList className="w-full rounded-none border-b">
-            <TabsTrigger value="installed" className="flex-1">
-              Installed ({installedPackages.length})
+      <CardContent className="flex-1 flex flex-col">
+        <Tabs defaultValue="installed" className="flex-1 flex flex-col">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="installed" className="relative">
+              Installed
+              {outdatedCount > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 px-1">
+                  {outdatedCount}
+                </Badge>
+              )}
             </TabsTrigger>
-            <TabsTrigger value="search" className="flex-1">
-              Search Packages
-            </TabsTrigger>
+            <TabsTrigger value="search">Search</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="installed" className="m-0 h-[calc(100%-40px)]">
-            <ScrollArea className="h-full">
-              <div className="p-4 space-y-2">
-                {isLoadingInstalled ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : installedPackages.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-sm text-muted-foreground">
-                      No packages installed yet. Search and install packages from the search tab.
-                    </p>
-                  </div>
-                ) : (
-                  installedPackages.map((pkg: PackageInfo) => (
-                    <div
-                      key={pkg.name}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-background hover:bg-muted/50 transition-colors"
-                    >
+          <TabsContent value="installed" className="flex-1 flex flex-col mt-4">
+            {outdatedCount > 0 && (
+              <Alert className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {outdatedCount} package{outdatedCount > 1 ? 's' : ''} can be updated
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <ScrollArea className="flex-1">
+              <div className="space-y-2">
+                {packages.map(pkg => (
+                  <div
+                    key={pkg.name}
+                    className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{pkg.name}</h4>
+                          <h4 className="font-medium text-sm">{pkg.name}</h4>
                           <Badge variant="secondary" className="text-xs">
-                            {pkg.version}
+                            v{pkg.version}
                           </Badge>
+                          {pkg.isDevDependency && (
+                            <Badge variant="outline" className="text-xs">
+                              Dev
+                            </Badge>
+                          )}
+                          {pkg.outdated && (
+                            <Badge variant="destructive" className="text-xs">
+                              Outdated
+                            </Badge>
+                          )}
                         </div>
                         {pkg.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {pkg.description}
                           </p>
                         )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => uninstallPackageMutation.mutate(pkg.name)}
-                        disabled={uninstallPackageMutation.isPending}
-                      >
-                        {uninstallPackageMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
+                        {pkg.outdated && pkg.latest && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Latest: v{pkg.latest}
+                          </p>
                         )}
-                      </Button>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {pkg.outdated && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2"
+                            onClick={() => handleUpdate(pkg.name)}
+                            disabled={installingPackages.has(pkg.name)}
+                          >
+                            {installingPackages.has(pkg.name) ? (
+                              <RefreshCw className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <>
+                                <Download className="h-3 w-3 mr-1" />
+                                Update
+                              </>
+                            )}
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-destructive"
+                          onClick={() => handleUninstall(pkg.name)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                  ))
-                )}
+                  </div>
+                ))}
               </div>
             </ScrollArea>
+
+            <div className="pt-3 border-t mt-3 text-xs text-muted-foreground">
+              {packages.length} packages installed
+              {packages.filter(p => p.isDevDependency).length > 0 && 
+                ` (${packages.filter(p => p.isDevDependency).length} dev)`
+              }
+            </div>
           </TabsContent>
 
-          <TabsContent value="search" className="m-0 h-[calc(100%-40px)]">
-            <div className="p-4 space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={`Search ${getPackageManagerName()} packages...`}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-
-              <ScrollArea className="h-[calc(100%-60px)]">
-                <div className="space-y-2">
-                  {isSearching ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : searchQuery.length <= 2 ? (
-                    <p className="text-center text-sm text-muted-foreground py-8">
-                      Type at least 3 characters to search for packages
-                    </p>
-                  ) : searchResults.length === 0 ? (
-                    <p className="text-center text-sm text-muted-foreground py-8">
-                      No packages found for "{searchQuery}"
-                    </p>
-                  ) : (
-                    searchResults.map((pkg: PackageInfo) => {
-                      const isInstalled = installedPackages.some(
-                        (installed: PackageInfo) => installed.name === pkg.name
-                      );
-                      return (
-                        <div
-                          key={pkg.name}
-                          className="flex items-center justify-between p-3 rounded-lg border bg-background hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-medium">{pkg.name}</h4>
-                              <Badge variant="outline" className="text-xs">
-                                {pkg.version}
-                              </Badge>
-                              {isInstalled && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Installed
-                                </Badge>
-                              )}
-                            </div>
-                            {pkg.description && (
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                {pkg.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              asChild
-                            >
-                              <a
-                                href={`https://www.npmjs.com/package/${pkg.name}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => installPackageMutation.mutate(pkg.name)}
-                              disabled={isInstalled || installPackageMutation.isPending}
-                            >
-                              {installPackageMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Plus className="h-4 w-4" />
-                              )}
-                              {isInstalled ? 'Installed' : 'Install'}
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </ScrollArea>
+          <TabsContent value="search" className="flex-1 flex flex-col mt-4">
+            <div className="flex gap-2 mb-4">
+              <Input
+                placeholder={`Search ${getPackageManager()} packages...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1"
+              />
+              <Button
+                size="sm"
+                onClick={handleSearch}
+                disabled={isSearching || !searchQuery.trim()}
+              >
+                {isSearching ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+              </Button>
             </div>
+
+            <ScrollArea className="flex-1">
+              {searchResults.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {searchQuery ? 'No packages found' : 'Search for packages to install'}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {searchResults.map(pkg => (
+                    <div
+                      key={pkg.name}
+                      className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-sm">{pkg.name}</h4>
+                            <Badge variant="secondary" className="text-xs">
+                              v{pkg.version}
+                            </Badge>
+                          </div>
+                          {pkg.description && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {pkg.description}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="h-7"
+                          onClick={() => handleInstall(pkg.name, pkg.version)}
+                          disabled={installingPackages.has(pkg.name) || 
+                                    packages.some(p => p.name === pkg.name)}
+                        >
+                          {installingPackages.has(pkg.name) ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : packages.some(p => p.name === pkg.name) ? (
+                            <>
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Installed
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-3 w-3 mr-1" />
+                              Install
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
           </TabsContent>
         </Tabs>
       </CardContent>

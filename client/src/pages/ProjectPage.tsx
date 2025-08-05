@@ -22,9 +22,17 @@ import EnvironmentPanel from '@/components/EnvironmentPanel';
 import { EnvironmentProvider } from '@/hooks/useEnvironment';
 import { ResourceMonitor } from '@/components/ResourceMonitor';
 import { CollaborativePresence } from '@/components/CollaborativePresence';
+import { AutoSaveIndicator } from '@/components/AutoSaveIndicator';
+import { KeyboardShortcuts } from '@/components/KeyboardShortcuts';
+import { ProjectSearch } from '@/components/ProjectSearch';
+import { ProjectStats } from '@/components/ProjectStats';
+import { FileUploadDropzone } from '@/components/FileUploadDropzone';
+import { PackageManager } from '@/components/PackageManager';
+import { ProjectSharing } from '@/components/ProjectSharing';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ECodeLoading } from '@/components/ECodeLoading';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   ResizableHandle, 
   ResizablePanel, 
@@ -62,7 +70,8 @@ import {
   Users,
   MessageSquare,
   Sparkles,
-  KeyRound
+  KeyRound,
+  X
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -85,7 +94,11 @@ const ProjectPage = () => {
   const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'console' | 'deployment' | 'git' | 'env'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [aiPanelVisible, setAiPanelVisible] = useState(false);
-  const [rightPanelTab, setRightPanelTab] = useState<'ai' | 'collaborate' | 'resources' | 'presence'>('ai');
+  const [rightPanelTab, setRightPanelTab] = useState<'ai' | 'collaborate' | 'resources' | 'presence' | 'search' | 'stats' | 'packages' | 'share'>('ai');
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'offline'>('idle');
+  const [lastSaved, setLastSaved] = useState<Date | undefined>();
   
   // Get current user for collaboration
   const { user } = useAuth();
@@ -171,6 +184,10 @@ const ProjectPage = () => {
         return newChanges;
       });
       
+      // Update auto-save status
+      setAutoSaveStatus('saved');
+      setLastSaved(new Date());
+      
       toast({
         title: "File saved",
         description: "Your changes have been saved successfully.",
@@ -180,6 +197,7 @@ const ProjectPage = () => {
       queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
     },
     onError: (error: Error) => {
+      setAutoSaveStatus('error');
       toast({
         title: "Failed to save file",
         description: error.message,
@@ -363,6 +381,7 @@ const ProjectPage = () => {
     const content = unsavedChanges[selectedFile.id] || selectedFile.content;
     if (!content) return;
     
+    setAutoSaveStatus('saving');
     saveFileMutation.mutate({ id: selectedFile.id, content });
   };
 
@@ -585,6 +604,12 @@ const ProjectPage = () => {
             </Tooltip>
           </TooltipProvider>
           
+          {/* Auto Save Indicator */}
+          <AutoSaveIndicator 
+            status={autoSaveStatus} 
+            lastSaved={lastSaved}
+          />
+          
           {/* Git Button */}
           <TooltipProvider>
             <Tooltip>
@@ -661,7 +686,7 @@ const ProjectPage = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Export Project
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowFileUpload(true)}>
                 <Upload className="h-4 w-4 mr-2" />
                 Import Files
               </DropdownMenuItem>
@@ -673,6 +698,11 @@ const ProjectPage = () => {
               <DropdownMenuItem>
                 <Settings className="h-4 w-4 mr-2" />
                 Project Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowKeyboardShortcuts(true)}>
+                <KeyRound className="h-4 w-4 mr-2" />
+                Keyboard Shortcuts
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -783,12 +813,17 @@ const ProjectPage = () => {
           <div className="w-[400px] border-l border-border overflow-hidden flex flex-col">
             <Tabs value={rightPanelTab} onValueChange={(value: any) => setRightPanelTab(value)} className="h-full flex flex-col">
               <div className="h-12 border-b border-border px-4 flex items-center justify-between bg-muted/30">
-                <TabsList className="h-8 bg-transparent">
-                  <TabsTrigger value="ai" className="h-8">AI Agent</TabsTrigger>
-                  <TabsTrigger value="collaborate" className="h-8">Collaborate</TabsTrigger>
-                  <TabsTrigger value="resources" className="h-8">Resources</TabsTrigger>
-                  <TabsTrigger value="presence" className="h-8">Presence</TabsTrigger>
-                </TabsList>
+                <ScrollArea className="flex-1">
+                  <TabsList className="h-8 bg-transparent inline-flex">
+                    <TabsTrigger value="ai" className="h-8">AI Agent</TabsTrigger>
+                    <TabsTrigger value="collaborate" className="h-8">Collaborate</TabsTrigger>
+                    <TabsTrigger value="resources" className="h-8">Resources</TabsTrigger>
+                    <TabsTrigger value="search" className="h-8">Search</TabsTrigger>
+                    <TabsTrigger value="stats" className="h-8">Stats</TabsTrigger>
+                    <TabsTrigger value="packages" className="h-8">Packages</TabsTrigger>
+                    <TabsTrigger value="share" className="h-8">Share</TabsTrigger>
+                  </TabsList>
+                </ScrollArea>
                 <Button 
                   variant="ghost" 
                   size="icon"
@@ -817,14 +852,83 @@ const ProjectPage = () => {
                   projectId={projectId} 
                   currentUser={{
                     id: user.id.toString(),
-                    username: user.username,
-                    avatar: user.avatarUrl || undefined
+                    username: user.username || 'Anonymous',
+                    avatar: user.profileImageUrl || undefined
                   }}
                 />}
+              </TabsContent>
+              <TabsContent value="search" className="flex-1 overflow-hidden p-4">
+                <ProjectSearch 
+                  projectId={projectId} 
+                  onFileSelect={(fileId) => {
+                    const file = files?.find(f => f.id === fileId);
+                    if (file) setSelectedFile(file);
+                  }}
+                />
+              </TabsContent>
+              <TabsContent value="stats" className="flex-1 overflow-hidden p-4">
+                <ProjectStats projectId={projectId} />
+              </TabsContent>
+              <TabsContent value="packages" className="flex-1 overflow-hidden p-4">
+                <PackageManager projectId={projectId} language="javascript" />
+              </TabsContent>
+              <TabsContent value="share" className="flex-1 overflow-hidden p-4">
+                <ProjectSharing 
+                  projectId={projectId} 
+                  projectName={project?.name || 'Untitled'} 
+                />
               </TabsContent>
             </Tabs>
           </div>
         )}
+        
+        {/* File Upload Modal */}
+        {showFileUpload && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowFileUpload(false)}>
+            <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Upload Files</h2>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowFileUpload(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <FileUploadDropzone 
+                projectId={projectId} 
+                onUploadComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+                }}
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* Keyboard Shortcuts Dialog */}
+        <KeyboardShortcuts 
+          open={showKeyboardShortcuts}
+          onOpenChange={setShowKeyboardShortcuts}
+          onSave={() => {
+            if (selectedFile && unsavedChanges[selectedFile.id]) {
+              setAutoSaveStatus('saving');
+              saveCurrentFile();
+            }
+          }}
+          onSearch={() => {
+            setAiPanelVisible(true);
+            setRightPanelTab('search');
+          }}
+          onToggleTerminal={toggleTerminal}
+          onToggleAI={toggleAiPanel}
+          onNewFile={() => {
+            if (files && files.length > 0) {
+              handleNewFile(null);
+            }
+          }}
+          onRun={toggleProjectRunning}
+        />
         
         {/* Collapsed Right Panel Toggle */}
         {!aiPanelVisible && (
