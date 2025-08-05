@@ -14,6 +14,15 @@ An advanced AI-powered development platform that streamlines software creation t
 
 ## Recent Changes
 
+### 2025-08-05 - Critical Fix: Resolved Project Navigation 404 Errors
+- ✅ **Fixed widespread 404 errors caused by incorrect routing format**
+  - Root cause: Navigation was using `/project/${project.id}` instead of `/@username/projectslug`
+  - Fixed navigation in 8+ files: Home.tsx, Dashboard.tsx, Deployments.tsx, Login.tsx, ReplitAIAgentPage.tsx, Explore.tsx, Landing.tsx, ProjectTemplates.tsx
+  - Updated all project navigation to use slug format: `/@${username}/${projectSlug}`
+  - Backend API properly handles slug-based routing at `/api/project/user/:username/slug/:slug`
+  - Verified navigation works correctly with no more 404 errors on project pages
+- ✅ **All TypeScript/LSP errors resolved** after navigation fixes
+
 ### 2025-08-05 - Complete Backend API Integration for All Pages
 - ✅ **Connected all major pages to backend APIs**
   - About page: Backend endpoint `/api/about` with team, milestones, values, and stats data

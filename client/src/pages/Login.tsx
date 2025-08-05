@@ -37,7 +37,7 @@ export default function Login() {
         const project = await response.json();
         // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
-        navigate(`/project/${project.id}?agent=true&prompt=${encodeURIComponent(description)}`);
+        navigate(`/@${project.owner?.username || 'user'}/${project.slug}?agent=true&prompt=${encodeURIComponent(description)}`);
       }
     } catch (error) {
       console.error('Failed to create project:', error);

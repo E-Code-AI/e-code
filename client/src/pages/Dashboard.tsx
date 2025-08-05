@@ -144,7 +144,7 @@ export default function Dashboard() {
         // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, aiPrompt);
         // Navigate directly to the project with AI agent mode
-        navigate(`/project/${project.id}?agent=true&prompt=${encodeURIComponent(aiPrompt)}`);
+        navigate(`/@${project.owner?.username || user?.username}/${project.slug}?agent=true&prompt=${encodeURIComponent(aiPrompt)}`);
       }
     } catch (error) {
       console.error('Failed to create project:', error);
@@ -173,7 +173,7 @@ export default function Dashboard() {
         const project = await response.json();
         // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, prompt);
-        navigate(`/project/${project.id}?agent=true&prompt=${encodeURIComponent(prompt)}`);
+        navigate(`/@${project.owner?.username || user?.username}/${project.slug}?agent=true&prompt=${encodeURIComponent(prompt)}`);
       }
     } catch (error) {
       console.error('Failed to create project:', error);
