@@ -201,6 +201,17 @@ export interface IStorage {
   getCheckpoint(id: number): Promise<Checkpoint | undefined>;
   restoreCheckpoint(checkpointId: number): Promise<boolean>;
 
+  // Agent operations
+  getAgentWorkSteps(projectId: number, sessionId: string): Promise<any[]>;
+  createAgentCheckpoint(checkpoint: {
+    projectId: number;
+    userId: number;
+    message: string;
+    changes: number;
+    sessionId: string;
+    timestamp: Date;
+  }): Promise<any>;
+
   // Time tracking operations
   startTimeTracking(tracking: InsertTimeTracking): Promise<TimeTracking>;
   stopTimeTracking(trackingId: number): Promise<TimeTracking | undefined>;
@@ -902,6 +913,35 @@ export class DatabaseStorage implements IStorage {
 
   async getProjectCheckpoints(projectId: number): Promise<Checkpoint[]> {
     return await db.select().from(checkpoints).where(eq(checkpoints.projectId, projectId)).orderBy(desc(checkpoints.createdAt));
+  }
+
+  // Agent operations
+  async getAgentWorkSteps(projectId: number, sessionId: string): Promise<any[]> {
+    // For now, return empty array as we don't have a dedicated table for work steps
+    // In a real implementation, this would query a work_steps table
+    return [];
+  }
+
+  async createAgentCheckpoint(checkpoint: {
+    projectId: number;
+    userId: number;
+    message: string;
+    changes: number;
+    sessionId: string;
+    timestamp: Date;
+  }): Promise<any> {
+    // Create a checkpoint using the existing checkpoint system
+    const newCheckpoint = await this.createCheckpoint({
+      projectId: checkpoint.projectId,
+      userId: checkpoint.userId,
+      message: checkpoint.message,
+      metadata: {
+        changes: checkpoint.changes,
+        sessionId: checkpoint.sessionId,
+        agentCheckpoint: true
+      }
+    });
+    return newCheckpoint;
   }
 
   async getCheckpoint(id: number): Promise<Checkpoint | undefined> {
