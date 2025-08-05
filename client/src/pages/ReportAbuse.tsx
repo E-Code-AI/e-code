@@ -20,14 +20,49 @@ export default function ReportAbuse() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate submission
-    setTimeout(() => {
-      toast({
-        title: "Report submitted",
-        description: "Thank you for helping keep E-Code safe. We'll review your report and take appropriate action.",
+    try {
+      const formElement = e.target as HTMLFormElement;
+      const formData = new FormData(formElement);
+      
+      const response = await fetch('/api/report/abuse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          reportType: reportType,
+          targetUrl: formData.get('url'),
+          description: formData.get('description'),
+          reporterEmail: formData.get('email')
+        }),
       });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "Report submitted",
+          description: data.message || "Thank you for helping keep E-Code safe. We'll review your report and take appropriate action.",
+        });
+        
+        // Reset form
+        formElement.reset();
+        setReportType('code');
+      } else {
+        toast({
+          title: "Submission failed",
+          description: data.error || "Failed to submit report. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to connect to server. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (

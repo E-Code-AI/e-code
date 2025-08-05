@@ -329,6 +329,14 @@ export interface IStorage {
   getProjectCustomDomains(projectId: number): Promise<any[]>;
   updateCustomDomain(id: number, updates: any): Promise<any | undefined>;
   deleteCustomDomain(id: number): Promise<boolean>;
+  
+  // Sales and Support operations
+  createSalesInquiry(inquiry: any): Promise<any>;
+  getSalesInquiries(status?: string): Promise<any[]>;
+  updateSalesInquiry(id: number, updates: any): Promise<any | undefined>;
+  createAbuseReport(report: any): Promise<any>;
+  getAbuseReports(status?: string): Promise<any[]>;
+  updateAbuseReport(id: number, updates: any): Promise<any | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1859,6 +1867,45 @@ export class DatabaseStorage implements IStorage {
   async deleteCustomDomain(id: number): Promise<boolean> {
     const result = await db.delete(customDomains).where(eq(customDomains.id, id));
     return result.length > 0;
+  }
+
+  // Sales and Support operations
+  async createSalesInquiry(inquiry: any): Promise<any> {
+    return {
+      id: Date.now(),
+      ...inquiry,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }
+
+  async getSalesInquiries(status?: string): Promise<any[]> {
+    // Would query from sales_inquiries table
+    return [];
+  }
+
+  async updateSalesInquiry(id: number, updates: any): Promise<any | undefined> {
+    // Would update sales_inquiries table
+    return { id, ...updates };
+  }
+
+  async createAbuseReport(report: any): Promise<any> {
+    return {
+      id: Date.now(),
+      ...report,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }
+
+  async getAbuseReports(status?: string): Promise<any[]> {
+    // Would query from abuse_reports table
+    return [];
+  }
+
+  async updateAbuseReport(id: number, updates: any): Promise<any | undefined> {
+    // Would update abuse_reports table
+    return { id, ...updates };
   }
 }
 

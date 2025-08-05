@@ -37,15 +37,60 @@ export default function ContactSales() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      toast({
-        title: "Thank you for your interest!",
-        description: "Our sales team will contact you within 24 hours.",
+    try {
+      const response = await fetch('/api/contact/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          email: formData.email,
+          company: formData.company,
+          phone: formData.phone,
+          message: formData.message,
+          companySize: formData.companySize,
+          useCase: formData.interest
+        }),
       });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "Thank you for your interest!",
+          description: data.message || "Our sales team will contact you within 24 hours.",
+        });
+        
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          company: '',
+          companySize: '',
+          phone: '',
+          message: '',
+          interest: ''
+        });
+        
+        // Navigate to home after success
+        setTimeout(() => navigate('/'), 2000);
+      } else {
+        toast({
+          title: "Submission failed",
+          description: data.error || "Failed to submit your inquiry. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to connect to server. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-      navigate('/');
-    }, 1500);
+    }
   };
 
   const handleChange = (field: string, value: string) => {

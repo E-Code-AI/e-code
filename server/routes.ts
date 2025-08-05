@@ -18636,6 +18636,90 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
 
+  // Contact Sales endpoint
+  app.post('/api/contact/sales', async (req, res) => {
+    try {
+      const { name, email, company, phone, message, companySize, useCase } = req.body;
+      
+      // Validate required fields
+      if (!name || !email || !message) {
+        return res.status(400).json({ error: 'Name, email, and message are required' });
+      }
+      
+      // Store sales inquiry in database
+      const inquiry = await storage.createSalesInquiry({
+        name,
+        email,
+        company: company || '',
+        phone: phone || '',
+        message,
+        companySize: companySize || 'unknown',
+        useCase: useCase || 'general',
+        status: 'new',
+        createdAt: new Date()
+      });
+      
+      // Log the inquiry for sales team
+      logger.info('New sales inquiry received:', {
+        id: inquiry.id,
+        name,
+        email,
+        company,
+        companySize
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'Thank you for your interest! Our sales team will contact you within 24 hours.',
+        inquiryId: inquiry.id
+      });
+    } catch (error) {
+      logger.error('Contact sales error:', error);
+      res.status(500).json({ error: 'Failed to submit sales inquiry. Please try again.' });
+    }
+  });
+  
+  // Report Abuse endpoint
+  app.post('/api/report/abuse', async (req, res) => {
+    try {
+      const { reportType, targetUrl, description, reporterEmail } = req.body;
+      const userId = req.user?.id || null;
+      
+      // Validate required fields
+      if (!reportType || !targetUrl || !description) {
+        return res.status(400).json({ error: 'Report type, target URL, and description are required' });
+      }
+      
+      // Store abuse report in database
+      const report = await storage.createAbuseReport({
+        reportType,
+        targetUrl,
+        description,
+        reporterEmail: reporterEmail || '',
+        reporterId: userId,
+        status: 'pending',
+        createdAt: new Date()
+      });
+      
+      // Log the report for moderation team
+      logger.warn('Abuse report submitted:', {
+        id: report.id,
+        type: reportType,
+        target: targetUrl,
+        reporter: userId || 'anonymous'
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'Thank you for helping keep E-Code safe. We\'ll review your report and take appropriate action.',
+        reportId: report.id
+      });
+    } catch (error) {
+      logger.error('Report abuse error:', error);
+      res.status(500).json({ error: 'Failed to submit report. Please try again.' });
+    }
+  });
+
   logger.info('All backend services initialized and API endpoints registered');
 
   return httpServer;

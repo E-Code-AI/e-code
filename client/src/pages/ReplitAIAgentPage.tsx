@@ -19,6 +19,7 @@ import {
   Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 // Example prompts categorized by type
 const examplePrompts = {
@@ -43,6 +44,7 @@ export default function ReplitAIAgentPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const params = useParams();
+  const { toast } = useToast();
   const [prompt, setPrompt] = useState('');
   const [showAgent, setShowAgent] = useState(false);
   const [projectId, setProjectId] = useState<number | null>(null);
@@ -86,18 +88,24 @@ export default function ReplitAIAgentPage() {
         setShowAgent(true);
       } else {
         const error = await response.json();
-        console.error('Failed to create project:', error);
+        toast({
+          title: "Failed to create project",
+          description: error.message || "Please try again later",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error('Failed to create project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to connect to server. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!prompt.trim()) return;
-
-    console.log('Starting to build:', prompt);
 
     // Create a new project for this AI session
     try {
@@ -108,8 +116,6 @@ export default function ReplitAIAgentPage() {
         visibility: 'private',
       };
       
-      console.log('Creating project with:', requestBody);
-      
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,18 +125,28 @@ export default function ReplitAIAgentPage() {
 
       if (response.ok) {
         const projectData = await response.json();
-        console.log('Project created successfully:', projectData);
         setProjectId(projectData.id);
         setProject(projectData);
         setShowAgent(true);
+        
+        toast({
+          title: "Project created",
+          description: "Starting to build your application...",
+        });
       } else {
         const errorData = await response.json();
-        console.error('Failed to create project:', errorData);
-        alert(`Failed to create project: ${JSON.stringify(errorData)}`);
+        toast({
+          title: "Failed to create project",
+          description: errorData.message || "Please try again later",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error('Failed to create project:', error);
-      alert(`Failed to create project: ${error}`);
+      toast({
+        title: "Error",
+        description: "Failed to connect to server. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
