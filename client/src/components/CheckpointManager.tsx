@@ -46,12 +46,30 @@ export function CheckpointManager({ projectId }: CheckpointManagerProps) {
   // Fetch checkpoints
   const { data: checkpoints, isLoading } = useQuery({
     queryKey: ['/api/checkpoints/project', projectId],
-    queryFn: () => apiRequest('GET', `/api/checkpoints/project/${projectId}?limit=20`).then(res => res.json())
+    queryFn: async () => {
+      try {
+        const res = await apiRequest('GET', `/api/checkpoints/project/${projectId}?limit=20`);
+        if (!res.ok) throw new Error('Failed to fetch checkpoints');
+        return await res.json();
+      } catch (error) {
+        console.error('Error fetching checkpoints:', error);
+        throw error;
+      }
+    }
   });
 
   // Create checkpoint mutation
   const createCheckpoint = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/checkpoints/create', data).then(res => res.json()),
+    mutationFn: async (data: any) => {
+      try {
+        const res = await apiRequest('POST', '/api/checkpoints/create', data);
+        if (!res.ok) throw new Error('Failed to create checkpoint');
+        return await res.json();
+      } catch (error) {
+        console.error('Error creating checkpoint:', error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/checkpoints/project', projectId] });
       toast({
@@ -77,7 +95,16 @@ export function CheckpointManager({ projectId }: CheckpointManagerProps) {
 
   // Restore checkpoint mutation
   const restoreCheckpoint = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/checkpoints/restore', data).then(res => res.json()),
+    mutationFn: async (data: any) => {
+      try {
+        const res = await apiRequest('POST', '/api/checkpoints/restore', data);
+        if (!res.ok) throw new Error('Failed to restore checkpoint');
+        return await res.json();
+      } catch (error) {
+        console.error('Error restoring checkpoint:', error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       toast({
         title: 'Checkpoint Restored',
@@ -95,7 +122,16 @@ export function CheckpointManager({ projectId }: CheckpointManagerProps) {
 
   // Delete checkpoint mutation
   const deleteCheckpoint = useMutation({
-    mutationFn: (checkpointId: number) => apiRequest('DELETE', `/api/checkpoints/${checkpointId}`).then(res => res.json()),
+    mutationFn: async (checkpointId: number) => {
+      try {
+        const res = await apiRequest('DELETE', `/api/checkpoints/${checkpointId}`);
+        if (!res.ok) throw new Error('Failed to delete checkpoint');
+        return await res.json();
+      } catch (error) {
+        console.error('Error deleting checkpoint:', error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/checkpoints/project', projectId] });
       toast({
