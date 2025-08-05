@@ -17,10 +17,30 @@ import {
   TimeTracking, InsertTimeTracking,
   Screenshot, InsertScreenshot,
   TaskSummary, InsertTaskSummary,
+  UserCredits, InsertUserCredits,
+  BudgetLimit, InsertBudgetLimit,
+  UsageAlert, InsertUsageAlert,
+  AutoscaleDeployment, InsertAutoscaleDeployment,
+  ReservedVmDeployment, InsertReservedVmDeployment,
+  ScheduledDeployment, InsertScheduledDeployment,
+  StaticDeployment, InsertStaticDeployment,
+  ObjectStorageBucket, InsertObjectStorageBucket,
+  ObjectStorageFile, InsertObjectStorageFile,
+  KeyValueStore, InsertKeyValueStore,
+  AiConversation, InsertAiConversation,
+  DynamicIntelligence, InsertDynamicIntelligence,
+  WebSearchHistory, InsertWebSearchHistory,
+  GitRepository, InsertGitRepository,
+  GitCommit, InsertGitCommit,
+  CustomDomain, InsertCustomDomain,
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
   mobileDevices, pushNotifications, teams, teamMembers, deployments,
-  comments, checkpoints, projectTimeTracking, projectScreenshots, taskSummaries, usageTracking
+  comments, checkpoints, projectTimeTracking, projectScreenshots, taskSummaries, usageTracking,
+  userCredits, budgetLimits, usageAlerts, autoscaleDeployments, reservedVmDeployments,
+  scheduledDeployments, staticDeployments, objectStorageBuckets, objectStorageFiles,
+  keyValueStore, aiConversations, dynamicIntelligence, webSearchHistory,
+  gitRepositories, gitCommits, customDomains
 } from "@shared/schema";
 import { eq, and, desc, isNull, sql, inArray, gte, lte } from "drizzle-orm";
 import { db } from "./db";
@@ -196,6 +216,79 @@ export interface IStorage {
   getProjectDeployments(projectId: number): Promise<any[]>;
   getRecentDeployments(userId: number): Promise<any[]>;
   deleteSecret(id: number): Promise<boolean>;
+
+  // User Credits and Billing operations
+  getUserCredits(userId: number): Promise<any | undefined>;
+  createUserCredits(credits: any): Promise<any>;
+  updateUserCredits(userId: number, credits: any): Promise<any | undefined>;
+  addCredits(userId: number, amount: number): Promise<any | undefined>;
+  deductCredits(userId: number, amount: number): Promise<any | undefined>;
+  getBudgetLimits(userId: number): Promise<any | undefined>;
+  createBudgetLimits(limits: any): Promise<any>;
+  updateBudgetLimits(userId: number, limits: any): Promise<any | undefined>;
+  createUsageAlert(alert: any): Promise<any>;
+  getUsageAlerts(userId: number): Promise<any[]>;
+  markAlertSent(alertId: number): Promise<void>;
+
+  // Deployment Type-Specific operations
+  createAutoscaleDeployment(config: any): Promise<any>;
+  getAutoscaleDeployment(deploymentId: number): Promise<any | undefined>;
+  updateAutoscaleDeployment(deploymentId: number, config: any): Promise<any | undefined>;
+  createReservedVmDeployment(config: any): Promise<any>;
+  getReservedVmDeployment(deploymentId: number): Promise<any | undefined>;
+  updateReservedVmDeployment(deploymentId: number, config: any): Promise<any | undefined>;
+  createScheduledDeployment(config: any): Promise<any>;
+  getScheduledDeployment(deploymentId: number): Promise<any | undefined>;
+  updateScheduledDeployment(deploymentId: number, config: any): Promise<any | undefined>;
+  createStaticDeployment(config: any): Promise<any>;
+  getStaticDeployment(deploymentId: number): Promise<any | undefined>;
+  updateStaticDeployment(deploymentId: number, config: any): Promise<any | undefined>;
+
+  // Object Storage operations
+  createObjectStorageBucket(bucket: any): Promise<any>;
+  getObjectStorageBucket(id: number): Promise<any | undefined>;
+  getProjectObjectStorageBuckets(projectId: number): Promise<any[]>;
+  deleteObjectStorageBucket(id: number): Promise<boolean>;
+  createObjectStorageFile(file: any): Promise<any>;
+  getObjectStorageFile(id: number): Promise<any | undefined>;
+  getBucketFiles(bucketId: number): Promise<any[]>;
+  deleteObjectStorageFile(id: number): Promise<boolean>;
+
+  // Key-Value Store operations
+  setKeyValue(projectId: number, key: string, value: any, expiresAt?: Date): Promise<any>;
+  getKeyValue(projectId: number, key: string): Promise<any | undefined>;
+  deleteKeyValue(projectId: number, key: string): Promise<boolean>;
+  getProjectKeyValues(projectId: number): Promise<any[]>;
+
+  // AI Conversation operations
+  createAiConversation(conversation: any): Promise<any>;
+  getAiConversation(id: number): Promise<any | undefined>;
+  getProjectAiConversations(projectId: number): Promise<any[]>;
+  updateAiConversation(id: number, updates: any): Promise<any | undefined>;
+  addMessageToConversation(conversationId: number, message: any): Promise<any | undefined>;
+
+  // Dynamic Intelligence operations
+  getDynamicIntelligence(userId: number): Promise<any | undefined>;
+  createDynamicIntelligence(settings: any): Promise<any>;
+  updateDynamicIntelligence(userId: number, settings: any): Promise<any | undefined>;
+
+  // Web Search operations
+  createWebSearchHistory(search: any): Promise<any>;
+  getConversationSearchHistory(conversationId: number): Promise<any[]>;
+
+  // Git Integration operations
+  createGitRepository(repo: any): Promise<any>;
+  getGitRepository(projectId: number): Promise<any | undefined>;
+  updateGitRepository(projectId: number, updates: any): Promise<any | undefined>;
+  createGitCommit(commit: any): Promise<any>;
+  getRepositoryCommits(repositoryId: number): Promise<any[]>;
+
+  // Custom Domain operations
+  createCustomDomain(domain: any): Promise<any>;
+  getCustomDomain(id: number): Promise<any | undefined>;
+  getProjectCustomDomains(projectId: number): Promise<any[]>;
+  updateCustomDomain(id: number, updates: any): Promise<any | undefined>;
+  deleteCustomDomain(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -342,7 +435,7 @@ export class DatabaseStorage implements IStorage {
 
   // API Key operations
   async createApiKey(apiKeyData: InsertApiKey): Promise<ApiKey> {
-    const [apiKey] = await db.insert(apiKeys).values([apiKeyData]).returning();
+    const [apiKey] = await db.insert(apiKeys).values(apiKeyData).returning();
     return apiKey;
   }
 
@@ -371,7 +464,7 @@ export class DatabaseStorage implements IStorage {
 
   // Code Review operations
   async createCodeReview(reviewData: InsertCodeReview): Promise<CodeReview> {
-    const [review] = await db.insert(codeReviews).values([reviewData]).returning();
+    const [review] = await db.insert(codeReviews).values(reviewData).returning();
     return review;
   }
 
@@ -395,7 +488,7 @@ export class DatabaseStorage implements IStorage {
 
   // Challenge operations
   async createChallenge(challengeData: InsertChallenge): Promise<Challenge> {
-    const [challenge] = await db.insert(challenges).values([challengeData]).returning();
+    const [challenge] = await db.insert(challenges).values(challengeData).returning();
     return challenge;
   }
 
@@ -419,7 +512,7 @@ export class DatabaseStorage implements IStorage {
 
   // Mentorship operations
   async createMentorProfile(profileData: InsertMentorProfile): Promise<MentorProfile> {
-    const [profile] = await db.insert(mentorProfiles).values([profileData]).returning();
+    const [profile] = await db.insert(mentorProfiles).values(profileData).returning();
     return profile;
   }
 
@@ -1302,6 +1395,394 @@ export class DatabaseStorage implements IStorage {
   
   async getUserMobileSessions(userId: number): Promise<any[]> {
     return [];
+  }
+
+  // User Credits and Billing operations
+  async getUserCredits(userId: number): Promise<UserCredits | undefined> {
+    const [credits] = await db.select().from(userCredits).where(eq(userCredits.userId, userId));
+    return credits;
+  }
+
+  async createUserCredits(credits: InsertUserCredits): Promise<UserCredits> {
+    const [created] = await db.insert(userCredits).values(credits).returning();
+    return created;
+  }
+
+  async updateUserCredits(userId: number, credits: Partial<InsertUserCredits>): Promise<UserCredits | undefined> {
+    const [updated] = await db
+      .update(userCredits)
+      .set({ ...credits, updatedAt: new Date() })
+      .where(eq(userCredits.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  async addCredits(userId: number, amount: number): Promise<UserCredits | undefined> {
+    const [updated] = await db
+      .update(userCredits)
+      .set({ 
+        remainingCredits: sql`${userCredits.remainingCredits} + ${amount}`,
+        extraCredits: sql`${userCredits.extraCredits} + ${amount}`,
+        updatedAt: new Date()
+      })
+      .where(eq(userCredits.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  async deductCredits(userId: number, amount: number): Promise<UserCredits | undefined> {
+    const [updated] = await db
+      .update(userCredits)
+      .set({ 
+        remainingCredits: sql`GREATEST(${userCredits.remainingCredits} - ${amount}, 0)`,
+        updatedAt: new Date()
+      })
+      .where(eq(userCredits.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  async getBudgetLimits(userId: number): Promise<BudgetLimit | undefined> {
+    const [limits] = await db.select().from(budgetLimits).where(eq(budgetLimits.userId, userId));
+    return limits;
+  }
+
+  async createBudgetLimits(limits: InsertBudgetLimit): Promise<BudgetLimit> {
+    const [created] = await db.insert(budgetLimits).values(limits).returning();
+    return created;
+  }
+
+  async updateBudgetLimits(userId: number, limits: Partial<InsertBudgetLimit>): Promise<BudgetLimit | undefined> {
+    const [updated] = await db
+      .update(budgetLimits)
+      .set({ ...limits, updatedAt: new Date() })
+      .where(eq(budgetLimits.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  async createUsageAlert(alert: InsertUsageAlert): Promise<UsageAlert> {
+    const [created] = await db.insert(usageAlerts).values(alert).returning();
+    return created;
+  }
+
+  async getUsageAlerts(userId: number): Promise<UsageAlert[]> {
+    return await db.select().from(usageAlerts).where(eq(usageAlerts.userId, userId));
+  }
+
+  async markAlertSent(alertId: number): Promise<void> {
+    await db
+      .update(usageAlerts)
+      .set({ sent: true, sentAt: new Date() })
+      .where(eq(usageAlerts.id, alertId));
+  }
+
+  // Deployment Type-Specific operations
+  async createAutoscaleDeployment(config: InsertAutoscaleDeployment): Promise<AutoscaleDeployment> {
+    const [created] = await db.insert(autoscaleDeployments).values(config).returning();
+    return created;
+  }
+
+  async getAutoscaleDeployment(deploymentId: number): Promise<AutoscaleDeployment | undefined> {
+    const [deployment] = await db.select().from(autoscaleDeployments).where(eq(autoscaleDeployments.deploymentId, deploymentId));
+    return deployment;
+  }
+
+  async updateAutoscaleDeployment(deploymentId: number, config: Partial<InsertAutoscaleDeployment>): Promise<AutoscaleDeployment | undefined> {
+    const [updated] = await db
+      .update(autoscaleDeployments)
+      .set(config)
+      .where(eq(autoscaleDeployments.deploymentId, deploymentId))
+      .returning();
+    return updated;
+  }
+
+  async createReservedVmDeployment(config: InsertReservedVmDeployment): Promise<ReservedVmDeployment> {
+    const [created] = await db.insert(reservedVmDeployments).values(config).returning();
+    return created;
+  }
+
+  async getReservedVmDeployment(deploymentId: number): Promise<ReservedVmDeployment | undefined> {
+    const [deployment] = await db.select().from(reservedVmDeployments).where(eq(reservedVmDeployments.deploymentId, deploymentId));
+    return deployment;
+  }
+
+  async updateReservedVmDeployment(deploymentId: number, config: Partial<InsertReservedVmDeployment>): Promise<ReservedVmDeployment | undefined> {
+    const [updated] = await db
+      .update(reservedVmDeployments)
+      .set(config)
+      .where(eq(reservedVmDeployments.deploymentId, deploymentId))
+      .returning();
+    return updated;
+  }
+
+  async createScheduledDeployment(config: InsertScheduledDeployment): Promise<ScheduledDeployment> {
+    const [created] = await db.insert(scheduledDeployments).values(config).returning();
+    return created;
+  }
+
+  async getScheduledDeployment(deploymentId: number): Promise<ScheduledDeployment | undefined> {
+    const [deployment] = await db.select().from(scheduledDeployments).where(eq(scheduledDeployments.deploymentId, deploymentId));
+    return deployment;
+  }
+
+  async updateScheduledDeployment(deploymentId: number, config: Partial<InsertScheduledDeployment>): Promise<ScheduledDeployment | undefined> {
+    const [updated] = await db
+      .update(scheduledDeployments)
+      .set(config)
+      .where(eq(scheduledDeployments.deploymentId, deploymentId))
+      .returning();
+    return updated;
+  }
+
+  async createStaticDeployment(config: InsertStaticDeployment): Promise<StaticDeployment> {
+    const [created] = await db.insert(staticDeployments).values(config).returning();
+    return created;
+  }
+
+  async getStaticDeployment(deploymentId: number): Promise<StaticDeployment | undefined> {
+    const [deployment] = await db.select().from(staticDeployments).where(eq(staticDeployments.deploymentId, deploymentId));
+    return deployment;
+  }
+
+  async updateStaticDeployment(deploymentId: number, config: Partial<InsertStaticDeployment>): Promise<StaticDeployment | undefined> {
+    const [updated] = await db
+      .update(staticDeployments)
+      .set(config)
+      .where(eq(staticDeployments.deploymentId, deploymentId))
+      .returning();
+    return updated;
+  }
+
+  // Object Storage operations
+  async createObjectStorageBucket(bucket: InsertObjectStorageBucket): Promise<ObjectStorageBucket> {
+    const [created] = await db.insert(objectStorageBuckets).values(bucket).returning();
+    return created;
+  }
+
+  async getObjectStorageBucket(id: number): Promise<ObjectStorageBucket | undefined> {
+    const [bucket] = await db.select().from(objectStorageBuckets).where(eq(objectStorageBuckets.id, id));
+    return bucket;
+  }
+
+  async getProjectObjectStorageBuckets(projectId: number): Promise<ObjectStorageBucket[]> {
+    return await db.select().from(objectStorageBuckets).where(eq(objectStorageBuckets.projectId, projectId));
+  }
+
+  async deleteObjectStorageBucket(id: number): Promise<boolean> {
+    const result = await db.delete(objectStorageBuckets).where(eq(objectStorageBuckets.id, id));
+    return result.length > 0;
+  }
+
+  async createObjectStorageFile(file: InsertObjectStorageFile): Promise<ObjectStorageFile> {
+    const [created] = await db.insert(objectStorageFiles).values(file).returning();
+    return created;
+  }
+
+  async getObjectStorageFile(id: number): Promise<ObjectStorageFile | undefined> {
+    const [file] = await db.select().from(objectStorageFiles).where(eq(objectStorageFiles.id, id));
+    return file;
+  }
+
+  async getBucketFiles(bucketId: number): Promise<ObjectStorageFile[]> {
+    return await db.select().from(objectStorageFiles).where(eq(objectStorageFiles.bucketId, bucketId));
+  }
+
+  async deleteObjectStorageFile(id: number): Promise<boolean> {
+    const result = await db.delete(objectStorageFiles).where(eq(objectStorageFiles.id, id));
+    return result.length > 0;
+  }
+
+  // Key-Value Store operations
+  async setKeyValue(projectId: number, key: string, value: any, expiresAt?: Date): Promise<KeyValueStore> {
+    const existing = await this.getKeyValue(projectId, key);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(keyValueStore)
+        .set({ value, expiresAt, updatedAt: new Date() })
+        .where(and(
+          eq(keyValueStore.projectId, projectId),
+          eq(keyValueStore.key, key)
+        ))
+        .returning();
+      return updated;
+    }
+    
+    const [created] = await db.insert(keyValueStore).values({
+      projectId,
+      key,
+      value,
+      expiresAt
+    }).returning();
+    return created;
+  }
+
+  async getKeyValue(projectId: number, key: string): Promise<KeyValueStore | undefined> {
+    const [kv] = await db
+      .select()
+      .from(keyValueStore)
+      .where(and(
+        eq(keyValueStore.projectId, projectId),
+        eq(keyValueStore.key, key)
+      ));
+    
+    if (kv && kv.expiresAt && new Date(kv.expiresAt) < new Date()) {
+      await this.deleteKeyValue(projectId, key);
+      return undefined;
+    }
+    
+    return kv;
+  }
+
+  async deleteKeyValue(projectId: number, key: string): Promise<boolean> {
+    const result = await db
+      .delete(keyValueStore)
+      .where(and(
+        eq(keyValueStore.projectId, projectId),
+        eq(keyValueStore.key, key)
+      ));
+    return result.length > 0;
+  }
+
+  async getProjectKeyValues(projectId: number): Promise<KeyValueStore[]> {
+    const kvs = await db
+      .select()
+      .from(keyValueStore)
+      .where(eq(keyValueStore.projectId, projectId));
+    
+    // Filter out expired keys
+    const now = new Date();
+    return kvs.filter(kv => !kv.expiresAt || new Date(kv.expiresAt) >= now);
+  }
+
+  // AI Conversation operations
+  async createAiConversation(conversation: InsertAiConversation): Promise<AiConversation> {
+    const [created] = await db.insert(aiConversations).values(conversation).returning();
+    return created;
+  }
+
+  async getAiConversation(id: number): Promise<AiConversation | undefined> {
+    const [conversation] = await db.select().from(aiConversations).where(eq(aiConversations.id, id));
+    return conversation;
+  }
+
+  async getProjectAiConversations(projectId: number): Promise<AiConversation[]> {
+    return await db.select().from(aiConversations).where(eq(aiConversations.projectId, projectId));
+  }
+
+  async updateAiConversation(id: number, updates: Partial<InsertAiConversation>): Promise<AiConversation | undefined> {
+    const [updated] = await db
+      .update(aiConversations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(aiConversations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async addMessageToConversation(conversationId: number, message: any): Promise<AiConversation | undefined> {
+    const conversation = await this.getAiConversation(conversationId);
+    if (!conversation) return undefined;
+    
+    const messages = [...conversation.messages as any[], message];
+    const [updated] = await db
+      .update(aiConversations)
+      .set({ 
+        messages,
+        totalTokensUsed: sql`${aiConversations.totalTokensUsed} + ${message.tokens || 0}`,
+        updatedAt: new Date()
+      })
+      .where(eq(aiConversations.id, conversationId))
+      .returning();
+    return updated;
+  }
+
+  // Dynamic Intelligence operations
+  async getDynamicIntelligence(userId: number): Promise<DynamicIntelligence | undefined> {
+    const [settings] = await db.select().from(dynamicIntelligence).where(eq(dynamicIntelligence.userId, userId));
+    return settings;
+  }
+
+  async createDynamicIntelligence(settings: InsertDynamicIntelligence): Promise<DynamicIntelligence> {
+    const [created] = await db.insert(dynamicIntelligence).values(settings).returning();
+    return created;
+  }
+
+  async updateDynamicIntelligence(userId: number, settings: Partial<InsertDynamicIntelligence>): Promise<DynamicIntelligence | undefined> {
+    const [updated] = await db
+      .update(dynamicIntelligence)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(dynamicIntelligence.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  // Web Search operations
+  async createWebSearchHistory(search: InsertWebSearchHistory): Promise<WebSearchHistory> {
+    const [created] = await db.insert(webSearchHistory).values(search).returning();
+    return created;
+  }
+
+  async getConversationSearchHistory(conversationId: number): Promise<WebSearchHistory[]> {
+    return await db.select().from(webSearchHistory).where(eq(webSearchHistory.conversationId, conversationId));
+  }
+
+  // Git Integration operations
+  async createGitRepository(repo: InsertGitRepository): Promise<GitRepository> {
+    const [created] = await db.insert(gitRepositories).values(repo).returning();
+    return created;
+  }
+
+  async getGitRepository(projectId: number): Promise<GitRepository | undefined> {
+    const [repo] = await db.select().from(gitRepositories).where(eq(gitRepositories.projectId, projectId));
+    return repo;
+  }
+
+  async updateGitRepository(projectId: number, updates: Partial<InsertGitRepository>): Promise<GitRepository | undefined> {
+    const [updated] = await db
+      .update(gitRepositories)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(gitRepositories.projectId, projectId))
+      .returning();
+    return updated;
+  }
+
+  async createGitCommit(commit: InsertGitCommit): Promise<GitCommit> {
+    const [created] = await db.insert(gitCommits).values(commit).returning();
+    return created;
+  }
+
+  async getRepositoryCommits(repositoryId: number): Promise<GitCommit[]> {
+    return await db.select().from(gitCommits).where(eq(gitCommits.repositoryId, repositoryId));
+  }
+
+  // Custom Domain operations
+  async createCustomDomain(domain: InsertCustomDomain): Promise<CustomDomain> {
+    const [created] = await db.insert(customDomains).values(domain).returning();
+    return created;
+  }
+
+  async getCustomDomain(id: number): Promise<CustomDomain | undefined> {
+    const [domain] = await db.select().from(customDomains).where(eq(customDomains.id, id));
+    return domain;
+  }
+
+  async getProjectCustomDomains(projectId: number): Promise<CustomDomain[]> {
+    return await db.select().from(customDomains).where(eq(customDomains.projectId, projectId));
+  }
+
+  async updateCustomDomain(id: number, updates: Partial<InsertCustomDomain>): Promise<CustomDomain | undefined> {
+    const [updated] = await db
+      .update(customDomains)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(customDomains.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCustomDomain(id: number): Promise<boolean> {
+    const result = await db.delete(customDomains).where(eq(customDomains.id, id));
+    return result.length > 0;
   }
 }
 

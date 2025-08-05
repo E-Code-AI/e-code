@@ -2,6 +2,8 @@ import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { storage } from '../storage';
+import { billingService } from './billing-service';
 
 export interface DeploymentConfig {
   id: string;
@@ -103,6 +105,36 @@ export class DeploymentManager {
       await this.setupSSLCertificate(deploymentId, config.customDomain || `${config.projectId}-${deploymentId.slice(0, 8)}.e-code.app`);
     }
 
+    // Create deployment record in database
+    const dbDeployment = await storage.createDeployment({
+      projectId: config.projectId,
+      type: config.type,
+      status: 'pending',
+      url: deployment.url || deployment.customUrl || '',
+      environmentId: config.environment,
+      metadata: {
+        regions: config.regions,
+        scaling: config.scaling,
+        scheduling: config.scheduling,
+        resources: config.resources,
+        environmentVars: config.environmentVars
+      }
+    });
+
+    // Create type-specific deployment configuration
+    await this.createTypeSpecificConfig(dbDeployment.id, config);
+
+    // Track deployment usage for billing
+    const project = await storage.getProject(config.projectId);
+    if (project) {
+      await billingService.trackResourceUsage(
+        project.ownerId,
+        `deployment.${config.type}`,
+        1,
+        { deploymentId: dbDeployment.id, projectId: config.projectId }
+      );
+    }
+
     this.deployments.set(deploymentId, deployment);
     
     // Add to build queue
@@ -193,6 +225,53 @@ export class DeploymentManager {
       };
       
       deployment.deploymentLog.push(`⚠️ Using self-signed certificate: ${error}`);
+    }
+  }
+
+  private async createTypeSpecificConfig(deploymentId: number, config: DeploymentConfig): Promise<void> {
+    switch (config.type) {
+      case 'autoscale':
+        await storage.createAutoscaleDeployment({
+          deploymentId,
+          minInstances: config.scaling?.minInstances || 1,
+          maxInstances: config.scaling?.maxInstances || 10,
+          targetCpuUtilization: config.scaling?.targetCPU || 70,
+          scaleDownDelay: 300
+        });
+        break;
+      
+      case 'reserved-vm':
+        await storage.createReservedVmDeployment({
+          deploymentId,
+          vmSize: 'standard',
+          cpuCores: parseInt(config.resources?.cpu || '2'),
+          memoryGb: parseInt(config.resources?.memory || '4'),
+          diskGb: parseInt(config.resources?.disk || '20'),
+          region: config.regions[0] || 'us-central1'
+        });
+        break;
+      
+      case 'scheduled':
+        await storage.createScheduledDeployment({
+          deploymentId,
+          cronExpression: config.scheduling?.cron || '0 * * * *',
+          timezone: config.scheduling?.timezone || 'UTC',
+          lastRun: null,
+          nextRun: null,
+          maxRuntime: 3600
+        });
+        break;
+      
+      case 'static':
+        await storage.createStaticDeployment({
+          deploymentId,
+          cdnEnabled: true,
+          buildCommand: config.buildCommand || null,
+          outputDirectory: 'dist',
+          headers: {},
+          redirects: []
+        });
+        break;
     }
   }
 

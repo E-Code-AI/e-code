@@ -133,8 +133,10 @@ export class EnhancedAutonomousAgent {
       
       // Calculate pricing based on effort
       const pricingInfo = effortPricingService.calculatePricing({
-        filesModified: this.filesModified,
-        linesOfCodeWritten: this.linesOfCodeWritten,
+        filesCreated: this.filesModified,
+        filesModified: 0,
+        linesAdded: this.linesOfCodeWritten,
+        linesDeleted: 0,
         tokensUsed: this.tokensUsed,
         executionTimeMs: Date.now() - this.startTime,
         apiCallsCount: this.apiCallsCount
@@ -146,7 +148,7 @@ export class EnhancedAutonomousAgent {
       
       const timeWorked = Math.round((Date.now() - this.startTime) / 1000);
       
-      logger.info(`Agent task completed: ${this.filesModified} files, ${this.linesOfCodeWritten} lines, effort score: ${pricingInfo.effortScore}`);
+      logger.info(`Agent task completed: ${this.filesModified} files, ${this.linesOfCodeWritten} lines`);
       
       return {
         message: this.generateResponseMessage(analysis, results),
@@ -158,13 +160,13 @@ export class EnhancedAutonomousAgent {
         screenshot,
         checkpoint,
         pricing: {
-          complexity: pricingInfo.complexity,
-          costInCents: pricingInfo.costInCents,
-          costInDollars: pricingInfo.costInDollars,
-          effortScore: parseFloat(pricingInfo.effortScore)
+          complexity: pricingInfo.tier.name,
+          costInCents: pricingInfo.totalCents,
+          costInDollars: pricingInfo.formattedPrice,
+          effortScore: pricingInfo.metrics.filesCreated + pricingInfo.metrics.linesAdded
         }
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Agent processing error:', error);
       throw error;
     }
