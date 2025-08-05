@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { performanceMonitor } from './performance';
+import { monitoringService } from '../services/monitoring-service';
 
 export const monitoringRouter = Router();
 
@@ -189,4 +190,41 @@ monitoringRouter.get('/metrics/prometheus', (req, res) => {
 
   res.set('Content-Type', 'text/plain');
   res.send(output);
+});
+
+// Monitoring event endpoint for frontend monitoring
+monitoringRouter.post('/event', async (req, res) => {
+  try {
+    const { type, category, message, metadata, userId, projectId, url, userAgent } = req.body;
+    
+    // Basic validation
+    if (!type || !category || !message) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: type, category, and message' 
+      });
+    }
+    
+    // Create monitoring event
+    const event = await monitoringService.trackEvent({
+      type,
+      category,
+      message,
+      metadata,
+      userId: userId || req.user?.id,
+      projectId,
+      url,
+      userAgent: userAgent || req.get('user-agent'),
+      ipAddress: req.ip
+    });
+    
+    res.json({ 
+      success: true, 
+      eventId: event.id 
+    });
+  } catch (error) {
+    console.error('Error tracking monitoring event:', error);
+    res.status(500).json({ 
+      error: 'Failed to track monitoring event' 
+    });
+  }
 });

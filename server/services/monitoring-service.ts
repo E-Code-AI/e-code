@@ -299,6 +299,46 @@ export class MonitoringService {
     }
   }
 
+  async trackEvent(eventData: {
+    type: string;
+    category: string;
+    message: string;
+    metadata?: Record<string, any>;
+    userId?: number;
+    projectId?: number;
+    url?: string;
+    userAgent?: string;
+    ipAddress?: string;
+  }): Promise<{ id: number }> {
+    try {
+      const [event] = await db.insert(monitoringEvents).values({
+        type: eventData.type,
+        category: eventData.category,
+        action: eventData.message,
+        label: eventData.metadata?.label,
+        value: eventData.metadata?.value,
+        timestamp: new Date(),
+        userId: eventData.userId,
+        sessionId: eventData.metadata?.sessionId,
+        metadata: eventData.metadata,
+        url: eventData.url,
+        userAgent: eventData.userAgent,
+        ipAddress: eventData.ipAddress
+      }).returning({ id: monitoringEvents.id });
+
+      logger.info(`Tracked ${eventData.type} event:`, {
+        category: eventData.category,
+        action: eventData.message,
+        userId: eventData.userId
+      });
+
+      return event;
+    } catch (error) {
+      logger.error('Failed to track event:', error);
+      throw error;
+    }
+  }
+
   private startHealthMonitoring() {
     // Monitor system health every minute
     setInterval(async () => {
