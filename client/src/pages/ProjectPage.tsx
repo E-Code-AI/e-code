@@ -103,6 +103,29 @@ const ProjectPage = () => {
   
   // Get current user for collaboration
   const { user } = useAuth();
+  
+  // Handle agent mode from URL parameters
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const isAgentMode = searchParams.get('agent') === 'true';
+    const prompt = searchParams.get('prompt');
+    
+    // Use the project ID from the loaded project data
+    const effectiveProjectId = project?.id || projectId;
+    
+    if (isAgentMode && prompt && effectiveProjectId) {
+      // Store prompt in sessionStorage for the agent to use
+      window.sessionStorage.setItem(`agent-prompt-${effectiveProjectId}`, prompt);
+      
+      // Open AI panel and switch to agent tab
+      setAiPanelVisible(true);
+      setRightPanelTab('ai');
+      
+      // Clean up URL without reloading the page
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [projectId, project]);
 
   // Query for fetching project details
   const { 
