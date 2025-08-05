@@ -8,6 +8,8 @@ import * as crypto from 'crypto';
 import * as path from 'path';
 import { createLogger } from '../utils/logger';
 import { Readable } from 'stream';
+import { storage as dbStorage } from '../storage';
+import { billingService } from './billing-service';
 
 const logger = createLogger('real-object-storage');
 
@@ -108,7 +110,9 @@ export class RealObjectStorageService {
   async uploadFile(
     key: string,
     content: Buffer | Readable | string,
-    options: UploadOptions = {}
+    options: UploadOptions = {},
+    projectId?: number,
+    userId?: number
   ): Promise<StorageObject> {
     const bucket = this.buckets.get(this.defaultBucket);
     if (!bucket) {
@@ -120,8 +124,10 @@ export class RealObjectStorageService {
       
       // Convert content to stream if needed
       let stream: Readable;
+      let fileSize = 0;
       if (Buffer.isBuffer(content)) {
         stream = Readable.from(content);
+        fileSize = content.length;
       } else if (typeof content === 'string') {
         stream = Readable.from(Buffer.from(content));
       } else {
@@ -161,6 +167,44 @@ export class RealObjectStorageService {
       if (options.public) {
         await file.makePublic();
         storageObject.url = `https://storage.googleapis.com/${this.defaultBucket}/${key}`;
+      }
+
+      // Track in database if project ID provided
+      if (projectId) {
+        // Find or create bucket record
+        let bucketRecord = (await dbStorage.getProjectObjectStorageBuckets(projectId))
+          .find(b => b.name === this.defaultBucket);
+        
+        if (!bucketRecord) {
+          bucketRecord = await dbStorage.createObjectStorageBucket({
+            projectId,
+            name: this.defaultBucket,
+            region: 'us-central1',
+            storageClass: 'STANDARD',
+            metadata: {}
+          });
+        }
+
+        // Create file record
+        await dbStorage.createObjectStorageFile({
+          bucketId: bucketRecord.id,
+          key,
+          size: storageObject.size,
+          contentType: storageObject.contentType,
+          metadata: options.metadata || {},
+          url: storageObject.url || null
+        });
+
+        // Track usage for billing
+        if (userId) {
+          const sizeInGB = storageObject.size / (1024 * 1024 * 1024);
+          await billingService.trackResourceUsage(
+            userId,
+            'storage.gb_month',
+            sizeInGB,
+            { projectId, bucketId: bucketRecord.id, fileKey: key }
+          );
+        }
       }
 
       logger.info(`Uploaded file: ${key} (${storageObject.size} bytes)`);
@@ -209,7 +253,7 @@ export class RealObjectStorageService {
     }
   }
 
-  async deleteFile(key: string): Promise<void> {
+  async deleteFile(key: string, projectId?: number): Promise<void> {
     const bucket = this.buckets.get(this.defaultBucket);
     if (!bucket) {
       throw new Error('Storage bucket not available');
