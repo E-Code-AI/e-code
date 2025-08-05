@@ -358,6 +358,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GPU Service Endpoints
+  app.get('/api/gpu/types', ensureAuthenticated, async (req, res) => {
+    try {
+      const { getGpuService } = await import('./services/gpu-service');
+      const gpuService = getGpuService(storage);
+      const gpuTypes = gpuService.getAvailableGpuTypes();
+      res.json(gpuTypes);
+    } catch (error) {
+      console.error('Error fetching GPU types:', error);
+      res.status(500).json({ error: 'Failed to fetch GPU types' });
+    }
+  });
+
+  app.get('/api/gpu/regions', ensureAuthenticated, async (req, res) => {
+    try {
+      const { getGpuService } = await import('./services/gpu-service');
+      const gpuService = getGpuService(storage);
+      const regions = gpuService.getAvailableRegions();
+      res.json(regions);
+    } catch (error) {
+      console.error('Error fetching GPU regions:', error);
+      res.status(500).json({ error: 'Failed to fetch GPU regions' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/gpu/provision', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { gpuType, region } = req.body;
+      
+      const { getGpuService } = await import('./services/gpu-service');
+      const gpuService = getGpuService(storage);
+      const instance = await gpuService.provisionGpuInstance(projectId, gpuType, region);
+      
+      res.json(instance);
+    } catch (error) {
+      console.error('Error provisioning GPU:', error);
+      res.status(500).json({ error: 'Failed to provision GPU instance' });
+    }
+  });
+
+  app.get('/api/projects/:projectId/gpu/instances', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const instances = await storage.getProjectGpuInstances(projectId);
+      res.json(instances);
+    } catch (error) {
+      console.error('Error fetching GPU instances:', error);
+      res.status(500).json({ error: 'Failed to fetch GPU instances' });
+    }
+  });
+
+  // Advanced Monitoring Endpoints
+  app.get('/api/monitoring/dashboards', ensureAuthenticated, async (req, res) => {
+    try {
+      const { getAdvancedMonitoringService } = await import('./services/advanced-monitoring');
+      const monitoringService = getAdvancedMonitoringService(storage);
+      const dashboards = monitoringService.getDashboards();
+      res.json(dashboards);
+    } catch (error) {
+      console.error('Error fetching dashboards:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboards' });
+    }
+  });
+
+  app.get('/api/monitoring/metrics/:metric', ensureAuthenticated, async (req, res) => {
+    try {
+      const { metric } = req.params;
+      const { timeRange = '1h', aggregation } = req.query;
+      
+      const { getAdvancedMonitoringService } = await import('./services/advanced-monitoring');
+      const monitoringService = getAdvancedMonitoringService(storage);
+      const data = monitoringService.getMetrics(metric, timeRange as string, aggregation as string);
+      
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      res.status(500).json({ error: 'Failed to fetch metrics' });
+    }
+  });
+
+  app.post('/api/monitoring/alerts', ensureAuthenticated, async (req, res) => {
+    try {
+      const alertRule = req.body;
+      const { getAdvancedMonitoringService } = await import('./services/advanced-monitoring');
+      const monitoringService = getAdvancedMonitoringService(storage);
+      const alert = monitoringService.createAlertRule(alertRule);
+      res.json(alert);
+    } catch (error) {
+      console.error('Error creating alert:', error);
+      res.status(500).json({ error: 'Failed to create alert' });
+    }
+  });
+
+  app.get('/api/monitoring/anomalies/:metric', ensureAuthenticated, async (req, res) => {
+    try {
+      const { metric } = req.params;
+      const { sensitivity = 3 } = req.query;
+      
+      const { getAdvancedMonitoringService } = await import('./services/advanced-monitoring');
+      const monitoringService = getAdvancedMonitoringService(storage);
+      const anomalies = await monitoringService.getAnomalies(metric, Number(sensitivity));
+      
+      res.json(anomalies);
+    } catch (error) {
+      console.error('Error detecting anomalies:', error);
+      res.status(500).json({ error: 'Failed to detect anomalies' });
+    }
+  });
+
   // Get dashboard quick actions/templates
   app.get('/api/dashboard/quick-actions', ensureAuthenticated, async (req, res) => {
     try {
