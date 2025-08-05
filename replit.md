@@ -14,6 +14,17 @@ An advanced AI-powered development platform that streamlines software creation t
 
 ## Recent Changes
 
+### 2025-08-05 - Fixed Project Creation 404 Errors & Navigation Issues
+- ✅ **Resolved critical 404 errors when creating projects with AI prompts**
+  - Root cause: Authentication state not properly synchronized during navigation
+  - Fixed Landing page to use window.location.href for full page reload
+  - Added proper error handling and toast notifications
+  - Enhanced console logging for debugging navigation issues
+- ✅ **Improved project creation flow from Landing page**
+  - Better handling of owner username in navigation URLs
+  - Automatic AI agent initialization with URL parameters
+  - Session storage for preserving prompts across navigation
+
 ### 2025-08-05 - AI-Powered Inline Code Completion Added (Claude Integration)
 - ✅ **Implemented inline AI code completion matching Replit's functionality**
   - Created code-completion-service.ts using Claude 3.5 Sonnet for real-time suggestions
