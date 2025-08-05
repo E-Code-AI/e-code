@@ -742,6 +742,7 @@ What would you like me to build for you today?`,
   const [isPaused, setIsPaused] = useState(false);
   const [extendedThinking, setExtendedThinking] = useState(false);
   const [highPowerMode, setHighPowerMode] = useState(false);
+  const [autoCheckpoints, setAutoCheckpoints] = useState(true);
   const [activeTab, setActiveTab] = useState<'chat' | 'progress'>('chat');
   const [progressLogs, setProgressLogs] = useState<Array<{
     id: string;
@@ -1519,6 +1520,17 @@ What would you like me to build?`,
               <Label htmlFor="high-power" className="cursor-pointer">
                 <Power className="h-3 w-3 inline mr-1" />
                 High Power
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="auto-checkpoints"
+                checked={autoCheckpoints}
+                onCheckedChange={setAutoCheckpoints}
+              />
+              <Label htmlFor="auto-checkpoints" className="cursor-pointer">
+                <History className="h-3 w-3 inline mr-1" />
+                Auto-checkpoints
               </Label>
             </div>
           </div>
