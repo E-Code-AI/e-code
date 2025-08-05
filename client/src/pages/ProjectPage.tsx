@@ -17,6 +17,7 @@ import Collaboration from '@/components/Collaboration';
 import GitPanel from '@/components/GitPanel';
 import AIPanel from '@/components/AIPanel';
 import { ReplitAgentChat } from '@/components/ReplitAgentChat';
+import { ReplitAgentV2 } from '@/components/ReplitAgentV2';
 import { ReplitSidebar } from '@/components/layout/ReplitSidebar';
 import EnvironmentPanel from '@/components/EnvironmentPanel';
 import { EnvironmentProvider } from '@/hooks/useEnvironment';
@@ -853,7 +854,10 @@ const ProjectPage = () => {
                 </Button>
               </div>
               <TabsContent value="ai" className="flex-1 overflow-hidden">
-                <ReplitAgentChat projectId={projectId} />
+                <ReplitAgentV2 
+                  projectId={projectId} 
+                  initialPrompt={window.sessionStorage.getItem(`agent-prompt-${projectId}`) || undefined}
+                />
               </TabsContent>
               <TabsContent value="collaborate" className="flex-1 overflow-hidden">
                 {user && <Collaboration 

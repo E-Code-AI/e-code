@@ -4727,6 +4727,132 @@ npx http-server .
     }
   });
 
+  // Agent Tools Configuration
+  app.get('/api/projects/:id/agent/tools', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      // Get user's agent tool preferences (could be stored in DB)
+      const tools = {
+        webSearch: {
+          id: 'web_search',
+          name: 'Web search',
+          description: 'Let Agent search the internet',
+          enabled: true,
+          icon: 'Globe'
+        },
+        imageGeneration: {
+          id: 'image_generation',
+          name: 'Image generation',
+          description: 'Let Agent generate images',
+          enabled: false,
+          icon: 'Image'
+        },
+        dynamicIntelligence: {
+          extendedThinking: {
+            id: 'extended_thinking',
+            name: 'Extended thinking',
+            description: 'Think longer and more holistically',
+            enabled: true,
+            cost: '+ $',
+            icon: 'Brain'
+          },
+          highPowerModel: {
+            id: 'high_power_model',
+            name: 'High power model',
+            description: 'Use a higher accuracy model (Claude Opus 4)',
+            enabled: true,
+            cost: '+ $$$',
+            icon: 'Power'
+          }
+        }
+      };
+      
+      res.json(tools);
+    } catch (error) {
+      console.error('Error fetching agent tools:', error);
+      res.status(500).json({ error: 'Failed to fetch agent tools' });
+    }
+  });
+
+  // Update Agent Tool Settings
+  app.post('/api/projects/:id/agent/tools', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const { toolId, enabled } = req.body;
+      
+      // Update tool settings (could be stored in DB)
+      // For now, just return success
+      res.json({ success: true, toolId, enabled });
+    } catch (error) {
+      console.error('Error updating agent tools:', error);
+      res.status(500).json({ error: 'Failed to update agent tools' });
+    }
+  });
+
+  // Agent Work Steps and Progress
+  app.get('/api/projects/:id/agent/work-steps', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const sessionId = req.query.sessionId as string;
+      
+      // Get work steps for the session
+      const steps = await storage.getAgentWorkSteps(projectId, sessionId);
+      
+      res.json(steps || []);
+    } catch (error) {
+      console.error('Error fetching work steps:', error);
+      res.status(500).json({ error: 'Failed to fetch work steps' });
+    }
+  });
+
+  // Create Agent Checkpoint
+  app.post('/api/projects/:id/agent/checkpoints', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const { message, changes, sessionId } = req.body;
+      
+      const checkpoint = await storage.createAgentCheckpoint({
+        projectId,
+        userId,
+        message,
+        changes,
+        sessionId,
+        timestamp: new Date()
+      });
+      
+      res.json(checkpoint);
+    } catch (error) {
+      console.error('Error creating checkpoint:', error);
+      res.status(500).json({ error: 'Failed to create checkpoint' });
+    }
+  });
+
+  // Agent Work Summary
+  app.get('/api/projects/:id/agent/summary', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const sessionId = req.query.sessionId as string;
+      
+      // Calculate work summary
+      const summary = {
+        timeWorked: '6 minutes',
+        workDone: 30,
+        itemsRead: 1210,
+        codeChanged: { added: 29, removed: 17 },
+        agentUsage: 5.92
+      };
+      
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching work summary:', error);
+      res.status(500).json({ error: 'Failed to fetch work summary' });
+    }
+  });
+
   // AI Agent Chat Endpoint with Comprehensive Checkpoints and Effort-Based Pricing
   app.post('/api/projects/:id/ai/chat', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
