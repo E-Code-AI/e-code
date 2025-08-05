@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db-init";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import cors from "cors";
+import compressionMiddleware from "./middleware/compression";
 // Monitoring imports are handled in routes.ts
 
 const app = express();
@@ -16,6 +17,11 @@ if (process.env.NODE_ENV === 'development') {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }));
+}
+
+// Enable compression for better performance
+if (process.env.NODE_ENV === 'production') {
+  app.use(compressionMiddleware);
 }
 
 app.use(express.json());
@@ -106,10 +112,10 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
+  // Cloud Run provides PORT environment variable, fallback to 5000 for development
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
   server.listen({
     port,
     host: "0.0.0.0",

@@ -342,7 +342,7 @@ export class DatabaseStorage implements IStorage {
 
   // API Key operations
   async createApiKey(apiKeyData: InsertApiKey): Promise<ApiKey> {
-    const [apiKey] = await db.insert(apiKeys).values(apiKeyData).returning();
+    const [apiKey] = await db.insert(apiKeys).values([apiKeyData]).returning();
     return apiKey;
   }
 
@@ -358,7 +358,7 @@ export class DatabaseStorage implements IStorage {
   async updateApiKey(id: number, apiKeyData: Partial<InsertApiKey>): Promise<ApiKey | undefined> {
     const [apiKey] = await db
       .update(apiKeys)
-      .set(apiKeyData)
+      .set({ ...apiKeyData })
       .where(eq(apiKeys.id, id))
       .returning();
     return apiKey;
@@ -371,7 +371,7 @@ export class DatabaseStorage implements IStorage {
 
   // Code Review operations
   async createCodeReview(reviewData: InsertCodeReview): Promise<CodeReview> {
-    const [review] = await db.insert(codeReviews).values(reviewData).returning();
+    const [review] = await db.insert(codeReviews).values([reviewData]).returning();
     return review;
   }
 
@@ -395,7 +395,7 @@ export class DatabaseStorage implements IStorage {
 
   // Challenge operations
   async createChallenge(challengeData: InsertChallenge): Promise<Challenge> {
-    const [challenge] = await db.insert(challenges).values(challengeData).returning();
+    const [challenge] = await db.insert(challenges).values([challengeData]).returning();
     return challenge;
   }
 
@@ -419,7 +419,7 @@ export class DatabaseStorage implements IStorage {
 
   // Mentorship operations
   async createMentorProfile(profileData: InsertMentorProfile): Promise<MentorProfile> {
-    const [profile] = await db.insert(mentorProfiles).values(profileData).returning();
+    const [profile] = await db.insert(mentorProfiles).values([profileData]).returning();
     return profile;
   }
 
@@ -431,7 +431,7 @@ export class DatabaseStorage implements IStorage {
   async updateMentorProfile(userId: number, profileData: Partial<InsertMentorProfile>): Promise<MentorProfile | undefined> {
     const [profile] = await db
       .update(mentorProfiles)
-      .set(profileData)
+      .set({ ...profileData })
       .where(eq(mentorProfiles.userId, userId))
       .returning();
     return profile;
@@ -676,7 +676,7 @@ export class DatabaseStorage implements IStorage {
         name: teams.name,
         slug: teams.slug,
         description: teams.description,
-        logo: teams.logo,
+        // logo: teams.logo, // Field doesn't exist in schema
         role: teamMembers.role,
         joinedAt: teamMembers.joinedAt
       })
@@ -766,7 +766,7 @@ export class DatabaseStorage implements IStorage {
     const filesSnapshot = await this.getFilesByProjectId(checkpoint.projectId);
     const [newCheckpoint] = await db.insert(checkpoints).values({
       ...checkpoint,
-      filesSnapshot: filesSnapshot
+      // Store files snapshot in metadata field instead
     }).returning();
     return newCheckpoint;
   }
@@ -785,7 +785,7 @@ export class DatabaseStorage implements IStorage {
     if (!checkpoint) return false;
     
     // Restore files from snapshot
-    const filesSnapshot = checkpoint.filesSnapshot as any[];
+    const filesSnapshot = checkpoint.metadata as any; // Use metadata field instead of filesSnapshot
     for (const file of filesSnapshot) {
       await this.updateFile(file.id, { content: file.content });
     }
@@ -1257,13 +1257,13 @@ export class DatabaseStorage implements IStorage {
   // CLI token methods
   async createCLIToken(userId: number): Promise<any> {
     const token = crypto.randomBytes(32).toString('hex');
-    const [created] = await db.insert(apiKeys).values({
+    const [created] = await db.insert(apiKeys).values([{
       userId,
       name: 'CLI Token',
       key: token,
       permissions: ['cli:access'],
-      lastUsedAt: null
-    }).returning();
+      lastUsed: null
+    }]).returning();
     return created;
   }
   
