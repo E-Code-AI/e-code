@@ -5,9 +5,29 @@ import { initializeDatabase } from "./db-init";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import cors from "cors";
 import compressionMiddleware from "./middleware/compression";
+import { securityMiddleware, sanitizeInput, securityMonitoring, ipSecurity } from "./middleware/security";
+import { rateLimiters, logRateLimitViolations, dynamicRateLimiter } from "./middleware/rate-limiter";
+import { cdnOptimization } from "./services/cdn-optimization";
+import { redisCache } from "./services/redis-cache";
+import { dbPool } from "./services/database-pool";
 // Monitoring imports are handled in routes.ts
 
 const app = express();
+
+// Production Security Middleware - Apply first
+app.use(...securityMiddleware());
+app.use(securityMonitoring);
+app.use(ipSecurity.middleware);
+
+// Rate limiting - Apply early
+app.use(logRateLimitViolations);
+app.use('/api/auth', rateLimiters.auth);
+app.use('/api', dynamicRateLimiter);
+app.use('/static', rateLimiters.static);
+
+// CDN Optimization
+app.use(cdnOptimization.staticAssetsMiddleware());
+app.use(cdnOptimization.dynamicContentMiddleware());
 
 // Configure CORS for development - allow same-origin requests
 if (process.env.NODE_ENV === 'development') {
@@ -20,12 +40,13 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Enable compression for better performance
-if (process.env.NODE_ENV === 'production') {
-  app.use(compressionMiddleware);
-}
+app.use(compressionMiddleware);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Input sanitization
+app.use(sanitizeInput);
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
