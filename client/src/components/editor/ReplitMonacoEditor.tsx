@@ -33,10 +33,12 @@ import {
   Clock,
   GitBranch,
   Palette,
+  Sparkles,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { registerAICodeCompletion, checkAICompletionAvailability } from "@/lib/ai-code-completion";
 
 interface EditorFile {
   id: number;
@@ -85,6 +87,8 @@ export function ReplitMonacoEditor({
   const [collaborators, setCollaborators] = useState<EditorUser[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [aiCompletionsEnabled, setAiCompletionsEnabled] = useState(true);
+  const aiCompletionDisposables = useRef<monaco.IDisposable[]>([]);
 
   const { toast } = useToast();
 
@@ -234,9 +238,35 @@ export function ReplitMonacoEditor({
         showUsers: true,
         showIssues: true,
       },
+      // Enable inline suggestions for AI completions
+      inlineSuggest: {
+        enabled: aiCompletionsEnabled,
+        mode: 'subword'
+      },
     });
 
     editorInstanceRef.current = editor;
+
+    // Register AI code completion
+    if (aiCompletionsEnabled) {
+      checkAICompletionAvailability().then(available => {
+        if (available && editorInstanceRef.current) {
+          const disposables = registerAICodeCompletion(
+            editorInstanceRef.current,
+            `Project ${projectId}`
+          );
+          aiCompletionDisposables.current = disposables;
+          
+          toast({
+            title: "AI Code Completion",
+            description: "Intelligent code suggestions enabled - powered by Claude",
+            duration: 3000,
+          });
+        }
+      }).catch(err => {
+        console.error('Failed to initialize AI completions:', err);
+      });
+    }
 
     // Gestion des changements
     const onContentChange = editor.onDidChangeModelContent(() => {
@@ -260,8 +290,11 @@ export function ReplitMonacoEditor({
       onContentChange.dispose();
       editor.dispose();
       editorInstanceRef.current = null;
+      // Clean up AI completion disposables
+      aiCompletionDisposables.current.forEach(d => d.dispose());
+      aiCompletionDisposables.current = [];
     };
-  }, [file, theme]);
+  }, [file, theme, aiCompletionsEnabled, projectId, toast]);
 
   const handleSave = () => {
     if (!editorInstanceRef.current || !fileId) return;
@@ -440,6 +473,17 @@ export function ReplitMonacoEditor({
                       Fullscreen
                     </>
                   )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+                <DropdownMenuItem 
+                  onClick={() => setAiCompletionsEnabled(!aiCompletionsEnabled)}
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  AI Completions
+                  <Badge variant={aiCompletionsEnabled ? "default" : "secondary"} className="ml-auto text-xs">
+                    {aiCompletionsEnabled ? "ON" : "OFF"}
+                  </Badge>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

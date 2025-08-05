@@ -11648,6 +11648,61 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
   
+  // AI Code Completion Routes
+  app.post('/api/ai/code-completion', ensureAuthenticated, async (req, res) => {
+    try {
+      const { code, position, language, fileName, projectContext } = req.body;
+      
+      if (!code || !position || !language) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      const completionService = (await import('./ai/code-completion-service')).CodeCompletionService.getInstance();
+      
+      // First try quick completions for common patterns
+      const quickCompletions = completionService.getQuickCompletions({
+        code,
+        position,
+        language,
+        fileName,
+        projectContext
+      });
+      
+      // If we have quick completions, return them immediately for low latency
+      if (quickCompletions.completions.length > 0) {
+        return res.json(quickCompletions);
+      }
+      
+      // Otherwise, get AI-powered completions
+      const completions = await completionService.getCompletions({
+        code,
+        position,
+        language,
+        fileName,
+        projectContext
+      });
+      
+      res.json(completions);
+    } catch (error) {
+      console.error('Error getting code completions:', error);
+      res.status(500).json({ error: 'Failed to get code completions' });
+    }
+  });
+  
+  app.post('/api/ai/code-completion/feedback', ensureAuthenticated, async (req, res) => {
+    try {
+      const { completion, accepted, context } = req.body;
+      
+      const completionService = (await import('./ai/code-completion-service')).CodeCompletionService.getInstance();
+      await completionService.recordCompletionFeedback(completion, accepted, context);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error recording completion feedback:', error);
+      res.status(500).json({ error: 'Failed to record feedback' });
+    }
+  });
+
   // Secrets Routes
   app.get('/api/secrets', ensureAuthenticated, async (req, res) => {
     try {
