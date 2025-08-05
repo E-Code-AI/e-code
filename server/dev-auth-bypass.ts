@@ -76,6 +76,42 @@ export function setupAuthBypass(app: any) {
     });
   });
   
+  // Add POST endpoint for auth bypass
+  app.post('/api/auth/debug/bypass', (req: Request, res: Response) => {
+    // Create a dev user session
+    const devUser = {
+      id: 1,
+      username: 'testuser',
+      email: 'test@example.com',
+      displayName: 'Test User',
+      avatarUrl: null,
+      bio: 'Development test user',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      password: '***PROTECTED***'
+    };
+
+    // Log in the dev user using passport
+    req.login(devUser as any, (err) => {
+      if (err) {
+        console.error('Dev auth bypass error:', err);
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Auth bypass failed', 
+          error: err.message 
+        });
+      }
+      
+      bypassAuth = true;
+      console.log('⚠️ Auth Bypass: User logged in via bypass');
+      res.json({ 
+        success: true,
+        message: 'Auth bypass enabled',
+        user: devUser
+      });
+    });
+  });
+
   console.log('🔧 Auth Bypass: Points de terminaison de débogage initialisés pour le développement');
   
   if (bypassAuth) {

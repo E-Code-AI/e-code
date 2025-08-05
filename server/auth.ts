@@ -504,21 +504,9 @@ export function setupAuth(app: Express) {
     }
     
     try {
-      // Find user with this token
-      // For now, we'll skip email verification as it's not in the schema
-      const user = null;
-      
-      if (!user) {
-        return res.status(400).json({ message: "Invalid or expired verification token" });
-      }
-      
-      // Update user as verified
-      await storage.updateUser(user.id, {
-        emailVerified: true
-      });
-      
-      console.log(`Email verified for user: ${user.username}`);
-      res.json({ message: "Email verified successfully! You can now log in." });
+      // Email verification not implemented yet
+      // TODO: Add email verification token fields to users table
+      return res.status(400).json({ message: "Email verification is not yet implemented" });
     } catch (error) {
       console.error("Email verification error:", error);
       res.status(500).json({ message: "Error verifying email" });
@@ -577,21 +565,9 @@ export function setupAuth(app: Express) {
     }
     
     try {
-      // Skip password reset for now as fields don't exist in schema
-      const user = null;
-      
-      if (!user) {
-        return res.status(400).json({ message: "Invalid or expired reset token" });
-      }
-      
-      // Hash new password and update user
-      const hashedPassword = await hashPassword(newPassword);
-      await storage.updateUser(user.id, {
-        password: hashedPassword
-      });
-      
-      console.log(`Password reset for user: ${user.username}`);
-      res.json({ message: "Password reset successfully! You can now log in with your new password." });
+      // For now, return error until password reset tokens are implemented
+      // TODO: Implement password reset token storage and validation
+      return res.status(400).json({ message: "Password reset functionality is not yet implemented" });
     } catch (error) {
       console.error("Password reset error:", error);
       res.status(500).json({ message: "Error resetting password" });
@@ -655,10 +631,8 @@ export function setupAuth(app: Express) {
       const apiToken = await storage.createApiKey({
         userId: req.user.id,
         name,
-        token: token.substring(0, 8) + "..." + token.substring(token.length - 4), // Store partial for display
-        tokenHash,
-        expiresAt,
-        scopes: scopes || ["read", "write"]
+        key: token.substring(0, 8) + "..." + token.substring(token.length - 4), // Store partial for display
+        permissions: scopes || ["read", "write"]
       });
       
       // Return the full token only once
@@ -790,7 +764,7 @@ export function setupAuth(app: Express) {
         bio
       });
       
-      const { password, ...userWithoutPassword } = updatedUser;
+      const { password, ...userWithoutPassword } = updatedUser as any;
       res.json(userWithoutPassword);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -810,7 +784,11 @@ export function setupAuth(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
       
-      const isValidPassword = user.password ? await comparePasswords(currentPassword, user.password) : false;
+      if (!user.password) {
+        return res.status(400).json({ error: 'No password set for this account' });
+      }
+      
+      const isValidPassword = await comparePasswords(currentPassword, user.password);
       if (!isValidPassword) {
         return res.status(400).json({ error: 'Current password is incorrect' });
       }
@@ -836,6 +814,10 @@ export function setupAuth(app: Express) {
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
+      }
+      
+      if (!user.password) {
+        return res.status(400).json({ error: 'No password set for this account' });
       }
       
       const isValidPassword = await comparePasswords(password, user.password);
