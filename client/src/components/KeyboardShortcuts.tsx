@@ -1,156 +1,186 @@
-import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useEffect, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription 
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Keyboard } from 'lucide-react';
 
 interface Shortcut {
-  keys: string[];
+  key: string;
   description: string;
   category: string;
+  action: () => void;
 }
 
-const shortcuts: Shortcut[] = [
-  // General
-  { keys: ['⌘', 'K'], description: 'Open command palette', category: 'General' },
-  { keys: ['⌘', ','], description: 'Open settings', category: 'General' },
-  { keys: ['⌘', 'P'], description: 'Quick open file', category: 'General' },
-  { keys: ['⌘', '⇧', 'P'], description: 'Show all commands', category: 'General' },
-  
-  // Navigation
-  { keys: ['⌘', 'H'], description: 'Go to home', category: 'Navigation' },
-  { keys: ['⌘', 'D'], description: 'Go to dashboard', category: 'Navigation' },
-  { keys: ['⌘', '1'], description: 'Focus editor', category: 'Navigation' },
-  { keys: ['⌘', '2'], description: 'Focus file explorer', category: 'Navigation' },
-  { keys: ['⌘', '3'], description: 'Focus terminal', category: 'Navigation' },
+interface KeyboardShortcutsProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  shortcuts?: Shortcut[];
+  onSave?: () => void;
+  onSearch?: () => void;
+  onToggleTerminal?: () => void;
+  onToggleAI?: () => void;
+  onNewFile?: () => void;
+  onRun?: () => void;
+}
+
+const DEFAULT_SHORTCUTS: Omit<Shortcut, 'action'>[] = [
+  // File Operations
+  { key: 'Cmd/Ctrl + S', description: 'Save current file', category: 'File' },
+  { key: 'Cmd/Ctrl + Shift + S', description: 'Save all files', category: 'File' },
+  { key: 'Cmd/Ctrl + N', description: 'New file', category: 'File' },
+  { key: 'Cmd/Ctrl + O', description: 'Open file', category: 'File' },
+  { key: 'Cmd/Ctrl + W', description: 'Close current tab', category: 'File' },
   
   // Editor
-  { keys: ['⌘', 'S'], description: 'Save file', category: 'Editor' },
-  { keys: ['⌘', '⇧', 'S'], description: 'Save all files', category: 'Editor' },
-  { keys: ['⌘', 'W'], description: 'Close file', category: 'Editor' },
-  { keys: ['⌘', '⇧', 'W'], description: 'Close all files', category: 'Editor' },
-  { keys: ['⌘', 'F'], description: 'Find in file', category: 'Editor' },
-  { keys: ['⌘', '⇧', 'F'], description: 'Find in project', category: 'Editor' },
-  { keys: ['⌘', 'G'], description: 'Go to line', category: 'Editor' },
-  { keys: ['⌘', '/'], description: 'Toggle comment', category: 'Editor' },
-  { keys: ['⌘', '['], description: 'Outdent line', category: 'Editor' },
-  { keys: ['⌘', ']'], description: 'Indent line', category: 'Editor' },
-  { keys: ['⌘', 'D'], description: 'Select next occurrence', category: 'Editor' },
-  { keys: ['⌘', '⇧', 'L'], description: 'Select all occurrences', category: 'Editor' },
-  { keys: ['⌥', '↑'], description: 'Move line up', category: 'Editor' },
-  { keys: ['⌥', '↓'], description: 'Move line down', category: 'Editor' },
-  { keys: ['⌥', '⇧', '↑'], description: 'Copy line up', category: 'Editor' },
-  { keys: ['⌥', '⇧', '↓'], description: 'Copy line down', category: 'Editor' },
+  { key: 'Cmd/Ctrl + F', description: 'Find in file', category: 'Editor' },
+  { key: 'Cmd/Ctrl + H', description: 'Find and replace', category: 'Editor' },
+  { key: 'Cmd/Ctrl + Shift + F', description: 'Find in project', category: 'Editor' },
+  { key: 'Cmd/Ctrl + /', description: 'Toggle comment', category: 'Editor' },
+  { key: 'Alt + Up/Down', description: 'Move line up/down', category: 'Editor' },
+  { key: 'Cmd/Ctrl + D', description: 'Duplicate line', category: 'Editor' },
   
-  // Terminal
-  { keys: ['⌘', '`'], description: 'Toggle terminal', category: 'Terminal' },
-  { keys: ['⌘', '⇧', '`'], description: 'Create new terminal', category: 'Terminal' },
-  { keys: ['⌘', '⇧', '['], description: 'Previous terminal', category: 'Terminal' },
-  { keys: ['⌘', '⇧', ']'], description: 'Next terminal', category: 'Terminal' },
-  { keys: ['⌘', 'K'], description: 'Clear terminal', category: 'Terminal' },
+  // Navigation
+  { key: 'Cmd/Ctrl + P', description: 'Quick open file', category: 'Navigation' },
+  { key: 'Cmd/Ctrl + Shift + P', description: 'Command palette', category: 'Navigation' },
+  { key: 'Cmd/Ctrl + B', description: 'Toggle sidebar', category: 'Navigation' },
+  { key: 'Cmd/Ctrl + J', description: 'Toggle terminal', category: 'Navigation' },
   
-  // Project
-  { keys: ['⌘', 'N'], description: 'New project', category: 'Project' },
-  { keys: ['⌘', '⇧', 'N'], description: 'New file', category: 'Project' },
-  { keys: ['⌘', '⏎'], description: 'Run project', category: 'Project' },
-  { keys: ['⌘', '⇧', '⏎'], description: 'Stop project', category: 'Project' },
-  { keys: ['⌘', 'B'], description: 'Toggle sidebar', category: 'Project' },
+  // Execution
+  { key: 'Cmd/Ctrl + Enter', description: 'Run project', category: 'Execution' },
+  { key: 'Cmd/Ctrl + Shift + Enter', description: 'Stop project', category: 'Execution' },
+  { key: 'Cmd/Ctrl + R', description: 'Restart project', category: 'Execution' },
   
-  // Git
-  { keys: ['⌘', '⇧', 'G'], description: 'Open Git panel', category: 'Git' },
-  { keys: ['⌘', '⇧', 'C'], description: 'Commit changes', category: 'Git' },
-  { keys: ['⌘', '⇧', 'U'], description: 'Push changes', category: 'Git' },
-  { keys: ['⌘', '⇧', 'D'], description: 'Pull changes', category: 'Git' },
+  // AI & Tools
+  { key: 'Cmd/Ctrl + K', description: 'Open AI assistant', category: 'AI & Tools' },
+  { key: 'Cmd/Ctrl + Shift + K', description: 'Generate code', category: 'AI & Tools' },
+  { key: 'Cmd/Ctrl + G', description: 'Go to line', category: 'AI & Tools' },
 ];
 
-export function KeyboardShortcuts() {
-  const [open, setOpen] = useState(false);
+export function KeyboardShortcuts({
+  open,
+  onOpenChange,
+  shortcuts,
+  onSave,
+  onSearch,
+  onToggleTerminal,
+  onToggleAI,
+  onNewFile,
+  onRun,
+}: KeyboardShortcutsProps) {
+  const { toast } = useToast();
+
+  const handleKeyPress = useCallback((e: KeyboardEvent) => {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const modKey = isMac ? e.metaKey : e.ctrlKey;
+
+    // Cmd/Ctrl + S - Save
+    if (modKey && e.key === 's' && !e.shiftKey) {
+      e.preventDefault();
+      onSave?.();
+      toast({
+        title: 'File Saved',
+        description: 'Your changes have been saved',
+      });
+    }
+
+    // Cmd/Ctrl + Shift + F - Search in project
+    if (modKey && e.shiftKey && e.key === 'f') {
+      e.preventDefault();
+      onSearch?.();
+    }
+
+    // Cmd/Ctrl + J - Toggle terminal
+    if (modKey && e.key === 'j') {
+      e.preventDefault();
+      onToggleTerminal?.();
+    }
+
+    // Cmd/Ctrl + K - Open AI
+    if (modKey && e.key === 'k' && !e.shiftKey) {
+      e.preventDefault();
+      onToggleAI?.();
+    }
+
+    // Cmd/Ctrl + N - New file
+    if (modKey && e.key === 'n') {
+      e.preventDefault();
+      onNewFile?.();
+    }
+
+    // Cmd/Ctrl + Enter - Run project
+    if (modKey && e.key === 'Enter') {
+      e.preventDefault();
+      onRun?.();
+    }
+
+    // Cmd/Ctrl + ? - Show shortcuts
+    if (modKey && e.key === '?') {
+      e.preventDefault();
+      onOpenChange(true);
+    }
+  }, [onSave, onSearch, onToggleTerminal, onToggleAI, onNewFile, onRun, onOpenChange, toast]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === '?') {
-        e.preventDefault();
-        setOpen(true);
-      }
-    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [handleKeyPress]);
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Listen for the custom event to open shortcuts
-  useEffect(() => {
-    const handleOpen = () => setOpen(true);
-    window.addEventListener('show-shortcuts', handleOpen);
-    return () => window.removeEventListener('show-shortcuts', handleOpen);
-  }, []);
-
-  // Group shortcuts by category
-  const categories = [...new Set(shortcuts.map(s => s.category))];
-  const groupedShortcuts = categories.reduce((acc, category) => {
-    acc[category] = shortcuts.filter(s => s.category === category);
+  const groupedShortcuts = DEFAULT_SHORTCUTS.reduce((acc, shortcut) => {
+    if (!acc[shortcut.category]) {
+      acc[shortcut.category] = [];
+    }
+    acc[shortcut.category].push(shortcut);
     return acc;
-  }, {} as Record<string, Shortcut[]>);
-
-  const ShortcutsList = ({ shortcuts }: { shortcuts: Shortcut[] }) => (
-    <div className="space-y-2">
-      {shortcuts.map((shortcut, index) => (
-        <div
-          key={index}
-          className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors"
-        >
-          <span className="text-sm">{shortcut.description}</span>
-          <div className="flex items-center gap-1">
-            {shortcut.keys.map((key, i) => (
-              <Badge
-                key={i}
-                variant="secondary"
-                className="font-mono text-xs px-2 py-0.5"
-              >
-                {key}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  }, {} as Record<string, typeof DEFAULT_SHORTCUTS>);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-3xl max-h-[80vh]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Keyboard className="h-5 w-5" />
             Keyboard Shortcuts
           </DialogTitle>
           <DialogDescription>
-            Quick reference for all keyboard shortcuts. Press ⌘⇧? to open this anytime.
+            Use these shortcuts to navigate and control the editor more efficiently
           </DialogDescription>
         </DialogHeader>
         
-        <Tabs defaultValue={categories[0]} className="mt-4">
-          <TabsList className="grid grid-cols-5 w-full">
-            {categories.map(category => (
-              <TabsTrigger key={category} value={category}>
-                {category}
-              </TabsTrigger>
+        <ScrollArea className="h-[500px] pr-4">
+          <div className="space-y-6">
+            {Object.entries(groupedShortcuts).map(([category, shortcuts]) => (
+              <div key={category}>
+                <h3 className="font-semibold text-sm mb-3">{category}</h3>
+                <div className="space-y-2">
+                  {shortcuts.map((shortcut, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50"
+                    >
+                      <span className="text-sm">{shortcut.description}</span>
+                      <Badge variant="secondary" className="font-mono text-xs">
+                        {shortcut.key}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+                <Separator className="mt-4" />
+              </div>
             ))}
-          </TabsList>
-          
-          <ScrollArea className="h-[400px] mt-4">
-            {categories.map(category => (
-              <TabsContent key={category} value={category}>
-                <ShortcutsList shortcuts={groupedShortcuts[category]} />
-              </TabsContent>
-            ))}
-          </ScrollArea>
-        </Tabs>
-        
-        <div className="mt-4 pt-4 border-t">
+          </div>
+        </ScrollArea>
+
+        <div className="pt-4 border-t">
           <p className="text-xs text-muted-foreground text-center">
-            Note: Use Ctrl instead of ⌘ on Windows/Linux
+            Press <Badge variant="outline" className="text-xs">Cmd/Ctrl + ?</Badge> to show this dialog
           </p>
         </div>
       </DialogContent>
