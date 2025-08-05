@@ -17,6 +17,12 @@ import {
   TimeTracking, InsertTimeTracking,
   Screenshot, InsertScreenshot,
   TaskSummary, InsertTaskSummary,
+  VoiceVideoSession, InsertVoiceVideoSession,
+  VoiceVideoParticipant, InsertVoiceVideoParticipant,
+  GpuInstance, InsertGpuInstance,
+  GpuUsage, InsertGpuUsage,
+  Assignment, InsertAssignment,
+  Submission, InsertSubmission,
 
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
@@ -25,14 +31,17 @@ import {
   userCredits, budgetLimits, usageAlerts, autoscaleDeployments, reservedVmDeployments,
   scheduledDeployments, staticDeployments, objectStorageBuckets, objectStorageFiles,
   keyValueStore, aiConversations, dynamicIntelligence, webSearchHistory,
-  gitRepositories, gitCommits, customDomains,
-  insertUserCreditsSchema, insertBudgetLimitsSchema, insertUsageAlertSchema,
+  gitRepositories, gitCommits, customDomains, secrets, environmentVariables,
+  voiceVideoSessions, voiceVideoParticipants, gpuInstances, gpuUsage,
+  assignments, submissions,
+  insertUserCreditsSchema, insertBudgetLimitSchema, insertUsageAlertSchema,
   insertAutoscaleDeploymentSchema, insertReservedVmDeploymentSchema,
   insertScheduledDeploymentSchema, insertStaticDeploymentSchema,
   insertObjectStorageBucketSchema, insertObjectStorageFileSchema,
   insertKeyValueStoreSchema, insertAiConversationSchema,
   insertDynamicIntelligenceSchema, insertWebSearchHistorySchema,
-  insertGitRepositorySchema, insertGitCommitSchema, insertCustomDomainSchema
+  insertGitRepositorySchema, insertGitCommitSchema, insertCustomDomainSchema,
+  insertSecretSchema, insertEnvironmentVariableSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -40,7 +49,7 @@ import { z } from "zod";
 type UserCredits = typeof userCredits.$inferSelect;
 type InsertUserCredits = z.infer<typeof insertUserCreditsSchema>;
 type BudgetLimit = typeof budgetLimits.$inferSelect;
-type InsertBudgetLimit = z.infer<typeof insertBudgetLimitsSchema>;
+type InsertBudgetLimit = z.infer<typeof insertBudgetLimitSchema>;
 type UsageAlert = typeof usageAlerts.$inferSelect;
 type InsertUsageAlert = z.infer<typeof insertUsageAlertSchema>;
 type AutoscaleDeployment = typeof autoscaleDeployments.$inferSelect;
@@ -228,6 +237,32 @@ export interface IStorage {
   createTaskSummary(summary: InsertTaskSummary): Promise<TaskSummary>;
   getProjectTaskSummaries(projectId: number): Promise<TaskSummary[]>;
   updateTaskSummary(id: number, summary: Partial<InsertTaskSummary>): Promise<TaskSummary | undefined>;
+  
+  // Voice/Video Session operations
+  createVoiceVideoSession(session: InsertVoiceVideoSession): Promise<VoiceVideoSession>;
+  getProjectVoiceVideoSessions(projectId: number): Promise<VoiceVideoSession[]>;
+  endVoiceVideoSession(sessionId: number): Promise<VoiceVideoSession | undefined>;
+  addVoiceVideoParticipant(participant: InsertVoiceVideoParticipant): Promise<VoiceVideoParticipant>;
+  removeVoiceVideoParticipant(sessionId: number, userId: number): Promise<void>;
+  
+  // GPU Instance operations
+  createGpuInstance(instance: InsertGpuInstance): Promise<GpuInstance>;
+  getProjectGpuInstances(projectId: number): Promise<GpuInstance[]>;
+  updateGpuInstanceStatus(instanceId: number, status: string): Promise<GpuInstance | undefined>;
+  createGpuUsage(usage: InsertGpuUsage): Promise<GpuUsage>;
+  getGpuUsageByInstance(instanceId: number): Promise<GpuUsage[]>;
+  
+  // Assignment operations
+  createAssignment(assignment: InsertAssignment): Promise<Assignment>;
+  getAssignments(filters?: { courseId?: number; createdBy?: number }): Promise<Assignment[]>;
+  getAssignment(id: number): Promise<Assignment | undefined>;
+  updateAssignment(id: number, assignment: Partial<InsertAssignment>): Promise<Assignment | undefined>;
+  
+  // Submission operations
+  createSubmission(submission: InsertSubmission): Promise<Submission>;
+  getSubmissionsByAssignment(assignmentId: number): Promise<Submission[]>;
+  getSubmissionsByStudent(studentId: number): Promise<Submission[]>;
+  gradeSubmission(submissionId: number, grade: number, feedback: string, gradedBy: number): Promise<Submission | undefined>;
   
   // Secret management operations
   createSecret(secret: any): Promise<any>;
@@ -490,7 +525,7 @@ export class DatabaseStorage implements IStorage {
 
   // API Key operations
   async createApiKey(apiKeyData: InsertApiKey): Promise<ApiKey> {
-    const [apiKey] = await db.insert(apiKeys).values(apiKeyData).returning();
+    const [apiKey] = await db.insert(apiKeys).values([apiKeyData]).returning();
     return apiKey;
   }
 
@@ -519,7 +554,7 @@ export class DatabaseStorage implements IStorage {
 
   // Code Review operations
   async createCodeReview(reviewData: InsertCodeReview): Promise<CodeReview> {
-    const [review] = await db.insert(codeReviews).values(reviewData).returning();
+    const [review] = await db.insert(codeReviews).values([reviewData]).returning();
     return review;
   }
 
@@ -543,7 +578,7 @@ export class DatabaseStorage implements IStorage {
 
   // Challenge operations
   async createChallenge(challengeData: InsertChallenge): Promise<Challenge> {
-    const [challenge] = await db.insert(challenges).values(challengeData).returning();
+    const [challenge] = await db.insert(challenges).values([challengeData]).returning();
     return challenge;
   }
 
@@ -567,7 +602,7 @@ export class DatabaseStorage implements IStorage {
 
   // Mentorship operations
   async createMentorProfile(profileData: InsertMentorProfile): Promise<MentorProfile> {
-    const [profile] = await db.insert(mentorProfiles).values(profileData).returning();
+    const [profile] = await db.insert(mentorProfiles).values([profileData]).returning();
     return profile;
   }
 
@@ -1906,6 +1941,154 @@ export class DatabaseStorage implements IStorage {
   async updateAbuseReport(id: number, updates: any): Promise<any | undefined> {
     // Would update abuse_reports table
     return { id, ...updates };
+  }
+
+  // Voice/Video Session operations
+  async createVoiceVideoSession(session: InsertVoiceVideoSession): Promise<VoiceVideoSession> {
+    const [created] = await db.insert(voiceVideoSessions).values(session).returning();
+    return created;
+  }
+
+  async getProjectVoiceVideoSessions(projectId: number): Promise<VoiceVideoSession[]> {
+    return await db.select().from(voiceVideoSessions)
+      .where(eq(voiceVideoSessions.projectId, projectId))
+      .orderBy(desc(voiceVideoSessions.startedAt));
+  }
+
+  async endVoiceVideoSession(sessionId: number): Promise<VoiceVideoSession | undefined> {
+    const [updated] = await db
+      .update(voiceVideoSessions)
+      .set({ 
+        status: 'ended',
+        endedAt: new Date()
+      })
+      .where(eq(voiceVideoSessions.id, sessionId))
+      .returning();
+    return updated;
+  }
+
+  async addVoiceVideoParticipant(participant: InsertVoiceVideoParticipant): Promise<VoiceVideoParticipant> {
+    const [created] = await db.insert(voiceVideoParticipants).values(participant).returning();
+    return created;
+  }
+
+  async removeVoiceVideoParticipant(sessionId: number, userId: number): Promise<void> {
+    await db
+      .update(voiceVideoParticipants)
+      .set({ leftAt: new Date() })
+      .where(and(
+        eq(voiceVideoParticipants.sessionId, sessionId),
+        eq(voiceVideoParticipants.userId, userId),
+        isNull(voiceVideoParticipants.leftAt)
+      ));
+  }
+
+  // GPU Instance operations
+  async createGpuInstance(instance: InsertGpuInstance): Promise<GpuInstance> {
+    const [created] = await db.insert(gpuInstances).values(instance).returning();
+    return created;
+  }
+
+  async getProjectGpuInstances(projectId: number): Promise<GpuInstance[]> {
+    return await db.select().from(gpuInstances)
+      .where(eq(gpuInstances.projectId, projectId))
+      .orderBy(desc(gpuInstances.createdAt));
+  }
+
+  async updateGpuInstanceStatus(instanceId: number, status: string): Promise<GpuInstance | undefined> {
+    const [updated] = await db
+      .update(gpuInstances)
+      .set({ 
+        status,
+        updatedAt: new Date()
+      })
+      .where(eq(gpuInstances.id, instanceId))
+      .returning();
+    return updated;
+  }
+
+  async createGpuUsage(usage: InsertGpuUsage): Promise<GpuUsage> {
+    const [created] = await db.insert(gpuUsage).values(usage).returning();
+    return created;
+  }
+
+  async getGpuUsageByInstance(instanceId: number): Promise<GpuUsage[]> {
+    return await db.select().from(gpuUsage)
+      .where(eq(gpuUsage.instanceId, instanceId))
+      .orderBy(desc(gpuUsage.createdAt));
+  }
+
+  // Assignment operations
+  async createAssignment(assignment: InsertAssignment): Promise<Assignment> {
+    const [created] = await db.insert(assignments).values(assignment).returning();
+    return created;
+  }
+
+  async getAssignments(filters?: { courseId?: number; createdBy?: number }): Promise<Assignment[]> {
+    const conditions = [];
+    
+    if (filters?.courseId) {
+      conditions.push(eq(assignments.courseId, filters.courseId));
+    }
+    if (filters?.createdBy) {
+      conditions.push(eq(assignments.createdBy, filters.createdBy));
+    }
+    
+    if (conditions.length > 0) {
+      return await db.select().from(assignments)
+        .where(and(...conditions))
+        .orderBy(desc(assignments.createdAt));
+    }
+    
+    return await db.select().from(assignments)
+      .orderBy(desc(assignments.createdAt));
+  }
+
+  async getAssignment(id: number): Promise<Assignment | undefined> {
+    const [assignment] = await db.select().from(assignments).where(eq(assignments.id, id));
+    return assignment;
+  }
+
+  async updateAssignment(id: number, assignment: Partial<InsertAssignment>): Promise<Assignment | undefined> {
+    const [updated] = await db
+      .update(assignments)
+      .set({ ...assignment, updatedAt: new Date() })
+      .where(eq(assignments.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Submission operations
+  async createSubmission(submission: InsertSubmission): Promise<Submission> {
+    const [created] = await db.insert(submissions).values(submission).returning();
+    return created;
+  }
+
+  async getSubmissionsByAssignment(assignmentId: number): Promise<Submission[]> {
+    return await db.select().from(submissions)
+      .where(eq(submissions.assignmentId, assignmentId))
+      .orderBy(desc(submissions.submittedAt));
+  }
+
+  async getSubmissionsByStudent(studentId: number): Promise<Submission[]> {
+    return await db.select().from(submissions)
+      .where(eq(submissions.studentId, studentId))
+      .orderBy(desc(submissions.submittedAt));
+  }
+
+  async gradeSubmission(submissionId: number, grade: number, feedback: string, gradedBy: number): Promise<Submission | undefined> {
+    const [updated] = await db
+      .update(submissions)
+      .set({ 
+        grade,
+        feedback,
+        gradedBy,
+        gradedAt: new Date(),
+        status: 'graded'
+      })
+      .where(eq(submissions.id, submissionId))
+      .returning();
+    return updated;
   }
 }
 
