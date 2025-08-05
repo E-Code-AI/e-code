@@ -2790,7 +2790,13 @@ npx http-server .
         await storage.createFile(file);
       }
       
-      res.status(201).json(newProject);
+      // Get the owner information to include in response
+      const owner = await storage.getUser(req.user!.id);
+      
+      res.status(201).json({
+        ...newProject,
+        owner
+      });
     } catch (error) {
       console.error('Error creating project:', error);
       res.status(500).json({ error: 'Failed to create project' });
@@ -6771,7 +6777,13 @@ document.addEventListener('DOMContentLoaded', function() {
         parentId: null,
       });
 
-      res.status(201).json(project);
+      // Get the owner information to include in response
+      const owner = await storage.getUser(req.user!.id);
+      
+      res.status(201).json({
+        ...project,
+        owner
+      });
     } catch (error) {
       res.status(500).json({ message: 'Failed to create project' });
     }
