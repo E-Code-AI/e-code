@@ -88,6 +88,7 @@ export interface IStorage {
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
   upsertUser(user: UpsertUser): Promise<User>;
+  saveEmailVerificationToken(email: string, token: string): Promise<void>;
 
   // Project operations
   getProject(id: number): Promise<Project | undefined>;
@@ -368,6 +369,13 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async saveEmailVerificationToken(email: string, token: string): Promise<void> {
+    // Store verification token temporarily
+    // In production, this would use a separate token storage table
+    // For now, we'll just log it
+    console.log(`Email verification token for ${email}: ${token}`);
   }
 
   // Project operations
