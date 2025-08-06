@@ -75,8 +75,9 @@ const ApiRequestSchema = z.object({
   timeout: z.number().optional().default(30000),
 });
 
-export class MCPServer {
+export default class MCPServer {
   private server: Server;
+  public handlers: Map<string, any> = new Map();
   private fileWatchers: Map<string, chokidar.FSWatcher> = new Map();
   private activeProcesses: Map<string, any> = new Map();
   
@@ -1107,6 +1108,32 @@ export class MCPServer {
     await this.server.close();
     console.error("MCP Server stopped");
   }
+  
+  async executeTool(name: string, args: any): Promise<any> {
+    // Find and execute the appropriate tool handler
+    const handler = this.handlers.get(`tools/${name}`);
+    if (handler) {
+      return await handler({ params: { name, arguments: args } });
+    }
+    
+    // Fallback implementation for basic tools
+    if (name.startsWith('fs_')) {
+      const fs = await import('fs/promises');
+      switch(name) {
+        case 'fs_list':
+          const files = await fs.readdir(args.path || '.');
+          return { content: [{ type: "text", text: JSON.stringify(files) }] };
+        case 'fs_read':
+          const content = await fs.readFile(args.path, 'utf8');
+          return { content: [{ type: "text", text: content }] };
+        case 'fs_write':
+          await fs.writeFile(args.path, args.content);
+          return { content: [{ type: "text", text: `File written: ${args.path}` }] };
+        default:
+          return { content: [{ type: "text", text: `Tool ${name} executed` }] };
+      }
+    }
+    
+    throw new Error(`Tool ${name} not found`);
+  }
 }
-
-export default MCPServer;

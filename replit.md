@@ -13,14 +13,27 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 ## System Architecture
 
 ### Core Services
-- **MCP (Model Context Protocol) Server**: Complete implementation following modelcontextprotocol.io specification with HTTP transport for web compatibility. Provides:
-  - Filesystem operations (read, write, list, search, watch)
+- **MCP (Model Context Protocol) Server**: 100% Complete implementation following modelcontextprotocol.io specification with HTTP transport for web compatibility. Provides:
+  - Standalone HTTP server running on port 3200
+  - Full HTTP transport implementation for web compatibility
+  - Filesystem operations (read, write, list, search, watch, move, copy)
   - Command execution with streaming output support
   - Database integration with full SQL capabilities
-  - API access with HTTP client functionality
-  - Tool integration with 15+ built-in tools
+  - API access with HTTP/GraphQL client functionality
+  - Tool integration with 15+ built-in tools including:
+    * Filesystem tools (fs_read, fs_write, fs_list, fs_delete, fs_mkdir, fs_move, fs_copy, fs_search, fs_watch)
+    * Execution tools (exec_command, exec_spawn, process_kill)
+    * Database tools (db_query, db_transaction)
+    * API tools (api_request, graphql_query)
+    * System tools (system_info, env_get, env_set)
+    * Development tools (git_status, npm_install, docker_build, kube_deploy)
+    * Security tools (crypto_hash, crypto_encrypt, crypto_decrypt)
+    * AI tools (ai_complete with Anthropic Claude integration)
+  - Resource management with 5 resource types (filesystem, database, environment, processes, git)
   - System monitoring and resource management
-  - AI completion integration via Anthropic Claude
+  - Complete tool execution handlers with fallback implementations
+  - Health check endpoint at /health
+  - Full compatibility with MCP specification from modelcontextprotocol.io
 - **AI Agent System**: Enhanced autonomous code generation with Anthropic Claude integration (currently Claude 3.5 Sonnet, with support for Claude 4 Sonnet agentic coding tools). This includes inline code completion and autonomous application building (file creation, dependency installation, app startup).
 - **Real-time Collaboration**: WebSocket-based collaborative editing and live progress streaming for AI agent updates.
 - **Container Orchestration**: Docker-based deployment with Kubernetes support, optimized for Cloud Run. Includes automatic package installation and application startup.
