@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Download, Presentation, TrendingUp, Users, Zap, Shield, Globe, Rocket, DollarSign, Award, Target, Building, Code, Cpu, Database, Cloud, Lock, BarChart3, PieChart, GitBranch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { Card } from '@/components/ui/card';
 
 export default function PitchDeck() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const { user } = useAuth();
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
 
   // Redirect if not admin
   useEffect(() => {
     if (user && user.username !== 'admin') {
-      navigate('/');
+      setLocation('/');
     }
-  }, [user, navigate]);
+  }, [user, setLocation]);
 
   const slides = [
     // Slide 1: Cover
@@ -1267,7 +1267,7 @@ export default function PitchDeck() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/admin')}
+                onClick={() => setLocation('/admin')}
                 className="mr-4"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
@@ -1337,7 +1337,7 @@ export default function PitchDeck() {
       </div>
 
       {/* Print Styles */}
-      <style jsx global>{`
+      <style>{`
         @media print {
           @page {
             size: landscape;
