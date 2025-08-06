@@ -132,17 +132,8 @@ export const mcpRateLimitOptions = {
     
     const clientIp = req.ip || req.connection.remoteAddress;
     return whitelist.includes(clientIp);
-  },
-  
-  // Custom key generator (by IP + API key)
-  keyGenerator: (req: any) => {
-    const apiKey = req.headers['x-api-key'];
-    const clientIp = req.ip || req.connection.remoteAddress;
-    
-    if (apiKey) {
-      return `api_${apiKey}`;
-    }
-    
-    return clientIp;
   }
+  
+  // Use default key generator (by IP) to properly handle IPv6
+  // The API key logic is handled separately in authentication
 };

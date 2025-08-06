@@ -18905,7 +18905,119 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
 
+  // REPLIT-STYLE SLUG ROUTING HANDLER
+  // Handle /@username/projectname pattern for project access
+  // This MUST be registered before Vite's catch-all route
+  app.get('/@:username/:slug', async (req, res, next) => {
+    try {
+      const { username, slug } = req.params;
+      
+      // Skip Vite internal routes
+      if (username === 'vite' || username === 'fs' || username === 'react-refresh' || username === 'id') {
+        return next();
+      }
+      
+      logger.info(`Slug route accessed: /@${username}/${slug}`);
+      
+      // Get user by username
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        logger.warn(`User not found for slug route: ${username}`);
+        // Fall through to React app which will show 404
+        return next();
+      }
+      
+      // Get project by slug and owner
+      const project = await storage.getProjectBySlug(slug);
+      if (!project || project.ownerId !== user.id) {
+        logger.warn(`Project not found for slug route: ${slug} by user ${username}`);
+        // Fall through to React app which will show 404
+        return next();
+      }
+      
+      // For private projects, check authentication
+      if (project.visibility === 'private') {
+        // Check if user is authenticated
+        if (!req.user) {
+          // Redirect to login
+          return res.redirect(`/login?redirect=${encodeURIComponent(req.originalUrl)}`);
+        }
+        
+        // Check if user has access
+        const hasAccess = req.user.id === project.ownerId || 
+          await storage.isProjectCollaborator(project.id, req.user.id);
+        
+        if (!hasAccess) {
+          logger.warn(`Access denied for private project: ${slug} to user ${req.user.id}`);
+          // Show 403 forbidden
+          return res.status(403).send('Access denied to private project');
+        }
+      }
+      
+      // Project exists and user has access - serve the React app
+      // The React app will handle displaying the project based on the URL
+      logger.info(`Serving project: ${slug} by ${username}`);
+      
+      // Let the React app handle this route
+      next();
+    } catch (error) {
+      logger.error('Error in slug routing handler:', error);
+      next();
+    }
+  });
+  
+  // Alternative slug patterns for robustness
+  app.get('/@:username/:slug/*', async (req, res, next) => {
+    // Handle sub-routes within a project
+    const { username, slug } = req.params;
+    
+    // Skip Vite internal routes
+    if (username === 'vite' || username === 'fs' || username === 'react-refresh' || username === 'id') {
+      return next();
+    }
+    
+    logger.info(`Project sub-route accessed: /@${username}/${slug}/${req.params[0]}`);
+    // Let React handle the routing
+    next();
+  });
+  
+  // Handle project creation pattern
+  app.get('/@:username/create-*', async (req, res, next) => {
+    const { username } = req.params;
+    logger.info(`Project creation route accessed: /@${username}/create-*`);
+    
+    // Verify user exists
+    const user = await storage.getUserByUsername(username);
+    if (!user) {
+      logger.warn(`User not found for creation route: ${username}`);
+      return next();
+    }
+    
+    // Check if current user matches the username (only allow creating projects for yourself)
+    if (!req.user || req.user.username !== username) {
+      logger.warn(`Unauthorized project creation attempt for user: ${username}`);
+      return res.redirect('/login');
+    }
+    
+    // Let React handle the project creation UI
+    next();
+  });
+  
+  // Legacy compatibility routes
+  app.get('/~:username/:slug', async (req, res) => {
+    // Redirect old-style URLs to new format
+    const { username, slug } = req.params;
+    res.redirect(`/@${username}/${slug}`);
+  });
+  
+  app.get('/users/:username/projects/:slug', async (req, res) => {
+    // Redirect API-style URLs to slug format
+    const { username, slug } = req.params;
+    res.redirect(`/@${username}/${slug}`);
+  });
+
   logger.info('All backend services initialized and API endpoints registered');
+  logger.info('Replit-style slug routing handlers registered');
 
   return httpServer;
 }
