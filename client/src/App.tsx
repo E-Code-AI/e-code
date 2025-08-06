@@ -329,28 +329,14 @@ function AppContent() {
               <ProjectsPage />
             </ReplitLayout>
           )} />
+          {/* Project Routes - Consolidated and properly ordered */}
           <ProtectedRoute path="/project/:id" component={() => (
-            <ProjectPage />
-          )} />
-          <ProtectedRoute path="/@:username/:projectname" component={() => (
-            <ProjectPage />
+            <ReplitLayout showSidebar={true}>
+              <ProjectPage />
+            </ReplitLayout>
           )} />
           
-          {/* Fallback for direct slug access - redirects to proper format */}
-          <ProtectedRoute path="/:slug" component={() => {
-            const [, navigate] = useLocation();
-            const { user } = useAuth();
-            
-            useEffect(() => {
-              // Redirect to the proper Replit-style URL format
-              const username = user?.username || 'admin';
-              navigate(`/@${username}/${window.location.pathname.slice(1)}`);
-            }, [user]);
-            
-            return <ECodeLoading size="lg" text="Redirecting to project..." />;
-          }} />
-
-          {/* SolarTech Applications with Replit-style URLs */}
+          {/* SolarTech Applications with specific Replit-style URLs (must come before generic patterns) */}
           <ProtectedRoute path="/@admin/solartech-ai-chat" component={() => (
             <ApplicationIDEWrapper
               projectName="SolarTech AI Chat"
@@ -375,11 +361,15 @@ function AppContent() {
               appComponent={<SolarTechStoreApp />}
             />
           )} />
-          <Route path="/@:username/:slug" component={() => (
+          
+          {/* Generic Replit-style project routes */}
+          <ProtectedRoute path="/@:username/:projectname" component={() => (
             <ReplitLayout showSidebar={true}>
-              <ReplitProjectPage />
+              <ProjectPage />
             </ReplitLayout>
           )} />
+          
+          {/* User profile route */}
           <Route path="/@:username" component={() => (
             <ReplitLayout showSidebar={false}>
               <UserProfile />
