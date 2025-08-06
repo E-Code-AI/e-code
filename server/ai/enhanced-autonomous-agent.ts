@@ -974,7 +974,7 @@ export async function initializeEnhancedAgent() {
   }
   
   // Fallback to database
-  const adminApiKey = await storage.getActiveAdminApiKey();
+  const adminApiKey = await storage.getActiveAdminApiKey('admin'); // Pass admin username
   if (adminApiKey) {
     enhancedAgent.setApiKey(adminApiKey.apiKey);
     logger.info('Enhanced AI Agent initialized with Anthropic API key from database');
@@ -984,6 +984,6 @@ export async function initializeEnhancedAgent() {
 }
 
 // Initialize on module load
-initializeEnhancedAgent().catch(err => {
-  logger.error('Failed to initialize enhanced agent:', err);
+initializeEnhancedAgent().catch((err) => {
+  logger.error(`Failed to initialize enhanced agent: ${err}`);
 });
