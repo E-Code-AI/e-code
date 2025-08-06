@@ -82,6 +82,11 @@ interface ProjectWithDeployment extends Project {
   isDeployed?: boolean;
   deploymentUrl?: string;
   deploymentStatus?: string;
+  owner?: {
+    id: number;
+    username: string;
+    email: string;
+  };
 }
 
 interface QuickAction {
@@ -395,7 +400,12 @@ export default function Dashboard() {
                 <div
                   key={project.id}
                   className="group bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[var(--ecode-border-hover)] transition-colors cursor-pointer rounded-lg p-4"
-                  onClick={() => navigate(project.slug ? `/${project.slug}` : `/project/${project.id}`)}
+                  onClick={() => {
+                    // Navigate to the proper Replit-style URL format
+                    const ownerUsername = project.owner?.username || user?.username || 'admin';
+                    const projectUrl = project.slug ? `/@${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+                    navigate(projectUrl);
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     {getProjectIcon(project)}
@@ -428,7 +438,11 @@ export default function Dashboard() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => navigate(project.slug ? `/${project.slug}` : `/project/${project.id}`)}>
+                          <DropdownMenuItem onClick={() => {
+                            const ownerUsername = project.owner?.username || user?.username || 'admin';
+                            const projectUrl = project.slug ? `/@${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+                            navigate(projectUrl);
+                          }}>
                             <ExternalLink className="h-4 w-4 mr-2" />
                             Open
                           </DropdownMenuItem>
