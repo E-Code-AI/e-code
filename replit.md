@@ -13,6 +13,14 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 ## System Architecture
 
 ### Core Services
+- **MCP (Model Context Protocol) Server**: Complete implementation following modelcontextprotocol.io specification with HTTP transport for web compatibility. Provides:
+  - Filesystem operations (read, write, list, search, watch)
+  - Command execution with streaming output support
+  - Database integration with full SQL capabilities
+  - API access with HTTP client functionality
+  - Tool integration with 15+ built-in tools
+  - System monitoring and resource management
+  - AI completion integration via Anthropic Claude
 - **AI Agent System**: Enhanced autonomous code generation with Anthropic Claude integration (currently Claude 3.5 Sonnet, with support for Claude 4 Sonnet agentic coding tools). This includes inline code completion and autonomous application building (file creation, dependency installation, app startup).
 - **Real-time Collaboration**: WebSocket-based collaborative editing and live progress streaming for AI agent updates.
 - **Container Orchestration**: Docker-based deployment with Kubernetes support, optimized for Cloud Run. Includes automatic package installation and application startup.

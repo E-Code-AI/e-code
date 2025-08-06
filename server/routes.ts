@@ -156,6 +156,7 @@ import { deploymentManager as enterpriseDeploymentManager } from "./services/dep
 import { realDeploymentService } from "./deployment/real-deployment-service";
 import * as path from "path";
 import adminRoutes from "./routes/admin";
+import mcpRouter, { initializeMCPServer } from "./api/mcp";
 import OpenAI from 'openai';
 import { performanceMiddleware } from './monitoring/performance';
 import { monitoringRouter } from './monitoring/routes';
@@ -9355,6 +9356,10 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Admin routes
   app.use("/api/admin", adminRoutes);
   app.use(deploymentRoutes);
+  
+  // MCP (Model Context Protocol) Routes
+  app.use("/api/mcp", mcpRouter);
+  initializeMCPServer(app);
   
   // Shell routes
   app.use("/api/shell", shellRoutes);
