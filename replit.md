@@ -13,9 +13,12 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 ## System Architecture
 
 ### Core Services
-- **MCP (Model Context Protocol) Server**: 100% Complete implementation following modelcontextprotocol.io specification with HTTP transport for web compatibility. **FULLY INTEGRATED** into AI Agent System and ALL UI Areas (as of August 6, 2025). Provides:
+- **MCP (Model Context Protocol) Server**: 100% Complete implementation following modelcontextprotocol.io specification with HTTP transport for web compatibility. **FULLY INTEGRATED** into AI Agent System and ALL UI Areas (as of August 6, 2025). **CLAUDE.AI INTEGRATION READY** with OAuth2, JWT, and API key authentication (as of August 6, 2025). Provides:
   - Standalone HTTP server running on port 3200
   - Full HTTP transport implementation for web compatibility
+  - **Authentication Layer**: OAuth2, JWT tokens, and API key support for Claude.ai Custom Connector
+  - **CORS Configuration**: Configured for claude.ai domain access with security headers
+  - **Cloud Run Deployment**: Automated deployment scripts with HTTPS for production
   - Filesystem operations (read, write, list, search, watch, move, copy)
   - Command execution with streaming output support
   - Database integration with full SQL capabilities
@@ -32,7 +35,8 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
   - Resource management with 5 resource types (filesystem, database, environment, processes, git)
   - System monitoring and resource management
   - Complete tool execution handlers with fallback implementations
-  - Health check endpoint at /health
+  - Health check endpoint at /mcp/health
+  - OAuth endpoints at /mcp/oauth/authorize and /mcp/oauth/token
   - Full compatibility with MCP specification from modelcontextprotocol.io
   - **Real-time Integration**: All AI agent operations now route through MCP tools instead of direct storage/execution calls
   - **Complete UI Integration** (August 6, 2025):
@@ -42,6 +46,13 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
     * ✅ Chat interface connected to MCP with visual status indicators
     * ✅ All MCP endpoints implemented in agent AI 
     * ✅ Chat user input processed through MCP with "MCP Powered" badges
+  - **Claude.ai Integration** (August 6, 2025):
+    * ✅ OAuth2 authorization flow for secure access
+    * ✅ API key authentication for simple integration
+    * ✅ CORS headers configured for claude.ai domains
+    * ✅ Cloud Run deployment scripts with HTTPS
+    * ✅ JWT token management with refresh tokens
+    * ✅ Rate limiting and security headers
 - **AI Agent System**: Enhanced autonomous code generation with Anthropic Claude integration (currently Claude 3.5 Sonnet, with support for Claude 4 Sonnet agentic coding tools). **NOW POWERED BY MCP** for all operations including file creation, package installation, and command execution. This includes inline code completion and autonomous application building via MCP tools.
 - **Real-time Collaboration**: WebSocket-based collaborative editing and live progress streaming for AI agent updates.
 - **Container Orchestration**: Docker-based deployment with Kubernetes support, optimized for Cloud Run. Includes automatic package installation and application startup.

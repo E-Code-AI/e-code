@@ -4,12 +4,35 @@
  */
 
 import { Router, Request, Response } from "express";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
 import { getMCPClient } from "../mcp/client";
 import { MCPHttpServer } from "../mcp/http-transport";
 import MCPServer from "../mcp/server";
 import { startMCPStandaloneServer } from "../mcp/standalone-server";
+import { 
+  authenticateMCP, 
+  oauthAuthorize, 
+  oauthToken, 
+  getAuthInfo 
+} from "../mcp/auth";
+import { 
+  mcpCorsOptions, 
+  mcpSecurityHeaders, 
+  mcpRateLimitOptions 
+} from "../mcp/cors";
 
 const router = Router();
+
+// Apply CORS to all MCP routes
+router.use(cors(mcpCorsOptions));
+
+// Apply security headers
+router.use(mcpSecurityHeaders());
+
+// Apply rate limiting
+const limiter = rateLimit(mcpRateLimitOptions);
+router.use(limiter);
 
 // Initialize MCP HTTP server
 let mcpHttpServer: MCPHttpServer | null = null;
@@ -25,14 +48,48 @@ export function initializeMCPServer(app: any) {
   // Connect them
   mcpHttpServer.setMCPServer(mcpServer as any);
   
+  // OAuth endpoints (no authentication required)
+  app.get('/mcp/oauth/authorize', oauthAuthorize);
+  app.post('/mcp/oauth/token', oauthToken);
+  
+  // Authentication info endpoint
+  app.get('/mcp/auth/info', (req: Request, res: Response) => {
+    const authInfo = getAuthInfo();
+    res.json({
+      ...authInfo,
+      serverUrl: process.env.MCP_SERVER_URL || `https://${req.hostname}`,
+      documentation: 'https://modelcontextprotocol.io/docs',
+      version: '1.0.0',
+      status: 'active'
+    });
+  });
+  
+  // Health check endpoint (no auth required)
+  app.get('/mcp/health', (req: Request, res: Response) => {
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      capabilities: {
+        tools: true,
+        resources: true,
+        prompts: true,
+        oauth: true,
+        apiKey: true
+      }
+    });
+  });
+  
   // Start the standalone MCP server on port 3200
   startMCPStandaloneServer();
   
   console.log("[MCP] MCP Server initialized with HTTP transport and standalone server");
+  console.log("[MCP] OAuth endpoint: /mcp/oauth/authorize");
+  console.log("[MCP] API endpoint: /mcp/connect (requires API key or OAuth token)");
 }
 
-// Get available MCP tools
-router.get("/tools", async (req: Request, res: Response) => {
+// Get available MCP tools (protected with authentication for external access)
+router.get("/tools", authenticateMCP, async (req: Request, res: Response) => {
   try {
     const client = getMCPClient();
     await client.connect();
@@ -44,8 +101,8 @@ router.get("/tools", async (req: Request, res: Response) => {
   }
 });
 
-// Get available MCP resources
-router.get("/resources", async (req: Request, res: Response) => {
+// Get available MCP resources (protected with authentication for external access)
+router.get("/resources", authenticateMCP, async (req: Request, res: Response) => {
   try {
     const client = getMCPClient();
     await client.connect();
@@ -57,8 +114,8 @@ router.get("/resources", async (req: Request, res: Response) => {
   }
 });
 
-// Execute MCP tool
-router.post("/tools/:name", async (req: Request, res: Response) => {
+// Execute MCP tool (protected with authentication for external access)
+router.post("/tools/:name", authenticateMCP, async (req: Request, res: Response) => {
   try {
     const { name } = req.params;
     const args = req.body;
