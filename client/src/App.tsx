@@ -335,6 +335,20 @@ function AppContent() {
           <ProtectedRoute path="/@:username/:projectname" component={() => (
             <ProjectPage />
           )} />
+          
+          {/* Fallback for direct slug access - redirects to proper format */}
+          <ProtectedRoute path="/:slug" component={() => {
+            const [, navigate] = useLocation();
+            const { user } = useAuth();
+            
+            useEffect(() => {
+              // Redirect to the proper Replit-style URL format
+              const username = user?.username || 'admin';
+              navigate(`/@${username}/${window.location.pathname.slice(1)}`);
+            }, [user]);
+            
+            return <ECodeLoading size="lg" text="Redirecting to project..." />;
+          }} />
 
           {/* SolarTech Applications with Replit-style URLs */}
           <ProtectedRoute path="/@admin/solartech-ai-chat" component={() => (
