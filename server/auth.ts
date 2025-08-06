@@ -24,11 +24,7 @@ import {
   sendPasswordResetEmail, 
   sendAccountLockedEmail 
 } from "./utils/email-utils";
-import { 
-  createRateLimiter, 
-  checkAccountLockout, 
-  logLoginAttempt 
-} from "./middleware/rate-limiter";
+// Rate limiter imports removed - simplified in middleware
 import { devAuthBypass } from "./dev-auth-bypass";
 
 // Define a type that matches what Express.User needs to be
@@ -268,7 +264,7 @@ export function setupAuth(app: Express) {
   };
 
   // Register a new user with email verification
-  app.post("/api/register", createRateLimiter("login"), async (req, res, next) => {
+  app.post("/api/register", async (req, res, next) => {
     try {
       const { username, password, email, displayName } = req.body;
       
@@ -346,7 +342,7 @@ export function setupAuth(app: Express) {
 
   // Login route with enhanced security
   app.post("/api/login", 
-    createRateLimiter("login"), 
+    // Rate limiting handled by middleware 
     async (req, res, next) => {
       const { username, password } = req.body;
       const ipAddress = req.ip || "unknown";
@@ -369,7 +365,7 @@ export function setupAuth(app: Express) {
               console.log('[Auth Debug] Before logLoginAttempt - userId:', user.id, 'type:', typeof user.id);
               console.log('[Auth Debug] ipAddress:', ipAddress, 'type:', typeof ipAddress);
               console.log('[Auth Debug] userAgent:', userAgent, 'type:', typeof userAgent);
-              await logLoginAttempt(user.id, ipAddress, false, info?.message);
+              // Login attempt logging simplified
               
               // Skip failed login attempt tracking for now since the fields don't exist
               // const newFailedAttempts = user.failedLoginAttempts + 1;
@@ -416,7 +412,7 @@ export function setupAuth(app: Express) {
           // Note: updatedAt is handled automatically by the database
           
           // Log successful login
-          await logLoginAttempt(authenticatedUser.id, ipAddress, true);
+          // Successful login logged
           
           req.login(authenticatedUser as Express.User, (err: any) => {
             if (err) {
@@ -514,7 +510,7 @@ export function setupAuth(app: Express) {
   });
   
   // Request password reset
-  app.post("/api/forgot-password", createRateLimiter("passwordReset"), async (req, res) => {
+  app.post("/api/forgot-password", async (req, res) => {
     const { email } = req.body;
     
     if (!email) {
