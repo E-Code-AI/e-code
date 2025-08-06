@@ -12,7 +12,8 @@ import {
   decimal,
   serial,
   primaryKey,
-  unique
+  unique,
+  real
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -295,6 +296,37 @@ export const pushNotifications = pgTable("push_notifications", {
 });
 
 // Deployments table
+// Knowledge Graph for Memory MCP
+export const knowledgeGraphNodes = pgTable("knowledge_graph_nodes", {
+  id: text("id").primaryKey(),
+  type: text("type").notNull(),
+  content: text("content").notNull(),
+  metadata: jsonb("metadata"),
+  embedding: real("embedding").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const knowledgeGraphEdges = pgTable("knowledge_graph_edges", {
+  id: text("id").primaryKey(),
+  sourceId: text("source_id").notNull().references(() => knowledgeGraphNodes.id, { onDelete: "cascade" }),
+  targetId: text("target_id").notNull().references(() => knowledgeGraphNodes.id, { onDelete: "cascade" }),
+  relationship: text("relationship").notNull(),
+  weight: real("weight").default(1.0),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const conversationMemory = pgTable("conversation_memory", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  sessionId: text("session_id").notNull(),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  metadata: jsonb("metadata"),
+  timestamp: timestamp("timestamp").defaultNow()
+});
+
 export const deployments = pgTable("deployments", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   projectId: integer("project_id").notNull().references(() => projects.id),

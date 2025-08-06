@@ -114,6 +114,130 @@ router.get("/resources", authenticateMCP, async (req: Request, res: Response) =>
   }
 });
 
+// GitHub MCP endpoints
+router.get("/github/repos/:username", authenticateMCP, async (req: Request, res: Response) => {
+  try {
+    const { username } = req.params;
+    const client = getMCPClient();
+    await client.connect();
+    const result = await client.callTool("github_list_repos", { username });
+    res.json(result);
+  } catch (error: any) {
+    console.error("[MCP] GitHub list repos failed:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/github/repos", authenticateMCP, async (req: Request, res: Response) => {
+  try {
+    const client = getMCPClient();
+    await client.connect();
+    const result = await client.callTool("github_create_repo", req.body);
+    res.json(result);
+  } catch (error: any) {
+    console.error("[MCP] GitHub create repo failed:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/github/issues", authenticateMCP, async (req: Request, res: Response) => {
+  try {
+    const client = getMCPClient();
+    await client.connect();
+    const result = await client.callTool("github_create_issue", req.body);
+    res.json(result);
+  } catch (error: any) {
+    console.error("[MCP] GitHub create issue failed:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PostgreSQL MCP endpoints
+router.get("/postgres/tables", authenticateMCP, async (req: Request, res: Response) => {
+  try {
+    const { schema = "public" } = req.query;
+    const client = getMCPClient();
+    await client.connect();
+    const result = await client.callTool("postgres_list_tables", { schema });
+    res.json(result);
+  } catch (error: any) {
+    console.error("[MCP] PostgreSQL list tables failed:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/postgres/query", authenticateMCP, async (req: Request, res: Response) => {
+  try {
+    const client = getMCPClient();
+    await client.connect();
+    const result = await client.callTool("postgres_query", req.body);
+    res.json(result);
+  } catch (error: any) {
+    console.error("[MCP] PostgreSQL query failed:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Memory MCP endpoints
+router.post("/memory/node", authenticateMCP, async (req: Request, res: Response) => {
+  try {
+    const client = getMCPClient();
+    await client.connect();
+    const result = await client.callTool("memory_create_node", req.body);
+    res.json(result);
+  } catch (error: any) {
+    console.error("[MCP] Memory create node failed:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/memory/search", authenticateMCP, async (req: Request, res: Response) => {
+  try {
+    const { query, type, limit = 10 } = req.query;
+    const client = getMCPClient();
+    await client.connect();
+    const result = await client.callTool("memory_search", { 
+      query, 
+      type, 
+      limit: Number(limit) 
+    });
+    res.json(result);
+  } catch (error: any) {
+    console.error("[MCP] Memory search failed:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/memory/conversation", authenticateMCP, async (req: Request, res: Response) => {
+  try {
+    const client = getMCPClient();
+    await client.connect();
+    const result = await client.callTool("memory_save_conversation", req.body);
+    res.json(result);
+  } catch (error: any) {
+    console.error("[MCP] Memory save conversation failed:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/memory/history/:userId", authenticateMCP, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { sessionId, limit = 50 } = req.query;
+    const client = getMCPClient();
+    await client.connect();
+    const result = await client.callTool("memory_get_history", { 
+      userId, 
+      sessionId, 
+      limit: Number(limit) 
+    });
+    res.json(result);
+  } catch (error: any) {
+    console.error("[MCP] Memory get history failed:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Execute MCP tool (protected with authentication for external access)
 router.post("/tools/:name", authenticateMCP, async (req: Request, res: Response) => {
   try {

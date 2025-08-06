@@ -15,7 +15,7 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 ## System Architecture
 
 ### Core Services
-- **MCP (Model Context Protocol) Server**: 100% Complete implementation following modelcontextprotocol.io specification with HTTP transport for web compatibility. **FULLY INTEGRATED** into AI Agent System and ALL UI Areas (as of August 6, 2025). **CLAUDE.AI INTEGRATION READY** with OAuth2, JWT, and API key authentication (as of August 6, 2025). Provides:
+- **MCP (Model Context Protocol) Server**: 100% Complete implementation following modelcontextprotocol.io specification with HTTP transport for web compatibility. **FULLY INTEGRATED** into AI Agent System and ALL UI Areas (as of August 6, 2025). **CLAUDE.AI INTEGRATION READY** with OAuth2, JWT, and API key authentication (as of August 6, 2025). **NEW MCP SERVERS INTEGRATED** (as of August 6, 2025). Provides:
   - Standalone HTTP server running on port 3200
   - Full HTTP transport implementation for web compatibility
   - **Authentication Layer**: OAuth2, JWT tokens, and API key support for Claude.ai Custom Connector
@@ -25,7 +25,7 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
   - Command execution with streaming output support
   - Database integration with full SQL capabilities
   - API access with HTTP/GraphQL client functionality
-  - Tool integration with 15+ built-in tools including:
+  - Tool integration with 30+ built-in tools including:
     * Filesystem tools (fs_read, fs_write, fs_list, fs_delete, fs_mkdir, fs_move, fs_copy, fs_search, fs_watch)
     * Execution tools (exec_command, exec_spawn, process_kill)
     * Database tools (db_query, db_transaction)
@@ -34,6 +34,9 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
     * Development tools (git_status, npm_install, docker_build, kube_deploy)
     * Security tools (crypto_hash, crypto_encrypt, crypto_decrypt)
     * AI tools (ai_complete with Anthropic Claude integration)
+    * **GitHub MCP Tools** (github_list_repos, github_create_repo, github_create_issue, github_create_pr)
+    * **PostgreSQL MCP Tools** (postgres_list_tables, postgres_get_schema, postgres_query, postgres_backup)
+    * **Memory MCP Tools** (memory_create_node, memory_search, memory_create_edge, memory_save_conversation, memory_get_history)
   - Resource management with 5 resource types (filesystem, database, environment, processes, git)
   - System monitoring and resource management
   - Complete tool execution handlers with fallback implementations
