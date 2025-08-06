@@ -326,12 +326,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get recent projects (same as all projects for now)
+  // Get recent projects with owner information
   app.get('/api/projects/recent', ensureAuthenticated, async (req, res) => {
     try {
-      const projects = await storage.getProjectsByUser(req.user!.id);
+      const user = req.user!;
+      const projects = await storage.getProjectsByUser(user.id);
       
-      // Get deployment status for each project
+      // Get deployment status and add owner information for each project
       const projectsWithStatus = await Promise.all(projects.map(async (project) => {
         const deployments = await storage.getProjectDeployments(project.id);
         const activeDeployment = deployments.find(d => d.status === 'active');
@@ -340,7 +341,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...project,
           isDeployed: !!activeDeployment,
           deploymentUrl: activeDeployment?.url,
-          deploymentStatus: activeDeployment?.status
+          deploymentStatus: activeDeployment?.status,
+          owner: {
+            id: user.id,
+            username: user.username,
+            email: user.email
+          }
         };
       }));
       
