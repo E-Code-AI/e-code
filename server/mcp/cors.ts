@@ -33,15 +33,16 @@ export const mcpCorsOptions: cors.CorsOptions = {
     
     // Check if origin is allowed
     if (ALLOWED_ORIGINS.includes(origin)) {
-      callback(null, true);
+      return callback(null, true);
     } else if (origin.includes('ngrok.io') || origin.includes('ngrok-free.app')) {
       // Allow ngrok for testing
-      callback(null, true);
+      return callback(null, true);
     } else if (process.env.NODE_ENV === 'development') {
       // Allow all origins in development
-      callback(null, true);
+      return callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.error(`[MCP CORS] Origin not allowed: ${origin}`);
+      return callback(null, false);
     }
   },
   

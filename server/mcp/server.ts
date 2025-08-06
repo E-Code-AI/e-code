@@ -28,6 +28,9 @@ import * as crypto from "crypto";
 import { githubMCP } from './servers/github-mcp';
 import { postgresMCP } from './servers/postgres-mcp';
 import { memoryMCP } from './servers/memory-mcp';
+import { slackMCP } from './servers/slack-mcp';
+import { googleDriveMCP } from './servers/google-drive-mcp';
+import { figmaMCP } from './servers/figma-mcp';
 
 const execAsync = promisify(exec);
 
@@ -605,7 +608,16 @@ export default class MCPServer {
             },
             required: ["userId"]
           }
-        }
+        },
+        
+        // Slack MCP Tools
+        ...slackMCP.getTools(),
+        
+        // Google Drive MCP Tools  
+        ...googleDriveMCP.getTools(),
+        
+        // Figma MCP Tools
+        ...figmaMCP.getTools()
       ],
     }));
     
@@ -795,6 +807,48 @@ export default class MCPServer {
             return await this.handleMemorySaveConversation(args);
           case "memory_get_history":
             return await this.handleMemoryGetHistory(args);
+            
+          // Slack MCP Tools
+          case "slack_send_message":
+            return await this.handleSlackSendMessage(args);
+          case "slack_list_channels":
+            return await this.handleSlackListChannels(args);
+          case "slack_list_users":
+            return await this.handleSlackListUsers(args);
+          case "slack_search_messages":
+            return await this.handleSlackSearchMessages(args);
+          case "slack_upload_file":
+            return await this.handleSlackUploadFile(args);
+            
+          // Google Drive MCP Tools
+          case "gdrive_list_files":
+            return await this.handleGDriveListFiles(args);
+          case "gdrive_get_file":
+            return await this.handleGDriveGetFile(args);
+          case "gdrive_create_file":
+            return await this.handleGDriveCreateFile(args);
+          case "gdrive_update_file":
+            return await this.handleGDriveUpdateFile(args);
+          case "gdrive_delete_file":
+            return await this.handleGDriveDeleteFile(args);
+          case "gdrive_search_files":
+            return await this.handleGDriveSearchFiles(args);
+            
+          // Figma MCP Tools
+          case "figma_get_file":
+            return await this.handleFigmaGetFile(args);
+          case "figma_get_nodes":
+            return await this.handleFigmaGetNodes(args);
+          case "figma_get_images":
+            return await this.handleFigmaGetImages(args);
+          case "figma_get_team_projects":
+            return await this.handleFigmaGetTeamProjects(args);
+          case "figma_get_project_files":
+            return await this.handleFigmaGetProjectFiles(args);
+          case "figma_get_comments":
+            return await this.handleFigmaGetComments(args);
+          case "figma_post_comment":
+            return await this.handleFigmaPostComment(args);
             
           default:
             throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
@@ -1336,6 +1390,135 @@ export default class MCPServer {
 
   private async handleMemoryGetHistory(args: any) {
     const result = await memoryMCP.getConversationHistory(args.userId, args.sessionId, args.limit);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  // Slack MCP handlers
+  private async handleSlackSendMessage(args: any) {
+    const result = await slackMCP.sendMessage(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleSlackListChannels(args: any) {
+    const result = await slackMCP.listChannels(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleSlackListUsers(args: any) {
+    const result = await slackMCP.listUsers(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleSlackSearchMessages(args: any) {
+    const result = await slackMCP.searchMessages(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleSlackUploadFile(args: any) {
+    const result = await slackMCP.uploadFile(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  // Google Drive MCP handlers
+  private async handleGDriveListFiles(args: any) {
+    const result = await googleDriveMCP.listFiles(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleGDriveGetFile(args: any) {
+    const result = await googleDriveMCP.getFile(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleGDriveCreateFile(args: any) {
+    const result = await googleDriveMCP.createFile(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleGDriveUpdateFile(args: any) {
+    const result = await googleDriveMCP.updateFile(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleGDriveDeleteFile(args: any) {
+    const result = await googleDriveMCP.deleteFile(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleGDriveSearchFiles(args: any) {
+    const result = await googleDriveMCP.searchFiles(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  // Figma MCP handlers
+  private async handleFigmaGetFile(args: any) {
+    const result = await figmaMCP.getFile(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleFigmaGetNodes(args: any) {
+    const result = await figmaMCP.getFileNodes(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleFigmaGetImages(args: any) {
+    const result = await figmaMCP.getImages(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleFigmaGetTeamProjects(args: any) {
+    const result = await figmaMCP.getTeamProjects(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleFigmaGetProjectFiles(args: any) {
+    const result = await figmaMCP.getProjectFiles(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleFigmaGetComments(args: any) {
+    const result = await figmaMCP.getComments(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleFigmaPostComment(args: any) {
+    const result = await figmaMCP.postComment(args);
     return {
       content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
     };

@@ -21,7 +21,8 @@ import {
   Copy,
   Trash,
   Activity,
-  Zap
+  Zap,
+  Server
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { MCPServersPanel } from '@/components/MCPServersPanel';
 
 // Icon mapping for quick actions
 const iconMap: Record<string, any> = {
@@ -113,6 +115,7 @@ export default function Dashboard() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [showBanner, setShowBanner] = useState(true);
   const [mcpStatus] = useState({ active: true, tools: 15, port: 3200 });
+  const [showMCPPanel, setShowMCPPanel] = useState(false);
 
   // Fetch recent projects with deployment status
   const { data: recentProjects = [], isLoading } = useQuery<ProjectWithDeployment[]>({
@@ -369,6 +372,35 @@ export default function Dashboard() {
               );
             })}
           </div>
+        </div>
+
+        {/* MCP Servers Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-medium text-[var(--ecode-text)]">
+                MCP Servers
+              </h2>
+              {mcpStatus.active && (
+                <Badge variant="success" className="bg-green-500/10 text-green-600">
+                  Active
+                </Badge>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMCPPanel(!showMCPPanel)}
+              className="flex items-center gap-2"
+            >
+              <Server className="h-4 w-4" />
+              {showMCPPanel ? 'Hide' : 'View'} MCP Servers
+            </Button>
+          </div>
+          
+          {showMCPPanel && (
+            <MCPServersPanel onClose={() => setShowMCPPanel(false)} />
+          )}
         </div>
 
         {/* Your recent Apps */}
