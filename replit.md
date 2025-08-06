@@ -3,6 +3,8 @@
 ## Overview
 E-Code Platform is an advanced AI-powered development platform that streamlines software creation through intelligent, automated deployment and collaboration tools. Its purpose is to provide an integrated development environment that goes beyond existing solutions like Replit, offering enhanced features such as industry-leading GPU computing, advanced monitoring, and comprehensive authentication methods. The platform aims to enable users to launch complete applications with a single prompt, transforming ideas into running code quickly and efficiently.
 
+**Production Domain**: https://e-code.ai (Ready for deployment - August 6, 2025)
+
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
 - **Error Handling**: Comprehensive error handling with proper logging
