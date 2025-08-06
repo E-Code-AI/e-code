@@ -49,13 +49,14 @@ export async function initializeDatabase() {
       name: "My First Project",
       description: "A sample project to get started with PLOT",
       visibility: "private",
-      language: "nodejs",
+      language: "javascript",
       ownerId: demo.id
     }).returning();
     
     // Create some sample files
     await db.insert(schema.files).values({
       name: "index.html",
+      path: "/index.html",
       content: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -78,13 +79,13 @@ export async function initializeDatabase() {
   <script src="script.js"></script>
 </body>
 </html>`,
-      isFolder: false,
-      projectId: project.id,
-      parentId: null
+      isDirectory: false,
+      projectId: project.id
     });
     
     await db.insert(schema.files).values({
       name: "styles.css",
+      path: "/styles.css",
       content: `body {
   font-family: Arial, sans-serif;
   line-height: 1.6;
@@ -114,13 +115,13 @@ button {
 button:hover {
   background-color: #005cc5;
 }`,
-      isFolder: false,
-      projectId: project.id,
-      parentId: null
+      isDirectory: false,
+      projectId: project.id
     });
     
     await db.insert(schema.files).values({
       name: "script.js",
+      path: "/script.js",
       content: `// Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
   // Get the button element
@@ -131,9 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
     alert('Hello from PLOT! Your JavaScript is working!');
   });
 });`,
-      isFolder: false,
-      projectId: project.id,
-      parentId: null
+      isDirectory: false,
+      projectId: project.id
     });
     
     console.log("Database initialized successfully with default data.");

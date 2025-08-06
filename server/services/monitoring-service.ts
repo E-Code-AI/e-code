@@ -57,6 +57,9 @@ export class MonitoringService {
 
   async processMonitoringEvents(event: MonitoringEvent, userId?: number): Promise<void> {
     try {
+      // Temporarily disable monitoring to prevent database errors during startup
+      return;
+      
       // Process errors
       if (event.errors && event.errors.length > 0) {
         await this.processErrors(event.errors, userId);
