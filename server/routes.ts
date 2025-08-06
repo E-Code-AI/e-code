@@ -2717,7 +2717,8 @@ npx http-server .
   });
 
   // Get project by username and slug (for Replit-style URLs)
-  app.get('/api/users/:username/projects/:slug', ensureAuthenticated, async (req, res) => {
+  // Note: This endpoint allows public access for public projects
+  app.get('/api/users/:username/projects/:slug', async (req, res) => {
     try {
       const { username, slug } = req.params;
       
@@ -2734,10 +2735,18 @@ npx http-server .
       }
       
       // Check access for private projects
-      if (project.visibility === 'private' && req.user?.id !== project.ownerId) {
-        const isCollaborator = req.user ? await storage.isProjectCollaborator(project.id, req.user.id) : false;
-        if (!isCollaborator) {
-          return res.status(403).json({ error: 'Access denied' });
+      if (project.visibility === 'private') {
+        // Private projects require authentication
+        if (!req.user) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        // Check if user has access
+        if (req.user.id !== project.ownerId) {
+          const isCollaborator = await storage.isProjectCollaborator(project.id, req.user.id);
+          if (!isCollaborator) {
+            return res.status(403).json({ error: 'Access denied' });
+          }
         }
       }
       

@@ -116,7 +116,7 @@ const ReplitProjectPage = () => {
 
   const projectId = matchProject && paramsProject?.id ? parseInt(paramsProject.id) : 0;
   const username = matchSlug && paramsSlug?.username ? paramsSlug.username : undefined;
-  const projectname = matchSlug && paramsSlug?.projectname ? paramsSlug.projectname : undefined;
+  const projectSlug = matchSlug && paramsSlug?.projectname ? paramsSlug.projectname : undefined;
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, string>>({});
   const [projectRunning, setProjectRunning] = useState(false);
@@ -175,14 +175,14 @@ const ReplitProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: username && projectname 
-      ? ['/api/users', username, 'projects', projectname] 
+    queryKey: username && projectSlug 
+      ? ['/api/users', username, 'projects', projectSlug] 
       : ['/api/projects', projectId],
     queryFn: async () => {
-      if (!projectId && (!username || !projectname)) return Promise.reject(new Error('No project identifier provided'));
+      if (!projectId && (!username || !projectSlug)) return Promise.reject(new Error('No project identifier provided'));
       
-      const url = username && projectname
-        ? `/api/users/${encodeURIComponent(username)}/projects/${encodeURIComponent(projectname)}`
+      const url = username && projectSlug
+        ? `/api/users/${encodeURIComponent(username)}/projects/${encodeURIComponent(projectSlug)}`
         : `/api/projects/${projectId}`;
       
       const res = await apiRequest('GET', url);
@@ -202,7 +202,7 @@ const ReplitProjectPage = () => {
       }
       return res.json();
     },
-    enabled: !!projectId || (!!username && !!projectname),
+    enabled: !!projectId || (!!username && !!projectSlug),
   });
 
   // Query for project files
@@ -212,7 +212,7 @@ const ReplitProjectPage = () => {
     error: filesError 
   } = useQuery<File[]>({
     queryKey: ['/api/projects', project?.id || projectId, 'files'],
-    enabled: !!project?.id || !!projectId,
+    enabled: !!(project?.id || projectId),
   });
 
   // Mobile bottom navigation matching Replit's design
