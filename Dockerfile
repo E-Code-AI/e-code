@@ -51,7 +51,7 @@ RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
 USER nodejs
 
-# Expose port
+# Expose port (internal port that the app runs on)
 EXPOSE 5000
 
 # Health check
