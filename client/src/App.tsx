@@ -16,7 +16,7 @@ const ProjectsPage = lazy(() => import("@/pages/ProjectsPage"));
 
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
-const ProjectPage = lazy(() => import("@/pages/ReplitProjectPage"));
+const ProjectPage = lazy(() => import("@/pages/ProjectPage"));
 const RuntimesPage = lazy(() => import("@/pages/RuntimesPage"));
 const RuntimeDiagnosticsPage = lazy(() => import("@/pages/RuntimeDiagnosticsPage"));
 const RuntimePublicPage = lazy(() => import("@/pages/RuntimePublicPage"));
