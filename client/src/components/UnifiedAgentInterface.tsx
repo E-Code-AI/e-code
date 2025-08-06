@@ -122,11 +122,11 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
     }
   }, [projectId]);
 
-  // MCP Server integration
+  // MCP Server integration - Powers all AI operations
   const [mcpTools, setMcpTools] = useState<any[]>([]);
   const [mcpConnected, setMcpConnected] = useState(false);
   
-  // Load MCP tools on mount
+  // Load MCP tools on mount and show connection status
   useEffect(() => {
     const loadMCPTools = async () => {
       try {
@@ -135,25 +135,35 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
           const tools = await response.json();
           setMcpTools(tools);
           setMcpConnected(true);
+          console.log(`[MCP] ✅ Connected to MCP server with ${tools.length} tools available`);
+          toast({
+            title: 'MCP Server Connected',
+            description: `Connected to Model Context Protocol with ${tools.length} tools`,
+            variant: 'default',
+          });
         }
       } catch (error) {
-        console.error('Failed to connect to MCP server:', error);
+        console.error('[MCP] ❌ Failed to connect to MCP server:', error);
+        setMcpConnected(false);
       }
     };
     loadMCPTools();
   }, []);
 
-  // Execute MCP tool
+  // Execute MCP tool - Used by AI agent for all operations
   const executeMCPTool = async (toolName: string, args: any) => {
     try {
+      console.log(`[MCP] 🔧 Executing tool: ${toolName}`, args);
       const response = await fetch(`http://localhost:3200/tools/${toolName}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(args),
       });
-      return await response.json();
+      const result = await response.json();
+      console.log(`[MCP] ✅ Tool ${toolName} result:`, result);
+      return result;
     } catch (error) {
-      console.error('Failed to execute MCP tool:', error);
+      console.error(`[MCP] ❌ Failed to execute tool ${toolName}:`, error);
       return null;
     }
   };

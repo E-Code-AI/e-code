@@ -1,5 +1,6 @@
 // Enhanced Autonomous AI Agent - Builds complete applications autonomously
 // This is the core of the AI agent that can understand natural language and build full applications
+// Now powered by MCP (Model Context Protocol) for all operations
 
 import { storage } from '../storage';
 import { BuildAction } from './autonomous-builder';
@@ -10,6 +11,7 @@ import { createLogger } from '../utils/logger';
 import { AnthropicProvider } from './ai-providers';
 import { realPackageManager } from '../services/real-package-manager';
 import { agentWebSocketService } from '../services/agent-websocket-service';
+import { mcpClient } from './mcp-client';
 
 const logger = createLogger('EnhancedAutonomousAgent');
 
@@ -661,7 +663,7 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
   }
   
   private async executeBuildActions(actions: BuildAction[], context: AgentContext, sessionId: string): Promise<any> {
-    this.thinkingProcess.push('🚀 Executing build actions...');
+    this.thinkingProcess.push('🚀 Executing build actions using MCP tools...');
     
     const results = {
       filesCreated: 0,
@@ -672,59 +674,34 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
       appStarted: false
     };
     
-    // First, create all files and folders with proper nested directory support
+    // Get project path
+    const projectPath = `/projects/${context.projectId}`;
+    
+    // First, create all files and folders using MCP tools
     for (const action of actions) {
       try {
         if (action.type === 'create_file') {
           // Handle nested paths like src/components/TodoList.jsx
           const fullPath = action.data.path.startsWith('/') ? action.data.path : `/${action.data.path}`;
-          const pathParts = fullPath.split('/').filter((p: string) => p);
+          const relativePath = fullPath.startsWith('/') ? fullPath.substring(1) : fullPath;
+          const filePath = `${relativePath}/${action.data.name}`;
           
-          // Create nested directories if needed
-          if (pathParts.length > 1) {
-            let currentPath = '';
-            for (let i = 0; i < pathParts.length - 1; i++) {
-              currentPath += '/' + pathParts[i];
-              try {
-                await storage.createFile({
-                  projectId: context.projectId,
-                  name: pathParts[i],
-                  path: currentPath.substring(0, currentPath.lastIndexOf('/')),
-                  content: '',
-                  isDirectory: true
-                });
-              } catch (err) {
-                // Directory might already exist, continue
-              }
-            }
-          }
-          
-          // Create the file
-          await storage.createFile({
-            projectId: context.projectId,
-            name: action.data.name,
-            path: fullPath.substring(0, fullPath.lastIndexOf('/')),
-            content: action.data.content,
-            isDirectory: false
-          });
+          // Use MCP to create the file (it handles directories automatically)
+          await mcpClient.createProjectFile(projectPath, filePath, action.data.content);
           results.filesCreated++;
           
           // Send progress update for file creation
           agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
             id: `file-${Date.now()}`,
             type: 'file_operation',
-            title: `Created ${action.data.name}`,
+            title: `Created ${action.data.name} via MCP`,
             icon: 'FileText',
-            file: action.data.path + '/' + action.data.name
+            file: filePath
           });
         } else if (action.type === 'create_folder') {
-          await storage.createFile({
-            projectId: context.projectId,
-            name: action.data.name,
-            path: action.data.path,
-            content: '',
-            isDirectory: true
-          });
+          // Use MCP to create directory
+          const folderPath = action.data.path.startsWith('/') ? action.data.path.substring(1) : action.data.path;
+          await mcpClient.createProjectDirectory(projectPath, `${folderPath}/${action.data.name}`);
           results.foldersCreated++;
         }
       } catch (error: any) {
@@ -758,8 +735,10 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
             details: allPackages
           });
           
-          await this.installPackages(context.projectId, allPackages, 'nodejs');
+          // Use MCP to install packages
+          const installOutput = await mcpClient.installPackages(allPackages, projectPath);
           results.packagesInstalled = allPackages;
+          this.thinkingProcess.push(`📦 MCP installed packages: ${installOutput.substring(0, 100)}...`);
           
           agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
             id: 'packages-installed',
@@ -783,25 +762,20 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
         });
         
         try {
-          // Execute start command
-          const terminalResult = await this.executeCommand(context.projectId, startCommand);
+          // Execute start command using MCP
+          const commandOutput = await mcpClient.executeCommand(startCommand, projectPath);
           results.commandsExecuted.push(startCommand);
+          results.appStarted = true;
           
-          if (terminalResult.success) {
-            results.appStarted = true;
-            this.thinkingProcess.push('✅ Application started successfully!');
-            agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
-              id: 'app-running',
-              type: 'action',
-              title: 'Application is now running!',
-              icon: 'CheckCircle',
-              expandable: true,
-              details: ['Your app is ready to use', 'Check the preview window to see it in action']
-            });
-          } else {
-            this.thinkingProcess.push(`⚠️ Failed to start app: ${terminalResult.output}`);
-            agentWebSocketService.sendError(context.projectId, sessionId, `Failed to start app: ${terminalResult.output}`);
-          }
+          this.thinkingProcess.push('✅ Application started successfully via MCP!');
+          agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+            id: 'app-running',
+            type: 'action',
+            title: 'Application is now running via MCP!',
+            icon: 'CheckCircle',
+            expandable: true,
+            details: ['Your app is ready to use', 'Check the preview window to see it in action', `Output: ${commandOutput.substring(0, 100)}...`]
+          });
         } catch (error: any) {
           results.errors.push(`Failed to start app: ${error.message}`);
         }
@@ -819,8 +793,11 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
       try {
         const requirements = requirementsAction.data.content.split('\n').filter((line: string) => line.trim());
         if (requirements.length > 0) {
-          await this.installPackages(context.projectId, requirements, 'python');
+          // Use MCP to install Python packages
+          const pipCommand = `pip install ${requirements.join(' ')}`;
+          const installOutput = await mcpClient.executeCommand(pipCommand, projectPath);
           results.packagesInstalled = requirements;
+          this.thinkingProcess.push(`🐍 MCP installed Python packages: ${installOutput.substring(0, 100)}...`);
         }
         
         // Find and run the main Python file
@@ -830,22 +807,19 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
         
         if (mainPyAction) {
           const startCommand = `python ${mainPyAction.data.name}`;
-          const terminalResult = await this.executeCommand(context.projectId, startCommand);
+          // Execute Python app using MCP
+          const commandOutput = await mcpClient.executeCommand(startCommand, projectPath);
           results.commandsExecuted.push(startCommand);
+          results.appStarted = true;
           
-          if (terminalResult.success) {
-            results.appStarted = true;
-            agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
-              id: 'python-app-running',
-              type: 'action',
-              title: 'Python application is now running!',
-              icon: 'CheckCircle',
-              expandable: true,
-              details: ['Your Python app is ready', 'Check the preview window to see it in action']
-            });
-          } else {
-            agentWebSocketService.sendError(context.projectId, sessionId, `Failed to start Python app: ${terminalResult.output}`);
-          }
+          agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
+            id: 'python-app-running',
+            type: 'action',
+            title: 'Python application is now running via MCP!',
+            icon: 'CheckCircle',
+            expandable: true,
+            details: ['Your Python app is ready', 'Check the preview window to see it in action', `Output: ${commandOutput.substring(0, 100)}...`]
+          });
         }
       } catch (error: any) {
         results.errors.push(`Python setup error: ${error.message}`);

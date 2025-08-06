@@ -4988,10 +4988,11 @@ npx http-server .
         isPaused: context?.isPaused || false
       };
 
-      // Process request with enhanced autonomous agent
+      // Process request with enhanced autonomous agent powered by MCP
+      console.log('[MCP Integration] Processing AI request through MCP-enabled agent');
       const response = await enhancedAgent.processRequest(agentContext);
 
-      // Response includes pricing, checkpoint, and metrics
+      // Response includes pricing, checkpoint, and metrics (all operations via MCP)
       res.json({
         id: Date.now().toString(),
         content: response.message,
