@@ -18981,28 +18981,6 @@ Generate a comprehensive application based on the user's request. Include all ne
     next();
   });
   
-  // Handle project creation pattern
-  app.get('/@:username/create-*', async (req, res, next) => {
-    const { username } = req.params;
-    logger.info(`Project creation route accessed: /@${username}/create-*`);
-    
-    // Verify user exists
-    const user = await storage.getUserByUsername(username);
-    if (!user) {
-      logger.warn(`User not found for creation route: ${username}`);
-      return next();
-    }
-    
-    // Check if current user matches the username (only allow creating projects for yourself)
-    if (!req.user || req.user.username !== username) {
-      logger.warn(`Unauthorized project creation attempt for user: ${username}`);
-      return res.redirect('/login');
-    }
-    
-    // Let React handle the project creation UI
-    next();
-  });
-  
   // Legacy compatibility routes
   app.get('/~:username/:slug', async (req, res) => {
     // Redirect old-style URLs to new format

@@ -375,6 +375,11 @@ function AppContent() {
               appComponent={<SolarTechStoreApp />}
             />
           )} />
+          <Route path="/@:username/:slug" component={() => (
+            <ReplitLayout showSidebar={true}>
+              <ReplitProjectPage />
+            </ReplitLayout>
+          )} />
           <Route path="/@:username" component={() => (
             <ReplitLayout showSidebar={false}>
               <UserProfile />
