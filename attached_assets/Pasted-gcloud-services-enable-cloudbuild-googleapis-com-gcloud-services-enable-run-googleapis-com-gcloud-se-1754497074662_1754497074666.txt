@@ -1,0 +1,52 @@
+gcloud services enable cloudbuild.googleapis.com
+gcloud services enable run.googleapis.com
+gcloud services enable containerregistry.googleapis.com
+gcloud services enable secretmanager.googleapis.com
+ERROR: (gcloud.services.enable) FAILED_PRECONDITION: Billing account for project '598842228608' is not found. Billing must be enabled for activation of service(s) 'cloudbuild.googleapis.com,artifactregistry.googleapis.com,containerregistry.googleapis.com' to proceed.
+Help Token: AeNz4PiaVYEjoNub2d8VzzxlUnZnWdsUHSZYQK_KA254YkxvRyPSV7wUICF6obEFxQjk70BiXSSuiZixIW2MVFmA68lB4Lp7S8_NWCC91l06qPyd
+- '@type': type.googleapis.com/google.rpc.PreconditionFailure
+  violations:
+  - subject: ?error_code=390001&project=598842228608&services=cloudbuild.googleapis.com&services=artifactregistry.googleapis.com&services=containerregistry.googleapis.com
+    type: googleapis.com/billing-enabled
+- '@type': type.googleapis.com/google.rpc.ErrorInfo
+  domain: serviceusage.googleapis.com/billing-enabled
+  metadata:
+    project: '598842228608'
+    services: cloudbuild.googleapis.com,artifactregistry.googleapis.com,containerregistry.googleapis.com
+  reason: UREQ_PROJECT_BILLING_NOT_FOUND
+ERROR: (gcloud.services.enable) FAILED_PRECONDITION: Billing account for project '598842228608' is not found. Billing must be enabled for activation of service(s) 'run.googleapis.com,artifactregistry.googleapis.com,containerregistry.googleapis.com' to proceed.
+Help Token: AeNz4PgccWiptZhn8PNfL9Hhssrg_4H9DNYRXNuF1tate3lAW9G3NUTU12DYAZdoRnVAZXH9aOSxUFCUU-VfHT48jjV_z-ncAOLnkSNIVuMbnd0O
+- '@type': type.googleapis.com/google.rpc.PreconditionFailure
+  violations:
+  - subject: ?error_code=390001&project=598842228608&services=run.googleapis.com&services=artifactregistry.googleapis.com&services=containerregistry.googleapis.com
+    type: googleapis.com/billing-enabled
+- '@type': type.googleapis.com/google.rpc.ErrorInfo
+  domain: serviceusage.googleapis.com/billing-enabled
+  metadata:
+    project: '598842228608'
+    services: run.googleapis.com,artifactregistry.googleapis.com,containerregistry.googleapis.com
+  reason: UREQ_PROJECT_BILLING_NOT_FOUND
+ERROR: (gcloud.services.enable) FAILED_PRECONDITION: Billing account for project '598842228608' is not found. Billing must be enabled for activation of service(s) 'containerregistry.googleapis.com' to proceed.
+Help Token: AeNz4PizG18ec48RqLhPMxLiGk1CUxkwIFubIh1XCgSVTtH1kG6VgFd2mkShd0-2C6li3iXEnjCLt1nkPibm2dEuOcvOWhMEtJVTkryOrKNhstV4
+- '@type': type.googleapis.com/google.rpc.PreconditionFailure
+  violations:
+  - subject: ?error_code=390001&project=598842228608&services=containerregistry.googleapis.com
+    type: googleapis.com/billing-enabled
+- '@type': type.googleapis.com/google.rpc.ErrorInfo
+  domain: serviceusage.googleapis.com/billing-enabled
+  metadata:
+    project: '598842228608'
+    services: containerregistry.googleapis.com
+  reason: UREQ_PROJECT_BILLING_NOT_FOUND
+ERROR: (gcloud.services.enable) FAILED_PRECONDITION: Billing account for project '598842228608' is not found. Billing must be enabled for activation of service(s) 'secretmanager.googleapis.com' to proceed.
+Help Token: AeNz4PhyDpSldS67IbznM_QfGdPp8IgjZJ5fPk-d3SGdmSGNkdh6JJwzdTHn2XpkMQaPSQTAoj9XJJ58iz3lP5FfO9Z7CZWfzchLYUMD_3sp6dU3
+- '@type': type.googleapis.com/google.rpc.PreconditionFailure
+  violations:
+  - subject: ?error_code=390001&project=598842228608&services=secretmanager.googleapis.com
+    type: googleapis.com/billing-enabled
+- '@type': type.googleapis.com/google.rpc.ErrorInfo
+  domain: serviceusage.googleapis.com/billing-enabled
+  metadata:
+    project: '598842228608'
+    services: secretmanager.googleapis.com
+  reason: UREQ_PROJECT_BILLING_NOT_FOUND
