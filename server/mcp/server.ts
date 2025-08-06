@@ -25,6 +25,9 @@ import * as http from "http";
 import * as https from "https";
 import * as os from "os";
 import * as crypto from "crypto";
+import { githubMCP } from './servers/github-mcp';
+import { postgresMCP } from './servers/postgres-mcp';
+import { memoryMCP } from './servers/memory-mcp';
 
 const execAsync = promisify(exec);
 
@@ -428,6 +431,180 @@ export default class MCPServer {
             },
             required: ["text"]
           }
+        },
+        
+        // GitHub MCP Tools
+        {
+          name: "github_list_repos",
+          description: "List GitHub repositories for a user",
+          inputSchema: {
+            type: "object",
+            properties: {
+              username: { type: "string", description: "GitHub username" }
+            },
+            required: ["username"]
+          }
+        },
+        {
+          name: "github_create_repo",
+          description: "Create a new GitHub repository",
+          inputSchema: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Repository name" },
+              description: { type: "string", description: "Repository description" },
+              private: { type: "boolean", default: false }
+            },
+            required: ["name"]
+          }
+        },
+        {
+          name: "github_create_issue",
+          description: "Create a GitHub issue",
+          inputSchema: {
+            type: "object",
+            properties: {
+              owner: { type: "string", description: "Repository owner" },
+              repo: { type: "string", description: "Repository name" },
+              title: { type: "string", description: "Issue title" },
+              body: { type: "string", description: "Issue body" },
+              labels: { type: "array", items: { type: "string" }, description: "Issue labels" }
+            },
+            required: ["owner", "repo", "title"]
+          }
+        },
+        {
+          name: "github_create_pr",
+          description: "Create a GitHub pull request",
+          inputSchema: {
+            type: "object",
+            properties: {
+              owner: { type: "string", description: "Repository owner" },
+              repo: { type: "string", description: "Repository name" },
+              title: { type: "string", description: "PR title" },
+              head: { type: "string", description: "Head branch" },
+              base: { type: "string", description: "Base branch" },
+              body: { type: "string", description: "PR body" }
+            },
+            required: ["owner", "repo", "title", "head", "base"]
+          }
+        },
+        
+        // PostgreSQL MCP Tools
+        {
+          name: "postgres_list_tables",
+          description: "List PostgreSQL database tables",
+          inputSchema: {
+            type: "object",
+            properties: {
+              schema: { type: "string", default: "public", description: "Schema name" }
+            }
+          }
+        },
+        {
+          name: "postgres_get_schema",
+          description: "Get PostgreSQL table schema",
+          inputSchema: {
+            type: "object",
+            properties: {
+              table: { type: "string", description: "Table name" },
+              schema: { type: "string", default: "public", description: "Schema name" }
+            },
+            required: ["table"]
+          }
+        },
+        {
+          name: "postgres_query",
+          description: "Execute PostgreSQL query",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "SQL query" },
+              params: { type: "array", items: { type: "string" }, description: "Query parameters" }
+            },
+            required: ["query"]
+          }
+        },
+        {
+          name: "postgres_backup",
+          description: "Create PostgreSQL backup",
+          inputSchema: {
+            type: "object",
+            properties: {
+              table: { type: "string", description: "Table name (optional, backs up entire schema if not provided)" },
+              schema: { type: "string", default: "public", description: "Schema name" }
+            }
+          }
+        },
+        
+        // Memory MCP Tools
+        {
+          name: "memory_create_node",
+          description: "Create a knowledge graph node",
+          inputSchema: {
+            type: "object",
+            properties: {
+              type: { type: "string", enum: ["concept", "entity", "event", "fact", "idea"], description: "Node type" },
+              content: { type: "string", description: "Node content" },
+              metadata: { type: "object", description: "Additional metadata" }
+            },
+            required: ["type", "content"]
+          }
+        },
+        {
+          name: "memory_search",
+          description: "Search knowledge graph nodes",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Search query" },
+              type: { type: "string", enum: ["concept", "entity", "event", "fact", "idea"], description: "Filter by node type" },
+              limit: { type: "number", default: 10, description: "Maximum results" }
+            },
+            required: ["query"]
+          }
+        },
+        {
+          name: "memory_create_edge",
+          description: "Create a relationship between nodes",
+          inputSchema: {
+            type: "object",
+            properties: {
+              sourceId: { type: "string", description: "Source node ID" },
+              targetId: { type: "string", description: "Target node ID" },
+              relationship: { type: "string", description: "Relationship type" },
+              weight: { type: "number", default: 1.0, description: "Relationship weight" }
+            },
+            required: ["sourceId", "targetId", "relationship"]
+          }
+        },
+        {
+          name: "memory_save_conversation",
+          description: "Save conversation to memory",
+          inputSchema: {
+            type: "object",
+            properties: {
+              userId: { type: "string", description: "User ID" },
+              sessionId: { type: "string", description: "Session ID" },
+              role: { type: "string", enum: ["user", "assistant", "system"], description: "Message role" },
+              content: { type: "string", description: "Message content" },
+              metadata: { type: "object", description: "Additional metadata" }
+            },
+            required: ["userId", "sessionId", "role", "content"]
+          }
+        },
+        {
+          name: "memory_get_history",
+          description: "Get conversation history",
+          inputSchema: {
+            type: "object",
+            properties: {
+              userId: { type: "string", description: "User ID" },
+              sessionId: { type: "string", description: "Session ID (optional)" },
+              limit: { type: "number", default: 50, description: "Maximum messages" }
+            },
+            required: ["userId"]
+          }
         }
       ],
     }));
@@ -586,6 +763,38 @@ export default class MCPServer {
             return await this.handleAiComplete(args);
           case "ai_embed":
             return await this.handleAiEmbed(args);
+            
+          // GitHub MCP Tools
+          case "github_list_repos":
+            return await this.handleGithubListRepos(args);
+          case "github_create_repo":
+            return await this.handleGithubCreateRepo(args);
+          case "github_create_issue":
+            return await this.handleGithubCreateIssue(args);
+          case "github_create_pr":
+            return await this.handleGithubCreatePR(args);
+            
+          // PostgreSQL MCP Tools
+          case "postgres_list_tables":
+            return await this.handlePostgresListTables(args);
+          case "postgres_get_schema":
+            return await this.handlePostgresGetSchema(args);
+          case "postgres_query":
+            return await this.handlePostgresQuery(args);
+          case "postgres_backup":
+            return await this.handlePostgresBackup(args);
+            
+          // Memory MCP Tools
+          case "memory_create_node":
+            return await this.handleMemoryCreateNode(args);
+          case "memory_search":
+            return await this.handleMemorySearch(args);
+          case "memory_create_edge":
+            return await this.handleMemoryCreateEdge(args);
+          case "memory_save_conversation":
+            return await this.handleMemorySaveConversation(args);
+          case "memory_get_history":
+            return await this.handleMemoryGetHistory(args);
             
           default:
             throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
@@ -1038,6 +1247,100 @@ export default class MCPServer {
     };
   }
   
+  // GitHub MCP handlers
+  private async handleGithubListRepos(args: any) {
+    const result = await githubMCP.listRepositories(args.username);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleGithubCreateRepo(args: any) {
+    const result = await githubMCP.createRepository(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleGithubCreateIssue(args: any) {
+    const result = await githubMCP.createIssue(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleGithubCreatePR(args: any) {
+    const result = await githubMCP.createPullRequest(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  // PostgreSQL MCP handlers
+  private async handlePostgresListTables(args: any) {
+    const result = await postgresMCP.listTables(args.schema);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handlePostgresGetSchema(args: any) {
+    const result = await postgresMCP.getTableSchema(args.table, args.schema);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handlePostgresQuery(args: any) {
+    const result = await postgresMCP.executeQuery(args.query, args.params);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handlePostgresBackup(args: any) {
+    const result = await postgresMCP.createBackup(args.table, args.schema);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  // Memory MCP handlers
+  private async handleMemoryCreateNode(args: any) {
+    const result = await memoryMCP.createNode(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleMemorySearch(args: any) {
+    const result = await memoryMCP.searchNodes(args.query, args.type, args.limit);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleMemoryCreateEdge(args: any) {
+    const result = await memoryMCP.createEdge(args.sourceId, args.targetId, args.relationship, args.weight);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleMemorySaveConversation(args: any) {
+    const result = await memoryMCP.saveConversation(args);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  private async handleMemoryGetHistory(args: any) {
+    const result = await memoryMCP.getConversationHistory(args.userId, args.sessionId, args.limit);
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
   // Helper methods
   private async getDatabaseSchema(table?: string) {
     const query = table
