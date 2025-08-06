@@ -30,6 +30,9 @@ import { ProjectStats } from '@/components/ProjectStats';
 import { FileUploadDropzone } from '@/components/FileUploadDropzone';
 import { PackageManager } from '@/components/PackageManager';
 import { ProjectSharing } from '@/components/ProjectSharing';
+import { GitHubMCPPanel } from '@/components/mcp/GitHubMCPPanel';
+import { PostgreSQLMCPPanel } from '@/components/mcp/PostgreSQLMCPPanel';
+import { MemoryMCPPanel } from '@/components/mcp/MemoryMCPPanel';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -95,7 +98,7 @@ const ProjectPage = () => {
   const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'console' | 'deployment' | 'git' | 'env'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [aiPanelVisible, setAiPanelVisible] = useState(false);
-  const [rightPanelTab, setRightPanelTab] = useState<'ai' | 'collaborate' | 'resources' | 'presence' | 'search' | 'stats' | 'packages' | 'share'>('ai');
+  const [rightPanelTab, setRightPanelTab] = useState<'ai' | 'collaborate' | 'resources' | 'presence' | 'search' | 'stats' | 'packages' | 'share' | 'github' | 'postgres' | 'memory'>('ai');
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'offline'>('idle');
@@ -865,6 +868,9 @@ const ProjectPage = () => {
                     <TabsTrigger value="stats" className="h-8">Stats</TabsTrigger>
                     <TabsTrigger value="packages" className="h-8">Packages</TabsTrigger>
                     <TabsTrigger value="share" className="h-8">Share</TabsTrigger>
+                    <TabsTrigger value="github" className="h-8">GitHub</TabsTrigger>
+                    <TabsTrigger value="postgres" className="h-8">Database</TabsTrigger>
+                    <TabsTrigger value="memory" className="h-8">Memory</TabsTrigger>
                   </TabsList>
                 </ScrollArea>
                 <Button 
@@ -923,6 +929,15 @@ const ProjectPage = () => {
                   projectId={projectId} 
                   projectName={project?.name || 'Untitled'} 
                 />
+              </TabsContent>
+              <TabsContent value="github" className="flex-1 overflow-hidden">
+                <GitHubMCPPanel projectId={projectId} />
+              </TabsContent>
+              <TabsContent value="postgres" className="flex-1 overflow-hidden">
+                <PostgreSQLMCPPanel projectId={projectId} />
+              </TabsContent>
+              <TabsContent value="memory" className="flex-1 overflow-hidden">
+                <MemoryMCPPanel projectId={projectId} />
               </TabsContent>
             </Tabs>
           </div>

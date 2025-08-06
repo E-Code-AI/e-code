@@ -19,6 +19,9 @@ import {
   mcpSecurityHeaders, 
   mcpRateLimitOptions 
 } from './cors';
+import githubRoutes from './api/github';
+import postgresRoutes from './api/postgres';
+import memoryRoutes from './api/memory';
 
 const router = Router();
 
@@ -63,6 +66,11 @@ router.get('/health', (req, res) => {
     }
   });
 });
+
+// MCP Server API Routes
+router.use('/github', githubRoutes);
+router.use('/postgres', postgresRoutes);
+router.use('/memory', memoryRoutes);
 
 // Initialize HTTP transport (applied to existing Express app)
 let httpServer: MCPHttpServer | null = null;
