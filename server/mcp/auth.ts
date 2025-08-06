@@ -135,11 +135,12 @@ export function oauthAuthorize(req: Request, res: Response) {
   });
   
   // Clean up old sessions
-  for (const [code, session] of oauthSessions.entries()) {
-    if (new Date().getTime() - session.createdAt.getTime() > 10 * 60 * 1000) {
+  const now = new Date().getTime();
+  oauthSessions.forEach((session, code) => {
+    if (now - session.createdAt.getTime() > 10 * 60 * 1000) {
       oauthSessions.delete(code);
     }
-  }
+  });
   
   // Redirect back to Claude.ai with authorization code
   const redirectUrl = new URL(redirect_uri || MCP_AUTH_CONFIG.oauth.redirectUri);
@@ -199,7 +200,7 @@ export function oauthToken(req: Request, res: Response) {
         type: 'access_token'
       },
       MCP_AUTH_CONFIG.jwt.secret,
-      { expiresIn: MCP_AUTH_CONFIG.jwt.expiresIn }
+      { expiresIn: MCP_AUTH_CONFIG.jwt.expiresIn } as jwt.SignOptions
     );
     
     // Generate refresh token
@@ -209,7 +210,7 @@ export function oauthToken(req: Request, res: Response) {
         type: 'refresh_token'
       },
       MCP_AUTH_CONFIG.jwt.secret,
-      { expiresIn: '30d' }
+      { expiresIn: '30d' } as jwt.SignOptions
     );
     
     // Store token info
@@ -248,7 +249,7 @@ export function oauthToken(req: Request, res: Response) {
           type: 'access_token'
         },
         MCP_AUTH_CONFIG.jwt.secret,
-        { expiresIn: MCP_AUTH_CONFIG.jwt.expiresIn }
+        { expiresIn: MCP_AUTH_CONFIG.jwt.expiresIn } as jwt.SignOptions
       );
       
       // Store token info

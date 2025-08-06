@@ -1,0 +1,96 @@
+# Cloud Build configuration for deploying MCP server to Cloud Run with HTTPS
+# This enables Claude.ai to connect to your MCP server as a Custom Connector
+
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/ecode-mcp-server:$COMMIT_SHA', '.']
+  
+  # Push the Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/ecode-mcp-server:$COMMIT_SHA']
+  
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'ecode-mcp-server'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/ecode-mcp-server:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--port'
+      - '5000'
+      - '--memory'
+      - '2Gi'
+      - '--cpu'
+      - '2'
+      - '--timeout'
+      - '900'
+      - '--concurrency'
+      - '1000'
+      - '--min-instances'
+      - '1'
+      - '--max-instances'
+      - '100'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - |
+        NODE_ENV=production,
+        PORT=5000,
+        MCP_SERVER_PORT=3200,
+        MCP_API_KEY=$_MCP_API_KEY,
+        MCP_JWT_SECRET=$_MCP_JWT_SECRET,
+        MCP_OAUTH_CLIENT_ID=ecode-mcp-server,
+        MCP_OAUTH_CLIENT_SECRET=$_MCP_OAUTH_CLIENT_SECRET,
+        MCP_OAUTH_REDIRECT_URI=https://claude.ai/auth/callback,
+        MCP_ALLOWED_ORIGIN=https://claude.ai,
+        DATABASE_URL=$_DATABASE_URL,
+        SESSION_SECRET=$_SESSION_SECRET,
+        ANTHROPIC_API_KEY=$_ANTHROPIC_API_KEY,
+        CORS_ALLOWED_ORIGINS=https://claude.ai,https://www.claude.ai
+      - '--set-secrets'
+      - |
+        MCP_API_KEY=mcp-api-key:latest,
+        MCP_JWT_SECRET=mcp-jwt-secret:latest,
+        MCP_OAUTH_CLIENT_SECRET=mcp-oauth-secret:latest,
+        DATABASE_URL=database-url:latest,
+        SESSION_SECRET=session-secret:latest,
+        ANTHROPIC_API_KEY=anthropic-api-key:latest
+
+  # Set up Cloud Run domain mapping for HTTPS
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'beta'
+      - 'run'
+      - 'domain-mappings'
+      - 'create'
+      - '--service'
+      - 'ecode-mcp-server'
+      - '--domain'
+      - 'mcp.ecode-platform.com'
+      - '--region'
+      - 'us-central1'
+    allowFailure: true
+
+# Substitutions (set these in Cloud Build trigger or command line)
+substitutions:
+  _MCP_API_KEY: 'mcp_key_default'  # Override with actual key
+  _MCP_JWT_SECRET: 'jwt_secret_default'  # Override with actual secret
+  _MCP_OAUTH_CLIENT_SECRET: 'oauth_secret_default'  # Override with actual secret
+  _DATABASE_URL: 'postgresql://user:pass@host/db'  # Override with actual URL
+  _SESSION_SECRET: 'session_secret_default'  # Override with actual secret
+  _ANTHROPIC_API_KEY: 'sk-ant-api03-xxx'  # Override with actual key
+
+# Build configuration
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+  
+# Timeout for the entire build
+timeout: '1200s'
