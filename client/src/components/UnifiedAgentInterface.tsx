@@ -122,6 +122,42 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
     }
   }, [projectId]);
 
+  // MCP Server integration
+  const [mcpTools, setMcpTools] = useState<any[]>([]);
+  const [mcpConnected, setMcpConnected] = useState(false);
+  
+  // Load MCP tools on mount
+  useEffect(() => {
+    const loadMCPTools = async () => {
+      try {
+        const response = await fetch('http://localhost:3200/tools');
+        if (response.ok) {
+          const tools = await response.json();
+          setMcpTools(tools);
+          setMcpConnected(true);
+        }
+      } catch (error) {
+        console.error('Failed to connect to MCP server:', error);
+      }
+    };
+    loadMCPTools();
+  }, []);
+
+  // Execute MCP tool
+  const executeMCPTool = async (toolName: string, args: any) => {
+    try {
+      const response = await fetch(`http://localhost:3200/tools/${toolName}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(args),
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to execute MCP tool:', error);
+      return null;
+    }
+  };
+
   // Check for active V2 build
   const { data: activeBuildData } = useQuery({
     queryKey: ['/api/agent-v2/active-build', projectId],

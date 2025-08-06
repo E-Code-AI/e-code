@@ -119,6 +119,7 @@ const LovableImport = lazy(() => import("@/pages/LovableImport"));
 const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
 
 const CodeGeneration = lazy(() => import("@/pages/CodeGeneration"));
+const MCPInterface = lazy(() => import("@/pages/MCPInterface"));
 // Application Pages
 const SolarTechAIChatApp = lazy(() => import("@/pages/SolarTechAIChatApp"));
 const SolarTechCRMApp = lazy(() => import("@/pages/SolarTechCRMApp"));
@@ -178,6 +179,7 @@ function AppContent() {
           <Route path="/ai" component={AI} />
           <Route path="/ai-agent" component={AIAgent} />
           <Route path="/code-generation" component={CodeGeneration} />
+          <Route path="/mcp" component={MCPInterface} />
           <Route path="/press" component={Press} />
           <Route path="/partners" component={Partners} />
           <Route path="/security" component={Security} />
