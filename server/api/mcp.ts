@@ -24,8 +24,13 @@ import {
 
 const router = Router();
 
-// Apply CORS to all MCP routes
-router.use(cors(mcpCorsOptions));
+// Apply simpler CORS for development
+router.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
+}));
 
 // Apply security headers
 router.use(mcpSecurityHeaders());
@@ -175,6 +180,76 @@ router.post("/postgres/query", authenticateMCP, async (req: Request, res: Respon
   } catch (error: any) {
     console.error("[MCP] PostgreSQL query failed:", error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Export a function to get servers data
+export function getMCPServers() {
+  return [
+    {
+      id: 'github',
+      name: 'GitHub MCP',
+      description: 'GitHub integration for repository management',
+      status: process.env.GITHUB_TOKEN ? 'active' : 'inactive',
+      tools: ['github_list_repos', 'github_create_repo', 'github_create_issue', 'github_create_pr']
+    },
+    {
+      id: 'postgres',
+      name: 'PostgreSQL MCP',
+      description: 'Database operations and management',
+      status: process.env.DATABASE_URL ? 'active' : 'inactive',
+      tools: ['postgres_list_tables', 'postgres_get_schema', 'postgres_query', 'postgres_backup']
+    },
+    {
+      id: 'memory',
+      name: 'Memory MCP',
+      description: 'Knowledge graph and conversation history',
+      status: 'active',
+      tools: ['memory_create_node', 'memory_search', 'memory_create_edge', 'memory_save_conversation', 'memory_get_history']
+    },
+    {
+      id: 'slack',
+      name: 'Slack MCP',
+      description: 'Slack messaging and collaboration',
+      status: process.env.SLACK_BOT_TOKEN ? 'active' : 'inactive',
+      tools: ['slack_send_message', 'slack_list_channels', 'slack_list_users', 'slack_search_messages', 'slack_upload_file']
+    },
+    {
+      id: 'google-drive',
+      name: 'Google Drive MCP',
+      description: 'Google Drive file management',
+      status: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) ? 'active' : 'inactive',
+      tools: ['gdrive_list_files', 'gdrive_get_file', 'gdrive_create_file', 'gdrive_update_file', 'gdrive_delete_file', 'gdrive_search_files']
+    },
+    {
+      id: 'figma',
+      name: 'Figma MCP',
+      description: 'Figma design collaboration',
+      status: process.env.FIGMA_API_KEY ? 'active' : 'inactive',
+      tools: ['figma_get_file', 'figma_get_nodes', 'figma_get_images', 'figma_get_team_projects', 'figma_get_project_files', 'figma_get_comments', 'figma_post_comment']
+    }
+  ];
+}
+
+// Get list of all MCP servers and their status
+router.get("/servers", (req: Request, res: Response) => {
+  console.log("[MCP] Getting servers list...");
+  try {
+    const servers = getMCPServers();
+    
+    const response = {
+      servers,
+      totalServers: servers.length,
+      activeServers: servers.filter(s => s.status === 'active').length,
+      totalTools: servers.reduce((acc, s) => acc + s.tools.length, 0)
+    };
+    
+    console.log("[MCP] Sending servers response:", response);
+    res.json(response);
+  } catch (error: any) {
+    console.error("[MCP] Failed to get servers list:", error);
+    console.error("[MCP] Error stack:", error.stack);
+    res.status(500).json({ error: error.message || 'Unknown error occurred' });
   }
 });
 

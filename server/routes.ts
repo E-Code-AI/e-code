@@ -156,7 +156,7 @@ import { deploymentManager as enterpriseDeploymentManager } from "./services/dep
 import { realDeploymentService } from "./deployment/real-deployment-service";
 import * as path from "path";
 import adminRoutes from "./routes/admin";
-import mcpRouter, { initializeMCPServer } from "./api/mcp";
+import mcpRouter, { initializeMCPServer, getMCPServers } from "./api/mcp";
 import OpenAI from 'openai';
 import { performanceMiddleware } from './monitoring/performance';
 import { monitoringRouter } from './monitoring/routes';
@@ -9365,6 +9365,24 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.use(deploymentRoutes);
   
   // MCP (Model Context Protocol) Routes
+  // Add direct MCP servers endpoint to avoid middleware issues
+  app.get("/api/mcp/servers", (req, res) => {
+    console.log("[MCP] Direct servers endpoint called");
+    try {
+      const servers = getMCPServers();
+      const response = {
+        servers,
+        totalServers: servers.length,
+        activeServers: servers.filter(s => s.status === 'active').length,
+        totalTools: servers.reduce((acc, s) => acc + s.tools.length, 0)
+      };
+      res.json(response);
+    } catch (error: any) {
+      console.error("[MCP] Direct servers endpoint error:", error);
+      res.status(500).json({ error: error.message || 'Failed to get servers' });
+    }
+  });
+  
   app.use("/api/mcp", mcpRouter);
   initializeMCPServer(app);
   
