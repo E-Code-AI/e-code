@@ -85,11 +85,19 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   const [newEnvKey, setNewEnvKey] = useState('');
   const [newEnvValue, setNewEnvValue] = useState('');
   const [newEnvSecret, setNewEnvSecret] = useState(false);
+  const [containerStatus, setContainerStatus] = useState<any>(null);
+  const [containerLogs, setContainerLogs] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     loadDeployments();
     loadStats();
+    // Start container status monitoring
+    const interval = setInterval(() => {
+      checkContainerStatus();
+    }, 5000); // Check every 5 seconds
+    
+    return () => clearInterval(interval);
   }, [projectId]);
 
   useEffect(() => {
@@ -136,6 +144,41 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
       console.error('Failed to load stats:', error);
       // Set empty stats on error
       setStats(null);
+    }
+  };
+
+  const checkContainerStatus = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/container/status`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const status = await response.json();
+        setContainerStatus(status);
+        
+        // Update deployment status based on container status
+        if (status.pods && status.pods.length > 0) {
+          const running = status.pods.filter((p: any) => p.status === 'Running').length;
+          const total = status.pods.length;
+          console.log(`Container status: ${running}/${total} pods running`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check container status:', error);
+    }
+  };
+
+  const loadContainerLogs = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/container/logs`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setContainerLogs(data.logs || []);
+      }
+    } catch (error) {
+      console.error('Failed to load container logs:', error);
     }
   };
 
@@ -277,16 +320,24 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
 
   const handleStop = async (deployment: Deployment) => {
     try {
+      // First stop the container
+      const containerResponse = await fetch(`/api/projects/${projectId}/container/stop`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      // Then update deployment status
       const response = await fetch(`/api/deployments/${deployment.id}/stop`, {
         method: 'POST',
         credentials: 'include'
       });
 
-      if (response.ok) {
+      if (response.ok && containerResponse.ok) {
         await loadDeployments();
+        setContainerStatus(null);
         toast({
           title: "Deployment Stopped",
-          description: `Deployment ${deployment.version} has been stopped`,
+          description: `Deployment ${deployment.version} and container have been stopped`,
         });
       }
     } catch (error) {
@@ -381,6 +432,23 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
             </TabsList>
 
             <TabsContent value="overview" className="mt-0">
+              {/* Container Status */}
+              {containerStatus && (
+                <div className="p-4 border-b">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Container Status</Label>
+                    <Badge variant={containerStatus?.deployment?.ready ? "default" : "secondary"}>
+                      {containerStatus?.deployment?.ready ? "Running" : "Stopped"}
+                    </Badge>
+                  </div>
+                  {containerStatus?.deployment?.availableReplicas !== undefined && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {containerStatus.deployment.availableReplicas}/{containerStatus.deployment.replicas} replicas active
+                    </div>
+                  )}
+                </div>
+              )}
+              
               {/* Deployment List */}
               <div className="p-4 border-b">
                 <Label className="text-xs mb-2">Active Deployments</Label>
@@ -505,22 +573,45 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
             </TabsContent>
 
             <TabsContent value="logs" className="mt-0">
-              <ScrollArea className="h-[400px]">
-                <div className="p-4 space-y-1">
-                  {buildLogs.map((log, index) => (
-                    <div key={index} className="flex items-start space-x-2 font-mono text-xs">
-                      <span className="text-muted-foreground">{log.timestamp}</span>
-                      <span className={
-                        log.level === 'error' ? 'text-red-500' :
-                        log.level === 'warning' ? 'text-yellow-500' :
-                        'text-foreground'
-                      }>
-                        {log.message}
-                      </span>
-                    </div>
-                  ))}
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <Label>Container Logs</Label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={loadContainerLogs}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                    Refresh
+                  </Button>
                 </div>
-              </ScrollArea>
+                <ScrollArea className="h-[350px] border rounded-lg">
+                  <div className="p-3 space-y-1">
+                    {containerLogs.length > 0 ? (
+                      containerLogs.map((log, index) => (
+                        <div key={index} className="font-mono text-xs text-foreground">
+                          {log}
+                        </div>
+                      ))
+                    ) : buildLogs.length > 0 ? (
+                      buildLogs.map((log, index) => (
+                        <div key={index} className="flex items-start space-x-2 font-mono text-xs">
+                          <span className="text-muted-foreground">{log.timestamp}</span>
+                          <span className={
+                            log.level === 'error' ? 'text-red-500' :
+                            log.level === 'warning' ? 'text-yellow-500' :
+                            'text-foreground'
+                          }>
+                            {log.message}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-xs text-muted-foreground">No logs available</div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
             </TabsContent>
 
             <TabsContent value="settings" className="mt-0">
