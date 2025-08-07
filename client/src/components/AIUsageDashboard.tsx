@@ -33,11 +33,10 @@ interface AIUsageData {
 interface UserCredits {
   id: number;
   userId: number;
-  planType: string;
-  totalCredits: number;
-  remainingCredits: number;
-  totalUsed: number;
-  billingCycle: string;
+  monthlyCredits: string;
+  remainingCredits: string;
+  extraCredits: string;
+  resetDate: string;
   updatedAt: string;
 }
 
@@ -62,7 +61,13 @@ export function AIUsageDashboard() {
     );
   }
 
-  const creditPercentage = credits ? (credits.remainingCredits / credits.totalCredits) * 100 : 0;
+  // Parse string values from database
+  const monthlyCredits = credits ? parseFloat(credits.monthlyCredits) : 0;
+  const remainingCredits = credits ? parseFloat(credits.remainingCredits) : 0;
+  const extraCredits = credits ? parseFloat(credits.extraCredits) : 0;
+  const totalCredits = monthlyCredits + extraCredits;
+  const totalUsed = totalCredits - remainingCredits;
+  const creditPercentage = totalCredits > 0 ? (remainingCredits / totalCredits) * 100 : 0;
   
   // Prepare chart data
   const chartData = usage?.summary.modelBreakdown 
@@ -91,16 +96,16 @@ export function AIUsageDashboard() {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-2xl font-bold">
-                {credits?.remainingCredits.toFixed(2)} / {credits?.totalCredits.toFixed(2)}
+                {remainingCredits.toFixed(2)} / {totalCredits.toFixed(2)}
               </p>
               <p className="text-sm text-muted-foreground">
                 Credits remaining ({creditPercentage.toFixed(0)}%)
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium">Plan: {credits?.planType}</p>
+              <p className="text-sm font-medium">Plan: Free</p>
               <p className="text-sm text-muted-foreground">
-                {credits?.billingCycle} billing
+                Monthly billing
               </p>
             </div>
           </div>
@@ -108,15 +113,15 @@ export function AIUsageDashboard() {
           <div className="grid grid-cols-3 gap-4 pt-2">
             <div>
               <p className="text-sm text-muted-foreground">Used</p>
-              <p className="font-semibold">{credits?.totalUsed.toFixed(2)}</p>
+              <p className="font-semibold">{totalUsed.toFixed(2)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Remaining</p>
-              <p className="font-semibold">{credits?.remainingCredits.toFixed(2)}</p>
+              <p className="font-semibold">{remainingCredits.toFixed(2)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total</p>
-              <p className="font-semibold">{credits?.totalCredits.toFixed(2)}</p>
+              <p className="font-semibold">{totalCredits.toFixed(2)}</p>
             </div>
           </div>
         </CardContent>

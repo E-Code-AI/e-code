@@ -11,11 +11,10 @@ import {
 interface UserCredits {
   id: number;
   userId: number;
-  planType: string;
-  totalCredits: number;
-  remainingCredits: number;
-  totalUsed: number;
-  billingCycle: string;
+  monthlyCredits: string;
+  remainingCredits: string;
+  extraCredits: string;
+  resetDate: string;
   updatedAt: string;
 }
 
@@ -29,7 +28,13 @@ export function CreditBalance() {
     return null;
   }
 
-  const percentage = (credits.remainingCredits / credits.totalCredits) * 100;
+  // Parse string values from database
+  const monthlyCredits = parseFloat(credits.monthlyCredits);
+  const remainingCredits = parseFloat(credits.remainingCredits);
+  const extraCredits = parseFloat(credits.extraCredits);
+  const totalCredits = monthlyCredits + extraCredits;
+  const totalUsed = totalCredits - remainingCredits;
+  const percentage = totalCredits > 0 ? (remainingCredits / totalCredits) * 100 : 0;
   const isLow = percentage < 20;
   
   return (
@@ -38,7 +43,7 @@ export function CreditBalance() {
         <div className="flex items-center gap-2 cursor-pointer">
           <Zap className={`w-4 h-4 ${isLow ? 'text-destructive' : 'text-primary'}`} />
           <Badge variant={isLow ? 'destructive' : 'secondary'} className="font-mono">
-            {credits.remainingCredits.toFixed(0)} credits
+            {remainingCredits.toFixed(0)} credits
           </Badge>
         </div>
       </HoverCardTrigger>
@@ -46,21 +51,21 @@ export function CreditBalance() {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <h4 className="text-sm font-semibold">AI Credits</h4>
-            <Badge variant="outline">{credits.planType}</Badge>
+            <Badge variant="outline">Free Plan</Badge>
           </div>
           
           <div className="space-y-1">
             <div className="flex justify-between text-sm">
               <span>Used</span>
-              <span className="font-medium">{credits.totalUsed.toFixed(2)}</span>
+              <span className="font-medium">{totalUsed.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Remaining</span>
-              <span className="font-medium">{credits.remainingCredits.toFixed(2)}</span>
+              <span className="font-medium">{remainingCredits.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Total</span>
-              <span className="font-medium">{credits.totalCredits.toFixed(2)}</span>
+              <span className="font-medium">{totalCredits.toFixed(2)}</span>
             </div>
           </div>
           
@@ -68,7 +73,7 @@ export function CreditBalance() {
           
           <p className="text-xs text-muted-foreground">
             {percentage < 10 && "⚠️ Credits running low. "}
-            Credits reset {credits.billingCycle === 'monthly' ? 'monthly' : 'weekly'}.
+            Credits reset monthly.
           </p>
         </div>
       </HoverCardContent>
