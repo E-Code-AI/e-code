@@ -1,0 +1,77 @@
+Get the new external IP
+kubectl get service e-code-platform -n e-code-platform
+
+# Test with curl (replace with your new IP)
+curl http://[NEW-EXTERNAL-IP]/api/monitoring/health
+
+# Check pod is healthy
+kubectl describe pod -n e-code-platform -l app=e-code-platform
+NAME              TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+e-code-platform   LoadBalancer   34.118.225.141   <pending>     80:31498/TCP   15s
+curl: (3) bad range in URL position 9:
+http://[NEW-EXTERNAL-IP]/api/monitoring/health
+        ^
+Name:             e-code-platform-76b44b796b-vvc8r
+Namespace:        e-code-platform
+Priority:         0
+Service Account:  default
+Node:             gke-e-code-cluster-default-pool-5fe08e6f-dcrh/10.132.0.3
+Start Time:       Thu, 07 Aug 2025 17:09:51 +0000
+Labels:           app=e-code-platform
+                  pod-template-hash=76b44b796b
+Annotations:      kubectl.kubernetes.io/restartedAt: 2025-08-07T17:08:36Z
+Status:           Running
+IP:               10.48.0.19
+IPs:
+  IP:           10.48.0.19
+Controlled By:  ReplicaSet/e-code-platform-76b44b796b
+Containers:
+  e-code-platform:
+    Container ID:   containerd://ffd82a53c5dc8e6c9b1254f49c2e519881b66f23d7efbd8c42a10b1e820da13b
+    Image:          gcr.io/votre-projet-ecode/e-code-platform:v4
+    Image ID:       gcr.io/votre-projet-ecode/e-code-platform@sha256:b5173dcd22527bcb05d34009b33054699354f68e681d49ec5d8f117c9c6c5b75
+    Port:           <none>
+    Host Port:      <none>
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Thu, 07 Aug 2025 17:12:18 +0000
+      Finished:     Thu, 07 Aug 2025 17:12:29 +0000
+    Ready:          False
+    Restart Count:  4
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-d27r4 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-d27r4:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                   From               Message
+  ----     ------     ----                  ----               -------
+  Normal   Scheduled  3m28s                 default-scheduler  Successfully assigned e-code-platform/e-code-platform-76b44b796b-vvc8r to gke-e-code-cluster-default-pool-5fe08e6f-dcrh
+  Normal   Pulled     3m25s                 kubelet            Successfully pulled image "gcr.io/votre-projet-ecode/e-code-platform:v4" in 3.673s (3.673s including waiting). Image size: 542901038 bytes.
+  Normal   Pulled     3m9s                  kubelet            Successfully pulled image "gcr.io/votre-projet-ecode/e-code-platform:v4" in 768ms (768ms including waiting). Image size: 542901038 bytes.
+  Normal   Pulled     2m44s                 kubelet            Successfully pulled image "gcr.io/votre-projet-ecode/e-code-platform:v4" in 892ms (892ms including waiting). Image size: 542901038 bytes.
+  Normal   Pulled     2m4s                  kubelet            Successfully pulled image "gcr.io/votre-projet-ecode/e-code-platform:v4" in 957ms (957ms including waiting). Image size: 542901038 bytes.
+  Normal   Pulling    63s (x5 over 3m28s)   kubelet            Pulling image "gcr.io/votre-projet-ecode/e-code-platform:v4"
+  Normal   Created    62s (x5 over 3m25s)   kubelet            Created container: e-code-platform
+  Normal   Started    62s (x5 over 3m25s)   kubelet            Started container e-code-platform
+  Normal   Pulled     62s                   kubelet            Successfully pulled image "gcr.io/votre-projet-ecode/e-code-platform:v4" in 932ms (932ms including waiting). Image size: 542901038 bytes.
+  Warning  BackOff    14s (x11 over 2m57s)  kubelet            Back-off restarting failed container e-code-platform in pod e-code-platform-76b44b796b-vvc8r_e-code-platform(e78f3d75-dfb1-41a0-96c8-6186cc1eb1b7)
