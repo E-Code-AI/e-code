@@ -143,7 +143,7 @@ export const userCredits = pgTable("user_credits", {
   monthlyCredits: decimal("monthly_credits", { precision: 10, scale: 2 }).notNull().default('25.00'),
   remainingCredits: decimal("remaining_credits", { precision: 10, scale: 2 }).notNull().default('25.00'),
   extraCredits: decimal("extra_credits", { precision: 10, scale: 2 }).notNull().default('0.00'),
-  resetDate: timestamp("reset_date").notNull(),
+  resetDate: timestamp("reset_date").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
