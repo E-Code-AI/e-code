@@ -1,33 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code Platform is an advanced AI-powered development platform that streamlines software creation through intelligent, automated deployment and collaboration tools. Its purpose is to provide an integrated development environment that goes beyond existing solutions like Replit, offering enhanced features such as industry-leading GPU computing, advanced monitoring, and comprehensive authentication methods. The platform aims to enable users to launch complete applications with a single prompt, transforming ideas into running code quickly and efficiently.
-
-**Production Domain**: https://e-code.ai (Ready for deployment - August 6, 2025)
-
-## Recent Updates (August 7, 2025)
-- **Kubernetes User Environments**: Implemented isolated Kubernetes deployments for each user, similar to Replit's architecture
-  - Created comprehensive deployment manager at `server/kubernetes/deployment-manager.ts`
-  - Built dedicated Docker image for user environments (`Dockerfile.user-environment`)
-  - Added persistent volume claims for user data storage
-  - Implemented network policies for environment isolation
-  - Added user environment initialization script (`scripts/user-environment-init.sh`)
-  - Storage interface extended with user environment methods
-  - API endpoints created at `/api/kubernetes/environment/*` for environment management
-  - Supports scaling (0-3 replicas), metrics monitoring, and command execution
-- **OpenAI Complete Integration**: Added ALL latest OpenAI models including GPT-4o, GPT-4o-mini, o1-preview, o1-mini with full agentic capabilities
-- **OpenAI Assistants API**: Implemented full OpenAI Assistants API with function calling, code interpreter, and file search capabilities
-- **Vision Support**: Added GPT-4o vision capabilities for image analysis and understanding
-- **Enhanced Billing**: Updated pricing for all OpenAI models with accurate 2025 pricing (GPT-4o: $2.50/1M input, $10/1M output)
-- **Model Selector UI**: Created comprehensive model selection component with capabilities display and pricing information
-- **AI Billing System Complete**: Comprehensive token usage tracking and credit-based billing system for all AI model usage
-- **Claude 3.5 Sonnet Integration**: Fully integrated Claude 3.5 Sonnet (claude-3-5-sonnet-20241022) with complete MCP support
-- **API Endpoints**: Added `/api/openai/*` endpoints for assistants, threads, and model-specific generation
-- **Previous Updates (August 6, 2025)**:
-  - MCP Integration Complete with GitHub, PostgreSQL, and Memory MCP servers
-  - MCP Panels Added with comprehensive UI functionality
-  - API Routes Implemented at `/api/mcp/github/*`, `/api/mcp/postgres/*`, `/api/mcp/memory/*`
-  - Deep UI Integration with MCP panels in project page right sidebar
+E-Code Platform is an advanced AI-powered development platform that streamlines software creation through intelligent, automated deployment and collaboration tools. It aims to provide an integrated development environment with enhanced features like industry-leading GPU computing, advanced monitoring, and comprehensive authentication. The platform enables users to launch complete applications from a single prompt, transforming ideas into running code quickly and efficiently.
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
@@ -39,113 +13,23 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 ## System Architecture
 
 ### Core Services
-- **MCP (Model Context Protocol) Server**: 100% Complete implementation following modelcontextprotocol.io specification with HTTP transport for web compatibility. **FULLY INTEGRATED** into AI Agent System and ALL UI Areas with dedicated panels for GitHub, PostgreSQL, and Memory MCP servers (as of August 6, 2025). **CLAUDE.AI INTEGRATION READY** with OAuth2, JWT, and API key authentication. **6 MCP SERVERS INTEGRATED** with comprehensive UI panels. Provides:
-  - Standalone HTTP server running on port 3200
-  - Full HTTP transport implementation for web compatibility
-  - **Authentication Layer**: OAuth2, JWT tokens, and API key support for Claude.ai Custom Connector
-  - **CORS Configuration**: Configured for claude.ai domain access with security headers
-  - **Cloud Run Deployment**: Automated deployment scripts with HTTPS for production
-  - Filesystem operations (read, write, list, search, watch, move, copy)
-  - Command execution with streaming output support
-  - Database integration with full SQL capabilities
-  - API access with HTTP/GraphQL client functionality
-  - Tool integration with 30+ built-in tools including:
-    * Filesystem tools (fs_read, fs_write, fs_list, fs_delete, fs_mkdir, fs_move, fs_copy, fs_search, fs_watch)
-    * Execution tools (exec_command, exec_spawn, process_kill)
-    * Database tools (db_query, db_transaction)
-    * API tools (api_request, graphql_query)
-    * System tools (system_info, env_get, env_set)
-    * Development tools (git_status, npm_install, docker_build, kube_deploy)
-    * Security tools (crypto_hash, crypto_encrypt, crypto_decrypt)
-    * AI tools (ai_complete with Anthropic Claude integration)
-    * **GitHub MCP Tools** (github_list_repos, github_create_repo, github_create_issue, github_create_pr)
-    * **PostgreSQL MCP Tools** (postgres_list_tables, postgres_get_schema, postgres_query, postgres_backup)
-    * **Memory MCP Tools** (memory_create_node, memory_search, memory_create_edge, memory_save_conversation, memory_get_history)
-  - Resource management with 5 resource types (filesystem, database, environment, processes, git)
-  - System monitoring and resource management
-  - Complete tool execution handlers with fallback implementations
-  - Health check endpoint at /mcp/health
-  - OAuth endpoints at /mcp/oauth/authorize and /mcp/oauth/token
-  - Full compatibility with MCP specification from modelcontextprotocol.io
-  - **Real-time Integration**: All AI agent operations now route through MCP tools instead of direct storage/execution calls
-  - **Complete UI Integration** (August 6, 2025):
-    * ✅ File operations replaced with MCP fs_write, fs_read, fs_mkdir tools
-    * ✅ Command execution replaced with MCP exec_command tool  
-    * ✅ AI agent requests routed through MCP client in backend
-    * ✅ Chat interface connected to MCP with visual status indicators
-    * ✅ All MCP endpoints implemented in agent AI 
-    * ✅ Chat user input processed through MCP with "MCP Powered" badges
-    * ✅ Dedicated UI panels for GitHub, PostgreSQL, and Memory MCP servers
-    * ✅ Full integration of MCP panels into ProjectPage right sidebar
-    * ✅ API routes for all MCP server operations
-  - **Claude.ai Integration** (August 6, 2025):
-    * ✅ OAuth2 authorization flow for secure access
-    * ✅ API key authentication for simple integration
-    * ✅ CORS headers configured for claude.ai domains
-    * ✅ Cloud Run deployment scripts with HTTPS
-    * ✅ JWT token management with refresh tokens
-    * ✅ Rate limiting and security headers
-- **AI Agent System**: Enhanced autonomous code generation with dual AI provider support - both Anthropic Claude (Claude 3.5 Sonnet) and OpenAI (GPT-4o, GPT-4o-mini, o1-preview, o1-mini). **NOW POWERED BY MCP** for all operations including file creation, package installation, and command execution. **FULL BILLING INTEGRATION** tracks all token usage and automatically deducts credits from user accounts. Includes inline code completion, autonomous application building via MCP tools, OpenAI Assistants API with function calling, code interpreter, file search, and vision capabilities for image analysis.
+- **MCP (Model Context Protocol) Server**: Fully implements the modelcontextprotocol.io specification with HTTP transport. It is integrated into the AI Agent System and UI, providing tools for filesystem operations, command execution, database integration, API access, and tool integration (including GitHub, PostgreSQL, and Memory MCP tools). Supports OAuth2, JWT, and API key authentication.
+- **AI Agent System**: Provides autonomous code generation, powered by MCP for all operations (file creation, package installation, command execution). Supports Anthropic Claude (Claude 3.5 Sonnet) and OpenAI models (GPT-4o, GPT-4o-mini, o1-preview, o1-mini), including OpenAI Assistants API with function calling, code interpreter, file search, and vision capabilities. Integrates full billing for token usage.
 - **Real-time Collaboration**: WebSocket-based collaborative editing and live progress streaming for AI agent updates.
-- **Container Orchestration**: Docker-based deployment with Kubernetes support, optimized for Cloud Run. Includes automatic package installation and application startup.
-- **Database Management**: PostgreSQL with Drizzle ORM for advanced hosting, monitoring, and backups. Includes comprehensive credit-based billing with AI usage tracking, type-specific deployment configurations (autoscale, VM, scheduled, static), object storage, and key-value store. **AI Usage Table**: New `ai_usage_records` table tracks all AI model usage with token counts, costs, and billing metadata.
+- **Container Orchestration**: Docker-based deployment with Kubernetes support, optimized for Cloud Run. Provides isolated user environments, automatic package installation, and application startup.
+- **Database Management**: PostgreSQL with Drizzle ORM for advanced hosting, monitoring, backups, and comprehensive credit-based billing with AI usage tracking.
 - **Security Services**: Role-based permissions, audit logs, secret management, advanced authentication (7 OAuth providers, hardware security key support, session management, IP allowlisting), and secure session management.
 - **Education Platform**: LMS integration with auto-grading and progress tracking.
-- **Analytics & Monitoring**: Comprehensive production monitoring system for Fortune 500 standards including:
-  - Real-time performance tracking with automatic error handling
-  - Client-side monitoring for user analytics and error tracking
-  - Server-side monitoring with APM integration
-  - Health checks at `/api/monitoring/health`
-  - Event tracking endpoint at `/api/monitoring/event`
-  - Database tables for monitoring events, performance metrics, error logs, and API usage
-  - Automatic session replay and user behavior analytics
-  - Network monitoring with retry logic
-  - Alert thresholds and anomaly detection
+- **Analytics & Monitoring**: Comprehensive production monitoring system including real-time performance tracking, client-side monitoring, server-side monitoring (APM), health checks, event tracking, and automatic session replay.
 
-### Production Hardening (Added August 5, 2025)
-- **Redis Caching Service**: Fortune 500-grade caching with Redis/ioredis
-  - Automatic failover and reconnection strategies
-  - Cache patterns: remember, invalidation, rate limiting
-  - Session storage with TTL management
-  - Health monitoring and graceful degradation
-- **CDN Optimization Service**: Multi-provider CDN support
-  - Cloudflare, CloudFront, and Fastly integration ready
-  - Static asset optimization with 1-year cache headers
-  - Dynamic content caching strategies
-  - Edge location routing and performance reporting
-  - Security headers and mobile optimization
-- **Rate Limiting Infrastructure**: Multi-tier protection
-  - Redis-backed distributed rate limiting
-  - Different limits for auth (5/15min), API (100/min), static (500/min)
-  - Cost-based rate limiting for expensive operations
-  - Dynamic tier-based limits (free/pro/enterprise)
-  - IP whitelisting/blacklisting support
-- **Security Middleware Suite**: Comprehensive protection
-  - Helmet.js integration with CSP configuration
-  - XSS, SQL injection, and CSRF protection
-  - Input sanitization and validation
-  - File upload security with MIME type validation
-  - API key validation and security monitoring
-  - IP-based access control for admin routes
-- **Database Connection Pooling**: Enterprise-grade optimization
-  - Configurable connection pools (min: 5, max: 20)
-  - Automatic connection health monitoring
-  - Query performance tracking and slow query alerts
-  - Read replica support with load balancing
-  - Transaction support with automatic rollback
-  - Graceful shutdown and connection cleanup
-- **Performance Monitoring Service**: Real-time insights
-  - Request timing middleware with automatic alerts
-  - System metrics: CPU, memory, event loop lag
-  - Endpoint performance tracking
-  - Automatic slow request detection (>1s threshold)
-  - Health status reporting and metrics aggregation
-- **Comprehensive Testing Infrastructure**: Production-ready testing
-  - Test database with automatic setup/teardown
-  - Test runner with suite management
-  - Security, performance, and integration test suites
-  - Mock service configuration for external dependencies
-  - Retry mechanisms and timeout handling
+### Production Hardening
+- **Redis Caching Service**: Fortune 500-grade caching with automatic failover, various cache patterns, and session storage.
+- **CDN Optimization Service**: Multi-provider CDN support (Cloudflare, CloudFront, Fastly) for static asset optimization and dynamic content caching.
+- **Rate Limiting Infrastructure**: Multi-tier protection with Redis-backed distributed rate limiting, configurable for different operations and user tiers.
+- **Security Middleware Suite**: Comprehensive protection via Helmet.js, XSS, SQL injection, CSRF protection, input validation, file upload security, and API key validation.
+- **Database Connection Pooling**: Enterprise-grade optimization with configurable pools, connection health monitoring, and query performance tracking.
+- **Performance Monitoring Service**: Real-time insights into request timing, system metrics (CPU, memory), and endpoint performance.
+- **Comprehensive Testing Infrastructure**: Production-ready testing including security, performance, and integration test suites.
 
 ### Technology Stack
 - **Frontend**: React.js with TypeScript, Tailwind CSS, shadcn/ui
@@ -153,27 +37,29 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 - **Deployment**: Cloud Run ready with Nix package management
 
 ### UI/UX Decisions
-- Cleaned up the user interface by removing unnecessary pages and focusing on core functionalities.
-- Implemented real, functional project templates (e.g., Next.js Blog, Express API, React Dashboard) with complete file structures ready to run.
-- Enhanced UI with a 4-tab layout for code generation preview (Files, Preview, Features, Deploy).
-- Icon transformations from string names to React components.
+- Focus on core functionalities with a streamlined user interface.
+- Includes functional project templates (e.g., Next.js Blog, Express API, React Dashboard).
+- Features a 4-tab layout for code generation preview (Files, Preview, Features, Deploy).
 
 ### Technical Implementations
-- **Routing**: Robust Replit-style slug routing for projects (`/@username/projectslug`) with full authentication and access control (Fixed August 6, 2025). Consolidated duplicate route definitions and fixed parameter mapping for proper project navigation.
-- **Performance**: Compression middleware, code splitting, caching, build optimization utilities, and Docker optimization for smaller image sizes.
-- **Security**: Replaced unsafe `eval()` usage with `Function` constructor, CSP headers, input validation.
-- **Deployment**: Dynamic port configuration using `process.env.PORT` for Cloud Run compatibility.
+- **Routing**: Robust Replit-style slug routing for projects (`/@username/projectslug`) with full authentication and access control.
+- **Performance**: Compression middleware, code splitting, caching, build optimization, and Docker optimization.
+- **Security**: Replaced unsafe `eval()` usage, CSP headers, and input validation.
+- **Deployment**: Dynamic port configuration for Cloud Run compatibility.
 - **Frontend Functionality**: Prioritizing frontend implementation where possible.
 
 ## External Dependencies
-- **AI Integration**: Anthropic Claude API (specifically Claude 3.5 Sonnet and Claude 4 Sonnet)
+- **AI Integration**: Anthropic Claude API (Claude 3.5 Sonnet, Claude 4 Sonnet), OpenAI API (GPT-4o, GPT-4o-mini, o1-preview, o1-mini), Together AI, Replicate, Hugging Face, Groq, Anyscale.
 - **Deployment Platform**: Google Cloud Run
-- **Authentication**: Passport.js (for session management and integration with 7 OAuth providers: GitHub, Google, GitLab, Bitbucket, Discord, Slack, Azure AD)
+- **Authentication**: Passport.js (for GitHub, Google, GitLab, Bitbucket, Discord, Slack, Azure AD)
 - **Real-time Communication**: WebSockets
 - **Database**: PostgreSQL
 - **Frontend Libraries**: React.js, Tailwind CSS, shadcn/ui
 - **Backend Framework**: Express.js
 - **ORM**: Drizzle ORM
-- **Editor**: Monaco Editor (for inline AI code completion)
-- **Charting**: Chart.js (for React Dashboard template)
+- **Editor**: Monaco Editor
+- **Charting**: Chart.js
 - **Containerization**: Docker
+- **Caching**: Redis/ioredis
+- **CDNs**: Cloudflare, CloudFront, Fastly
+```

@@ -31,6 +31,7 @@ import { memoryMCP } from './servers/memory-mcp';
 import { slackMCP } from './servers/slack-mcp';
 import { googleDriveMCP } from './servers/google-drive-mcp';
 import { figmaMCP } from './servers/figma-mcp';
+import { openSourceModelsProvider, OPENSOURCE_MODELS } from '../ai/opensource-models-provider';
 
 const execAsync = promisify(exec);
 
@@ -1268,8 +1269,52 @@ export default class MCPServer {
   private async handleAiComplete(args: any) {
     const { prompt, model = "claude-3-5-sonnet-20241022", temperature = 0.7, maxTokens = 2048, userId } = args;
     
-    // Use Anthropic SDK if available
-    if (process.env.ANTHROPIC_API_KEY) {
+    // Check if this is an open-source model
+    const isOpenSourceModel = Object.keys(OPENSOURCE_MODELS).includes(model);
+    
+    if (isOpenSourceModel) {
+      // Use open-source models provider
+      try {
+        const messages = [{ role: "user", content: prompt }];
+        const response = await openSourceModelsProvider.generateChat(messages, {
+          model,
+          temperature,
+          max_tokens: maxTokens
+        });
+        
+        // Track usage for billing if userId provided
+        if (userId) {
+          const modelConfig = OPENSOURCE_MODELS[model as keyof typeof OPENSOURCE_MODELS];
+          const { aiBillingService } = await import('../services/ai-billing-service');
+          
+          // Estimate tokens (rough approximation)
+          const inputTokens = Math.ceil(prompt.length / 4);
+          const outputTokens = Math.ceil(response.length / 4);
+          
+          await aiBillingService.trackAIUsage(userId, {
+            model: modelConfig.name,
+            provider: modelConfig.provider,
+            inputTokens,
+            outputTokens,
+            totalTokens: inputTokens + outputTokens,
+            prompt: prompt.substring(0, 200),
+            completion: response.substring(0, 200),
+            purpose: 'mcp-completion',
+            timestamp: new Date()
+          });
+        }
+        
+        return {
+          content: [{ type: "text", text: response }],
+        };
+      } catch (error: any) {
+        console.error(`Open-source model error (${model}):`, error);
+        throw new Error(`Failed to use ${model}: ${error.message}`);
+      }
+    }
+    
+    // Use Anthropic SDK for Claude models
+    if (process.env.ANTHROPIC_API_KEY && model.includes('claude')) {
       const { Anthropic } = await import("@anthropic-ai/sdk");
       const anthropic = new Anthropic({
         apiKey: process.env.ANTHROPIC_API_KEY,
@@ -1303,7 +1348,42 @@ export default class MCPServer {
       };
     }
     
-    throw new Error("AI completion requires ANTHROPIC_API_KEY");
+    // Use OpenAI for GPT models
+    if (process.env.OPENAI_API_KEY && (model.includes('gpt') || model.includes('o1'))) {
+      const { default: OpenAI } = await import("openai");
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+      
+      const response = await openai.chat.completions.create({
+        model,
+        max_tokens: maxTokens,
+        temperature,
+        messages: [{ role: "user", content: prompt }],
+      });
+      
+      // Track usage for billing if userId provided
+      if (userId && response.usage) {
+        const { aiBillingService } = await import('../services/ai-billing-service');
+        await aiBillingService.trackAIUsage(userId, {
+          model,
+          provider: 'OpenAI',
+          inputTokens: response.usage.prompt_tokens || 0,
+          outputTokens: response.usage.completion_tokens || 0,
+          totalTokens: response.usage.total_tokens || 0,
+          prompt: prompt.substring(0, 200),
+          completion: response.choices[0].message.content?.substring(0, 200) || '',
+          purpose: 'mcp-completion',
+          timestamp: new Date()
+        });
+      }
+      
+      return {
+        content: [{ type: "text", text: response.choices[0].message.content || '' }],
+      };
+    }
+    
+    throw new Error("AI completion requires API keys (ANTHROPIC_API_KEY, OPENAI_API_KEY, or open-source model providers)");
   }
   
   private async handleAiEmbed(args: any) {
