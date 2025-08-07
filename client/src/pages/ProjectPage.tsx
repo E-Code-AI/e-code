@@ -136,7 +136,7 @@ const ProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: projectSlug ? ['/api/users', paramsSlug?.username, 'projects', paramsSlug?.projectname] : ['/api/projects', projectId],
+    queryKey: projectSlug ? ['project-by-slug', projectSlug] : ['project-by-id', projectId],
     queryFn: async () => {
       if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
       
@@ -152,7 +152,8 @@ const ProjectPage = () => {
         }
         throw new Error(error || 'Failed to fetch project');
       }
-      return res.json();
+      const projectData = res.json();
+      return projectData;
     },
     enabled: !!projectId || !!projectSlug,
     retry: (failureCount, error) => {
@@ -170,11 +171,12 @@ const ProjectPage = () => {
     isLoading: filesLoading, 
     error: filesError 
   } = useQuery<File[]>({
-    queryKey: ['/api/files', projectId],
+    queryKey: ['/api/projects', project?.id, 'files'],
     queryFn: async () => {
-      if (!projectId) return Promise.reject(new Error('No project ID provided'));
+      const actualProjectId = project?.id || projectId;
+      if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('GET', `/api/files/${projectId}`);
+      const res = await apiRequest('GET', `/api/projects/${actualProjectId}/files`);
       if (!res.ok) {
         const error = await res.text();
         if (res.status === 401) {
@@ -184,7 +186,7 @@ const ProjectPage = () => {
       }
       return res.json();
     },
-    enabled: !!projectId,
+    enabled: !!(project?.id || projectId),
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error.message.includes('log in')) {

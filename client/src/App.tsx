@@ -335,7 +335,7 @@ function AppContent() {
               <ProjectPage />
             </ReplitLayout>
           )} />
-          
+
           {/* SolarTech Applications with specific Replit-style URLs (must come before generic patterns) */}
           <ProtectedRoute path="/@admin/solartech-ai-chat" component={() => (
             <ApplicationIDEWrapper
@@ -361,14 +361,14 @@ function AppContent() {
               appComponent={<SolarTechStoreApp />}
             />
           )} />
-          
+
           {/* Generic Replit-style project routes */}
           <ProtectedRoute path="/@:username/:projectname" component={() => (
             <ReplitLayout showSidebar={true}>
               <ProjectPage />
             </ReplitLayout>
           )} />
-          
+
           {/* User profile route */}
           <Route path="/@:username" component={() => (
             <ReplitLayout showSidebar={false}>
