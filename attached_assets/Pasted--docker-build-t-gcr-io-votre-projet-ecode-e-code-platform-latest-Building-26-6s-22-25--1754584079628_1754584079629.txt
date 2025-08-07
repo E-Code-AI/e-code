@@ -1,0 +1,153 @@
+ docker build -t gcr.io/votre-projet-ecode/e-code-platform:latest .
+[+] Building 26.6s (22/25)                                                                                docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 1.31kB                                                                              0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   1.4s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 2B                                                                                     0.0s
+ => [internal] load build context                                                                                  24.5s
+ => => transferring context: 1.48GB                                                                                24.3s
+ => [builder 1/9] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb  4.6s
+ => => resolve docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca  0.0s
+ => => sha256:1e5a4c89cee5c0826c540ab06d4b6b491c96eda01837f430bd47f0d26702d6e3 1.26MB / 1.26MB                      0.4s
+ => => sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e 7.67kB / 7.67kB                      0.0s
+ => => sha256:929b04d7c782f04f615cf785488fed452b6569f87c73ff666ad553a7554f0006 1.72kB / 1.72kB                      0.0s
+ => => sha256:ee77c6cd7c1886ecc802ad6cedef3a8ec1ea27d1fb96162bf03dd3710839b8da 6.18kB / 6.18kB                      0.0s
+ => => sha256:f18232174bc91741fdf3da96d85011092101a032a93a388b79e99e69c2d5c870 3.64MB / 3.64MB                      0.3s
+ => => sha256:dd71dde834b5c203d162902e6b8994cb2309ae049a0eabc4efea161b2b5a3d0e 40.01MB / 40.01MB                    1.1s
+ => => extracting sha256:f18232174bc91741fdf3da96d85011092101a032a93a388b79e99e69c2d5c870                           0.3s
+ => => sha256:25ff2da83641908f65c3a74d80409d6b1b62ccfaab220b9ea70b80df5a2e0549 446B / 446B                          0.7s
+ => => extracting sha256:dd71dde834b5c203d162902e6b8994cb2309ae049a0eabc4efea161b2b5a3d0e                           3.0s
+ => => extracting sha256:1e5a4c89cee5c0826c540ab06d4b6b491c96eda01837f430bd47f0d26702d6e3                           0.1s
+ => => extracting sha256:25ff2da83641908f65c3a74d80409d6b1b62ccfaab220b9ea70b80df5a2e0549                           0.0s
+ => [builder 2/9] RUN apk add --no-cache python3 make g++ git                                                       9.8s
+ => [stage-1  2/13] RUN apk add --no-cache git                                                                      6.3s
+ => [stage-1  3/13] WORKDIR /app                                                                                    3.6s
+ => [builder 3/9] WORKDIR /app                                                                                      0.2s
+ => CACHED [builder 4/9] COPY package*.json ./                                                                      0.0s 
+ => CACHED [builder 5/9] COPY tsconfig*.json ./                                                                     0.0s 
+ => ERROR [builder 6/9] COPY drizzle.config.ts ./                                                                   0.0s 
+ => CACHED [stage-1  4/13] COPY package*.json ./                                                                    0.0s 
+ => CACHED [stage-1  5/13] RUN npm ci --only=production                                                             0.0s 
+ => CACHED [builder 7/9] RUN npm ci                                                                                 0.0s 
+ => CACHED [builder 8/9] COPY . .                                                                                   0.0s 
+ => CACHED [builder 9/9] RUN npm run build                                                                          0.0s 
+ => CACHED [stage-1  6/13] COPY --from=builder /app/dist ./dist                                                     0.0s 
+ => CACHED [stage-1  7/13] COPY --from=builder /app/client/dist ./client/dist                                       0.0s 
+ => ERROR [stage-1  8/13] COPY shared ./shared                                                                      0.0s
+ => ERROR [stage-1  9/13] COPY theme.json ./                                                                        0.0s
+ => ERROR [stage-1 10/13] COPY deployment.config.ts ./                                                              0.0s
+------
+ > [builder 6/9] COPY drizzle.config.ts ./:
+------
+------
+ > [stage-1  8/13] COPY shared ./shared:
+------
+------
+ > [stage-1  9/13] COPY theme.json ./:
+------
+------
+ > [stage-1 10/13] COPY deployment.config.ts ./:
+------
+Dockerfile:31
+--------------------
+  29 |     COPY shared ./shared
+  30 |     COPY theme.json ./
+  31 | >>> COPY deployment.config.ts ./
+  32 |     # Create logs directory
+  33 |     RUN mkdir -p logs
+--------------------
+ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref 254e626b-f70d-4b46-86c2-2315d0b4c6bc::m2ekxn2knxcwf1xs9c0nv1qyr: "/deployment.config.ts": not found
+simita_invest@cloudshell:~ (votre-projet-ecode)$ cd ~/e-code
+simita_invest@cloudshell:~/e-code (votre-projet-ecode)$ cat > Dockerfile << 'EOF'
+# E-Code Platform Production Dockerfile
+FROM node:18-alpine AS builder
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ git
+WORKDIR /app
+# Copy package files
+COPY package*.json ./
+COPY tsconfig*.json ./
+COPY drizzle.config.ts ./
+# Install dependencies
+RUN npm ci
+# Copy source code
+COPY . .
+# Build the application
+RUN npm run build
+# Production stage
+FROM node:18-alpine
+# Install production dependencies
+RUN apk add --no-cache git
+WORKDIR /app
+# Copy package files
+COPY package*.json ./
+# Install production dependencies only
+RUN npm ci --only=production
+# Copy built application
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/client/dist ./client/dist
+# Copy necessary files
+COPY shared ./shared
+COPY theme.json ./
+COPY deployment.config.ts ./
+# Create logs directory
+RUN mkdir -p logs
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+USER nodejs
+# Expose port (internal port that the app runs on)
+EXPOSE 5000
+EOF ["node", "dist/server/index.js"]http://localhost:5000/api/monitoring/health', (res) => process.exit(res.statusCode ==
+simita_invest@cloudshell:~/e-code (votre-projet-ecode)$ ls -la Dockerfile
+-rw-rw-r-- 1 simita_invest simita_invest 1270 Aug  7 16:26 Dockerfile
+simita_invest@cloudshell:~/e-code (votre-projet-ecode)$ docker build -t gcr.io/votre-projet-ecode/e-code-platform:latest .
+[+] Building 66.7s (22/25)                                                                                docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 1.31kB                                                                              0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   0.4s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 2B                                                                                     0.0s
+ => [internal] load build context                                                                                  62.9s
+ => => transferring context: 1.11GB                                                                                62.7s
+ => [builder 1/9] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb  0.0s
+ => CACHED [builder 2/9] RUN apk add --no-cache python3 make g++ git                                                0.0s
+ => CACHED [builder 3/9] WORKDIR /app                                                                               0.0s
+ => CACHED [stage-1  2/13] RUN apk add --no-cache git                                                               0.0s
+ => CACHED [stage-1  3/13] WORKDIR /app                                                                             0.0s
+ => CANCELED [builder 4/9] COPY package*.json ./                                                                    3.3s
+ => CACHED [builder 5/9] COPY tsconfig*.json ./                                                                     0.0s
+ => ERROR [builder 6/9] COPY drizzle.config.ts ./                                                                   0.0s
+ => CACHED [stage-1  4/13] COPY package*.json ./                                                                    0.0s
+ => CACHED [stage-1  5/13] RUN npm ci --only=production                                                             0.0s
+ => CACHED [builder 7/9] RUN npm ci                                                                                 0.0s
+ => CACHED [builder 8/9] COPY . .                                                                                   0.0s
+ => CACHED [builder 9/9] RUN npm run build                                                                          0.0s
+ => CACHED [stage-1  6/13] COPY --from=builder /app/dist ./dist                                                     0.0s
+ => CACHED [stage-1  7/13] COPY --from=builder /app/client/dist ./client/dist                                       0.0s
+ => ERROR [stage-1  8/13] COPY shared ./shared                                                                      0.0s
+ => ERROR [stage-1  9/13] COPY theme.json ./                                                                        0.0s
+ => ERROR [stage-1 10/13] COPY deployment.config.ts ./                                                              0.0s
+------
+ > [builder 6/9] COPY drizzle.config.ts ./:
+------
+------
+ > [stage-1  8/13] COPY shared ./shared:
+------
+------
+ > [stage-1  9/13] COPY theme.json ./:
+------
+------
+ > [stage-1 10/13] COPY deployment.config.ts ./:
+------
+Dockerfile:31
+--------------------
+  29 |     COPY shared ./shared
+  30 |     COPY theme.json ./
+  31 | >>> COPY deployment.config.ts ./
+  32 |     # Create logs directory
+  33 |     RUN mkdir -p logs
+--------------------
+ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref 254e626b-f70d-4b46-86c2-2315d0b4c6bc::p00wxwsbegj6u58mysbd0avm7: "/deployment.config.ts": not found
+simita_invest@cloudshell:
