@@ -5,11 +5,17 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 
 **Production Domain**: https://e-code.ai (Ready for deployment - August 6, 2025)
 
-## Recent Updates (August 6, 2025)
-- **MCP Integration Complete**: Fully integrated GitHub, PostgreSQL, and Memory MCP servers into the project UI
-- **MCP Panels Added**: Created dedicated UI panels for each critical MCP server with comprehensive functionality
-- **API Routes Implemented**: Added specific API endpoints for MCP server operations at `/api/mcp/github/*`, `/api/mcp/postgres/*`, `/api/mcp/memory/*`
-- **Deep UI Integration**: MCP panels now accessible directly from the project page right sidebar
+## Recent Updates (August 7, 2025)
+- **AI Billing System Complete**: Implemented comprehensive token usage tracking and credit-based billing system for all AI model usage
+- **Claude 3.5 Sonnet Integration**: Fully integrated Claude 3.5 Sonnet (claude-3-5-sonnet-20241022) as the primary AI model with complete MCP support
+- **Usage Tracking Database**: Added `ai_usage_records` table to track detailed AI usage, costs, and billing metadata
+- **Billing Service**: Created `AIBillingService` that automatically tracks token usage and deducts credits for all AI operations
+- **API Endpoints**: Added `/api/ai/usage`, `/api/ai/models/pricing`, and `/api/user/credits` for monitoring AI usage and costs
+- **Previous Updates (August 6, 2025)**:
+  - MCP Integration Complete with GitHub, PostgreSQL, and Memory MCP servers
+  - MCP Panels Added with comprehensive UI functionality
+  - API Routes Implemented at `/api/mcp/github/*`, `/api/mcp/postgres/*`, `/api/mcp/memory/*`
+  - Deep UI Integration with MCP panels in project page right sidebar
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
@@ -67,10 +73,10 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
     * ✅ Cloud Run deployment scripts with HTTPS
     * ✅ JWT token management with refresh tokens
     * ✅ Rate limiting and security headers
-- **AI Agent System**: Enhanced autonomous code generation with Anthropic Claude integration (currently Claude 3.5 Sonnet, with support for Claude 4 Sonnet agentic coding tools). **NOW POWERED BY MCP** for all operations including file creation, package installation, and command execution. This includes inline code completion and autonomous application building via MCP tools.
+- **AI Agent System**: Enhanced autonomous code generation with Anthropic Claude integration (using Claude 3.5 Sonnet - model ID: claude-3-5-sonnet-20241022). **NOW POWERED BY MCP** for all operations including file creation, package installation, and command execution. **FULL BILLING INTEGRATION** tracks all token usage and automatically deducts credits from user accounts. Includes inline code completion and autonomous application building via MCP tools.
 - **Real-time Collaboration**: WebSocket-based collaborative editing and live progress streaming for AI agent updates.
 - **Container Orchestration**: Docker-based deployment with Kubernetes support, optimized for Cloud Run. Includes automatic package installation and application startup.
-- **Database Management**: PostgreSQL with Drizzle ORM for advanced hosting, monitoring, and backups. Includes comprehensive credit-based billing, type-specific deployment configurations (autoscale, VM, scheduled, static), object storage, and key-value store.
+- **Database Management**: PostgreSQL with Drizzle ORM for advanced hosting, monitoring, and backups. Includes comprehensive credit-based billing with AI usage tracking, type-specific deployment configurations (autoscale, VM, scheduled, static), object storage, and key-value store. **AI Usage Table**: New `ai_usage_records` table tracks all AI model usage with token counts, costs, and billing metadata.
 - **Security Services**: Role-based permissions, audit logs, secret management, advanced authentication (7 OAuth providers, hardware security key support, session management, IP allowlisting), and secure session management.
 - **Education Platform**: LMS integration with auto-grading and progress tracking.
 - **Analytics & Monitoring**: Comprehensive production monitoring system for Fortune 500 standards including:

@@ -2,14 +2,15 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { codeAnalyzer } from './code-analyzer';
 import { createLogger } from '../utils/logger';
+import { aiBillingService } from '../services/ai-billing-service';
 
 const logger = createLogger('ai-provider');
 
 export interface AIProvider {
   name: string;
-  generateCompletion(prompt: string, systemPrompt: string, maxTokens?: number, temperature?: number): Promise<string>;
-  generateChat(messages: ChatMessage[], maxTokens?: number, temperature?: number): Promise<string>;
-  generateCodeWithUnderstanding(code: string, language: string, instruction: string): Promise<string>;
+  generateCompletion(prompt: string, systemPrompt: string, maxTokens?: number, temperature?: number, userId?: number): Promise<string>;
+  generateChat(messages: ChatMessage[], maxTokens?: number, temperature?: number, userId?: number): Promise<string>;
+  generateCodeWithUnderstanding(code: string, language: string, instruction: string, userId?: number): Promise<string>;
   analyzeCode(code: string, language: string): Promise<any>;
   isAvailable(): boolean;
 }
@@ -30,7 +31,7 @@ export class OpenAIProvider implements AIProvider {
     });
   }
 
-  async generateCompletion(prompt: string, systemPrompt: string, maxTokens = 1024, temperature = 0.2): Promise<string> {
+  async generateCompletion(prompt: string, systemPrompt: string, maxTokens = 1024, temperature = 0.2, userId?: number): Promise<string> {
     const completion = await this.client.chat.completions.create({
       model: this.model,
       messages: [
@@ -41,10 +42,27 @@ export class OpenAIProvider implements AIProvider {
       temperature,
     });
 
-    return completion.choices[0].message.content?.trim() || '';
+    const result = completion.choices[0].message.content?.trim() || '';
+    
+    // Track usage for billing if userId provided
+    if (userId && completion.usage) {
+      await aiBillingService.trackAIUsage(userId, {
+        model: this.model,
+        provider: 'OpenAI',
+        inputTokens: completion.usage.prompt_tokens || 0,
+        outputTokens: completion.usage.completion_tokens || 0,
+        totalTokens: completion.usage.total_tokens || 0,
+        prompt: prompt.substring(0, 200),
+        completion: result.substring(0, 200),
+        purpose: 'completion',
+        timestamp: new Date()
+      });
+    }
+
+    return result;
   }
 
-  async generateChat(messages: ChatMessage[], maxTokens = 1024, temperature = 0.5): Promise<string> {
+  async generateChat(messages: ChatMessage[], maxTokens = 1024, temperature = 0.5, userId?: number): Promise<string> {
     const completion = await this.client.chat.completions.create({
       model: this.model,
       messages: messages as any,
@@ -52,14 +70,31 @@ export class OpenAIProvider implements AIProvider {
       temperature,
     });
 
-    return completion.choices[0].message.content?.trim() || '';
+    const result = completion.choices[0].message.content?.trim() || '';
+    
+    // Track usage for billing if userId provided
+    if (userId && completion.usage) {
+      await aiBillingService.trackAIUsage(userId, {
+        model: this.model,
+        provider: 'OpenAI',
+        inputTokens: completion.usage.prompt_tokens || 0,
+        outputTokens: completion.usage.completion_tokens || 0,
+        totalTokens: completion.usage.total_tokens || 0,
+        prompt: messages[messages.length - 1]?.content.substring(0, 200),
+        completion: result.substring(0, 200),
+        purpose: 'chat',
+        timestamp: new Date()
+      });
+    }
+
+    return result;
   }
 
   isAvailable(): boolean {
     return !!process.env.OPENAI_API_KEY;
   }
   
-  async generateCodeWithUnderstanding(code: string, language: string, instruction: string): Promise<string> {
+  async generateCodeWithUnderstanding(code: string, language: string, instruction: string, userId?: number): Promise<string> {
     // Analyze the code using our sophisticated code analyzer
     const context = await codeAnalyzer.analyzeCode(code, language);
     
@@ -102,8 +137,8 @@ Generate the requested code following the existing code style and patterns.`;
 export class AnthropicProvider implements AIProvider {
   name = 'Claude';
   private client: Anthropic;
-  // Use the newest Anthropic model
-  private model = 'claude-sonnet-4-20250514'; // E-Code uses the latest Claude 4 Sonnet model
+  // Use the newest Anthropic model - Claude 3.5 Sonnet (latest available)
+  private model = 'claude-3-5-sonnet-20241022'; // Latest Claude 3.5 Sonnet model with enhanced capabilities
 
   constructor(apiKey?: string) {
     this.client = new Anthropic({
@@ -111,7 +146,7 @@ export class AnthropicProvider implements AIProvider {
     });
   }
 
-  async generateCompletion(prompt: string, systemPrompt: string, maxTokens = 1024, temperature = 0.2): Promise<string> {
+  async generateCompletion(prompt: string, systemPrompt: string, maxTokens = 1024, temperature = 0.2, userId?: number): Promise<string> {
     const message = await this.client.messages.create({
       model: this.model,
       system: systemPrompt,
@@ -122,10 +157,27 @@ export class AnthropicProvider implements AIProvider {
 
     // Extract text from Anthropic's response format
     const content = message.content[0];
-    return content.type === 'text' ? content.text.trim() : '';
+    const result = content.type === 'text' ? content.text.trim() : '';
+    
+    // Track usage for billing if userId provided
+    if (userId && message.usage) {
+      await aiBillingService.trackAIUsage(userId, {
+        model: this.model,
+        provider: 'Anthropic',
+        inputTokens: message.usage.input_tokens || 0,
+        outputTokens: message.usage.output_tokens || 0,
+        totalTokens: (message.usage.input_tokens || 0) + (message.usage.output_tokens || 0),
+        prompt: prompt.substring(0, 200),
+        completion: result.substring(0, 200),
+        purpose: 'completion',
+        timestamp: new Date()
+      });
+    }
+    
+    return result;
   }
 
-  async generateChat(messages: ChatMessage[], maxTokens = 1024, temperature = 0.5): Promise<string> {
+  async generateChat(messages: ChatMessage[], maxTokens = 1024, temperature = 0.5, userId?: number): Promise<string> {
     // Extract system message and convert to Anthropic format
     const systemMessage = messages.find(m => m.role === 'system');
     const userMessages = messages.filter(m => m.role !== 'system');
@@ -142,14 +194,31 @@ export class AnthropicProvider implements AIProvider {
     });
 
     const content = message.content[0];
-    return content.type === 'text' ? content.text.trim() : '';
+    const result = content.type === 'text' ? content.text.trim() : '';
+    
+    // Track usage for billing if userId provided
+    if (userId && message.usage) {
+      await aiBillingService.trackAIUsage(userId, {
+        model: this.model,
+        provider: 'Anthropic',
+        inputTokens: message.usage.input_tokens || 0,
+        outputTokens: message.usage.output_tokens || 0,
+        totalTokens: (message.usage.input_tokens || 0) + (message.usage.output_tokens || 0),
+        prompt: messages[messages.length - 1]?.content.substring(0, 200),
+        completion: result.substring(0, 200),
+        purpose: 'chat',
+        timestamp: new Date()
+      });
+    }
+    
+    return result;
   }
 
   isAvailable(): boolean {
     return !!process.env.ANTHROPIC_API_KEY;
   }
   
-  async generateCodeWithUnderstanding(code: string, language: string, instruction: string): Promise<string> {
+  async generateCodeWithUnderstanding(code: string, language: string, instruction: string, userId?: number): Promise<string> {
     // Analyze code using sophisticated analyzer
     const context = await codeAnalyzer.analyzeCode(code, language);
     
@@ -217,13 +286,13 @@ export class ECodeModelProvider implements AIProvider {
     }
   }
 
-  async generateCompletion(prompt: string, systemPrompt: string, maxTokens = 1024, temperature = 0.2): Promise<string> {
+  async generateCompletion(prompt: string, systemPrompt: string, maxTokens = 1024, temperature = 0.2, userId?: number): Promise<string> {
     // E-Code models use enhanced prompts for better performance
     const enhancedSystemPrompt = `${systemPrompt}\n\nYou are ${this.name}, an AI assistant fine-tuned by E-Code for superior performance in software development tasks.`;
-    return this.baseProvider.generateCompletion(prompt, enhancedSystemPrompt, maxTokens, temperature);
+    return this.baseProvider.generateCompletion(prompt, enhancedSystemPrompt, maxTokens, temperature, userId);
   }
 
-  async generateChat(messages: ChatMessage[], maxTokens = 1024, temperature = 0.5): Promise<string> {
+  async generateChat(messages: ChatMessage[], maxTokens = 1024, temperature = 0.5, userId?: number): Promise<string> {
     // Enhance system message with E-Code model identity
     const enhancedMessages = messages.map(m => {
       if (m.role === 'system') {
@@ -235,14 +304,14 @@ export class ECodeModelProvider implements AIProvider {
       return m;
     });
     
-    return this.baseProvider.generateChat(enhancedMessages, maxTokens, temperature);
+    return this.baseProvider.generateChat(enhancedMessages, maxTokens, temperature, userId);
   }
 
   isAvailable(): boolean {
     return this.baseProvider.isAvailable();
   }
   
-  async generateCodeWithUnderstanding(code: string, language: string, instruction: string): Promise<string> {
+  async generateCodeWithUnderstanding(code: string, language: string, instruction: string, userId?: number): Promise<string> {
     // E-Code models have native sophisticated code understanding
     const context = await codeAnalyzer.analyzeCode(code, language);
     
@@ -319,7 +388,7 @@ export class AIProviderManager {
   constructor() {
     // Initialize available providers
     this.providers.set('OpenAI GPT-4', new OpenAIProvider());
-    this.providers.set('Claude 4 Sonnet', new AnthropicProvider());
+    this.providers.set('Claude 3.5 Sonnet', new AnthropicProvider());
     
     // E-Code fine-tuned models
     this.providers.set('E-Code Agent', new ECodeModelProvider('E-Code Agent'));
@@ -339,9 +408,9 @@ export class AIProviderManager {
         description: 'GPT-4 Omni - OpenAI\'s most capable model'
       },
       {
-        name: 'Claude 4 Sonnet',
-        available: this.providers.get('Claude 4 Sonnet')!.isAvailable(),
-        description: 'Claude 4 Sonnet - Anthropic\'s latest AI assistant'
+        name: 'Claude 3.5 Sonnet',
+        available: this.providers.get('Claude 3.5 Sonnet')!.isAvailable(),
+        description: 'Claude 3.5 Sonnet - Anthropic\'s most advanced AI model with superior coding capabilities'
       },
       {
         name: 'E-Code Agent',
@@ -363,7 +432,7 @@ export class AIProviderManager {
 
   getDefaultProvider(): AIProvider {
     // Try E-Code Agent first, then Claude, then OpenAI
-    const preferredOrder = ['E-Code Agent', 'Claude 4 Sonnet', 'OpenAI GPT-4'];
+    const preferredOrder = ['E-Code Agent', 'Claude 3.5 Sonnet', 'OpenAI GPT-4'];
     
     for (const providerName of preferredOrder) {
       const provider = this.providers.get(providerName);

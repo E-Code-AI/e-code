@@ -3547,6 +3547,72 @@ npx http-server .
     }
   });
 
+  // API Routes for AI Usage and Billing
+  app.get('/api/ai/usage', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { startDate, endDate } = req.query;
+      
+      const usage = await storage.getAIUsageStats(
+        userId,
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+      
+      // Calculate summary statistics
+      const summary = {
+        totalTokens: usage.reduce((sum, u) => sum + u.totalTokens, 0),
+        totalCost: usage.reduce((sum, u) => sum + parseFloat(u.creditsCost), 0),
+        usageCount: usage.length,
+        modelBreakdown: {} as any
+      };
+      
+      // Group by model
+      for (const record of usage) {
+        if (!summary.modelBreakdown[record.model]) {
+          summary.modelBreakdown[record.model] = {
+            totalTokens: 0,
+            totalCost: 0,
+            usageCount: 0
+          };
+        }
+        summary.modelBreakdown[record.model].totalTokens += record.totalTokens;
+        summary.modelBreakdown[record.model].totalCost += parseFloat(record.creditsCost);
+        summary.modelBreakdown[record.model].usageCount += 1;
+      }
+      
+      res.json({
+        summary,
+        recentUsage: usage.slice(0, 50)
+      });
+    } catch (error) {
+      console.error('Error fetching AI usage:', error);
+      res.status(500).json({ error: 'Failed to fetch AI usage' });
+    }
+  });
+
+  app.get('/api/ai/models/pricing', async (req, res) => {
+    try {
+      const { aiBillingService } = await import('./services/ai-billing-service');
+      const pricing = aiBillingService.getModelPricing();
+      res.json(pricing);
+    } catch (error) {
+      console.error('Error fetching model pricing:', error);
+      res.status(500).json({ error: 'Failed to fetch model pricing' });
+    }
+  });
+
+  app.get('/api/user/credits', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const credits = await storage.getUserCredits(userId);
+      res.json(credits);
+    } catch (error) {
+      console.error('Error fetching user credits:', error);
+      res.status(500).json({ error: 'Failed to fetch user credits' });
+    }
+  });
+
   // API Routes for Deployments
   app.get('/api/projects/:id/deployments', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {

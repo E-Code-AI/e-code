@@ -684,6 +684,27 @@ export const customDomains = pgTable('custom_domains', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// AI Usage Tracking Table (for billing)
+export const aiUsageRecords = pgTable('ai_usage_records', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  model: varchar('model').notNull(),
+  provider: varchar('provider').notNull(), // OpenAI, Anthropic, E-Code
+  inputTokens: integer('input_tokens').notNull().default(0),
+  outputTokens: integer('output_tokens').notNull().default(0),
+  totalTokens: integer('total_tokens').notNull().default(0),
+  creditsCost: decimal('credits_cost', { precision: 10, scale: 4 }).notNull().default('0'),
+  purpose: varchar('purpose'), // chat, completion, embedding, code-generation, agent-task
+  projectId: integer('project_id').references(() => projects.id),
+  conversationId: varchar('conversation_id'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('ai_usage_user_idx').on(table.userId),
+  index('ai_usage_project_idx').on(table.projectId),
+  index('ai_usage_created_idx').on(table.createdAt),
+]);
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   projects: many(projects),
@@ -694,6 +715,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   mentorshipSessions: many(mentorshipSessions),
   challengeSubmissions: many(challengeSubmissions),
   mobileDevices: many(mobileDevices),
+  aiUsageRecords: many(aiUsageRecords),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({

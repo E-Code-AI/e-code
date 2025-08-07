@@ -33,7 +33,7 @@ import {
   keyValueStore, aiConversations, dynamicIntelligence, webSearchHistory,
   gitRepositories, gitCommits, customDomains, secrets, environmentVariables,
   voiceVideoSessions, voiceVideoParticipants, gpuInstances, gpuUsage,
-  assignments, submissions,
+  assignments, submissions, aiUsageRecords,
   insertUserCreditsSchema, insertBudgetLimitSchema, insertUsageAlertSchema,
   insertAutoscaleDeploymentSchema, insertReservedVmDeploymentSchema,
   insertScheduledDeploymentSchema, insertStaticDeploymentSchema,
@@ -152,6 +152,22 @@ export interface IStorage {
   trackAIUsage(userId: number, tokens: number, mode: string): Promise<void>;
   createAiUsageRecord(record: any): Promise<any>;
   updateUserAiTokens(userId: number, tokensUsed: number): Promise<void>;
+  
+  // AI Usage Tracking for billing
+  createAIUsageRecord(record: {
+    userId: number;
+    model: string;
+    provider: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    creditsCost: number;
+    purpose?: string;
+    projectId?: number;
+    metadata?: any;
+  }): Promise<any>;
+  getAIUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any[]>;
+  getUserCredits(userId: number): Promise<UserCredits | undefined>;
 
   // Deployment operations
   createDeployment(deploymentData: InsertDeployment): Promise<Deployment>;
@@ -2089,6 +2105,78 @@ export class DatabaseStorage implements IStorage {
       .where(eq(submissions.id, submissionId))
       .returning();
     return updated;
+  }
+
+  // AI Usage Tracking for billing
+  async createAIUsageRecord(record: {
+    userId: number;
+    model: string;
+    provider: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    creditsCost: number;
+    purpose?: string;
+    projectId?: number;
+    metadata?: any;
+  }): Promise<any> {
+    const [created] = await db.insert(aiUsageRecords).values({
+      userId: record.userId,
+      model: record.model,
+      provider: record.provider,
+      inputTokens: record.inputTokens,
+      outputTokens: record.outputTokens,
+      totalTokens: record.totalTokens,
+      creditsCost: record.creditsCost.toString(),
+      purpose: record.purpose,
+      projectId: record.projectId,
+      conversationId: record.metadata?.conversationId,
+      metadata: record.metadata || {},
+    }).returning();
+    
+    // Also deduct credits from user account
+    await db.update(userCredits)
+      .set({ 
+        remainingCredits: sql`${userCredits.remainingCredits} - ${record.creditsCost}`,
+        totalUsed: sql`${userCredits.totalUsed} + ${record.creditsCost}`,
+        updatedAt: new Date()
+      })
+      .where(eq(userCredits.userId, record.userId));
+    
+    return created;
+  }
+
+  async getAIUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any[]> {
+    let query = db.select().from(aiUsageRecords).where(eq(aiUsageRecords.userId, userId));
+    
+    if (startDate) {
+      query = query.where(gte(aiUsageRecords.createdAt, startDate));
+    }
+    
+    if (endDate) {
+      query = query.where(lte(aiUsageRecords.createdAt, endDate));
+    }
+    
+    return await query.orderBy(desc(aiUsageRecords.createdAt));
+  }
+
+  async getUserCredits(userId: number): Promise<UserCredits | undefined> {
+    const [credits] = await db.select().from(userCredits).where(eq(userCredits.userId, userId));
+    
+    // If no credits record exists, create one with default credits
+    if (!credits) {
+      const [newCredits] = await db.insert(userCredits).values({
+        userId,
+        planType: 'free',
+        totalCredits: 100, // Free users get 100 credits to start
+        remainingCredits: 100,
+        totalUsed: 0,
+        billingCycle: 'monthly'
+      }).returning();
+      return newCredits;
+    }
+    
+    return credits;
   }
 }
 
