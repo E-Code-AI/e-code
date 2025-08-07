@@ -3638,6 +3638,131 @@ npx http-server .
       res.status(500).json({ error: 'Failed to fetch user credits' });
     }
   });
+  
+  // OpenAI Agents API endpoints
+  const { openAIAgentsService } = await import('./ai/openai-agents-service');
+  const { enhancedOpenAIProvider } = await import('./ai/openai-enhanced-provider');
+  
+  // List available OpenAI models
+  app.get('/api/openai/models', ensureAuthenticated, async (req, res) => {
+    try {
+      const models = await openAIAgentsService.listAvailableModels();
+      res.json(models);
+    } catch (error) {
+      console.error('Error listing OpenAI models:', error);
+      res.status(500).json({ error: 'Failed to list models' });
+    }
+  });
+  
+  // Create an OpenAI assistant
+  app.post('/api/openai/assistants', ensureAuthenticated, async (req, res) => {
+    try {
+      const { type, functions } = req.body;
+      let assistantId: string;
+      
+      switch (type) {
+        case 'coding':
+          assistantId = await openAIAgentsService.createCodingAssistant();
+          break;
+        case 'research':
+          assistantId = await openAIAgentsService.createResearchAssistant();
+          break;
+        case 'agentic':
+          assistantId = await openAIAgentsService.createAgenticAssistant(functions || []);
+          break;
+        default:
+          assistantId = await openAIAgentsService.createOrGetAssistant(req.body);
+      }
+      
+      res.json({ assistantId });
+    } catch (error) {
+      console.error('Error creating assistant:', error);
+      res.status(500).json({ error: 'Failed to create assistant' });
+    }
+  });
+  
+  // Create or get a thread
+  app.post('/api/openai/threads', ensureAuthenticated, async (req, res) => {
+    try {
+      const sessionId = req.sessionID || `user-${req.user!.id}-${Date.now()}`;
+      const threadId = await openAIAgentsService.createOrGetThread(sessionId, req.body.metadata);
+      res.json({ threadId });
+    } catch (error) {
+      console.error('Error creating thread:', error);
+      res.status(500).json({ error: 'Failed to create thread' });
+    }
+  });
+  
+  // Run an assistant
+  app.post('/api/openai/run', ensureAuthenticated, async (req, res) => {
+    try {
+      const { assistantId, threadId, message, instructions } = req.body;
+      const userId = req.user!.id;
+      
+      // Add user message to thread
+      if (message) {
+        await openAIAgentsService.addMessage(threadId, {
+          role: 'user',
+          content: message
+        });
+      }
+      
+      // Run assistant
+      const result = await openAIAgentsService.runAssistant(
+        assistantId,
+        threadId,
+        userId,
+        instructions
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error running assistant:', error);
+      res.status(500).json({ error: 'Failed to run assistant' });
+    }
+  });
+  
+  // Generate with specific OpenAI model
+  app.post('/api/openai/generate', ensureAuthenticated, async (req, res) => {
+    try {
+      const { prompt, model, temperature, maxTokens, responseFormat } = req.body;
+      const userId = req.user!.id;
+      
+      const result = await enhancedOpenAIProvider.generateCompletion(
+        prompt,
+        'You are a helpful AI assistant.',
+        maxTokens || 1024,
+        temperature || 0.7,
+        userId,
+        { model, responseFormat }
+      );
+      
+      res.json({ result });
+    } catch (error) {
+      console.error('Error generating with OpenAI:', error);
+      res.status(500).json({ error: 'Failed to generate response' });
+    }
+  });
+  
+  // Analyze image with vision models
+  app.post('/api/openai/vision', ensureAuthenticated, async (req, res) => {
+    try {
+      const { imageUrl, prompt, model } = req.body;
+      const userId = req.user!.id;
+      
+      const result = await enhancedOpenAIProvider.analyzeImage(
+        imageUrl,
+        prompt,
+        userId,
+        { model: model || 'gpt-4o' }
+      );
+      
+      res.json({ result });
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      res.status(500).json({ error: 'Failed to analyze image' });
+    }
+  });
 
   // API Routes for Deployments
   app.get('/api/projects/:id/deployments', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
