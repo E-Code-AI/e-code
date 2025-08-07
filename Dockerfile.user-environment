@@ -1,0 +1,61 @@
+# User Environment Docker Image for E-Code Platform
+# This provides an isolated development environment similar to Replit's architecture
+
+FROM node:20-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    wget \
+    python3 \
+    python3-pip \
+    build-essential \
+    docker.io \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create user with proper permissions
+RUN useradd -m -s /bin/bash -u 1000 user && \
+    echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Install global npm packages
+RUN npm install -g \
+    typescript \
+    ts-node \
+    nodemon \
+    pm2 \
+    vite \
+    @vitejs/plugin-react
+
+# Create project directories
+RUN mkdir -p /home/user/projects && \
+    mkdir -p /home/user/.npm && \
+    mkdir -p /home/user/.cache && \
+    chown -R user:user /home/user
+
+# Copy environment setup scripts
+COPY --chown=user:user scripts/user-environment-init.sh /usr/local/bin/init.sh
+RUN chmod +x /usr/local/bin/init.sh
+
+# Set working directory
+WORKDIR /home/user/projects
+
+# Switch to user
+USER user
+
+# Environment variables
+ENV NODE_ENV=production \
+    PORT=3000 \
+    IDE_PORT=8080 \
+    PATH="/home/user/.npm/bin:$PATH"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Expose ports
+EXPOSE 3000 8080
+
+# Start the environment
+CMD ["/usr/local/bin/init.sh"]
