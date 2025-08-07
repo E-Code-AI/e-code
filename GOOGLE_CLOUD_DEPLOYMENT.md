@@ -102,11 +102,36 @@ gcloud sql users create ecode-admin \
 ```
 
 ### Step 5: Build and Deploy Platform
-```bash
-# Clone your repository
-git clone https://github.com/openaxcloud/ecode-platformhttps://github.com/openaxcloud/e-code.git
-cd ecode-platform
 
+#### First, Set Up GitHub Authentication (Required for Private Repo)
+
+**Option 1: Personal Access Token (Recommended for Google Cloud Shell)**
+1. Go to GitHub → Settings → Developer settings → Personal access tokens
+2. Click "Generate new token (classic)"
+3. Give it a name: "GCP Deployment"
+4. Select scope: `repo` (full control of private repositories)
+5. Generate and copy the token
+
+```bash
+# Clone your PRIVATE repository using token
+git clone https://YOUR_GITHUB_TOKEN@github.com/openaxcloud/e-code.git
+cd e-code
+```
+
+**Option 2: SSH Key (For permanent setups)**
+```bash
+# Generate SSH key in Google Cloud Shell
+ssh-keygen -t ed25519 -C "your-email@example.com"
+cat ~/.ssh/id_ed25519.pub
+# Add this public key to GitHub → Settings → SSH and GPG keys
+
+# Then clone using SSH
+git clone git@github.com:openaxcloud/e-code.git
+cd e-code
+```
+
+#### Build and Deploy
+```bash
 # Build Docker image
 docker build -t gcr.io/ecode-platform-prod/main:latest .
 
@@ -271,6 +296,42 @@ Run the provided script:
 ```bash
 chmod +x deploy-to-google.sh
 ./deploy-to-google.sh YOUR_PROJECT_ID
+```
+
+## Quick Start for openaxcloud/e-code Repository
+
+### Complete Command Sequence for Google Cloud Shell
+```bash
+# 1. Set up GitHub token (get from GitHub settings first)
+export GITHUB_TOKEN="your_personal_access_token_here"
+
+# 2. Clone private repository
+git clone https://${GITHUB_TOKEN}@github.com/openaxcloud/e-code.git
+cd e-code
+
+# 3. Create GCP project (or use existing)
+gcloud projects create ecode-platform --name="E-Code Platform"
+gcloud config set project ecode-platform
+
+# 4. Enable required services
+gcloud services enable compute.googleapis.com container.googleapis.com \
+  cloudbuild.googleapis.com run.googleapis.com sqladmin.googleapis.com
+
+# 5. Create Kubernetes cluster
+gcloud container clusters create ecode-cluster \
+  --zone us-central1-a \
+  --num-nodes 3 \
+  --machine-type n2-standard-4 \
+  --enable-autoscaling \
+  --min-nodes 2 \
+  --max-nodes 10
+
+# 6. Get cluster credentials (after cluster is created)
+gcloud container clusters get-credentials ecode-cluster --zone us-central1-a
+
+# 7. Deploy
+chmod +x deploy-to-google.sh
+./deploy-to-google.sh ecode-platform
 ```
 
 ## Verification
