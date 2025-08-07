@@ -1266,7 +1266,7 @@ export default class MCPServer {
   
   // AI/ML handlers
   private async handleAiComplete(args: any) {
-    const { prompt, model = "claude-3-sonnet", temperature = 0.7, maxTokens = 2048 } = args;
+    const { prompt, model = "claude-3-5-sonnet-20241022", temperature = 0.7, maxTokens = 2048, userId } = args;
     
     // Use Anthropic SDK if available
     if (process.env.ANTHROPIC_API_KEY) {
@@ -1281,6 +1281,22 @@ export default class MCPServer {
         temperature,
         messages: [{ role: "user", content: prompt }],
       });
+      
+      // Track usage for billing if userId provided
+      if (userId && response.usage) {
+        const { aiBillingService } = await import('../services/ai-billing-service');
+        await aiBillingService.trackAIUsage(userId, {
+          model,
+          provider: 'Anthropic',
+          inputTokens: response.usage.input_tokens || 0,
+          outputTokens: response.usage.output_tokens || 0,
+          totalTokens: (response.usage.input_tokens || 0) + (response.usage.output_tokens || 0),
+          prompt: prompt.substring(0, 200),
+          completion: response.content[0].text.substring(0, 200),
+          purpose: 'mcp-completion',
+          timestamp: new Date()
+        });
+      }
       
       return {
         content: [{ type: "text", text: response.content[0].text }],
