@@ -1,0 +1,31 @@
+eux tu me donner le contenu du mail a envoyer avec ce courrier :                                                                                                       Réponse à la mise en demeure de M. Jean-Joseph Folacci
+
+Envoyé par lettre recommandée avec accusé de réception et par courriel
+
+À l’attention de M. Jean-Joseph Folacci
+(Coordonnées du destinataire)
+
+Objet : Réponse à votre mise en demeure
+
+Monsieur,
+
+Nous accusons réception de votre mise en demeure, que nous avons examinée avec la plus grande attention. En réponse aux éléments exposés dans votre courrier, nous souhaitons vous apporter les précisions suivantes :
+
+Tout d’abord, nous vous confirmons avoir bien pris note de vos doléances et nous nous engageons à analyser votre installation dans les plus brefs délais par le biais d’un audit technique complet. Nos équipes vont procéder à une vérification à distance de chaque élément du système afin d’identifier toute anomalie éventuelle. Soyez assuré que nous mettons tout en œuvre pour comprendre l’origine des problèmes rencontrés et y apporter une solution adéquate dès que possible.
+
+Concernant les simulations prévisionnelles de production solaire (PVGIS) que vous mentionnez, nous tenons à préciser qu’il s’agit d’un outil de calcul indépendant géré par un organisme public. En d’autres termes, ce logiciel de simulation n’a pas été développé par nos soins. Il fournit des estimations généralement fiables et sert de référence dans notre domaine. Cela constitue un premier élément de justification de la production attendue. Cela étant, nous convenons qu’une analyse approfondie est nécessaire : dans le cadre de l’audit en cours, nous comparerons les données réelles de votre installation avec les estimations de PVGIS afin de vérifier que la configuration est optimale. À première vue, tous les réglages de votre système semblent corrects de notre côté, mais nous vous communiquerons un rapport détaillé dès que cet audit sera achevé.
+
+En ce qui concerne l’absence de recommandation d’Enedis pour le raccordement au réseau, nous souhaitons clarifier ce point important. Comme expliqué dès le début du projet, votre installation dépend d’une Entreprise Locale de Distribution (ELD) et non du gestionnaire de réseau Enedis. Cela implique que les procédures de raccordement sont différentes et peuvent être plus longues, car traitées de manière manuelle par l’ELD, alors que celles d’Enedis sont automatisées. Par ailleurs, il existe un délai incompressible entre la fin des travaux d’installation et la demande de raccordement effectif : nous devons d’abord faire intervenir le Consuel afin d’obtenir le certificat de conformité de l’installation. Ce n’est qu’une fois ce certificat obtenu que le dossier de raccordement complet peut être constitué puis transmis à l’ELD. Nous comprenons votre impatience, toutefois ces étapes administratives et techniques sont nécessaires et en partie indépendantes de notre volonté. Nous tenons à vous assurer que nous avons effectué toutes les démarches requises et que nous suivons de près l’avancement de votre raccordement auprès de l’ELD.
+
+S’agissant de l’absence de suivi et de réactivité que vous déplorez, nous regrettons sincèrement que vous ayez eu ce ressenti. Nos équipes ont au contraire consacré de nombreuses heures à vous informer et à vérifier le bon fonctionnement de votre installation. Nous disposons d’ailleurs de l’historique des communications (appels téléphoniques, courriels) et des journaux d’interventions techniques qui témoignent du temps important passé sur votre dossier. Les annexes que vous avez jointes à votre courrier montrent qu’à plusieurs reprises, des réponses vous ont bien été apportées suite à vos interrogations. Soyez assuré que notre service client reste mobilisé et à votre écoute : nous restons disponibles pour tout complément d’information ou toute nouvelle préoccupation de votre part. Notre objectif a toujours été votre satisfaction et nous regrettons que nos efforts n’aient pas suffi à dissiper vos inquiétudes jusqu’à présent.
+
+Enfin, afin de vous témoigner de notre bonne foi et de notre volonté de résoudre amiablement cette situation, nous consentons à l’indemnisation demandée dans votre courrier. Cette proposition d’indemnisation exceptionnelle vous est accordée à titre commercial, en gage de notre engagement à vos côtés. Vous recevrez sous peu les détails concernant cette indemnisation. Par ailleurs, dès que notre audit technique sera complété, nous vous transmettrons sans délai le rapport d’analyse détaillé, contenant nos observations et, le cas échéant, les actions correctives entreprises.
+
+Nous vous invitons en retour à faire preuve de compréhension quant à la complexité de ce dossier. Les menaces de saisine de la DGCCRF ou d’actions judiciaires répétées ne favorisent pas un climat constructif pour avancer sereinement vers une solution. Sachez que nous détenons l’ensemble des éléments prouvant la conformité et la qualité de notre intervention : photos de l’installation, certificat de conformité Consuel, données issues de l’outil de simulation PVGIS, rapports d’analyse du fabricant concernant le matériel installé, etc. Nous tenons à souligner que notre entreprise a réalisé les travaux en respectant scrupuleusement les normes en vigueur, avec des équipements de marques reconnues. Néanmoins, certains paramètres restent en dehors de notre contrôle direct (par exemple, les résultats précis d’un logiciel de simulation tiers, les délais administratifs imposés par l’ELD, ou les performances exactes du matériel fournies par le fabricant).
+
+En conclusion, nous comprenons votre frustration et nous regrettons les désagréments que vous avez subis. Vous pouvez compter sur notre entière mobilisation pour finaliser le raccordement et optimiser le fonctionnement de votre installation solaire. Nous vous remercions de votre patience et de la confiance que vous avez accordée à ÉNERGIE PLUS QUALIWATT jusqu’à présent. Nous espérons que les actions engagées et les clarifications apportées dans ce courrier sauront vous apporter satisfaction.
+
+Veuillez agréer, Monsieur, l’expression de nos salutations distinguées.
+
+Henri Benezra
+Président, ÉNERGIE PLUS QUALIWATT
