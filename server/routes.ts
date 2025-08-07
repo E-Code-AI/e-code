@@ -39,6 +39,7 @@ import { startProject, stopProject, getProjectStatus, getProjectLogs } from "./s
 import { setupLogsWebsocket } from "./logs";
 import shellRoutes, { setupShellWebSocket } from "./routes/shell";
 import { notificationRoutes } from "./routes/notifications";
+import isolationRoutes from "./api/isolation";
 import { webImportService } from "./tools/web-import-service";
 import { screenshotService } from "./services/screenshot-service";
 import { promptRefinementService } from "./services/prompt-refinement-service";
@@ -11698,6 +11699,9 @@ Generate a comprehensive application based on the user's request. Include all ne
   
   // Notification routes
   app.use(notificationRoutes);
+  
+  // Isolation routes for container-like environments
+  app.use(isolationRoutes);
   
   // Preview routes
   const previewRoutesModule = await import('./routes/preview');
