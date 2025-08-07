@@ -388,6 +388,12 @@ export interface IStorage {
   createAbuseReport(report: any): Promise<any>;
   getAbuseReports(status?: string): Promise<any[]>;
   updateAbuseReport(id: number, updates: any): Promise<any | undefined>;
+  
+  // Kubernetes User Environment operations
+  saveUserEnvironment(environment: any): Promise<void>;
+  getUserEnvironment(userId: number): Promise<any | null>;
+  updateUserEnvironment(environment: any): Promise<void>;
+  deleteUserEnvironment(userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1974,6 +1980,29 @@ export class DatabaseStorage implements IStorage {
   async updateAbuseReport(id: number, updates: any): Promise<any | undefined> {
     // Would update abuse_reports table
     return { id, ...updates };
+  }
+  
+  // Kubernetes User Environment operations
+  private userEnvironments = new Map<number, any>();
+  
+  async saveUserEnvironment(environment: any): Promise<void> {
+    this.userEnvironments.set(environment.userId, environment);
+    // In production, this would save to a database table
+  }
+  
+  async getUserEnvironment(userId: number): Promise<any | null> {
+    return this.userEnvironments.get(userId) || null;
+    // In production, this would query from user_environments table
+  }
+  
+  async updateUserEnvironment(environment: any): Promise<void> {
+    this.userEnvironments.set(environment.userId, environment);
+    // In production, this would update the user_environments table
+  }
+  
+  async deleteUserEnvironment(userId: number): Promise<void> {
+    this.userEnvironments.delete(userId);
+    // In production, this would delete from user_environments table
   }
 
   // Voice/Video Session operations

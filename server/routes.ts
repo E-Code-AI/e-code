@@ -19148,6 +19148,122 @@ Generate a comprehensive application based on the user's request. Include all ne
       res.status(500).json({ error: 'Failed to submit report. Please try again.' });
     }
   });
+  
+  // Kubernetes User Environment API Endpoints
+  app.post('/api/kubernetes/environment', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Check if user already has an environment
+      const existing = await storage.getUserEnvironment(userId);
+      if (existing) {
+        return res.json(existing);
+      }
+      
+      // Import the deployment manager
+      const { deploymentManager } = await import('./kubernetes/deployment-manager');
+      
+      // Create new environment for user
+      const environment = await deploymentManager.createUserEnvironment(userId, user.username);
+      
+      res.json({
+        message: 'Isolated environment created successfully',
+        environment,
+        accessUrl: `https://${user.username}.e-code.ai`,
+        ideUrl: `https://ide-${user.username}.e-code.ai`
+      });
+    } catch (error) {
+      logger.error('Failed to create user environment:', error);
+      res.status(500).json({ error: 'Failed to create isolated environment' });
+    }
+  });
+  
+  app.get('/api/kubernetes/environment', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const environment = await storage.getUserEnvironment(userId);
+      
+      if (!environment) {
+        return res.status(404).json({ error: 'No environment found for user' });
+      }
+      
+      res.json(environment);
+    } catch (error) {
+      logger.error('Failed to get user environment:', error);
+      res.status(500).json({ error: 'Failed to retrieve environment' });
+    }
+  });
+  
+  app.patch('/api/kubernetes/environment/scale', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { replicas } = req.body;
+      
+      if (typeof replicas !== 'number' || replicas < 0 || replicas > 3) {
+        return res.status(400).json({ error: 'Invalid replicas value (0-3)' });
+      }
+      
+      const { deploymentManager } = await import('./kubernetes/deployment-manager');
+      await deploymentManager.scaleEnvironment(userId, replicas);
+      
+      res.json({ message: `Environment scaled to ${replicas} replicas` });
+    } catch (error) {
+      logger.error('Failed to scale environment:', error);
+      res.status(500).json({ error: 'Failed to scale environment' });
+    }
+  });
+  
+  app.delete('/api/kubernetes/environment', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      const { deploymentManager } = await import('./kubernetes/deployment-manager');
+      await deploymentManager.deleteUserEnvironment(userId);
+      
+      res.json({ message: 'Environment deleted successfully' });
+    } catch (error) {
+      logger.error('Failed to delete environment:', error);
+      res.status(500).json({ error: 'Failed to delete environment' });
+    }
+  });
+  
+  app.post('/api/kubernetes/environment/exec', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { command } = req.body;
+      
+      if (!command) {
+        return res.status(400).json({ error: 'Command is required' });
+      }
+      
+      const { deploymentManager } = await import('./kubernetes/deployment-manager');
+      const output = await deploymentManager.executeInEnvironment(userId, command);
+      
+      res.json({ output });
+    } catch (error) {
+      logger.error('Failed to execute command:', error);
+      res.status(500).json({ error: 'Failed to execute command' });
+    }
+  });
+  
+  app.get('/api/kubernetes/environment/metrics', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      const { deploymentManager } = await import('./kubernetes/deployment-manager');
+      const metrics = await deploymentManager.getEnvironmentMetrics(userId);
+      
+      res.json(metrics);
+    } catch (error) {
+      logger.error('Failed to get metrics:', error);
+      res.status(500).json({ error: 'Failed to retrieve metrics' });
+    }
+  });
 
   // REPLIT-STYLE SLUG ROUTING HANDLER
   // Handle /@username/projectname pattern for project access
