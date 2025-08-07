@@ -189,6 +189,18 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   const handleDeploy = async () => {
     setIsDeploying(true);
     try {
+      // First create the container environment
+      const containerResponse = await fetch(`/api/projects/${projectId}/container`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+
+      if (!containerResponse.ok) {
+        throw new Error('Failed to create container environment');
+      }
+
+      // Then trigger deployment
       const response = await fetch(`/api/projects/${projectId}/deploy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

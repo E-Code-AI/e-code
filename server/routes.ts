@@ -112,6 +112,7 @@ import { dockerExecutor } from "./execution/docker-executor";
 import { realCodeGenerator } from "./ai/real-code-generator";
 import { realCollaborationService } from "./collaboration/real-collaboration";
 import { agentWebSocketService } from './services/agent-websocket-service';
+import containerRoutes from "./routes/containers";
 
 // Utility function for formatting bytes
 function formatBytes(bytes: number): string {
@@ -9590,6 +9591,7 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Admin routes
   app.use("/api/admin", adminRoutes);
   app.use(deploymentRoutes);
+  app.use(containerRoutes);
   
   // MCP (Model Context Protocol) Routes
   // Add direct MCP servers endpoint to avoid middleware issues
