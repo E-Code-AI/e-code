@@ -1,0 +1,80 @@
+ # 1. Navigate to the cloned directory
+cd ~/e-code
+
+# 2. Build the Docker image with the simplified Dockerfile
+cat > Dockerfile << 'EOF'
+FROM node:18-alpine
+
+RUN apk add --no-cache python3 make g++ git
+
+WORKDIR /app
+
+COPY . .
+
+RUN npm ci
+
+RUN npm run build || true
+
+RUN mkdir -p logs
+
+EXPOSE 5000
+
+CMD ["npm", "start"]
+EOF
+
+# 3. Build the Docker image
+docker build -t gcr.io/votre-projet-ecode/e-code-platform:latest .
+
+# 4. Push to Google Container Registry
+docker push gcr.io/votre-projet-ecode/e-code-platform:latest
+
+# 5. Deploy to Kubernetes
+kubectl create namespace e-code-platform || true
+
+kubectl create deployment e-code-platform \
+  --image=gcr.io/votre-projet-ecode/e-code-platform:latest \
+  --namespace=e-code-platform
+
+# 6. Expose the service
+kubectl expose deployment e-code-platform \
+  --type=LoadBalancer \
+kubectl get service e-code-platform -n e-code-platform --watch
+[+] Building 85.8s (12/12) FINISHED                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 221B                                                                                0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   0.6s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 245B                                                                                   0.0s
+ => [1/7] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca  0.0s
+ => [internal] load build context                                                                                   2.8s
+ => => transferring context: 45.66MB                                                                                2.8s
+ => CACHED [2/7] RUN apk add --no-cache python3 make g++ git                                                        0.0s
+ => CACHED [3/7] WORKDIR /app                                                                                       0.0s
+ => [4/7] COPY . .                                                                                                  0.9s
+ => [5/7] RUN npm ci                                                                                               55.0s
+ => [6/7] RUN npm run build || true                                                                                 8.0s 
+ => [7/7] RUN mkdir -p logs                                                                                         0.6s 
+ => exporting to image                                                                                             17.7s 
+ => => exporting layers                                                                                            17.7s 
+ => => writing image sha256:290cf6dbb0b894ef9857db5b388a53d8f5cebd0cb467f428ad8725837ea2a34e                        0.0s 
+ => => naming to gcr.io/votre-projet-ecode/e-code-platform:latest                                                   0.0s 
+The push refers to repository [gcr.io/votre-projet-ecode/e-code-platform]                                                
+0fd0f250850b: Pushed 
+6314b94d9ff0: Pushed 
+05f9e398c547: Pushed 
+cb9ef3864dc5: Pushed 
+02c64f03bc1b: Pushed 
+6f21fa0f045c: Pushed 
+82140d9a70a7: Layer already exists 
+f3b40b0cdb1c: Layer already exists 
+0b1f26057bd0: Layer already exists 
+08000c18d16d: Layer already exists 
+latest: digest: sha256:a7098bd86f84bf462a96d0c9699905a8f0b61b8b9e0714a3d145b588131e1439 size: 2417
+Error from server (AlreadyExists): namespaces "e-code-platform" already exists
+deployment.apps/e-code-platform created
+service/e-code-platform exposed
+NAME              TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+e-code-platform   LoadBalancer   34.118.231.44   <pending>     80:32664/TCP   1s
+e-code-platform   LoadBalancer   34.118.231.44   <pending>     80:32664/TCP   1s
+e-code-platform   LoadBalancer   34.118.231.44   <pending>     80:32664/TCP   2s
+e-code-platform   LoadBalancer   34.118.231.44   35.205.76.229   80:32664/TCP   39s
