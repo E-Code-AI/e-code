@@ -13,10 +13,12 @@ import { ECodeLoading } from "@/components/ECodeLoading";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { AIUsageDashboard } from "@/components/AIUsageDashboard";
 
 export default function Usage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('ai');
   
   // Fetch real usage data
   const { data: usageData, isLoading } = useQuery({
@@ -198,12 +200,18 @@ export default function Usage() {
       </Card>
 
       {/* Usage Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+      <Tabs defaultValue="ai" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="ai">AI Usage</TabsTrigger>
+          <TabsTrigger value="overview">Resources</TabsTrigger>
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
+
+        {/* AI Usage Tab */}
+        <TabsContent value="ai" className="space-y-4">
+          <AIUsageDashboard />
+        </TabsContent>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
