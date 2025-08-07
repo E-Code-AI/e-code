@@ -22,6 +22,7 @@ import {
   Trash,
   Zap
 } from 'lucide-react';
+import { CreditBalance } from '@/components/CreditBalance';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -267,6 +268,9 @@ export default function Dashboard() {
 
         {/* Main greeting - Lovable.dev style */}
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <CreditBalance />
+          </div>
           <h1 className="text-3xl md:text-4xl font-bold text-[var(--ecode-text)] mb-2">
             Hi {user?.displayName || user?.username}, what do you want to build?
           </h1>
