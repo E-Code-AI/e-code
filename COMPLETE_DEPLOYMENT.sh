@@ -22,15 +22,7 @@ gcloud container clusters get-credentials e-code-cluster --zone europe-west1-b
 echo "Creating namespace..."
 kubectl create namespace e-code-platform || echo "Namespace may already exist"
 
-# 3. Set up PostgreSQL database
-echo "Setting up PostgreSQL..."
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: postgres-secret
-  namespace: e-code-platform
-type: Opaque
+cdue
 data:
   POSTGRES_PASSWORD: $(echo -n "ecode2025secure" | base64)
 ---
@@ -85,19 +77,19 @@ spec:
 EOF
 
 # 4. Build and push Docker image
-echo "Building Docker image..."
-PROJECT_ID="votre-projet-ecode"
-IMAGE_NAME="gcr.io/votre-projet-ecode/e-code-platform:latest"
+      echo "Building Docker image..."
+      PROJECT_ID="votre-projet-ecode"
+      IMAGE_NAME="gcr.io/${PROJECT_ID}/e-code-platform:latest"
 
 # Configure Docker for GCR
 gcloud auth configure-docker
 
 # Build the image
-docker build -t $gcr.io/$votre-projet-ecode/e-code-platform:latest
+docker build -t gcr.io/votre-projet-ecode/e-code-platform:latest
 
 # Push to Google Container Registry
 echo "Pushing image to GCR..."
-docker push ${IMAGE_NAME}
+docker push gcr.io/votre-projet-ecode/e-code-platform:latest
 
 # 5. Deploy the application
 echo "Deploying E-Code Platform..."
