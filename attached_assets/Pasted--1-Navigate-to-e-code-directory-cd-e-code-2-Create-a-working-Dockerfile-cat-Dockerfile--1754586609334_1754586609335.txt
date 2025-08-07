@@ -1,0 +1,83 @@
+# 1. Navigate to e-code directory
+cd ~/e-code
+
+# 2. Create a working Dockerfile
+cat > Dockerfile << 'EOF'
+FROM node:18-alpine
+
+RUN apk add --no-cache python3 make g++ git
+
+WORKDIR /app
+
+COPY . .
+
+RUN npm ci
+
+# Don't build, just run in dev mode for now
+RUN mkdir -p logs
+
+EXPOSE 5000
+
+# Use dev command that works
+CMD ["npm", "run", "dev"]
+EOF
+
+# 3. Build and tag as v4
+docker build -t gcr.io/votre-projet-ecode/e-code-platform:v4 .
+
+# 4. Push v4
+docker push gcr.io/votre-projet-ecode/e-code-platform:v4
+
+# 5. Update deployment to v4
+kubectl set image deployment/e-code-platform e-code-platform=gcr.io/votre-projet-ecode/e-code-platform:v4 -n e-code-platform
+
+# 6. Watch rollout
+kubectl rollout status deployment/e-code-platform -n e-code-platform
+
+# 7. Check pods
+kubectl get pods -n e-code-platform
+
+kubectl logs -n e-code-platform deployment/e-code-platform --tail=30
+[+] Building 0.8s (11/11) FINISHED                                                                        docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 272B                                                                                0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   0.3s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 245B                                                                                   0.0s
+ => [1/6] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca  0.0s
+ => [internal] load build context                                                                                   0.1s
+ => => transferring context: 53.46kB                                                                                0.1s
+ => CACHED [2/6] RUN apk add --no-cache python3 make g++ git                                                        0.0s
+ => CACHED [3/6] WORKDIR /app                                                                                       0.0s
+ => CACHED [4/6] COPY . .                                                                                           0.0s
+ => CACHED [5/6] RUN npm ci                                                                                         0.0s
+ => [6/6] RUN mkdir -p logs                                                                                         0.2s
+ => exporting to image                                                                                              0.0s
+ => => exporting layers                                                                                             0.0s
+ => => writing image sha256:56763fe5d922f466ce96e7bb58730846b56868cf79200bf81226aebf155ee7d1                        0.0s
+ => => naming to gcr.io/votre-projet-ecode/e-code-platform:v4                                                       0.0s
+The push refers to repository [gcr.io/votre-projet-ecode/e-code-platform]
+d31984ae2f70: Pushed 
+05f9e398c547: Layer already exists 
+cb9ef3864dc5: Layer already exists 
+02c64f03bc1b: Layer already exists 
+6f21fa0f045c: Layer already exists 
+82140d9a70a7: Layer already exists 
+f3b40b0cdb1c: Layer already exists 
+0b1f26057bd0: Layer already exists 
+08000c18d16d: Layer already exists 
+v4: digest: sha256:b5173dcd22527bcb05d34009b33054699354f68e681d49ec5d8f117c9c6c5b75 size: 2209
+deployment.apps/e-code-platform image updated
+Waiting for deployment "e-code-platform" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+deployment "e-code-platform" successfully rolled out
+NAME                               READY   STATUS        RESTARTS   AGE
+e-code-platform-76b44b796b-vvc8r   1/1     Running       0          5s
+e-code-platform-8fb7bdf88-rst2n    0/1     Terminating   3          79s
+postgres-5fb6b6654c-pt6f6          1/1     Running       0          68m
+Found 2 pods, using pod/e-code-platform-76b44b796b-vvc8r
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
