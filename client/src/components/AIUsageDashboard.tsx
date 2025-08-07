@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Zap, TrendingUp, DollarSign, Activity } from 'lucide-react';
+import { Zap, TrendingUp, DollarSign, Activity, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
+import { OpenAIModelSelector } from './OpenAIModelSelector';
 
 interface AIUsageData {
   summary: {
@@ -41,6 +43,8 @@ interface UserCredits {
 }
 
 export function AIUsageDashboard() {
+  const [selectedModel, setSelectedModel] = useState('gpt-4o');
+  
   const { data: usage, isLoading: usageLoading } = useQuery<AIUsageData>({
     queryKey: ['/api/ai/usage'],
   });
@@ -81,6 +85,25 @@ export function AIUsageDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* OpenAI Model Selector */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5" />
+            OpenAI Model Selection
+          </CardTitle>
+          <CardDescription>
+            Choose your preferred OpenAI model for AI generation
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <OpenAIModelSelector 
+            selectedModel={selectedModel}
+            onModelSelect={setSelectedModel}
+          />
+        </CardContent>
+      </Card>
+      
       {/* Credit Balance Card */}
       <Card>
         <CardHeader>
