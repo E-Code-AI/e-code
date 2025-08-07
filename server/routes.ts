@@ -2716,6 +2716,29 @@ npx http-server .
     }
   });
 
+  // Handle slug-based routes for frontend (serve React app)
+  app.get('/@:username/:projectname', async (req, res, next) => {
+    try {
+      const { username, projectname } = req.params;
+      
+      // Check if this is a valid project route
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return next(); // Let frontend handle 404
+      }
+      
+      const project = await storage.getProjectBySlug(projectname);
+      if (!project || project.ownerId !== user.id) {
+        return next(); // Let frontend handle 404
+      }
+      
+      // Serve the React app
+      return next();
+    } catch (error) {
+      return next();
+    }
+  });
+
   // Get project by username and slug (for Replit-style URLs)
   // Note: This endpoint allows public access for public projects
   app.get('/api/users/:username/projects/:slug', async (req, res) => {
@@ -2750,14 +2773,12 @@ npx http-server .
         }
       }
       
-      // Get additional project info including owner and files
+      // Get additional project info including owner
       const owner = await storage.getUser(project.ownerId);
-      const files = await storage.getFilesByProjectId(project.id);
       
       res.json({
         ...project,
-        owner,
-        files
+        owner
       });
     } catch (error) {
       console.error('Error getting project by username and slug:', error);
