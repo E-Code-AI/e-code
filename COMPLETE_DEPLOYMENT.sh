@@ -87,7 +87,7 @@ EOF
 # 4. Build and push Docker image
 echo "Building Docker image..."
 PROJECT_ID="votre-projet-ecode"
-IMAGE_NAME="gcr.io/${PROJECT_ID}/e-code-platform:latest"
+IMAGE_NAME="gcr.io/votre-projet-ecode/e-code-platform:latest"
 
 # Configure Docker for GCR
 gcloud auth configure-docker
