@@ -13,11 +13,26 @@ const logger = createLogger('ai-billing-service');
 
 // Pricing per 1K tokens (similar to Replit's pricing model)
 export const AI_MODEL_PRICING = {
-  // OpenAI Models
+  // OpenAI Models - Latest pricing as of 2025
   'gpt-4o': {
-    input: 0.005,  // $5 per 1M input tokens
-    output: 0.015, // $15 per 1M output tokens
-    creditsPerThousand: 0.02 // 0.02 credits per 1K tokens average
+    input: 0.0025,  // $2.50 per 1M input tokens
+    output: 0.01,   // $10 per 1M output tokens
+    creditsPerThousand: 0.0125 // 0.0125 credits per 1K tokens average
+  },
+  'gpt-4o-mini': {
+    input: 0.00015, // $0.15 per 1M input tokens
+    output: 0.0006, // $0.60 per 1M output tokens
+    creditsPerThousand: 0.0004
+  },
+  'o1-preview': {
+    input: 0.015,   // $15 per 1M input tokens (reasoning model)
+    output: 0.06,   // $60 per 1M output tokens
+    creditsPerThousand: 0.075
+  },
+  'o1-mini': {
+    input: 0.003,   // $3 per 1M input tokens
+    output: 0.012,  // $12 per 1M output tokens
+    creditsPerThousand: 0.015
   },
   'gpt-4-turbo': {
     input: 0.01,
@@ -26,8 +41,13 @@ export const AI_MODEL_PRICING = {
   },
   'gpt-3.5-turbo': {
     input: 0.0005,
-    output: 0.0015,
-    creditsPerThousand: 0.002
+    output: 0.002,
+    creditsPerThousand: 0.00125
+  },
+  'gpt-4-vision-preview': {
+    input: 0.01,
+    output: 0.03,
+    creditsPerThousand: 0.04
   },
   
   // Anthropic Models

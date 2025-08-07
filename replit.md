@@ -6,11 +6,14 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 **Production Domain**: https://e-code.ai (Ready for deployment - August 6, 2025)
 
 ## Recent Updates (August 7, 2025)
-- **AI Billing System Complete**: Implemented comprehensive token usage tracking and credit-based billing system for all AI model usage
-- **Claude 3.5 Sonnet Integration**: Fully integrated Claude 3.5 Sonnet (claude-3-5-sonnet-20241022) as the primary AI model with complete MCP support
-- **Usage Tracking Database**: Added `ai_usage_records` table to track detailed AI usage, costs, and billing metadata
-- **Billing Service**: Created `AIBillingService` that automatically tracks token usage and deducts credits for all AI operations
-- **API Endpoints**: Added `/api/ai/usage`, `/api/ai/models/pricing`, and `/api/user/credits` for monitoring AI usage and costs
+- **OpenAI Complete Integration**: Added ALL latest OpenAI models including GPT-4o, GPT-4o-mini, o1-preview, o1-mini with full agentic capabilities
+- **OpenAI Assistants API**: Implemented full OpenAI Assistants API with function calling, code interpreter, and file search capabilities
+- **Vision Support**: Added GPT-4o vision capabilities for image analysis and understanding
+- **Enhanced Billing**: Updated pricing for all OpenAI models with accurate 2025 pricing (GPT-4o: $2.50/1M input, $10/1M output)
+- **Model Selector UI**: Created comprehensive model selection component with capabilities display and pricing information
+- **AI Billing System Complete**: Comprehensive token usage tracking and credit-based billing system for all AI model usage
+- **Claude 3.5 Sonnet Integration**: Fully integrated Claude 3.5 Sonnet (claude-3-5-sonnet-20241022) with complete MCP support
+- **API Endpoints**: Added `/api/openai/*` endpoints for assistants, threads, and model-specific generation
 - **Previous Updates (August 6, 2025)**:
   - MCP Integration Complete with GitHub, PostgreSQL, and Memory MCP servers
   - MCP Panels Added with comprehensive UI functionality
