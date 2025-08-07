@@ -1,0 +1,99 @@
+# 1. Navigate to your e-code directory
+cd ~/e-code
+
+# 2. Pull the latest changes from GitHub
+git pull origin main
+
+# 3. Check you have all the files
+ls -la | grep -E "Dockerfile|package.json|server|client|shared"
+
+# 4. Build a new Docker image with updated code
+docker build -t gcr.io/votre-projet-ecode/e-code-platform:latest .
+
+# 5. Push the updated image
+docker push gcr.io/votre-projet-ecode/e-code-platform:latest
+
+# 6. Restart the deployment to use new image
+kubectl rollout restart deployment/e-code-platform -n e-code-platform
+
+# 7. Watch the rollout status
+kubectl rollout status deployment/e-code-platform -n e-code-platform
+
+# 8. Check if pods are running
+kubectl get pods -n e-code-platform
+
+# 9. View logs to ensure it's working
+kubectl logs -n e-code-platform deployment/e-code-platform --tail=20
+Username for 'https://github.com': openax
+Password for 'https://openax@github.com': 
+remote: Invalid username or token. Password authentication is not supported for Git operations.
+fatal: Authentication failed for 'https://github.com/openaxcloud/e-code.git/'
+drwxrwxr-x  4 simita_invest simita_invest     4096 Aug  7 16:35 client
+-rwxrwxr-x  1 simita_invest simita_invest     4253 Aug  7 16:35 deploy-mcp-server.sh
+-rw-rw-r--  1 simita_invest simita_invest      374 Aug  7 17:01 Dockerfile
+-rw-rw-r--  1 simita_invest simita_invest     1419 Aug  7 16:35 Dockerfile.user-environment
+-rw-rw-r--  1 simita_invest simita_invest     6770 Aug  7 16:35 package.json
+drwxrwxr-x 54 simita_invest simita_invest     4096 Aug  7 16:35 server
+drwxrwxr-x  3 simita_invest simita_invest     4096 Aug  7 16:35 shared
+-rw-rw-r--  1 simita_invest simita_invest     2938 Aug  7 16:35 test-mcp-server.md
+-rw-rw-r--  1 simita_invest simita_invest      628 Aug  7 16:35 tsconfig.server.json
+[+] Building 0.8s (13/13) FINISHED                                                                        docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 413B                                                                                0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   0.6s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 245B                                                                                   0.0s
+ => [1/8] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca  0.0s
+ => [internal] load build context                                                                                   0.1s
+ => => transferring context: 53.46kB                                                                                0.1s
+ => CACHED [2/8] RUN apk add --no-cache python3 make g++ git                                                        0.0s
+ => CACHED [3/8] WORKDIR /app                                                                                       0.0s
+ => CACHED [4/8] COPY . .                                                                                           0.0s
+ => CACHED [5/8] RUN npm ci                                                                                         0.0s
+ => CACHED [6/8] RUN npm run build || echo "Build completed with warnings"                                          0.0s
+ => CACHED [7/8] RUN ls -la dist/ || echo "No dist directory"                                                       0.0s
+ => CACHED [8/8] RUN mkdir -p logs                                                                                  0.0s
+ => exporting to image                                                                                              0.0s
+ => => exporting layers                                                                                             0.0s
+ => => writing image sha256:9267fad94a6e1b57cad40f3fe4ddae2658bfa9f2675d3fb666f1dc2beb78b2b8                        0.0s
+ => => naming to gcr.io/votre-projet-ecode/e-code-platform:latest                                                   0.0s
+The push refers to repository [gcr.io/votre-projet-ecode/e-code-platform]
+c308195984b9: Layer already exists 
+2a5d97db7082: Layer already exists 
+73b407d329d1: Layer already exists 
+05f9e398c547: Layer already exists 
+cb9ef3864dc5: Layer already exists 
+02c64f03bc1b: Layer already exists 
+6f21fa0f045c: Layer already exists 
+82140d9a70a7: Layer already exists 
+f3b40b0cdb1c: Layer already exists 
+0b1f26057bd0: Layer already exists 
+08000c18d16d: Layer already exists 
+latest: digest: sha256:3203d14f7c0e6198bf65bf0e2b21bc567a6ab270c29e0ee53bd4fb4aa787745e size: 2623
+deployment.apps/e-code-platform restarted
+Waiting for deployment spec update to be observed...
+Waiting for deployment "e-code-platform" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "e-code-platform" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+deployment "e-code-platform" successfully rolled out
+NAME                               READY   STATUS    RESTARTS     AGE
+e-code-platform-6f8478759d-2bx26   0/1     Error     6            7m18s
+e-code-platform-8fb7bdf88-rst2n    1/1     Running   1 (2s ago)   4s
+postgres-5fb6b6654c-pt6f6          1/1     Running   0            67m
+Found 2 pods, using pod/e-code-platform-8fb7bdf88-rst2n
+node:internal/modules/cjs/loader:1143
+  throw err;
+  ^
+
+Error: Cannot find module '/app/dist/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1140:15)
+    at Module._load (node:internal/modules/cjs/loader:981:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:128:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v18.20.8
