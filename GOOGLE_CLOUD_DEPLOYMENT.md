@@ -98,13 +98,13 @@ gcloud sql databases create projects --instance=ecode-db
 # Create user
 gcloud sql users create ecode-admin \
   --instance=ecode-db \
-  --password=SECURE_PASSWORD_HERE
+  --password=Gazprom5454@
 ```
 
 ### Step 5: Build and Deploy Platform
 ```bash
 # Clone your repository
-git clone https://github.com/yourusername/ecode-platform
+git clone https://github.com/openaxcloud/ecode-platformhttps://github.com/openaxcloud/e-code.git
 cd ecode-platform
 
 # Build Docker image
