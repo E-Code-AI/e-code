@@ -3,7 +3,11 @@
 ## Overview
 E-Code Platform is an advanced AI-powered development platform that streamlines software creation through intelligent, automated deployment and collaboration tools. It aims to provide an integrated development environment with enhanced features like industry-leading GPU computing, advanced monitoring, and comprehensive authentication. The platform enables users to launch complete applications from a single prompt, transforming ideas into running code quickly and efficiently.
 
-**LIVE DEPLOYMENT**: Successfully deployed on Google Cloud Platform at http://35.189.194.33 (as of August 7, 2025)
+**LIVE DEPLOYMENT**: ✅ Successfully deployed on Google Cloud Platform at http://35.189.194.33 (as of August 7, 2025)
+- Status: Running stable with simplified Node.js server
+- Infrastructure: GKE cluster with LoadBalancer service
+- Database: PostgreSQL running in separate pod
+- Current Version: Simple development build (awaiting full application deployment)
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
