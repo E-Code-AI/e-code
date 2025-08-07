@@ -1,0 +1,52 @@
+# Create a GKE cluster
+gcloud container clusters create e-code-cluster \
+  --zone us-central1-a \
+  --num-nodes 3 \
+  --machine-type n1-standard-2 \
+  --enable-autoscaling \
+  --min-nodes 1 \
+  --max-nodes 10
+Note: The Kubelet readonly port (10255) is now deprecated. Please update your workloads to use the recommended alternatives. See https://cloud.google.com/kubernetes-engine/docs/how-to/disable-kubelet-readonly-port for ways to check usage and for migration instructions.
+Note: Your Pod address range (`--cluster-ipv4-cidr`) can accommodate at most 1008 node(s).
+Creating cluster e-code-cluster in us-central1-a...done.                                                                
+ERROR: (gcloud.container.clusters.create) Operation [<Operation
+ clusterConditions: [<StatusCondition
+ canonicalCode: CanonicalCodeValueValuesEnum(UNAVAILABLE, 15)
+ code: CodeValueValuesEnum(GCE_STOCKOUT, 1)
+ message: "Instance 'gke-e-code-cluster-default-pool-501b0cab-g8qc' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.">, <StatusCondition
+ canonicalCode: CanonicalCodeValueValuesEnum(UNAVAILABLE, 15)
+ code: CodeValueValuesEnum(GCE_STOCKOUT, 1)
+ message: "Instance 'gke-e-code-cluster-default-pool-501b0cab-n36m' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.">, <StatusCondition
+ canonicalCode: CanonicalCodeValueValuesEnum(UNAVAILABLE, 15)
+ code: CodeValueValuesEnum(GCE_STOCKOUT, 1)
+ message: "Instance 'gke-e-code-cluster-default-pool-501b0cab-v76l' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.">, <StatusCondition
+ canonicalCode: CanonicalCodeValueValuesEnum(UNAVAILABLE, 15)
+ code: CodeValueValuesEnum(GCE_STOCKOUT, 1)
+ message: "Google Compute Engine: Not all instances running in IGM after 35m26.49205728s. Expected 3, running 0, transitioning 3. Current errors: [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-g8qc' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.; [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-n36m' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.; [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-v76l' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.">]
+ detail: "Google Compute Engine: Not all instances running in IGM after 35m26.49205728s. Expected 3, running 0, transitioning 3. Current errors: [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-g8qc' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.; [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-n36m' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.; [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-v76l' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later."
+ endTime: '2025-08-07T15:36:44.918179322Z'
+ error: <Status
+ code: 14
+ details: []
+ message: "Instance 'gke-e-code-cluster-default-pool-501b0cab-g8qc' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.">
+ name: 'operation-1754578604255-b870256a-fcdf-4b7c-bf4f-0c4313cc813c'
+ nodepoolConditions: []
+ operationType: OperationTypeValueValuesEnum(CREATE_CLUSTER, 1)
+ progress: <OperationProgress
+ metrics: [<Metric
+ intValue: 9
+ name: 'CLUSTER_CONFIGURING'>, <Metric
+ intValue: 9
+ name: 'CLUSTER_CONFIGURING_TOTAL'>, <Metric
+ intValue: 12
+ name: 'CLUSTER_DEPLOYING'>, <Metric
+ intValue: 12
+ name: 'CLUSTER_DEPLOYING_TOTAL'>]
+ stages: []>
+ selfLink: 'https://container.googleapis.com/v1/projects/598842228608/zones/us-central1-a/operations/operation-1754578604255-b870256a-fcdf-4b7c-bf4f-0c4313cc813c'
+ startTime: '2025-08-07T14:56:44.255874679Z'
+ status: StatusValueValuesEnum(DONE, 3)
+ statusMessage: "Google Compute Engine: Not all instances running in IGM after 35m26.49205728s. Expected 3, running 0, transitioning 3. Current errors: [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-g8qc' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.; [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-n36m' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.; [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-v76l' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later."
+ targetLink: 'https://container.googleapis.com/v1/projects/598842228608/zones/us-central1-a/clusters/e-code-cluster'
+ zone: 'us-central1-a'>] finished with error: Google Compute Engine: Not all instances running in IGM after 35m26.49205728s. Expected 3, running 0, transitioning 3. Current errors: [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-g8qc' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.; [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-n36m' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.; [GCE_STOCKOUT]: Instance 'gke-e-code-cluster-default-pool-501b0cab-v76l' creation failed: The zone 'projects/votre-projet-ecode/zones/us-central1-a' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.
+simita_invest@cloudshell:~
