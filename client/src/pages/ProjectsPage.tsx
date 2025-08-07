@@ -282,7 +282,7 @@ const ProjectsPage = () => {
   // Mutation for deleting a project
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
-      const res = await apiRequest('DELETE', `/api/user/projects/${projectId}`);
+      const res = await apiRequest('DELETE', `/api/projects/${projectId}`);
       if (!res.ok) {
         throw new Error('Failed to delete project');
       }
@@ -321,7 +321,7 @@ const ProjectsPage = () => {
   // Mutation for forking a project
   const forkProjectMutation = useMutation({
     mutationFn: async ({ projectId, name }: { projectId: number; name: string }) => {
-      const res = await apiRequest('POST', `/api/user/projects/${projectId}/fork`, { name });
+      const res = await apiRequest('POST', `/api/projects/${projectId}/fork`, { name });
       if (!res.ok) {
         throw new Error('Failed to fork project');
       }
@@ -350,7 +350,7 @@ const ProjectsPage = () => {
   // Mutation for liking a project
   const likeProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
-      const res = await apiRequest('POST', `/api/user/projects/${projectId}/like`);
+      const res = await apiRequest('POST', `/api/projects/${projectId}/like`);
       if (!res.ok) {
         throw new Error('Failed to like project');
       }
