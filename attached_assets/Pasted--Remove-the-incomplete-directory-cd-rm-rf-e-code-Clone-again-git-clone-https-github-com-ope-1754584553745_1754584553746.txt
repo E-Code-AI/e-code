@@ -1,0 +1,66 @@
+# Remove the incomplete directory
+cd ~
+rm -rf e-code
+
+# Clone again
+git clone https://github.com/openaxcloud/e-code.git
+cd e-code
+
+# Check for package.json
+ls package.json# Remove the incomplete directory
+cd ~
+rm -rf e-code
+
+# Clone again
+git clone https://github.com/openaxcloud/e-code.git
+cd e-code
+
+# Check for package.json
+ls package.json# Remove the incomplete directory
+cd ~
+rm -rf e-code
+
+# Clone again
+git clone https://github.com/openaxcloud/e-code.git
+cd e-code
+
+# Check for package.json
+ls package.json
+Cloning into 'e-code'...
+Username for 'https://github.com': openax
+Password for 'https://openax@github.com': 
+remote: Enumerating objects: 6530, done.
+remote: Counting objects: 100% (6530/6530), done.
+remote: Compressing objects: 100% (1679/1679), done.
+remote: Total 6530 (delta 4751), reused 6530 (delta 4751), pack-reused 0 (from 0)
+Receiving objects: 100% (6530/6530), 31.68 MiB | 29.02 MiB/s, done.
+Resolving deltas: 100% (4751/4751), done.
+ls: cannot access 'package.json#': No such file or directory
+ls: cannot access 'Remove': No such file or directory
+ls: cannot access 'the': No such file or directory
+ls: cannot access 'incomplete': No such file or directory
+ls: cannot access 'directory': No such file or directory
+Cloning into 'e-code'...
+Username for 'https://github.com': openax
+Password for 'https://openax@github.com': 
+remote: Enumerating objects: 6530, done.
+remote: Counting objects: 100% (6530/6530), done.
+remote: Compressing objects: 100% (1679/1679), done.
+remote: Total 6530 (delta 4751), reused 6530 (delta 4751), pack-reused 0 (from 0)
+Receiving objects: 100% (6530/6530), 31.68 MiB | 30.18 MiB/s, done.
+Resolving deltas: 100% (4751/4751), done.
+ls: cannot access 'package.json#': No such file or directory
+ls: cannot access 'Remove': No such file or directory
+ls: cannot access 'the': No such file or directory
+ls: cannot access 'incomplete': No such file or directory
+ls: cannot access 'directory': No such file or directory
+Cloning into 'e-code'...
+Username for 'https://github.com': openax
+Password for 'https://openax@github.com': 
+remote: Enumerating objects: 6530, done.
+remote: Counting objects: 100% (6530/6530), done.
+remote: Compressing objects: 100% (1679/1679), done.
+remote: Total 6530 (delta 4751), reused 6530 (delta 4751), pack-reused 0 (from 0)
+Receiving objects: 100% (6530/6530), 31.68 MiB | 23.64 MiB/s, done.
+Resolving deltas: 100% (4751/4751), done.
+package.json
