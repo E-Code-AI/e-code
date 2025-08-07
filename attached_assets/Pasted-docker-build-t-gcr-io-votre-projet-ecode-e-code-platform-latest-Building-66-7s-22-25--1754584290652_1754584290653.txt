@@ -1,0 +1,142 @@
+docker build -t gcr.io/votre-projet-ecode/e-code-platform:latest .
+[+] Building 66.7s (22/25)                                                                                docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 1.31kB                                                                              0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   0.4s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 2B                                                                                     0.0s
+ => [internal] load build context                                                                                  62.9s
+ => => transferring context: 1.11GB                                                                                62.7s
+ => [builder 1/9] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb  0.0s
+ => CACHED [builder 2/9] RUN apk add --no-cache python3 make g++ git                                                0.0s
+ => CACHED [builder 3/9] WORKDIR /app                                                                               0.0s
+ => CACHED [stage-1  2/13] RUN apk add --no-cache git                                                               0.0s
+ => CACHED [stage-1  3/13] WORKDIR /app                                                                             0.0s
+ => CANCELED [builder 4/9] COPY package*.json ./                                                                    3.3s
+ => CACHED [builder 5/9] COPY tsconfig*.json ./                                                                     0.0s
+ => ERROR [builder 6/9] COPY drizzle.config.ts ./                                                                   0.0s
+ => CACHED [stage-1  4/13] COPY package*.json ./                                                                    0.0s
+ => CACHED [stage-1  5/13] RUN npm ci --only=production                                                             0.0s
+ => CACHED [builder 7/9] RUN npm ci                                                                                 0.0s
+ => CACHED [builder 8/9] COPY . .                                                                                   0.0s
+ => CACHED [builder 9/9] RUN npm run build                                                                          0.0s
+ => CACHED [stage-1  6/13] COPY --from=builder /app/dist ./dist                                                     0.0s
+ => CACHED [stage-1  7/13] COPY --from=builder /app/client/dist ./client/dist                                       0.0s
+ => ERROR [stage-1  8/13] COPY shared ./shared                                                                      0.0s
+ => ERROR [stage-1  9/13] COPY theme.json ./                                                                        0.0s
+ => ERROR [stage-1 10/13] COPY deployment.config.ts ./                                                              0.0s
+------
+ > [builder 6/9] COPY drizzle.config.ts ./:
+------
+------
+ > [stage-1  8/13] COPY shared ./shared:
+------
+------
+ > [stage-1  9/13] COPY theme.json ./:
+------
+------
+ > [stage-1 10/13] COPY deployment.config.ts ./:
+------
+Dockerfile:31
+--------------------
+  29 |     COPY shared ./shared
+  30 |     COPY theme.json ./
+  31 | >>> COPY deployment.config.ts ./
+  32 |     # Create logs directory
+  33 |     RUN mkdir -p logs
+--------------------
+ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref 254e626b-f70d-4b46-86c2-2315d0b4c6bc::p00wxwsbegj6u58mysbd0avm7: "/deployment.config.ts": not found
+simita_invest@cloudshell:~/e-code (votre-projet-ecode)$ cat > Dockerfile << 'EOF'
+# E-Code Platform - Simplified Dockerfile
+FROM node:18-alpine
+# Install dependencies
+RUN apk add --no-cache python3 make g++ git
+WORKDIR /app
+# Copy everything
+COPY . .
+# Install dependencies
+RUN npm ci
+# Build the application if needed
+RUN npm run build || true
+# Create logs directory
+RUN mkdir -p logs
+# Expose port
+EXPOSE 5000
+# Start the application
+CMD ["npm", "start"]
+EOF
+simita_invest@cloudshell:~/e-code (votre-projet-ecode)$ # E-Code Platform - Simplified Dockerfile
+FROM node:18-alpine
+-bash: FROM: command not found
+simita_invest@cloudshell:~/e-code (votre-projet-ecode)$ # 1. Go to your e-code directory
+cd ~/e-code
+
+# 2. Create a simpler Dockerfile without missing files
+cat > Dockerfile << 'EOF'
+# E-Code Platform - Simplified Dockerfile
+FROM node:18-alpine
+
+# Install dependencies
+RUN apk add --no-cache python3 make g++ git
+
+WORKDIR /app
+
+# Copy everything
+COPY . .
+
+# Install dependencies
+RUN npm ci
+
+# Build the application if needed
+RUN npm run build || true
+
+# Create logs directory
+RUN mkdir -p logs
+
+# Expose port
+EXPOSE 5000
+
+# Start the application
+CMD ["npm", "start"]
+EOF
+
+# 3. Build the Docker image
+docker build -t gcr.io/votre-projet-ecode/e-code-platform:latest .
+
+# 4. Push to Google Container Registry
+docker push gcr.io/votre-projet-ecode/e-code-platform:latest
+[+] Building 25.7s (9/11)                                                                                 docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 423B                                                                                0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   0.7s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 2B                                                                                     0.0s
+ => [1/7] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca  0.0s
+ => [internal] load build context                                                                                   3.4s
+ => => transferring context: 5.63MB                                                                                 3.3s
+ => CACHED [2/7] RUN apk add --no-cache python3 make g++ git                                                        0.0s
+ => CACHED [3/7] WORKDIR /app                                                                                       0.0s
+ => [4/7] COPY . .                                                                                                 19.9s
+ => ERROR [5/7] RUN npm ci                                                                                          1.6s
+------                                                                                                                   
+ > [5/7] RUN npm ci:
+1.525 npm error code ENOENT
+1.526 npm error syscall open
+1.526 npm error path /app/package.json
+1.527 npm error errno -2
+1.527 npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/app/package.json'
+1.527 npm error enoent This is related to npm not being able to find a file.
+1.527 npm error enoent
+1.530 npm error A complete log of this run can be found in: /root/.npm/_logs/2025-08-07T16_30_31_459Z-debug-0.log
+------
+Dockerfile:13
+--------------------
+  11 |     
+  12 |     # Install dependencies
+  13 | >>> RUN npm ci
+  14 |     
+  15 |     # Build the application if needed
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c npm ci" did not complete successfully: exit code: 254
+The push refers to repository [gcr.io/votre-projet-ecode/e-code-platform]
+An image does not exist locally with the tag: gcr.io/votre-projet-ecode/e-code-platform
