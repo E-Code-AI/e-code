@@ -93,7 +93,7 @@ IMAGE_NAME="gcr.io/votre-projet-ecode/e-code-platform:latest"
 gcloud auth configure-docker
 
 # Build the image
-docker build -t ${IMAGE_NAME} .
+docker build -t $gcr.io/$votre-projet-ecode/e-code-platform:latest
 
 # Push to Google Container Registry
 echo "Pushing image to GCR..."
