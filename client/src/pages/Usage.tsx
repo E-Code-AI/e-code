@@ -127,7 +127,11 @@ export default function Usage() {
   const currentDay = today.getDate();
   const daysRemaining = daysInMonth - currentDay + 1;
   
-  const billingCycle = billingData?.currentCycle || {
+  const billingCycle = billingData?.currentCycle ? {
+    start: new Date(billingData.currentCycle.start),
+    end: new Date(billingData.currentCycle.end),
+    daysRemaining: billingData.currentCycle.daysRemaining
+  } : {
     start: startOfMonth,
     end: endOfMonth,
     daysRemaining
