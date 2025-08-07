@@ -9610,6 +9610,10 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   
   app.use("/api/mcp", mcpRouter);
+  
+  // Open-source Models API
+  const openSourceModelsRouter = await import('./api/opensource-models');
+  app.use('/api/opensource', openSourceModelsRouter.default);
   initializeMCPServer(app);
   
   // Shell routes
