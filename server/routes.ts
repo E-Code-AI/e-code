@@ -2724,17 +2724,22 @@ npx http-server .
       // Check if this is a valid project route
       const user = await storage.getUserByUsername(username);
       if (!user) {
-        return next(); // Let frontend handle 404
+        // If user doesn't exist, let it fall through to serve the React app
+        // which will handle the 404 on the frontend
+        return next();
       }
       
-      const project = await storage.getProjectBySlug(projectname);
-      if (!project || project.ownerId !== user.id) {
-        return next(); // Let frontend handle 404
+      const project = await storage.getProjectBySlug(projectname, user.id);
+      if (!project) {
+        // If project doesn't exist or doesn't belong to user,
+        // let it fall through to serve the React app
+        return next();
       }
       
-      // Serve the React app
+      // Valid project route - serve the React app
       return next();
     } catch (error) {
+      console.error('Error in slug route handler:', error);
       return next();
     }
   });
@@ -2752,8 +2757,8 @@ npx http-server .
       }
       
       // Get project by slug belonging to the user
-      const project = await storage.getProjectBySlug(slug);
-      if (!project || project.ownerId !== user.id) {
+      const project = await storage.getProjectBySlug(slug, user.id);
+      if (!project) {
         return res.status(404).json({ error: 'Project not found' });
       }
       
