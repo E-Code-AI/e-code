@@ -1,0 +1,107 @@
+# 1. Get the detailed logs from the crashed container
+kubectl logs e-code-platform-76b44b796b-vvc8r -n e-code-platform --previous
+
+# 2. Check current logs
+kubectl logs e-code-platform-76b44b796b-vvc8r -n e-code-platform
+
+# 3. Let's create a simpler deployment that just runs Node
+cat > Dockerfile << 'EOF'
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Create a simple server
+RUN echo 'const express = require("express"); const app = express(); app.get("/", (req, res) => res.send("E-Code Platform Running on GCP!")); app.get("/api/monitoring/health", (req, res) => res.json({status: "ok"})); app.listen(5000, () => console.log("Server running on port 5000"));' > server.js
+
+RUN npm init -y && npm install express
+
+EXPOSE 5000
+
+CMD ["node", "server.js"]
+EOF
+
+# 4. Build minimal version
+docker build -t gcr.io/votre-projet-ecode/e-code-platform:minimal .
+
+# 5. Push minimal version
+docker push gcr.io/votre-projet-ecode/e-code-platform:minimal
+
+# 6. Deploy minimal version
+kubectl set image deployment/e-code-platform e-code-platform=gcr.io/votre-projet-ecode/e-code-platform:minimal -n e-code-platform
+
+# 7. Watch the rollout
+kubectl rollout status deployment/e-code-platform -n e-code-platform
+
+# 8. Check if it's running
+kubectl get pods -n e-code-platform
+
+kubectl get service e-code-platform -n e-code-platform
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+/app/server/db.ts:6
+  throw new Error(
+        ^
+
+
+Error: DATABASE_URL must be set. Did you forget to provision a database?
+    at <anonymous> (/app/server/db.ts:6:9)
+    at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+    at async loadESM (node:internal/process/esm_loader:34:7)
+    at async handleMainPromise (node:internal/modules/run_main:106:12)
+
+Node.js v18.20.8
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+/app/server/db.ts:6
+  throw new Error(
+        ^
+
+
+Error: DATABASE_URL must be set. Did you forget to provision a database?
+    at <anonymous> (/app/server/db.ts:6:9)
+    at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+    at async loadESM (node:internal/process/esm_loader:34:7)
+    at async handleMainPromise (node:internal/modules/run_main:106:12)
+
+Node.js v18.20.8
+[+] Building 6.1s (8/8) FINISHED                                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 477B                                                                                0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   0.7s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 2B                                                                                     0.0s
+ => CACHED [1/4] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9  0.0s
+ => [2/4] WORKDIR /app                                                                                              0.0s
+ => [3/4] RUN echo 'const express = require("express"); const app = express(); app.get("/", (req, res) => res.send  0.2s
+ => [4/4] RUN npm init -y && npm install express                                                                    4.7s
+ => exporting to image                                                                                              0.3s
+ => => exporting layers                                                                                             0.3s
+ => => writing image sha256:0b79924daa6167263de5048f2d1d2febfee3d39e41683bf2bcfe07caa375a310                        0.0s 
+ => => naming to gcr.io/votre-projet-ecode/e-code-platform:minimal                                                  0.0s 
+The push refers to repository [gcr.io/votre-projet-ecode/e-code-platform]                                                
+a5ac728f5f64: Pushed 
+842f7a6db520: Pushed 
+8f40d7daf60b: Pushed 
+82140d9a70a7: Layer already exists 
+f3b40b0cdb1c: Layer already exists 
+0b1f26057bd0: Layer already exists 
+08000c18d16d: Layer already exists 
+minimal: digest: sha256:af5e4e9765972ec699b4c590ea63d49bcbcd2132785ebd48c535151b47d94f4a size: 1782
+deployment.apps/e-code-platform image updated
+Waiting for deployment "e-code-platform" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+deployment "e-code-platform" successfully rolled out
+NAME                               READY   STATUS    RESTARTS   AGE
+e-code-platform-68f86d5879-2dl99   1/1     Running   0          6s
+e-code-platform-76b44b796b-vvc8r   0/1     Error     5          5m4s
+postgres-5fb6b6654c-pt6f6          1/1     Running   0          73m
+NAME              TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)        AGE
+e-code-platform   LoadBalancer   34.118.225.141   35.189.194.33   80:31498/TCP   111s
