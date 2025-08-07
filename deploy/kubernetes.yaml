@@ -1,0 +1,305 @@
+# E-Code Platform - Complete Kubernetes Deployment with Container Orchestration
+---
+# Namespace for main platform
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-code-platform
+  labels:
+    name: e-code-platform
+    managed-by: e-code
+
+---
+# ConfigMap for platform configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-config
+  namespace: e-code-platform
+data:
+  NODE_ENV: "production"
+  PORT: "5000"
+  ENABLE_CONTAINER_ORCHESTRATION: "true"
+  KUBERNETES_NAMESPACE_PREFIX: "project-"
+  USER_CONTAINER_IMAGE: "gcr.io/votre-projet-ecode/user-environment:latest"
+
+---
+# Main Platform Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-code-platform
+  namespace: e-code-platform
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: e-code-platform
+  template:
+    metadata:
+      labels:
+        app: e-code-platform
+    spec:
+      serviceAccountName: e-code-orchestrator
+      containers:
+      - name: e-code-platform
+        image: gcr.io/votre-projet-ecode/e-code-platform:full
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: e-code-secrets
+              key: database-url
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: e-code-secrets
+              key: openai-api-key
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: e-code-secrets
+              key: stripe-secret-key
+        - name: VITE_STRIPE_PUBLIC_KEY
+          valueFrom:
+            secretKeyRef:
+              name: e-code-secrets
+              key: stripe-public-key
+        - name: SESSION_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: e-code-secrets
+              key: session-secret
+        - name: KUBERNETES_SERVICE_HOST
+          value: "kubernetes.default.svc"
+        - name: ENABLE_ORCHESTRATION
+          value: "true"
+        envFrom:
+        - configMapRef:
+            name: platform-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        readinessProbe:
+          httpGet:
+            path: /api/monitoring/health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/monitoring/health
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+
+---
+# Service for main platform
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-code-platform
+  namespace: e-code-platform
+spec:
+  type: LoadBalancer
+  selector:
+    app: e-code-platform
+  ports:
+  - port: 80
+    targetPort: 5000
+    protocol: TCP
+
+---
+# ServiceAccount for container orchestration
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: e-code-orchestrator
+  namespace: e-code-platform
+
+---
+# ClusterRole for managing user containers
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: e-code-orchestrator
+rules:
+- apiGroups: [""]
+  resources: ["namespaces", "pods", "services", "configmaps", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies", "ingresses"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create", "get"]
+- apiGroups: [""]
+  resources: ["resourcequotas"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: e-code-orchestrator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: e-code-orchestrator
+subjects:
+- kind: ServiceAccount
+  name: e-code-orchestrator
+  namespace: e-code-platform
+
+---
+# PostgreSQL StatefulSet for platform database
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: e-code-platform
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:14
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: ecode
+        - name: POSTGRES_USER
+          value: ecode_user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-password
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: e-code-platform
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: e-code-ingress
+  namespace: e-code-platform
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  rules:
+  - host: e-code.app
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: e-code-platform
+            port:
+              number: 80
+  - host: "*.e-code.app"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: e-code-platform
+            port:
+              number: 80
+
+---
+# ResourceQuota for default limits on user namespaces
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: default-user-quota
+  namespace: e-code-platform
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: "20Gi"
+    limits.cpu: "20"
+    limits.memory: "40Gi"
+    persistentvolumeclaims: "100"
+    pods: "50"
+
+---
+# NetworkPolicy for platform security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: platform-network-policy
+  namespace: e-code-platform
+spec:
+  podSelector:
+    matchLabels:
+      app: e-code-platform
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector: {}
+    - namespaceSelector:
+        matchLabels:
+          managed-by: e-code
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
