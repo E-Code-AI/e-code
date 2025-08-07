@@ -478,6 +478,78 @@ export class KubernetesOrchestrator {
       throw error;
     }
   }
+
+  /**
+   * Scale deployment to stop/start containers
+   */
+  async scaleDeployment(userId: string, projectId: string, replicas: number): Promise<void> {
+    const namespace = `project-${userId}-${projectId}`;
+    const deploymentName = `app-${projectId}`;
+    
+    try {
+      await this.appsApi.patchNamespacedDeployment(
+        deploymentName,
+        namespace,
+        {
+          spec: {
+            replicas: replicas
+          }
+        },
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        {
+          headers: {
+            'Content-Type': 'application/strategic-merge-patch+json'
+          }
+        }
+      );
+      
+      logger.info(`Scaled deployment ${deploymentName} to ${replicas} replicas`);
+    } catch (error: any) {
+      logger.error(`Failed to scale deployment:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get container logs
+   */
+  async getContainerLogs(userId: string, projectId: string): Promise<string> {
+    const namespace = `project-${userId}-${projectId}`;
+    
+    try {
+      const pods = await this.k8sApi.listNamespacedPod(namespace, undefined, undefined, undefined, undefined, `app=app-${projectId}`);
+      
+      if (pods.body.items.length === 0) {
+        return 'No pods found for this project';
+      }
+      
+      const podName = pods.body.items[0].metadata?.name!;
+      
+      // Get logs from the pod
+      const logs = await this.k8sApi.readNamespacedPodLog(
+        podName,
+        namespace,
+        'user-environment',
+        false,
+        undefined,
+        undefined,
+        undefined,
+        false,
+        undefined,
+        100, // tail last 100 lines
+        true
+      );
+      
+      return logs.body;
+    } catch (error: any) {
+      logger.error(`Failed to get container logs:`, error);
+      return `Failed to retrieve logs: ${error.message}`;
+    }
+  }
 }
 
 export const orchestrator = new KubernetesOrchestrator();
