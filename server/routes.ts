@@ -7452,8 +7452,8 @@ module.exports = new Solution();`
   agentWebSocketService.initialize(httpServer);
   
   // WebSocket for Mobile app real-time features (terminal, AI, collaboration)
-  const { initializeMobileWebSocket } = require('./websocket/mobile-websocket');
-  initializeMobileWebSocket(httpServer);
+  // Note: Mobile WebSocket is initialized separately for React Native app
+  // The mobile app connects via its own WebSocket client
   
   // Old collaboration WebSocket code removed - replaced with CollaborationServer using Yjs
   
