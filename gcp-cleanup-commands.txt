@@ -1,0 +1,86 @@
+# Commandes pour nettoyer complètement le projet votre-projet-ecode
+# Copiez-collez ces commandes une par une dans Google Cloud Shell
+
+# 1. Configuration du projet
+gcloud config set project votre-projet-ecode
+
+# 2. Supprimer tous les clusters GKE
+echo "Suppression des clusters..."
+gcloud container clusters list --format="value(name,zone)" | while read cluster_name cluster_zone; do
+  if [ ! -z "$cluster_name" ]; then
+    echo "Suppression du cluster: $cluster_name"
+    gcloud container clusters delete "$cluster_name" --zone="$cluster_zone" --quiet
+  fi
+done
+
+# 3. Supprimer toutes les images Docker
+echo "Suppression des images Docker..."
+gcloud container images list --repository=gcr.io/votre-projet-ecode --format="value(name)" | while read image; do
+  if [ ! -z "$image" ]; then
+    echo "Suppression de l'image: $image"
+    gcloud container images delete "$image" --force-delete-tags --quiet
+  fi
+done
+
+# 4. Supprimer tous les disques persistants
+echo "Suppression des disques..."
+gcloud compute disks list --format="value(name,zone)" | while read disk_name disk_zone; do
+  if [ ! -z "$disk_name" ]; then
+    echo "Suppression du disque: $disk_name"
+    gcloud compute disks delete "$disk_name" --zone="$disk_zone" --quiet
+  fi
+done
+
+# 5. Supprimer toutes les instances VM
+echo "Suppression des instances VM..."
+gcloud compute instances list --format="value(name,zone)" | while read instance_name instance_zone; do
+  if [ ! -z "$instance_name" ]; then
+    echo "Suppression de l'instance: $instance_name"
+    gcloud compute instances delete "$instance_name" --zone="$instance_zone" --quiet
+  fi
+done
+
+# 6. Supprimer les load balancers et adresses IP
+echo "Suppression des forwarding rules..."
+gcloud compute forwarding-rules list --format="value(name,region)" | while read rule region; do
+  if [ ! -z "$rule" ]; then
+    if [ ! -z "$region" ]; then
+      gcloud compute forwarding-rules delete "$rule" --region="$region" --quiet
+    else
+      gcloud compute forwarding-rules delete "$rule" --global --quiet
+    fi
+  fi
+done
+
+echo "Suppression des adresses IP..."
+gcloud compute addresses list --format="value(name,region)" | while read ip_name ip_region; do
+  if [ ! -z "$ip_name" ]; then
+    if [ ! -z "$ip_region" ]; then
+      gcloud compute addresses delete "$ip_name" --region="$ip_region" --quiet
+    else
+      gcloud compute addresses delete "$ip_name" --global --quiet
+    fi
+  fi
+done
+
+# 7. Vérification finale
+echo "=== NETTOYAGE TERMINÉ ==="
+echo "Vérification des ressources restantes:"
+echo ""
+echo "Clusters:"
+gcloud container clusters list
+echo ""
+echo "Images:"
+gcloud container images list --repository=gcr.io/votre-projet-ecode
+echo ""
+echo "Instances:"
+gcloud compute instances list
+echo ""
+echo "Disques:"
+gcloud compute disks list
+echo ""
+echo "Adresses IP:"
+gcloud compute addresses list
+
+echo ""
+echo "✅ Projet nettoyé! Plus de frais de compute/stockage/load balancing."
