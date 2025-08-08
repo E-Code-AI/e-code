@@ -5,6 +5,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import * as fs from 'fs/promises';
 import { spawn } from 'child_process';
 import { createLogger } from '../utils/logger';
+import { previewEvents } from './preview-websocket';
 
 const logger = createLogger('preview-service');
 
@@ -68,6 +69,9 @@ export class PreviewService {
     };
     
     this.previews.set(projectId, preview);
+    
+    // Emit WebSocket event for preview start
+    previewEvents.emit('preview:start', { projectId, port });
     
     try {
       // Create temporary directory for preview
@@ -136,25 +140,39 @@ export class PreviewService {
           const log = data.toString();
           preview.logs.push(log);
           logger.info(`Preview ${projectId}: ${log}`);
+          // Emit log event for WebSocket
+          previewEvents.emit('preview:log', { projectId, log });
         });
         
         preview.process.stderr.on('data', (data: Buffer) => {
           const log = data.toString();
           preview.logs.push(log);
           logger.error(`Preview ${projectId}: ${log}`);
+          // Emit log event for WebSocket
+          previewEvents.emit('preview:log', { projectId, log });
         });
         
         preview.process.on('exit', (code: number) => {
           preview.status = code === 0 ? 'stopped' : 'error';
           preview.logs.push(`Process exited with code ${code}`);
+          // Emit stop or error event
+          if (code === 0) {
+            previewEvents.emit('preview:stop', { projectId });
+          } else {
+            previewEvents.emit('preview:error', { projectId, error: `Process exited with code ${code}` });
+          }
         });
         
         // Wait a bit for server to start
         await new Promise(resolve => setTimeout(resolve, 2000));
         preview.status = 'running';
+        // Emit ready event
+        previewEvents.emit('preview:ready', { projectId, port });
       } else {
         preview.status = 'error';
         preview.logs.push('Could not determine how to start preview');
+        // Emit error event
+        previewEvents.emit('preview:error', { projectId, error: 'Could not determine how to start preview' });
       }
       
     } catch (error: any) {
@@ -171,6 +189,8 @@ export class PreviewService {
     if (preview?.process) {
       preview.process.kill();
       preview.status = 'stopped';
+      // Emit stop event for WebSocket
+      previewEvents.emit('preview:stop', { projectId });
     }
     this.previews.delete(projectId);
   }

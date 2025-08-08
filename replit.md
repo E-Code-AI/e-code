@@ -17,6 +17,15 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 - **Interface Toggle**: Users can switch between agent and editor modes for accelerated development
 - **Full MCP Integration**: All AI operations powered by MCP backend infrastructure
 
+**PREVIEW SYSTEM UPDATE (August 8, 2025)**: ✅ Complete Replit-like Preview Functionality
+- **Live Server Previews**: Complete architectural overhaul from static HTML to live server URLs
+- **WebSocket Real-time Updates**: Full WebSocket service (preview-websocket.ts) for live status, logs, and progress
+- **Developer Tools Integration**: Eruda developer tools for in-preview debugging and inspection
+- **Responsive Device Testing**: Multiple device modes (desktop, tablet, mobile) with presets
+- **Automatic Preview Startup**: Auto-detects executable files and starts preview servers
+- **Real-time Connectivity Indicators**: WebSocket connection status shown in preview header
+- **Preview Management API**: /api/preview/start and /api/preview/stop endpoints for control
+
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
 - **Error Handling**: Comprehensive error handling with proper logging

@@ -190,6 +190,7 @@ import deploymentRoutes from './routes/deployment';
 import { marketplaceService } from './services/marketplace-service';
 import { getEducationService } from './services/education-service';
 import { previewService } from './preview/preview-service';
+import { previewWebSocketService } from './preview/preview-websocket';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { dataProvisioningService } from './data/data-provisioning-service';
 import { resourceMonitor } from './services/resource-monitor';
@@ -6995,6 +6996,9 @@ npx http-server .
   // Create HTTP server and WebSocket servers
   const httpServer = createServer(app);
   
+  // Initialize preview WebSocket service for real-time updates
+  previewWebSocketService.initialize(httpServer);
+  
   // WebSocket for real-time collaboration using Yjs
   const collabServer = new CollaborationServer(httpServer);
   
@@ -9232,7 +9236,52 @@ Generate a comprehensive application based on the user's request. Include all ne
     proxy(req, res, next);
   });
   
-  // Preview routes
+  // Preview routes - Replit-style simplified endpoints
+  app.post('/api/preview/start/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const preview = await previewService.startPreview(projectId);
+      
+      // Return the format expected by the Preview component
+      res.json({
+        url: `/preview/${projectId}`,
+        port: preview.port,
+        status: preview.status,
+        logs: preview.logs || [],
+        projectId: preview.projectId
+      });
+    } catch (error) {
+      console.error('Error starting preview:', error);
+      res.status(500).json({ error: 'Failed to start preview' });
+    }
+  });
+
+  app.post('/api/preview/stop/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      await previewService.stopPreview(projectId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error stopping preview:', error);
+      res.status(500).json({ error: 'Failed to stop preview' });
+    }
+  });
+
+  app.get('/api/preview/status/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const preview = previewService.getPreview(projectId);
+      if (!preview) {
+        return res.json({ status: 'stopped' });
+      }
+      res.json(preview);
+    } catch (error) {
+      console.error('Error getting preview status:', error);
+      res.status(500).json({ error: 'Failed to get preview status' });
+    }
+  });
+
+  // Legacy preview routes (keep for backwards compatibility)
   app.post('/api/projects/:id/preview/start', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
