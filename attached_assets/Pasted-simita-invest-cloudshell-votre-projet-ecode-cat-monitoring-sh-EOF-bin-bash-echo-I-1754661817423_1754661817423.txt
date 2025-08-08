@@ -1,0 +1,152 @@
+simita_invest@cloudshell:~ (votre-projet-ecode)$ cat > monitoring.sh << 'EOF'
+#!/bin/bash
+echo "📊 Installation Monitoring"
+kubectl create namespace monitoring 2>/dev/null || true
+
+kubectl apply -n monitoring -f - <<'K8S'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          value: admin2025
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+spec:
+  type: LoadBalancer
+  selector:
+    app: grafana
+  ports:
+  - port: 80
+    targetPort: 3000
+K8S
+
+chmod +x monitoring.sh && ./monitoring.sh-n monitoring -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+📊 Installation Monitoring
+namespace/monitoring created
+deployment.apps/grafana created
+service/grafana created
+📈 Grafana: http://
+User: admin / Pass: admin2025
+simita_invest@cloudshell:~ (votre-projet-ecode)$ cat > fix-deploy.sh << 'EOF'
+#!/bin/bash
+PROJECT_ID="votre-projet-ecode"
+ZONE="europe-west1-b"
+
+echo "🔧 Correction du déploiement E-Code Platform v3"
+echo ""
+
+# Configuration
+gcloud config set project ${PROJECT_ID}
+gcloud container clusters get-credentials e-code-production --zone=${ZONE}
+
+# 1. Supprimer les pods en erreur
+echo "➡️ Nettoyage des pods en erreur..."
+kubectl delete deployment e-code-v3 -n e-code 2>/dev/null || true
+
+# 2. Créer le server.js
+cat > server.js << 'JS'
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>E-Code Platform</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          margin: 0;
+        }
+        .container {
+chmod +x fix-deploy.sh && ./fix-deploy.she e-code-v3-lb -n e-code"tus.loadBalancer.ingress[0].ip}')p>
+🔧 Correction du déploiement E-Code Platform v3
+
+Updated property [core/project].
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for e-code-production.
+➡️ Nettoyage des pods en erreur...
+deployment.apps "e-code-v3" deleted
+➡️ Construction de l'image Docker...
+[+] Building 4.3s (10/10) FINISHED                                                                        docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 178B                                                                                0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   0.3s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 2B                                                                                     0.0s
+ => [1/5] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca  0.0s
+ => [internal] load build context                                                                                   0.0s
+ => => transferring context: 2.54kB                                                                                 0.0s
+ => CACHED [2/5] WORKDIR /app                                                                                       0.0s
+ => [3/5] COPY package.json ./                                                                                      0.0s
+ => [4/5] RUN npm install --production                                                                              3.5s
+ => [5/5] COPY server.js ./                                                                                         0.0s 
+ => exporting to image                                                                                              0.3s 
+ => => exporting layers                                                                                             0.3s
+ => => writing image sha256:4e10d6833c6c209f6138b8b256af7148e775f587516085511feec6abc5b4098f                        0.0s
+ => => naming to gcr.io/votre-projet-ecode/e-code-app:v3-fixed                                                      0.0s
+The push refers to repository [gcr.io/votre-projet-ecode/e-code-app]
+b66e465a7239: Pushed 
+d9c2d4f52c24: Pushed 
+01de3ec7e6f8: Pushed 
+5569d6364535: Layer already exists 
+82140d9a70a7: Layer already exists 
+f3b40b0cdb1c: Layer already exists 
+0b1f26057bd0: Layer already exists 
+08000c18d16d: Layer already exists 
+v3-fixed: digest: sha256:ba092a0667c69186c0e3c39abe5575be9ae51a7c07ba1d05fdab33cc6bbf962b size: 1990
+➡️ Déploiement de la version corrigée...
+deployment.apps/e-code-v3 created
+➡️ Attente du déploiement...
+
+📊 État des pods:
+e-code-v3-65c7f9b55d-5wcbw    1/1     Running   0          21s
+e-code-v3-65c7f9b55d-d6cfq    1/1     Running   0          21s
+e-code-v3-65c7f9b55d-db9lz    1/1     Running   0          21s
+e-code-v3-65c7f9b55d-dh76r    1/1     Running   0          20s
+e-code-v3-65c7f9b55d-rjg4b    1/1     Running   0          20s
+
+🌐 Services disponibles:
+NAME           TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)        AGE
+e-code-lb      LoadBalancer   34.118.234.15    34.38.197.234   80:32001/TCP   17m
+e-code-v2-lb   LoadBalancer   34.118.239.224   34.14.80.192    80:30629/TCP   13m
+e-code-v3-lb   LoadBalancer   34.118.228.94    35.241.201.16   80:32553/TCP   2m29s
+postgres       ClusterIP      34.118.229.64    <none>          5432/TCP       17m
+redis          ClusterIP      34.118.229.119   <none>          6379/TCP       17m
+
+✅ APPLICATION DÉPLOYÉE!
+========================
+🌐 E-Code Platform v3: http://35.241.201.16
+
+Test avec: curl http://35.241.201.16
+simita_invest@cloudshell:~ (votre-projet-ecode)$ 
