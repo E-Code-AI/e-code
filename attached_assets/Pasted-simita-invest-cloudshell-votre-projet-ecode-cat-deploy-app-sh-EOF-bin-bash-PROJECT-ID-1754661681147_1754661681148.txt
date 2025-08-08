@@ -1,0 +1,85 @@
+simita_invest@cloudshell:~ (votre-projet-ecode)$ cat > deploy-app.sh << 'EOF'
+#!/bin/bash
+PROJECT_ID="votre-projet-ecode"
+ZONE="europe-west1-b"
+
+echo "🚀 Déploiement E-Code Platform v3 Production"
+gcloud config set project ${PROJECT_ID}
+gcloud container clusters get-credentials e-code-production --zone=${ZONE}
+
+# Build simple Docker image
+cat > Dockerfile << 'DOCKER'
+FROM node:18-alpine
+WORKDIR /app
+RUN npm init -y && npm install express
+RUN cat > server.js << 'JS'
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>E-Code Platform</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          margin: 0;
+        }
+        .container {
+          text-align: center;
+          padding: 3rem;
+          background: rgba(255,255,255,0.1);
+chmod +x deploy-app.sh && ./deploy-app.shv3"ode -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+🚀 Déploiement E-Code Platform v3 Production
+Updated property [core/project].
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for e-code-production.
+[+] Building 1.1s (8/8) FINISHED                                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 3.39kB                                                                              0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   0.7s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 2B                                                                                     0.0s
+ => [1/4] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca  0.0s
+ => CACHED [2/4] WORKDIR /app                                                                                       0.0s
+ => CACHED [3/4] RUN npm init -y && npm install express                                                             0.0s
+ => [4/4] RUN cat > server.js << 'JS'                                                                               0.2s
+ => exporting to image                                                                                              0.0s
+ => => exporting layers                                                                                             0.0s
+ => => writing image sha256:a9bf22649b6f089829b9c2fe69dc23f13bafa8bb0b24cf25ca34dceb45628f7e                        0.0s
+ => => naming to gcr.io/votre-projet-ecode/e-code-app:v3                                                            0.0s
+The push refers to repository [gcr.io/votre-projet-ecode/e-code-app]
+640d473cb33c: Pushed 
+7d0605ee27c0: Layer already exists 
+5569d6364535: Layer already exists 
+82140d9a70a7: Layer already exists 
+f3b40b0cdb1c: Layer already exists 
+0b1f26057bd0: Layer already exists 
+08000c18d16d: Layer already exists 
+v3: digest: sha256:f41d5d1f7b348968ead5193b29a6e3c456b888be3ba86dbc357dfd102ea4ff49 size: 1784
+deployment.apps/e-code-v3 created
+service/e-code-v3-lb created
+horizontalpodautoscaler.autoscaling/e-code-v3-hpa created
+⏳ Attente...
+✅ Application E-Code v3: http://
+e-code-v3-bc5c96d94-8dsxk     0/1     Error     2 (24s ago)   31s
+e-code-v3-bc5c96d94-9ghxr     0/1     Error     2 (23s ago)   30s
+e-code-v3-bc5c96d94-fxv9x     0/1     Error     2 (24s ago)   31s
+e-code-v3-bc5c96d94-hgmw6     0/1     Error     2 (24s ago)   30s
+e-code-v3-bc5c96d94-lrmrt     0/1     Error     2 (23s ago)   30s
+e-code-v3-bc5c96d94-mjgnh     0/1     Error     2 (24s ago)   30s
+e-code-v3-bc5c96d94-q4gbr     0/1     Error     2 (24s ago)   30s
+e-code-v3-bc5c96d94-t9dh8     0/1     Error     2             31s
+e-code-v3-bc5c96d94-wtsck     0/1     Error     2 (23s ago)   30s
+e-code-v3-bc5c96d94-zkxzz     0/1     Error     2 (24s ago)   30s
