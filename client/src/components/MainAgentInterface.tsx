@@ -24,6 +24,7 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { PolyglotIndicator } from '@/components/PolyglotIndicator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,10 +131,11 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Initialize WebSocket for real-time updates
+  // Initialize WebSocket for real-time updates - ROUTES THROUGH GO SERVICE (Polyglot)
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${projectId}&sessionId=${sessionId}`;
+    // WebSocket connections handled by Go service for high performance
+    const wsUrl = `${protocol}//${window.location.host}/ws/agent?projectId=${projectId}&sessionId=${sessionId}&service=go-runtime`;
     const websocket = new WebSocket(wsUrl);
     
     websocket.onopen = () => {
@@ -421,6 +423,8 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
                 Working...
               </Badge>
             )}
+            {/* POLYGLOT SERVICE INDICATOR - Shows which backend service is active */}
+            <PolyglotIndicator className="h-8" />
           </div>
           
           <div className="flex items-center gap-2">
