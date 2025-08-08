@@ -158,10 +158,13 @@ export default function Dashboard() {
         // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, aiPrompt);
         
-        // Ensure we have the owner username
+        // Ensure we have the owner username and slug
         const ownerUsername = project.owner?.username || user?.username || 'admin';
-        const projectUrl = `/@${ownerUsername}/${project.slug}`;
+        // Use slug if available, otherwise fallback to name (which should be slugified)
+        const projectSlug = project.slug || project.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const projectUrl = `/@${ownerUsername}/${projectSlug}`;
         console.log(`Navigating to: ${projectUrl}`);
+        console.log('Project has slug:', project.slug);
         
         // Add a small delay to ensure project is fully created and indexed
         setTimeout(() => {

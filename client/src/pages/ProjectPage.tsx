@@ -146,25 +146,33 @@ const ProjectPage = () => {
     queryFn: async () => {
       if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
       
+      // Note: projectname in the route is actually the project slug
       const url = projectSlug 
         ? `/api/users/${paramsSlug?.username}/projects/${paramsSlug?.projectname}`
         : `/api/projects/${projectId}`;
       
+      console.log('Fetching project from:', url);
+      
       const res = await apiRequest('GET', url);
       if (!res.ok) {
         const error = await res.text();
+        console.error('Failed to fetch project:', res.status, error);
         if (res.status === 401) {
           throw new Error('You need to log in to access this project');
         }
+        if (res.status === 404) {
+          throw new Error('Project not found. It may have been deleted or moved.');
+        }
         throw new Error(error || 'Failed to fetch project');
       }
-      const projectData = res.json();
+      const projectData = await res.json();
+      console.log('Project loaded:', projectData);
       return projectData;
     },
     enabled: !!projectId || !!projectSlug,
     retry: (failureCount, error) => {
-      // Don't retry on authentication errors
-      if (error.message.includes('log in')) {
+      // Don't retry on authentication errors or not found errors
+      if (error.message.includes('log in') || error.message.includes('not found')) {
         return false;
       }
       return failureCount < 3;
