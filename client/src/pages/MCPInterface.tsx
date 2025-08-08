@@ -16,6 +16,9 @@ import {
   Package, Cloud, Brain, Activity, Server, Zap
 } from 'lucide-react';
 
+// Use Web Crypto API for generating UUIDs
+const crypto = window.crypto;
+
 interface MCPTool {
   name: string;
   description: string;
@@ -45,20 +48,41 @@ export default function MCPInterface() {
   const [serverHealth, setServerHealth] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('tools');
 
-  // MCP Server endpoints
-  const MCP_SERVER_URL = 'http://localhost:3200';
+  // MCP Server endpoints - Using integrated MCP server on Express
+  const MCP_SERVER_URL = '/mcp';  // Direct MCP HTTP transport
   const EXPRESS_MCP_URL = '/api/mcp';
 
-  // Load tools
+  // Load tools - Using MCP HTTP transport
   const loadTools = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${MCP_SERVER_URL}/tools`);
-      const data = await response.json();
-      setTools(data);
+      // Connect to MCP server first
+      const connectResponse = await fetch(`${MCP_SERVER_URL}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: crypto.randomUUID() }),
+      });
+      const connection = await connectResponse.json();
+      
+      // List tools using MCP protocol
+      const response = await fetch(`${MCP_SERVER_URL}/message`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Session-Id': connection.sessionId,
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'tools/list',
+          params: {},
+          id: 1,
+        }),
+      });
+      const result = await response.json();
+      setTools(result.result?.tools || []);
       toast({
         title: 'Tools Loaded',
-        description: `Successfully loaded ${data.length} MCP tools`,
+        description: `Successfully loaded ${result.result?.tools?.length || 0} MCP tools`,
       });
     } catch (error) {
       toast({
@@ -71,16 +95,37 @@ export default function MCPInterface() {
     }
   };
 
-  // Load resources
+  // Load resources - Using MCP HTTP transport
   const loadResources = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${MCP_SERVER_URL}/resources`);
-      const data = await response.json();
-      setResources(data);
+      // Connect to MCP server first
+      const connectResponse = await fetch(`${MCP_SERVER_URL}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: crypto.randomUUID() }),
+      });
+      const connection = await connectResponse.json();
+      
+      // List resources using MCP protocol
+      const response = await fetch(`${MCP_SERVER_URL}/message`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Session-Id': connection.sessionId,
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'resources/list',
+          params: {},
+          id: 1,
+        }),
+      });
+      const result = await response.json();
+      setResources(result.result?.resources || []);
       toast({
         title: 'Resources Loaded',
-        description: `Successfully loaded ${data.length} MCP resources`,
+        description: `Successfully loaded ${result.result?.resources?.length || 0} MCP resources`,
       });
     } catch (error) {
       toast({
@@ -93,16 +138,23 @@ export default function MCPInterface() {
     }
   };
 
-  // Check server health
+  // Check server health - Using integrated MCP server
   const checkHealth = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${MCP_SERVER_URL}/health`);
+      const response = await fetch(`${MCP_SERVER_URL}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: 'health-check' }),
+      });
       const data = await response.json();
-      setServerHealth(data);
+      setServerHealth({
+        status: data.status || 'connected',
+        capabilities: data.capabilities,
+      });
       toast({
         title: 'Server Status',
-        description: `MCP Server is ${data.status} on port ${data.port}`,
+        description: `MCP Server is ${data.status || 'connected'} with capabilities: ${Object.keys(data.capabilities || {}).join(', ')}`,
       });
     } catch (error) {
       toast({
