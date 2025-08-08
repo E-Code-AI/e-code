@@ -11,7 +11,8 @@ import { createLogger } from '../utils/logger';
 import { AnthropicProvider } from './ai-providers';
 import { realPackageManager } from '../services/real-package-manager';
 import { agentWebSocketService } from '../services/agent-websocket-service';
-import { mcpClient } from './mcp-client';
+import { getMCPClient } from '../api/mcp';
+import { MCPClient } from '../mcp/client';
 
 const logger = createLogger('EnhancedAutonomousAgent');
 
@@ -50,6 +51,7 @@ export class EnhancedAutonomousAgent {
   private actions: BuildAction[] = [];
   private thinkingProcess: string[] = [];
   private aiProvider: AnthropicProvider | null = null;
+  private mcpClient: MCPClient | null = null;
   
   // Tracking metrics for effort-based pricing
   private filesModified: number = 0;
@@ -65,6 +67,23 @@ export class EnhancedAutonomousAgent {
     if (apiKey) {
       this.aiProvider = new AnthropicProvider(apiKey);
       logger.info('Enhanced AI Agent initialized with Anthropic API key');
+    }
+    
+    // Initialize MCP client for all operations
+    this.initializeMCPClient();
+  }
+  
+  private async initializeMCPClient() {
+    try {
+      this.mcpClient = getMCPClient();
+      if (this.mcpClient) {
+        await this.mcpClient.connect();
+        logger.info('MCP Client connected for AI Agent operations');
+      } else {
+        logger.warn('MCP Client not available, using fallback methods');
+      }
+    } catch (error) {
+      logger.error('Failed to connect MCP Client:', error);
     }
   }
   
@@ -687,7 +706,16 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
           const filePath = `${relativePath}/${action.data.name}`;
           
           // Use MCP to create the file (it handles directories automatically)
-          await mcpClient.createProjectFile(projectPath, filePath, action.data.content);
+          if (this.mcpClient) {
+            await this.mcpClient.writeFile(`${projectPath}/${filePath}`, action.data.content);
+            logger.info(`[MCP] Created file via MCP: ${filePath}`);
+          } else {
+            // Fallback to direct file operations
+            const fs = require('fs').promises;
+            const fullFilePath = `${projectPath}/${filePath}`;
+            await fs.mkdir(require('path').dirname(fullFilePath), { recursive: true });
+            await fs.writeFile(fullFilePath, action.data.content);
+          }
           results.filesCreated++;
           
           // Send progress update for file creation
@@ -701,7 +729,17 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
         } else if (action.type === 'create_folder') {
           // Use MCP to create directory
           const folderPath = action.data.path.startsWith('/') ? action.data.path.substring(1) : action.data.path;
-          await mcpClient.createProjectDirectory(projectPath, `${folderPath}/${action.data.name}`);
+          if (this.mcpClient) {
+            await this.mcpClient.callTool("fs_mkdir", { 
+              path: `${projectPath}/${folderPath}/${action.data.name}`,
+              recursive: true
+            });
+            logger.info(`[MCP] Created directory via MCP: ${folderPath}/${action.data.name}`);
+          } else {
+            // Fallback to direct file operations
+            const fs = require('fs').promises;
+            await fs.mkdir(`${projectPath}/${folderPath}/${action.data.name}`, { recursive: true });
+          }
           results.foldersCreated++;
         }
       } catch (error: any) {
@@ -736,9 +774,20 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
           });
           
           // Use MCP to install packages
-          const installOutput = await mcpClient.installPackages(allPackages, projectPath);
+          if (this.mcpClient) {
+            const installCommand = `npm install ${allPackages.join(' ')}`;
+            const result = await this.mcpClient.callTool("exec_command", { 
+              command: installCommand,
+              cwd: projectPath 
+            });
+            const installOutput = result?.content?.[0]?.text || '';
+            logger.info(`[MCP] Installed packages via MCP: ${allPackages.join(', ')}`);
+            this.thinkingProcess.push(`📦 MCP installed packages: ${installOutput.substring(0, 100)}...`);
+          } else {
+            // Fallback to direct package installation
+            await realPackageManager.installPackages(allPackages, projectPath);
+          }
           results.packagesInstalled = allPackages;
-          this.thinkingProcess.push(`📦 MCP installed packages: ${installOutput.substring(0, 100)}...`);
           
           agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
             id: 'packages-installed',
