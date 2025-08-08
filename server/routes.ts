@@ -42,6 +42,7 @@ import { notificationRoutes } from "./routes/notifications";
 import isolationRoutes from "./api/isolation";
 import { webImportService } from "./tools/web-import-service";
 import { screenshotService } from "./services/screenshot-service";
+import polyglotRoutes from "./polyglot-routes";
 import { promptRefinementService } from "./services/prompt-refinement-service";
 import { agentProgressService } from "./services/agent-progress-service";
 import { conversationManagementService } from "./services/conversation-management-service";
@@ -11937,6 +11938,9 @@ Generate a comprehensive application based on the user's request. Include all ne
   
   // Notification routes
   app.use(notificationRoutes);
+  
+  // Polyglot Backend Routes (TypeScript + Go + Python)
+  app.use(polyglotRoutes);
   
   // Isolation routes for container-like environments
   app.use(isolationRoutes);

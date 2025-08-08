@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["jq", "google-cloud-sdk"]
+packages = ["glibcLocales", "go", "google-cloud-sdk", "jq", "libxcrypt"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -22,6 +22,14 @@ externalPort = 80
 [[ports]]
 localPort = 8001
 externalPort = 3001
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
 
 [workflows]
 runButton = "Project"

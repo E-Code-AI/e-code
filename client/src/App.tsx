@@ -125,6 +125,7 @@ const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
 
 const CodeGeneration = lazy(() => import("@/pages/CodeGeneration"));
 const MCPInterface = lazy(() => import("@/pages/MCPInterface"));
+const PolyglotBackendPage = lazy(() => import("@/pages/PolyglotBackendPage"));
 // Application Pages
 const SolarTechAIChatApp = lazy(() => import("@/pages/SolarTechAIChatApp"));
 const SolarTechCRMApp = lazy(() => import("@/pages/SolarTechCRMApp"));
@@ -185,6 +186,7 @@ function AppContent() {
           <Route path="/ai-agent" component={AIAgent} />
           <Route path="/code-generation" component={CodeGeneration} />
           <Route path="/mcp" component={MCPInterface} />
+          <Route path="/polyglot" component={PolyglotBackendPage} />
           <Route path="/press" component={Press} />
           <Route path="/partners" component={Partners} />
           <Route path="/security" component={Security} />
