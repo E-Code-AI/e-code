@@ -1,0 +1,103 @@
+simita_invest@cloudshell:~ (votre-projet-ecode)$ cat > fix-deploy.sh << 'SCRIPT'
+#!/bin/bash
+echo "🔧 Correction PostgreSQL et déploiement E-Code v2"
+
+# Fix PostgreSQL
+kubectl delete deployment postgres -n e-code
+kubectl apply -n e-code -f - <<'PG'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_PASSWORD
+          value: secure2025
+        - name: POSTGRES_DB
+          value: ecode
+        ports:
+        - containerPort: 5432
+PG
+
+# Déployer E-Code Platform v2
+kubectl apply -n e-code -f - <<'APP'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-code-v2
+spec:
+  replicas: 10
+  selector:
+chmod +x fix-deploy.sh && ./fix-deploy.short 1M+ utilisateurs".status.loadBalancer.ingress[0].ip}')
+🔧 Correction PostgreSQL et déploiement E-Code v2
+deployment.apps "postgres" deleted
+deployment.apps/postgres created
+deployment.apps/e-code-v2 created
+service/e-code-v2-lb created
+horizontalpodautoscaler.autoscaling/e-code-v2-hpa created
+⏳ Attente déploiement...
+NAME                          READY   STATUS    RESTARTS   AGE
+e-code-app-548dcc45dc-4k4lq   1/1     Running   0          4m1s
+e-code-app-548dcc45dc-5hrmn   1/1     Running   0          4m1s
+e-code-app-548dcc45dc-97skv   1/1     Running   0          4m1s
+e-code-app-548dcc45dc-h4dph   1/1     Running   0          4m1s
+e-code-app-548dcc45dc-kpvvx   1/1     Running   0          4m1s
+e-code-v2-577bf88f97-29nfm    1/1     Running   0          30s
+e-code-v2-577bf88f97-chblf    1/1     Running   0          30s
+e-code-v2-577bf88f97-cw2wt    1/1     Running   0          30s
+e-code-v2-577bf88f97-h9l5w    1/1     Running   0          30s
+e-code-v2-577bf88f97-hts6b    1/1     Running   0          30s
+e-code-v2-577bf88f97-hw9qw    1/1     Running   0          30s
+e-code-v2-577bf88f97-kc62z    1/1     Running   0          30s
+e-code-v2-577bf88f97-mlkb7    1/1     Running   0          30s
+e-code-v2-577bf88f97-pws6l    1/1     Running   0          30s
+e-code-v2-577bf88f97-x92k7    1/1     Running   0          30s
+postgres-76477778bc-nc9lz     1/1     Running   0          31s
+redis-698496554f-zrsgw        1/1     Running   0          4m3s
+✅ Application E-Code v2: http://34.14.80.192
+📊 Infrastructure: 10-100 pods, support 1M+ utilisateurs
+simita_invest@cloudshell:~ (votre-projet-ecode)$ # Voir tous les pods
+kubectl get pods -n e-code
+
+# Voir les services et IPs
+kubectl get services -n e-code
+
+# Voir l'auto-scaling
+kubectl get hpa -n e-code
+NAME                          READY   STATUS    RESTARTS   AGE
+e-code-app-548dcc45dc-4k4lq   1/1     Running   0          4m30s
+e-code-app-548dcc45dc-5hrmn   1/1     Running   0          4m30s
+e-code-app-548dcc45dc-97skv   1/1     Running   0          4m30s
+e-code-app-548dcc45dc-h4dph   1/1     Running   0          4m30s
+e-code-app-548dcc45dc-kpvvx   1/1     Running   0          4m30s
+e-code-v2-577bf88f97-29nfm    1/1     Running   0          59s
+e-code-v2-577bf88f97-chblf    1/1     Running   0          59s
+e-code-v2-577bf88f97-cw2wt    1/1     Running   0          59s
+e-code-v2-577bf88f97-h9l5w    1/1     Running   0          59s
+e-code-v2-577bf88f97-hts6b    1/1     Running   0          59s
+e-code-v2-577bf88f97-hw9qw    1/1     Running   0          59s
+e-code-v2-577bf88f97-kc62z    1/1     Running   0          59s
+e-code-v2-577bf88f97-mlkb7    1/1     Running   0          59s
+e-code-v2-577bf88f97-pws6l    1/1     Running   0          59s
+e-code-v2-577bf88f97-x92k7    1/1     Running   0          59s
+postgres-76477778bc-nc9lz     1/1     Running   0          60s
+redis-698496554f-zrsgw        1/1     Running   0          4m32s
+NAME           TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)        AGE
+e-code-lb      LoadBalancer   34.118.234.15    34.38.197.234   80:32001/TCP   4m30s
+e-code-v2-lb   LoadBalancer   34.118.239.224   34.14.80.192    80:30629/TCP   59s
+postgres       ClusterIP      34.118.229.64    <none>          5432/TCP       4m33s
+redis          ClusterIP      34.118.229.119   <none>          6379/TCP       4m32s
+NAME            REFERENCE               TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+e-code-hpa      Deployment/e-code-app   cpu: 0%/70%   5         100       5          4m30s
