@@ -9721,21 +9721,68 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.use(containerRoutes);
   
   // MCP (Model Context Protocol) Routes
-  // Add direct MCP servers endpoint to avoid middleware issues
-  app.get("/api/mcp/servers", (req, res) => {
-    console.log("[MCP] Direct servers endpoint called");
+  // Add direct MCP servers endpoint with REAL MCP data
+  app.get("/api/mcp/servers", async (req, res) => {
+    console.log("[MCP] Direct servers endpoint called - fetching REAL data");
     try {
-      const servers = getMCPServers();
+      // Connect to real MCP server and get actual tools
+      const connectRes = await fetch('http://localhost:5000/mcp/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const { sessionId } = await connectRes.json();
+      
+      // Get real tools from MCP
+      const toolsRes = await fetch('http://localhost:5000/mcp/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-session-id': sessionId
+        },
+        body: JSON.stringify({
+          method: 'list_tools'
+        })
+      });
+      const toolsData = await toolsRes.json();
+      
+      // Map real MCP tools to proper format
+      const coreTools = toolsData.result?.tools || [];
+      
+      // Combine real MCP data with other services
+      const servers = [
+        {
+          id: 'core',
+          name: 'Core MCP Server',
+          status: 'active',
+          description: 'Main MCP server with real tool execution',
+          tools: coreTools.map((tool: any) => ({
+            name: tool.name,
+            description: tool.description || `Execute ${tool.name}`
+          }))
+        },
+        ...getMCPServers().slice(1) // Add other servers too
+      ];
+      
       const response = {
         servers,
         totalServers: servers.length,
         activeServers: servers.filter(s => s.status === 'active').length,
         totalTools: servers.reduce((acc, s) => acc + s.tools.length, 0)
       };
+      
       res.json(response);
     } catch (error: any) {
-      console.error("[MCP] Direct servers endpoint error:", error);
-      res.status(500).json({ error: error.message || 'Failed to get servers' });
+      console.error("[MCP] Error fetching real MCP data:", error);
+      // Fallback but indicate connection issue
+      const servers = getMCPServers();
+      res.json({
+        servers: servers.map(s => ({ ...s, status: 'reconnecting' })),
+        totalServers: servers.length,
+        activeServers: 0,
+        totalTools: 0,
+        error: 'Reconnecting to MCP server...'
+      });
     }
   });
   
