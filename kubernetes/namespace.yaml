@@ -1,0 +1,8 @@
+# Namespace for E-Code Platform
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-code-platform
+  labels:
+    name: e-code-platform
+    environment: production
