@@ -71,6 +71,7 @@ const ReplitAIAgentPage = lazy(() => import("@/pages/ReplitAIAgentPage"));
 const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
 const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
 const Scalability = lazy(() => import("@/pages/Scalability"));
+const AuthenticationDemo = lazy(() => import("@/components/AuthenticationDemo"));
 // User area pages
 const Account = lazy(() => import("@/pages/Account"));
 
@@ -188,6 +189,7 @@ function AppContent() {
           <Route path="/code-generation" component={CodeGeneration} />
           <Route path="/mcp" component={MCPInterface} />
           <Route path="/polyglot" component={PolyglotBackendPage} />
+          <Route path="/demo" component={AuthenticationDemo} />
           <Route path="/press" component={Press} />
           <Route path="/partners" component={Partners} />
           <Route path="/security" component={Security} />
