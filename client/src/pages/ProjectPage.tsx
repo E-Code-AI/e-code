@@ -109,6 +109,17 @@ const ProjectPage = () => {
   const [showMainAgent, setShowMainAgent] = useState(false);
   const [agentPrompt, setAgentPrompt] = useState<string | undefined>();
   
+  // POLYGLOT BACKEND STATUS - Exactly like Replit
+  const [polyglotStatus, setPolyglotStatus] = useState<{
+    typescript: { status: 'active' | 'inactive', port: number };
+    go: { status: 'active' | 'inactive', port: number };
+    python: { status: 'active' | 'inactive', port: number };
+  }>({
+    typescript: { status: 'inactive', port: 5000 },
+    go: { status: 'inactive', port: 8080 },
+    python: { status: 'inactive', port: 8081 }
+  });
+  
   // Get current user for collaboration
   const { user } = useAuth();
   
@@ -135,6 +146,41 @@ const ProjectPage = () => {
       window.history.replaceState({}, '', newUrl);
     }
   }, [projectId, project]);
+  
+  // CHECK POLYGLOT SERVICE STATUS - Like Replit's architecture monitoring
+  useEffect(() => {
+    const checkPolyglotStatus = async () => {
+      try {
+        const response = await fetch('/api/health');
+        const data = await response.json();
+        
+        if (data.services) {
+          setPolyglotStatus({
+            typescript: { 
+              status: data.services.typescript?.healthy ? 'active' : 'inactive',
+              port: 5000
+            },
+            go: { 
+              status: data.services.go?.healthy ? 'active' : 'inactive',
+              port: 8080
+            },
+            python: { 
+              status: data.services.python?.healthy ? 'active' : 'inactive',
+              port: 8081
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to check polyglot status:', error);
+      }
+    };
+    
+    // Check immediately and then every 15 seconds for real-time status
+    checkPolyglotStatus();
+    const interval = setInterval(checkPolyglotStatus, 15000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Query for fetching project details
   const { 
@@ -755,6 +801,53 @@ const ProjectPage = () => {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          
+          {/* POLYGLOT BACKEND STATUS INDICATOR - Exactly like Replit */}
+          <div className="flex items-center gap-1 px-2 py-1 bg-secondary/50 rounded-md">
+            <span className="text-xs text-muted-foreground">Backend:</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className={cn(
+                    "w-2 h-2 rounded-full",
+                    polyglotStatus.typescript.status === 'active' ? 'bg-green-500' : 'bg-red-500'
+                  )} />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">TypeScript API (Port {polyglotStatus.typescript.port})</p>
+                  <p className="text-xs text-muted-foreground">Web API & Database</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className={cn(
+                    "w-2 h-2 rounded-full",
+                    polyglotStatus.go.status === 'active' ? 'bg-green-500' : 'bg-red-500'
+                  )} />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Go Runtime (Port {polyglotStatus.go.port})</p>
+                  <p className="text-xs text-muted-foreground">Containers & WebSocket</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className={cn(
+                    "w-2 h-2 rounded-full",
+                    polyglotStatus.python.status === 'active' ? 'bg-green-500' : 'bg-red-500'
+                  )} />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Python ML (Port {polyglotStatus.python.port})</p>
+                  <p className="text-xs text-muted-foreground">AI/ML Operations</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           
           {/* Project Actions Menu */}
           <DropdownMenu>
