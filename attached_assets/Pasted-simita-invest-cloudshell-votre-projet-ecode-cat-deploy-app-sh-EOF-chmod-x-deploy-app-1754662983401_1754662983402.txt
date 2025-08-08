@@ -1,0 +1,107 @@
+simita_invest@cloudshell:~ (votre-projet-ecode)$ cat > deploy-app.sh << 'EOF' && chmod +x deploy-app.sh && ./deploy-app.sh
+#!/bin/bash
+PROJECT_ID="votre-projet-ecode"
+ZONE="europe-west1-b"
+
+echo "🚀 DÉPLOIEMENT E-CODE PLATFORM FINAL"
+echo "===================================="
+
+gcloud config set project ${PROJECT_ID}
+gcloud container clusters get-credentials e-code-production --zone=${ZONE}
+
+# Nettoyer ancien v3
+kubectl delete deployment e-code-v3 -n e-code 2>/dev/null || true
+kubectl delete service e-code-v3-lb -n e-code 2>/dev/null || true
+
+# Créer app
+mkdir -p app && cd app
+
+cat > server.js << 'JS'
+const express = require('express');
+const app = express();
+const PORT = 8080;
+
+app.get('/', (req, res) => {
+  res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+  <title>E-Code Platform</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+EOF.. && rm -rf app http://34.52.255.38" -n e-code -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+🚀 DÉPLOIEMENT E-CODE PLATFORM FINAL
+====================================
+Updated property [core/project].
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for e-code-production.
+deployment.apps "e-code-v3" deleted
+service "e-code-v3-lb" deleted
+[+] Building 1.8s (8/9)                                                                                   docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 179B                                                                                0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   0.7s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 2B                                                                                     0.0s
+ => [1/5] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca  0.0s
+ => [internal] load build context                                                                                   0.0s
+ => => transferring context: 4.02kB                                                                                 0.0s
+ => CACHED [2/5] WORKDIR /app                                                                                       0.0s
+ => [3/5] COPY package*.json ./                                                                                     0.0s
+ => ERROR [4/5] RUN npm ci --only=production                                                                        1.0s
+------                                                                                                                   
+ > [4/5] RUN npm ci --only=production:                                                                                   
+0.415 npm warn config only Use `--omit=dev` to omit dev dependencies from the install.
+0.958 npm error code EUSAGE
+0.958 npm error
+0.958 npm error The `npm ci` command can only install with an existing package-lock.json or
+0.958 npm error npm-shrinkwrap.json with lockfileVersion >= 1. Run an install with npm@5 or
+0.958 npm error later to generate a package-lock.json file, then try again.
+0.958 npm error
+0.958 npm error Clean install a project
+0.958 npm error
+0.958 npm error Usage:
+0.958 npm error npm ci
+0.958 npm error
+0.958 npm error Options:
+0.958 npm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+0.958 npm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+0.958 npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+0.958 npm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+0.958 npm error [--no-bin-links] [--no-fund] [--dry-run]
+0.958 npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+0.958 npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]
+0.958 npm error
+0.958 npm error aliases: clean-install, ic, install-clean, isntall-clean
+0.958 npm error
+0.958 npm error Run "npm help ci" for more info
+0.962 npm error A complete log of this run can be found in: /root/.npm/_logs/2025-08-08T14_21_58_591Z-debug-0.log
+------
+Dockerfile:4
+--------------------
+   2 |     WORKDIR /app
+   3 |     COPY package*.json ./
+   4 | >>> RUN npm ci --only=production
+   5 |     COPY server.js ./
+   6 |     EXPOSE 8080
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c npm ci --only=production" did not complete successfully: exit code: 1
+The push refers to repository [gcr.io/votre-projet-ecode/e-code-final]
+An image does not exist locally with the tag: gcr.io/votre-projet-ecode/e-code-final
+deployment.apps/e-code-final created
+service/e-code-final-lb created
+
+✅ DÉPLOIEMENT TERMINÉ!
+🌐 Application: http://35.241.201.16
+📌 Domaine: https://e-code.ai
+📊 Monitoring: http://34.52.255.38
