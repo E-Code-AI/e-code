@@ -7392,16 +7392,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // AI Routes
+  // AI Routes - ENHANCED WITH POLYGLOT ARCHITECTURE
   
   // Get available AI providers
   app.get('/api/ai/providers', ensureAuthenticated, getAvailableProviders);
   
-  // Generate code completion
-  app.post('/api/ai/completion', ensureAuthenticated, generateCompletion);
+  // Generate code completion - NOW USING PYTHON ML SERVICE
+  app.post('/api/ai/completion', ensureAuthenticated, async (req, res) => {
+    try {
+      logger.info('[POLYGLOT] Generating completion via Python ML service');
+      const result = await aiProxy.generateCompletion(req.body.prompt, req.body.language);
+      res.json(result);
+    } catch (error) {
+      logger.warn('[POLYGLOT] Falling back to TypeScript implementation');
+      generateCompletion(req, res);
+    }
+  });
   
-  // Generate code explanation
-  app.post('/api/ai/explanation', ensureAuthenticated, generateExplanation);
+  // Generate code explanation - NOW USING PYTHON ML SERVICE
+  app.post('/api/ai/explanation', ensureAuthenticated, async (req, res) => {
+    try {
+      logger.info('[POLYGLOT] Generating explanation via Python ML service');
+      const result = await aiProxy.analyzeCode(req.body.code, req.body.language);
+      res.json({ explanation: result.analysis || result.explanation });
+    } catch (error) {
+      logger.warn('[POLYGLOT] Falling back to TypeScript implementation');
+      generateExplanation(req, res);
+    }
+  });
   
   // Convert code between languages - NOW USING PYTHON ML SERVICE
   app.post('/api/ai/convert', ensureAuthenticated, async (req, res) => {
