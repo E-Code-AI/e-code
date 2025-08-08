@@ -7,39 +7,71 @@ import { Express, Request, Response } from "express";
 import { Server as MCPServer } from "@modelcontextprotocol/sdk/server/index.js";
 import { EventEmitter } from "events";
 import * as crypto from "crypto";
+import { Readable, Writable } from "stream";
 
 const uuidv4 = () => crypto.randomUUID();
 
 interface Session {
   id: string;
   transport: HttpServerTransport;
+  server: MCPServer;
   lastActivity: Date;
 }
 
-class HttpServerTransport extends EventEmitter {
+// Create a proper transport that implements the expected interface
+class HttpServerTransport {
+  public readable: Readable;
+  public writable: Writable;
   private messageQueue: any[] = [];
   private responseCallbacks: Map<string, (response: any) => void> = new Map();
   
   constructor(public sessionId: string) {
-    super();
+    // Create readable stream for the MCP server to read from
+    this.readable = new Readable({
+      read() {}
+    });
+    
+    // Create writable stream for the MCP server to write to
+    this.writable = new Writable({
+      write: (chunk, encoding, callback) => {
+        try {
+          const message = JSON.parse(chunk.toString());
+          this.handleServerMessage(message);
+        } catch (error) {
+          console.error('[MCP] Failed to parse server message:', error);
+        }
+        callback();
+      }
+    });
   }
   
-  send(message: any) {
+  // Required by MCP SDK - Start the transport
+  async start() {
+    // HTTP transport is ready immediately
+    return Promise.resolve();
+  }
+  
+  // Handle messages from the MCP server
+  private handleServerMessage(message: any) {
     if (message.id && this.responseCallbacks.has(message.id)) {
       const callback = this.responseCallbacks.get(message.id)!;
       this.responseCallbacks.delete(message.id);
       callback(message);
     } else {
       this.messageQueue.push(message);
-      this.emit("message", message);
     }
   }
   
-  receive(message: any): Promise<any> {
+  // Send a message to the MCP server
+  sendToServer(message: any): Promise<any> {
     return new Promise((resolve) => {
       const messageId = message.id || uuidv4();
+      const messageWithId = { ...message, id: messageId };
+      
       this.responseCallbacks.set(messageId, resolve);
-      this.emit("message", { ...message, id: messageId });
+      
+      // Write message to the readable stream for the server to process
+      this.readable.push(JSON.stringify(messageWithId) + '\n');
       
       // Timeout after 30 seconds
       setTimeout(() => {
@@ -64,8 +96,9 @@ class HttpServerTransport extends EventEmitter {
     return messages;
   }
   
-  close() {
-    this.removeAllListeners();
+  async close() {
+    this.readable.destroy();
+    this.writable.destroy();
     this.responseCallbacks.clear();
     this.messageQueue = [];
   }
@@ -73,11 +106,16 @@ class HttpServerTransport extends EventEmitter {
 
 export class MCPHttpServer {
   private sessions: Map<string, Session> = new Map();
-  private mcpServer: MCPServer | null = null;
+  private mcpServerInstance: any = null;
   
   constructor(private app: Express) {
     this.setupRoutes();
     this.startCleanupInterval();
+  }
+  
+  // Set the MCP server instance
+  setMCPServer(server: any) {
+    this.mcpServerInstance = server;
   }
   
   private setupRoutes() {
@@ -87,18 +125,28 @@ export class MCPHttpServer {
       
       if (!this.sessions.has(sessionId)) {
         const transport = new HttpServerTransport(sessionId);
+        
+        // Create a new MCP server instance for this session
+        let server: any = null;
+        if (this.mcpServerInstance) {
+          server = this.mcpServerInstance;
+          
+          try {
+            // Connect the server to the transport using stdio transport
+            await server.connect(transport);
+          } catch (error) {
+            console.error('[MCP] Failed to connect server to transport:', error);
+          }
+        }
+        
         const session: Session = {
           id: sessionId,
           transport,
+          server,
           lastActivity: new Date(),
         };
         
         this.sessions.set(sessionId, session);
-        
-        // Connect MCP server to this transport
-        if (this.mcpServer) {
-          await this.mcpServer.connect(transport as any);
-        }
       }
       
       res.json({ 
@@ -124,7 +172,8 @@ export class MCPHttpServer {
       session.lastActivity = new Date();
       
       try {
-        const response = await session.transport.receive(req.body);
+        // Send the message to the MCP server through the transport
+        const response = await session.transport.sendToServer(req.body);
         res.json(response);
       } catch (error: any) {
         res.status(500).json({ 

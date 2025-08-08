@@ -4,13 +4,13 @@ import postgresRoutes from '../mcp/api/postgres';
 import memoryRoutes from '../mcp/api/memory';
 import MCPServer from '../mcp/server';
 import { MCPClient } from '../mcp/client';
-import { MCPHttpServer } from '../mcp/http-transport';
+import { SimpleHttpTransport } from '../mcp/simple-http-transport';
 
 const router = Router();
 
 // Global MCP instances
 let mcpServerInstance: MCPServer | null = null;
-let httpTransport: MCPHttpServer | null = null;
+let httpTransport: SimpleHttpTransport | null = null;
 let mcpClient: MCPClient | null = null;
 
 // Mount MCP API routes
@@ -94,8 +94,8 @@ export function initializeMCPServer(app: Express) {
     // Create MCP server instance
     mcpServerInstance = new MCPServer();
     
-    // Create HTTP transport for the MCP server
-    httpTransport = new MCPHttpServer(app);
+    // Create simple HTTP transport that actually works
+    httpTransport = new SimpleHttpTransport(app);
     
     // Connect MCP server to HTTP transport
     if (mcpServerInstance && httpTransport) {
