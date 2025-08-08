@@ -70,6 +70,7 @@ const AIAgent = lazy(() => import("@/pages/AIAgent"));
 const ReplitAIAgentPage = lazy(() => import("@/pages/ReplitAIAgentPage"));
 const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
 const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
+const Scalability = lazy(() => import("@/pages/Scalability"));
 // User area pages
 const Account = lazy(() => import("@/pages/Account"));
 
@@ -259,6 +260,12 @@ function AppContent() {
           <ProtectedRoute path="/analytics" component={() => (
             <ReplitLayout showSidebar={false}>
               <Analytics />
+            </ReplitLayout>
+          )} />
+
+          <ProtectedRoute path="/scalability" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Scalability />
             </ReplitLayout>
           )} />
 
