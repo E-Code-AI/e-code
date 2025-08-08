@@ -500,6 +500,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       ];
       
+      // Add MCP interface for admin users only
+      if (req.user?.role === 'admin') {
+        quickActions.push({
+          id: 'mcp-interface',
+          icon: 'Zap',
+          label: 'MCP Control',
+          description: 'Access Model Context Protocol tools',
+          template: 'mcp',
+          isAdminOnly: true,
+          url: '/mcp'  // Direct navigation instead of project creation
+        });
+      }
+      
       res.json(quickActions);
     } catch (error) {
       console.error('Error fetching quick actions:', error);

@@ -39,7 +39,8 @@ import {
 const iconMap: Record<string, any> = {
   BookOpen,
   FileText,
-  BarChart3
+  BarChart3,
+  Zap
 };
 
 // Get project icon based on project details
