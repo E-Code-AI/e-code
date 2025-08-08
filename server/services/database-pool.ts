@@ -127,9 +127,57 @@ export class DatabasePoolManager {
         : query;
       
       const result = await client.query(queryConfig);
-      return result.rows;
+      return result.rows as T[];
     } finally {
       client.release();
+    }
+  }
+
+  // Get pool statistics
+  getPoolStatistics(): any {
+    const pool = this.pools.get('primary');
+    if (!pool) {
+      return {
+        totalConnections: 0,
+        idleConnections: 0,
+        activeConnections: 0,
+        waitingRequests: 0
+      };
+    }
+
+    return {
+      totalConnections: pool.totalCount,
+      idleConnections: pool.idleCount,
+      activeConnections: this.activeConnections.get('primary') || 0,
+      waitingRequests: pool.waitingCount,
+      configuration: {
+        max: this.config.max,
+        min: this.config.min,
+        idleTimeoutMillis: this.config.idleTimeoutMillis,
+        connectionTimeoutMillis: this.config.connectionTimeoutMillis
+      }
+    };
+  }
+
+  // Setup monitoring
+  private setupMonitoring(): void {
+    setInterval(() => {
+      const stats = this.getPoolStatistics();
+      if (stats.waitingRequests > 5) {
+        logger.warn('Database pool has waiting requests', stats);
+      }
+      if (stats.idleConnections === 0 && stats.activeConnections === this.config.max) {
+        logger.warn('Database pool at maximum capacity', stats);
+      }
+    }, 30000); // Every 30 seconds
+  }
+
+  // Cleanup on shutdown
+  async shutdown(): Promise<void> {
+    logger.info('Shutting down database pools...');
+    for (const [name, pool] of this.pools) {
+      await pool.end();
+      logger.info(`Pool ${name} closed`);
     }
   }
 

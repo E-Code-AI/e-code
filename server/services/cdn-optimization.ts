@@ -124,6 +124,56 @@ export class CDNOptimizationService {
     ];
   }
 
+  // Get nearest edge location based on request
+  private getNearestEdgeLocation(req: Request): string {
+    // In production, this would use geo-IP to determine nearest edge
+    // For now, return a simulated edge location
+    const edges = this.config.edgeLocations;
+    const index = Math.floor(Math.random() * edges.length);
+    return edges[index];
+  }
+
+  // Get edge locations
+  getEdgeLocations(): string[] {
+    return this.config.edgeLocations;
+  }
+
+  // Purge CDN cache
+  async purgeAll(): Promise<void> {
+    logger.info('[CDN] Purging all cache');
+    // In production, this would call CDN APIs
+    this.purgeStats.totalPurges++;
+    this.purgeStats.lastPurge = new Date();
+  }
+
+  async purgeUrls(urls: string[]): Promise<void> {
+    logger.info(`[CDN] Purging URLs: ${urls.join(', ')}`);
+    // In production, this would call CDN APIs
+    this.purgeStats.totalPurges++;
+    this.purgeStats.urlsPurged += urls.length;
+    this.purgeStats.lastPurge = new Date();
+  }
+
+  async purgeTags(tags: string[]): Promise<void> {
+    logger.info(`[CDN] Purging tags: ${tags.join(', ')}`);
+    // In production, this would call CDN APIs
+    this.purgeStats.totalPurges++;
+    this.purgeStats.tagsPurged += tags.length;
+    this.purgeStats.lastPurge = new Date();
+  }
+
+  // Purge statistics
+  private purgeStats = {
+    totalPurges: 0,
+    urlsPurged: 0,
+    tagsPurged: 0,
+    lastPurge: null as Date | null
+  };
+
+  getPurgeStatistics(): any {
+    return this.purgeStats;
+  }
+
   // Edge location detection (simplified)
   private getNearestEdgeLocation(req: Request): string {
     // In production, use geo-IP detection
