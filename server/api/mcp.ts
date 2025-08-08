@@ -131,9 +131,79 @@ export function getMCPClient(): MCPClient | null {
   return mcpClient;
 }
 
-// Get MCP servers (placeholder for compatibility)
+// Get MCP servers with full metadata for UI
 export function getMCPServers() {
-  return ['github', 'postgres', 'memory'];
+  return [
+    {
+      id: 'core',
+      name: 'Core MCP Server',
+      status: 'active',
+      description: 'Main MCP server with file, command, and database tools',
+      tools: [
+        { name: 'fs_read', description: 'Read file contents' },
+        { name: 'fs_write', description: 'Write file contents' },
+        { name: 'fs_mkdir', description: 'Create directory' },
+        { name: 'exec_command', description: 'Execute shell command' },
+        { name: 'db_query', description: 'Execute database query' },
+        { name: 'ai_complete', description: 'Get AI completion' }
+      ],
+      endpoints: [
+        '/mcp/connect',
+        '/mcp/message',
+        '/mcp/disconnect'
+      ]
+    },
+    {
+      id: 'github',
+      name: 'GitHub MCP',
+      status: 'active',
+      description: 'GitHub integration for repository management',
+      tools: [
+        { name: 'github_repos', description: 'List repositories' },
+        { name: 'github_issues', description: 'Manage issues' },
+        { name: 'github_pr', description: 'Handle pull requests' }
+      ],
+      endpoints: [
+        '/api/mcp/github/repositories',
+        '/api/mcp/github/issues',
+        '/api/mcp/github/pull-requests'
+      ]
+    },
+    {
+      id: 'postgres',
+      name: 'PostgreSQL MCP',
+      status: 'active',
+      description: 'Database management and queries',
+      tools: [
+        { name: 'postgres_tables', description: 'List database tables' },
+        { name: 'postgres_query', description: 'Execute SQL queries' },
+        { name: 'postgres_backup', description: 'Database backup' }
+      ],
+      endpoints: [
+        '/api/mcp/postgres/tables',
+        '/api/mcp/postgres/schema/:table',
+        '/api/mcp/postgres/query',
+        '/api/mcp/postgres/backup'
+      ]
+    },
+    {
+      id: 'memory',
+      name: 'Memory MCP',
+      status: 'active',
+      description: 'Knowledge graph and memory management',
+      tools: [
+        { name: 'memory_search', description: 'Search memory' },
+        { name: 'memory_store', description: 'Store information' },
+        { name: 'memory_retrieve', description: 'Retrieve context' }
+      ],
+      endpoints: [
+        '/api/mcp/memory/search',
+        '/api/mcp/memory/conversations',
+        '/api/mcp/memory/nodes',
+        '/api/mcp/memory/edges'
+      ]
+    }
+  ];
 }
 
 export default router;
