@@ -123,6 +123,13 @@ const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
 const FigmaImport = lazy(() => import("@/pages/FigmaImport"));
 const BoltImport = lazy(() => import("@/pages/BoltImport"));
 const LovableImport = lazy(() => import("@/pages/LovableImport"));
+
+// Solutions pages
+const AppBuilder = lazy(() => import("@/pages/solutions/AppBuilder"));
+const WebsiteBuilder = lazy(() => import("@/pages/solutions/WebsiteBuilder"));
+const GameBuilder = lazy(() => import("@/pages/solutions/GameBuilder"));
+const DashboardBuilder = lazy(() => import("@/pages/solutions/DashboardBuilder"));
+const ChatbotBuilder = lazy(() => import("@/pages/solutions/ChatbotBuilder"));
 const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
 
 const CodeGeneration = lazy(() => import("@/pages/CodeGeneration"));
@@ -183,6 +190,14 @@ function AppContent() {
           <Route path="/commercial-agreement" component={CommercialAgreement} />
           <Route path="/report-abuse" component={ReportAbuse} />
           <Route path="/status" component={Status} />
+          
+          {/* Solutions pages */}
+          <Route path="/solutions/app-builder" component={AppBuilder} />
+          <Route path="/solutions/website-builder" component={WebsiteBuilder} />
+          <Route path="/solutions/game-builder" component={GameBuilder} />
+          <Route path="/solutions/dashboard-builder" component={DashboardBuilder} />
+          <Route path="/solutions/chatbot-builder" component={ChatbotBuilder} />
+          
           <Route path="/mobile" component={MobileAdmin} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-agent" component={AIAgent} />
