@@ -8,9 +8,9 @@ import { initializePolyglotServices } from "./polyglot-services";
 import compressionMiddleware from "./middleware/compression";
 import { securityMiddleware, sanitizeInput, securityMonitoring, ipSecurity } from "./middleware/security";
 import { rateLimiters, logRateLimitViolations, dynamicRateLimiter } from "./middleware/rate-limiter";
-import { cdnOptimization } from "./services/cdn-optimization";
-import { redisCache } from "./services/redis-cache";
-import { dbPool } from "./services/database-pool";
+import { CDNOptimizationService } from "./services/cdn-optimization";
+import { RedisCache } from "./services/redis-cache";
+import { DatabasePoolManager } from "./services/database-pool";
 // Monitoring imports are handled in routes.ts
 
 const app = express();
@@ -27,6 +27,7 @@ app.use('/api', dynamicRateLimiter);
 app.use('/static', rateLimiters.static);
 
 // CDN Optimization
+const cdnOptimization = new CDNOptimizationService();
 app.use(cdnOptimization.staticAssetsMiddleware());
 app.use(cdnOptimization.dynamicContentMiddleware());
 
