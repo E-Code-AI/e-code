@@ -7451,6 +7451,10 @@ module.exports = new Solution();`
   // WebSocket for AI Agent real-time updates
   agentWebSocketService.initialize(httpServer);
   
+  // WebSocket for Mobile app real-time features (terminal, AI, collaboration)
+  const { initializeMobileWebSocket } = require('./websocket/mobile-websocket');
+  initializeMobileWebSocket(httpServer);
+  
   // Old collaboration WebSocket code removed - replaced with CollaborationServer using Yjs
   
   // Removed debug middleware to improve performance
