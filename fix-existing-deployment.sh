@@ -8,7 +8,7 @@ set -e
 # Configuration - Update these with your actual values
 PROJECT_ID="votre-projet-ecode"  # Your actual GCP project
 CLUSTER_NAME="e-code-cluster"
-ZONE="us-central1-a"
+ZONE="europe-west1-b"  # European zone
 NAMESPACE="e-code-platform"
 EXTERNAL_IP="35.189.194.33"  # Your existing LoadBalancer IP
 
