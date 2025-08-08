@@ -1,0 +1,38 @@
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to votre-projet-ecode.
+Use `gcloud config set project [PROJECT_ID]` to change to a different project.
+simita_invest@cloudshell:~ (votre-projet-ecode)$ ./fix-existing-deployment.sh
+-bash: ./fix-existing-deployment.sh: No such file or directory
+simita_invest@cloudshell:~ (votre-projet-ecode)$ # Exécutez simplement ce script
+./quick-fix-europe.sh
+-bash: ./quick-fix-europe.sh: No such file or directory
+simita_invest@cloudshell:~ (votre-projet-ecode)$ ./quick-fix-europe.sh
+-bash: ./quick-fix-europe.sh: No such file or directory
+simita_invest@cloudshell:~ (votre-projet-ecode)$ gcloud config set project votre-projet-ecode
+gcloud container clusters get-credentials e-code-cluster --zone=europe-west1-b
+Updated property [core/project].
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for e-code-cluster.
+simita_invest@cloudshell:~ (votre-projet-ecode)$ kubectl set env deployment/e-code-platform \
+  DATABASE_URL="postgresql://postgres:postgres@postgres-service:5432/ecode" \
+  -n e-code-platform
+deployment.apps/e-code-platform env updated
+simita_invest@cloudshell:~ (votre-projet-ecode)$ kubectl rollout restart deployment/e-code-platform -n e-code-platform
+deployment.apps/e-code-platform restarted
+simita_invest@cloudshell:~ (votre-projet-ecode)$ kubectl get pods -n e-code-platform
+NAME                               READY   STATUS        RESTARTS   AGE
+e-code-platform-597b4bcf47-5p6j4   1/1     Running       0          8s
+e-code-platform-7d76b7bf9-zvjxp    1/1     Terminating   0          15h
+e-code-platform-b8f8d6589-2bndb    1/1     Terminating   0          16s
+postgres-5fb6b6654c-pt6f6          1/1     Running       0          21h
+simita_invest@cloudshell:~ (votre-projet-ecode)$ curl http://35.189.194.33/api/health
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot GET /api/health</pre>
+</body>
+</html>
