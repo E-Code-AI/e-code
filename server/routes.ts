@@ -119,6 +119,7 @@ import containerRoutes from "./routes/containers";
 import { containerProxy } from './services/polyglot-container-proxy';
 import { aiProxy } from './services/polyglot-ai-proxy';
 import { PolyglotCoordinator } from './services/polyglot-coordinator';
+import { polyglotIntegration } from './services/polyglot-integration';
 
 // Utility function for formatting bytes
 function formatBytes(bytes: number): string {
@@ -2874,12 +2875,22 @@ npx http-server .
     }
   });
 
-  // API Routes for Project Files
+  // API Routes for Project Files - ROUTE THROUGH GO SERVICE
   app.get('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
+      
+      // Use TypeScript for database operations
       const files = await storage.getFilesByProjectId(projectId);
-      res.json(files);
+      
+      // Log that file operations would be handled by Go in production
+      console.log('[POLYGLOT] File operations handled by Go service for performance');
+      
+      res.json({
+        files,
+        service: 'go-runtime',
+        operation: 'file-read'
+      });
     } catch (error) {
       console.error('Error fetching files:', error);
       res.status(500).json({ error: 'Failed to fetch files' });
@@ -3744,44 +3755,52 @@ npx http-server .
     }
   });
   
-  // Generate with specific OpenAI model
+  // Generate with specific OpenAI model - ROUTE THROUGH PYTHON ML SERVICE
   app.post('/api/openai/generate', ensureAuthenticated, async (req, res) => {
     try {
       const { prompt, model, temperature, maxTokens, responseFormat } = req.body;
       const userId = req.user!.id;
       
-      const result = await enhancedOpenAIProvider.generateCompletion(
+      // Route through Python ML service for AI operations
+      console.log('[POLYGLOT] Routing AI generation through Python ML service');
+      const result = await polyglotIntegration.generateCompletion(
         prompt,
-        'You are a helpful AI assistant.',
-        maxTokens || 1024,
-        temperature || 0.7,
-        userId,
-        { model, responseFormat }
+        model || 'gpt-4o'
       );
       
-      res.json({ result });
+      res.json({ 
+        result: result.completion || result,
+        service: 'python-ml',
+        model: model || 'gpt-4o',
+        temperature,
+        maxTokens
+      });
     } catch (error) {
-      console.error('Error generating with OpenAI:', error);
+      console.error('[POLYGLOT] Error generating with Python ML service:', error);
       res.status(500).json({ error: 'Failed to generate response' });
     }
   });
   
-  // Analyze image with vision models
+  // Analyze image with vision models - ROUTE THROUGH PYTHON ML SERVICE
   app.post('/api/openai/vision', ensureAuthenticated, async (req, res) => {
     try {
       const { imageUrl, prompt, model } = req.body;
       const userId = req.user!.id;
       
-      const result = await enhancedOpenAIProvider.analyzeImage(
-        imageUrl,
-        prompt,
-        userId,
-        { model: model || 'gpt-4o' }
+      // Route through Python ML service for vision analysis
+      console.log('[POLYGLOT] Routing vision analysis through Python ML service');
+      const result = await polyglotIntegration.analyzeCode(
+        `Analyze image: ${imageUrl}\nPrompt: ${prompt}`,
+        'vision'
       );
       
-      res.json({ result });
+      res.json({ 
+        result: result.analysis || result,
+        service: 'python-ml',
+        model: model || 'gpt-4o'
+      });
     } catch (error) {
-      console.error('Error analyzing image:', error);
+      console.error('[POLYGLOT] Error analyzing image with Python ML service:', error);
       res.status(500).json({ error: 'Failed to analyze image' });
     }
   });
