@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import Terminal from '@/components/Terminal';
+import Preview from '@/components/Preview';
 import { ExecutionConsole } from '@/components/ExecutionConsole';
 import { DeploymentPanel } from '@/components/DeploymentPanel';
 import Collaboration from '@/components/Collaboration';
@@ -99,7 +100,7 @@ const ProjectPage = () => {
   const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'console' | 'deployment' | 'git' | 'env'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [aiPanelVisible, setAiPanelVisible] = useState(false);
-  const [rightPanelTab, setRightPanelTab] = useState<'assistant' | 'collaborate' | 'resources' | 'presence' | 'search' | 'stats' | 'packages' | 'share' | 'github' | 'postgres' | 'memory'>('assistant');
+  const [rightPanelTab, setRightPanelTab] = useState<'preview' | 'assistant' | 'collaborate' | 'resources' | 'presence' | 'search' | 'stats' | 'packages' | 'share' | 'github' | 'postgres' | 'memory'>('preview');
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'offline'>('idle');
@@ -912,6 +913,7 @@ const ProjectPage = () => {
               <div className="h-12 border-b border-border px-4 flex items-center justify-between bg-muted/30">
                 <ScrollArea className="flex-1">
                   <TabsList className="h-8 bg-transparent inline-flex">
+                    <TabsTrigger value="preview" className="h-8">Preview</TabsTrigger>
                     <TabsTrigger value="assistant" className="h-8">Assistant</TabsTrigger>
                     <TabsTrigger value="collaborate" className="h-8">Collaborate</TabsTrigger>
                     <TabsTrigger value="resources" className="h-8">Resources</TabsTrigger>
@@ -933,6 +935,12 @@ const ProjectPage = () => {
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </div>
+              <TabsContent value="preview" className="flex-1 overflow-hidden">
+                <Preview 
+                  openFiles={files || []}
+                  projectId={projectId}
+                />
+              </TabsContent>
               <TabsContent value="assistant" className="flex-1 overflow-hidden">
                 <ReplitAgentV2 
                   projectId={projectId} 

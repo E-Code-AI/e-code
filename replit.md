@@ -25,6 +25,9 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 - **Automatic Preview Startup**: Auto-detects executable files and starts preview servers
 - **Real-time Connectivity Indicators**: WebSocket connection status shown in preview header
 - **Preview Management API**: /api/preview/start and /api/preview/stop endpoints for control
+- **UI Cleanup**: Removed all duplicate preview components (LivePreview, EnhancedPreview, CodeGenerationPreview)
+- **Project Page Integration**: Preview now properly integrated into ProjectPage right panel as primary tab
+- **Duplicate Removal**: Cleaned up duplicate project pages (ReplitProjectPage, ResponsiveProjectPage)
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
