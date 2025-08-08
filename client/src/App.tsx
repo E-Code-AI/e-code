@@ -81,6 +81,10 @@ const Themes = lazy(() => import("@/pages/Themes"));
 const Usage = lazy(() => import("@/pages/Usage"));
 const Subscribe = lazy(() => import("@/pages/Subscribe"));
 const Plans = lazy(() => import("@/pages/Plans"));
+const Cycles = lazy(() => import("@/pages/Cycles"));
+const Bounties = lazy(() => import("@/pages/Bounties"));
+const PowerUps = lazy(() => import("@/pages/PowerUps"));
+const Badges = lazy(() => import("@/pages/Badges"));
 // Enterprise pages
 const SSOConfiguration = lazy(() => import("@/pages/SSOConfiguration"));
 const AuditLogs = lazy(() => import("@/pages/AuditLogs"));
@@ -542,6 +546,26 @@ function AppContent() {
           <ProtectedRoute path="/usage" component={() => (
             <ReplitLayout showSidebar={false}>
               <Usage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/cycles" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Cycles />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/bounties" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Bounties />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/powerups" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <PowerUps />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/badges" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <Badges />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/subscribe" component={() => (

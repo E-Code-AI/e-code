@@ -35,6 +35,7 @@ import { ProjectSharing } from '@/components/ProjectSharing';
 import { GitHubMCPPanel } from '@/components/mcp/GitHubMCPPanel';
 import { PostgreSQLMCPPanel } from '@/components/mcp/PostgreSQLMCPPanel';
 import { MemoryMCPPanel } from '@/components/mcp/MemoryMCPPanel';
+import { GPUManagement } from '@/components/GPUManagement';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -924,6 +925,7 @@ const ProjectPage = () => {
                     <TabsTrigger value="github" className="h-8">GitHub</TabsTrigger>
                     <TabsTrigger value="postgres" className="h-8">Database</TabsTrigger>
                     <TabsTrigger value="memory" className="h-8">Memory</TabsTrigger>
+                    <TabsTrigger value="gpu" className="h-8">GPU</TabsTrigger>
                   </TabsList>
                 </ScrollArea>
                 <Button 
@@ -997,6 +999,9 @@ const ProjectPage = () => {
               </TabsContent>
               <TabsContent value="memory" className="flex-1 overflow-hidden">
                 <MemoryMCPPanel projectId={projectId} />
+              </TabsContent>
+              <TabsContent value="gpu" className="flex-1 overflow-hidden p-4">
+                <GPUManagement projectId={projectId} />
               </TabsContent>
             </Tabs>
           </div>
