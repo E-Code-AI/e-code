@@ -102,8 +102,8 @@ export function initializeMCPServer(app: Express) {
       httpTransport.setMCPServer(mcpServerInstance.getServer());
     }
     
-    // Initialize MCP client to connect to our server
-    mcpClient = new MCPClient('http://localhost:5000/mcp');
+    // Initialize MCP client to connect to standalone MCP server on port 3200
+    mcpClient = new MCPClient('http://localhost:3200');
     
     // Auto-connect the client after a short delay
     setTimeout(async () => {

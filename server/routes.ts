@@ -54,6 +54,7 @@ import { effortPricingService } from "./services/effort-pricing-service";
 import { agentV2Service } from "./services/agent-v2-service";
 // import { deployProject, stopDeployment, getDeploymentStatus, getDeploymentLogs } from "./deployment";
 import { realDeploymentServiceV2 } from "./deployment/real-deployment-service-v2";
+import { startMCPStandaloneServer } from "./mcp/standalone-server";
 import { 
   initRepo, 
   isGitRepo, 
@@ -10008,6 +10009,10 @@ Generate a comprehensive application based on the user's request. Include all ne
   const openSourceModelsRouter = await import('./api/opensource-models');
   app.use('/api/opensource', openSourceModelsRouter.default);
   initializeMCPServer(app);
+  
+  // Start the standalone MCP server on port 3200 for AI operations
+  startMCPStandaloneServer();
+  console.log('[MCP] Standalone server starting on port 3200 for tool execution');
   
   // Shell routes
   app.use("/api/shell", shellRoutes);
