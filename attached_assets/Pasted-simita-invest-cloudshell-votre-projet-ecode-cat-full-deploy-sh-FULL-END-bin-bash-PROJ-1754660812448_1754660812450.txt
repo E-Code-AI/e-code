@@ -1,0 +1,171 @@
+simita_invest@cloudshell:~ (votre-projet-ecode)$ cat > full-deploy.sh << 'FULL_END'
+#!/bin/bash
+PROJECT_ID="votre-projet-ecode"
+ZONE="europe-west1-b"
+
+echo "🚀 Infrastructure Complète E-Code"
+gcloud config set project ${PROJECT_ID}
+gcloud services enable container.googleapis.com compute.googleapis.com
+
+# Cluster Production
+gcloud container clusters create e-code-production \
+  --zone=${ZONE} \
+  --num-nodes=5 \
+  --machine-type=n2-standard-4 \
+  --enable-autoscaling \
+  --min-nodes=5 \
+  --max-nodes=50 \
+  --disk-size=100 \
+  --disk-type=pd-ssd
+
+gcloud container clusters get-credentials e-code-production --zone=${ZONE}
+
+# Namespace & Secrets
+kubectl create namespace e-code
+kubectl create secret generic app-secrets \
+  --from-literal=DATABASE_URL=postgres://localhost/ecode \
+  --namespace=e-code
+
+# PostgreSQL
+kubectl apply -n e-code -f - <<'K8S'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+chmod +x full-deploy.sh && ./full-deploy.she -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+🚀 Infrastructure Complète E-Code
+Updated property [core/project].
+Operation "operations/acat.p2-598842228608-a0a0bb2a-5c76-46a0-8613-0dbdeef8bd79" finished successfully.
+Note: The Kubelet readonly port (10255) is now deprecated. Please update your workloads to use the recommended alternatives. See https://cloud.google.com/kubernetes-engine/docs/how-to/disable-kubelet-readonly-port for ways to check usage and for migration instructions.
+Note: Your Pod address range (`--cluster-ipv4-cidr`) can accommodate at most 1008 node(s).
+Creating cluster e-code-production in europe-west1-b... Cluster is being health-checked (Kubernetes Control Plane is hea
+lthy)...done.                                                                                                           
+Created [https://container.googleapis.com/v1/projects/votre-projet-ecode/zones/europe-west1-b/clusters/e-code-production].
+To inspect the contents of your cluster, go to: https://console.cloud.google.com/kubernetes/workload_/gcloud/europe-west1-b/e-code-production?project=votre-projet-ecode
+kubeconfig entry generated for e-code-production.
+NAME               LOCATION        MASTER_VERSION      MASTER_IP      MACHINE_TYPE   NODE_VERSION        NUM_NODES  STATUS   STACK_TYPE
+e-code-production  europe-west1-b  1.33.2-gke.1240000  34.140.167.91  n2-standard-4  1.33.2-gke.1240000  5          RUNNING  IPV4
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for e-code-production.
+namespace/e-code created
+secret/app-secrets created
+deployment.apps/postgres created
+service/postgres created
+deployment.apps/redis created
+service/redis created
+deployment.apps/e-code-app created
+service/e-code-lb created
+horizontalpodautoscaler.autoscaling/e-code-hpa created
+✅ Application: http://34.38.197.234
+NAME                              READY   STATUS    RESTARTS      AGE
+pod/e-code-app-548dcc45dc-4k4lq   1/1     Running   0             41s
+pod/e-code-app-548dcc45dc-5hrmn   1/1     Running   0             41s
+pod/e-code-app-548dcc45dc-97skv   1/1     Running   0             41s
+pod/e-code-app-548dcc45dc-h4dph   1/1     Running   0             41s
+pod/e-code-app-548dcc45dc-kpvvx   1/1     Running   0             41s
+pod/postgres-6f44647985-s6f2t     0/1     Error     2 (31s ago)   44s
+pod/redis-698496554f-zrsgw        1/1     Running   0             43s
+
+NAME                TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)        AGE
+service/e-code-lb   LoadBalancer   34.118.234.15    34.38.197.234   80:32001/TCP   41s
+service/postgres    ClusterIP      34.118.229.64    <none>          5432/TCP       44s
+service/redis       ClusterIP      34.118.229.119   <none>          6379/TCP       43s
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/e-code-app   5/5     5            5           42s
+deployment.apps/postgres     0/1     1            0           45s
+deployment.apps/redis        1/1     1            1           43s
+
+NAME                                    DESIRED   CURRENT   READY   AGE
+replicaset.apps/e-code-app-548dcc45dc   5         5         5       42s
+replicaset.apps/postgres-6f44647985     1         1         0       45s
+replicaset.apps/redis-698496554f        1         1         1       44s
+
+NAME                                             REFERENCE               TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/e-code-hpa   Deployment/e-code-app   cpu: <unknown>/70%   5         100       5          41s
+simita_invest@cloudshell:~ (votre-projet-ecode)$ # État du cluster
+kubectl get nodes
+kubectl get pods --all-namespaces
+
+# Auto-scaling
+kubectl get hpa --all-namespaces
+
+# IP externe
+kubectl get services --all-namespaces
+NAME                                               STATUS   ROLES    AGE   VERSION
+gke-e-code-production-default-pool-f8118658-66wh   Ready    <none>   90s   v1.33.2-gke.1240000
+gke-e-code-production-default-pool-f8118658-6jx0   Ready    <none>   92s   v1.33.2-gke.1240000
+gke-e-code-production-default-pool-f8118658-dg0d   Ready    <none>   88s   v1.33.2-gke.1240000
+gke-e-code-production-default-pool-f8118658-nmfv   Ready    <none>   86s   v1.33.2-gke.1240000
+gke-e-code-production-default-pool-f8118658-q1wj   Ready    <none>   88s   v1.33.2-gke.1240000
+NAMESPACE         NAME                                                          READY   STATUS             RESTARTS      AGE
+e-code            e-code-app-548dcc45dc-4k4lq                                   1/1     Running            0             52s
+e-code            e-code-app-548dcc45dc-5hrmn                                   1/1     Running            0             52s
+e-code            e-code-app-548dcc45dc-97skv                                   1/1     Running            0             52s
+e-code            e-code-app-548dcc45dc-h4dph                                   1/1     Running            0             52s
+e-code            e-code-app-548dcc45dc-kpvvx                                   1/1     Running            0             52s
+e-code            postgres-6f44647985-s6f2t                                     0/1     CrashLoopBackOff   2 (27s ago)   55s
+e-code            redis-698496554f-zrsgw                                        1/1     Running            0             54s
+gke-managed-cim   kube-state-metrics-0                                          2/2     Running            0             2m25s
+gmp-system        collector-62pph                                               2/2     Running            0             87s
+gmp-system        collector-87n6d                                               2/2     Running            0             91s
+gmp-system        collector-ch9xq                                               2/2     Running            0             88s
+gmp-system        collector-zpqn9                                               2/2     Running            0             85s
+gmp-system        collector-zrmcq                                               2/2     Running            0             93s
+gmp-system        gmp-operator-9fb7cc954-gftbl                                  1/1     Running            0             103s
+kube-system       event-exporter-gke-bd86d64bf-tmkfj                            2/2     Running            0             2m18s
+kube-system       fluentbit-gke-2bsxb                                           3/3     Running            0             85s
+kube-system       fluentbit-gke-gt7z5                                           3/3     Running            0             87s
+kube-system       fluentbit-gke-qbcw2                                           3/3     Running            0             93s
+kube-system       fluentbit-gke-rhhln                                           3/3     Running            0             88s
+kube-system       fluentbit-gke-wf4mc                                           3/3     Running            0             90s
+kube-system       gke-metrics-agent-8mdr7                                       2/2     Running            0             90s
+kube-system       gke-metrics-agent-kxcvd                                       2/2     Running            0             87s
+kube-system       gke-metrics-agent-nj24s                                       2/2     Running            0             88s
+kube-system       gke-metrics-agent-pqb4f                                       2/2     Running            0             93s
+kube-system       gke-metrics-agent-tnq6l                                       2/2     Running            0             86s
+kube-system       konnectivity-agent-6dfd9c57bd-8r7vk                           2/2     Running            0             56s
+kube-system       konnectivity-agent-6dfd9c57bd-blqjg                           2/2     Running            0             55s
+kube-system       konnectivity-agent-6dfd9c57bd-gmkj4                           2/2     Running            0             56s
+kube-system       konnectivity-agent-6dfd9c57bd-ksb6r                           2/2     Running            0             56s
+kube-system       konnectivity-agent-6dfd9c57bd-nj4m9                           2/2     Running            0             118s
+kube-system       konnectivity-agent-autoscaler-7475b685f8-hvg7h                1/1     Running            0             117s
+kube-system       kube-dns-674884f56b-fwl79                                     4/4     Running            0             2m33s
+kube-system       kube-dns-674884f56b-zwkjh                                     4/4     Running            0             52s
+kube-system       kube-dns-autoscaler-5b7f4bcd8f-nj7kz                          1/1     Running            0             115s
+kube-system       kube-proxy-gke-e-code-production-default-pool-f8118658-66wh   1/1     Running            0             88s
+kube-system       kube-proxy-gke-e-code-production-default-pool-f8118658-6jx0   1/1     Running            0             75s
+kube-system       kube-proxy-gke-e-code-production-default-pool-f8118658-dg0d   1/1     Running            0             53s
+kube-system       kube-proxy-gke-e-code-production-default-pool-f8118658-nmfv   1/1     Running            0             86s
+kube-system       kube-proxy-gke-e-code-production-default-pool-f8118658-q1wj   1/1     Running            0             72s
+kube-system       l7-default-backend-78d5dbcd59-8xbqm                           1/1     Running            0             112s
+kube-system       metrics-server-v1.33.0-59f9cdd8d7-mwt6n                       0/1     Running            0             83s
+kube-system       metrics-server-v1.33.0-bdd6c7bd7-fsk72                        0/1     Running            0             95s
+kube-system       pdcsi-node-6zpmb                                              2/2     Running            0             86s
+kube-system       pdcsi-node-l75xz                                              2/2     Running            0             84s
+kube-system       pdcsi-node-pd2q8                                              2/2     Running            0             85s
+kube-system       pdcsi-node-q65vn                                              2/2     Running            0             86s
+kube-system       pdcsi-node-wpfhp                                              2/2     Running            0             87s
+NAMESPACE         NAME                 REFERENCE                        TARGETS                   MINPODS   MAXPODS   REPLICAS   AGE
+e-code            e-code-hpa           Deployment/e-code-app            cpu: <unknown>/70%        5         100       5          51s
+gke-managed-cim   kube-state-metrics   StatefulSet/kube-state-metrics   memory: <unknown>/400Mi   1         10        1          2m24s
+NAMESPACE     NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)            AGE
+default       kubernetes             ClusterIP      34.118.224.1     <none>          443/TCP            4m8s
+e-code        e-code-lb              LoadBalancer   34.118.234.15    34.38.197.234   80:32001/TCP       52s
+e-code        postgres               ClusterIP      34.118.229.64    <none>          5432/TCP           55s
+e-code        redis                  ClusterIP      34.118.229.119   <none>          6379/TCP           54s
+gmp-system    alertmanager           ClusterIP      None             <none>          9093/TCP           105s
+gmp-system    gmp-operator           ClusterIP      34.118.231.191   <none>          8443/TCP,443/TCP   104s
+gmp-system    rule-evaluator         ClusterIP      34.118.230.98    <none>          19092/TCP          104s
+kube-system   default-http-backend   NodePort       34.118.232.155   <none>          80:30091/TCP       111s
+kube-system   kube-dns               ClusterIP      34.118.224.10    <none>          53/UDP,53/TCP      2m35s
+kube-system   metrics-server         ClusterIP      34.118.233.231   <none>          443/TCP            98s
+simita_invest@cloudshell:~ (votre-projet-ecode)$ 
