@@ -115,6 +115,11 @@ import { realCollaborationService } from "./collaboration/real-collaboration";
 import { agentWebSocketService } from './services/agent-websocket-service';
 import containerRoutes from "./routes/containers";
 
+// POLYGLOT BACKEND INTEGRATION - Using Go and Python services for performance
+import { containerProxy } from './services/polyglot-container-proxy';
+import { aiProxy } from './services/polyglot-ai-proxy';
+import { PolyglotCoordinator } from './services/polyglot-coordinator';
+
 // Utility function for formatting bytes
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 Bytes';
@@ -5072,20 +5077,21 @@ npx http-server .
     }
   });
 
-  // AI Prompt Improvement
+  // AI Prompt Improvement - NOW USING PYTHON ML SERVICE
   app.post('/api/ai/improve-prompt', ensureAuthenticated, async (req, res) => {
     try {
       const { prompt } = req.body;
       
-      // Use AI to improve the prompt
-      const improvedPrompt = await advancedAIService.improvePrompt({
-        prompt,
-        context: 'Improve this prompt to be more specific and actionable for building applications'
-      });
+      // Use Python ML service for advanced AI prompt improvement
+      logger.info('[POLYGLOT] Improving prompt via Python ML service');
+      const improvedPrompt = await aiProxy.analyzeText(
+        prompt, 
+        'prompt_improvement'
+      );
       
-      res.json({ improvedPrompt });
+      res.json({ improvedPrompt: improvedPrompt.result || improvedPrompt.improved_text || prompt });
     } catch (error: any) {
-      console.error('Prompt improvement error:', error);
+      console.error('[POLYGLOT] Prompt improvement error:', error);
       res.status(500).json({ error: 'Failed to improve prompt' });
     }
   });
@@ -7397,14 +7403,41 @@ document.addEventListener('DOMContentLoaded', function() {
   // Generate code explanation
   app.post('/api/ai/explanation', ensureAuthenticated, generateExplanation);
   
-  // Convert code between languages
-  app.post('/api/ai/convert', ensureAuthenticated, convertCode);
+  // Convert code between languages - NOW USING PYTHON ML SERVICE
+  app.post('/api/ai/convert', ensureAuthenticated, async (req, res) => {
+    try {
+      logger.info('[POLYGLOT] Converting code via Python ML service');
+      const result = await aiProxy.convertCode(req.body.code, req.body.fromLang, req.body.toLang);
+      res.json(result);
+    } catch (error) {
+      logger.error('[POLYGLOT] Code conversion error:', error);
+      convertCode(req, res);  // Fallback to TypeScript implementation
+    }
+  });
   
-  // Generate documentation
-  app.post('/api/ai/document', ensureAuthenticated, generateDocumentation);
+  // Generate documentation - NOW USING PYTHON ML SERVICE
+  app.post('/api/ai/document', ensureAuthenticated, async (req, res) => {
+    try {
+      logger.info('[POLYGLOT] Generating docs via Python ML service');
+      const result = await aiProxy.generateDocumentation(req.body.code, req.body.language);
+      res.json(result);
+    } catch (error) {
+      logger.error('[POLYGLOT] Doc generation error:', error);
+      generateDocumentation(req, res);  // Fallback to TypeScript implementation
+    }
+  });
   
-  // Generate tests
-  app.post('/api/ai/tests', ensureAuthenticated, generateTests);
+  // Generate tests - NOW USING PYTHON ML SERVICE
+  app.post('/api/ai/tests', ensureAuthenticated, async (req, res) => {
+    try {
+      logger.info('[POLYGLOT] Generating tests via Python ML service');
+      const result = await aiProxy.generateTests(req.body.code, req.body.language, req.body.framework);
+      res.json(result);
+    } catch (error) {
+      logger.error('[POLYGLOT] Test generation error:', error);
+      generateTests(req, res);  // Fallback to TypeScript implementation
+    }
+  });
   
   // AI Assistant endpoint for project chat
   app.post('/api/projects/:projectId/ai/chat', ensureAuthenticated, async (req, res) => {
@@ -19036,23 +19069,24 @@ Generate a comprehensive application based on the user's request. Include all ne
   // dockerExecutor is already imported at the top
   logger.info('Using real Docker executor for container execution');
   
-  // Execute code in container
+  // Execute code in container - NOW USING GO SERVICE FOR PERFORMANCE
   app.post('/api/execute/container', ensureAuthenticated, async (req, res) => {
     try {
       const { code, language, stdin, timeout } = req.body;
       const userId = req.user!.id;
       
-      const result = await dockerExecutor.execute({
-        code,
+      // Use Go service for container execution (high-performance)
+      logger.info('[POLYGLOT] Executing container via Go service');
+      const result = await containerProxy.createContainer({
+        projectId: `exec-${userId}-${Date.now()}`,
         language,
-        stdin,
-        timeout,
-        userId: userId.toString()
+        command: ['sh', '-c', code],
+        env: { STDIN: stdin || '' }
       });
       
       res.json(result);
     } catch (error) {
-      logger.error('Container execution error:', error);
+      logger.error('[POLYGLOT] Container execution error:', error);
       res.status(500).json({ error: 'Execution failed' });
     }
   });

@@ -39,6 +39,11 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 ## System Architecture
 
 ### Core Services
+- **POLYGLOT BACKEND ARCHITECTURE**: **✅ ACTIVE** (as of August 8, 2025) - True polyglot backend like Replit with:
+  - **Go Runtime Service** (Port 8080): Handles container orchestration, file operations, WebSocket real-time services. High-performance operations.
+  - **Python ML Service** (Port 8081): Powers AI/ML workloads, data processing, code analysis, scientific computing.
+  - **TypeScript Core** (Port 5000): Web API, user management, database operations, frontend serving.
+  - **Integration Status**: Services running and integrated into routes with [POLYGLOT] logging. AI endpoints route through Python, container ops through Go.
 - **MCP (Model Context Protocol) Server**: **✅ 100% FUNCTIONAL** (as of August 8, 2025) - Complete MCP implementation with full functionality. HTTP transport at `/mcp/*` with working tool execution (fs_read, fs_write, exec_command all verified). UI endpoints (`/api/mcp/servers`) now return REAL MCP data, not mocks. Full integration achieved between UI and MCP server. All 12 verification tests pass. WebSocket configured for agent-specific real-time updates. GitHub, PostgreSQL, and Memory MCP services fully operational.
 - **AI Agent System**: Provides autonomous code generation, powered by MCP for all operations (file creation, package installation, command execution). Supports Anthropic Claude (Claude 3.5 Sonnet) and OpenAI models (GPT-4o, GPT-4o-mini, o1-preview, o1-mini), including OpenAI Assistants API with function calling, code interpreter, file search, and vision capabilities. Integrates full billing for token usage.
 - **Real-time Collaboration**: WebSocket-based collaborative editing and live progress streaming for AI agent updates.
