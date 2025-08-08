@@ -67,8 +67,8 @@ export class SimpleHttpTransport {
       try {
         const message = req.body;
         
-        // Handle different message types
-        if (message.method === "tools/list") {
+        // Handle different message types - support both naming conventions
+        if (message.method === "tools/list" || message.method === "list_tools") {
           // Return the list of available tools
           res.json({
             jsonrpc: "2.0",
@@ -149,7 +149,7 @@ export class SimpleHttpTransport {
               ]
             }
           });
-        } else if (message.method === "tools/call") {
+        } else if (message.method === "tools/call" || message.method === "call_tool") {
           // Handle tool execution
           const { name, arguments: args } = message.params;
           
