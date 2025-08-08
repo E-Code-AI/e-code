@@ -1,0 +1,98 @@
+# Services for E-Code Platform Components
+apiVersion: v1
+kind: Service
+metadata:
+  name: typescript-service
+  namespace: e-code-platform
+  labels:
+    app: e-code
+    component: typescript-core
+spec:
+  selector:
+    app: e-code
+    component: typescript-core
+  ports:
+  - port: 5000
+    targetPort: 5000
+    name: http
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-runtime-service
+  namespace: e-code-platform
+  labels:
+    app: e-code
+    component: go-runtime
+spec:
+  selector:
+    app: e-code
+    component: go-runtime
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-ml-service
+  namespace: e-code-platform
+  labels:
+    app: e-code
+    component: python-ml
+spec:
+  selector:
+    app: e-code
+    component: python-ml
+  ports:
+  - port: 8081
+    targetPort: 8081
+    name: http
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-service
+  namespace: e-code-platform
+  labels:
+    app: e-code
+    component: mcp-server
+spec:
+  selector:
+    app: e-code
+    component: mcp-server
+  ports:
+  - port: 3200
+    targetPort: 3200
+    name: http
+  type: ClusterIP
+
+---
+# LoadBalancer Service for External Access
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-code-loadbalancer
+  namespace: e-code-platform
+  labels:
+    app: e-code
+spec:
+  selector:
+    app: e-code
+    component: typescript-core
+  ports:
+  - port: 80
+    targetPort: 5000
+    name: http
+  - port: 443
+    targetPort: 5000
+    name: https
+  type: LoadBalancer
+  sessionAffinity: ClientIP

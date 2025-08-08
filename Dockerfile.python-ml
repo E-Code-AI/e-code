@@ -1,0 +1,35 @@
+# Python ML Service Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY server/polyglot/python-ml/requirements.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY server/polyglot/python-ml/ ./
+
+# Create non-root user
+RUN useradd -m -u 1001 python && chown -R python:python /app
+USER python
+
+# Expose port
+EXPOSE 8081
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD python -c "import requests; exit(0 if requests.get('http://localhost:8081/health').status_code == 200 else 1)"
+
+# Run the application
+CMD ["python", "server.py"]
