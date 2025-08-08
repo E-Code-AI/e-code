@@ -1,0 +1,97 @@
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to votre-projet-ecode.
+Use `gcloud config set project [PROJECT_ID]` to change to a different project.
+simita_invest@cloudshell:~ (votre-projet-ecode)$ kubectl set env deployment/e-code-platform \
+DATABASE_URL="postgresql://postgres:postgres@postgres-service:5432/ecode" \
+NODE_ENV="production" \
+PORT="5000" \
+SESSION_SECRET="production-secret-$(date +%s)" \
+POSTGRES_HOST="postgres-service" \
+POSTGRES_PORT="5432" \
+POSTGRES_DB="ecode" \
+POSTGRES_USER="postgres" \
+POSTGRES_PASSWORD="postgres" \
+PGDATABASE="ecode" \
+PGHOST="postgres-service" \
+PGPASSWORD="postgres" \
+PGPORT="5432" \
+PGUSER="postgres" \
+REDIS_HOST="redis-service" \
+REDIS_PORT="6379" \
+OPENAI_API_KEY="${OPENAI_API_KEY:-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}" \
+STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY:-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}" \
+VITE_STRIPE_PUBLIC_KEY="${VITE_STRIPE_PUBLIC_KEY:-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}" \
+-n e-code-platform
+deployment.apps/e-code-platform env updated
+simita_invest@cloudshell:~ (votre-projet-ecode)$ cat > Dockerfile.minimal << 'DOCKERFILE'
+FROM node:18-alpine
+WORKDIR /app
+RUN npm init -y && npm install express
+RUN echo 'const express = require("express"); \
+const app = express(); \
+app.get("/", (req, res) => res.send("E-Code Platform Running!")); \
+app.get("/api/health", (req, res) => res.json({status: "ok", timestamp: new Date()})); \
+app.get("/api/monitoring/health", (req, res) => res.json({status: "ok"})); \
+app.listen(5000, "0.0.0.0", () => console.log("Server running on port 5000"));' > server.js
+EXPOSE 5000
+CMD ["node", "server.js"]
+DOCKERFILE
+simita_invest@cloudshell:~ (votre-projet-ecode)$ docker build -f Dockerfile.minimal -t gcr.io/votre-projet-ecode/e-code-platform:minimal .
+docker push gcr.io/votre-projet-ecode/e-code-platform:minimal
+[+] Building 9.6s (8/8) FINISHED                                                                          docker:default
+ => [internal] load build definition from Dockerfile.minimal                                                        0.0s
+ => => transferring dockerfile: 556B                                                                                0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                   1.4s
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 2B                                                                                     0.0s
+ => [1/4] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca  2.8s
+ => => resolve docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca  0.0s
+ => => sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e 7.67kB / 7.67kB                      0.0s
+ => => sha256:929b04d7c782f04f615cf785488fed452b6569f87c73ff666ad553a7554f0006 1.72kB / 1.72kB                      0.0s
+ => => sha256:ee77c6cd7c1886ecc802ad6cedef3a8ec1ea27d1fb96162bf03dd3710839b8da 6.18kB / 6.18kB                      0.0s
+ => => sha256:f18232174bc91741fdf3da96d85011092101a032a93a388b79e99e69c2d5c870 3.64MB / 3.64MB                      0.4s
+ => => sha256:dd71dde834b5c203d162902e6b8994cb2309ae049a0eabc4efea161b2b5a3d0e 40.01MB / 40.01MB                    0.8s
+ => => sha256:1e5a4c89cee5c0826c540ab06d4b6b491c96eda01837f430bd47f0d26702d6e3 1.26MB / 1.26MB                      0.5s
+ => => extracting sha256:f18232174bc91741fdf3da96d85011092101a032a93a388b79e99e69c2d5c870                           0.2s
+ => => sha256:25ff2da83641908f65c3a74d80409d6b1b62ccfaab220b9ea70b80df5a2e0549 446B / 446B                          0.8s
+ => => extracting sha256:dd71dde834b5c203d162902e6b8994cb2309ae049a0eabc4efea161b2b5a3d0e                           1.7s
+ => => extracting sha256:1e5a4c89cee5c0826c540ab06d4b6b491c96eda01837f430bd47f0d26702d6e3                           0.1s
+ => => extracting sha256:25ff2da83641908f65c3a74d80409d6b1b62ccfaab220b9ea70b80df5a2e0549                           0.0s
+ => [2/4] WORKDIR /app                                                                                              0.7s
+ => [3/4] RUN npm init -y && npm install express                                                                    4.1s
+ => [4/4] RUN echo 'const express = require("express"); const app = express(); app.get("/", (req, res) => res.send  0.3s
+ => exporting to image                                                                                              0.3s 
+ => => exporting layers                                                                                             0.3s 
+ => => writing image sha256:f756eb95612fc79b6f74ae36a77b934e4d6b6c795c2e3b50c0c82cb4653b5f69                        0.0s 
+ => => naming to gcr.io/votre-projet-ecode/e-code-platform:minimal                                                  0.0s 
+The push refers to repository [gcr.io/votre-projet-ecode/e-code-platform]                                                
+23c426ad1a6a: Pushed 
+7d0605ee27c0: Pushed 
+5569d6364535: Pushed 
+82140d9a70a7: Layer already exists 
+f3b40b0cdb1c: Layer already exists 
+0b1f26057bd0: Layer already exists 
+08000c18d16d: Layer already exists 
+minimal: digest: sha256:46aec59eafee5ac30cdc1071eb8e867da29f4208736bb20475a30e95bc414827 size: 1782
+simita_invest@cloudshell:~ (votre-projet-ecode)$ kubectl set image deployment/e-code-platform e-code-platform=gcr.io/votre-projet-ecode/e-code-platform:minimal -n e-code-platform
+deployment.apps/e-code-platform image updated
+simita_invest@cloudshell:~ (votre-projet-ecode)$ kubectl rollout restart deployment/e-code-platform -n e-code-platform
+kubectl rollout status deployment/e-code-platform -n e-code-platform
+deployment.apps/e-code-platform restarted
+Waiting for deployment "e-code-platform" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "e-code-platform" rollout to finish: 1 old replicas are pending termination...
+deployment "e-code-platform" successfully rolled out
+simita_invest@cloudshell:~ (votre-projet-ecode)$ echo "✅ Déploiement mis à jour!"
+EOF
+✅ Déploiement mis à jour!
+-bash: EOF: command not found
+simita_invest@cloudshell:~ (votre-projet-ecode)$ chmod +x fix-deployment.sh
+./fix-deployment.sh
+chmod: cannot access 'fix-deployment.sh': No such file or directory
+-bash: ./fix-deployment.sh: No such file or directory
+simita_invest@cloudshell:~ (votre-projet-ecode)$ chmod +x fix-deployment.sh
+./fix-deployment.sh
+chmod: cannot access 'fix-deployment.sh': No such file or directory
+-bash: ./fix-deployment.sh: No such file or directory
+simita_invest@cloudshell:~ (votre-projet-ecode)$ 
