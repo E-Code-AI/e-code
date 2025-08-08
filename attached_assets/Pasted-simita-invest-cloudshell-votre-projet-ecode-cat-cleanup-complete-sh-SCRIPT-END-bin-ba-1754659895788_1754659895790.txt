@@ -1,0 +1,50 @@
+simita_invest@cloudshell:~ (votre-projet-ecode)$ cat > cleanup-complete.sh << 'SCRIPT_END'
+#!/bin/bash
+echo "🧹 Nettoyage complet du projet votre-projet-ecode"
+gcloud config set project votre-projet-ecode
+
+echo "Suppression des clusters GKE..."
+gcloud container clusters list --format="value(name,zone)" | while read cluster_name cluster_zone; do
+  if [ ! -z "$cluster_name" ]; then
+    echo "Suppression: $cluster_name"
+    gcloud container clusters delete "$cluster_name" --zone="$cluster_zone" --quiet || true
+  fi
+done
+
+echo "Suppression des images Docker..."
+gcloud container images list --repository=gcr.io/votre-projet-ecode --format="value(name)" | while read image; do
+  if [ ! -z "$image" ]; then
+    echo "Suppression: $image"
+    gcloud container images delete "$image" --force-delete-tags --quiet || true
+  fi
+done
+
+echo "Suppression des disques persistants..."
+gcloud compute disks list --format="value(name,zone)" | while read disk_name disk_zone; do
+  if [ ! -z "$disk_name" ]; then
+    echo "Suppression: $disk_name"
+    gcloud compute disks delete "$disk_name" --zone="$disk_zone" --quiet || true
+  fi
+done
+
+echo "Suppression des instances VM..."
+gcloud compute instances list --format="value(name,zone)" | while read instance_name instance_zone; do
+  if [ ! -z "$instance_name" ]; then
+    echo "Suppression: $instance_name"
+    gcloud compute instances delete "$instance_name" --zone="$instance_zone" --quiet || true
+  fi
+done
+
+echo "Suppression des load balancers..."
+gcloud compute forwarding-rules list --format="value(name,region)" | while read rule region; do
+  if [ ! -z "$rule" ]; then
+    if [ ! -z "$region" ]; then
+      gcloud compute forwarding-rules delete "$rule" --region="$region" --quiet || true
+chmod +x cleanup-complete.sh && ./cleanup-complete.shing!"--quiet || truequiet || truegion; do
+🧹 Nettoyage complet du projet votre-projet-ecode
+Updated property [core/project].
+Suppression des clusters GKE...
+Suppression: e-code-cluster
+Deleting cluster e-code-cluster...
+.............................................................................................................................................WARNING: Compute Engine Metadata server unavailable on attempt 1 of 5. Reason: HTTPConnectionPool(host='169.254.169.254', port=80): Read timed out. (read timeout=3)
+....................WARNING: Compute Engine Metadata server unavailable on attempt 2 of 5. Reason: HTTPConnectionPool(host='169.254.169.254', port=80): Read timed out. (read timeout=3)
