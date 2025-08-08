@@ -9,12 +9,13 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 - Database: PostgreSQL running in separate pod
 - Current Version: 100% functional completion with container orchestration
 
-**MAJOR UPDATE (August 8, 2025)**: ✅ Automatic AI Generation Now Working Like Replit
-- Automatic AI code generation when projects are created with prompts
-- Real-time WebSocket progress updates showing step-by-step AI actions
-- Beautiful progress indicator with current step display
-- No manual triggering needed - AI starts building immediately
-- Full MCP integration for all AI operations
+**MAJOR UPDATE (August 8, 2025)**: ✅ Complete Replit-like AI Agent Interface
+- **Principal Agent Interface**: MainAgentInterface displays front and center (not in side panels) exactly like Replit
+- **Automatic AI Generation**: AI starts building immediately when projects are created with prompts
+- **Real-time Progress**: WebSocket updates show step-by-step AI actions with beautiful progress indicators
+- **Assistant Separation**: Claude Sonnet assistant moved to side panel tab, distinct from main autonomous agent
+- **Interface Toggle**: Users can switch between agent and editor modes for accelerated development
+- **Full MCP Integration**: All AI operations powered by MCP backend infrastructure
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing

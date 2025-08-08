@@ -18,6 +18,7 @@ import GitPanel from '@/components/GitPanel';
 import AIPanel from '@/components/AIPanel';
 import { ReplitAgentChat } from '@/components/ReplitAgentChat';
 import { ReplitAgentV2 } from '@/components/ReplitAgentV2';
+import { MainAgentInterface } from '@/components/MainAgentInterface';
 import { ReplitSidebar } from '@/components/layout/ReplitSidebar';
 import EnvironmentPanel from '@/components/EnvironmentPanel';
 import { EnvironmentProvider } from '@/hooks/useEnvironment';
@@ -98,11 +99,13 @@ const ProjectPage = () => {
   const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'console' | 'deployment' | 'git' | 'env'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [aiPanelVisible, setAiPanelVisible] = useState(false);
-  const [rightPanelTab, setRightPanelTab] = useState<'ai' | 'collaborate' | 'resources' | 'presence' | 'search' | 'stats' | 'packages' | 'share' | 'github' | 'postgres' | 'memory'>('ai');
+  const [rightPanelTab, setRightPanelTab] = useState<'assistant' | 'collaborate' | 'resources' | 'presence' | 'search' | 'stats' | 'packages' | 'share' | 'github' | 'postgres' | 'memory'>('assistant');
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'offline'>('idle');
   const [lastSaved, setLastSaved] = useState<Date | undefined>();
+  const [showMainAgent, setShowMainAgent] = useState(false);
+  const [agentPrompt, setAgentPrompt] = useState<string | undefined>();
   
   // Get current user for collaboration
   const { user } = useAuth();
@@ -117,12 +120,13 @@ const ProjectPage = () => {
     const effectiveProjectId = project?.id || projectId;
     
     if (isAgentMode && prompt && effectiveProjectId) {
-      // Store prompt in sessionStorage for the agent to use
-      window.sessionStorage.setItem(`agent-prompt-${effectiveProjectId}`, prompt);
+      // Show the main agent interface with the prompt
+      setAgentPrompt(prompt);
+      setShowMainAgent(true);
       
-      // Open AI panel and switch to agent tab
+      // Also open the assistant panel for additional help
       setAiPanelVisible(true);
-      setRightPanelTab('ai');
+      setRightPanelTab('assistant');
       
       // Clean up URL without reloading the page
       const newUrl = window.location.pathname;
@@ -698,7 +702,29 @@ const ProjectPage = () => {
             </Tooltip>
           </TooltipProvider>
           
-          {/* AI Assistant Toggle Button */}
+          {/* Main AI Agent Toggle Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8",
+                    showMainAgent && "bg-primary text-primary-foreground"
+                  )}
+                  onClick={() => setShowMainAgent(!showMainAgent)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{showMainAgent ? 'Hide' : 'Show'} AI Agent</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          {/* AI Assistant Toggle Button (Side Panel) */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -711,11 +737,11 @@ const ProjectPage = () => {
                   )}
                   onClick={toggleAiPanel}
                 >
-                  <Sparkles className="h-4 w-4" />
+                  <MessageSquare className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{aiPanelVisible ? 'Hide' : 'Show'} AI assistant</p>
+                <p>{aiPanelVisible ? 'Hide' : 'Show'} Assistant</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -759,29 +785,50 @@ const ProjectPage = () => {
       
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar with Files, Agent, Tools, etc. */}
-        <div className="w-64 overflow-auto border-r">
-          <ReplitSidebar projectId={projectId || 0} />
-        </div>
-        
-        {/* Middle Section: Editor and Terminal */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Code Editor */}
-          <div className={`flex-1 ${terminalVisible ? 'overflow-hidden' : 'overflow-auto'}`}>
-            {selectedFile ? (
-              <CodeEditor
-                file={selectedFile}
-                onChange={handleFileChange}
+        {/* Show Main Agent Interface as Principal when active (like Replit) */}
+        {showMainAgent && projectId ? (
+          <div className="flex-1 flex">
+            {/* Agent Interface takes center stage */}
+            <div className="flex-1 flex flex-col">
+              <MainAgentInterface 
+                projectId={projectId}
+                initialPrompt={agentPrompt}
+                onMinimize={() => setShowMainAgent(false)}
+                className="h-full"
               />
-            ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground">
-                <p>Select a file to edit</p>
-              </div>
-            )}
+            </div>
+            
+            {/* Files sidebar on the right when agent is active */}
+            <div className="w-64 border-l overflow-auto">
+              <ReplitSidebar projectId={projectId} />
+            </div>
           </div>
+        ) : (
+          <>
+            {/* Traditional layout when agent is not active */}
+            {/* Left Sidebar with Files, Agent, Tools, etc. */}
+            <div className="w-64 overflow-auto border-r">
+              <ReplitSidebar projectId={projectId || 0} />
+            </div>
+            
+            {/* Middle Section: Editor and Terminal */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Code Editor */}
+              <div className={`flex-1 ${terminalVisible ? 'overflow-hidden' : 'overflow-auto'}`}>
+                {selectedFile ? (
+                  <CodeEditor
+                    file={selectedFile}
+                    onChange={handleFileChange}
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    <p>Select a file to edit</p>
+                  </div>
+                )}
+              </div>
           
-          {/* Bottom Panel (Terminal and Deployment) */}
-          {terminalVisible && (
+              {/* Bottom Panel (Terminal and Deployment) */}
+              {terminalVisible && (
             <div className="border-t border-border h-[300px] flex flex-col">
               <div className="h-8 bg-muted/30 border-b border-border flex items-center px-4 justify-between">
                 <div className="flex items-center space-x-4">
@@ -852,18 +899,20 @@ const ProjectPage = () => {
                   </EnvironmentProvider>
                 )}
               </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
         
-        {/* Right Panel: AI/Chat/Collaboration/Resources/Presence */}
+        {/* Right Panel: Assistant/Collaboration/Resources/Presence */}
         {aiPanelVisible && projectId && (
           <div className="w-[400px] border-l border-border overflow-hidden flex flex-col">
             <Tabs value={rightPanelTab} onValueChange={(value: any) => setRightPanelTab(value)} className="h-full flex flex-col">
               <div className="h-12 border-b border-border px-4 flex items-center justify-between bg-muted/30">
                 <ScrollArea className="flex-1">
                   <TabsList className="h-8 bg-transparent inline-flex">
-                    <TabsTrigger value="ai" className="h-8">AI Agent</TabsTrigger>
+                    <TabsTrigger value="assistant" className="h-8">Assistant</TabsTrigger>
                     <TabsTrigger value="collaborate" className="h-8">Collaborate</TabsTrigger>
                     <TabsTrigger value="resources" className="h-8">Resources</TabsTrigger>
                     <TabsTrigger value="search" className="h-8">Search</TabsTrigger>
@@ -884,10 +933,10 @@ const ProjectPage = () => {
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </div>
-              <TabsContent value="ai" className="flex-1 overflow-hidden">
+              <TabsContent value="assistant" className="flex-1 overflow-hidden">
                 <ReplitAgentV2 
                   projectId={projectId} 
-                  initialPrompt={window.sessionStorage.getItem(`agent-prompt-${projectId}`) || undefined}
+                  className="h-full"
                 />
               </TabsContent>
               <TabsContent value="collaborate" className="flex-1 overflow-hidden">
