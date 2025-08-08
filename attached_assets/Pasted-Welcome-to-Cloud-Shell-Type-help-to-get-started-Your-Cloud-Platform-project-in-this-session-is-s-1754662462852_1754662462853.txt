@@ -1,0 +1,77 @@
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to votre-projet-ecode.
+Use `gcloud config set project [PROJECT_ID]` to change to a different project.
+simita_invest@cloudshell:~ (votre-projet-ecode)$ chmod +x full-deploy.sh && ./full-deploy.sh
+🚀 Infrastructure Complète E-Code
+Updated property [core/project].
+Operation "operations/acat.p2-598842228608-f115234c-20cb-4742-91d9-0b88ee3bfdf3" finished successfully.
+Note: The Kubelet readonly port (10255) is now deprecated. Please update your workloads to use the recommended alternatives. See https://cloud.google.com/kubernetes-engine/docs/how-to/disable-kubelet-readonly-port for ways to check usage and for migration instructions.
+Note: Your Pod address range (`--cluster-ipv4-cidr`) can accommodate at most 1008 node(s).
+ERROR: (gcloud.container.clusters.create) ResponseError: code=409, message=Already exists: projects/votre-projet-ecode/zones/europe-west1-b/clusters/e-code-production.
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for e-code-production.
+Error from server (AlreadyExists): namespaces "e-code" already exists
+error: failed to create secret secrets "app-secrets" already exists
+deployment.apps/postgres configured
+service/postgres unchanged
+deployment.apps/redis unchanged
+service/redis unchanged
+deployment.apps/e-code-app unchanged
+service/e-code-lb unchanged
+horizontalpodautoscaler.autoscaling/e-code-hpa unchanged
+✅ Application: http://34.38.197.234
+NAME                              READY   STATUS             RESTARTS      AGE
+pod/e-code-app-548dcc45dc-4k4lq   1/1     Running            0             28m
+pod/e-code-app-548dcc45dc-5hrmn   1/1     Running            0             28m
+pod/e-code-app-548dcc45dc-97skv   1/1     Running            0             28m
+pod/e-code-app-548dcc45dc-h4dph   1/1     Running            0             28m
+pod/e-code-app-548dcc45dc-kpvvx   1/1     Running            0             28m
+pod/e-code-v2-577bf88f97-29nfm    1/1     Running            0             24m
+pod/e-code-v2-577bf88f97-chblf    1/1     Running            0             24m
+pod/e-code-v2-577bf88f97-cw2wt    1/1     Running            0             24m
+pod/e-code-v2-577bf88f97-h9l5w    1/1     Running            0             24m
+pod/e-code-v2-577bf88f97-hts6b    1/1     Running            0             24m
+pod/e-code-v2-577bf88f97-hw9qw    1/1     Running            0             24m
+pod/e-code-v2-577bf88f97-kc62z    1/1     Running            0             24m
+pod/e-code-v2-577bf88f97-mlkb7    1/1     Running            0             24m
+pod/e-code-v2-577bf88f97-pws6l    1/1     Running            0             24m
+pod/e-code-v2-577bf88f97-x92k7    1/1     Running            0             24m
+pod/e-code-v3-65c7f9b55d-5wcbw    1/1     Running            0             11m
+pod/e-code-v3-65c7f9b55d-d6cfq    1/1     Running            0             11m
+pod/e-code-v3-65c7f9b55d-db9lz    1/1     Running            0             11m
+pod/e-code-v3-65c7f9b55d-dh76r    1/1     Running            0             10m
+pod/e-code-v3-65c7f9b55d-dk9g2    1/1     Running            0             9m21s
+pod/e-code-v3-65c7f9b55d-f42xt    1/1     Running            0             9m21s
+pod/e-code-v3-65c7f9b55d-hhl7q    1/1     Running            0             9m21s
+pod/e-code-v3-65c7f9b55d-rjg4b    1/1     Running            0             10m
+pod/e-code-v3-65c7f9b55d-t9blf    1/1     Running            0             9m22s
+pod/e-code-v3-65c7f9b55d-z5wdw    1/1     Running            0             9m21s
+pod/postgres-6f44647985-bnv75     0/1     CrashLoopBackOff   2 (20s ago)   42s
+pod/redis-698496554f-zrsgw        1/1     Running            0             28m
+
+NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)        AGE
+service/e-code-lb      LoadBalancer   34.118.234.15    34.38.197.234   80:32001/TCP   28m
+service/e-code-v2-lb   LoadBalancer   34.118.239.224   34.14.80.192    80:30629/TCP   24m
+service/e-code-v3-lb   LoadBalancer   34.118.228.94    35.241.201.16   80:32553/TCP   13m
+service/postgres       ClusterIP      34.118.229.64    <none>          5432/TCP       28m
+service/redis          ClusterIP      34.118.229.119   <none>          6379/TCP       28m
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/e-code-app   5/5     5            5           28m
+deployment.apps/e-code-v2    10/10   10           10          24m
+deployment.apps/e-code-v3    10/10   10           10          11m
+deployment.apps/postgres     0/1     1            0           24m
+deployment.apps/redis        1/1     1            1           28m
+
+NAME                                    DESIRED   CURRENT   READY   AGE
+replicaset.apps/e-code-app-548dcc45dc   5         5         5       28m
+replicaset.apps/e-code-v2-577bf88f97    10        10        10      24m
+replicaset.apps/e-code-v3-65c7f9b55d    10        10        10      11m
+replicaset.apps/postgres-6f44647985     1         1         0       42s
+replicaset.apps/postgres-76477778bc     0         0         0       24m
+replicaset.apps/redis-698496554f        1         1         1       28m
+
+NAME                                                REFERENCE               TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/e-code-hpa      Deployment/e-code-app   cpu: 0%/70%   5         100       5          28m
+horizontalpodautoscaler.autoscaling/e-code-v2-hpa   Deployment/e-code-v2    cpu: 0%/70%   10        100       10         24m
+horizontalpodautoscaler.autoscaling/e-code-v3-hpa   Deployment/e-code-v3    cpu: 1%/60%   10        100       10         13m
