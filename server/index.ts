@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db-init";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import cors from "cors";
+import { initializePolyglotServices } from "./polyglot-services";
 import compressionMiddleware from "./middleware/compression";
 import { securityMiddleware, sanitizeInput, securityMonitoring, ipSecurity } from "./middleware/security";
 import { rateLimiters, logRateLimitViolations, dynamicRateLimiter } from "./middleware/rate-limiter";
@@ -128,6 +129,15 @@ app.use((req, res, next) => {
       
       // Start optional services in background without blocking port opening
       // Removed Nix package manager initialization that was causing ENOENT errors
+      
+      // Initialize Polyglot Services - Replit's multi-language backend architecture
+      setTimeout(async () => {
+        try {
+          initializePolyglotServices();
+        } catch (polyglotError) {
+          console.warn("Warning: Polyglot services failed to start:", polyglotError);
+        }
+      }, 500); // Start polyglot services quickly
       
       // Start the preview server (optional service) - delayed to not block startup
       setTimeout(async () => {
