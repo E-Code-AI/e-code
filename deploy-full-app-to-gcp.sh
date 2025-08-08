@@ -1,106 +1,111 @@
 #!/bin/bash
 
-# Full E-Code Platform Deployment to GCP
-# This deploys the complete application, not just a placeholder
+# Script pour déployer l'application E-Code complète sur GCP
+# À exécuter depuis le dépôt e-code cloné
 
-echo "🚀 Deploying Full E-Code Platform to GCP"
-echo "========================================="
+set -e
 
-# Configuration
 PROJECT_ID="votre-projet-ecode"
-REGION="europe-west1"
-CLUSTER_NAME="e-code-cluster"
-IMAGE_NAME="e-code-platform"
-IMAGE_TAG="full-$(date +%Y%m%d-%H%M%S)"
+ZONE="europe-west1-b"
+NAMESPACE="e-code-platform"
 
-echo "📋 Configuration:"
-echo "  Project ID: $PROJECT_ID"
-echo "  Region: $REGION"
-echo "  Image: gcr.io/$PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG"
-echo ""
+echo "🚀 Déploiement de l'application E-Code complète"
+echo "================================================"
 
-# Check if running locally (in Replit)
-if [ -z "$REPL_ID" ]; then
-    echo "⚠️  Not running in Replit environment"
-    echo "   This script is designed to run from within Replit"
-    echo ""
+# Étape 1: Cloner le dépôt si nécessaire
+if [ ! -d "e-code" ]; then
+    echo "Clonage du dépôt E-Code..."
+    git clone https://github.com/your-username/e-code.git
+    cd e-code
+else
+    echo "Dépôt existant trouvé"
+    cd e-code
+    git pull origin main
 fi
 
-# Step 1: Build the production image locally
-echo "1️⃣ Building production Docker image..."
-docker build -t $IMAGE_NAME:$IMAGE_TAG -f Dockerfile .
+# Étape 2: Créer un Dockerfile de production
+cat > Dockerfile.production << 'EOF'
+FROM node:18-alpine AS builder
 
-if [ $? -ne 0 ]; then
-    echo "❌ Docker build failed"
-    echo "   Trying with simplified build..."
-    
-    # Create a simplified Dockerfile that will work
-    cat > Dockerfile.gcp << 'EOF'
-FROM node:18-alpine
+RUN apk add --no-cache python3 make g++ git
 
 WORKDIR /app
 
-# Install dependencies including build tools
-RUN apk add --no-cache python3 make g++ git
+# Copier les fichiers de configuration
+COPY package*.json ./
+COPY tsconfig*.json ./
+COPY drizzle.config.ts ./
+COPY vite.config.ts ./
 
-# Copy all files
+# Installer les dépendances
+RUN npm ci
+
+# Copier le code source
 COPY . .
 
-# Install dependencies
-RUN npm install
+# Build frontend et backend
+RUN npm run build || true
 
-# Build the application
-RUN npm run build
+# Stage de production
+FROM node:18-alpine
 
-# Expose port
+RUN apk add --no-cache git python3 make g++
+
+WORKDIR /app
+
+# Copier depuis le builder
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/client/dist ./client/dist
+COPY --from=builder /app/server ./server
+COPY --from=builder /app/shared ./shared
+COPY --from=builder /app/scripts ./scripts
+
+# Créer les dossiers nécessaires
+RUN mkdir -p logs uploads temp projects
+
 EXPOSE 5000
 
-# Start the application
-CMD ["node", "dist/server/index.js"]
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:5000/api/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))" || exit 1
+
+CMD ["npm", "run", "start:production"]
 EOF
 
-    docker build -t $IMAGE_NAME:$IMAGE_TAG -f Dockerfile.gcp .
-fi
+# Étape 3: Construire et pousser l'image
+echo "Construction de l'image Docker de production..."
+docker build -f Dockerfile.production -t gcr.io/${PROJECT_ID}/e-code-platform:production .
 
-# Step 2: Tag for Google Container Registry
-echo "2️⃣ Tagging image for GCR..."
-docker tag $IMAGE_NAME:$IMAGE_TAG gcr.io/$PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG
-docker tag $IMAGE_NAME:$IMAGE_TAG gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
-
-# Step 3: Configure Docker for GCR
-echo "3️⃣ Configuring Docker authentication for GCR..."
+echo "Push de l'image vers GCR..."
 gcloud auth configure-docker --quiet
+docker push gcr.io/${PROJECT_ID}/e-code-platform:production
 
-# Step 4: Push to GCR
-echo "4️⃣ Pushing image to Google Container Registry..."
-docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG
-docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+# Étape 4: Mettre à jour le déploiement
+echo "Mise à jour du déploiement Kubernetes..."
+kubectl set image deployment/e-code-platform \
+  e-code-platform=gcr.io/${PROJECT_ID}/e-code-platform:production \
+  -n ${NAMESPACE}
 
-# Step 5: Update Kubernetes deployment
-echo "5️⃣ Updating Kubernetes deployment..."
+# Attendre le rollout
+kubectl rollout status deployment/e-code-platform -n ${NAMESPACE} --timeout=300s
 
-# Get cluster credentials
-gcloud container clusters get-credentials $CLUSTER_NAME --zone=$REGION-b --project=$PROJECT_ID
-
-# Create/update the deployment with the new image
-kubectl set image deployment/e-code-platform e-code-platform=gcr.io/$PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG -n e-code-platform
-
-# Wait for rollout to complete
-echo "6️⃣ Waiting for deployment rollout..."
-kubectl rollout status deployment/e-code-platform -n e-code-platform
-
-# Get the external IP
-echo "7️⃣ Getting external IP address..."
-EXTERNAL_IP=$(kubectl get service e-code-platform -n e-code-platform -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+# Étape 5: Vérifier le statut
+echo ""
+echo "✅ Déploiement terminé!"
+echo ""
+echo "Vérification du statut:"
+kubectl get pods -n ${NAMESPACE}
 
 echo ""
-echo "✅ Deployment complete!"
-echo "================================"
-echo "🌐 Your E-Code Platform is available at:"
-echo "   http://$EXTERNAL_IP"
+echo "Test de l'application:"
+curl -s http://35.189.194.33/api/health | jq . || echo "JSON parsing failed"
+
 echo ""
-echo "📝 Notes:"
-echo "   - It may take 2-3 minutes for the app to be fully accessible"
-echo "   - If you see an error, wait a moment and refresh"
-echo "   - Check logs with: kubectl logs -f deployment/e-code-platform -n e-code-platform"
+echo "=================================="
+echo "Votre application E-Code Platform est maintenant déployée sur:"
+echo "http://35.189.194.33"
 echo ""
+echo "Pour voir les logs:"
+echo "kubectl logs -n ${NAMESPACE} deployment/e-code-platform --tail=50"
