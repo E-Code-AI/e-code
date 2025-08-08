@@ -1,0 +1,104 @@
+# Fixed deployment configuration for existing GKE cluster
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: e-code-config
+  namespace: e-code-platform
+data:
+  NODE_ENV: "production"
+  PORT: "5000"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "ecode"
+  REDIS_HOST: "redis-service"  
+  REDIS_PORT: "6379"
+  CORS_ORIGIN: "*"
+  SESSION_SECRET: "change-this-to-secure-secret"
+  REPLIT_DOMAINS: "35.189.194.33"
+  ISSUER_URL: "https://replit.com/oidc"
+  REPL_ID: "e-code-platform"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: e-code-secrets
+  namespace: e-code-platform
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql://postgres:postgres@postgres-service:5432/ecode"
+  POSTGRES_USER: "postgres"
+  POSTGRES_PASSWORD: "postgres"
+  PGDATABASE: "ecode"
+  PGHOST: "postgres-service"
+  PGPASSWORD: "postgres"
+  PGPORT: "5432"
+  PGUSER: "postgres"
+  REDIS_PASSWORD: "redis-password"
+  OPENAI_API_KEY: "${OPENAI_API_KEY}"
+  STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY}"
+  VITE_STRIPE_PUBLIC_KEY: "${VITE_STRIPE_PUBLIC_KEY}"
+  SESSION_SECRET: "your-secure-session-secret-here"
+  JWT_SECRET: "your-jwt-secret-here"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-code-platform
+  namespace: e-code-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: e-code-platform
+  template:
+    metadata:
+      labels:
+        app: e-code-platform
+    spec:
+      containers:
+      - name: e-code-platform
+        image: gcr.io/votre-projet-ecode/e-code-platform:latest
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - configMapRef:
+            name: e-code-config
+        - secretRef:
+            name: e-code-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-code-platform
+  namespace: e-code-platform
+spec:
+  type: LoadBalancer
+  selector:
+    app: e-code-platform
+  ports:
+  - port: 80
+    targetPort: 5000
+    protocol: TCP
