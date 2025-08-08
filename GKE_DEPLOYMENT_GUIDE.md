@@ -77,7 +77,7 @@ The script will:
 #### Step 1: Set up GCP Project
 ```bash
 # Set your project ID
-export PROJECT_ID="your-project-id"
+export PROJECT_ID="votre-projet-ecode"  # Or your actual project ID
 gcloud config set project $PROJECT_ID
 
 # Enable required APIs
@@ -86,8 +86,9 @@ gcloud services enable container.googleapis.com compute.googleapis.com container
 
 #### Step 2: Create GKE Cluster
 ```bash
+# For Europe deployment
 gcloud container clusters create e-code-cluster \
-  --zone=us-central1-a \
+  --zone=europe-west1-b \
   --num-nodes=3 \
   --machine-type=e2-standard-4 \
   --enable-autoscaling \
@@ -95,7 +96,7 @@ gcloud container clusters create e-code-cluster \
   --max-nodes=10
 
 # Get credentials
-gcloud container clusters get-credentials e-code-cluster --zone=us-central1-a
+gcloud container clusters get-credentials e-code-cluster --zone=europe-west1-b
 ```
 
 #### Step 3: Build and Push Docker Images

@@ -6,10 +6,10 @@
 set -e
 
 # Configuration
-PROJECT_ID="your-gcp-project-id"  # CHANGE THIS
+PROJECT_ID="votre-projet-ecode"  # CHANGE THIS to your project
 CLUSTER_NAME="e-code-cluster"
-REGION="us-central1"
-ZONE="us-central1-a"
+REGION="europe-west1"  # European region
+ZONE="europe-west1-b"  # European zone
 REGISTRY="gcr.io"
 
 # Colors for output
