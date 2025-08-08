@@ -200,7 +200,16 @@ export const previewService = new PreviewService();
 // Start preview server on port 3100
 export function startPreviewServer() {
   const PORT = 3100;
-  previewService.app.listen(PORT, () => {
-    logger.info(`Preview server running on port ${PORT}`);
+  const previewApp = express();
+  
+  // In development, proxy everything to the main Vite server on port 5000
+  previewApp.use('/', createProxyMiddleware({
+    target: 'http://localhost:5000',
+    changeOrigin: true,
+    ws: true // Enable WebSocket proxying for Vite HMR
+  }));
+  
+  previewApp.listen(PORT, () => {
+    logger.info(`Preview server running on port ${PORT} - proxying to main server on port 5000`);
   });
 }
