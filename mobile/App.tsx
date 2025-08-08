@@ -57,7 +57,7 @@ export default function App() {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('authToken');
-      const response = await fetch(`${API_BASE}/projects/recent`, {
+      const response = await fetch(`${API_BASE}/mobile/projects`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -238,7 +238,23 @@ function HomeTab({ projects, loading, onCreateNew, onRefresh }) {
         <Text style={styles.sectionTitle}>Start coding instantly</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {templates.map(template => (
-            <TouchableOpacity key={template.id} style={styles.templateCard}>
+            <TouchableOpacity 
+              key={template.id} 
+              style={styles.templateCard}
+              onPress={() => {
+                Alert.alert(
+                  'Create Project',
+                  `Create a new ${template.name} project?`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Create', 
+                      onPress: () => onCreateNew(template.name.toLowerCase())
+                    }
+                  ]
+                );
+              }}
+            >
               <View style={[styles.templateIcon, { backgroundColor: template.color + '20' }]}>
                 <Text style={styles.templateEmoji}>{template.icon}</Text>
               </View>
@@ -299,6 +315,8 @@ function HomeTab({ projects, loading, onCreateNew, onRefresh }) {
 
 // Project Card Component
 function ProjectCard({ project }) {
+  const [showProjectScreen, setShowProjectScreen] = useState(false);
+  
   const getLanguageIcon = (language) => {
     const icons = {
       javascript: '📗',
@@ -310,8 +328,23 @@ function ProjectCard({ project }) {
     return icons[language?.toLowerCase()] || '📁';
   };
 
+  if (showProjectScreen) {
+    // Import would be at top: import { ProjectScreen } from './screens/ProjectScreen';
+    return (
+      <Modal visible={true} animationType="slide">
+        <ProjectScreen 
+          project={project} 
+          onClose={() => setShowProjectScreen(false)}
+        />
+      </Modal>
+    );
+  }
+
   return (
-    <TouchableOpacity style={styles.projectCard}>
+    <TouchableOpacity 
+      style={styles.projectCard}
+      onPress={() => setShowProjectScreen(true)}
+    >
       <View style={styles.projectIcon}>
         <Text style={styles.projectEmoji}>{getLanguageIcon(project.language)}</Text>
       </View>
@@ -321,7 +354,21 @@ function ProjectCard({ project }) {
           {project.language} • Updated {formatDate(project.updatedAt)}
         </Text>
       </View>
-      <TouchableOpacity style={styles.projectMenu}>
+      <TouchableOpacity 
+        style={styles.projectMenu}
+        onPress={(e) => {
+          e.stopPropagation();
+          Alert.alert(
+            'Project Options',
+            'What would you like to do?',
+            [
+              { text: 'Rename', onPress: () => Alert.alert('Rename', 'Feature coming soon') },
+              { text: 'Delete', style: 'destructive', onPress: () => Alert.alert('Delete', 'Are you sure?') },
+              { text: 'Cancel', style: 'cancel' }
+            ]
+          );
+        }}
+      >
         <Icon name="more-vert" size={20} color="#6b7280" />
       </TouchableOpacity>
     </TouchableOpacity>
@@ -342,7 +389,7 @@ function LoginScreen({ onLogin }) {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/login`, {
+      const response = await fetch(`${API_BASE}/mobile/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })

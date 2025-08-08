@@ -276,7 +276,13 @@ export function ProjectScreen({ project, onClose }) {
         <View style={styles.previewContainer}>
           <Icon name="web" size={48} color="#6b7280" />
           <Text style={styles.previewText}>Web preview coming soon</Text>
-          <TouchableOpacity style={styles.openBrowserButton}>
+          <TouchableOpacity 
+            style={styles.openBrowserButton}
+            onPress={() => {
+              // In production, use Linking.openURL(`http://localhost:3000/preview/${project.id}`)
+              Alert.alert('Preview', `Opening project preview for ${project.name}`);
+            }}
+          >
             <Text style={styles.openBrowserText}>Open in Browser</Text>
           </TouchableOpacity>
         </View>

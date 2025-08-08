@@ -30,7 +30,10 @@ export function ProfileTab({ user }) {
           style: 'destructive',
           onPress: async () => {
             await AsyncStorage.clear();
-            // Trigger app reload or navigation to login
+            // Force app to reload by restarting (in production, navigate to login)
+            // For React Native apps, you'd typically use:
+            // RNRestart.Restart(); or navigation.reset()
+            Alert.alert('Logged Out', 'Please restart the app to log in again');
           }
         }
       ]
