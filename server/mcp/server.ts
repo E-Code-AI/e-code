@@ -1718,4 +1718,9 @@ export default class MCPServer {
     
     throw new Error(`Tool ${name} not found`);
   }
+  
+  // Get the internal server instance for HTTP transport connection
+  getServer() {
+    return this.server;
+  }
 }
