@@ -89,6 +89,16 @@ import * as crypto from "crypto";
 
 // Storage interface definition
 export interface IStorage {
+  // Mobile-specific methods
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createFile(data: { projectId: number; path: string; content: string }): Promise<any>;
+  updateFile(fileId: number, data: { content: string }): Promise<void>;
+  getTrendingProjects(options: { limit: number }): Promise<any[]>;
+  getFeaturedProjects(options: { limit: number }): Promise<any[]>;
+  pinProject(projectId: number, userId: number): Promise<void>;
+  unpinProject(projectId: number, userId: number): Promise<void>;
+  trackUsage(userId: number, data: any): Promise<void>;
+  updateUserStripeInfo(userId: number, data: any): Promise<void>;
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -407,6 +417,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await this.db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await this.db.select().from(users).where(eq(users.username, username));
     return user;
   }
 
