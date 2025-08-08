@@ -87,6 +87,9 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
   const [attachments, setAttachments] = useState<File[]>([]);
   const [buildProgress, setBuildProgress] = useState(0);
   const [isBuilding, setIsBuilding] = useState(false);
+  const [currentStep, setCurrentStep] = useState<string>('');
+  const [wsConnected, setWsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
   
   // Agent modes - combining both systems
   const [agentMode, setAgentMode] = useState<'standard' | 'thinking' | 'highpower' | 'v2'>('standard');
@@ -117,13 +120,103 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load agent prompt if available
+  // Set up WebSocket connection for real-time AI progress updates
+  useEffect(() => {
+    // Connect to WebSocket for real-time updates
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+    
+    ws.onopen = () => {
+      console.log('[WebSocket] Connected for AI progress updates');
+      setWsConnected(true);
+      // Send authentication/project info
+      ws.send(JSON.stringify({ 
+        type: 'auth', 
+        projectId 
+      }));
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        // Handle different message types
+        switch(data.type) {
+          case 'ai:progress':
+            if (data.projectId === projectId) {
+              setCurrentStep(data.step);
+              setBuildProgress(data.progress);
+              console.log(`[AI Progress] ${data.step} - ${data.progress}%`);
+              
+              // Add progress message to chat
+              const progressMessage: Message = {
+                id: `progress-${Date.now()}`,
+                role: 'system',
+                content: `⚡ ${data.step}`,
+                timestamp: new Date(),
+                metadata: {
+                  mcpActive: true
+                }
+              };
+              setMessages(prev => [...prev.filter(m => !m.id.startsWith('progress-')), progressMessage]);
+            }
+            break;
+            
+          case 'ai:status':
+            if (data.projectId === projectId) {
+              console.log(`[AI Status] ${data.status}: ${data.message}`);
+            }
+            break;
+            
+          case 'ai:complete':
+            if (data.projectId === projectId) {
+              setIsBuilding(false);
+              setBuildProgress(100);
+              setCurrentStep('Complete!');
+              toast({
+                title: '✅ Project Generated',
+                description: `Created ${data.filesCreated} files successfully!`,
+              });
+            }
+            break;
+        }
+      } catch (error) {
+        console.error('[WebSocket] Error parsing message:', error);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('[WebSocket] Error:', error);
+      setWsConnected(false);
+    };
+    
+    ws.onclose = () => {
+      console.log('[WebSocket] Disconnected');
+      setWsConnected(false);
+    };
+    
+    wsRef.current = ws;
+    
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [projectId, toast]);
+
+  // Load agent prompt if available and automatically start generation
   useEffect(() => {
     const storedPrompt = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
     if (storedPrompt) {
       setInitialPrompt(storedPrompt);
       setInput(storedPrompt);
       window.sessionStorage.removeItem(`agent-prompt-${projectId}`);
+      
+      // Automatically start AI generation like Replit
+      setTimeout(() => {
+        console.log('[AI Agent] Starting automatic generation from prompt:', storedPrompt);
+        handleAutoGenerate(storedPrompt);
+      }, 500); // Small delay to ensure component is fully mounted
     }
   }, [projectId]);
 
@@ -223,6 +316,103 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
       });
     },
   });
+
+  // Automatic generation handler for Replit-like experience
+  const handleAutoGenerate = async (prompt: string) => {
+    if (!prompt.trim() || isLoading) return;
+
+    // Show initial system message about starting
+    const systemMessage: Message = {
+      id: `system-${Date.now()}`,
+      role: 'system',
+      content: '🚀 Starting AI-powered project creation...',
+      timestamp: new Date(),
+      metadata: {
+        mcpActive: true,
+      }
+    };
+    setMessages([systemMessage]);
+
+    // Add user message with the prompt
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: prompt,
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+    setIsBuilding(true);
+    setBuildProgress(10);
+
+    // Show building message
+    const buildingMessage: Message = {
+      id: `building-${Date.now()}`,
+      role: 'assistant',
+      content: '🔨 Building your project...\n\nI\'m analyzing your request and will start creating the necessary files and structure.',
+      timestamp: new Date(),
+      isStreaming: true,
+      metadata: {
+        thinking: true,
+      }
+    };
+    setMessages(prev => [...prev, buildingMessage]);
+
+    // Start the actual generation
+    try {
+      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/generate`, {
+        prompt,
+        mode: 'autonomous',
+        autoStart: true,
+        context: {
+          sessionId: Date.now().toString(),
+          isInitialBuild: true,
+          mcpEnabled: true
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start AI generation');
+      }
+
+      const data = await response.json();
+      
+      // Update with AI response
+      const assistantMessage: Message = {
+        id: data.id || Date.now().toString(),
+        role: 'assistant',
+        content: data.content || '✅ Project structure created successfully!',
+        timestamp: new Date(),
+        actions: data.actions,
+        metadata: {
+          ...data.metadata,
+          mcpPowered: true
+        }
+      };
+      
+      setMessages(prev => prev.filter(m => m.id !== buildingMessage.id).concat(assistantMessage));
+      setBuildProgress(100);
+      
+      // Show preview after generation
+      setTimeout(() => {
+        window.postMessage({ type: 'show-preview' }, '*');
+      }, 1000);
+      
+    } catch (error) {
+      console.error('[AI Agent] Generation failed:', error);
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'system',
+        content: '❌ Failed to generate project. Please try again.',
+        timestamp: new Date(),
+      };
+      setMessages(prev => prev.filter(m => m.id !== buildingMessage.id).concat(errorMessage));
+    } finally {
+      setIsLoading(false);
+      setIsBuilding(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -785,14 +975,36 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
           
           {isBuilding && buildProgress > 0 && (
             <div className="flex gap-3">
-              <div className="w-8 h-8" />
-              <Card className="max-w-[80%]">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bot className="h-4 w-4 animate-pulse" />
+              </div>
+              <Card className="max-w-[80%] border-primary/20 shadow-lg">
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm">Building your application...</span>
-                    <span className="text-sm text-muted-foreground">{buildProgress}%</span>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary animate-spin" />
+                      <span className="text-sm font-medium">AI Building Your Project</span>
+                      <Badge variant="secondary" className="ml-auto text-xs">
+                        {buildProgress}%
+                      </Badge>
+                    </div>
+                    
+                    {currentStep && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <RefreshCw className="h-3 w-3 animate-spin" />
+                        <span>{currentStep}</span>
+                      </div>
+                    )}
+                    
+                    <Progress value={buildProgress} className="h-2 bg-primary/10" />
+                    
+                    {wsConnected && (
+                      <div className="flex items-center gap-1 text-xs text-green-600">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        <span>Real-time updates active</span>
+                      </div>
+                    )}
                   </div>
-                  <Progress value={buildProgress} className="h-2" />
                 </CardContent>
               </Card>
             </div>
