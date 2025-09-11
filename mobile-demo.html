@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Code Mobile-First Responsive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0e1525 0%, #1c2333 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0079F2;
+        }
+        
+        .nav-desktop {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-mobile {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(8px);
+            padding: 1rem;
+            z-index: 1000;
+        }
+        
+        .nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 44px;
+            min-height: 44px;
+        }
+        
+        .nav-item:hover,
+        .nav-item.active {
+            color: #0079F2;
+            background: rgba(0, 121, 242, 0.1);
+        }
+        
+        .icon {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 121, 242, 0.2);
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(45deg, #0079F2, #00D2FF);
+            border-radius: 8px;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .responsive-demo {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .device-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 121, 242, 0.2);
+            color: #0079F2;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .btn {
+            background: #0079F2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            min-height: 44px;
+        }
+        
+        .btn:hover {
+            background: #0066cc;
+        }
+        
+        /* Mobile Styles */
+        @media (max-width: 767px) {
+            .container {
+                padding: 1rem;
+                padding-bottom: 80px; /* Space for mobile nav */
+            }
+            
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .nav-desktop {
+                display: none;
+            }
+            
+            .nav-mobile {
+                display: block;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .feature-card {
+                padding: 1.5rem;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 16px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Tablet Styles */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* Touch Device Optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .nav-item,
+            .btn,
+            .feature-card {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .feature-card:hover {
+                transform: none;
+            }
+            
+            .feature-card:active {
+                transform: scale(0.98);
+            }
+        }
+        
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">E-Code Platform</div>
+            <nav class="nav-desktop">
+                <button class="btn">Dashboard</button>
+                <button class="btn">Projects</button>
+                <button class="btn">Community</button>
+            </nav>
+        </header>
+        
+        <!-- Device Detection -->
+        <div class="device-indicator">
+            <span id="device-type">📱 Mobile Device Detected</span>
+            <div class="pulse"></div>
+        </div>
+        
+        <!-- Main Content -->
+        <main>
+            <h1>Mobile-First Responsive Design</h1>
+            <p style="margin: 1rem 0; opacity: 0.8; line-height: 1.6;">
+                E-Code Platform now features comprehensive mobile-first responsive design with PWA support, 
+                touch-optimized components, and seamless cross-device development experience.
+            </p>
+            
+            <!-- Responsive Demo -->
+            <div class="responsive-demo">
+                <h2>Responsive Features Demo</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h3>Touch-Optimized</h3>
+                        <p>44px minimum touch targets, haptic feedback, and gesture support</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h3>Adaptive Layout</h3>
+                        <p>Mobile-first design that scales beautifully to desktop</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3>PWA Ready</h3>
+                        <p>Progressive Web App with offline support and installation</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h3>Developer Tools</h3>
+                        <p>Mobile-optimized code editor with touch toolbar</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin: 2rem 0;">
+                <button class="btn">Experience Mobile Coding</button>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav class="nav-mobile">
+        <div class="nav-items">
+            <button class="nav-item active">
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                </svg>
+                <span style="font-size: 0.75rem;">Home</span>
+            </button>
+            
+            <button class="nav-item">
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
+                </svg>
+                <span style="font-size: 0.75rem;">Projects</span>
+            </button>
+            
+            <button class="nav-item" style="background: #0079F2; color: white; border-radius: 50%; width: 48px; height: 48px;">
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                </svg>
+            </button>
+            
+            <button class="nav-item">
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+                </svg>
+                <span style="font-size: 0.75rem;">Community</span>
+            </button>
+            
+            <button class="nav-item">
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"/>
+                </svg>
+                <span style="font-size: 0.75rem;">Profile</span>
+            </button>
+        </div>
+    </nav>
+    
+    <script>
+        // Device detection
+        function updateDeviceIndicator() {
+            const deviceIndicator = document.getElementById('device-type');
+            const width = window.innerWidth;
+            
+            if (width < 768) {
+                deviceIndicator.textContent = '📱 Mobile Device Detected';
+            } else if (width < 1024) {
+                deviceIndicator.textContent = '📱 Tablet Device Detected';
+            } else {
+                deviceIndicator.textContent = '🖥️ Desktop Device Detected';
+            }
+        }
+        
+        // Touch detection
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            document.body.classList.add('touch-device');
+        }
+        
+        // Update on resize
+        window.addEventListener('resize', updateDeviceIndicator);
+        updateDeviceIndicator();
+        
+        // Mobile navigation interaction
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Haptic feedback on supported devices
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(10);
+                }
+            });
+        });
+        
+        // Feature card interactions
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('click', function() {
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+                
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(5);
+                }
+            });
+        });
+        
+        console.log('🎉 E-Code Mobile-First Responsive Design Demo');
+        console.log('📱 Device width:', window.innerWidth);
+        console.log('🖱️ Touch support:', 'ontouchstart' in window);
+        console.log('📐 Viewport height:', window.innerHeight);
+    </script>
+</body>
+</html>

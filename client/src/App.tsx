@@ -60,6 +60,7 @@ const Privacy = lazy(() => import("@/pages/Privacy"));
 const Status = lazy(() => import("@/pages/Status"));
 
 const MobileAdmin = lazy(() => import("@/pages/mobile"));
+const MobileDemo = lazy(() => import("@/pages/MobileDemo"));
 const AI = lazy(() => import("@/pages/AI"));
 const Press = lazy(() => import("@/pages/Press"));
 const Partners = lazy(() => import("@/pages/Partners"));
@@ -200,6 +201,7 @@ function AppContent() {
           <Route path="/solutions/chatbot-builder" component={ChatbotBuilder} />
           
           <Route path="/mobile" component={MobileAdmin} />
+          <Route path="/mobile-demo" component={MobileDemo} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-agent" component={AIAgent} />
           <Route path="/code-generation" component={CodeGeneration} />
