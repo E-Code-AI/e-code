@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 
+/**
+ * Generic media query hook - still useful for custom queries.
+ * For standard responsive breakpoints, consider using `useBreakpoint()` from './use-breakpoint'
+ */
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState<boolean>(false);
 
@@ -17,6 +21,17 @@ export function useMediaQuery(query: string): boolean {
 }
 
 // Predefined breakpoints
+/**
+ * @deprecated Use `useBreakpoint().isMobile` for more comprehensive responsive logic.
+ */
 export const useIsMobile = () => useMediaQuery('(max-width: 640px)');
+
+/**
+ * @deprecated Use `useBreakpoint().isTablet` for more comprehensive responsive logic.  
+ */
 export const useIsTablet = () => useMediaQuery('(max-width: 768px)');
+
+/**
+ * @deprecated Use `useBreakpoint().isDesktop` for more comprehensive responsive logic.
+ */
 export const useIsDesktop = () => useMediaQuery('(min-width: 769px)');

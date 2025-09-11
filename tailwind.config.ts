@@ -3,7 +3,52 @@ import type { Config } from "tailwindcss";
 export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
+  
+  // Safelist for dynamic classes and utilities that might not be detected
+  safelist: [
+    // Responsive utilities that might be constructed dynamically
+    'px-responsive',
+    'py-responsive', 
+    'p-responsive',
+    'text-responsive-xs',
+    'text-responsive-sm',
+    'text-responsive-base',
+    'text-responsive-lg',
+    'text-responsive-xl',
+    'text-responsive-2xl',
+    'grid-responsive',
+    'grid-responsive-2',
+    'grid-responsive-3',
+    'mobile-only',
+    'desktop-only',
+    'container-responsive',
+    'max-w-responsive',
+    'mobile-nav-spacing',
+    // Touch target utility
+    'touch-target',
+    // Screen reader utility
+    'sr-only-focusable',
+    // Tablet-specific utilities
+    'tablet:px-responsive',
+    'tablet:py-responsive',
+    'tablet:grid-cols-2',
+    'tablet:grid-cols-3',
+  ],
+  
   theme: {
+    // Override default screens to match our breakpoint system
+    screens: {
+      'sm': '640px',   // Mobile landscape / Small tablet
+      'md': '768px',   // Tablet portrait
+      'lg': '1024px',  // Desktop / Tablet landscape
+      'xl': '1280px',  // Large desktop
+      '2xl': '1536px', // Extra large desktop
+      // Custom breakpoint aliases for clarity
+      'mobile': {'max': '639px'},        // Mobile only
+      'tablet': {'min': '640px', 'max': '1023px'},  // Tablet only
+      'desktop': {'min': '1024px'},      // Desktop and above
+    },
+    
     extend: {
       borderRadius: {
         lg: "var(--ecode-radius-lg)",

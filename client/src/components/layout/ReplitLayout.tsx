@@ -29,7 +29,7 @@ export function ReplitLayout({
           </div>
         )}
         
-        <main className={`flex-1 flex flex-col overflow-auto ${className}`}>
+        <main id="main-content" className={`flex-1 flex flex-col overflow-auto ${className}`}>
           {children}
         </main>
       </div>

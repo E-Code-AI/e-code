@@ -86,6 +86,16 @@
 
 /* Responsive utilities */
 @layer utilities {
+  /* Touch target utility for accessibility */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Screen reader only utility that becomes visible on focus */
+  .sr-only-focusable {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:p-2 focus:bg-background focus:text-foreground focus:border focus:border-border focus:rounded;
+  }
+  
   /* Responsive padding and margins */
   .px-responsive {
     @apply px-4 sm:px-6 lg:px-8;
@@ -97,6 +107,15 @@
   
   .p-responsive {
     @apply p-4 sm:p-6 lg:p-8;
+  }
+  
+  /* Tablet-specific responsive utilities */
+  .tablet\:px-responsive {
+    @apply tablet:px-6;
+  }
+  
+  .tablet\:py-responsive {
+    @apply tablet:py-6;
   }
   
   /* Responsive text sizes */
