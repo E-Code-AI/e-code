@@ -4,10 +4,16 @@ import "./index.css";
 import { ThemeProvider } from "next-themes";
 import "./lib/monaco-config";
 import { monitoring } from "./lib/monitoring";
+import { registerServiceWorker } from "./pwa/registerServiceWorker";
 
 // Initialize production monitoring
 // This will automatically capture errors and performance metrics
 console.log('[MONITORING] Initializing production monitoring service...');
+
+// Register PWA service worker
+registerServiceWorker().catch((error) => {
+  console.error('[PWA] Failed to register service worker:', error);
+});
 
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider attribute="class" defaultTheme="dark">
