@@ -1,5 +1,7 @@
 import * as k8s from '@kubernetes/client-node';
-import { logger } from '../utils/logger';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('DeploymentManager');
 import { v4 as uuidv4 } from 'uuid';
 import { exec } from 'child_process';
 import { promisify } from 'util';
