@@ -74,33 +74,159 @@ export class BuildOptimizer {
 
   private static async generateServiceWorker(): Promise<void> {
     const swContent = `
-// Service Worker for caching static assets
-const CACHE_NAME = 'e-code-v1';
+// Enhanced Service Worker for PWA functionality
+const CACHE_NAME = 'e-code-v2';
+const STATIC_CACHE = 'e-code-static-v2';
+const DYNAMIC_CACHE = 'e-code-dynamic-v2';
+
+// Assets to cache immediately
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css'
+  '/manifest.json',
+  '/assets/icons/icon-192.png',
+  '/assets/icons/icon-512.png',
+  '/assets/icons/icon-192-maskable.png',
+  '/assets/icons/icon-512-maskable.png',
+  '/favicon.svg'
 ];
 
+// Install event - cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
+    Promise.all([
+      caches.open(STATIC_CACHE)
+        .then((cache) => cache.addAll(urlsToCache)),
+      self.skipWaiting()
+    ])
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      }
-    )
+// Activate event - clean up old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    Promise.all([
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((cacheName) => cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE)
+            .map((cacheName) => caches.delete(cacheName))
+        );
+      }),
+      self.clients.claim()
+    ])
   );
 });
+
+// Fetch event - serve from cache with network fallback
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET requests
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Skip cross-origin requests except for same-origin assets
+  if (url.origin !== location.origin) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then((response) => {
+      if (response) {
+        return response;
+      }
+
+      return fetch(request).then((response) => {
+        // Don't cache if not a valid response
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+
+        // Clone the response
+        const responseToCache = response.clone();
+
+        // Cache static assets and HTML pages
+        if (
+          request.destination === 'image' ||
+          request.destination === 'script' ||
+          request.destination === 'style' ||
+          request.destination === 'document' ||
+          url.pathname.endsWith('.json') ||
+          url.pathname.endsWith('.svg')
+        ) {
+          caches.open(url.pathname.includes('/assets/') ? STATIC_CACHE : DYNAMIC_CACHE)
+            .then((cache) => {
+              cache.put(request, responseToCache);
+            });
+        }
+
+        return response;
+      }).catch(() => {
+        // Return offline fallback for HTML pages
+        if (request.destination === 'document') {
+          return caches.match('/');
+        }
+      });
+    })
+  );
+});
+
+// Background sync for offline actions
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'background-sync') {
+    event.waitUntil(doBackgroundSync());
+  }
+});
+
+// Push notifications support
+self.addEventListener('push', (event) => {
+  if (event.data) {
+    const options = {
+      body: event.data.text(),
+      icon: '/assets/icons/icon-192.png',
+      badge: '/assets/icons/icon-72.png',
+      vibrate: [200, 100, 200],
+      data: {
+        dateOfArrival: Date.now(),
+        primaryKey: 1
+      },
+      actions: [
+        {
+          action: 'explore',
+          title: 'Open E-Code',
+          icon: '/assets/icons/shortcut-new.png'
+        },
+        {
+          action: 'close',
+          title: 'Close',
+          icon: '/assets/icons/icon-72.png'
+        }
+      ]
+    };
+
+    event.waitUntil(
+      self.registration.showNotification('E-Code', options)
+    );
+  }
+});
+
+// Notification click handling
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'explore') {
+    event.waitUntil(
+      clients.openWindow('/')
+    );
+  }
+});
+
+async function doBackgroundSync() {
+  // Handle background sync operations
+  console.log('Background sync triggered');
+}
     `;
     
     const distPublic = path.join(process.cwd(), 'dist', 'public');
@@ -109,7 +235,7 @@ self.addEventListener('fetch', (event) => {
     }
     
     fs.writeFileSync(path.join(distPublic, 'sw.js'), swContent.trim());
-    console.log('🔧 Service worker generated');
+    console.log('🔧 Enhanced PWA service worker generated');
   }
 
   private static async compressAssets(): Promise<void> {

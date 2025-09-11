@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 // Lazy load all pages for better performance
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -648,6 +649,9 @@ function AppContent() {
           <Route component={NotFound} />
           </Switch>
         </Suspense>
+        
+        {/* PWA Install Prompt */}
+        <PWAInstallPrompt />
       </div>
     </TooltipProvider>
     </ErrorBoundary>
