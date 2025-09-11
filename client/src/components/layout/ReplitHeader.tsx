@@ -56,7 +56,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { SpotlightSearch } from "@/components/SpotlightSearch";
-import { useIsMobile } from "@/hooks/use-media-query";
+import { useIsMobile, useIsSmallMobile } from "@/hooks/use-media-query";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -73,6 +73,7 @@ export function ReplitHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [projectInfo, setProjectInfo] = useState<any>(null);
   const isMobile = useIsMobile();
+  const isSmallMobile = useIsSmallMobile();
   const { toast } = useToast();
 
   // Get project info from URL - supports both formats: /projects/:id and /@:username/:project
@@ -116,35 +117,39 @@ export function ReplitHeader() {
 
   return (
     <>
-    <header className="h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition shadow-sm">
+    <header className="h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-container replit-transition shadow-sm">
       {/* Logo et navigation principale */}
-      <div className="flex items-center">
+      <div className="flex items-center flex-1 min-w-0">
         {/* Mobile menu button - only on mobile */}
-        <div className="lg:hidden mr-2">
+        <div className="lg:hidden mr-2 flex-shrink-0">
           <MobileMenu onOpenSpotlight={() => setSpotlightOpen(true)} />
         </div>
         
         {/* E-Code Logo */}
         <Link href="/">
-          <div className="group cursor-pointer flex items-center">
-            <ECodeLogo size="sm" showText={!isMobile} className="group-hover:opacity-80 transition-opacity" />
+          <div className="group cursor-pointer flex items-center flex-shrink-0">
+            <ECodeLogo 
+              size="sm" 
+              showText={!isSmallMobile} 
+              className="group-hover:opacity-80 transition-opacity" 
+            />
           </div>
         </Link>
 
-        {/* Project Name Display - shown when in project view */}
-        {projectInfo && (
+        {/* Project Name Display - shown when in project view - hidden on small mobile */}
+        {projectInfo && !isSmallMobile && (
           <>
-            <span className="text-[var(--ecode-text-muted)] mx-2">/</span>
+            <span className="text-[var(--ecode-text-muted)] mx-2 flex-shrink-0">/</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] replit-transition font-medium flex items-center gap-1"
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] replit-transition font-medium flex items-center gap-1 min-w-0 max-w-48"
                 >
-                  <FolderOpen className="h-4 w-4" />
-                  {projectInfo.name}
-                  <ChevronDown className="h-3 w-3" />
+                  <FolderOpen className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{projectInfo.name}</span>
+                  <ChevronDown className="h-3 w-3 flex-shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
@@ -397,44 +402,60 @@ export function ReplitHeader() {
         </nav>
       </div>
 
-      {/* Search bar - only on larger screens */}
-      <div className="flex-1 max-w-md mx-4 sm:mx-6 hidden lg:block">
-        <Button
-          variant="outline"
-          className="w-full justify-start text-left font-normal bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text-secondary)] hover:bg-[var(--ecode-sidebar-hover)]"
-          onClick={() => setSpotlightOpen(true)}
-        >
-          <Search className="mr-2 h-4 w-4" />
-          <span className="hidden xl:inline">Search or run a command...</span>
-          <span className="xl:hidden">Search...</span>
-          <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-            <span className="text-xs">⌘</span>K
-          </kbd>
-        </Button>
+      {/* Search bar - responsive sizing */}
+      <div className={cn(
+        "flex-1 mx-4",
+        isMobile ? "max-w-[120px]" : "max-w-md hidden lg:block"
+      )}>
+        {isMobile ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-full h-8"
+            onClick={() => setSpotlightOpen(true)}
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full justify-start text-left font-normal bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text-secondary)] hover:bg-[var(--ecode-sidebar-hover)]"
+            onClick={() => setSpotlightOpen(true)}
+          >
+            <Search className="mr-2 h-4 w-4" />
+            <span className="hidden xl:inline">Search or run a command...</span>
+            <span className="xl:hidden">Search...</span>
+            <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </Button>
+        )}
       </div>
 
       {/* Actions utilisateur */}
-      <div className="flex items-center space-x-2 md:space-x-3">
-        {/* Bouton Plan Pro */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="hidden sm:flex items-center space-x-1 border-[var(--ecode-warning)] text-[var(--ecode-warning)] hover:bg-[var(--ecode-warning)]/10 replit-transition"
-          onClick={() => navigate('/pricing')}
-        >
-          <Crown className="h-4 w-4" />
-          <span>Upgrade</span>
-        </Button>
+      <div className="flex items-center space-x-2 flex-shrink-0">
+        {/* Bouton Plan Pro - hidden on small mobile */}
+        {!isSmallMobile && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden sm:flex items-center space-x-1 border-[var(--ecode-warning)] text-[var(--ecode-warning)] hover:bg-[var(--ecode-warning)]/10 replit-transition"
+            onClick={() => navigate('/pricing')}
+          >
+            <Crown className="h-4 w-4" />
+            <span className="hidden md:inline">Upgrade</span>
+          </Button>
+        )}
 
-
-
-        {/* Notifications */}
-        <NotificationCenter />
+        {/* Notifications - smaller on mobile */}
+        <div className={cn(isMobile && "scale-90")}>
+          <NotificationCenter />
+        </div>
 
         {/* Menu utilisateur */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 replit-hover">
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 replit-hover touch-target">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.username || undefined} />
                 <AvatarFallback className="bg-[var(--ecode-accent)] text-white">

@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { useIsMobile } from "@/hooks/use-media-query";
 
 interface FileNode {
   id: number;
@@ -61,6 +62,7 @@ interface Project {
 export function ReplitSidebar({ projectId }: { projectId?: number }) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(["/"]));
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   // Récupération des fichiers du projet
   const { data: files = [], isLoading: filesLoading } = useQuery<FileNode[]>({
@@ -87,7 +89,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
     return files.map((file) => (
       <div key={file.id} className="select-none">
         <div
-          className={`flex items-center py-1 px-2 rounded-md cursor-pointer replit-transition group ${
+          className={`flex items-center py-1 px-2 rounded-md cursor-pointer replit-transition group touch-target-sm ${
             selectedFile === file.path
               ? "bg-[var(--ecode-accent)] text-white"
               : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
@@ -128,6 +130,11 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
     ));
   };
 
+  // On mobile, the sidebar should be a modal/sheet instead of a fixed sidebar
+  if (isMobile) {
+    return null; // Mobile sidebar is handled by MobileMenu in the header
+  }
+
   return (
     <TooltipProvider>
       <div className="w-60 bg-[var(--ecode-surface)] border-r border-[var(--ecode-border)] flex flex-col h-full">
@@ -139,7 +146,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 <CollapsibleTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto"
+                    className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto touch-target"
                   >
                     <div className="flex items-center">
                       <Folder className="h-4 w-4 mr-2" />
@@ -156,9 +163,9 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                            className="h-8 w-8 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] touch-target-sm"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>New File</TooltipContent>
@@ -169,9 +176,9 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                            className="h-8 w-8 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] touch-target-sm"
                           >
-                            <Search className="h-3 w-3" />
+                            <Search className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Search Files</TooltipContent>
@@ -182,9 +189,9 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                            className="h-8 w-8 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] touch-target-sm"
                           >
-                            <RefreshCw className="h-3 w-3" />
+                            <RefreshCw className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Refresh</TooltipContent>
@@ -210,7 +217,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
               <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto"
+                  className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto touch-target"
                 >
                   <div className="flex items-center">
                     <GitBranch className="h-4 w-4 mr-2" />
@@ -226,14 +233,14 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 px-2 text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                      className="h-8 px-2 text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] touch-target-sm"
                     >
                       Commit
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 px-2 text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                      className="h-8 px-2 text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] touch-target-sm"
                     >
                       Push
                     </Button>
@@ -248,7 +255,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 <CollapsibleTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto"
+                    className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto touch-target"
                   >
                     <div className="flex items-center">
                       <Sparkles className="h-4 w-4 mr-2" />
@@ -264,10 +271,10 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                    className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-10 touch-target"
                     onClick={() => window.dispatchEvent(new CustomEvent('openAgent'))}
                   >
-                    <Sparkles className="h-3 w-3 mr-2" />
+                    <Sparkles className="h-4 w-4 mr-2" />
                     Open Agent Chat
                   </Button>
                 </CollapsibleContent>
@@ -279,7 +286,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
               <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto"
+                  className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto touch-target"
                 >
                   <div className="flex items-center">
                     <Terminal className="h-4 w-4 mr-2" />
@@ -292,25 +299,25 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                  className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-10 touch-target"
                 >
-                  <Terminal className="h-3 w-3 mr-2" />
+                  <Terminal className="h-4 w-4 mr-2" />
                   Console
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                  className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-10 touch-target"
                 >
-                  <Database className="h-3 w-3 mr-2" />
+                  <Database className="h-4 w-4 mr-2" />
                   Database
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                  className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-10 touch-target"
                 >
-                  <Globe className="h-3 w-3 mr-2" />
+                  <Globe className="h-4 w-4 mr-2" />
                   Webview
                 </Button>
               </CollapsibleContent>
@@ -322,7 +329,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 <CollapsibleTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto"
+                    className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto touch-target"
                   >
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-2" />
@@ -334,7 +341,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 <CollapsibleContent className="space-y-1 mt-2">
                   {recentProjects.slice(0, 5).map((project) => (
                     <Link key={project.id} href={`/project/${project.id}`}>
-                      <div className="flex items-center justify-between p-2 rounded-md hover:bg-[var(--ecode-sidebar-hover)] cursor-pointer group replit-transition">
+                      <div className="flex items-center justify-between p-2 rounded-md hover:bg-[var(--ecode-sidebar-hover)] cursor-pointer group replit-transition touch-target">
                         <div className="flex items-center min-w-0 flex-1">
                           <div className="flex-shrink-0">
                             {project.visibility === "private" ? (
@@ -374,12 +381,12 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)]"
+                            className="h-8 w-8 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] touch-target-sm"
                           >
                             {project.isRunning ? (
-                              <Square className="h-3 w-3" />
+                              <Square className="h-4 w-4" />
                             ) : (
-                              <Play className="h-3 w-3" />
+                              <Play className="h-4 w-4" />
                             )}
                           </Button>
                         </div>
@@ -398,7 +405,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+              className="h-10 w-10 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] touch-target"
             >
               <Settings className="h-4 w-4" />
             </Button>
@@ -408,14 +415,14 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-[var(--ecode-green)] hover:bg-[var(--ecode-green)]/10"
+                  className="h-10 w-10 text-[var(--ecode-green)] hover:bg-[var(--ecode-green)]/10 touch-target"
                 >
                   <Play className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  className="h-10 w-10 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] touch-target"
                 >
                   <Square className="h-4 w-4" />
                 </Button>
