@@ -2,7 +2,8 @@ import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
 
-export function useIsMobile() {
+// DEPRECATED: Use useIsMobile from hooks/useIsMobile.ts instead
+export function useIsMobileDeprecated() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
 
   React.useEffect(() => {
