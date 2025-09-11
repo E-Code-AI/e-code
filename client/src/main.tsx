@@ -4,6 +4,7 @@ import "./index.css";
 import { ThemeProvider } from "next-themes";
 import "./lib/monaco-config";
 import { monitoring } from "./lib/monitoring";
+import "./pwa/registerServiceWorker";
 
 // Initialize production monitoring
 // This will automatically capture errors and performance metrics
