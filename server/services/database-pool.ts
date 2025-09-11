@@ -286,56 +286,6 @@ export class DatabasePoolManager {
     return { healthy, pools: poolStats };
   }
 
-  // Monitoring
-  private setupMonitoring() {
-    // Log pool statistics every minute
-    setInterval(() => {
-      this.logPoolStatistics();
-    }, 60000);
-
-    // Clean up idle connections periodically
-    setInterval(() => {
-      this.cleanupIdleConnections();
-    }, 300000); // Every 5 minutes
-  }
-
-  private logPoolStatistics() {
-    for (const [name, pool] of this.pools) {
-      logger.info(`Pool '${name}' statistics`, {
-        waiting: pool.waitingCount,
-        idle: pool.idleCount,
-        total: pool.totalCount,
-        active: this.activeConnections.get(name) || 0
-      });
-    }
-  }
-
-  private async cleanupIdleConnections() {
-    for (const [name, pool] of this.pools) {
-      if (pool.idleCount > this.config.min!) {
-        logger.info(`Cleaning up idle connections in pool '${name}'`);
-        // Pool will automatically clean up based on idleTimeoutMillis
-      }
-    }
-  }
-
-  // Graceful shutdown
-  async shutdown() {
-    logger.info('Shutting down database pools...');
-    
-    for (const [name, pool] of this.pools) {
-      try {
-        await pool.end();
-        logger.info(`Pool '${name}' closed successfully`);
-      } catch (error) {
-        logger.error(`Error closing pool '${name}':`, error);
-      }
-    }
-    
-    this.pools.clear();
-    this.activeConnections.clear();
-  }
-
   // Get Drizzle instance with pooled connection
   getDrizzle(poolName: string = 'primary') {
     const pool = this.pools.get(poolName);
