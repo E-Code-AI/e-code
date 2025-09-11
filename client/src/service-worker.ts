@@ -12,7 +12,8 @@ const PRECACHE_URLS = [
   '/',
   '/manifest.json',
   '/favicon.svg',
-  // Main app files will be determined at build time
+  // Note: Main app CSS/JS files are added dynamically by the build process
+  // The registerServiceWorker will add them during runtime
 ];
 
 // Install event - precache core shell
@@ -222,7 +223,23 @@ self.addEventListener('message', (event) => {
     console.log('[SW] Skipping waiting and activating new service worker');
     self.skipWaiting();
   }
+  
+  if (event.data && event.data.type === 'CACHE_MAIN_ASSETS') {
+    console.log('[SW] Caching main app assets:', event.data.assets);
+    cacheMainAssets(event.data.assets);
+  }
 });
+
+// Cache main app assets
+async function cacheMainAssets(assets) {
+  try {
+    const cache = await caches.open(STATIC_CACHE);
+    await cache.addAll(assets);
+    console.log('[SW] Main app assets cached successfully');
+  } catch (error) {
+    console.error('[SW] Failed to cache main app assets:', error);
+  }
+}
 
 // Handle push notifications (future feature)
 self.addEventListener('push', (event) => {

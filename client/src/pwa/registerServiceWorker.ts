@@ -51,6 +51,9 @@ class PWAServiceWorkerManager {
       // Check for immediate updates
       this.checkForUpdates();
 
+      // Send main app assets to service worker for precaching
+      await this.sendMainAssetsToServiceWorker();
+
     } catch (error) {
       console.error('[PWA] Service worker registration failed:', error);
     }
@@ -170,6 +173,49 @@ class PWAServiceWorkerManager {
    */
   isUpdateAvailable(): boolean {
     return this.updateAvailable;
+  }
+
+  /**
+   * Send main app assets to service worker for precaching
+   */
+  private async sendMainAssetsToServiceWorker(): Promise<void> {
+    if (!navigator.serviceWorker.controller) {
+      console.log('[PWA] No active service worker to send assets to');
+      return;
+    }
+
+    try {
+      // Extract main CSS and JS files from current page
+      const mainAssets: string[] = [];
+      
+      // Get CSS files
+      const cssLinks = document.querySelectorAll('link[rel="stylesheet"]');
+      cssLinks.forEach((link) => {
+        const href = (link as HTMLLinkElement).href;
+        if (href && href.includes('/assets/')) {
+          mainAssets.push(new URL(href).pathname);
+        }
+      });
+      
+      // Get main JS file
+      const scriptTags = document.querySelectorAll('script[src]');
+      scriptTags.forEach((script) => {
+        const src = (script as HTMLScriptElement).src;
+        if (src && src.includes('/assets/') && src.includes('index-')) {
+          mainAssets.push(new URL(src).pathname);
+        }
+      });
+
+      if (mainAssets.length > 0) {
+        console.log('[PWA] Sending main assets to service worker:', mainAssets);
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CACHE_MAIN_ASSETS',
+          assets: mainAssets
+        });
+      }
+    } catch (error) {
+      console.error('[PWA] Failed to send main assets to service worker:', error);
+    }
   }
 }
 
