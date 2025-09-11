@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* Touch target sizing for accessibility */
+  .touch-target { 
+    min-width: 44px; 
+    min-height: 44px; 
+  }
+  
+  .touch-target-sm { 
+    min-width: 40px; 
+    min-height: 40px; 
+  }
+  
+  .touch-target-lg { 
+    min-width: 48px; 
+    min-height: 48px; 
+  }
+  
+  /* Safe area handling for notched devices */
+  .safe-area { 
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); 
+  }
+  
+  /* Responsive spacing utilities */
+  .px-responsive { 
+    @apply px-4 md:px-6 lg:px-8; 
+  }
+  
+  .py-responsive { 
+    @apply py-3 md:py-4 lg:py-6; 
+  }
+  
+  .p-responsive { 
+    @apply p-3 md:p-4 lg:p-6; 
+  }
+  
+  .px-container { 
+    @apply max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8; 
+  }
+  
+  /* Responsive typography */
+  .text-responsive-xs { 
+    @apply text-xs md:text-sm; 
+  }
+  
+  .text-responsive-sm { 
+    @apply text-sm md:text-base; 
+  }
+  
+  .text-responsive-base { 
+    @apply text-base md:text-lg; 
+  }
+  
+  .text-responsive-lg { 
+    @apply text-lg md:text-xl; 
+  }
+  
+  .text-responsive-xl { 
+    @apply text-xl md:text-2xl; 
+  }
+  
+  /* Interactive elements */
+  .replit-card-hover { 
+    @apply transition shadow-sm hover:shadow-md; 
+  }
+  
+  /* Visibility helpers */
+  .show-desktop { 
+    display: none; 
+  }
+  
+  @media (min-width: 768px) { 
+    .show-desktop { 
+      display: block; 
+    } 
+  }
+  
+  .show-mobile { 
+    display: block; 
+  }
+  
+  @media (min-width: 768px) { 
+    .show-mobile { 
+      display: none; 
+    } 
+  }
+}

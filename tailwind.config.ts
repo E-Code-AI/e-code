@@ -4,6 +4,13 @@ export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
+    screens: {
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px"
+    },
     extend: {
       borderRadius: {
         lg: "var(--ecode-radius-lg)",
@@ -86,5 +93,13 @@ export default {
       },
     },
   },
+  safelist: [
+    "touch-target", "touch-target-sm", "touch-target-lg",
+    "safe-area",
+    "px-responsive", "py-responsive", "p-responsive", "px-container",
+    "text-responsive-xs", "text-responsive-sm", "text-responsive-base",
+    "text-responsive-lg", "text-responsive-xl",
+    "replit-card-hover", "show-mobile", "show-desktop"
+  ],
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;

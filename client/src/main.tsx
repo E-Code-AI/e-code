@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import "./styles/utilities.css";
 import { ThemeProvider } from "next-themes";
 import "./lib/monaco-config";
 import { monitoring } from "./lib/monitoring";

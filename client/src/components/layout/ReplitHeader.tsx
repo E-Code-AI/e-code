@@ -56,7 +56,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { SpotlightSearch } from "@/components/SpotlightSearch";
-import { useIsMobile } from "@/hooks/use-media-query";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
