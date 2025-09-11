@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Code Platform - Offline</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #0e1525 0%, #1c2333 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .offline-container {
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: #0079F2;
+      border-radius: 16px;
+      margin: 0 auto 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 24px;
+      color: white;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    p {
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .features {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+      text-align: left;
+    }
+
+    .features h3 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #0079F2;
+    }
+
+    .features ul {
+      list-style: none;
+    }
+
+    .features li {
+      padding: 8px 0;
+      padding-left: 24px;
+      position: relative;
+      color: #cbd5e1;
+    }
+
+    .features li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: bold;
+    }
+
+    .retry-btn {
+      background: #0079F2;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .retry-btn:hover {
+      background: #0066cc;
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .status.checking {
+      background: rgba(251, 191, 36, 0.1);
+      color: #fbbf24;
+    }
+
+    .status.online {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+    }
+
+    .status.offline {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+
+    @media (max-width: 480px) {
+      .offline-container {
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 20px;
+      }
+      
+      .logo {
+        width: 60px;
+        height: 60px;
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-container">
+    <div class="logo">E</div>
+    
+    <h1>You're offline</h1>
+    <p>E-Code Platform is currently unavailable. Some features may still work while offline.</p>
+    
+    <div class="features">
+      <h3>Available Offline Features:</h3>
+      <ul>
+        <li>View recently opened projects</li>
+        <li>Browse cached templates</li>
+        <li>Access saved code snippets</li>
+        <li>Review project history</li>
+      </ul>
+    </div>
+    
+    <button class="retry-btn" onclick="checkConnection()">
+      Check Connection
+    </button>
+    
+    <div id="status" class="status offline">
+      No internet connection detected
+    </div>
+  </div>
+
+  <script>
+    function checkConnection() {
+      const status = document.getElementById('status');
+      const btn = document.querySelector('.retry-btn');
+      
+      status.className = 'status checking';
+      status.textContent = 'Checking connection...';
+      btn.disabled = true;
+      btn.textContent = 'Checking...';
+      
+      // Check if online
+      if (navigator.onLine) {
+        // Try to fetch a small resource to verify real connectivity
+        fetch('/manifest.json', { 
+          method: 'HEAD',
+          cache: 'no-cache'
+        })
+        .then(() => {
+          status.className = 'status online';
+          status.textContent = 'Connection restored! Redirecting...';
+          btn.textContent = 'Redirecting...';
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        })
+        .catch(() => {
+          status.className = 'status offline';
+          status.textContent = 'Still offline. Try again later.';
+          btn.disabled = false;
+          btn.textContent = 'Check Connection';
+        });
+      } else {
+        setTimeout(() => {
+          status.className = 'status offline';
+          status.textContent = 'No internet connection detected';
+          btn.disabled = false;
+          btn.textContent = 'Check Connection';
+        }, 1000);
+      }
+    }
+
+    // Auto-check connection when online status changes
+    window.addEventListener('online', () => {
+      checkConnection();
+    });
+
+    window.addEventListener('offline', () => {
+      const status = document.getElementById('status');
+      status.className = 'status offline';
+      status.textContent = 'Connection lost';
+    });
+
+    // Keyboard shortcut to retry
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        checkConnection();
+      }
+    });
+  </script>
+</body>
+</html>

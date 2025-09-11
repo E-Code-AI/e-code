@@ -143,6 +143,7 @@ const SolarTechStoreApp = lazy(() => import("@/pages/SolarTechStoreApp"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
+import { ResponsiveLayout } from "@/components/layout/ResponsiveLayout";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import { SpotlightSearch } from "@/components/SpotlightSearch";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -219,24 +220,24 @@ function AppContent() {
           <Route path="/deployments" component={PublicDeploymentsPage} />
 
           <ProtectedRoute path="/github-import" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <GitHubImport />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/projects/:id/import/figma" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <FigmaImport />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/projects/:id/import/bolt" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <BoltImport />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/projects/:id/import/lovable" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <LovableImport />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <Route path="/git" component={Git} />
           {/* Newsletter pages */}
@@ -245,69 +246,69 @@ function AppContent() {
           <Route path="/share/:shareId" component={SharedSnippet} />
 
           <ProtectedRoute path="/dashboard" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <Dashboard />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/explore" component={() => (
-            <ReplitLayout>
+            <ResponsiveLayout>
               <Explore />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/teams" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <Teams />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/teams/:id" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <TeamPage />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/teams/:id/settings" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <TeamSettings />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/notifications" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <Notifications />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/analytics" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <Analytics />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
 
           <ProtectedRoute path="/scalability" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <Scalability />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
 
           <ProtectedRoute path="/education" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <Education />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/marketplace" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <Marketplace />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
 
           {/* New Feature Routes */}
           <ProtectedRoute path="/api-sdk" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <APISDKPage />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
 
           <ProtectedRoute path="/mobile-apps" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <MobileAppsPage />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           {/* Advanced Feature Routes */}
           <ProtectedRoute path="/advanced/mobile" component={() => (
@@ -351,20 +352,20 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/home" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <Home />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/projects" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <ProjectsPage />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           {/* Project Routes - Consolidated and properly ordered */}
           <ProtectedRoute path="/project/:id" component={() => (
-            <ReplitLayout showSidebar={true}>
+            <ResponsiveLayout showSidebar={true}>
               <ProjectPage />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
 
           {/* SolarTech Applications with specific Replit-style URLs (must come before generic patterns) */}
@@ -395,21 +396,21 @@ function AppContent() {
 
           {/* Generic Replit-style project routes */}
           <ProtectedRoute path="/@:username/:projectname" component={() => (
-            <ReplitLayout showSidebar={true}>
+            <ResponsiveLayout showSidebar={true}>
               <ProjectPage />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
 
           {/* User profile route */}
           <Route path="/@:username" component={() => (
-            <ReplitLayout showSidebar={false}>
+            <ResponsiveLayout showSidebar={false}>
               <UserProfile />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/editor/:id" component={() => (
-            <ReplitLayout showSidebar={true}>
+            <ResponsiveLayout showSidebar={true}>
               <Editor />
-            </ReplitLayout>
+            </ResponsiveLayout>
           )} />
           <ProtectedRoute path="/runtimes" component={() => (
             <ReplitLayout>

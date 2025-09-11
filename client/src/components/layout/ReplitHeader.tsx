@@ -65,7 +65,15 @@ import { useToast } from "@/hooks/use-toast";
 import { ECodeLogo } from "@/components/ECodeLogo";
 import { MobileMenu } from "./MobileMenu";
 
-export function ReplitHeader() {
+export function ReplitHeader({ 
+  onMobileMenuToggle, 
+  showMobileMenuButton = false, 
+  isMobile: isMobileProp 
+}: { 
+  onMobileMenuToggle?: () => void; 
+  showMobileMenuButton?: boolean; 
+  isMobile?: boolean; 
+}) {
   const { user, logoutMutation } = useAuth();
   const [location, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");

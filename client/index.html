@@ -2,15 +2,243 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <title>E-Code - Code, Create, and Learn Together</title>
+    
+    <!-- Favicons and Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Meta Tags -->
     <meta name="description" content="E-Code is where people create software, learn to code, and build their ideas. With zero setup and instant collaboration." />
+    <meta name="keywords" content="code editor, IDE, programming, development, collaboration, AI coding, web development" />
+    <meta name="author" content="E-Code Platform" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="E-Code Platform" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="E-Code" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-TileColor" content="#0079F2" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#0079F2" />
+    <meta name="msapplication-navbutton-color" content="#0079F2" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Social Media / Open Graph -->
+    <meta property="og:title" content="E-Code - Advanced AI-Powered Development Platform" />
+    <meta property="og:description" content="Code anywhere, anytime. Advanced AI-powered development platform with real-time collaboration." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://e-code.com" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:site_name" content="E-Code Platform" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="E-Code Platform" />
+    <meta name="twitter:description" content="Advanced AI-powered development platform" />
+    <meta name="twitter:image" content="/twitter-image.png" />
+    
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Critical CSS for faster loading -->
+    <style>
+      /* Critical styles for initial load */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        background-color: #0e1525;
+        color: #ffffff;
+        overflow-x: hidden;
+      }
+      
+      #root {
+        min-height: 100vh;
+        min-height: 100dvh; /* Dynamic viewport height for mobile */
+      }
+      
+      /* Loading spinner */
+      .initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #0e1525;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      
+      .loader-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(0, 121, 242, 0.3);
+        border-top: 3px solid #0079F2;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Safe area handling for mobile devices */
+      @supports (padding: max(0px)) {
+        body {
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+      }
+    </style>
   </head>
   <body>
+    <!-- Initial loading screen -->
+    <div class="initial-loader" id="initial-loader">
+      <div class="loader-spinner"></div>
+    </div>
+    
     <div id="root"></div>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      // Remove initial loader when app loads
+      window.addEventListener('load', () => {
+        const loader = document.getElementById('initial-loader');
+        if (loader) {
+          loader.style.opacity = '0';
+          loader.style.transition = 'opacity 0.3s ease';
+          setTimeout(() => {
+            loader.remove();
+          }, 300);
+        }
+      });
+
+      // Register service worker for PWA functionality
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+              
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      // New service worker available
+                      if (confirm('New version available! Reload to update?')) {
+                        window.location.reload();
+                      }
+                    }
+                  });
+                }
+              });
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+
+      // Handle install prompt for PWA
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show custom install prompt after a delay
+        setTimeout(() => {
+          if (deferredPrompt && !window.localStorage.getItem('pwa-dismissed')) {
+            showInstallPrompt();
+          }
+        }, 30000); // Show after 30 seconds
+      });
+
+      function showInstallPrompt() {
+        if (!deferredPrompt) return;
+        
+        const installBanner = document.createElement('div');
+        installBanner.style.cssText = `
+          position: fixed;
+          bottom: 20px;
+          left: 20px;
+          right: 20px;
+          background: #0079F2;
+          color: white;
+          padding: 16px;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0, 121, 242, 0.3);
+          z-index: 10000;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        `;
+        
+        installBanner.innerHTML = `
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">Install E-Code Platform</div>
+            <div style="font-size: 14px; opacity: 0.9;">Get the full app experience with offline support</div>
+          </div>
+          <div>
+            <button id="install-btn" style="background: white; color: #0079F2; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; margin-right: 8px; cursor: pointer;">Install</button>
+            <button id="dismiss-btn" style="background: transparent; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 12px; border-radius: 6px; cursor: pointer;">Later</button>
+          </div>
+        `;
+        
+        document.body.appendChild(installBanner);
+        
+        document.getElementById('install-btn').addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User choice: ${outcome}`);
+            deferredPrompt = null;
+          }
+          installBanner.remove();
+        });
+        
+        document.getElementById('dismiss-btn').addEventListener('click', () => {
+          window.localStorage.setItem('pwa-dismissed', 'true');
+          installBanner.remove();
+        });
+      }
+
+      // Detect mobile device for enhanced mobile experience
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        document.documentElement.classList.add('mobile-device');
+        
+        // Add mobile-specific optimizations
+        document.addEventListener('touchstart', function() {}, { passive: true });
+        document.addEventListener('touchmove', function() {}, { passive: true });
+        
+        // Prevent zoom on input focus
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        if (viewportMeta) {
+          viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+        }
+      }
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
+    
     <!-- This is an e-code script which adds a banner on the top of the page when opened in development mode outside the e-code environment -->
     <script type="text/javascript" src="https://e-code.com/public/js/e-code-dev-banner.js"></script>
   </body>
