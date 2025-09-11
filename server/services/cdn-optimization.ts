@@ -174,13 +174,6 @@ export class CDNOptimizationService {
     return this.purgeStats;
   }
 
-  // Edge location detection (simplified)
-  private getNearestEdgeLocation(req: Request): string {
-    // In production, use geo-IP detection
-    // For now, return default
-    return this.config.edgeLocations[0];
-  }
-
   // Purge CDN cache
   async purgeCache(patterns: string[]): Promise<void> {
     logger.info('Purging CDN cache', { patterns });
