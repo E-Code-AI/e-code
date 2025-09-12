@@ -31,13 +31,22 @@ npm install
 cp .env.production.example .env
 # Edit .env with your database and API keys
 
-# 4. Start PostgreSQL (or use Docker)
+# 4. Database Setup Options:
+# Option A: Use Neon PostgreSQL (Recommended for production)
+# - Sign up at https://neon.tech
+# - Create a new project and get your connection string
+# - Update DATABASE_URL in .env
+
+# Option B: Local PostgreSQL for development
 docker run --name ecode-postgres -e POSTGRES_DB=ecode_dev -e POSTGRES_USER=ecode -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15
 
-# 5. Set up database
+# 5. Validate database configuration
+npm run db:validate
+
+# 6. Set up database schema
 npm run db:push
 
-# 6. Start development server
+# 7. Start development server
 npm run dev
 ```
 
@@ -57,7 +66,23 @@ export ANTHROPIC_API_KEY="your-anthropic-key"
 NODE_ENV=production npm start
 ```
 
-## 🏗️ Architecture
+## 🏗️ Architecture & Database
+
+### Database Architecture
+The E-Code platform uses a **hybrid database approach** for optimal performance:
+
+- **🎯 Primary Database: Neon PostgreSQL** (Recommended)
+  - All relational data (users, projects, files, billing)
+  - ACID compliance and complex queries
+  - Automatic scaling and backups
+  - Get started at [neon.tech](https://neon.tech)
+
+- **🔑 Key-Value Store: ReplitDB Emulation**
+  - Simple settings and cache data
+  - Replit compatibility layer
+  - File-based storage for development
+
+### System Architecture
 
 - **Main Server**: Express.js + React (Port 5000)
 - **Preview Server**: Live preview system (Port 3100)
@@ -65,6 +90,8 @@ NODE_ENV=production npm start
 - **Go Runtime**: Container & file operations (Port 8080)
 - **Python ML**: AI/ML processing (Port 8081)
 - **Database**: PostgreSQL with connection pooling
+
+📚 **Read the complete guide**: [DATABASE_ARCHITECTURE_GUIDE.md](./DATABASE_ARCHITECTURE_GUIDE.md)
 
 ## 🧪 Platform Status
 
@@ -88,7 +115,8 @@ npm run build
 NODE_OPTIONS="--max-old-space-size=8192" npm run check
 
 # Database operations
-npm run db:push
+npm run db:push        # Push schema to database
+npm run db:validate    # Validate database configuration
 
 # Test platform features
 npm run dev
