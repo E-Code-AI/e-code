@@ -33,7 +33,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { ReplitEditorLayout } from '@/components/editor/ReplitEditorLayout';
 import { ReplitFileSidebar } from '@/components/editor/ReplitFileSidebar';
 import { ReplitCodeEditor } from '@/components/editor/ReplitCodeEditor';
-import { Globe, MoreVertical, Beaker, Package as PackageIcon, Bug } from 'lucide-react';
+import { Globe, MoreVertical, Beaker, Package as PackageIcon, Bug, Rocket } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import {
   DropdownMenu,
@@ -450,6 +450,12 @@ export default function EditorPage() {
               title: 'Debugger',
               icon: <Bug className="h-3 w-3" />,
               content: <DebuggerPanel projectId={projectIdNum.toString()} />
+            },
+            {
+              id: 'deployment',
+              title: 'Deploy',
+              icon: <Rocket className="h-3 w-3" />,
+              content: <DeploymentManager projectId={projectIdNum} />
             },
             {
               id: 'tests',

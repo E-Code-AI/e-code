@@ -425,11 +425,6 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await this.db.select().from(users).where(eq(users.username, username));
-    return user;
-  }
-
   async createUser(userData: InsertUser): Promise<User> {
     const [user] = await this.db.insert(users).values(userData).returning();
     return user;
@@ -1573,6 +1568,20 @@ export class DatabaseStorage implements IStorage {
   // User Credits and Billing operations
   async getUserCredits(userId: number): Promise<UserCredits | undefined> {
     const [credits] = await this.db.select().from(userCredits).where(eq(userCredits.userId, userId));
+
+    // If no credits record exists, create one with default credits
+    if (!credits) {
+      const [newCredits] = await this.db.insert(userCredits).values({
+        userId,
+        planType: 'free',
+        totalCredits: 100, // Free users get 100 credits to start
+        remainingCredits: 100,
+        totalUsed: 0,
+        billingCycle: 'monthly'
+      }).returning();
+      return newCredits;
+    }
+
     return credits;
   }
 
@@ -2219,25 +2228,6 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await query.orderBy(desc(aiUsageRecords.createdAt));
-  }
-
-  async getUserCredits(userId: number): Promise<UserCredits | undefined> {
-    const [credits] = await this.db.select().from(userCredits).where(eq(userCredits.userId, userId));
-
-    // If no credits record exists, create one with default credits
-    if (!credits) {
-      const [newCredits] = await this.db.insert(userCredits).values({
-        userId,
-        planType: 'free',
-        totalCredits: 100, // Free users get 100 credits to start
-        remainingCredits: 100,
-        totalUsed: 0,
-        billingCycle: 'monthly'
-      }).returning();
-      return newCredits;
-    }
-
-    return credits;
   }
 }
 
