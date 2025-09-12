@@ -37,6 +37,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useLocation } from 'wouter';
+import { RealTimeCostEstimator } from './RealTimeCostEstimator';
 
 interface ReplitAgentProps {
   projectId: number;
@@ -1633,7 +1634,16 @@ What would you like me to build?`,
       {/* Progress Tab */}
       <TabsContent value="progress" className="flex-1 m-0">
         <ScrollArea className="h-full">
-          <div className="p-4">
+          <div className="p-4 space-y-4">
+            {/* Real-time Cost Estimator */}
+            <RealTimeCostEstimator
+              projectId={projectId}
+              isActive={isBuilding}
+              currentTask={currentTask}
+              estimatedComplexity={highPowerMode ? 'expert' : extendedThinking ? 'complex' : 'moderate'}
+              tokensUsed={messages.reduce((sum, msg) => sum + (msg.metrics?.tokensUsed || 0), 0)}
+            />
+            
             {progressLogs.length === 0 ? (
               <div className="text-center text-[var(--ecode-text-secondary)] py-8">
                 <FileTerminal className="h-12 w-12 mx-auto mb-4 opacity-50" />

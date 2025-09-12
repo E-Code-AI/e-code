@@ -18961,6 +18961,54 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
 
+  // Real-time cost estimation endpoint for UI cost display
+  app.get('/api/agent/usage/cost-estimate/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { tokensUsed = 0, timeElapsed = 0, complexity = 'moderate' } = req.query;
+      
+      // Simple cost calculation based on effort-based pricing
+      const complexityMultiplier = {
+        simple: 1.0,
+        moderate: 1.5,
+        complex: 2.0,
+        expert: 3.0
+      };
+      
+      const baseRates = {
+        perThousandTokens: 50, // $0.50 per 1K tokens
+        perComputeMinute: 200, // $2.00 per compute minute
+      };
+      
+      const tokenCost = (parseInt(tokensUsed as string) / 1000) * baseRates.perThousandTokens;
+      const computeCost = (parseInt(timeElapsed as string) / 60) * baseRates.perComputeMinute;
+      const multiplier = complexityMultiplier[complexity as keyof typeof complexityMultiplier] || 1.5;
+      
+      const estimatedCostCents = Math.round((tokenCost + computeCost) * multiplier);
+      
+      res.json({
+        success: true,
+        estimate: {
+          totalCostCents: estimatedCostCents,
+          totalCostDollars: (estimatedCostCents / 100).toFixed(3),
+          breakdown: {
+            tokenCost: Math.round(tokenCost),
+            computeCost: Math.round(computeCost),
+            complexityMultiplier: multiplier
+          },
+          tokensUsed: parseInt(tokensUsed as string),
+          timeElapsed: parseInt(timeElapsed as string),
+          complexity: complexity as string
+        }
+      });
+    } catch (error) {
+      logger.error('Cost estimation error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to estimate costs' 
+      });
+    }
+  });
+
   app.get('/api/agent/usage/summary/:projectId', ensureAuthenticated, async (req, res) => {
     try {
       const { projectId } = req.params;
