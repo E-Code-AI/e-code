@@ -244,6 +244,8 @@ class BoltImportService extends BaseImportAdapter {
           projectName: enhancedStructure.name
         },
         filesCreated
+      };
+
     } catch (error: any) {
       await this.handleImportError(importRecord.id, error);
       
