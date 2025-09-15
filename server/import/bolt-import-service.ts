@@ -1,7 +1,7 @@
 import { storage } from '../storage';
 import { BaseImportAdapter } from './base-adapter';
 import { BoltImportOptions, ImportOptions, ImportResult } from './types';
-import * as AdmZip from 'adm-zip';
+// import * as AdmZip from 'adm-zip'; // TODO: Add adm-zip dependency
 
 interface BoltProjectStructure {
   name: string;
@@ -44,7 +44,8 @@ class BoltImportService extends BaseImportAdapter {
       }
       
       if (boltOptions.zipFile) {
-        // Validate zip file
+        // TODO: Implement zip file validation when adm-zip is available
+        /*
         try {
           const zip = new AdmZip(boltOptions.zipFile);
           const entries = zip.getEntries();
@@ -54,6 +55,8 @@ class BoltImportService extends BaseImportAdapter {
         } catch (zipError) {
           errors.push('Invalid zip file format');
         }
+        */
+        errors.push('Zip file upload not yet supported');
       }
       
       if (boltOptions.boltProjectData) {
@@ -100,7 +103,9 @@ class BoltImportService extends BaseImportAdapter {
       let projectStructure: BoltProjectStructure;
 
       if (boltOptions.zipFile) {
-        projectStructure = await this.processZipFile(boltOptions.zipFile);
+        // TODO: Implement zip file processing when adm-zip is available
+        throw new Error('Zip file processing not yet implemented - please use URL or project data');
+        // projectStructure = await this.processZipFile(boltOptions.zipFile);
       } else if (boltOptions.boltUrl) {
         projectStructure = await this.fetchFromBoltUrl(boltOptions.boltUrl);
       } else {
@@ -260,6 +265,9 @@ class BoltImportService extends BaseImportAdapter {
   }
 
   private async processZipFile(zipBuffer: Buffer): Promise<BoltProjectStructure> {
+    // TODO: Implement when adm-zip is available
+    throw new Error('Zip file processing not yet implemented');
+    /*
     const zip = new AdmZip(zipBuffer);
     const entries = zip.getEntries();
     
@@ -292,6 +300,7 @@ class BoltImportService extends BaseImportAdapter {
       scripts: packageJsonContent?.scripts || {},
       description: packageJsonContent?.description
     };
+    */
   }
 
   private async fetchFromBoltUrl(url: string): Promise<BoltProjectStructure> {

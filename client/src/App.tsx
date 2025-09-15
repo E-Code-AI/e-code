@@ -96,6 +96,7 @@ const HealthDashboard = lazy(() => import("@/pages/HealthDashboard"));
 const StudentDPA = lazy(() => import("@/pages/StudentDPA"));
 const Languages = lazy(() => import("@/pages/Languages"));
 const GitHubImport = lazy(() => import("@/pages/GitHubImport"));
+const ImportHub = lazy(() => import("@/pages/ImportHub"));
 const Git = lazy(() => import("@/pages/Git"));
 
 const Secrets = lazy(() => import("@/pages/Secrets"));
@@ -221,6 +222,11 @@ function AppContent() {
           <ProtectedRoute path="/github-import" component={() => (
             <ReplitLayout showSidebar={false}>
               <GitHubImport />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/projects/:id/import" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <ImportHub />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/projects/:id/import/figma" component={() => (

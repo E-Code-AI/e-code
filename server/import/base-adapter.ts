@@ -21,7 +21,7 @@ export abstract class BaseImportAdapter extends EventEmitter implements ImportAd
   async reportProgress(importId: string, progress: ImportProgress): Promise<void> {
     try {
       // Update import record with progress
-      await storage.updateProjectImport(importId, {
+      await storage.updateProjectImport(parseInt(importId), {
         metadata: {
           progress: {
             stage: progress.stage,
@@ -51,7 +51,7 @@ export abstract class BaseImportAdapter extends EventEmitter implements ImportAd
   }
 
   protected async updateImportRecord(importId: string, updates: any): Promise<void> {
-    await storage.updateProjectImport(importId, updates);
+    await storage.updateProjectImport(parseInt(importId), updates);
   }
 
   protected async handleImportError(importId: string, error: Error): Promise<void> {
