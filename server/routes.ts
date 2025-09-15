@@ -7,7 +7,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import Stripe from "stripe";
 import { db } from "./db";
-import { users, usageTracking, checkpoints } from "@shared/schema";
+import { users, usageTracking, checkpoints, dynamicIntelligence } from "@shared/schema";
 import { and, eq, gte, lte, sql, desc } from "drizzle-orm";
 
 const execAsync = promisify(exec);
@@ -48,6 +48,8 @@ import { agentProgressService } from "./services/agent-progress-service";
 import { conversationManagementService } from "./services/conversation-management-service";
 import { feedbackService } from "./services/feedback-service";
 import { agentUsageTrackingService } from "./services/agent-usage-tracking-service";
+import { featureFlags } from "./config/feature-flags";
+import { monitoringService } from "./services/monitoring-service";
 import { advancedCapabilitiesService } from "./services/advanced-capabilities-service";
 import { checkpointService } from "./services/checkpoint-service";
 import { effortPricingService } from "./services/effort-pricing-service";
@@ -637,6 +639,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching folders:', error);
       res.status(500).json({ error: 'Failed to fetch folders' });
+    }
+  });
+
+  // Feature flags endpoint for AI UX features
+  app.get('/api/feature-flags', ensureAuthenticated, async (req, res) => {
+    try {
+      res.json(featureFlags);
+    } catch (error) {
+      console.error('Error fetching feature flags:', error);
+      res.status(500).json({ error: 'Failed to fetch feature flags' });
+    }
+  });
+
+  // User AI preferences endpoints
+  app.get('/api/user/ai-preferences', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Get or create user preferences
+      let preferences = await db.query.dynamicIntelligence.findFirst({
+        where: eq(dynamicIntelligence.userId, userId)
+      });
+
+      if (!preferences) {
+        // Create default preferences
+        const [newPreferences] = await db.insert(dynamicIntelligence).values({
+          userId,
+          extendedThinking: false,
+          highPowerMode: false,
+          autoWebSearch: true,
+          preferredModel: 'claude-3-sonnet',
+          improvePromptEnabled: false,
+          progressTabEnabled: false,
+          pauseResumeEnabled: false,
+          autoCheckpoints: true
+        }).returning();
+        preferences = newPreferences;
+      }
+
+      res.json(preferences);
+    } catch (error) {
+      console.error('Error fetching user AI preferences:', error);
+      res.status(500).json({ error: 'Failed to fetch user AI preferences' });
+    }
+  });
+
+  app.put('/api/user/ai-preferences', ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const updates = req.body;
+
+      // Track which features are being toggled
+      Object.entries(updates).forEach(async ([key, value]) => {
+        if (['extendedThinking', 'highPowerMode', 'improvePromptEnabled', 'progressTabEnabled', 'pauseResumeEnabled', 'autoCheckpoints'].includes(key)) {
+          await monitoringService.trackEvent({
+            type: 'feature_toggle',
+            category: 'ai_ux',
+            message: `${key}_${value ? 'enabled' : 'disabled'}`,
+            userId,
+            metadata: { 
+              feature: key,
+              enabled: value,
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
+      });
+
+      // Validate allowed fields
+      const allowedFields = [
+        'extendedThinking', 'highPowerMode', 'autoWebSearch', 'preferredModel',
+        'customInstructions', 'improvePromptEnabled', 'progressTabEnabled', 
+        'pauseResumeEnabled', 'autoCheckpoints'
+      ];
+      
+      const filteredUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([key]) => allowedFields.includes(key))
+      );
+
+      // Update or create preferences
+      const [updatedPreferences] = await db.insert(dynamicIntelligence).values({
+        userId,
+        ...filteredUpdates,
+        updatedAt: new Date()
+      }).onConflictDoUpdate({
+        target: dynamicIntelligence.userId,
+        set: {
+          ...filteredUpdates,
+          updatedAt: new Date()
+        }
+      }).returning();
+
+      res.json(updatedPreferences);
+    } catch (error) {
+      console.error('Error updating user AI preferences:', error);
+      res.status(500).json({ error: 'Failed to update user AI preferences' });
     }
   });
 
@@ -5509,8 +5607,23 @@ module.exports = new Solution();`
 
   // AI Prompt Improvement - NOW USING PYTHON ML SERVICE
   app.post('/api/ai/improve-prompt', ensureAuthenticated, async (req, res) => {
+    const startTime = Date.now();
+    
     try {
       const { prompt } = req.body;
+      const userId = req.user!.id;
+      
+      // Track feature usage
+      await monitoringService.trackEvent({
+        type: 'feature_usage',
+        category: 'ai_ux',
+        message: 'improve_prompt_started',
+        userId,
+        metadata: { 
+          promptLength: prompt.length,
+          timestamp: new Date().toISOString()
+        }
+      });
       
       // Use Python ML service for advanced AI prompt improvement
       logger.info('[POLYGLOT] Improving prompt via Python ML service');
@@ -5519,8 +5632,37 @@ module.exports = new Solution();`
         'prompt_improvement'
       );
       
+      const latency = Date.now() - startTime;
+      
+      // Track successful completion
+      await monitoringService.trackEvent({
+        type: 'feature_success',
+        category: 'ai_ux',
+        message: 'improve_prompt_completed',
+        userId,
+        metadata: { 
+          originalLength: prompt.length,
+          improvedLength: (improvedPrompt.result || improvedPrompt.improved_text || prompt).length,
+          latencyMs: latency
+        }
+      });
+      
       res.json({ improvedPrompt: improvedPrompt.result || improvedPrompt.improved_text || prompt });
     } catch (error: any) {
+      const latency = Date.now() - startTime;
+      
+      // Track error
+      await monitoringService.trackEvent({
+        type: 'feature_error',
+        category: 'ai_ux',
+        message: 'improve_prompt_failed',
+        userId: req.user?.id,
+        metadata: { 
+          error: error.message,
+          latencyMs: latency
+        }
+      });
+      
       console.error('[POLYGLOT] Prompt improvement error:', error);
       res.status(500).json({ error: 'Failed to improve prompt' });
     }
@@ -17877,6 +18019,19 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.post('/api/agent/task/:taskId/pause', ensureAuthenticated, async (req, res) => {
     try {
       const { taskId } = req.params;
+      const userId = req.user!.id;
+      
+      // Track pause usage
+      await monitoringService.trackEvent({
+        type: 'feature_usage',
+        category: 'ai_ux',
+        message: 'agent_pause_used',
+        userId,
+        metadata: { 
+          taskId,
+          timestamp: new Date().toISOString()
+        }
+      });
       
       logger.info(`Pausing agent task ${taskId}`);
       await agentProgressService.pauseTask(taskId);
@@ -17896,6 +18051,19 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.post('/api/agent/task/:taskId/resume', ensureAuthenticated, async (req, res) => {
     try {
       const { taskId } = req.params;
+      const userId = req.user!.id;
+      
+      // Track resume usage
+      await monitoringService.trackEvent({
+        type: 'feature_usage',
+        category: 'ai_ux',
+        message: 'agent_resume_used',
+        userId,
+        metadata: { 
+          taskId,
+          timestamp: new Date().toISOString()
+        }
+      });
       
       logger.info(`Resuming agent task ${taskId}`);
       await agentProgressService.resumeTask(taskId);

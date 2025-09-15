@@ -743,6 +743,8 @@ What would you like me to build for you today?`,
   const [extendedThinking, setExtendedThinking] = useState(false);
   const [highPowerMode, setHighPowerMode] = useState(false);
   const [autoCheckpoints, setAutoCheckpoints] = useState(true);
+  const [featureFlags, setFeatureFlags] = useState<any>(null);
+  const [userPreferences, setUserPreferences] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'chat' | 'progress'>('chat');
   const [progressLogs, setProgressLogs] = useState<Array<{
     id: string;
@@ -766,6 +768,49 @@ What would you like me to build for you today?`,
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load feature flags and user preferences
+  useEffect(() => {
+    const loadFeatureFlagsAndPreferences = async () => {
+      try {
+        // Load feature flags
+        const flagsResponse = await fetch('/api/feature-flags');
+        if (flagsResponse.ok) {
+          const flags = await flagsResponse.json();
+          setFeatureFlags(flags);
+        }
+
+        // Load user AI preferences
+        const prefsResponse = await fetch('/api/user/ai-preferences');
+        if (prefsResponse.ok) {
+          const prefs = await prefsResponse.json();
+          setUserPreferences(prefs);
+          
+          // Set toggle states from preferences
+          setExtendedThinking(prefs.extendedThinking || false);
+          setHighPowerMode(prefs.highPowerMode || false);
+          setAutoCheckpoints(prefs.autoCheckpoints ?? true);
+        }
+      } catch (error) {
+        console.error('Error loading feature flags or preferences:', error);
+      }
+    };
+
+    loadFeatureFlagsAndPreferences();
+  }, []);
+
+  // Save preferences when toggle states change
+  const savePreferences = async (updates: any) => {
+    try {
+      await fetch('/api/user/ai-preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+    }
+  };
 
   // Initialize default session
   useEffect(() => {
@@ -1504,7 +1549,10 @@ What would you like me to build?`,
               <Switch
                 id="extended-thinking"
                 checked={extendedThinking}
-                onCheckedChange={setExtendedThinking}
+                onCheckedChange={(checked) => {
+                  setExtendedThinking(checked);
+                  savePreferences({ extendedThinking: checked });
+                }}
               />
               <Label htmlFor="extended-thinking" className="cursor-pointer">
                 <Brain className="h-3 w-3 inline mr-1" />
@@ -1515,7 +1563,10 @@ What would you like me to build?`,
               <Switch
                 id="high-power"
                 checked={highPowerMode}
-                onCheckedChange={setHighPowerMode}
+                onCheckedChange={(checked) => {
+                  setHighPowerMode(checked);
+                  savePreferences({ highPowerMode: checked });
+                }}
               />
               <Label htmlFor="high-power" className="cursor-pointer">
                 <Power className="h-3 w-3 inline mr-1" />
@@ -1526,7 +1577,10 @@ What would you like me to build?`,
               <Switch
                 id="auto-checkpoints"
                 checked={autoCheckpoints}
-                onCheckedChange={setAutoCheckpoints}
+                onCheckedChange={(checked) => {
+                  setAutoCheckpoints(checked);
+                  savePreferences({ autoCheckpoints: checked });
+                }}
               />
               <Label htmlFor="auto-checkpoints" className="cursor-pointer">
                 <History className="h-3 w-3 inline mr-1" />
