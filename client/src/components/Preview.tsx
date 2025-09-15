@@ -13,7 +13,12 @@ import {
   Square,
   AlertCircle,
   Wifi,
-  WifiOff
+  WifiOff,
+  Server,
+  Globe,
+  Zap,
+  Copy,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
@@ -22,8 +27,43 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+
+interface PreviewProps {
+  openFiles: File[];
+  projectId?: number;
+}
+
+interface PreviewService {
+  port: number;
+  name: string;
+  path?: string;
+  description?: string;
+}
+
+interface PreviewStatus {
+  status: 'idle' | 'starting' | 'running' | 'error' | 'stopped';
+  runId?: string;
+  ports?: number[];
+  primaryPort?: number;
+  currentPort?: number;
+  services?: PreviewService[];
+  frameworkType?: string;
+  healthChecks?: Record<number, boolean>;
+  lastHealthCheck?: string;
+  logs?: string[];
+}
 
 interface PreviewProps {
   openFiles: File[];
@@ -44,42 +84,82 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewStatus, setPreviewStatus] = useState<'idle' | 'starting' | 'running' | 'error'>('idle');
+  const [previewStatus, setPreviewStatus] = useState<PreviewStatus>({ status: 'idle' });
   const [deviceMode, setDeviceMode] = useState<keyof typeof DEVICE_PRESETS>('desktop');
+  const [selectedPort, setSelectedPort] = useState<number | null>(null);
   const [devToolsEnabled, setDevToolsEnabled] = useState(false);
-  const [previewLogs, setPreviewLogs] = useState<string[]>([]);
   const [wsConnected, setWsConnected] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
 
+  // Load saved preferences
+  useEffect(() => {
+    if (projectId) {
+      const savedDevice = localStorage.getItem(`preview-device-${projectId}`) as keyof typeof DEVICE_PRESETS;
+      const savedPort = localStorage.getItem(`preview-port-${projectId}`);
+      
+      if (savedDevice && DEVICE_PRESETS[savedDevice]) {
+        setDeviceMode(savedDevice);
+      }
+      if (savedPort) {
+        setSelectedPort(parseInt(savedPort));
+      }
+    }
+  }, [projectId]);
+
+  // Save preferences
+  const savePreference = (key: string, value: string) => {
+    if (projectId) {
+      localStorage.setItem(`preview-${key}-${projectId}`, value);
+    }
+  };
+
   // Start preview server for project
   const startPreview = async () => {
     if (!projectId) return;
     
-    setPreviewStatus('starting');
+    setPreviewStatus({ status: 'starting' });
     setIsLoading(true);
     
     try {
-      const response = await apiRequest('POST', `/api/preview/start/${projectId}`);
+      const response = await apiRequest('POST', `/api/projects/${projectId}/preview/start`);
       const data = await response.json();
       
-      if (data.url) {
-        // Use the actual preview URL from the service
-        setPreviewUrl(`http://localhost:${8000 + projectId}`);
-        setPreviewStatus('running');
-        setPreviewLogs(data.logs || []);
+      if (data.success && data.preview) {
+        const preview = data.preview;
+        setPreviewStatus({
+          status: 'running',
+          runId: preview.runId,
+          ports: preview.ports,
+          primaryPort: preview.primaryPort,
+          services: preview.services,
+          frameworkType: preview.frameworkType
+        });
         
-        // Auto-inject Eruda for developer tools
+        // Set initial port selection
+        const targetPort = selectedPort && preview.ports.includes(selectedPort) 
+          ? selectedPort 
+          : preview.primaryPort;
+        
+        setSelectedPort(targetPort);
+        setPreviewUrl(`http://localhost:${targetPort}`);
+        
+        toast({
+          title: "Preview Started",
+          description: `${preview.frameworkType || 'Application'} server is running on ${preview.ports.length} port(s)`,
+        });
+        
+        // Auto-inject dev tools if enabled
         if (devToolsEnabled) {
-          injectDevTools();
+          setTimeout(injectDevTools, 1000);
         }
       } else {
-        throw new Error('Failed to get preview URL');
+        throw new Error(data.error || 'Failed to start preview');
       }
     } catch (error: any) {
       console.error('Failed to start preview:', error);
-      setPreviewStatus('error');
+      setPreviewStatus({ status: 'error' });
       toast({
         title: "Preview Error",
         description: error.message || "Failed to start preview server",
@@ -95,12 +175,83 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     if (!projectId) return;
     
     try {
-      await apiRequest('POST', `/api/preview/stop/${projectId}`);
+      await apiRequest('POST', `/api/projects/${projectId}/preview/stop`);
       setPreviewUrl(null);
-      setPreviewStatus('idle');
-      setPreviewLogs([]);
+      setPreviewStatus({ status: 'idle' });
+      setSelectedPort(null);
+      
+      toast({
+        title: "Preview Stopped",
+        description: "Preview server has been stopped",
+      });
     } catch (error) {
       console.error('Failed to stop preview:', error);
+      toast({
+        title: "Error",
+        description: "Failed to stop preview server",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Switch to different port
+  const switchPort = async (port: number) => {
+    if (!projectId || !previewStatus.ports?.includes(port)) return;
+    
+    try {
+      const response = await apiRequest('POST', `/api/projects/${projectId}/preview/switch-port`, {
+        port
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setSelectedPort(port);
+        setPreviewUrl(`http://localhost:${port}`);
+        savePreference('port', port.toString());
+        
+        // Update status
+        setPreviewStatus(prev => ({
+          ...prev,
+          currentPort: port
+        }));
+        
+        toast({
+          title: "Port Switched",
+          description: `Now viewing service on port ${port}`,
+        });
+      } else {
+        throw new Error(data.error || 'Failed to switch port');
+      }
+    } catch (error: any) {
+      console.error('Failed to switch port:', error);
+      toast({
+        title: "Port Switch Failed",
+        description: error.message || "Unable to switch to selected port",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Copy preview URL to clipboard
+  const copyPreviewUrl = async () => {
+    if (!previewUrl) return;
+    
+    try {
+      // For sharing, we'd use the actual domain
+      const shareableUrl = previewUrl.replace('localhost', `${projectId}-user.preview.e-code.com`);
+      await navigator.clipboard.writeText(shareableUrl);
+      
+      toast({
+        title: "URL Copied",
+        description: "Preview URL copied to clipboard",
+      });
+    } catch (error) {
+      console.error('Failed to copy URL:', error);
+      toast({
+        title: "Copy Failed",
+        description: "Unable to copy URL to clipboard",
+        variant: "destructive"
+      });
     }
   };
 
@@ -158,6 +309,12 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     }
   };
 
+  // Toggle device mode and save preference
+  const handleDeviceChange = (device: keyof typeof DEVICE_PRESETS) => {
+    setDeviceMode(device);
+    savePreference('device', device);
+  };
+
   // Setup WebSocket connection for real-time preview updates
   useEffect(() => {
     if (!projectId) return;
@@ -185,20 +342,30 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           break;
           
         case 'preview:ready':
-          setPreviewStatus('running');
-          setPreviewUrl(`http://localhost:${data.port}`);
-          setPreviewLogs(prev => [...prev, 'Preview server is ready!']);
+          setPreviewStatus(prev => ({
+            ...prev,
+            status: 'running',
+            ports: data.ports,
+            primaryPort: data.primaryPort,
+            services: data.services
+          }));
+          
+          // Set URL for current or primary port
+          const targetPort = selectedPort && data.ports.includes(selectedPort) 
+            ? selectedPort 
+            : data.primaryPort;
+          setPreviewUrl(`http://localhost:${targetPort}`);
+          setSelectedPort(targetPort);
           break;
           
         case 'preview:stop':
-          setPreviewStatus('idle');
+          setPreviewStatus({ status: 'idle' });
           setPreviewUrl(null);
-          setPreviewLogs(prev => [...prev, 'Preview server stopped']);
+          setSelectedPort(null);
           break;
           
         case 'preview:error':
-          setPreviewStatus('error');
-          setPreviewLogs(prev => [...prev, `Error: ${data.error}`]);
+          setPreviewStatus({ status: 'error' });
           toast({
             title: "Preview Error",
             description: data.error,
@@ -207,7 +374,21 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           break;
           
         case 'preview:log':
-          setPreviewLogs(prev => [...prev, data.log]);
+          // Handle logs from specific services
+          console.log(`[${data.service}:${data.port}] ${data.log}`);
+          break;
+          
+        case 'preview:port-switch':
+          setSelectedPort(data.port);
+          setPreviewUrl(data.url);
+          break;
+          
+        case 'preview:health-check-failed':
+          toast({
+            title: "Service Health Check Failed",
+            description: `Service on port ${data.port} is not responding`,
+            variant: "destructive"
+          });
           break;
           
         case 'preview:rebuild':
@@ -215,12 +396,23 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           break;
           
         case 'preview:status':
-          setPreviewStatus(data.status || 'idle');
-          if (data.url) {
-            setPreviewUrl(`http://localhost:${data.port}`);
-          }
-          if (data.logs) {
-            setPreviewLogs(data.logs);
+          setPreviewStatus({
+            status: data.status || 'idle',
+            runId: data.runId,
+            ports: data.ports,
+            primaryPort: data.primaryPort,
+            services: data.services,
+            healthChecks: data.healthChecks,
+            lastHealthCheck: data.lastHealthCheck,
+            frameworkType: data.frameworkType
+          });
+          
+          if (data.ports && data.primaryPort) {
+            const targetPort = selectedPort && data.ports.includes(selectedPort) 
+              ? selectedPort 
+              : data.primaryPort;
+            setPreviewUrl(`http://localhost:${targetPort}`);
+            setSelectedPort(targetPort);
           }
           break;
       }
@@ -244,21 +436,71 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     };
   }, [projectId, toast]);
 
-  // Auto-start preview when project changes
+  // Auto-start preview when project changes (enhanced logic)
   useEffect(() => {
     if (projectId && openFiles.length > 0) {
-      // Check if we have executable files
+      // Check if we have runnable files
       const hasExecutable = openFiles.some(f => 
         f.name === 'package.json' || 
         f.name.endsWith('.py') || 
-        f.name === 'index.html'
+        f.name === 'index.html' ||
+        f.name === 'main.py' ||
+        f.name === 'app.py' ||
+        f.name === 'server.py'
       );
       
-      if (hasExecutable && previewStatus === 'idle') {
-        startPreview();
+      // Check for modern frameworks
+      const hasModernFramework = openFiles.some(f => f.content?.includes('@vitejs/plugin-react') ||
+        f.content?.includes('@vitejs/plugin-vue') ||
+        f.content?.includes('@angular/core'));
+      
+      if (hasExecutable && previewStatus.status === 'idle') {
+        // Auto-start for projects with runnable files
+        if (hasModernFramework || openFiles.some(f => f.name === 'package.json')) {
+          setTimeout(startPreview, 1000); // Slight delay for better UX
+        }
       }
     }
   }, [projectId, openFiles]);
+
+  // Check preview status on component mount
+  useEffect(() => {
+    if (projectId) {
+      checkPreviewStatus();
+    }
+  }, [projectId]);
+
+  const checkPreviewStatus = async () => {
+    if (!projectId) return;
+    
+    try {
+      const response = await apiRequest('GET', `/api/projects/${projectId}/preview/status`);
+      const data = await response.json();
+      
+      if (data.status !== 'stopped') {
+        setPreviewStatus({
+          status: data.status,
+          runId: data.runId,
+          ports: data.ports,
+          primaryPort: data.primaryPort,
+          services: data.services,
+          healthChecks: data.healthChecks,
+          lastHealthCheck: data.lastHealthCheck,
+          frameworkType: data.frameworkType
+        });
+        
+        if (data.status === 'running' && data.ports && data.primaryPort) {
+          const targetPort = selectedPort && data.ports.includes(selectedPort) 
+            ? selectedPort 
+            : data.primaryPort;
+          setPreviewUrl(`http://localhost:${targetPort}`);
+          setSelectedPort(targetPort);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check preview status:', error);
+    }
+  };
 
   // Clean up preview on unmount
   useEffect(() => {
@@ -285,22 +527,34 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
   
   return (
     <div className={`flex flex-col h-full ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
-      {/* Preview header - Replit style */}
+      {/* Preview header - Enhanced Replit style */}
       <div className="flex items-center justify-between p-2 border-b bg-background">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold">Preview</h3>
-          {previewStatus === 'running' && (
-            <span className="flex items-center gap-1 text-xs text-green-600">
-              <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
-              Live
-            </span>
+          
+          {/* Status indicator */}
+          {previewStatus.status === 'running' && (
+            <div className="flex items-center gap-1">
+              <span className="flex items-center gap-1 text-xs text-green-600">
+                <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
+                Live
+              </span>
+              {previewStatus.frameworkType && (
+                <Badge variant="secondary" className="text-xs">
+                  {previewStatus.frameworkType}
+                </Badge>
+              )}
+            </div>
           )}
-          {previewStatus === 'starting' && (
+          
+          {previewStatus.status === 'starting' && (
             <span className="text-xs text-yellow-600">Starting...</span>
           )}
-          {previewStatus === 'error' && (
+          
+          {previewStatus.status === 'error' && (
             <span className="text-xs text-red-600">Error</span>
           )}
+          
           {/* WebSocket connection status */}
           {wsConnected ? (
             <Wifi className="h-3 w-3 text-green-600" title="Real-time updates connected" />
@@ -310,14 +564,46 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
         </div>
         
         <div className="flex items-center gap-1">
+          {/* Port selector */}
+          {previewStatus.ports && previewStatus.ports.length > 1 && (
+            <Select 
+              value={selectedPort?.toString() || previewStatus.primaryPort?.toString()} 
+              onValueChange={(value) => switchPort(parseInt(value))}
+            >
+              <SelectTrigger className="h-8 w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {previewStatus.ports.map(port => {
+                  const service = previewStatus.services?.find(s => s.port === port);
+                  const isHealthy = previewStatus.healthChecks?.[port] !== false;
+                  
+                  return (
+                    <SelectItem key={port} value={port.toString()}>
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span>{port}</span>
+                        {service && (
+                          <span className="text-xs text-muted-foreground">
+                            {service.name}
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          )}
+          
           {/* Start/Stop button */}
-          {previewStatus !== 'running' ? (
+          {previewStatus.status !== 'running' ? (
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8"
               onClick={startPreview}
-              disabled={!projectId || previewStatus === 'starting'}
+              disabled={!projectId || previewStatus.status === 'starting'}
               title="Start preview"
             >
               <Play className="h-4 w-4" />
@@ -334,7 +620,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             </Button>
           )}
           
-          {/* Device selector - Replit style */}
+          {/* Device selector - Enhanced */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8" title="Device preview">
@@ -344,23 +630,31 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              <DropdownMenuLabel>Device Presets</DropdownMenuLabel>
+              <DropdownMenuSeparator />
               {Object.entries(DEVICE_PRESETS).map(([key, preset]) => (
                 <DropdownMenuItem
                   key={key}
-                  onClick={() => setDeviceMode(key as keyof typeof DEVICE_PRESETS)}
+                  onClick={() => handleDeviceChange(key as keyof typeof DEVICE_PRESETS)}
+                  className={deviceMode === key ? 'bg-accent' : ''}
                 >
-                  {preset.label}
-                  {preset.width !== '100%' && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {preset.width} × {preset.height}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {key === 'desktop' && <Monitor className="h-4 w-4" />}
+                    {key.includes('tablet') && <Tablet className="h-4 w-4" />}
+                    {key.includes('mobile') && <Smartphone className="h-4 w-4" />}
+                    <span>{preset.label}</span>
+                    {preset.width !== '100%' && (
+                      <span className="text-xs text-muted-foreground">
+                        {preset.width} × {preset.height}
+                      </span>
+                    )}
+                  </div>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
           
-          {/* Developer tools toggle - Like Replit */}
+          {/* Developer tools toggle */}
           <Button
             variant="ghost"
             size="icon"
@@ -369,6 +663,18 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             title="Developer tools (Eruda)"
           >
             <Bug className="h-4 w-4" />
+          </Button>
+          
+          {/* Copy URL button */}
+          <Button
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={copyPreviewUrl}
+            disabled={!previewUrl}
+            title="Copy preview URL"
+          >
+            <Copy className="h-4 w-4" />
           </Button>
           
           {/* Refresh button */}
@@ -423,18 +729,43 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Preview Server Offline</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              {previewStatus.status === 'error' ? 'Preview Error' : 'Preview Server Offline'}
+            </h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-md">
               {projectId 
-                ? "Click the play button to start the preview server. Your project will be served on a unique port."
+                ? previewStatus.status === 'error'
+                  ? "There was an error starting the preview server. Check your project files and try again."
+                  : "Click the play button to start the preview server. Your project will be served with auto-detected framework support."
                 : "Open a project to see the preview"
               }
             </p>
-            {previewLogs.length > 0 && (
-              <div className="mt-4 p-3 bg-muted rounded-md max-w-lg w-full text-left">
-                <p className="text-xs font-mono">
-                  {previewLogs.slice(-3).join('\n')}
-                </p>
+            
+            {/* Service status indicators */}
+            {previewStatus.services && previewStatus.services.length > 0 && (
+              <div className="mt-4 p-3 bg-muted rounded-md max-w-lg w-full">
+                <h4 className="text-sm font-medium mb-2">Available Services:</h4>
+                <div className="space-y-1">
+                  {previewStatus.services.map(service => (
+                    <div key={service.port} className="flex items-center gap-2 text-xs">
+                      <span className={`w-2 h-2 rounded-full ${
+                        previewStatus.healthChecks?.[service.port] !== false ? 'bg-green-500' : 'bg-red-500'
+                      }`} />
+                      <span>{service.name}</span>
+                      <span className="text-muted-foreground">:{service.port}</span>
+                      {service.description && (
+                        <span className="text-muted-foreground">- {service.description}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Framework detection info */}
+            {previewStatus.frameworkType && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                Detected: {previewStatus.frameworkType} project
               </div>
             )}
           </div>
