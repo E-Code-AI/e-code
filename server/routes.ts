@@ -42,6 +42,9 @@ import { notificationRoutes } from "./routes/notifications";
 import isolationRoutes from "./api/isolation";
 import { webImportService } from "./tools/web-import-service";
 import { screenshotService } from "./services/screenshot-service";
+import { webContentService } from "./services/web-content-service";
+import { featureFlagsService } from "./services/feature-flags-service";
+import webImportRoutes from "./routes/web-import";
 import polyglotRoutes from "./polyglot-routes";
 import { promptRefinementService } from "./services/prompt-refinement-service";
 import { agentProgressService } from "./services/agent-progress-service";
@@ -12428,7 +12431,10 @@ Generate a comprehensive application based on the user's request. Include all ne
   
   // Notification routes
   app.use(notificationRoutes);
-  
+
+  // Web import routes
+  app.use('/api/import', webImportRoutes);
+
   // Polyglot Backend Routes (TypeScript + Go + Python)
   app.use(polyglotRoutes);
   

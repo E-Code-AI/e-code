@@ -7,7 +7,8 @@ import {
   FileIcon, FolderIcon, Settings, User, LogOut, Home, Code, 
   Terminal, Package, GitBranch, Rocket, Search, Zap, Users,
   Book, MessageCircle, BarChart, Shield, Plus, Play, Save,
-  Copy, Clipboard, Trash2, Upload, Download, Eye, EyeOff
+  Copy, Clipboard, Trash2, Upload, Download, Eye, EyeOff,
+  Globe, Camera, FileText
 } from 'lucide-react';
 
 interface CommandItem {
@@ -133,6 +134,39 @@ export function CommandPalette() {
         setOpen(false);
       },
       group: 'Actions'
+    },
+    
+    // Import Actions
+    {
+      id: 'import-web-content',
+      label: 'Import from URL',
+      icon: <Globe className="h-4 w-4" />,
+      shortcut: '⌘⇧I',
+      action: () => {
+        window.dispatchEvent(new CustomEvent('open-web-import'));
+        setOpen(false);
+      },
+      group: 'Import'
+    },
+    {
+      id: 'import-screenshot',
+      label: 'Capture Screenshot',
+      icon: <Camera className="h-4 w-4" />,
+      action: () => {
+        window.dispatchEvent(new CustomEvent('capture-screenshot'));
+        setOpen(false);
+      },
+      group: 'Import'
+    },
+    {
+      id: 'import-text-only',
+      label: 'Extract Text Only',
+      icon: <FileText className="h-4 w-4" />,
+      action: () => {
+        window.dispatchEvent(new CustomEvent('extract-text-only'));
+        setOpen(false);
+      },
+      group: 'Import'
     },
     
     // Tools
