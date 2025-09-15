@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { FeatureFlagProvider } from "@/hooks/useFeatureFlags";
 
 // Lazy load all pages for better performance
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -659,10 +660,24 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <AppContent />
+          <FeatureFlagWrapper>
+            <AppContent />
+          </FeatureFlagWrapper>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
+  );
+}
+
+function FeatureFlagWrapper({ children }: { children: React.ReactNode }) {
+  // This would get user ID from auth context in a real implementation
+  // For now, we'll use undefined (guest mode)
+  const userId = undefined; // TODO: Get from auth context
+  
+  return (
+    <FeatureFlagProvider userId={userId}>
+      {children}
+    </FeatureFlagProvider>
   );
 }
 
