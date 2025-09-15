@@ -44,6 +44,7 @@ import { webImportService } from "./tools/web-import-service";
 import { screenshotService } from "./services/screenshot-service";
 import polyglotRoutes from "./polyglot-routes";
 import featureFlagRoutes from "./routes/feature-flags";
+import aiEnhancementRoutes from "./routes/ai-enhancements";
 import { promptRefinementService } from "./services/prompt-refinement-service";
 import { agentProgressService } from "./services/agent-progress-service";
 import { conversationManagementService } from "./services/conversation-management-service";
@@ -12435,6 +12436,9 @@ Generate a comprehensive application based on the user's request. Include all ne
   
   // Feature flags routes
   app.use("/api/feature-flags", featureFlagRoutes);
+  
+  // AI enhancement routes
+  app.use("/api/ai", aiEnhancementRoutes);
   
   // Isolation routes for container-like environments
   app.use(isolationRoutes);
