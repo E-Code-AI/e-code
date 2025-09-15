@@ -207,6 +207,8 @@ import { CheckpointService } from './services/checkpoint-service';
 import { figmaImportService } from './import/figma-import-service';
 import { boltImportService } from './import/bolt-import-service';
 import { lovableImportService } from './import/lovable-import-service';
+import { githubImportService } from './import/github-import-service';
+import { featureFlagService } from './services/feature-flag-service';
 
 const logger = createLogger('routes');
 const checkpointService = new CheckpointService();
@@ -5379,41 +5381,110 @@ module.exports = new Solution();`
     }
   });
 
-  // Import Routes for Figma, Bolt, and Lovable
+  // Enhanced Import Routes with Feature Flags
   // Figma Import
   app.post('/api/import/figma', ensureAuthenticated, async (req, res) => {
     try {
-      const { projectId, figmaUrl } = req.body;
+      // Check feature flag
+      if (!featureFlagService.isEnabled('import.figma')) {
+        return res.status(403).json({ 
+          error: 'Figma import is currently disabled',
+          code: 'FEATURE_DISABLED'
+        });
+      }
+
+      const { projectId, figmaUrl, figmaToken, exportImages, imageScale, componentsOnly } = req.body;
       
-      const importResult = await figmaImportService.importFromFigma({
+      const importResult = await figmaImportService.import({
         projectId,
         userId: req.user!.id,
-        figmaUrl
+        figmaUrl,
+        figmaToken,
+        exportImages,
+        imageScale,
+        componentsOnly
       });
       
       res.json({ success: true, import: importResult });
     } catch (error: any) {
       console.error('Figma import error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ 
+        error: error.message,
+        code: 'IMPORT_FAILED'
+      });
     }
   });
 
   // Bolt Import
   app.post('/api/import/bolt', ensureAuthenticated, async (req, res) => {
     try {
-      const { projectId, boltUrl, boltProjectData } = req.body;
+      // Check feature flag
+      if (!featureFlagService.isEnabled('import.bolt')) {
+        return res.status(403).json({ 
+          error: 'Bolt.new import is currently disabled',
+          code: 'FEATURE_DISABLED'
+        });
+      }
+
+      const { projectId, boltUrl, boltProjectData, zipFile } = req.body;
       
-      const importResult = await boltImportService.importFromBolt({
+      const importResult = await boltImportService.import({
         projectId,
         userId: req.user!.id,
         boltUrl,
-        boltProjectData
+        boltProjectData,
+        zipFile
       });
       
       res.json({ success: true, import: importResult });
     } catch (error: any) {
       console.error('Bolt import error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ 
+        error: error.message,
+        code: 'IMPORT_FAILED'
+      });
+    }
+  });
+
+  // Enhanced GitHub Import
+  app.post('/api/import/github', ensureAuthenticated, async (req, res) => {
+    try {
+      // Check feature flag
+      if (!featureFlagService.isEnabled('import.githubEnhanced')) {
+        return res.status(403).json({ 
+          error: 'Enhanced GitHub import is currently disabled',
+          code: 'FEATURE_DISABLED'
+        });
+      }
+
+      const { 
+        projectId, 
+        githubUrl, 
+        token, 
+        branch, 
+        subdirectory, 
+        includeHistory, 
+        handleLFS 
+      } = req.body;
+      
+      const importResult = await githubImportService.import({
+        projectId,
+        userId: req.user!.id,
+        githubUrl,
+        token,
+        branch,
+        subdirectory,
+        includeHistory,
+        handleLFS
+      });
+      
+      res.json({ success: true, import: importResult });
+    } catch (error: any) {
+      console.error('GitHub import error:', error);
+      res.status(500).json({ 
+        error: error.message,
+        code: 'IMPORT_FAILED'
+      });
     }
   });
 
@@ -5433,6 +5504,17 @@ module.exports = new Solution();`
     } catch (error: any) {
       console.error('Lovable import error:', error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get feature flags
+  app.get('/api/feature-flags', async (req, res) => {
+    try {
+      const flags = featureFlagService.getFlags();
+      res.json({ flags });
+    } catch (error: any) {
+      console.error('Feature flags error:', error);
+      res.status(500).json({ error: 'Failed to get feature flags' });
     }
   });
 
