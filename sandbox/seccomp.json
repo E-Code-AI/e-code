@@ -1,0 +1,194 @@
+{
+  "comment": "Conservative seccomp profile for code execution sandbox",
+  "defaultAction": "SCMP_ACT_ERRNO",
+  "archMap": [
+    {
+      "architecture": "SCMP_ARCH_X86_64",
+      "subArchitectures": [
+        "SCMP_ARCH_X86",
+        "SCMP_ARCH_X32"
+      ]
+    },
+    {
+      "architecture": "SCMP_ARCH_AARCH64",
+      "subArchitectures": []
+    }
+  ],
+  "syscalls": [
+    {
+      "comment": "Basic process management",
+      "names": [
+        "exit",
+        "exit_group",
+        "getpid",
+        "getppid",
+        "getuid",
+        "getgid",
+        "geteuid",
+        "getegid",
+        "getgroups",
+        "setgroups",
+        "wait4",
+        "waitpid"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    },
+    {
+      "comment": "Memory management",
+      "names": [
+        "brk",
+        "mmap",
+        "mmap2",
+        "munmap",
+        "mprotect",
+        "madvise",
+        "mlock",
+        "munlock"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    },
+    {
+      "comment": "File operations - limited to safe operations",
+      "names": [
+        "read",
+        "write",
+        "readv",
+        "writev",
+        "pread64",
+        "pwrite64",
+        "open",
+        "openat",
+        "close",
+        "stat",
+        "fstat",
+        "lstat",
+        "access",
+        "faccessat",
+        "fcntl",
+        "fcntl64",
+        "flock",
+        "lseek",
+        "llseek",
+        "_llseek",
+        "dup",
+        "dup2",
+        "dup3",
+        "pipe",
+        "pipe2"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    },
+    {
+      "comment": "Time and scheduling",
+      "names": [
+        "nanosleep",
+        "clock_gettime",
+        "gettimeofday",
+        "time",
+        "alarm",
+        "getitimer",
+        "setitimer",
+        "timer_create",
+        "timer_settime",
+        "timer_gettime",
+        "timer_delete"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    },
+    {
+      "comment": "Signal handling - limited",
+      "names": [
+        "rt_sigaction",
+        "rt_sigprocmask",
+        "rt_sigreturn",
+        "sigaltstack",
+        "rt_sigpending",
+        "rt_sigtimedwait",
+        "rt_sigqueueinfo"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    },
+    {
+      "comment": "Threading - basic support",
+      "names": [
+        "clone",
+        "futex",
+        "set_robust_list",
+        "get_robust_list",
+        "gettid"
+      ],
+      "action": "SCMP_ACT_ALLOW",
+      "args": [
+        {
+          "index": 0,
+          "value": 2080505856,
+          "valueTwo": 0,
+          "op": "SCMP_CMP_MASKED_EQ"
+        }
+      ]
+    },
+    {
+      "comment": "Network - very limited (may need expansion per language)",
+      "names": [
+        "socket",
+        "bind",
+        "connect",
+        "listen",
+        "accept",
+        "accept4",
+        "socketpair",
+        "shutdown",
+        "getsockname",
+        "getpeername",
+        "sendto",
+        "recvfrom",
+        "setsockopt",
+        "getsockopt"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    },
+    {
+      "comment": "Standard I/O and terminal",
+      "names": [
+        "ioctl",
+        "poll",
+        "ppoll",
+        "select",
+        "pselect6",
+        "epoll_create",
+        "epoll_create1",
+        "epoll_ctl",
+        "epoll_wait",
+        "epoll_pwait"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    },
+    {
+      "comment": "Process execution - controlled",
+      "names": [
+        "execve",
+        "execveat"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    },
+    {
+      "comment": "Architecture and capabilities queries",
+      "names": [
+        "uname",
+        "arch_prctl",
+        "prctl",
+        "capget",
+        "capset"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    }
+  ],
+  "comment_production": "IMPORTANT: This profile must be tuned per programming language and use case. Languages like Python, Node.js, Java may require additional syscalls. Test thoroughly before production use. Consider using tools like 'strace' to identify required syscalls for your specific runtime.",
+  "tuning_notes": {
+    "python": "May need additional syscalls: getrandom, openat2, statx",
+    "nodejs": "May need additional syscalls: eventfd2, inotify_init1, inotify_add_watch",
+    "java": "May need additional syscalls: prctl, set_tid_address, sched_getaffinity",
+    "go": "May need additional syscalls: sched_yield, clone with specific flags",
+    "general": "Monitor container logs for 'Operation not permitted' errors and add required syscalls carefully"
+  }
+}

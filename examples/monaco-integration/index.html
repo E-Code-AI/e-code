@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Code Monaco Editor Integration</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background-color: #2d2d30;
+            padding: 10px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #ffffff;
+        }
+
+        .language-select {
+            padding: 8px 12px;
+            background-color: #3c3c3c;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .run-button {
+            padding: 8px 16px;
+            background-color: #0e639c;
+            border: none;
+            border-radius: 4px;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .run-button:hover {
+            background-color: #1177bb;
+        }
+
+        .run-button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .output-container {
+            width: 400px;
+            background-color: #252526;
+            border-left: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-header {
+            padding: 10px;
+            background-color: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+            font-weight: bold;
+        }
+
+        .output-content {
+            flex: 1;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            background-color: #1e1e1e;
+        }
+
+        .loading {
+            color: #ffcc02;
+        }
+
+        .error {
+            color: #f14c4c;
+        }
+
+        .success {
+            color: #89d185;
+        }
+
+        .status-bar {
+            background-color: #007acc;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>E-Code Editor</h1>
+        <select class="language-select" id="languageSelect">
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+            <option value="java">Java</option>
+            <option value="go">Go</option>
+            <option value="bash">Bash</option>
+        </select>
+        <button class="run-button" id="runButton">Run Code</button>
+        <span id="status" class="status-bar" style="display: none;"></span>
+    </div>
+
+    <div class="main-content">
+        <div class="editor-container">
+            <div id="editor" style="height: 100%;"></div>
+        </div>
+        <div class="output-container">
+            <div class="output-header">Output</div>
+            <div class="output-content" id="output">Click "Run Code" to execute your program...</div>
+        </div>
+    </div>
+
+    <!-- Monaco Editor -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+    
+    <script>
+        // Configuration
+        const EXECUTOR_URL = 'http://localhost:8080';
+        const API_KEY = 'development-key-change-in-production'; // Change in production
+
+        // Language configurations
+        const languages = {
+            python: {
+                id: 'python',
+                defaultCode: `# Python Example
+print("Hello, World!")
+
+# Calculate factorial
+def factorial(n):
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
+
+print(f"Factorial of 5: {factorial(5)}")
+
+# List comprehension
+squares = [x**2 for x in range(1, 6)]
+print(f"Squares: {squares}")`,
+                monacoLanguage: 'python'
+            },
+            javascript: {
+                id: 'javascript',
+                defaultCode: `// JavaScript Example
+console.log("Hello, World!");
+
+// Arrow function
+const factorial = (n) => {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+};
+
+console.log(\`Factorial of 5: \${factorial(5)}\`);
+
+// Array methods
+const numbers = [1, 2, 3, 4, 5];
+const squares = numbers.map(x => x * x);
+console.log(\`Squares: \${squares}\`);`,
+                monacoLanguage: 'javascript'
+            },
+            java: {
+                id: 'java',
+                defaultCode: `// Java Example
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+        
+        // Calculate factorial
+        int result = factorial(5);
+        System.out.println("Factorial of 5: " + result);
+        
+        // Array operations
+        int[] numbers = {1, 2, 3, 4, 5};
+        System.out.print("Squares: ");
+        for (int num : numbers) {
+            System.out.print(num * num + " ");
+        }
+        System.out.println();
+    }
+    
+    public static int factorial(int n) {
+        if (n <= 1) return 1;
+        return n * factorial(n - 1);
+    }
+}`,
+                monacoLanguage: 'java'
+            },
+            go: {
+                id: 'go',
+                defaultCode: `// Go Example
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, World!")
+    
+    // Calculate factorial
+    result := factorial(5)
+    fmt.Printf("Factorial of 5: %d\\n", result)
+    
+    // Slice operations
+    numbers := []int{1, 2, 3, 4, 5}
+    fmt.Print("Squares: ")
+    for _, num := range numbers {
+        fmt.Printf("%d ", num*num)
+    }
+    fmt.Println()
+}
+
+func factorial(n int) int {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n-1)
+}`,
+                monacoLanguage: 'go'
+            },
+            bash: {
+                id: 'bash',
+                defaultCode: `#!/bin/bash
+# Bash Example
+echo "Hello, World!"
+
+# Function to calculate factorial
+factorial() {
+    local n=$1
+    if [ $n -le 1 ]; then
+        echo 1
+    else
+        local prev=$(factorial $((n-1)))
+        echo $((n * prev))
+    fi
+}
+
+result=$(factorial 5)
+echo "Factorial of 5: $result"
+
+# Array operations
+numbers=(1 2 3 4 5)
+echo -n "Squares: "
+for num in "\${numbers[@]}"; do
+    echo -n "$((num * num)) "
+done
+echo`,
+                monacoLanguage: 'shell'
+            }
+        };
+
+        let editor;
+        let currentLanguage = 'python';
+
+        // Initialize Monaco Editor
+        require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: languages[currentLanguage].defaultCode,
+                language: languages[currentLanguage].monacoLanguage,
+                theme: 'vs-dark',
+                fontSize: 14,
+                minimap: { enabled: true },
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                tabSize: 4,
+                insertSpaces: true,
+                wordWrap: 'on'
+            });
+
+            // Enable common keyboard shortcuts
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
+                // Save functionality (customize as needed)
+                console.log('Save triggered');
+            });
+
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function() {
+                runCode();
+            });
+        });
+
+        // Language selection handler
+        document.getElementById('languageSelect').addEventListener('change', function(e) {
+            currentLanguage = e.target.value;
+            const langConfig = languages[currentLanguage];
+            
+            if (editor) {
+                monaco.editor.setModelLanguage(editor.getModel(), langConfig.monacoLanguage);
+                editor.setValue(langConfig.defaultCode);
+            }
+        });
+
+        // Run button handler
+        document.getElementById('runButton').addEventListener('click', runCode);
+
+        // Execute code function
+        async function runCode() {
+            const code = editor.getValue();
+            const outputElement = document.getElementById('output');
+            const runButton = document.getElementById('runButton');
+            const statusElement = document.getElementById('status');
+
+            // Show loading state
+            runButton.disabled = true;
+            runButton.textContent = 'Running...';
+            outputElement.innerHTML = '<span class="loading">Executing code...</span>';
+            statusElement.style.display = 'inline';
+            statusElement.textContent = 'Running';
+
+            try {
+                const response = await fetch(\`\${EXECUTOR_URL}/execute\`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': API_KEY
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        language: currentLanguage,
+                        timeout: 30
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(\`HTTP \${response.status}: \${response.statusText}\`);
+                }
+
+                const result = await response.json();
+
+                // Display results
+                let output = '';
+                if (result.success) {
+                    output = \`<span class="success">✓ Execution completed successfully (Exit code: \${result.exit_code}, Time: \${result.execution_time_ms}ms)</span>\\n\\n\`;
+                    if (result.stdout) {
+                        output += \`<strong>Output:</strong>\\n\${result.stdout}\`;
+                    }
+                    if (result.stderr) {
+                        output += \`\\n<strong>Errors:</strong>\\n\${result.stderr}\`;
+                    }
+                } else {
+                    output = \`<span class="error">✗ Execution failed (Exit code: \${result.exit_code})</span>\\n\\n\`;
+                    if (result.error) {
+                        output += \`<strong>Error:</strong>\\n\${result.error}\\n\\n\`;
+                    }
+                    if (result.stderr) {
+                        output += \`<strong>Error Output:</strong>\\n\${result.stderr}\\n\\n\`;
+                    }
+                    if (result.stdout) {
+                        output += \`<strong>Output:</strong>\\n\${result.stdout}\`;
+                    }
+                }
+
+                outputElement.innerHTML = output || 'No output generated.';
+                statusElement.textContent = result.success ? 'Success' : 'Error';
+
+            } catch (error) {
+                outputElement.innerHTML = \`<span class="error">Connection Error: \${error.message}</span>\\n\\nMake sure the executor service is running on \${EXECUTOR_URL}\`;
+                statusElement.textContent = 'Error';
+                console.error('Execution error:', error);
+            } finally {
+                runButton.disabled = false;
+                runButton.textContent = 'Run Code';
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Handle page visibility for better performance
+        document.addEventListener('visibilitychange', function() {
+            if (editor) {
+                if (document.hidden) {
+                    editor.getModel().dispose();
+                } else {
+                    // Recreate model if needed
+                    if (!editor.getModel()) {
+                        const langConfig = languages[currentLanguage];
+                        const model = monaco.editor.createModel(
+                            langConfig.defaultCode,
+                            langConfig.monacoLanguage
+                        );
+                        editor.setModel(model);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
