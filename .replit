@@ -1,5 +1,5 @@
-modules = ["nodejs-20", "web", "postgresql-16", "python-3.11"]
-run = "npm run dev"
+modules = ["nodejs-20", "web", "postgresql-16", "python-3.11", "go-1.21"]
+run = "./run-replit.sh"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
@@ -59,7 +59,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "./run-replit.sh"
 waitForPort = 5000
 
 [agent]
