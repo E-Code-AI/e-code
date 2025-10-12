@@ -48,46 +48,28 @@ http://localhost:[port]
 http://127.0.0.1:[port]
 ```
 
-For team sharing in development:
+### Production Environment (Replit Deploy)
+
+**Important**: Replit Deploy uses a **single external port** architecture. Preview URLs use **path-based routing** instead of wildcard subdomains.
+
+#### Preview URL Scheme
+Previews are accessed via path-based routing on the main domain:
 ```
-http://{project}-{user}.preview.localhost:[port]
+https://e-code.ai/preview/:projectId/:port/
 ```
 
-### Production Environment
-In production, previews are available at:
+Examples:
+- Frontend (port 3000): `https://e-code.ai/preview/123/3000/`
+- API (port 8000): `https://e-code.ai/preview/123/8000/`
+- WebSocket: `wss://e-code.ai/ws/preview/123/3000/`
+
+#### WebSocket Preview Access
+WebSocket connections for previews use the `/ws/preview/` path:
 ```
-https://{project}-{user}.preview.e-code.com
+wss://e-code.ai/ws/preview/:projectId/:port/
 ```
 
-#### TLS Configuration
-Production previews require wildcard SSL certificates:
-
-1. **Obtain Wildcard Certificate**:
-   ```bash
-   # Using Let's Encrypt with DNS challenge
-   certbot certonly --dns-cloudflare \
-     --dns-cloudflare-credentials ~/.secrets/cloudflare.ini \
-     -d "*.preview.e-code.com"
-   ```
-
-2. **Configure Reverse Proxy**:
-   ```nginx
-   server {
-       listen 443 ssl;
-       server_name *.preview.e-code.com;
-       
-       ssl_certificate /path/to/wildcard.crt;
-       ssl_certificate_key /path/to/wildcard.key;
-       
-       location / {
-           proxy_pass http://preview-backend;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-           proxy_set_header X-Forwarded-Proto $scheme;
-       }
-   }
-   ```
+This allows real-time communication with preview instances running on different ports.
 
 ## API Reference
 
@@ -163,20 +145,10 @@ The preview system uses WebSocket for real-time updates:
 ## Security
 
 ### Preview Isolation
-- Each preview runs in an isolated container
+- Each preview runs in an isolated process
 - No cross-project access
 - Scoped environment variables
 - Resource limits enforced
-
-### Cookie Scoping
-Cookies are properly scoped to prevent conflicts:
-```javascript
-// Development
-domain: ".preview.localhost"
-
-// Production  
-domain: ".preview.e-code.com"
-```
 
 ### Access Control
 - **Public Projects**: Anyone can view previews
@@ -199,11 +171,11 @@ domain: ".preview.e-code.com"
 3. **Port Configuration**: Ensure your application listens on the correct port
 4. **CORS Issues**: Add appropriate CORS headers for cross-origin requests
 
-#### SSL/TLS Issues (Production)
-1. **Certificate Validity**: Ensure wildcard certificate covers *.preview.e-code.com
-2. **Certificate Chain**: Include intermediate certificates
-3. **DNS Configuration**: Verify DNS records point to correct load balancer
-4. **Firewall Rules**: Ensure port 443 is open
+#### SSL/TLS Issues (Replit Production)
+1. **HTTPS Required**: Replit automatically provides SSL/TLS for deployed apps
+2. **WebSocket Secure**: Use `wss://` protocol for WebSocket connections
+3. **Mixed Content**: Ensure all preview resources use HTTPS
+4. **Certificate Trust**: Replit-provided certificates are trusted by all browsers
 
 ### Debug Commands
 
@@ -212,11 +184,20 @@ domain: ".preview.e-code.com"
 # Development
 curl http://localhost:3000/api/projects/123/preview/status
 
-# Production
-curl https://project-user.preview.e-code.com/health
+# Production (Replit)
+curl https://e-code.ai/api/projects/123/preview/status
 ```
 
-#### Test Port Connectivity
+#### Test Preview URL Access
+```bash
+# Test specific preview port
+curl https://e-code.ai/preview/123/3000/
+
+# Test WebSocket preview connection
+wscat -c wss://e-code.ai/ws/preview/123/3000/
+```
+
+#### Test Port Connectivity (Development)
 ```bash
 # Test specific port
 nc -zv localhost 3000
@@ -230,7 +211,7 @@ done
 #### Monitor WebSocket Connection
 ```javascript
 // In browser console
-const ws = new WebSocket('ws://localhost:3000/ws/preview');
+const ws = new WebSocket('wss://e-code.ai/ws/preview/123/3000/');
 ws.onmessage = (event) => console.log('WS:', JSON.parse(event.data));
 ```
 

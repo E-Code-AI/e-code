@@ -102,7 +102,7 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 ### Technology Stack
 - **Frontend**: React.js with TypeScript, Tailwind CSS, shadcn/ui
 - **Backend**: Express.js with TypeScript, Drizzle ORM
-- **Deployment**: Cloud Run ready with Nix package management
+- **Deployment**: Cloud Run and Replit Deploy with Nix package management
 
 ### UI/UX Decisions
 - Focus on core functionalities with a streamlined user interface.
@@ -113,12 +113,76 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 - **Routing**: Robust Replit-style slug routing for projects (`/@username/projectslug`) with full authentication and access control.
 - **Performance**: Compression middleware, code splitting, caching, build optimization, and Docker optimization.
 - **Security**: Replaced unsafe `eval()` usage, CSP headers, and input validation.
-- **Deployment**: Dynamic port configuration for Cloud Run compatibility.
+- **Deployment**: Dynamic port configuration for Cloud Run and Replit Deploy compatibility.
 - **Frontend Functionality**: Prioritizing frontend implementation where possible.
+
+## Replit Deployment
+
+### Production URLs
+E-Code is deployed on Replit with multiple access points:
+- **Development**: https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev
+- **Published**: https://replit-clone-henri45.replit.app
+- **Custom Domain**: https://e-code.ai
+
+### Single-Port Architecture
+
+Replit Deploy exposes a **single external port** (80/443). All preview URLs use **path-based routing**:
+- HTTP Preview: `/preview/:projectId/:port/`
+- WebSocket Preview: `/ws/preview/:projectId/:port/`
+
+Example preview URLs:
+- Frontend: `https://e-code.ai/preview/123/3000/`
+- Backend API: `https://e-code.ai/preview/123/8000/`
+- WebSocket: `wss://e-code.ai/ws/preview/123/3000/`
+
+**Note**: Replit does **not** support wildcard subdomains. All previews are accessed through the main domain.
+
+### Required Environment Variables
+
+Set these in Replit Secrets:
+
+**Core**:
+- `NODE_ENV=production`
+- `PORT=5000`
+- `SESSION_SECRET` (32+ character random string)
+- `DATABASE_URL` (auto-configured by Replit PostgreSQL)
+
+**CORS** (Critical):
+```
+ALLOWED_ORIGINS=https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev,https://replit-clone-henri45.replit.app,https://e-code.ai
+```
+
+**AI Integration**:
+- `ANTHROPIC_API_KEY` (for Claude Sonnet)
+
+**MCP**:
+- `MCP_API_KEY`
+- `MCP_JWT_SECRET` (32+ character random string)
+- `MCP_OAUTH_SECRET` (32+ character random string)
+
+**Payments** (Optional):
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET` (from Stripe webhook endpoint)
+- `STRIPE_PUBLISHABLE_KEY`
+
+### Stripe Webhook Configuration
+
+1. Go to Stripe Dashboard → Webhooks
+2. Add endpoint: `https://e-code.ai/api/stripe/webhook`
+3. Select events: `customer.subscription.*`, `invoice.payment_*`
+4. Copy signing secret to `STRIPE_WEBHOOK_SECRET`
+
+### Deployment Configuration
+
+The `.replit` file configures:
+- **Type**: Autoscale
+- **Build**: `npm run build`
+- **Start**: `npm run start`
+- **Port**: 5000 → 80/443 (external)
 
 ## External Dependencies
 - **AI Integration**: Anthropic Claude API (Claude 3.5 Sonnet, Claude 4 Sonnet), OpenAI API (GPT-4o, GPT-4o-mini, o1-preview, o1-mini), Together AI, Replicate, Hugging Face, Groq, Anyscale.
-- **Deployment Platform**: Google Cloud Run
+- **Deployment Platform**: Google Cloud Run, Replit Deploy
 - **Authentication**: Passport.js (for GitHub, Google, GitLab, Bitbucket, Discord, Slack, Azure AD)
 - **Real-time Communication**: WebSockets
 - **Database**: PostgreSQL
@@ -130,4 +194,3 @@ E-Code Platform is an advanced AI-powered development platform that streamlines 
 - **Containerization**: Docker
 - **Caching**: Redis/ioredis
 - **CDNs**: Cloudflare, CloudFront, Fastly
-```
