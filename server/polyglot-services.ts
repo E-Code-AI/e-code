@@ -3,6 +3,10 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import WebSocket from 'ws';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import { createLogger } from './utils/logger';
+
+const logger = createLogger('polyglot-services');
 
 // Go Runtime Service (Port 8080) - Container orchestration, file operations, WebSocket
 export function startGoRuntimeService() {
@@ -193,4 +197,41 @@ export function initializePolyglotServices() {
     console.error('[POLYGLOT] Failed to initialize services:', error);
     return null;
   }
+}
+
+// Setup proxy routes for polyglot services on main Express server
+// This allows access through the main port instead of separate ports
+export function setupPolyglotProxyRoutes(app: express.Application) {
+  logger.info('Setting up polyglot service proxy routes on main server');
+  
+  // Proxy Go Runtime Service routes through main server
+  app.use('/polyglot/go', createProxyMiddleware({
+    target: 'http://127.0.0.1:8080',
+    changeOrigin: true,
+    ws: true, // Enable WebSocket proxying for Go runtime
+    pathRewrite: {
+      '^/polyglot/go': ''
+    },
+    onError: (err: any, req: any, res: any) => {
+      logger.error('Go runtime proxy error:', err);
+      res.status(502).json({ error: 'Go runtime service unavailable' });
+    }
+  }));
+  
+  // Proxy Python ML Service routes through main server
+  app.use('/polyglot/python', createProxyMiddleware({
+    target: 'http://127.0.0.1:8081',
+    changeOrigin: true,
+    pathRewrite: {
+      '^/polyglot/python': ''
+    },
+    onError: (err: any, req: any, res: any) => {
+      logger.error('Python ML service proxy error:', err);
+      res.status(502).json({ error: 'Python ML service unavailable' });
+    }
+  }));
+  
+  logger.info('✅ Polyglot proxy routes registered on main server');
+  logger.info('  - Go Runtime: /polyglot/go/* -> http://127.0.0.1:8080/*');
+  logger.info('  - Python ML: /polyglot/python/* -> http://127.0.0.1:8081/*');
 }
