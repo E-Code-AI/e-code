@@ -743,6 +743,8 @@ What would you like me to build for you today?`,
   const [extendedThinking, setExtendedThinking] = useState(false);
   const [highPowerMode, setHighPowerMode] = useState(false);
   const [autoCheckpoints, setAutoCheckpoints] = useState(true);
+  const [featureFlags, setFeatureFlags] = useState<any>(null);
+  const [userPreferences, setUserPreferences] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'chat' | 'progress'>('chat');
   const [progressLogs, setProgressLogs] = useState<Array<{
     id: string;
@@ -766,6 +768,49 @@ What would you like me to build for you today?`,
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load feature flags and user preferences
+  useEffect(() => {
+    const loadFeatureFlagsAndPreferences = async () => {
+      try {
+        // Load feature flags
+        const flagsResponse = await fetch('/api/feature-flags');
+        if (flagsResponse.ok) {
+          const flags = await flagsResponse.json();
+          setFeatureFlags(flags);
+        }
+
+        // Load user AI preferences
+        const prefsResponse = await fetch('/api/user/ai-preferences');
+        if (prefsResponse.ok) {
+          const prefs = await prefsResponse.json();
+          setUserPreferences(prefs);
+          
+          // Set toggle states from preferences
+          setExtendedThinking(prefs.extendedThinking || false);
+          setHighPowerMode(prefs.highPowerMode || false);
+          setAutoCheckpoints(prefs.autoCheckpoints ?? true);
+        }
+      } catch (error) {
+        console.error('Error loading feature flags or preferences:', error);
+      }
+    };
+
+    loadFeatureFlagsAndPreferences();
+  }, []);
+
+  // Save preferences when toggle states change
+  const savePreferences = async (updates: any) => {
+    try {
+      await fetch('/api/user/ai-preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+    }
+  };
 
   // Initialize default session
   useEffect(() => {
@@ -1500,33 +1545,46 @@ What would you like me to build?`,
         <div className="flex items-center gap-2">
           {/* Advanced Capabilities */}
           <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="extended-thinking"
-                checked={extendedThinking}
-                onCheckedChange={setExtendedThinking}
-              />
-              <Label htmlFor="extended-thinking" className="cursor-pointer">
-                <Brain className="h-3 w-3 inline mr-1" />
-                Extended Thinking
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="high-power"
-                checked={highPowerMode}
-                onCheckedChange={setHighPowerMode}
-              />
-              <Label htmlFor="high-power" className="cursor-pointer">
-                <Power className="h-3 w-3 inline mr-1" />
-                High Power
-              </Label>
-            </div>
+            {featureFlags?.aiUx?.extendedThinking !== false && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="extended-thinking"
+                  checked={extendedThinking}
+                  onCheckedChange={(checked) => {
+                    setExtendedThinking(checked);
+                    savePreferences({ extendedThinking: checked });
+                  }}
+                />
+                <Label htmlFor="extended-thinking" className="cursor-pointer">
+                  <Brain className="h-3 w-3 inline mr-1" />
+                  Extended Thinking
+                </Label>
+              </div>
+            )}
+            {featureFlags?.aiUx?.highPowerMode !== false && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="high-power"
+                  checked={highPowerMode}
+                  onCheckedChange={(checked) => {
+                    setHighPowerMode(checked);
+                    savePreferences({ highPowerMode: checked });
+                  }}
+                />
+                <Label htmlFor="high-power" className="cursor-pointer">
+                  <Power className="h-3 w-3 inline mr-1" />
+                  High Power
+                </Label>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Switch
                 id="auto-checkpoints"
                 checked={autoCheckpoints}
-                onCheckedChange={setAutoCheckpoints}
+                onCheckedChange={(checked) => {
+                  setAutoCheckpoints(checked);
+                  savePreferences({ autoCheckpoints: checked });
+                }}
               />
               <Label htmlFor="auto-checkpoints" className="cursor-pointer">
                 <History className="h-3 w-3 inline mr-1" />
@@ -1536,7 +1594,7 @@ What would you like me to build?`,
           </div>
           
           {/* Pause/Resume Button */}
-          {isBuilding && (
+          {isBuilding && featureFlags?.aiUx?.pauseResume !== false && (
             <Button
               variant="ghost"
               size="sm"
@@ -1578,7 +1636,9 @@ What would you like me to build?`,
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'chat' | 'progress')} className="flex-1 flex flex-col">
         <TabsList className="w-full rounded-none border-b">
           <TabsTrigger value="chat" className="flex-1">Chat</TabsTrigger>
-          <TabsTrigger value="progress" className="flex-1">Progress</TabsTrigger>
+          {featureFlags?.aiUx?.progressTab !== false && (
+            <TabsTrigger value="progress" className="flex-1">Progress</TabsTrigger>
+          )}
         </TabsList>
         
         <TabsContent value="chat" className="flex-1 m-0">
@@ -1631,58 +1691,60 @@ What would you like me to build?`,
       </TabsContent>
       
       {/* Progress Tab */}
-      <TabsContent value="progress" className="flex-1 m-0">
-        <ScrollArea className="h-full">
-          <div className="p-4">
-            {progressLogs.length === 0 ? (
-              <div className="text-center text-[var(--ecode-text-secondary)] py-8">
-                <FileTerminal className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No progress logs yet</p>
-                <p className="text-xs mt-2">Actions will appear here as the agent works</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {progressLogs.map(log => (
-                  <div key={log.id} className="flex items-start gap-2 text-sm">
-                    <div className={cn(
-                      "mt-1 h-2 w-2 rounded-full",
-                      log.type === 'info' && "bg-blue-500",
-                      log.type === 'success' && "bg-green-500",
-                      log.type === 'warning' && "bg-yellow-500",
-                      log.type === 'error' && "bg-red-500"
-                    )} />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[var(--ecode-text)]">{log.message}</span>
-                        {log.file && (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="h-auto p-0 text-xs"
-                            onClick={() => {
-                              // Navigate to file
-                              if (selectedFile !== log.file) {
-                                // This would trigger file selection in the parent component
-                                toast({ title: `Opening ${log.file}` });
-                              }
-                            }}
-                          >
-                            <ChevronRight className="h-3 w-3" />
-                            {log.file}
-                          </Button>
-                        )}
+      {featureFlags?.aiUx?.progressTab !== false && (
+        <TabsContent value="progress" className="flex-1 m-0">
+          <ScrollArea className="h-full">
+            <div className="p-4">
+              {progressLogs.length === 0 ? (
+                <div className="text-center text-[var(--ecode-text-secondary)] py-8">
+                  <FileTerminal className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No progress logs yet</p>
+                  <p className="text-xs mt-2">Actions will appear here as the agent works</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {progressLogs.map(log => (
+                    <div key={log.id} className="flex items-start gap-2 text-sm">
+                      <div className={cn(
+                        "mt-1 h-2 w-2 rounded-full",
+                        log.type === 'info' && "bg-blue-500",
+                        log.type === 'success' && "bg-green-500",
+                        log.type === 'warning' && "bg-yellow-500",
+                        log.type === 'error' && "bg-red-500"
+                      )} />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[var(--ecode-text)]">{log.message}</span>
+                          {log.file && (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-xs"
+                              onClick={() => {
+                                // Navigate to file
+                                if (selectedFile !== log.file) {
+                                  // This would trigger file selection in the parent component
+                                  toast({ title: `Opening ${log.file}` });
+                                }
+                              }}
+                            >
+                              <ChevronRight className="h-3 w-3" />
+                              {log.file}
+                            </Button>
+                          )}
+                        </div>
+                        <span className="text-xs text-[var(--ecode-text-tertiary)]">
+                          {log.timestamp.toLocaleTimeString()}
+                        </span>
                       </div>
-                      <span className="text-xs text-[var(--ecode-text-tertiary)]">
-                        {log.timestamp.toLocaleTimeString()}
-                      </span>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-      </TabsContent>
+                  ))}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+      )}
     </Tabs>
 
     {/* Enhanced Input area */}
@@ -1750,22 +1812,24 @@ What would you like me to build?`,
           </Tooltip>
         </TooltipProvider>
         
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleImprovePrompt}
-                disabled={isLoading || !input.trim()}
-              >
-                <Sparkles className="h-3 w-3 mr-1" />
-                Improve Prompt
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>AI-enhance your prompt for better results</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {featureFlags?.aiUx?.improvePrompt !== false && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleImprovePrompt}
+                  disabled={isLoading || !input.trim()}
+                >
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Improve Prompt
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>AI-enhance your prompt for better results</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
       
       <div className="relative">
