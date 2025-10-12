@@ -600,6 +600,11 @@ export const dynamicIntelligence = pgTable('dynamic_intelligence', {
   autoWebSearch: boolean('auto_web_search').default(true),
   preferredModel: varchar('preferred_model').default('claude-3-sonnet'),
   customInstructions: text('custom_instructions'),
+  // AI UX Feature preferences  
+  improvePromptEnabled: boolean('improve_prompt_enabled').default(false),
+  progressTabEnabled: boolean('progress_tab_enabled').default(false),
+  pauseResumeEnabled: boolean('pause_resume_enabled').default(false),
+  autoCheckpoints: boolean('auto_checkpoints').default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
