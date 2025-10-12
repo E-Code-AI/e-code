@@ -4,16 +4,22 @@
 **Platform**: E-Code Platform  
 **Target Domain**: https://e-code.ai  
 **Deployment Type**: Autoscale (supports custom domains)  
+**Architecture**: Single-Port (production-hardened)  
 **Status**: Ready for deployment
+
+> **📖 Documentation**: See [REPLIT_SINGLE_PORT_ARCHITECTURE.md](./REPLIT_SINGLE_PORT_ARCHITECTURE.md) for detailed architecture information.
 
 ## ✅ Pre-Deployment Checklist
 - ✅ Build scripts configured (`npm run build`)
 - ✅ Start scripts configured (`npm run start`)
 - ✅ Deployment type set to `autoscale` in .replit
-- ✅ Port configuration (5000 → 80)
+- ✅ Single-port configuration (5000 → 80)
 - ✅ Database configured (PostgreSQL)
 - ✅ MCP server integrated and ready
 - ✅ All core features functional
+- ✅ Preview services proxied through main port
+- ✅ Polyglot services proxied through main port
+- ✅ WebSocket support enabled
 
 ## 📋 Deployment Configuration
 ```
@@ -21,6 +27,13 @@ Type: Autoscale
 Build Command: npm run build
 Start Command: npm run start
 Primary Port: 5000 → 80
+Architecture: Single-Port with Reverse Proxy
+
+Service Routing:
+- Main App: /
+- Preview: /preview/:projectId/:port/*
+- Go Runtime: /polyglot/go/*
+- Python ML: /polyglot/python/*
 ```
 
 ## 🌐 Custom Domain Setup

@@ -33,18 +33,16 @@ interface PreviewInstance {
 export class PreviewService {
   private previews: Map<number, PreviewInstance> = new Map();
   private basePort = 8000;
-  private app: express.Application;
   private healthCheckInterval: NodeJS.Timeout;
 
   constructor() {
-    this.app = express();
-    this.setupRoutes();
     this.startHealthChecks();
   }
 
-  private setupRoutes() {
+  // Register preview routes on the main Express app
+  registerRoutes(app: express.Application) {
     // Multi-port proxy requests to preview instances
-    this.app.use('/:projectId/:port/*', async (req, res, next) => {
+    app.use('/preview/:projectId/:port/*', async (req, res, next) => {
       const projectId = parseInt(req.params.projectId);
       const port = parseInt(req.params.port);
       const preview = this.previews.get(projectId);
@@ -65,10 +63,11 @@ export class PreviewService {
       
       // Proxy to the specific port
       const proxy = createProxyMiddleware({
-        target: `http://localhost:${port}`,
+        target: `http://127.0.0.1:${port}`,
         changeOrigin: true,
+        ws: true, // Enable WebSocket proxying
         pathRewrite: {
-          [`^/${projectId}/${port}`]: ''
+          [`^/preview/${projectId}/${port}`]: ''
         },
         onError: (err: any, req: any, res: any) => {
           logger.error(`Preview proxy error for project ${projectId} port ${port}:`, err);
@@ -80,7 +79,7 @@ export class PreviewService {
     });
 
     // Default port proxy (backwards compatibility)
-    this.app.use('/:projectId/*', async (req, res, next) => {
+    app.use('/preview/:projectId/*', async (req, res, next) => {
       const projectId = parseInt(req.params.projectId);
       const preview = this.previews.get(projectId);
       
@@ -90,10 +89,11 @@ export class PreviewService {
       
       // Proxy to primary port
       const proxy = createProxyMiddleware({
-        target: `http://localhost:${preview.primaryPort}`,
+        target: `http://127.0.0.1:${preview.primaryPort}`,
         changeOrigin: true,
+        ws: true, // Enable WebSocket proxying
         pathRewrite: {
-          [`^/${projectId}`]: ''
+          [`^/preview/${projectId}`]: ''
         },
         onError: (err: any, req: any, res: any) => {
           logger.error(`Preview proxy error for project ${projectId}:`, err);
@@ -540,21 +540,10 @@ export class PreviewService {
 
 export const previewService = new PreviewService();
 
-// Start preview server on port 3100
-export function startPreviewServer() {
-  const PORT = 3100;
-  const previewApp = express();
-  
-  // In development, proxy everything to the main Vite server on port 5000
-  previewApp.use('/', createProxyMiddleware({
-    target: 'http://localhost:5000',
-    changeOrigin: true,
-    ws: true // Enable WebSocket proxying for Vite HMR
-  }));
-  
-  previewApp.listen(PORT, () => {
-    logger.info(`Preview server running on port ${PORT} - proxying to main server on port 5000`);
-  });
+// Register preview routes on the main Express server
+export function setupPreviewRoutes(app: express.Application) {
+  logger.info('Setting up preview routes on main server');
+  previewService.registerRoutes(app);
 }
 
 // Cleanup on process exit

@@ -4,7 +4,6 @@ import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db-init";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import cors from "cors";
-import { initializePolyglotServices } from "./polyglot-services";
 import compressionMiddleware from "./middleware/compression";
 import { securityMiddleware, sanitizeInput, securityMonitoring, ipSecurity } from "./middleware/security";
 import { rateLimiters, logRateLimitViolations, dynamicRateLimiter } from "./middleware/rate-limiter";
@@ -134,20 +133,24 @@ app.use((req, res, next) => {
       // Initialize Polyglot Services - Replit's multi-language backend architecture
       setTimeout(async () => {
         try {
+          const { initializePolyglotServices, setupPolyglotProxyRoutes } = await import("./polyglot-services");
+          // Start the actual services on their internal ports
           initializePolyglotServices();
+          // Setup proxy routes so they can be accessed through main port
+          setupPolyglotProxyRoutes(app);
         } catch (polyglotError) {
           console.warn("Warning: Polyglot services failed to start:", polyglotError);
         }
       }, 500); // Start polyglot services quickly
       
-      // Start the preview server (optional service) - delayed to not block startup
+      // Setup preview routes on main server (instead of separate server)
       setTimeout(async () => {
         try {
-          const { startPreviewServer } = await import("./preview/preview-service");
-          startPreviewServer();
-          console.log("Preview server started on port 3100");
+          const { setupPreviewRoutes } = await import("./preview/preview-service");
+          setupPreviewRoutes(app);
+          console.log("Preview routes registered on main server");
         } catch (previewError) {
-          console.warn("Warning: Preview server failed to start:", previewError);
+          console.warn("Warning: Preview routes failed to register:", previewError);
         }
       }, 1000); // 1 second delay to ensure main server is fully ready
       
