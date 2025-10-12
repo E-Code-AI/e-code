@@ -81,6 +81,14 @@ Before deploying, ensure these are set in Replit Secrets:
 ### AI Integration
 - `ANTHROPIC_API_KEY` - For AI agent functionality (Claude Sonnet)
 
+### Optional AI UX features
+These features are disabled by default for conservative rollout. To enable any of these features, set the corresponding `FEATURE_AI_UX_*` variable to `true` in Replit Secrets:
+- `FEATURE_AI_UX_IMPROVE_PROMPT` - AI-powered prompt refinement button
+- `FEATURE_AI_UX_EXTENDED_THINKING` - Deeper AI reasoning mode toggle
+- `FEATURE_AI_UX_HIGH_POWER_MODE` - High-power AI processing toggle
+- `FEATURE_AI_UX_PROGRESS_TAB` - Progress tracking tab in UI
+- `FEATURE_AI_UX_PAUSE_RESUME` - Pause/resume functionality for AI tasks
+
 ### MCP Server
 - `MCP_API_KEY` - For MCP authentication
 - `MCP_JWT_SECRET` - For JWT token signing (minimum 32 characters)
