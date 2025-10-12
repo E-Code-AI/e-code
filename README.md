@@ -59,12 +59,29 @@ NODE_ENV=production npm start
 
 ## 🏗️ Architecture
 
-- **Main Server**: Express.js + React (Port 5000)
-- **Preview Server**: Live preview system (Port 3100)
-- **MCP Server**: AI tools and automation (Port 3200)
+### Single-Port Production Architecture (Replit Deploy Ready)
+
+The platform uses a **single-port architecture** optimized for Replit Deploy:
+
+- **Main Server**: Express.js + React (Port 5000 → External Port 80)
+  - All services accessible through path-based routing
+  - WebSocket support for real-time features
+  
+**Internal Services** (localhost only):
 - **Go Runtime**: Container & file operations (Port 8080)
+  - Proxied through `/polyglot/go/*`
 - **Python ML**: AI/ML processing (Port 8081)
-- **Database**: PostgreSQL with connection pooling
+  - Proxied through `/polyglot/python/*`
+- **Preview Services**: Live preview system (Ports 8000+)
+  - Proxied through `/preview/:projectId/:port/*`
+
+**Benefits**:
+- ✅ Single external port (compatible with Replit Deploy)
+- ✅ No wildcard subdomains required
+- ✅ WebSocket support maintained
+- ✅ Internal services secured (localhost only)
+
+📖 See [REPLIT_SINGLE_PORT_ARCHITECTURE.md](./REPLIT_SINGLE_PORT_ARCHITECTURE.md) for detailed documentation.
 
 ## 🧪 Platform Status
 
@@ -77,6 +94,22 @@ NODE_ENV=production npm start
 - Deployment system with SSL support
 - Multi-language runtime support
 - Authentication and billing systems
+
+### Testing Single-Port Architecture
+
+```bash
+# Verify the implementation
+./verify-single-port.sh
+
+# Start development server
+npm run dev
+
+# Test proxy routes:
+# - Main app: http://localhost:5000/
+# - Preview: http://localhost:5000/preview/:projectId/:port/
+# - Go runtime: http://localhost:5000/polyglot/go/health
+# - Python ML: http://localhost:5000/polyglot/python/health
+```
 
 ## 🔧 Development
 
