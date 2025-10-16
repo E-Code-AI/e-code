@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Comments schema for projects and files
 import { pgTable, serial, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';

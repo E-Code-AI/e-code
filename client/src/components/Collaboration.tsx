@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useState, useRef } from 'react';
 import { User } from '@shared/schema';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';

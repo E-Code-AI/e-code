@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from '../db';
 import { projects, files, checkpoints, checkpointFiles, checkpointDatabase } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';

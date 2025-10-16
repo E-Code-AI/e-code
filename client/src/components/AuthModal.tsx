@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';

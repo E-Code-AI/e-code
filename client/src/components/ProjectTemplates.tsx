@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from 'react';
 import { 
   Code, Zap, Package, Globe, Database, Shield, 

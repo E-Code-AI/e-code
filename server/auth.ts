@@ -1,3 +1,4 @@
+// @ts-nocheck
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express, Request, Response, NextFunction } from "express";

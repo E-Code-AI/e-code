@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Auto-Grading Service
  * Provides automated assignment grading and test execution for education

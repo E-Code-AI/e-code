@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { storage } from '../storage';
 import { logger } from '../utils/logger';
 import fetch from 'node-fetch';

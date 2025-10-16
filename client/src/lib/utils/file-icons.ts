@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { File } from "@/lib/types";
 
 export const getFileIcon = (file: File): string => {

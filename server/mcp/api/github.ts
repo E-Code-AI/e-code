@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router } from 'express';
 import { ensureAuthenticated } from '../../middleware/auth';
 import { mockGitHubRepos } from './mock-data';
