@@ -383,7 +383,9 @@ export function ProjectScreen({ project, onClose }) {
         }}
       >
         <TouchableWithoutFeedback
-          accessible={false}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss create file modal"
+          accessibilityHint="Closes the new file dialog"
           onPress={() => {
             if (isCreatingFile) return;
             setCreateFileModalVisible(false);
