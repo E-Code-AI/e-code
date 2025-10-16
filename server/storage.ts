@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import {
   User, InsertUser, UpsertUser,
   Project, InsertProject,
@@ -81,7 +79,7 @@ type InsertGitCommit = z.infer<typeof insertGitCommitSchema>;
 type CustomDomain = typeof customDomains.$inferSelect;
 type InsertCustomDomain = z.infer<typeof insertCustomDomainSchema>;
 
-import { eq, and, desc, isNull, sql, inArray, gte, lte } from "drizzle-orm";
+import { eq, and, desc, isNull, sql, inArray, gte, lte, SQL } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";
@@ -89,9 +87,401 @@ import connectPg from "connect-pg-simple";
 import { client } from "./db";
 import * as crypto from "crypto";
 
+type ApiKeyInsertModel = typeof apiKeys.$inferInsert;
+type CodeReviewInsertModel = typeof codeReviews.$inferInsert;
+type ChallengeInsertModel = typeof challenges.$inferInsert;
+type MentorProfileInsertModel = typeof mentorProfiles.$inferInsert;
+
+type UsageMetricInput = {
+  metricType: string;
+  value: number | string;
+  unit: string;
+  billingPeriodStart?: Date;
+  billingPeriodEnd?: Date;
+};
+
+type UsageMetricMetadata = {
+  unit?: string;
+  [key: string]: unknown;
+};
+
+const normalizeStringArray = (value: unknown, fallback: string[] = []): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item));
+  }
+
+  if (value === null || value === undefined) {
+    return [...fallback];
+  }
+
+  return [String(value)];
+};
+
 // Storage interface definition
-export class DatabaseStorage {
+export interface IStorage {
+  // Mobile-specific methods
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createFile(data: { projectId: number; path: string; content: string }): Promise<File>;
+  createFile(file: InsertFile): Promise<File>;
+  updateFile(fileId: number, data: { content: string }): Promise<void>;
+  updateFile(id: number, file: Partial<InsertFile>): Promise<File | undefined>;
+  getTrendingProjects(options: { limit: number }): Promise<any[]>;
+  getFeaturedProjects(options: { limit: number }): Promise<any[]>;
+  pinProject(projectId: number, userId: number): Promise<void>;
+  unpinProject(projectId: number, userId: number): Promise<void>;
+  trackUsage(userId: number, data: UsageMetricInput): Promise<void>;
+  updateUserStripeInfo(userId: number, data: any): Promise<User | undefined>;
+  // User operations
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  saveEmailVerificationToken(email: string, token: string): Promise<void>;
+
+  // Project operations
+  getProject(id: number): Promise<Project | undefined>;
+  getProjectBySlug(slug: string, ownerId?: number): Promise<Project | null>;
+  getProjectsByUserId(ownerId: number): Promise<Project[]>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined>;
+  deleteProject(id: number): Promise<boolean>;
+  incrementProjectViews(id: number): Promise<void>;
+
+  // File operations
+  getFile(id: number): Promise<File | undefined>;
+  getFilesByProjectId(projectId: number): Promise<File[]>;
+  createFile(file: InsertFile): Promise<File>;
+  updateFile(id: number, file: Partial<InsertFile>): Promise<File | undefined>;
+  deleteFile(id: number): Promise<boolean>;
+
+  // API Key operations
+  createApiKey(apiKey: InsertApiKey): Promise<ApiKey>;
+  getUserApiKeys(userId: number): Promise<ApiKey[]>;
+  getApiKey(id: number): Promise<ApiKey | undefined>;
+  updateApiKey(id: number, apiKey: Partial<InsertApiKey>): Promise<ApiKey | undefined>;
+  deleteApiKey(id: number): Promise<boolean>;
+
+  // Code Review operations
+  createCodeReview(review: InsertCodeReview): Promise<CodeReview>;
+  getCodeReview(id: number): Promise<CodeReview | undefined>;
+  getProjectCodeReviews(projectId: number): Promise<CodeReview[]>;
+  updateCodeReview(id: number, review: Partial<InsertCodeReview>): Promise<CodeReview | undefined>;
+
+  // Challenge operations
+  createChallenge(challenge: InsertChallenge): Promise<Challenge>;
+  getChallenge(id: number): Promise<Challenge | undefined>;
+  getChallengesByCategory(category: string): Promise<Challenge[]>;
+  updateChallenge(id: number, challenge: Partial<InsertChallenge>): Promise<Challenge | undefined>;
+
+  // Mentorship operations
+  createMentorProfile(profile: InsertMentorProfile): Promise<MentorProfile>;
+  getMentorProfile(userId: number): Promise<MentorProfile | undefined>;
+  updateMentorProfile(userId: number, profile: Partial<InsertMentorProfile>): Promise<MentorProfile | undefined>;
+
+  // Template operations
+  getAllTemplates(publishedOnly?: boolean): Promise<any[]>;
+  pinProject(projectId: number, userId: number): Promise<void>;
+  unpinProject(projectId: number, userId: number): Promise<void>;
+
+  // Login history operations
+  createLoginHistory(history: any): Promise<any>;
+
+  // Admin API Key operations (for centralized AI services)
+  getActiveAdminApiKey(provider: string): Promise<any>;
+  trackAIUsage(userId: number, tokens: number, mode: string): Promise<void>;
+  createAiUsageRecord(record: any): Promise<any>;
+  updateUserAiTokens(userId: number, tokensUsed: number): Promise<void>;
+
+  // AI Usage Tracking for billing
+  createAIUsageRecord(record: {
+    userId: number;
+    model: string;
+    provider: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    creditsCost: number;
+    purpose?: string;
+    projectId?: number;
+    metadata?: any;
+  }): Promise<any>;
+  getAIUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any[]>;
+  getUserCredits(userId: number): Promise<UserCredits | undefined>;
+
+  // Deployment operations
+  createDeployment(deploymentData: InsertDeployment): Promise<Deployment>;
+  getDeployments(projectId: number): Promise<Deployment[]>;
+  updateDeployment(id: number, deploymentData: Partial<InsertDeployment>): Promise<Deployment | undefined>;
+
+  // Audit log operations
+  getAuditLogs(filters: { userId?: number; action?: string; dateRange?: string }): Promise<any[]>;
+
+  // Storage operations
+  getStorageBuckets(): Promise<any[]>;
+  createStorageBucket(bucket: { projectId: number; name: string; region: string; isPublic: boolean }): Promise<any>;
+  getProjectStorageBuckets(projectId: number): Promise<any[]>;
+  getStorageObjects(bucketId: string): Promise<any[]>;
+  deleteStorageObject(bucketId: string, objectKey: string): Promise<void>;
+
+  // Team operations
+  getUserTeams(userId: number): Promise<any[]>;
+
+  // Theme operations  
+  getUserThemeSettings(userId: number): Promise<any>;
+  updateUserThemeSettings(userId: number, settings: any): Promise<any>;
+  getInstalledThemes(userId: number): Promise<any[]>;
+  installTheme(userId: number, themeId: string): Promise<void>;
+  uninstallTheme(userId: number, themeId: string): Promise<void>;
+  createCustomTheme(userId: number, theme: any): Promise<any>;
+
+  // Stripe operations
+  updateUserStripeInfo(userId: number, stripeData: {
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    stripePriceId?: string;
+    subscriptionStatus?: string;
+    subscriptionCurrentPeriodEnd?: Date;
+  }): Promise<User | undefined>;
+  updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
+
+  // Usage tracking operations
+  trackUsage(
+    userId: number,
+    eventType: string,
+    quantity: number,
+    metadata?: UsageMetricMetadata
+  ): Promise<void>;
+  getUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any>;
+  getUserUsage(userId: number, billingPeriodStart?: Date): Promise<any>;
+  getUsageHistory(userId: number, startDate: Date, endDate: Date, metricType?: string): Promise<any[]>;
+  getUsageSummary(userId: number, period: string): Promise<any>;
+
+  // Comments operations
+  createComment(comment: InsertComment): Promise<Comment>;
+  getProjectComments(projectId: number): Promise<Comment[]>;
+  getFileComments(fileId: number): Promise<Comment[]>;
+  updateComment(id: number, comment: Partial<InsertComment>): Promise<Comment | undefined>;
+  deleteComment(id: number): Promise<boolean>;
+
+  // Checkpoints operations
+  createCheckpoint(checkpoint: any): Promise<Checkpoint>;
+  getProjectCheckpoints(projectId: number): Promise<Checkpoint[]>;
+  getCheckpoint(id: number): Promise<Checkpoint | undefined>;
+  restoreCheckpoint(checkpointId: number): Promise<boolean>;
+
+  // Agent operations
+  getAgentWorkSteps(projectId: number, sessionId: string): Promise<any[]>;
+  createAgentCheckpoint(checkpoint: {
+    projectId: number;
+    userId: number;
+    message: string;
+    changes: number;
+    sessionId: string;
+    timestamp: Date;
+  }): Promise<any>;
+
+  // Time tracking operations
+  startTimeTracking(tracking: InsertTimeTracking): Promise<TimeTracking>;
+  stopTimeTracking(trackingId: number): Promise<TimeTracking | undefined>;
+  getActiveTimeTracking(projectId: number, userId: number): Promise<TimeTracking | undefined>;
+  getProjectTimeTracking(projectId: number): Promise<TimeTracking[]>;
+
+  // Screenshot operations
+  createScreenshot(screenshot: InsertScreenshot): Promise<Screenshot>;
+  getProjectScreenshots(projectId: number): Promise<Screenshot[]>;
+  getScreenshot(id: number): Promise<Screenshot | undefined>;
+  deleteScreenshot(id: number): Promise<boolean>;
+
+  // Task summary operations
+  createTaskSummary(summary: InsertTaskSummary): Promise<TaskSummary>;
+  getProjectTaskSummaries(projectId: number): Promise<TaskSummary[]>;
+  updateTaskSummary(id: number, summary: Partial<InsertTaskSummary>): Promise<TaskSummary | undefined>;
+
+  // Voice/Video Session operations
+  createVoiceVideoSession(session: InsertVoiceVideoSession): Promise<VoiceVideoSession>;
+  getProjectVoiceVideoSessions(projectId: number): Promise<VoiceVideoSession[]>;
+  endVoiceVideoSession(sessionId: number): Promise<VoiceVideoSession | undefined>;
+  addVoiceVideoParticipant(participant: InsertVoiceVideoParticipant): Promise<VoiceVideoParticipant>;
+  removeVoiceVideoParticipant(sessionId: number, userId: number): Promise<void>;
+
+  // GPU Instance operations
+  createGpuInstance(instance: InsertGpuInstance): Promise<GpuInstance>;
+  getProjectGpuInstances(projectId: number): Promise<GpuInstance[]>;
+  updateGpuInstanceStatus(instanceId: number, status: string): Promise<GpuInstance | undefined>;
+  createGpuUsage(usage: InsertGpuUsage): Promise<GpuUsage>;
+  getGpuUsageByInstance(instanceId: number): Promise<GpuUsage[]>;
+
+  // Assignment operations
+  createAssignment(assignment: InsertAssignment): Promise<Assignment>;
+  getAssignments(filters?: { courseId?: number; createdBy?: number }): Promise<Assignment[]>;
+  getAssignment(id: number): Promise<Assignment | undefined>;
+  updateAssignment(id: number, assignment: Partial<InsertAssignment>): Promise<Assignment | undefined>;
+
+  // Submission operations
+  createSubmission(submission: InsertSubmission): Promise<Submission>;
+  getSubmissionsByAssignment(assignmentId: number): Promise<Submission[]>;
+  getSubmissionsByStudent(studentId: number): Promise<Submission[]>;
+  gradeSubmission(submissionId: number, grade: number, feedback: string, gradedBy: number): Promise<Submission | undefined>;
+
+  // Secret management operations
+  createSecret(secret: any): Promise<any>;
+  getProjectSecrets(projectId: number): Promise<any[]>;
+  getSecret(id: number): Promise<any | undefined>;
+  deleteSecret(id: number): Promise<boolean>;
+
+  // Missing methods from routes.ts
+  getProjectCollaborators(projectId: number): Promise<any[]>;
+  isProjectCollaborator(projectId: number, userId: number): Promise<boolean>;
+  forkProject(projectId: number, userId: number): Promise<Project>;
+  likeProject(projectId: number, userId: number): Promise<void>;
+  unlikeProject(projectId: number, userId: number): Promise<void>;
+  isProjectLiked(projectId: number, userId: number): Promise<boolean>;
+  getProjectLikes(projectId: number): Promise<number>;
+  trackProjectView(projectId: number, userId: number): Promise<void>;
+  getProjectActivity(projectId: number): Promise<any[]>;
+  getProjectFiles(projectId: number): Promise<any[]>;
+  getFileById(id: number): Promise<any | undefined>;
+  getAdminApiKey(provider: string): Promise<any>;
+  createCLIToken(userId: number): Promise<any>;
+  getUserCLITokens(userId: number): Promise<any[]>;
+  getMobileSession(sessionId: string): Promise<any | undefined>;
+  createMobileSession(session: any): Promise<any>;
+  updateMobileSession(sessionId: string, session: any): Promise<any | undefined>;
+  getUserMobileSessions(userId: number): Promise<any[]>;
+  getProjectDeployments(projectId: number): Promise<any[]>;
+  getRecentDeployments(userId: number): Promise<any[]>;
+
+  // User Credits and Billing operations
+  getUserCredits(userId: number): Promise<any | undefined>;
+  createUserCredits(credits: any): Promise<any>;
+  updateUserCredits(userId: number, credits: any): Promise<any | undefined>;
+  addCredits(userId: number, amount: number): Promise<any | undefined>;
+  deductCredits(userId: number, amount: number): Promise<any | undefined>;
+  getBudgetLimits(userId: number): Promise<any | undefined>;
+  createBudgetLimits(limits: any): Promise<any>;
+  updateBudgetLimits(userId: number, limits: any): Promise<any | undefined>;
+  createUsageAlert(alert: any): Promise<any>;
+  getUsageAlerts(userId: number): Promise<any[]>;
+  markAlertSent(alertId: number): Promise<void>;
+
+  // Deployment Type-Specific operations
+  createAutoscaleDeployment(config: any): Promise<any>;
+  getAutoscaleDeployment(deploymentId: number): Promise<any | undefined>;
+  updateAutoscaleDeployment(deploymentId: number, config: any): Promise<any | undefined>;
+  createReservedVmDeployment(config: any): Promise<any>;
+  getReservedVmDeployment(deploymentId: number): Promise<any | undefined>;
+  updateReservedVmDeployment(deploymentId: number, config: any): Promise<any | undefined>;
+  createScheduledDeployment(config: any): Promise<any>;
+  getScheduledDeployment(deploymentId: number): Promise<any | undefined>;
+  updateScheduledDeployment(deploymentId: number, config: any): Promise<any | undefined>;
+  createStaticDeployment(config: any): Promise<any>;
+  getStaticDeployment(deploymentId: number): Promise<any | undefined>;
+  updateStaticDeployment(deploymentId: number, config: any): Promise<any | undefined>;
+
+  // Object Storage operations
+  createObjectStorageBucket(bucket: any): Promise<any>;
+  getObjectStorageBucket(id: number): Promise<any | undefined>;
+  getProjectObjectStorageBuckets(projectId: number): Promise<any[]>;
+  deleteObjectStorageBucket(id: number): Promise<boolean>;
+  createObjectStorageFile(file: any): Promise<any>;
+  getObjectStorageFile(id: number): Promise<any | undefined>;
+  getBucketFiles(bucketId: number): Promise<any[]>;
+  deleteObjectStorageFile(id: number): Promise<boolean>;
+
+  // Key-Value Store operations
+  setKeyValue(projectId: number, key: string, value: any, expiresAt?: Date): Promise<any>;
+  getKeyValue(projectId: number, key: string): Promise<any | undefined>;
+  deleteKeyValue(projectId: number, key: string): Promise<boolean>;
+  getProjectKeyValues(projectId: number): Promise<any[]>;
+
+  // AI Conversation operations
+  createAiConversation(conversation: any): Promise<any>;
+  getAiConversation(id: number): Promise<any | undefined>;
+  getProjectAiConversations(projectId: number): Promise<any[]>;
+  updateAiConversation(id: number, updates: any): Promise<any | undefined>;
+  addMessageToConversation(conversationId: number, message: any): Promise<any | undefined>;
+
+  // Dynamic Intelligence operations
+  getDynamicIntelligence(userId: number): Promise<any | undefined>;
+  createDynamicIntelligence(settings: any): Promise<any>;
+  updateDynamicIntelligence(userId: number, settings: any): Promise<any | undefined>;
+
+  // Web Search operations
+  createWebSearchHistory(search: any): Promise<any>;
+  getConversationSearchHistory(conversationId: number): Promise<any[]>;
+
+  // Git Integration operations
+  createGitRepository(repo: any): Promise<any>;
+  getGitRepository(projectId: number): Promise<any | undefined>;
+  updateGitRepository(projectId: number, updates: any): Promise<any | undefined>;
+  createGitCommit(commit: any): Promise<any>;
+  getRepositoryCommits(repositoryId: number): Promise<any[]>;
+
+  // Custom Domain operations
+  createCustomDomain(domain: any): Promise<any>;
+  getCustomDomain(id: number): Promise<any | undefined>;
+  getProjectCustomDomains(projectId: number): Promise<any[]>;
+  updateCustomDomain(id: number, updates: any): Promise<any | undefined>;
+  deleteCustomDomain(id: number): Promise<boolean>;
+
+  // Sales and Support operations
+  createSalesInquiry(inquiry: any): Promise<any>;
+  getSalesInquiries(status?: string): Promise<any[]>;
+  updateSalesInquiry(id: number, updates: any): Promise<any | undefined>;
+  createAbuseReport(report: any): Promise<any>;
+  getAbuseReports(status?: string): Promise<any[]>;
+  updateAbuseReport(id: number, updates: any): Promise<any | undefined>;
+  
+  // Kubernetes User Environment operations
+  saveUserEnvironment(environment: any): Promise<void>;
+  getUserEnvironment(userId: number): Promise<any | null>;
+  updateUserEnvironment(environment: any): Promise<void>;
+  deleteUserEnvironment(userId: number): Promise<void>;
+}
+
+export class DatabaseStorage implements IStorage {
   private db = db; // Use the imported db instance
+
+  // Mobile-specific project feeds
+  async getTrendingProjects({ limit }: { limit: number }): Promise<Project[]> {
+    return await this.db
+      .select()
+      .from(projects)
+      .orderBy(desc(projects.views), desc(projects.updatedAt))
+      .limit(limit);
+  }
+
+  async getFeaturedProjects({ limit }: { limit: number }): Promise<Project[]> {
+    return await this.db
+      .select()
+      .from(projects)
+      .where(eq(projects.isPinned, true))
+      .orderBy(desc(projects.updatedAt))
+      .limit(limit);
+  }
+
+  async pinProject(projectId: number, userId: number): Promise<void> {
+    await this.db
+      .update(projects)
+      .set({ isPinned: true, updatedAt: new Date() })
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
+
+    // Optionally record the pin action for analytics
+    await this.trackUsage(userId, "project.pin", 1, { unit: "action" });
+  }
+
+  async unpinProject(projectId: number, userId: number): Promise<void> {
+    await this.db
+      .update(projects)
+      .set({ isPinned: false, updatedAt: new Date() })
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
+
+    await this.trackUsage(userId, "project.unpin", 1, { unit: "action" });
+  }
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
@@ -167,16 +557,16 @@ export class DatabaseStorage {
 
   async getProjectBySlug(slug: string, ownerId?: number): Promise<Project | null> {
     try {
-      let query = this.db
+      const condition =
+        ownerId !== undefined
+          ? and(eq(projects.slug, slug), eq(projects.ownerId, ownerId))
+          : eq(projects.slug, slug);
+
+      const result = await this.db
         .select()
         .from(projects)
-        .where(eq(projects.slug, slug));
-
-      if (ownerId) {
-        query = query.where(eq(projects.ownerId, ownerId));
-      }
-
-      const result = await query.limit(1);
+        .where(condition)
+        .limit(1);
 
       return result[0] || null;
     } catch (error) {
@@ -237,17 +627,45 @@ export class DatabaseStorage {
     return await this.db.select().from(files).where(eq(files.projectId, projectId)).orderBy(files.path);
   }
 
-  async createFile(fileData: InsertFile): Promise<File> {
-    const [file] = await this.db.insert(files).values(fileData).returning();
+  async createFile(data: { projectId: number; path: string; content: string }): Promise<File>;
+  async createFile(fileData: InsertFile): Promise<File>;
+  async createFile(
+    fileData: InsertFile | { projectId: number; path: string; content: string }
+  ): Promise<File> {
+    const values: InsertFile = "name" in fileData
+      ? fileData
+      : {
+          name: fileData.path.split("/").pop() ?? fileData.path,
+          path: fileData.path,
+          projectId: fileData.projectId,
+          content: fileData.content,
+          isDirectory: false,
+        };
+
+    const [file] = await this.db.insert(files).values(values).returning();
     return file;
   }
 
-  async updateFile(id: number, fileData: Partial<InsertFile>): Promise<File | undefined> {
+  async updateFile(id: number, data: { content: string }): Promise<void>;
+  async updateFile(id: number, fileData: Partial<InsertFile>): Promise<File | undefined>;
+  async updateFile(
+    id: number,
+    fileData: { content: string } | Partial<InsertFile>
+  ): Promise<void | (File | undefined)> {
+    const update: Partial<InsertFile> = "content" in fileData && Object.keys(fileData).length === 1
+      ? { content: fileData.content }
+      : { ...fileData };
+
     const [file] = await this.db
       .update(files)
-      .set({ ...fileData, updatedAt: new Date() })
+      .set({ ...update, updatedAt: new Date() })
       .where(eq(files.id, id))
       .returning();
+
+    if ("content" in fileData && Object.keys(fileData).length === 1) {
+      return;
+    }
+
     return file;
   }
 
@@ -258,7 +676,12 @@ export class DatabaseStorage {
 
   // API Key operations
   async createApiKey(apiKeyData: InsertApiKey): Promise<ApiKey> {
-    const [apiKey] = await this.db.insert(apiKeys).values([apiKeyData]).returning();
+    const values = {
+      ...apiKeyData,
+      permissions: normalizeStringArray(apiKeyData.permissions, []),
+    } satisfies InsertApiKey;
+
+    const [apiKey] = await this.db.insert(apiKeys).values(values).returning();
     return apiKey;
   }
 
@@ -272,9 +695,19 @@ export class DatabaseStorage {
   }
 
   async updateApiKey(id: number, apiKeyData: Partial<InsertApiKey>): Promise<ApiKey | undefined> {
+    const baseUpdate = apiKeyData as Partial<ApiKeyInsertModel>;
+    const updateData: Partial<ApiKeyInsertModel> = {
+      ...baseUpdate,
+      ...(apiKeyData.permissions !== undefined
+        ? {
+            permissions: normalizeStringArray(apiKeyData.permissions, []) as ApiKeyInsertModel["permissions"],
+          }
+        : {}),
+    };
+
     const [apiKey] = await this.db
       .update(apiKeys)
-      .set({ ...apiKeyData })
+      .set(updateData)
       .where(eq(apiKeys.id, id))
       .returning();
     return apiKey;
@@ -287,7 +720,12 @@ export class DatabaseStorage {
 
   // Code Review operations
   async createCodeReview(reviewData: InsertCodeReview): Promise<CodeReview> {
-    const [review] = await this.db.insert(codeReviews).values([reviewData]).returning();
+    const values = {
+      ...reviewData,
+      filesChanged: normalizeStringArray(reviewData.filesChanged, []),
+    } satisfies InsertCodeReview;
+
+    const [review] = await this.db.insert(codeReviews).values(values).returning();
     return review;
   }
 
@@ -301,9 +739,20 @@ export class DatabaseStorage {
   }
 
   async updateCodeReview(id: number, reviewData: Partial<InsertCodeReview>): Promise<CodeReview | undefined> {
+    const baseReview = reviewData as Partial<CodeReviewInsertModel>;
+    const reviewUpdate: Partial<CodeReviewInsertModel> = {
+      ...baseReview,
+      ...(reviewData.filesChanged !== undefined
+        ? {
+            filesChanged: normalizeStringArray(reviewData.filesChanged, []) as CodeReviewInsertModel["filesChanged"],
+          }
+        : {}),
+      updatedAt: new Date(),
+    };
+
     const [review] = await this.db
       .update(codeReviews)
-      .set({ ...reviewData, updatedAt: new Date() })
+      .set(reviewUpdate)
       .where(eq(codeReviews.id, id))
       .returning();
     return review;
@@ -311,7 +760,15 @@ export class DatabaseStorage {
 
   // Challenge operations
   async createChallenge(challengeData: InsertChallenge): Promise<Challenge> {
-    const [challenge] = await this.db.insert(challenges).values([challengeData]).returning();
+    const challengeValues = {
+      ...challengeData,
+      tags: normalizeStringArray(challengeData.tags, []),
+      testCases: Array.isArray(challengeData.testCases)
+        ? [...challengeData.testCases]
+        : [],
+    } satisfies InsertChallenge;
+
+    const [challenge] = await this.db.insert(challenges).values(challengeValues).returning();
     return challenge;
   }
 
@@ -325,9 +782,18 @@ export class DatabaseStorage {
   }
 
   async updateChallenge(id: number, challengeData: Partial<InsertChallenge>): Promise<Challenge | undefined> {
+    const baseChallenge = challengeData as Partial<ChallengeInsertModel>;
+    const challengeUpdate: Partial<ChallengeInsertModel> = {
+      ...baseChallenge,
+      ...(challengeData.tags !== undefined
+        ? { tags: normalizeStringArray(challengeData.tags, []) as ChallengeInsertModel["tags"] }
+        : {}),
+      updatedAt: new Date(),
+    };
+
     const [challenge] = await this.db
       .update(challenges)
-      .set({ ...challengeData, updatedAt: new Date() })
+      .set(challengeUpdate)
       .where(eq(challenges.id, id))
       .returning();
     return challenge;
@@ -335,7 +801,16 @@ export class DatabaseStorage {
 
   // Mentorship operations
   async createMentorProfile(profileData: InsertMentorProfile): Promise<MentorProfile> {
-    const [profile] = await this.db.insert(mentorProfiles).values([profileData]).returning();
+    const profileValues = {
+      ...profileData,
+      expertise: normalizeStringArray(profileData.expertise, []),
+      availability:
+        profileData.availability && typeof profileData.availability === "object"
+          ? { ...profileData.availability }
+          : {},
+    } satisfies InsertMentorProfile;
+
+    const [profile] = await this.db.insert(mentorProfiles).values(profileValues).returning();
     return profile;
   }
 
@@ -345,9 +820,27 @@ export class DatabaseStorage {
   }
 
   async updateMentorProfile(userId: number, profileData: Partial<InsertMentorProfile>): Promise<MentorProfile | undefined> {
+    const baseMentor = profileData as Partial<MentorProfileInsertModel>;
+    const mentorUpdate: Partial<MentorProfileInsertModel> = {
+      ...baseMentor,
+      ...(profileData.expertise !== undefined
+        ? {
+            expertise: normalizeStringArray(profileData.expertise, []) as MentorProfileInsertModel["expertise"],
+          }
+        : {}),
+      ...(profileData.availability !== undefined
+        ? {
+            availability:
+              profileData.availability && typeof profileData.availability === "object"
+                ? { ...profileData.availability }
+                : {},
+          }
+        : {}),
+    };
+
     const [profile] = await this.db
       .update(mentorProfiles)
-      .set({ ...profileData })
+      .set(mentorUpdate)
       .where(eq(mentorProfiles.userId, userId))
       .returning();
     return profile;
@@ -423,20 +916,6 @@ export class DatabaseStorage {
     ];
 
     return publishedOnly ? templates : templates;
-  }
-
-  async pinProject(projectId: number, userId: number): Promise<void> {
-    await this.db
-      .update(projects)
-      .set({ isPinned: true })
-      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
-  }
-
-  async unpinProject(projectId: number, userId: number): Promise<void> {
-    await this.db
-      .update(projects)
-      .set({ isPinned: false })
-      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
   }
 
   async createLoginHistory(history: any): Promise<any> {
@@ -806,17 +1285,32 @@ export class DatabaseStorage {
   }
 
   // Stripe operations
-  async updateUserStripeInfo(userId: number, stripeData: {
-    stripeCustomerId?: string;
-    stripeSubscriptionId?: string;
-    stripePriceId?: string;
-    subscriptionStatus?: string;
-    subscriptionCurrentPeriodEnd?: Date;
-  }): Promise<User | undefined> {
-    const [updated] = await this.db.update(users)
-      .set({ ...stripeData, updatedAt: new Date() })
+  async updateUserStripeInfo(userId: number, data: any): Promise<User | undefined>;
+  async updateUserStripeInfo(
+    userId: number,
+    stripeData: {
+      stripeCustomerId?: string;
+      stripeSubscriptionId?: string;
+      stripePriceId?: string;
+      subscriptionStatus?: string;
+      subscriptionCurrentPeriodEnd?: Date;
+    }
+  ): Promise<User | undefined>;
+  async updateUserStripeInfo(
+    userId: number,
+    stripeData: any
+  ): Promise<User | undefined> {
+    const updatePayload = {
+      ...stripeData,
+      updatedAt: new Date(),
+    };
+
+    const [updated] = await this.db
+      .update(users)
+      .set(updatePayload)
       .where(eq(users.id, userId))
       .returning();
+
     return updated;
   }
 
@@ -833,19 +1327,51 @@ export class DatabaseStorage {
   }
 
   // Usage tracking operations
-  async trackUsage(userId: number, eventType: string, quantity: number, metadata?: any): Promise<void> {
+  async trackUsage(userId: number, data: UsageMetricInput): Promise<void>;
+  async trackUsage(
+    userId: number,
+    eventType: string,
+    quantity: number,
+    metadata?: UsageMetricMetadata
+  ): Promise<void>;
+  async trackUsage(
+    userId: number,
+    arg2: UsageMetricInput | string,
+    arg3?: number,
+    arg4?: UsageMetricMetadata
+  ): Promise<void> {
     const now = new Date();
-    const billingPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const billingPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const defaultPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const defaultPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    await this.db.insert(usageTracking).values([{
+    const metric: UsageMetricInput =
+      typeof arg2 === "string"
+        ? {
+            metricType: arg2,
+            value: arg3 ?? 0,
+            unit: arg4?.unit ?? "request",
+            billingPeriodStart: defaultPeriodStart,
+            billingPeriodEnd: defaultPeriodEnd,
+          }
+        : {
+            metricType: arg2.metricType,
+            value: arg2.value,
+            unit: arg2.unit,
+            billingPeriodStart: arg2.billingPeriodStart ?? defaultPeriodStart,
+            billingPeriodEnd: arg2.billingPeriodEnd ?? defaultPeriodEnd,
+          };
+
+    const billingPeriodStart = metric.billingPeriodStart ?? defaultPeriodStart;
+    const billingPeriodEnd = metric.billingPeriodEnd ?? defaultPeriodEnd;
+
+    await this.db.insert(usageTracking).values({
       userId,
-      metricType: eventType,
-      value: quantity.toString(),
-      unit: metadata?.unit || 'request',
+      metricType: metric.metricType,
+      value: typeof metric.value === "number" ? metric.value.toString() : metric.value,
+      unit: metric.unit,
       billingPeriodStart,
-      billingPeriodEnd
-    }]);
+      billingPeriodEnd,
+    });
   }
 
   async getUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any> {
@@ -1202,13 +1728,13 @@ export class DatabaseStorage {
   // CLI token methods
   async createCLIToken(userId: number): Promise<any> {
     const token = crypto.randomBytes(32).toString('hex');
-    const [created] = await this.db.insert(apiKeys).values([{
+    const [created] = await this.db.insert(apiKeys).values({
       userId,
       name: 'CLI Token',
       key: token,
       permissions: ['cli:access'],
       lastUsed: null
-    }]).returning();
+    }).returning();
     return created;
   }
 
@@ -1255,14 +1781,10 @@ export class DatabaseStorage {
 
     // If no credits record exists, create one with default credits
     if (!credits) {
-      const [newCredits] = await this.db.insert(userCredits).values({
-        userId,
-        planType: 'free',
-        totalCredits: 100, // Free users get 100 credits to start
-        remainingCredits: 100,
-        totalUsed: 0,
-        billingCycle: 'monthly'
-      }).returning();
+      const [newCredits] = await this.db
+        .insert(userCredits)
+        .values({ userId })
+        .returning();
       return newCredits;
     }
 
@@ -1889,11 +2411,11 @@ export class DatabaseStorage {
     }).returning();
 
     // Also deduct credits from user account
-    await this.db.update(userCredits)
-      .set({ 
+    await this.db
+      .update(userCredits)
+      .set({
         remainingCredits: sql`${userCredits.remainingCredits} - ${record.creditsCost}`,
-        totalUsed: sql`${userCredits.totalUsed} + ${record.creditsCost}`,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(userCredits.userId, record.userId));
 
@@ -1901,17 +2423,23 @@ export class DatabaseStorage {
   }
 
   async getAIUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any[]> {
-    let query = this.db.select().from(aiUsageRecords).where(eq(aiUsageRecords.userId, userId));
+    const filters: SQL[] = [eq(aiUsageRecords.userId, userId)];
 
     if (startDate) {
-      query = query.where(gte(aiUsageRecords.createdAt, startDate));
+      filters.push(gte(aiUsageRecords.createdAt, startDate));
     }
 
     if (endDate) {
-      query = query.where(lte(aiUsageRecords.createdAt, endDate));
+      filters.push(lte(aiUsageRecords.createdAt, endDate));
     }
 
-    return await query.orderBy(desc(aiUsageRecords.createdAt));
+    const whereClause = filters.length > 1 ? and(...filters) : filters[0];
+
+    return await this.db
+      .select()
+      .from(aiUsageRecords)
+      .where(whereClause)
+      .orderBy(desc(aiUsageRecords.createdAt));
   }
 }
 

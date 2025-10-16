@@ -1,5 +1,12 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["types/**/*.d.ts"],
+  "include": [
+    "shared/**/*",
+    "types/**/*",
+    "server/db.ts",
+    "server/db-init.ts",
+    "server/storage.ts",
+    "server/utils/**/*"
+  ],
   "exclude": []
 }
