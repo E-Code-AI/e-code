@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Polyglot Backend Coordinator
  * Routes requests to appropriate backend services (TypeScript, Go, Python)

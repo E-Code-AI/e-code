@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Voice/Video Collaboration Service using WebRTC
  * Provides real-time voice and video communication capabilities

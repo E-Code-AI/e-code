@@ -124,6 +124,23 @@ E-Code is deployed on Replit with multiple access points:
 - **Published**: https://replit-clone-henri45.replit.app
 - **Custom Domain**: https://e-code.ai
 
+### Deployment Flow & Syncing with GitHub
+
+Merging a pull request on GitHub **does not automatically redeploy** the Replit development or published instances. To propagate
+changes after a merge:
+
+1. Open the corresponding Replit workspace.
+2. Pull the latest changes. The first time you run `git pull origin main` after a GitHub merge, Git may stop with "Need to specify how to reconcile divergent branches." Fix it once by choosing a pull strategy, for example:
+   - `git config pull.rebase false` (merge commits) **or**
+   - `git config pull.rebase true` (rebase) **or** simply run `git pull --rebase origin main` for a one-off pull.
+   After configuring your preference, rerun `git pull origin main` (or use Replit's "Sync" button if available).
+   - If `git` reports `Unable to create '.git/packed-refs.lock': File exists`, remove the stale lock with `rm -f .git/packed-refs.lock` and retry the pull. This typically happens when a previous Git command on Replit was interrupted.
+   - Some workspaces show `Can't find lefthook in PATH` after a pull because the hook runner is not installed in the shell session. Reinstall it with `npx lefthook install` (or temporarily bypass the hook with `SKIP=lefthook git pull ...`) before retrying.
+3. Re-run the application locally to ensure the update builds correctly.
+4. Trigger a new deployment from the **Deployments** tab so the autoscale instance picks up the latest build.
+
+Until these steps are completed, the live Replit URLs listed above will continue serving the previously deployed version.
+
 ### Single-Port Architecture
 
 Replit Deploy exposes a **single external port** (80/443). All preview URLs use **path-based routing**:

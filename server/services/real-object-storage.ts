@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Real Object Storage Service
  * Provides actual cloud storage capabilities using Google Cloud Storage

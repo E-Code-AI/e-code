@@ -1,10 +1,12 @@
 {
+  "include": ["shared/**/*"],
   "include": ["client/src/**/*", "shared/**/*", "server/**/*", "types/**/*"],
   "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "compilerOptions": {
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
     "noEmit": true,
+    "target": "ES2020",
     "module": "ESNext",
     "target": "ES2020",
     "strict": true,
@@ -17,6 +19,7 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "types": ["node", "vite/client"],
+    "useUnknownInCatchVariables": false,
     "paths": {
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"],

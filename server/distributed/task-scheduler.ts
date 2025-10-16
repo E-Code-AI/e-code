@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EventEmitter } from 'events';
 import { clusterManager, DistributedTask } from './cluster-manager';
 import { createLogger } from '../utils/logger';

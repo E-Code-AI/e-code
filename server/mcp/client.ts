@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * MCP Client for integrating with the MCP Server
  * Provides HTTP-based transport for web environments

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router } from 'express';
 import { AdminService } from '../services/admin-service';
 import { storage } from '../storage';

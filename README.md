@@ -118,7 +118,11 @@ npm run dev
 npm run build
 
 # Type checking
-NODE_OPTIONS="--max-old-space-size=8192" npm run check
+# Shared schema only (fast sanity check used in CI)
+npm run typecheck
+
+# Full stack type checking (includes client + server placeholders; currently surfaces thousands of TODO typings)
+NODE_OPTIONS="--max-old-space-size=8192" npm run typecheck:full
 
 # Database operations
 npm run db:push

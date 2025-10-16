@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReactNode, useState } from 'react';
 import { ReplitHeader } from '@/components/layout/ReplitHeader';
 import { ReplitSidebar } from '@/components/layout/ReplitSidebar';

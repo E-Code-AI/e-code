@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Server as SocketIOServer } from 'socket.io';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';

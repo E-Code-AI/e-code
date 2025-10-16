@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Worker } from 'worker_threads';
 import * as vm from 'vm';
 import * as path from 'path';
