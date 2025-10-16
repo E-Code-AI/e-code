@@ -34,6 +34,7 @@ import { autonomousBuilder } from "./ai/autonomous-builder";
 import { ContextAwarenessService } from "./ai/context-awareness-service";
 import { enhancedAgent } from "./ai/enhanced-autonomous-agent";
 import { createLogger } from "./utils/logger";
+import { getSubscriptionPeriodBoundary } from "./services/stripe-utils";
 import { setupTerminalWebsocket } from "./terminal";
 import { startProject, stopProject, getProjectStatus, getProjectLogs } from "./simple-executor";
 import { setupLogsWebsocket } from "./logs";
@@ -860,10 +861,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let subscriptionInfo = null;
       if (stripe && user.stripeCustomerId && user.stripeSubscriptionId) {
         try {
-          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+            expand: ['items']
+          });
           subscriptionInfo = {
             status: subscription.status,
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            currentPeriodEnd:
+              getSubscriptionPeriodBoundary(subscription, 'current_period_end') ?? undefined,
             cancelAtPeriodEnd: subscription.cancel_at_period_end,
             priceId: subscription.items.data[0]?.price.id
           };

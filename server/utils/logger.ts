@@ -2,30 +2,48 @@
  * Logger utility for consistent logging across services
  */
 
+type LogArguments = [message: string, ...details: unknown[]];
+
 export interface Logger {
-  info: (message: string) => void;
-  warn: (message: string) => void;
-  error: (message: string) => void;
-  debug: (message: string) => void;
+  info: (...args: LogArguments) => void;
+  warn: (...args: LogArguments) => void;
+  error: (...args: LogArguments) => void;
+  debug: (...args: LogArguments) => void;
 }
 
-export function createLogger(service: string): Logger {
-  const prefix = `[${service}]`;
+type ConsoleMethod = 'log' | 'warn' | 'error';
 
+const buildMessage = (service: string, level: string, message: string): string => {
+  return `[${new Date().toISOString()}] [${service}] ${level}: ${message}`;
+};
+
+const emitLog = (method: ConsoleMethod, formatted: string, details: unknown[]): void => {
+  if (details.length === 0) {
+    console[method](formatted);
+    return;
+  }
+
+  console[method](formatted, ...details);
+};
+
+export function createLogger(service: string): Logger {
   return {
-    info: (message: string) => {
-      console.log(`[${new Date().toISOString()}] ${prefix} INFO: ${message}`);
+    info: (message: string, ...details: unknown[]) => {
+      emitLog('log', buildMessage(service, 'INFO', message), details);
     },
-    warn: (message: string) => {
-      console.warn(`[${new Date().toISOString()}] ${prefix} WARN: ${message}`);
+    warn: (message: string, ...details: unknown[]) => {
+      emitLog('warn', buildMessage(service, 'WARN', message), details);
     },
-    error: (message: string) => {
-      console.error(`[${new Date().toISOString()}] ${prefix} ERROR: ${message}`);
+    error: (message: string, ...details: unknown[]) => {
+      emitLog('error', buildMessage(service, 'ERROR', message), details);
     },
-    debug: (message: string) => {
-      if (process.env.DEBUG) {
-        console.log(`[${new Date().toISOString()}] ${prefix} DEBUG: ${message}`);
+    debug: (message: string, ...details: unknown[]) => {
+      if (!process.env.DEBUG) {
+        return;
       }
+
+      emitLog('log', buildMessage(service, 'DEBUG', message), details);
     }
   };
 }
+
