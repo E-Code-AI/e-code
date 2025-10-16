@@ -80,7 +80,7 @@ type InsertGitCommit = z.infer<typeof insertGitCommitSchema>;
 type CustomDomain = typeof customDomains.$inferSelect;
 type InsertCustomDomain = z.infer<typeof insertCustomDomainSchema>;
 
-import { eq, and, desc, isNull, sql, inArray, gte, lte } from "drizzle-orm";
+import { eq, and, desc, isNull, sql, inArray, gte, lte, SQL } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";
@@ -88,6 +88,34 @@ import connectPg from "connect-pg-simple";
 import { client } from "./db";
 import * as crypto from "crypto";
 
+type ApiKeyInsertModel = typeof apiKeys.$inferInsert;
+type CodeReviewInsertModel = typeof codeReviews.$inferInsert;
+type ChallengeInsertModel = typeof challenges.$inferInsert;
+type MentorProfileInsertModel = typeof mentorProfiles.$inferInsert;
+
+type UsageMetricInput = {
+  metricType: string;
+  value: number | string;
+  unit: string;
+  billingPeriodStart?: Date;
+  billingPeriodEnd?: Date;
+};
+
+type UsageMetricMetadata = {
+  unit?: string;
+  [key: string]: unknown;
+};
+
+const normalizeStringArray = (value: unknown, fallback: string[] = []): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item));
+  }
+
+  if (value === null || value === undefined) {
+    return [...fallback];
+  }
+
+  return [String(value)];
 const toMutableArray = <T>(value: readonly T[] | T[] | null | undefined): T[] | null | undefined => {
   if (Array.isArray(value)) {
     return [...value];
@@ -99,14 +127,16 @@ const toMutableArray = <T>(value: readonly T[] | T[] | null | undefined): T[] | 
 export interface IStorage {
   // Mobile-specific methods
   getUserByUsername(username: string): Promise<User | undefined>;
-  createFile(data: { projectId: number; path: string; content: string }): Promise<any>;
+  createFile(data: { projectId: number; path: string; content: string }): Promise<File>;
+  createFile(file: InsertFile): Promise<File>;
   updateFile(fileId: number, data: { content: string }): Promise<void>;
+  updateFile(id: number, file: Partial<InsertFile>): Promise<File | undefined>;
   getTrendingProjects(options: { limit: number }): Promise<any[]>;
   getFeaturedProjects(options: { limit: number }): Promise<any[]>;
   pinProject(projectId: number, userId: number): Promise<void>;
   unpinProject(projectId: number, userId: number): Promise<void>;
-  trackUsage(userId: number, data: any): Promise<void>;
-  updateUserStripeInfo(userId: number, data: any): Promise<void>;
+  trackUsage(userId: number, data: UsageMetricInput): Promise<void>;
+  updateUserStripeInfo(userId: number, data: any): Promise<User | undefined>;
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -225,7 +255,12 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
 
   // Usage tracking operations
-  trackUsage(userId: number, eventType: string, quantity: number, metadata?: any): Promise<void>;
+  trackUsage(
+    userId: number,
+    eventType: string,
+    quantity: number,
+    metadata?: UsageMetricMetadata
+  ): Promise<void>;
   getUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any>;
   getUserUsage(userId: number, billingPeriodStart?: Date): Promise<any>;
   getUsageHistory(userId: number, startDate: Date, endDate: Date, metricType?: string): Promise<any[]>;
@@ -417,6 +452,43 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   private db = db; // Use the imported db instance
 
+  // Mobile-specific project feeds
+  async getTrendingProjects({ limit }: { limit: number }): Promise<Project[]> {
+    return await this.db
+      .select()
+      .from(projects)
+      .orderBy(desc(projects.views), desc(projects.updatedAt))
+      .limit(limit);
+  }
+
+  async getFeaturedProjects({ limit }: { limit: number }): Promise<Project[]> {
+    return await this.db
+      .select()
+      .from(projects)
+      .where(eq(projects.isPinned, true))
+      .orderBy(desc(projects.updatedAt))
+      .limit(limit);
+  }
+
+  async pinProject(projectId: number, userId: number): Promise<void> {
+    await this.db
+      .update(projects)
+      .set({ isPinned: true, updatedAt: new Date() })
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
+
+    // Optionally record the pin action for analytics
+    await this.trackUsage(userId, "project.pin", 1, { unit: "action" });
+  }
+
+  async unpinProject(projectId: number, userId: number): Promise<void> {
+    await this.db
+      .update(projects)
+      .set({ isPinned: false, updatedAt: new Date() })
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
+
+    await this.trackUsage(userId, "project.unpin", 1, { unit: "action" });
+  }
+
   // User operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await this.db.select().from(users).where(eq(users.id, id));
@@ -491,16 +563,16 @@ export class DatabaseStorage implements IStorage {
 
   async getProjectBySlug(slug: string, ownerId?: number): Promise<Project | null> {
     try {
-      let query = this.db
+      const condition =
+        ownerId !== undefined
+          ? and(eq(projects.slug, slug), eq(projects.ownerId, ownerId))
+          : eq(projects.slug, slug);
+
+      const result = await this.db
         .select()
         .from(projects)
-        .where(eq(projects.slug, slug));
-
-      if (ownerId) {
-        query = query.where(eq(projects.ownerId, ownerId));
-      }
-
-      const result = await query.limit(1);
+        .where(condition)
+        .limit(1);
 
       return result[0] || null;
     } catch (error) {
@@ -561,17 +633,45 @@ export class DatabaseStorage implements IStorage {
     return await this.db.select().from(files).where(eq(files.projectId, projectId)).orderBy(files.path);
   }
 
-  async createFile(fileData: InsertFile): Promise<File> {
-    const [file] = await this.db.insert(files).values(fileData).returning();
+  async createFile(data: { projectId: number; path: string; content: string }): Promise<File>;
+  async createFile(fileData: InsertFile): Promise<File>;
+  async createFile(
+    fileData: InsertFile | { projectId: number; path: string; content: string }
+  ): Promise<File> {
+    const values: InsertFile = "name" in fileData
+      ? fileData
+      : {
+          name: fileData.path.split("/").pop() ?? fileData.path,
+          path: fileData.path,
+          projectId: fileData.projectId,
+          content: fileData.content,
+          isDirectory: false,
+        };
+
+    const [file] = await this.db.insert(files).values(values).returning();
     return file;
   }
 
-  async updateFile(id: number, fileData: Partial<InsertFile>): Promise<File | undefined> {
+  async updateFile(id: number, data: { content: string }): Promise<void>;
+  async updateFile(id: number, fileData: Partial<InsertFile>): Promise<File | undefined>;
+  async updateFile(
+    id: number,
+    fileData: { content: string } | Partial<InsertFile>
+  ): Promise<void | (File | undefined)> {
+    const update: Partial<InsertFile> = "content" in fileData && Object.keys(fileData).length === 1
+      ? { content: fileData.content }
+      : { ...fileData };
+
     const [file] = await this.db
       .update(files)
-      .set({ ...fileData, updatedAt: new Date() })
+      .set({ ...update, updatedAt: new Date() })
       .where(eq(files.id, id))
       .returning();
+
+    if ("content" in fileData && Object.keys(fileData).length === 1) {
+      return;
+    }
+
     return file;
   }
 
@@ -582,7 +682,12 @@ export class DatabaseStorage implements IStorage {
 
   // API Key operations
   async createApiKey(apiKeyData: InsertApiKey): Promise<ApiKey> {
-    const [apiKey] = await this.db.insert(apiKeys).values([apiKeyData]).returning();
+    const values = {
+      ...apiKeyData,
+      permissions: normalizeStringArray(apiKeyData.permissions, []),
+    } satisfies InsertApiKey;
+
+    const [apiKey] = await this.db.insert(apiKeys).values(values).returning();
     return apiKey;
   }
 
@@ -596,9 +701,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateApiKey(id: number, apiKeyData: Partial<InsertApiKey>): Promise<ApiKey | undefined> {
+    const baseUpdate = apiKeyData as Partial<ApiKeyInsertModel>;
+    const updateData: Partial<ApiKeyInsertModel> = {
+      ...baseUpdate,
+      ...(apiKeyData.permissions !== undefined
+        ? {
+            permissions: normalizeStringArray(apiKeyData.permissions, []) as ApiKeyInsertModel["permissions"],
+          }
+        : {}),
+    };
+
     const [apiKey] = await this.db
       .update(apiKeys)
-      .set({ ...apiKeyData })
+      .set(updateData)
       .where(eq(apiKeys.id, id))
       .returning();
     return apiKey;
@@ -611,6 +726,12 @@ export class DatabaseStorage implements IStorage {
 
   // Code Review operations
   async createCodeReview(reviewData: InsertCodeReview): Promise<CodeReview> {
+    const values = {
+      ...reviewData,
+      filesChanged: normalizeStringArray(reviewData.filesChanged, []),
+    } satisfies InsertCodeReview;
+
+    const [review] = await this.db.insert(codeReviews).values(values).returning();
     const normalizedReview: InsertCodeReview = {
       ...reviewData,
       filesChanged: toMutableArray<string>(reviewData.filesChanged),
@@ -630,6 +751,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateCodeReview(id: number, reviewData: Partial<InsertCodeReview>): Promise<CodeReview | undefined> {
+    const baseReview = reviewData as Partial<CodeReviewInsertModel>;
+    const reviewUpdate: Partial<CodeReviewInsertModel> = {
+      ...baseReview,
+      ...(reviewData.filesChanged !== undefined
+        ? {
+            filesChanged: normalizeStringArray(reviewData.filesChanged, []) as CodeReviewInsertModel["filesChanged"],
+          }
+        : {}),
+      updatedAt: new Date(),
     const normalizedReview: Partial<InsertCodeReview> = {
       ...reviewData,
       filesChanged: toMutableArray<string>(reviewData.filesChanged),
@@ -637,6 +767,7 @@ export class DatabaseStorage implements IStorage {
 
     const [review] = await this.db
       .update(codeReviews)
+      .set(reviewUpdate)
       .set({ ...normalizedReview, updatedAt: new Date() })
       .where(eq(codeReviews.id, id))
       .returning();
@@ -645,6 +776,15 @@ export class DatabaseStorage implements IStorage {
 
   // Challenge operations
   async createChallenge(challengeData: InsertChallenge): Promise<Challenge> {
+    const challengeValues = {
+      ...challengeData,
+      tags: normalizeStringArray(challengeData.tags, []),
+      testCases: Array.isArray(challengeData.testCases)
+        ? [...challengeData.testCases]
+        : [],
+    } satisfies InsertChallenge;
+
+    const [challenge] = await this.db.insert(challenges).values(challengeValues).returning();
     const normalizedChallenge: InsertChallenge = {
       ...challengeData,
       tags: toMutableArray<string>(challengeData.tags),
@@ -665,6 +805,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateChallenge(id: number, challengeData: Partial<InsertChallenge>): Promise<Challenge | undefined> {
+    const baseChallenge = challengeData as Partial<ChallengeInsertModel>;
+    const challengeUpdate: Partial<ChallengeInsertModel> = {
+      ...baseChallenge,
+      ...(challengeData.tags !== undefined
+        ? { tags: normalizeStringArray(challengeData.tags, []) as ChallengeInsertModel["tags"] }
+        : {}),
+      updatedAt: new Date(),
     const normalizedChallenge: Partial<InsertChallenge> = {
       ...challengeData,
       tags: toMutableArray<string>(challengeData.tags),
@@ -673,6 +820,7 @@ export class DatabaseStorage implements IStorage {
 
     const [challenge] = await this.db
       .update(challenges)
+      .set(challengeUpdate)
       .set({ ...normalizedChallenge, updatedAt: new Date() })
       .where(eq(challenges.id, id))
       .returning();
@@ -681,6 +829,16 @@ export class DatabaseStorage implements IStorage {
 
   // Mentorship operations
   async createMentorProfile(profileData: InsertMentorProfile): Promise<MentorProfile> {
+    const profileValues = {
+      ...profileData,
+      expertise: normalizeStringArray(profileData.expertise, []),
+      availability:
+        profileData.availability && typeof profileData.availability === "object"
+          ? { ...profileData.availability }
+          : {},
+    } satisfies InsertMentorProfile;
+
+    const [profile] = await this.db.insert(mentorProfiles).values(profileValues).returning();
     const normalizedProfile: InsertMentorProfile = {
       ...profileData,
       expertise: toMutableArray<string>(profileData.expertise),
@@ -696,6 +854,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateMentorProfile(userId: number, profileData: Partial<InsertMentorProfile>): Promise<MentorProfile | undefined> {
+    const baseMentor = profileData as Partial<MentorProfileInsertModel>;
+    const mentorUpdate: Partial<MentorProfileInsertModel> = {
+      ...baseMentor,
+      ...(profileData.expertise !== undefined
+        ? {
+            expertise: normalizeStringArray(profileData.expertise, []) as MentorProfileInsertModel["expertise"],
+          }
+        : {}),
+      ...(profileData.availability !== undefined
+        ? {
+            availability:
+              profileData.availability && typeof profileData.availability === "object"
+                ? { ...profileData.availability }
+                : {},
+          }
+        : {}),
     const normalizedProfile: Partial<InsertMentorProfile> = {
       ...profileData,
       expertise: toMutableArray<string>(profileData.expertise),
@@ -703,6 +877,7 @@ export class DatabaseStorage implements IStorage {
 
     const [profile] = await this.db
       .update(mentorProfiles)
+      .set(mentorUpdate)
       .set({ ...normalizedProfile })
       .where(eq(mentorProfiles.userId, userId))
       .returning();
@@ -779,20 +954,6 @@ export class DatabaseStorage implements IStorage {
     ];
 
     return publishedOnly ? templates : templates;
-  }
-
-  async pinProject(projectId: number, userId: number): Promise<void> {
-    await this.db
-      .update(projects)
-      .set({ isPinned: true })
-      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
-  }
-
-  async unpinProject(projectId: number, userId: number): Promise<void> {
-    await this.db
-      .update(projects)
-      .set({ isPinned: false })
-      .where(and(eq(projects.id, projectId), eq(projects.ownerId, userId)));
   }
 
   async createLoginHistory(history: any): Promise<any> {
@@ -1162,17 +1323,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Stripe operations
-  async updateUserStripeInfo(userId: number, stripeData: {
-    stripeCustomerId?: string;
-    stripeSubscriptionId?: string;
-    stripePriceId?: string;
-    subscriptionStatus?: string;
-    subscriptionCurrentPeriodEnd?: Date;
-  }): Promise<User | undefined> {
-    const [updated] = await this.db.update(users)
-      .set({ ...stripeData, updatedAt: new Date() })
+  async updateUserStripeInfo(userId: number, data: any): Promise<User | undefined>;
+  async updateUserStripeInfo(
+    userId: number,
+    stripeData: {
+      stripeCustomerId?: string;
+      stripeSubscriptionId?: string;
+      stripePriceId?: string;
+      subscriptionStatus?: string;
+      subscriptionCurrentPeriodEnd?: Date;
+    }
+  ): Promise<User | undefined>;
+  async updateUserStripeInfo(
+    userId: number,
+    stripeData: any
+  ): Promise<User | undefined> {
+    const updatePayload = {
+      ...stripeData,
+      updatedAt: new Date(),
+    };
+
+    const [updated] = await this.db
+      .update(users)
+      .set(updatePayload)
       .where(eq(users.id, userId))
       .returning();
+
     return updated;
   }
 
@@ -1189,19 +1365,51 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Usage tracking operations
-  async trackUsage(userId: number, eventType: string, quantity: number, metadata?: any): Promise<void> {
+  async trackUsage(userId: number, data: UsageMetricInput): Promise<void>;
+  async trackUsage(
+    userId: number,
+    eventType: string,
+    quantity: number,
+    metadata?: UsageMetricMetadata
+  ): Promise<void>;
+  async trackUsage(
+    userId: number,
+    arg2: UsageMetricInput | string,
+    arg3?: number,
+    arg4?: UsageMetricMetadata
+  ): Promise<void> {
     const now = new Date();
-    const billingPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const billingPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const defaultPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const defaultPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    await this.db.insert(usageTracking).values([{
+    const metric: UsageMetricInput =
+      typeof arg2 === "string"
+        ? {
+            metricType: arg2,
+            value: arg3 ?? 0,
+            unit: arg4?.unit ?? "request",
+            billingPeriodStart: defaultPeriodStart,
+            billingPeriodEnd: defaultPeriodEnd,
+          }
+        : {
+            metricType: arg2.metricType,
+            value: arg2.value,
+            unit: arg2.unit,
+            billingPeriodStart: arg2.billingPeriodStart ?? defaultPeriodStart,
+            billingPeriodEnd: arg2.billingPeriodEnd ?? defaultPeriodEnd,
+          };
+
+    const billingPeriodStart = metric.billingPeriodStart ?? defaultPeriodStart;
+    const billingPeriodEnd = metric.billingPeriodEnd ?? defaultPeriodEnd;
+
+    await this.db.insert(usageTracking).values({
       userId,
-      metricType: eventType,
-      value: quantity.toString(),
-      unit: metadata?.unit || 'request',
+      metricType: metric.metricType,
+      value: typeof metric.value === "number" ? metric.value.toString() : metric.value,
+      unit: metric.unit,
       billingPeriodStart,
-      billingPeriodEnd
-    }]);
+      billingPeriodEnd,
+    });
   }
 
   async getUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any> {
@@ -1558,13 +1766,13 @@ export class DatabaseStorage implements IStorage {
   // CLI token methods
   async createCLIToken(userId: number): Promise<any> {
     const token = crypto.randomBytes(32).toString('hex');
-    const [created] = await this.db.insert(apiKeys).values([{
+    const [created] = await this.db.insert(apiKeys).values({
       userId,
       name: 'CLI Token',
       key: token,
       permissions: ['cli:access'],
       lastUsed: null
-    }]).returning();
+    }).returning();
     return created;
   }
 
@@ -1611,14 +1819,10 @@ export class DatabaseStorage implements IStorage {
 
     // If no credits record exists, create one with default credits
     if (!credits) {
-      const [newCredits] = await this.db.insert(userCredits).values({
-        userId,
-        planType: 'free',
-        totalCredits: 100, // Free users get 100 credits to start
-        remainingCredits: 100,
-        totalUsed: 0,
-        billingCycle: 'monthly'
-      }).returning();
+      const [newCredits] = await this.db
+        .insert(userCredits)
+        .values({ userId })
+        .returning();
       return newCredits;
     }
 
@@ -2245,11 +2449,11 @@ export class DatabaseStorage implements IStorage {
     }).returning();
 
     // Also deduct credits from user account
-    await this.db.update(userCredits)
-      .set({ 
+    await this.db
+      .update(userCredits)
+      .set({
         remainingCredits: sql`${userCredits.remainingCredits} - ${record.creditsCost}`,
-        totalUsed: sql`${userCredits.totalUsed} + ${record.creditsCost}`,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(userCredits.userId, record.userId));
 
@@ -2257,17 +2461,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAIUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any[]> {
-    let query = this.db.select().from(aiUsageRecords).where(eq(aiUsageRecords.userId, userId));
+    const filters: SQL[] = [eq(aiUsageRecords.userId, userId)];
 
     if (startDate) {
-      query = query.where(gte(aiUsageRecords.createdAt, startDate));
+      filters.push(gte(aiUsageRecords.createdAt, startDate));
     }
 
     if (endDate) {
-      query = query.where(lte(aiUsageRecords.createdAt, endDate));
+      filters.push(lte(aiUsageRecords.createdAt, endDate));
     }
 
-    return await query.orderBy(desc(aiUsageRecords.createdAt));
+    const whereClause = filters.length > 1 ? and(...filters) : filters[0];
+
+    return await this.db
+      .select()
+      .from(aiUsageRecords)
+      .where(whereClause)
+      .orderBy(desc(aiUsageRecords.createdAt));
   }
 }
 

@@ -3,8 +3,20 @@ import Stripe from 'stripe';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { resourceMonitor } from './resource-monitor';
+import { coerceNumber, getSubscriptionPeriodBoundary } from './stripe-utils';
 
 const logger = createLogger('stripe-billing');
+
+type UsageSnapshot = {
+  used?: number;
+  cost?: number;
+  unit?: string;
+};
+
+const isUsageSnapshot = (value: unknown): value is UsageSnapshot => {
+  return typeof value === 'object' && value !== null;
+};
+
 
 export class StripeBillingService {
   private stripe: Stripe;
@@ -81,11 +93,13 @@ export class StripeBillingService {
       });
       
       // Update user's subscription info
+      const periodEnd = getSubscriptionPeriodBoundary(subscription, 'current_period_end');
+
       await storage.updateUserStripeInfo(userId, {
         stripeCustomerId: customerId,
         stripeSubscriptionId: subscription.id,
         subscriptionStatus: subscription.status,
-        subscriptionCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        subscriptionCurrentPeriodEnd: periodEnd ?? undefined,
       });
       
       logger.info(`Created subscription ${subscription.id} for user ${userId}`);
@@ -128,25 +142,30 @@ export class StripeBillingService {
       }
       
       // Find the subscription item for this price
-      const subscription = await this.stripe.subscriptions.retrieve(user.stripeSubscriptionId);
-      const subscriptionItem = subscription.items.data.find(item => item.price.id === priceId);
-      
+      const subscription = await this.stripe.subscriptions.retrieve(
+        user.stripeSubscriptionId,
+        { expand: ['items.data.price'] }
+      );
+      const subscriptionItem = subscription.items.data.find(
+        item => item.price?.id === priceId
+      );
+
       if (!subscriptionItem) {
         logger.warn(`No subscription item found for price ${priceId}`);
         return;
       }
-      
-      // Report usage to Stripe using the correct method
-      const usageRecord = await this.stripe.billing.meters.createEvent({
-        event_name: metricType,
-        payload: {
-          stripe_customer_id: user.stripeCustomerId!,
-          value: quantity.toString(),
-        },
-        identifier: `${userId}-${Date.now()}`,
+
+      if (!subscriptionItem.id) {
+        logger.warn(`Subscription item for price ${priceId} is missing an identifier`);
+        return;
+      }
+
+      await (this.stripe.subscriptionItems as any).createUsageRecord(subscriptionItem.id, {
+        action: 'increment',
+        quantity,
         timestamp: Math.floor(Date.now() / 1000),
       });
-      
+
       logger.info(`Reported usage for user ${userId}: ${metricType} = ${quantity}`);
     } catch (error) {
       logger.error('Failed to report usage to Stripe:', error);
@@ -167,11 +186,18 @@ export class StripeBillingService {
         // Get usage for the current billing period
         const billingPeriodStart = await this.getBillingPeriodStart(user.stripeSubscriptionId);
         const usage = await storage.getUserUsage(user.id, billingPeriodStart);
-        
-        // Report each metric to Stripe
-        for (const [metricType, data] of Object.entries(usage)) {
-          if (data && typeof data === 'object' && 'used' in data && data.used > 0) {
-            await this.reportUsage(user.id, metricType, data.used);
+
+        if (usage && typeof usage === 'object') {
+          // Report each metric to Stripe
+          for (const [metricType, entry] of Object.entries(
+            usage as Record<string, unknown>
+          )) {
+            if (!isUsageSnapshot(entry)) continue;
+
+            const used = coerceNumber(entry.used);
+            if (used === null || used <= 0) continue;
+
+            await this.reportUsage(user.id, metricType, used);
           }
         }
       }
@@ -183,8 +209,17 @@ export class StripeBillingService {
   }
   
   private async getBillingPeriodStart(subscriptionId: string): Promise<Date> {
-    const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
-    return new Date(subscription.current_period_start * 1000);
+    const subscription = await this.stripe.subscriptions.retrieve(subscriptionId, {
+      expand: ['items']
+    });
+
+    const periodStart = getSubscriptionPeriodBoundary(subscription, 'current_period_start');
+    if (periodStart) {
+      return periodStart;
+    }
+
+    const created = coerceNumber(subscription.created);
+    return created ? new Date(created * 1000) : new Date();
   }
   
   async enforceUsageLimits(userId: number): Promise<boolean> {
@@ -269,21 +304,38 @@ export class StripeBillingService {
       
       // Add custom line items for detailed breakdown
       const usage = await storage.getUserUsage(userId);
-      
-      for (const [metricType, data] of Object.entries(usage)) {
-        if (data && typeof data === 'object' && 'used' in data && 'cost' in data && data.used > 0 && data.cost > 0) {
+
+      if (usage && typeof usage === 'object') {
+        for (const [metricType, entry] of Object.entries(
+          usage as Record<string, unknown>
+        )) {
+          if (!isUsageSnapshot(entry)) continue;
+
+          const used = coerceNumber(entry.used);
+          const cost = coerceNumber(entry.cost);
+          const unit = typeof entry.unit === 'string' ? entry.unit : undefined;
+
+          if (used === null || used <= 0 || cost === null || cost <= 0) {
+            continue;
+          }
+
           await this.stripe.invoiceItems.create({
             customer: user.stripeCustomerId,
             invoice: invoice.id,
-            description: `${metricType.replace(/_/g, ' ')} usage: ${data.used} ${data.unit}`,
-            amount: Math.round(data.cost * 100), // Convert to cents
+            description: `${metricType.replace(/_/g, ' ')} usage: ${used}${unit ? ` ${unit}` : ''}`,
+            amount: Math.round(cost * 100), // Convert to cents
             currency: 'eur',
           });
         }
       }
-      
+
+      const invoiceId = invoice.id;
+      if (!invoiceId) {
+        throw new Error('Invoice identifier missing from Stripe response');
+      }
+
       // Finalize the invoice
-      const finalizedInvoice = await this.stripe.invoices.finalizeInvoice(invoice.id);
+      const finalizedInvoice = await this.stripe.invoices.finalizeInvoice(invoiceId);
       
       logger.info(`Generated invoice ${finalizedInvoice.id} for user ${userId}`);
       return finalizedInvoice.hosted_invoice_url || '';
@@ -322,9 +374,11 @@ export class StripeBillingService {
     const userId = parseInt(subscription.metadata.userId);
     if (!userId) return;
     
+    const periodEnd = getSubscriptionPeriodBoundary(subscription, 'current_period_end');
+
     await storage.updateUserStripeInfo(userId, {
       subscriptionStatus: subscription.status,
-      subscriptionCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      subscriptionCurrentPeriodEnd: periodEnd ?? undefined,
     });
     
     logger.info(`Updated subscription status for user ${userId}: ${subscription.status}`);
