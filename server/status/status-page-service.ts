@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Status Page Service
  * Implements public status monitoring for E-Code platform

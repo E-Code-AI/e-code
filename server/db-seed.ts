@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";

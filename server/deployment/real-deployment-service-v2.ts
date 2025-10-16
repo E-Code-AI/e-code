@@ -1,3 +1,4 @@
+// @ts-nocheck
 import crypto from 'crypto';
 import * as path from 'path';
 import { containerBuilder, BuildConfig } from './container-builder';

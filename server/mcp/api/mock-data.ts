@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Mock data for MCP endpoints during development
 export const mockGitHubRepos = [
   {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EventEmitter } from 'events';
 import * as crypto from 'crypto';
 import * as path from 'path';

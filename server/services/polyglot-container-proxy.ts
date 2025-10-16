@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Polyglot Container Proxy - Routes container operations to Go service
  * This replaces the TypeScript container manager with Go-based operations

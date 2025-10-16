@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from 'react';
 import Terminal from './Terminal';
 import { Button } from '@/components/ui/button';

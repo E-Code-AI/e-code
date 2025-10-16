@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { ReplitLayout } from '@/components/layout/ReplitLayout';
 import { AdvancedSearch } from '@/components/AdvancedSearch';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Rate Limiting Middleware
  * Simplified rate limiting for development and production

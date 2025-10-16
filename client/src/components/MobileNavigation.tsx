@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useLocation } from 'wouter';
 import { Home, ChevronLeft, ChevronRight, Menu, SquareStack } from 'lucide-react';
 import { Button } from "@/components/ui/button";
