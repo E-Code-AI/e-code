@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,12 @@ import {
   SafeAreaView,
   Modal,
   ActivityIndicator,
-  Alert
+  Alert,
+  TextInput,
+  Platform,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,6 +33,12 @@ export function ProjectScreen({ project, onClose }) {
   const [loading, setLoading] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
   const [deploymentStatus, setDeploymentStatus] = useState(null);
+  const [isCreateFileModalVisible, setCreateFileModalVisible] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
+  const [isCreatingFile, setIsCreatingFile] = useState(false);
+  const [fileNameError, setFileNameError] = useState('');
+
+  const trimmedFileName = useMemo(() => newFileName.trim(), [newFileName]);
 
   useEffect(() => {
     loadProjectFiles();
@@ -35,6 +46,7 @@ export function ProjectScreen({ project, onClose }) {
   }, []);
 
   const loadProjectFiles = async () => {
+    setLoading(true);
     try {
       const token = await AsyncStorage.getItem('authToken');
       const response = await fetch(`${API_BASE}/mobile/projects/${project.id}/files`, {
@@ -130,34 +142,46 @@ export function ProjectScreen({ project, onClose }) {
   };
 
   const createNewFile = () => {
-    Alert.prompt(
-      'New File',
-      'Enter file name:',
-      async (filename) => {
-        if (!filename) return;
-        
-        try {
-          const token = await AsyncStorage.getItem('authToken');
-          const response = await fetch(`${API_BASE}/projects/${project.id}/files`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              path: filename,
-              content: ''
-            })
-          });
-          
-          if (response.ok) {
-            loadProjectFiles();
-          }
-        } catch (error) {
-          Alert.alert('Error', 'Failed to create file');
-        }
+    setNewFileName('');
+    setFileNameError('');
+    setCreateFileModalVisible(true);
+  };
+
+  const submitNewFile = async () => {
+    if (!trimmedFileName) {
+      setFileNameError('Please enter a file name.');
+      return;
+    }
+
+    setIsCreatingFile(true);
+
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE}/projects/${project.id}/files`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          path: trimmedFileName,
+          content: ''
+        })
+      });
+
+      if (response.ok) {
+        await loadProjectFiles();
+        setCreateFileModalVisible(false);
+        setNewFileName('');
+        setFileNameError('');
+      } else {
+        Alert.alert('Error', 'Failed to create file');
       }
-    );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to create file');
+    } finally {
+      setIsCreatingFile(false);
+    }
   };
 
   if (showEditor && selectedFile) {
@@ -322,7 +346,7 @@ export function ProjectScreen({ project, onClose }) {
 
       {/* Bottom Action Bar */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.bottomAction}
           onPress={() => setShowTerminal(true)}
         >
@@ -345,6 +369,94 @@ export function ProjectScreen({ project, onClose }) {
           <Text style={styles.bottomActionText}>Fork</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isCreateFileModalVisible}
+        onRequestClose={() => {
+          if (!isCreatingFile) {
+            setCreateFileModalVisible(false);
+            setNewFileName('');
+            setFileNameError('');
+          }
+        }}
+      >
+        <TouchableWithoutFeedback
+          accessible={false}
+          onPress={() => {
+            if (isCreatingFile) return;
+            setCreateFileModalVisible(false);
+            setNewFileName('');
+            setFileNameError('');
+          }}
+        >
+          <View style={styles.modalOverlay}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.modalKeyboardAvoider}
+            >
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.modalTitle}>New File</Text>
+                  <TextInput
+                    autoFocus
+                    placeholder="Enter file name"
+                    placeholderTextColor="#6b7280"
+                    style={[styles.modalInput, fileNameError && styles.modalInputError]}
+                    value={newFileName}
+                    onChangeText={text => {
+                      if (fileNameError) {
+                        setFileNameError('');
+                      }
+                      setNewFileName(text);
+                    }}
+                    editable={!isCreatingFile}
+                    returnKeyType="done"
+                    onSubmitEditing={() => {
+                      if (trimmedFileName) {
+                        submitNewFile();
+                      } else {
+                        setFileNameError('Please enter a file name.');
+                      }
+                    }}
+                  />
+                  {!!fileNameError && <Text style={styles.modalErrorText}>{fileNameError}</Text>}
+                  <View style={styles.modalActions}>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.modalCancelButton]}
+                      onPress={() => {
+                        if (isCreatingFile) return;
+                        setCreateFileModalVisible(false);
+                        setNewFileName('');
+                        setFileNameError('');
+                      }}
+                      disabled={isCreatingFile}
+                    >
+                      <Text style={styles.modalCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalButton,
+                        styles.modalConfirmButton,
+                        (isCreatingFile || !trimmedFileName) && styles.modalConfirmButtonDisabled,
+                      ]}
+                      onPress={submitNewFile}
+                      disabled={isCreatingFile || !trimmedFileName}
+                    >
+                      {isCreatingFile ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Text style={styles.modalConfirmText}>Create</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -559,5 +671,74 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 11,
     marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: '#00000080',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalKeyboardAvoider: {
+    width: '100%',
+  },
+  modalContainer: {
+    width: '100%',
+    backgroundColor: '#1c2333',
+    borderRadius: 12,
+    padding: 20,
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  modalInput: {
+    backgroundColor: '#0e1525',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#fff',
+    borderWidth: 1,
+    borderColor: '#2d3748',
+    marginBottom: 20,
+  },
+  modalInputError: {
+    borderColor: '#ef4444',
+  },
+  modalErrorText: {
+    color: '#f87171',
+    fontSize: 12,
+    marginBottom: 16,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  modalCancelButton: {
+    backgroundColor: 'transparent',
+  },
+  modalConfirmButton: {
+    backgroundColor: '#0079F2',
+  },
+  modalConfirmButtonDisabled: {
+    backgroundColor: '#1e293b',
+  },
+  modalCancelText: {
+    color: '#9ca3af',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  modalConfirmText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
