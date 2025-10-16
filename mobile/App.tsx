@@ -15,8 +15,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
-  Alert
+  Alert,
+  Pressable
 } from 'react-native';
+import type { GestureResponderEvent } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ProjectScreen } from './screens/ProjectScreen';
@@ -317,7 +319,20 @@ function HomeTab({ projects, loading, onCreateNew, onRefresh }) {
 // Project Card Component
 function ProjectCard({ project }) {
   const [showProjectScreen, setShowProjectScreen] = useState(false);
-  
+
+  const handleProjectMenuPress = (event?: GestureResponderEvent) => {
+    event?.stopPropagation();
+    Alert.alert(
+      'Project Options',
+      'What would you like to do?',
+      [
+        { text: 'Rename', onPress: () => Alert.alert('Rename', 'Feature coming soon') },
+        { text: 'Delete', style: 'destructive', onPress: () => Alert.alert('Delete', 'Are you sure?') },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
+  };
+
   const getLanguageIcon = (language) => {
     const icons = {
       javascript: '📗',
@@ -358,23 +373,12 @@ function ProjectCard({ project }) {
           {project.language} • Updated {formatDate(project.updatedAt)}
         </Text>
       </View>
-      <TouchableOpacity 
+      <Pressable
         style={styles.projectMenu}
-        onPress={(e) => {
-          e.stopPropagation();
-          Alert.alert(
-            'Project Options',
-            'What would you like to do?',
-            [
-              { text: 'Rename', onPress: () => Alert.alert('Rename', 'Feature coming soon') },
-              { text: 'Delete', style: 'destructive', onPress: () => Alert.alert('Delete', 'Are you sure?') },
-              { text: 'Cancel', style: 'cancel' }
-            ]
-          );
-        }}
+        onPress={handleProjectMenuPress}
       >
         <Icon name="more-vert" size={20} color="#6b7280" />
-      </TouchableOpacity>
+      </Pressable>
     </TouchableOpacity>
   );
 }
