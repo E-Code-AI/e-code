@@ -191,33 +191,41 @@ export function CodeEditorScreen({ project, file, onClose }) {
       </View>
 
       {/* Code Editor */}
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         style={styles.editorContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView 
-          horizontal
-          showsHorizontalScrollIndicator={false}
+        <ScrollView
+          style={styles.editorScroll}
+          contentContainerStyle={styles.editorContent}
+          showsVerticalScrollIndicator={false}
         >
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.codeRow}>
             <View style={styles.lineNumbers}>
               {code.split('\n').map((_, index) => (
                 <Text key={index} style={styles.lineNumber}>{index + 1}</Text>
               ))}
             </View>
-            <TextInput
-              style={[styles.codeInput, { minHeight: 500 }]}
-              value={code}
-              onChangeText={setCode}
-              multiline
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="off"
-              keyboardType="default"
-              placeholder="// Start coding..."
-              placeholderTextColor="#6b7280"
-            />
-          </ScrollView>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              bounces={false}
+              contentContainerStyle={styles.codeSurface}
+            >
+              <TextInput
+                style={[styles.codeInput, { minHeight: 500 }]}
+                value={code}
+                onChangeText={setCode}
+                multiline
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="off"
+                keyboardType="default"
+                placeholder="// Start coding..."
+                placeholderTextColor="#6b7280"
+              />
+            </ScrollView>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -304,14 +312,28 @@ const styles = StyleSheet.create({
   },
   editorContainer: {
     flex: 1,
+  },
+  editorScroll: {
+    flex: 1,
+  },
+  editorContent: {
+    flexGrow: 1,
+  },
+  codeRow: {
     flexDirection: 'row',
+    alignItems: 'stretch',
+    backgroundColor: '#0e1525',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   lineNumbers: {
-    backgroundColor: '#0e1525',
-    paddingHorizontal: 8,
+    backgroundColor: '#0b1220',
     paddingVertical: 12,
+    paddingHorizontal: 12,
     borderRightWidth: 1,
-    borderRightColor: '#2d3748',
+    borderRightColor: '#1f2937',
+    width: 56,
+    alignItems: 'flex-end',
   },
   lineNumber: {
     color: '#6b7280',
@@ -319,14 +341,21 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     lineHeight: 20,
   },
+  codeSurface: {
+    flexGrow: 1,
+  },
   codeInput: {
-    flex: 1,
-    color: '#fff',
+    color: '#f3f4f6',
     fontSize: 14,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     lineHeight: 20,
+    backgroundColor: '#0e1525',
+    borderLeftWidth: 1,
+    borderLeftColor: '#1f2937',
+    textAlignVertical: 'top',
+    minWidth: 300,
   },
   console: {
     height: 150,
