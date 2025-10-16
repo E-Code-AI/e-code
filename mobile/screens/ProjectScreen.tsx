@@ -396,7 +396,10 @@ export function ProjectScreen({ project, onClose }) {
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
               style={styles.modalKeyboardAvoider}
             >
-              <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+              <TouchableWithoutFeedback
+                onPress={Keyboard.dismiss}
+                accessibilityLabel="Dismiss keyboard"
+              >
                 <View style={styles.modalContainer}>
                   <Text style={styles.modalTitle}>New File</Text>
                   <TextInput
