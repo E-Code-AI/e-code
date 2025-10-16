@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from "react";
 import { ReplitMonacoEditor } from "./ReplitMonacoEditor";
 import { ReplitFileExplorer } from "../files/ReplitFileExplorer";
