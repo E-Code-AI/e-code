@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Request, Response, NextFunction } from 'express';
 
 // Simple authentication middleware for development

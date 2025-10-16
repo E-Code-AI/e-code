@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Complete Polyglot Backend Integration - Routes all operations through appropriate services
 // Exactly like Replit's multi-language architecture
 

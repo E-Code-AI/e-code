@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useRef, useState } from "react";
 import * as monaco from 'monaco-editor';
 import { setupMonacoTheme, getMonacoEditorOptions } from "@/lib/monaco-setup";

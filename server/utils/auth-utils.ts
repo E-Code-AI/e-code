@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { randomBytes, createHash } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';

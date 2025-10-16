@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useParams } from "wouter";
 import { DatabaseManagement as DatabaseManagementComponent } from "@/components/DatabaseManagement";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";

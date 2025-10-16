@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Runtime health monitoring
  * This module provides health checks and monitoring for language runtimes

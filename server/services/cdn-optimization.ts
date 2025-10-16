@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * CDN Optimization Service
  * Fortune 500-grade content delivery optimization

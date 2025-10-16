@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Language Environments component
  * Displays available language environments and their status

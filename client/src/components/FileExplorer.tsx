@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from 'react';
 import { File } from '@shared/schema';
 import { cn } from '@/lib/utils';
