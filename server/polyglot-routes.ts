@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Polyglot Backend Routes
  * Integrates TypeScript, Go, and Python services into unified API

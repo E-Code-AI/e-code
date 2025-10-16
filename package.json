@@ -11,6 +11,9 @@
     "typecheck": "tsc --noEmit --pretty false --skipLibCheck",
     "typecheck:full": "tsc --noEmit --pretty false --skipLibCheck -p tsconfig.full.json",
     "db:push": "drizzle-kit push"
+    "check": "tsc",
+    "db:push": "drizzle-kit push",
+    "test": "tsx test/run-tests.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",

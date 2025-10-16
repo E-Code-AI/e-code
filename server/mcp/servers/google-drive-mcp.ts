@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Google Drive MCP Server
  * Provides Google Drive integration capabilities

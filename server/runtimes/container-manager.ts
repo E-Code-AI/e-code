@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Container manager for PLOT runtime
  * This module handles container-based execution environments

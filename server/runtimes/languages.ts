@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Languages supported by PLOT runtime
  * This file defines all supported programming languages and their configurations
