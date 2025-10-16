@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { ProjectScreen } from './screens/ProjectScreen';
 
 const { width, height } = Dimensions.get('window');
 const API_BASE = 'http://localhost:5000/api';
@@ -329,11 +330,14 @@ function ProjectCard({ project }) {
   };
 
   if (showProjectScreen) {
-    // Import would be at top: import { ProjectScreen } from './screens/ProjectScreen';
     return (
-      <Modal visible={true} animationType="slide">
-        <ProjectScreen 
-          project={project} 
+      <Modal
+        visible={true}
+        animationType="slide"
+        onRequestClose={() => setShowProjectScreen(false)}
+      >
+        <ProjectScreen
+          project={project}
           onClose={() => setShowProjectScreen(false)}
         />
       </Modal>
