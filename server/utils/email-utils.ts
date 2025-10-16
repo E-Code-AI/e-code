@@ -13,7 +13,7 @@ const emailConfig = {
 };
 
 // Create transporter
-const transporter = process.env.SMTP_PASS ? nodemailer.createTransporter(emailConfig) : null;
+const transporter = process.env.SMTP_PASS ? nodemailer.createTransport(emailConfig) : null;
 
 // Email templates
 const emailTemplates = {
