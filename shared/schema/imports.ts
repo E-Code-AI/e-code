@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { pgTable, text, timestamp, integer, jsonb } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -38,5 +37,4 @@ export type ImportTemplate = typeof importTemplates.$inferSelect;
 export type InsertImportTemplate = z.infer<typeof insertImportTemplateSchema>;
 
 // Import these tables in the main schema
-import { projects } from './projects';
-import { users } from './users';
+import { projects, users } from '../schema';

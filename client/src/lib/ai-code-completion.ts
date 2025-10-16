@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * AI-powered inline code completion for Monaco Editor
  * Provides real-time suggestions as users type

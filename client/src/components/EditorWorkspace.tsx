@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { File, Project } from '@shared/schema';
 import CodeEditor from './CodeEditor';

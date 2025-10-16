@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { Project, File } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";

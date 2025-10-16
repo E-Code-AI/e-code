@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
@@ -72,7 +71,11 @@ const ReplitAIAgentPage = lazy(() => import("@/pages/ReplitAIAgentPage"));
 const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
 const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
 const Scalability = lazy(() => import("@/pages/Scalability"));
-const AuthenticationDemo = lazy(() => import("@/components/AuthenticationDemo"));
+const AuthenticationDemo = lazy(() =>
+  import("@/components/AuthenticationDemo").then((module) => ({
+    default: module.AuthenticationDemo,
+  }))
+);
 // User area pages
 const Account = lazy(() => import("@/pages/Account"));
 

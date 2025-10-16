@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { Search, Bell, HelpCircle, User, Menu, X, Bookmark, Share2, MoreVertical } from 'lucide-react';

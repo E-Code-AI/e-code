@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import * as monaco from 'monaco-editor';
 import { CollaborationProvider } from '@/utils/collaboration-provider';

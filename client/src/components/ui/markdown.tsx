@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
