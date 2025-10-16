@@ -1,8 +1,9 @@
 import Stripe from 'stripe';
 import { storage } from '../storage';
+import { getSubscriptionPeriodBoundary } from '../services/stripe-utils';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2025-07-30.basil',
 });
 
 export interface SubscriptionPlan {
@@ -134,7 +135,11 @@ export class StripePaymentService {
     // Create customer if doesn't exist
     let customerId = user.stripeCustomerId;
     if (!customerId) {
-      customerId = await this.createCustomer(userId, user.email, user.username);
+      customerId = await this.createCustomer(
+        userId,
+        user.email ?? '',
+        user.username ?? undefined
+      );
     }
 
     // Attach payment method if provided
@@ -169,11 +174,13 @@ export class StripePaymentService {
     });
 
     // Update user subscription info
+    const periodEnd = getSubscriptionPeriodBoundary(subscription, 'current_period_end');
+
     await storage.updateUser(userId, {
       stripeSubscriptionId: subscription.id,
       stripePriceId: plan.id,
       subscriptionStatus: subscription.status,
-      subscriptionCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      subscriptionCurrentPeriodEnd: periodEnd ?? undefined,
     });
 
     return subscription;
@@ -206,14 +213,21 @@ export class StripePaymentService {
       throw new Error('Invalid plan');
     }
 
-    const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
-    
+    const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+      expand: ['items']
+    });
+
+    const primaryItem = subscription.items.data[0];
+    if (!primaryItem?.id) {
+      throw new Error('Unable to determine subscription item for update');
+    }
+
     // Update subscription
     const updatedSubscription = await stripe.subscriptions.update(
       user.stripeSubscriptionId,
       {
         items: [{
-          id: subscription.items.data[0].id,
+          id: primaryItem.id,
           price: plan.id,
         }],
         proration_behavior: 'create_prorations',
@@ -242,7 +256,11 @@ export class StripePaymentService {
 
     let customerId = user.stripeCustomerId;
     if (!customerId) {
-      customerId = await this.createCustomer(userId, user.email, user.username);
+      customerId = await this.createCustomer(
+        userId,
+        user.email ?? '',
+        user.username ?? undefined
+      );
     }
 
     const paymentIntent = await stripe.paymentIntents.create({
@@ -280,11 +298,13 @@ export class StripePaymentService {
     }
 
     // Get subscription
-    const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
-    
+    const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+      expand: ['items']
+    });
+
     // Find or create usage subscription item
-    let usageItem = subscription.items.data.find(item => item.price.id === priceId);
-    
+    let usageItem = subscription.items.data.find(item => item.price?.id === priceId);
+
     if (!usageItem) {
       // Add usage-based item to subscription
       usageItem = await stripe.subscriptionItems.create({
@@ -294,14 +314,16 @@ export class StripePaymentService {
     }
 
     // Record usage
-    await stripe.subscriptionItems.createUsageRecord(
-      usageItem.id,
-      {
-        quantity: Math.ceil(quantity),
-        timestamp: Math.floor(Date.now() / 1000),
-        action: 'increment',
-      }
-    );
+    const usageItemId = usageItem.id;
+    if (!usageItemId) {
+      throw new Error('Unable to determine subscription item identifier for usage record');
+    }
+
+    await (stripe.subscriptionItems as any).createUsageRecord(usageItemId, {
+      quantity: Math.ceil(quantity),
+      timestamp: Math.floor(Date.now() / 1000),
+      action: 'increment',
+    });
 
     // Store usage record
     const usageRecord: UsageRecord = {
@@ -344,7 +366,8 @@ export class StripePaymentService {
     try {
       event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
     } catch (err) {
-      throw new Error(`Webhook signature verification failed: ${err.message}`);
+      const error = err as Error;
+      throw new Error(`Webhook signature verification failed: ${error.message}`);
     }
 
     // Handle different event types
@@ -378,7 +401,10 @@ export class StripePaymentService {
     await storage.updateUser(userId, {
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
-      subscriptionCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      subscriptionCurrentPeriodEnd: getSubscriptionPeriodBoundary(
+        subscription,
+        'current_period_end'
+      ) ?? undefined,
     });
   }
 

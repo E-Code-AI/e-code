@@ -3,10 +3,11 @@
   "include": [
     "shared/**/*",
     "types/**/*",
-    "server/db.ts",
-    "server/db-init.ts",
-    "server/storage.ts",
-    "server/utils/**/*"
+    "server/utils/logger.ts",
+    "server/services/stripe-utils.ts",
+    "server/services/stripe-billing-service.ts",
+    "server/payments/stripe-service.ts",
+    "server/billing/subscription-manager.ts"
   ],
   "exclude": []
 }
