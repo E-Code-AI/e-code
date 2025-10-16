@@ -1,56 +1,73 @@
 /**
- * Test script for AI UX Features
- * Tests feature flags, preferences API, and telemetry
+ * AI UX Feature Flag Tests
  */
 
-import { featureFlags } from '../server/config/feature-flags';
+import { defaultFeatureFlags, getFeatureFlags } from '../server/config/feature-flags';
+import { testRunner } from './setup/test-runner';
 
-describe('AI UX Features', () => {
-  describe('Feature Flags', () => {
-    test('should have default feature flags disabled', () => {
-      expect(featureFlags.aiUx.improvePrompt).toBe(false);
-      expect(featureFlags.aiUx.extendedThinking).toBe(false);
-      expect(featureFlags.aiUx.highPowerMode).toBe(false);
-      expect(featureFlags.aiUx.progressTab).toBe(false);
-      expect(featureFlags.aiUx.pauseResume).toBe(false);
-    });
+const originalEnv = { ...process.env };
+const overrideKeys = [
+  'FEATURE_AI_UX_IMPROVE_PROMPT',
+  'FEATURE_AI_UX_EXTENDED_THINKING',
+  'FEATURE_AI_UX_HIGH_POWER_MODE',
+  'FEATURE_AI_UX_PROGRESS_TAB',
+  'FEATURE_AI_UX_PAUSE_RESUME'
+];
 
-    test('should respect environment variables', () => {
-      // This would need to be run with environment variables set
-      // Example: FEATURE_AI_UX_IMPROVE_PROMPT=true npm test
-    });
-  });
+const resetEnv = () => {
+  for (const key of overrideKeys) {
+    if (originalEnv[key] !== undefined) {
+      process.env[key] = originalEnv[key];
+    } else {
+      delete process.env[key];
+    }
+  }
+};
 
-  describe('User Preferences API', () => {
-    // These would be integration tests that hit the actual API endpoints
-    
-    test('GET /api/user/ai-preferences should return user preferences', async () => {
-      // Mock test - would need proper test setup
-      // const response = await fetch('/api/user/ai-preferences');
-      // expect(response.ok).toBe(true);
-    });
+testRunner.registerSuite('AI UX Feature Flags', {
+  setup: async () => {
+    resetEnv();
+  },
+  teardown: async () => {
+    resetEnv();
+  },
+  tests: [
+    {
+      name: 'should have default feature flags disabled',
+      fn: async () => {
+        expect(defaultFeatureFlags.aiUx.improvePrompt).toBe(false);
+        expect(defaultFeatureFlags.aiUx.extendedThinking).toBe(false);
+        expect(defaultFeatureFlags.aiUx.highPowerMode).toBe(false);
+        expect(defaultFeatureFlags.aiUx.progressTab).toBe(false);
+        expect(defaultFeatureFlags.aiUx.pauseResume).toBe(false);
+      }
+    },
+    {
+      name: 'should respect environment variable overrides',
+      fn: async () => {
+        process.env.FEATURE_AI_UX_IMPROVE_PROMPT = 'true';
+        process.env.FEATURE_AI_UX_EXTENDED_THINKING = 'true';
+        process.env.FEATURE_AI_UX_HIGH_POWER_MODE = 'true';
+        process.env.FEATURE_AI_UX_PROGRESS_TAB = 'true';
+        process.env.FEATURE_AI_UX_PAUSE_RESUME = 'true';
 
-    test('PUT /api/user/ai-preferences should update preferences', async () => {
-      // Mock test - would need proper test setup
-      // const response = await fetch('/api/user/ai-preferences', {
-      //   method: 'PUT',
-      //   body: JSON.stringify({ extendedThinking: true })
-      // });
-      // expect(response.ok).toBe(true);
-    });
-  });
+        const featureFlags = getFeatureFlags();
 
-  describe('Telemetry', () => {
-    test('should track feature usage events', () => {
-      // Mock test for telemetry
-      // Would verify that monitoring service trackEvent is called
-    });
-  });
+        expect(featureFlags.aiUx.improvePrompt).toBe(true);
+        expect(featureFlags.aiUx.extendedThinking).toBe(true);
+        expect(featureFlags.aiUx.highPowerMode).toBe(true);
+        expect(featureFlags.aiUx.progressTab).toBe(true);
+        expect(featureFlags.aiUx.pauseResume).toBe(true);
+      }
+    },
+    {
+      name: 'should not mutate default feature flags when overriding env variables',
+      fn: async () => {
+        process.env.FEATURE_AI_UX_IMPROVE_PROMPT = 'true';
+        getFeatureFlags();
+
+        expect(defaultFeatureFlags.aiUx.improvePrompt).toBe(false);
+      }
+    }
+  ]
 });
-
-// Mock tests for demonstration - in a real test suite these would use proper test framework
-console.log('AI UX Features Test Suite');
-console.log('✓ Feature flags default to disabled');
-console.log('✓ API endpoints are defined');
-console.log('✓ Telemetry is configured');
-console.log('✓ UI components respect feature flags');
