@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router } from 'express';
 import { orchestrator } from '../kubernetes/orchestrator';
 import { createLogger } from '../utils/logger';

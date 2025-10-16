@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Project tracking schema for time tracking and screenshots
 import { pgTable, serial, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';

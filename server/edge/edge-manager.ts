@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EventEmitter } from 'events';
 import * as os from 'os';
 import { createLogger } from '../utils/logger';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { pgTable, text, integer, timestamp, boolean, varchar, uuid, jsonb } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';

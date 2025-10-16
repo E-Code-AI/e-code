@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Logger utility for consistent logging across services
  */

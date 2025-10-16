@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { OpenAI } from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 

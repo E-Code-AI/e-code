@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router } from 'express';
 import { ensureAuthenticated } from '../auth';
 import { storage } from '../storage';

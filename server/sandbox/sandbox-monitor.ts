@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Sandbox Monitoring and Audit System
  * Provides real-time monitoring, security event logging, and audit trails

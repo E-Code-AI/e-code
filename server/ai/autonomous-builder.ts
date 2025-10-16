@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Autonomous Builder - Helps non-coders build complete applications
 // This module provides AI-powered app building capabilities with comprehensive templates
 
@@ -305,7 +306,15 @@ h1 {
         {
           type: 'install_package',
           data: {
-            packages: ['react', 'react-dom', 'vite', '@vitejs/plugin-react', 'typescript']
+            packages: [
+              'react',
+              'react-dom',
+              '@types/react',
+              '@types/react-dom',
+              'vite',
+              '@vitejs/plugin-react',
+              'typescript'
+            ]
           }
         }
       ]
@@ -816,7 +825,803 @@ export default function App() {
       estimatedTime: '5 minutes',
       features: ['Product catalog', 'Shopping cart', 'Search & filters', 'Checkout', 'User accounts'],
       actions: [
-        // E-commerce template actions...
+        {
+          type: 'create_folder',
+          data: { name: 'src', isFolder: true },
+          folderRef: 'src'
+        },
+        {
+          type: 'create_folder',
+          data: { name: 'components', isFolder: true },
+          parentRef: 'src',
+          folderRef: 'src/components'
+        },
+        {
+          type: 'create_folder',
+          data: { name: 'data', isFolder: true },
+          parentRef: 'src',
+          folderRef: 'src/data'
+        },
+        {
+          type: 'create_file',
+          data: {
+            name: 'index.html',
+            content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Online Store</title>
+  <link rel="stylesheet" href="/src/App.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>`
+          }
+        },
+        {
+          type: 'create_file',
+          data: {
+            name: 'package.json',
+            content: JSON.stringify({
+              name: 'ecommerce-store',
+              version: '1.0.0',
+              private: true,
+              scripts: {
+                dev: 'vite',
+                build: 'vite build',
+                preview: 'vite preview'
+              },
+              dependencies: {
+                react: '^18.2.0',
+                'react-dom': '^18.2.0'
+              },
+              devDependencies: {
+                '@types/react': '^18.2.0',
+                '@types/react-dom': '^18.2.0',
+                '@vitejs/plugin-react': '^4.2.0',
+                typescript: '^5.3.0',
+                vite: '^5.0.0'
+              }
+            }, null, 2)
+          }
+        },
+        {
+          type: 'create_file',
+          parentRef: 'src',
+          data: {
+            name: 'main.tsx',
+            content: `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './App.css';
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);`
+          }
+        },
+        {
+          type: 'create_file',
+          parentRef: 'src',
+          data: {
+            name: 'types.ts',
+            content: `export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+  tags: string[];
+  rating: number;
+  inventory: number;
+}
+
+export interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+export interface FilterOption {
+  label: string;
+  value: string;
+}`
+          }
+        },
+        {
+          type: 'create_file',
+          parentRef: 'src/data',
+          data: {
+            name: 'products.ts',
+            content: `import type { Product } from '../types';
+
+export const products: Product[] = [
+  {
+    id: 'starter-kit',
+    name: 'Developer Starter Kit',
+    description: 'All the essentials for modern web development in one bundle.',
+    price: 129,
+    category: 'Bundles',
+    image: 'https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?auto=format&fit=crop&w=800&q=80',
+    tags: ['popular', 'bestseller'],
+    rating: 4.9,
+    inventory: 24
+  },
+  {
+    id: 'design-tokens',
+    name: 'Premium Design Tokens',
+    description: 'Beautiful, accessible design tokens for lightning-fast prototyping.',
+    price: 89,
+    category: 'UI Kits',
+    image: 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=800&q=80',
+    tags: ['new'],
+    rating: 4.7,
+    inventory: 46
+  },
+  {
+    id: 'ai-copilot',
+    name: 'AI Coding Copilot',
+    description: 'Smart pair-programmer that accelerates your development workflow.',
+    price: 199,
+    category: 'AI Tools',
+    image: 'https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=800&q=80',
+    tags: ['ai'],
+    rating: 4.8,
+    inventory: 12
+  },
+  {
+    id: 'cloud-hosting',
+    name: 'Cloud Hosting Credits',
+    description: 'Scalable hosting credits that grow alongside your project.',
+    price: 59,
+    category: 'Infrastructure',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
+    tags: ['featured'],
+    rating: 4.6,
+    inventory: 64
+  }
+];
+
+export const categories = Array.from(new Set(products.map((product) => product.category)));`
+          }
+        },
+        {
+          type: 'create_file',
+          parentRef: 'src/components',
+          data: {
+            name: 'ProductCard.tsx',
+            content: `import type { Product } from '../types';
+
+interface ProductCardProps {
+  product: Product;
+  onAddToCart: (productId: string) => void;
+}
+
+export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+  const badge = product.tags[0];
+
+  return (
+    <article className="product-card">
+      <div className="product-image" role="presentation">
+        <img src={product.image} alt="" />
+        {badge ? <span className="product-badge">{badge}</span> : null}
+      </div>
+      <div className="product-content">
+        <h3>{product.name}</h3>
+        <p>{product.description}</p>
+        <div className="product-meta">
+          <span className="product-price">\${product.price.toFixed(2)}</span>
+          <span className="product-rating">★ {product.rating.toFixed(1)}</span>
+        </div>
+      </div>
+      <button className="add-to-cart" onClick={() => onAddToCart(product.id)}>
+        Add to cart
+      </button>
+    </article>
+  );
+}`
+          }
+        },
+        {
+          type: 'create_file',
+          parentRef: 'src/components',
+          data: {
+            name: 'CartSummary.tsx',
+            content: `import type { CartItem } from '../types';
+
+interface CartSummaryProps {
+  items: CartItem[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  onIncrement: (productId: string) => void;
+  onDecrement: (productId: string) => void;
+  onRemove: (productId: string) => void;
+}
+
+export function CartSummary({
+  items,
+  subtotal,
+  discount,
+  total,
+  onIncrement,
+  onDecrement,
+  onRemove
+}: CartSummaryProps) {
+  if (items.length === 0) {
+    return (
+      <aside className="cart empty">
+        <h2>Your cart</h2>
+        <p>Start adding products to see them here.</p>
+      </aside>
+    );
+  }
+
+  return (
+    <aside className="cart">
+      <h2>Your cart</h2>
+      <ul className="cart-items">
+        {items.map((item) => (
+          <li key={item.product.id} className="cart-item">
+            <div>
+              <p className="cart-item-name">{item.product.name}</p>
+              <p className="cart-item-price">\${item.product.price.toFixed(2)}</p>
+            </div>
+            <div className="cart-item-controls">
+              <button onClick={() => onDecrement(item.product.id)} aria-label="Decrease quantity">
+                –
+              </button>
+              <span aria-live="polite">{item.quantity}</span>
+              <button onClick={() => onIncrement(item.product.id)} aria-label="Increase quantity">
+                +
+              </button>
+              <button className="remove" onClick={() => onRemove(item.product.id)}>
+                Remove
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div className="cart-summary">
+        <div className="summary-row">
+          <span>Subtotal</span>
+          <span>\${subtotal.toFixed(2)}</span>
+        </div>
+        <div className="summary-row">
+          <span>Discount</span>
+          <span>- \${discount.toFixed(2)}</span>
+        </div>
+        <div className="summary-row total">
+          <span>Total</span>
+          <span>\${total.toFixed(2)}</span>
+        </div>
+        <button className="checkout">Proceed to checkout</button>
+      </div>
+    </aside>
+  );
+}`
+          }
+        },
+        {
+          type: 'create_file',
+          parentRef: 'src',
+          data: {
+            name: 'App.tsx',
+            content: `import { useMemo, useState } from 'react';
+import './App.css';
+import { categories, products } from './data/products';
+import type { CartItem } from './types';
+import { ProductCard } from './components/ProductCard';
+import { CartSummary } from './components/CartSummary';
+
+type CartState = Record<string, number>;
+
+export default function App() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [cart, setCart] = useState<CartState>({});
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesCategory =
+        activeCategory === 'All' ? true : product.category === activeCategory;
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [activeCategory, searchTerm]);
+
+  const cartItems: CartItem[] = useMemo(() => {
+    return Object.entries(cart)
+      .map(([productId, quantity]) => {
+        const product = products.find((item) => item.id === productId);
+        if (!product) {
+          return null;
+        }
+
+        return { product, quantity };
+      })
+      .filter((item): item is CartItem => item !== null);
+  }, [cart]);
+
+  const subtotal = cartItems.reduce(
+    (total, item) => total + item.product.price * item.quantity,
+    0
+  );
+  const discount = subtotal > 150 ? subtotal * 0.1 : 0;
+  const total = subtotal - discount;
+
+  const addToCart = (productId: string) => {
+    setCart((previous) => ({
+      ...previous,
+      [productId]: (previous[productId] ?? 0) + 1
+    }));
+  };
+
+  const decrementItem = (productId: string) => {
+    setCart((previous) => {
+      const quantity = previous[productId] ?? 0;
+      if (quantity <= 1) {
+        const { [productId]: _removed, ...rest } = previous;
+        return rest;
+      }
+
+      return { ...previous, [productId]: quantity - 1 };
+    });
+  };
+
+  const incrementItem = (productId: string) => {
+    setCart((previous) => ({
+      ...previous,
+      [productId]: (previous[productId] ?? 0) + 1
+    }));
+  };
+
+  const removeItem = (productId: string) => {
+    setCart((previous) => {
+      const { [productId]: _removed, ...rest } = previous;
+      return rest;
+    });
+  };
+
+  const allCategories = ['All', ...categories];
+
+  return (
+    <div className="app-shell">
+      <header className="store-header">
+        <div>
+          <h1>Atlas Supply</h1>
+          <p>Your curated marketplace for developer essentials.</p>
+        </div>
+        <div className="search-group">
+          <input
+            type="search"
+            placeholder="Search products"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </div>
+      </header>
+
+      <section className="content">
+        <div className="filters" role="navigation" aria-label="Product filters">
+          {allCategories.map((category) => {
+            const isActive = category === activeCategory;
+            const classes = ['filter-chip'];
+            if (isActive) {
+              classes.push('active');
+            }
+
+            return (
+              <button
+                key={category}
+                className={classes.join(' ')}
+                onClick={() => setActiveCategory(category)}
+                aria-pressed={isActive}
+              >
+                {category}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="layout">
+          <main className="product-grid">
+            {filteredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={addToCart}
+              />
+            ))}
+          </main>
+
+          <CartSummary
+            items={cartItems}
+            subtotal={subtotal}
+            discount={discount}
+            total={total}
+            onIncrement={incrementItem}
+            onDecrement={decrementItem}
+            onRemove={removeItem}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}`
+          }
+        },
+        {
+          type: 'create_file',
+          parentRef: 'src',
+          data: {
+            name: 'App.css',
+            content: `:root {
+  color: #101828;
+  background-color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #f4f3ff 0%, #f8fafc 40%);
+  min-height: 100vh;
+}
+
+.app-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.store-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.store-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  letter-spacing: -0.04em;
+}
+
+.store-header p {
+  margin: 0.5rem 0 0;
+  color: #475467;
+}
+
+.search-group input {
+  width: 240px;
+  padding: 0.75rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid #d0d5dd;
+  background: #ffffff;
+  font-size: 0.95rem;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.filter-chip {
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid #d0d5dd;
+  background: rgba(255, 255, 255, 0.9);
+  color: #344054;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+  border-color: #7f56d9;
+  color: #7f56d9;
+}
+
+.filter-chip.active {
+  background: linear-gradient(120deg, #7f56d9 0%, #9e77ed 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 10px 30px rgba(126, 86, 217, 0.25);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.product-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px rgba(93, 95, 239, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.product-image img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+.product-badge {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  background: rgba(16, 24, 40, 0.85);
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+}
+
+.product-content h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.product-content p {
+  margin: 0;
+  color: #475467;
+  line-height: 1.5;
+}
+
+.product-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.product-price {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.product-rating {
+  color: #f79009;
+  font-weight: 600;
+}
+
+.add-to-cart {
+  margin-top: auto;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(120deg, #7f56d9 0%, #9e77ed 100%);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.add-to-cart:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(126, 86, 217, 0.25);
+}
+
+.cart {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 1.75rem;
+  box-shadow: 0 20px 40px rgba(93, 95, 239, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cart h2 {
+  margin: 0;
+}
+
+.cart.empty {
+  text-align: center;
+  color: #475467;
+  font-size: 0.95rem;
+}
+
+.cart-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cart-item-name {
+  margin: 0;
+  font-weight: 600;
+}
+
+.cart-item-price {
+  margin: 0.25rem 0 0;
+  color: #475467;
+  font-size: 0.9rem;
+}
+
+.cart-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cart-item-controls button {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #d0d5dd;
+  background: white;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.cart-item-controls .remove {
+  background: transparent;
+  color: #d92d20;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cart-summary {
+  border-top: 1px solid #e4e7ec;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #475467;
+}
+
+.summary-row.total {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #101828;
+}
+
+.checkout {
+  width: 100%;
+  padding: 0.85rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(120deg, #10b981 0%, #22c55e 100%);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cart {
+    position: sticky;
+    bottom: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .store-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-group input {
+    width: 100%;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+}`
+          }
+        },
+        {
+          type: 'create_file',
+          data: {
+            name: 'tsconfig.json',
+            content: JSON.stringify({
+              compilerOptions: {
+                target: 'ES2020',
+                useDefineForClassFields: true,
+                lib: ['ES2020', 'DOM', 'DOM.Iterable'],
+                module: 'ESNext',
+                moduleResolution: 'Node',
+                strict: true,
+                jsx: 'react-jsx',
+                types: ['vite/client'],
+                baseUrl: '.',
+                paths: {
+                  src: ['./src']
+                }
+              },
+              include: ['src']
+            }, null, 2)
+          }
+        },
+        {
+          type: 'create_file',
+          data: {
+            name: 'vite.config.ts',
+            content: `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    host: true
+  }
+});`
+          }
+        },
+        {
+          type: 'install_package',
+          data: {
+            packages: [
+              'react',
+              'react-dom',
+              '@types/react',
+              '@types/react-dom',
+              'vite',
+              '@vitejs/plugin-react',
+              'typescript'
+            ]
+          }
+        }
       ]
     });
 

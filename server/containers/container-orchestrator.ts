@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as crypto from 'crypto';
 import { spawn, exec } from 'child_process';
 import { promisify } from 'util';

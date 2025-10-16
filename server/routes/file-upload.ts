@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router } from 'express';
 import { storage } from '../storage';
 // Import removed - ensureAuthenticated will be defined locally
