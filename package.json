@@ -7,7 +7,9 @@
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
-    "check": "tsc",
+    "check": "npm run typecheck",
+    "typecheck": "tsc --noEmit --pretty false --skipLibCheck",
+    "typecheck:full": "tsc --noEmit --pretty false --skipLibCheck -p tsconfig.full.json",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
