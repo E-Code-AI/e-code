@@ -4,8 +4,8 @@ import { z } from 'zod';
 
 export const projectImports = pgTable('project_imports', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: integer('user_id').notNull().references(() => users.id),
+  projectId: integer('project_id').notNull(),
+  userId: integer('user_id').notNull(),
   importType: text('import_type').notNull(), // 'figma', 'bolt', 'lovable'
   sourceUrl: text('source_url').notNull(),
   status: text('status').notNull().default('pending'), // pending, processing, completed, failed
@@ -35,7 +35,3 @@ export type ProjectImport = typeof projectImports.$inferSelect;
 export type InsertProjectImport = z.infer<typeof insertProjectImportSchema>;
 export type ImportTemplate = typeof importTemplates.$inferSelect;
 export type InsertImportTemplate = z.infer<typeof insertImportTemplateSchema>;
-
-// Import these tables in the main schema
-import { projects } from './projects';
-import { users } from './users';
