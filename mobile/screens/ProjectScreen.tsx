@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -23,16 +23,35 @@ import { AIAssistantScreen } from './AIAssistantScreen';
 
 const API_BASE = 'http://localhost:5000/api';
 
-export function ProjectScreen({ project, onClose }) {
-  const [activeTab, setActiveTab] = useState('files');
-  const [files, setFiles] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
+type ProjectFile = {
+  path: string;
+  size?: number;
+  [key: string]: unknown;
+};
+
+type DeploymentStatus = string | null;
+
+type Project = {
+  id: string | number;
+  name: string;
+  language: string;
+};
+
+type ProjectScreenProps = {
+  project: Project;
+  onClose: () => void;
+};
+
+export function ProjectScreen({ project, onClose }: ProjectScreenProps) {
+  const [activeTab, setActiveTab] = useState<'files' | 'preview' | 'console' | 'settings'>('files');
+  const [files, setFiles] = useState<ProjectFile[]>([]);
+  const [selectedFile, setSelectedFile] = useState<ProjectFile | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
-  const [deploymentStatus, setDeploymentStatus] = useState(null);
+  const [deploymentStatus, setDeploymentStatus] = useState<DeploymentStatus>(null);
   const [isCreateFileModalVisible, setCreateFileModalVisible] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [isCreatingFile, setIsCreatingFile] = useState(false);
@@ -40,12 +59,7 @@ export function ProjectScreen({ project, onClose }) {
 
   const trimmedFileName = useMemo(() => newFileName.trim(), [newFileName]);
 
-  useEffect(() => {
-    loadProjectFiles();
-    checkDeploymentStatus();
-  }, []);
-
-  const loadProjectFiles = async () => {
+  const loadProjectFiles = useCallback(async () => {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('authToken');
@@ -54,16 +68,16 @@ export function ProjectScreen({ project, onClose }) {
           'Authorization': `Bearer ${token}`
         }
       });
-      const data = await response.json();
+      const data: ProjectFile[] = await response.json();
       setFiles(data);
     } catch (error) {
       console.error('Failed to load files:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [project.id]);
 
-  const checkDeploymentStatus = async () => {
+  const checkDeploymentStatus = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem('authToken');
       const response = await fetch(`${API_BASE}/projects/${project.id}/deployment`, {
@@ -71,14 +85,19 @@ export function ProjectScreen({ project, onClose }) {
           'Authorization': `Bearer ${token}`
         }
       });
-      const data = await response.json();
-      setDeploymentStatus(data.status);
+      const data: { status?: DeploymentStatus } = await response.json();
+      setDeploymentStatus(data.status ?? null);
     } catch (error) {
       console.error('Failed to check deployment:', error);
     }
-  };
+  }, [project.id]);
 
-  const runProject = async () => {
+  useEffect(() => {
+    loadProjectFiles();
+    checkDeploymentStatus();
+  }, [loadProjectFiles, checkDeploymentStatus]);
+
+  const runProject = useCallback(async () => {
     setIsRunning(true);
     try {
       const token = await AsyncStorage.getItem('authToken');
@@ -100,9 +119,9 @@ export function ProjectScreen({ project, onClose }) {
     } finally {
       setIsRunning(false);
     }
-  };
+  }, [project.id]);
 
-  const deployProject = async () => {
+  const deployProject = useCallback(() => {
     Alert.alert(
       'Deploy Project',
       'Deploy this project to production?',
@@ -120,7 +139,7 @@ export function ProjectScreen({ project, onClose }) {
                   'Content-Type': 'application/json'
                 }
               });
-              
+
               if (response.ok) {
                 Alert.alert('Success', 'Deployment started');
                 setDeploymentStatus('deploying');
@@ -134,20 +153,20 @@ export function ProjectScreen({ project, onClose }) {
         }
       ]
     );
-  };
+  }, [project.id]);
 
-  const openFile = (file) => {
+  const openFile = useCallback((file: ProjectFile) => {
     setSelectedFile(file);
     setShowEditor(true);
-  };
+  }, []);
 
-  const createNewFile = () => {
+  const createNewFile = useCallback(() => {
     setNewFileName('');
     setFileNameError('');
     setCreateFileModalVisible(true);
-  };
+  }, []);
 
-  const submitNewFile = async () => {
+  const submitNewFile = useCallback(async () => {
     if (!trimmedFileName) {
       setFileNameError('Please enter a file name.');
       return;
@@ -182,7 +201,7 @@ export function ProjectScreen({ project, onClose }) {
     } finally {
       setIsCreatingFile(false);
     }
-  };
+  }, [project.id, trimmedFileName, loadProjectFiles]);
 
   if (showEditor && selectedFile) {
     return (
@@ -276,9 +295,9 @@ export function ProjectScreen({ project, onClose }) {
                 <Text style={styles.newFileText}>New File</Text>
               </TouchableOpacity>
               
-              {files.map((file, index) => (
-                <TouchableOpacity 
-                  key={index}
+              {files.map((file) => (
+                <TouchableOpacity
+                  key={file.path}
                   style={styles.fileItem}
                   onPress={() => openFile(file)}
                 >
@@ -466,10 +485,14 @@ export function ProjectScreen({ project, onClose }) {
   );
 }
 
-function formatFileSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+function formatFileSize(bytes?: number) {
+  if (typeof bytes !== 'number' || Number.isNaN(bytes)) {
+    return '—';
+  }
+
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 const styles = StyleSheet.create({
