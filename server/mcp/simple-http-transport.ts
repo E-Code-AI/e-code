@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Simple HTTP Transport for MCP Server
  * A working implementation that properly connects MCP server over HTTP

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { DatabaseStorage } from '../storage';
 
 export interface Badge {

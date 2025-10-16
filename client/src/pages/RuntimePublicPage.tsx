@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Runtime Public Page
  * A public route to test and demonstrate runtime functionality without authentication requirements

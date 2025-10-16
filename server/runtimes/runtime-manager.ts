@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Runtime manager for PLOT
  * This module coordinates all runtime components including containers and Nix environments

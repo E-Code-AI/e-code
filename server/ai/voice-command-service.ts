@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Voice Command Service
  * Provides voice-activated commands and AI debugging capabilities

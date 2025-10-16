@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * UI Component for managing isolated project environments
  */

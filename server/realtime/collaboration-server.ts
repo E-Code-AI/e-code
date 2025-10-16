@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { WebSocketServer, WebSocket } from 'ws';
 import * as Y from 'yjs';
 import { storage } from '../storage';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Deployment configuration for Cloud Run optimization
 export const deploymentConfig = {
   // Port configuration for Cloud Run

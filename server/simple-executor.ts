@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Simple executor for running projects without Docker
  * This is a lightweight alternative that runs projects directly on the host

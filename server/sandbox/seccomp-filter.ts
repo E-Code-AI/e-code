@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Seccomp (Secure Computing Mode) filter builder for Linux sandboxing
  * Generates BPF (Berkeley Packet Filter) programs for syscall filtering

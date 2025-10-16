@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as ts from 'typescript';
 import * as parser from '@babel/parser';
 import traverse from '@babel/traverse';

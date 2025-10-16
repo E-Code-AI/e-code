@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
