@@ -19,6 +19,9 @@ import io from 'socket.io-client';
 const API_BASE = 'http://localhost:5000/api';
 const WS_BASE = 'ws://localhost:5000';
 
+const CODE_INPUT_MIN_HEIGHT = 500;
+const CODE_INPUT_MIN_WIDTH = 300;
+
 export function CodeEditorScreen({ project, file, onClose }) {
   const [code, setCode] = useState('');
   const [saving, setSaving] = useState(false);
@@ -213,7 +216,7 @@ export function CodeEditorScreen({ project, file, onClose }) {
               contentContainerStyle={styles.codeSurface}
             >
               <TextInput
-                style={[styles.codeInput, { minHeight: 500 }]}
+                style={[styles.codeInput, { minHeight: CODE_INPUT_MIN_HEIGHT }]}
                 value={code}
                 onChangeText={setCode}
                 multiline
@@ -355,7 +358,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderLeftColor: '#1f2937',
     textAlignVertical: 'top',
-    minWidth: 300,
+    minWidth: CODE_INPUT_MIN_WIDTH,
   },
   console: {
     height: 150,
