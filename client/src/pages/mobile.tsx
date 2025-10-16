@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';

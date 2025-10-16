@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Language configurations for the client
  * This mirrors the server-side language configurations

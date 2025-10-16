@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";

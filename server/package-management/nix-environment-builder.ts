@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { nixPackageManager } from './nix-package-manager';

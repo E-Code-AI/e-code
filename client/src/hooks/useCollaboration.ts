@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';

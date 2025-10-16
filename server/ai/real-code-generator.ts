@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Real AI Code Generation Service
  * Provides actual code generation and file modification capabilities

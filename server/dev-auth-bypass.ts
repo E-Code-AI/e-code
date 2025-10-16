@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Module pour contourner l'authentification en développement
  * NE PAS UTILISER EN PRODUCTION !

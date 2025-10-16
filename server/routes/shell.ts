@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router } from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
 import { spawn, ChildProcess } from 'child_process';

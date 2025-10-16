@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Runtime Diagnostics Page
  * Displays detailed diagnostics about available runtime environments

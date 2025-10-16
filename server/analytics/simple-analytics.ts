@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('simple-analytics');

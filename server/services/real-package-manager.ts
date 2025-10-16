@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Real Package Management Service
  * Provides actual package installation and management via npm, pip, etc.

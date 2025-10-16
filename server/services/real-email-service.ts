@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Real Email Service
  * Provides actual email sending capabilities

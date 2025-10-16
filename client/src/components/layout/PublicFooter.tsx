@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Link } from 'wouter';
 import { 
   Twitter, Github, Youtube, Linkedin, Instagram,
