@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "shared/**/*",
+    "types/**/*",
+    "server/utils/logger.ts",
+    "server/services/stripe-utils.ts",
+    "server/services/stripe-billing-service.ts",
+    "server/payments/stripe-service.ts",
+    "server/billing/subscription-manager.ts"
+  ],
+  "exclude": []
+}
