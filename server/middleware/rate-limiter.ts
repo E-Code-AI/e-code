@@ -48,14 +48,19 @@ export const rateLimiters = {
 };
 
 // Middleware for dynamic rate limiting based on user tier
-export const dynamicRateLimiter = async (
+export const dynamicRateLimiter = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    // Apply default rate limit for all requests
-    return rateLimiters.api(req, res, next);
+    const path = req.path || '';
+
+    if (path.startsWith('/api/ai') || path.startsWith('/api/deployments')) {
+      return rateLimiters.expensive(req, res, next);
+    }
+
+    return next();
   } catch (error) {
     console.error('Rate limiter error:', error);
     // Continue without rate limiting if there's an error
