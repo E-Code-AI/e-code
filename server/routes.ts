@@ -3165,18 +3165,44 @@ npx http-server .
     }
   });
 
+  // Route pour récupérer les fichiers d'un projet (compatible avec le client)
   app.get('/api/files/:id', ensureAuthenticated, async (req, res) => {
     try {
-      const fileId = parseInt(req.params.id);
-      const file = await storage.getFile(fileId);
+      const id = parseInt(req.params.id);
+      
+      // Check if this is a project ID (fetching all files) or a file ID (fetching single file)
+      // First try as project ID
+      const project = await storage.getProject(id);
+      if (project) {
+        // This is a project ID - return all files
+        if (project.ownerId !== req.user!.id) {
+          const isCollaborator = await storage.isProjectCollaborator(id, req.user!.id);
+          if (!isCollaborator) {
+            return res.status(403).json({ error: 'Access denied' });
+          }
+        }
+        
+        const files = await storage.getFilesByProjectId(id);
+        // Add isFolder field for frontend compatibility
+        const filesWithFolder = files.map(file => ({
+          ...file,
+          isFolder: file.isDirectory || file.isFolder || false
+        }));
+        
+        // Return array directly (not wrapped in object) as client expects
+        return res.json(filesWithFolder);
+      }
+      
+      // If not a project, try as a file ID
+      const file = await storage.getFile(id);
       
       if (!file) {
-        return res.status(404).json({ error: 'File not found' });
+        return res.status(404).json({ error: 'File or project not found' });
       }
       
       // Ensure user has access to the project this file belongs to
-      const project = await storage.getProject(file.projectId);
-      if (!project || project.ownerId !== req.user!.id) {
+      const fileProject = await storage.getProject(file.projectId);
+      if (!fileProject || fileProject.ownerId !== req.user!.id) {
         const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user!.id);
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
@@ -3185,7 +3211,7 @@ npx http-server .
       
       res.json(file);
     } catch (error) {
-      console.error('Error fetching file:', error);
+      console.error('Error fetching file(s):', error);
       res.status(500).json({ error: 'Failed to fetch file' });
     }
   });
@@ -3245,6 +3271,50 @@ npx http-server .
     } catch (error) {
       console.error('Error updating file:', error);
       res.status(500).json({ error: 'Failed to update file' });
+    }
+  });
+
+  // Route pour créer un fichier (compatible avec le client qui utilise POST /api/files/${projectId})
+  app.post('/api/files/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      // Vérifier l'accès au projet
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      
+      if (project.ownerId !== req.user!.id) {
+        const isCollaborator = await storage.isProjectCollaborator(projectId, req.user!.id);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      // Préparer les données du fichier
+      const fileData = {
+        name: req.body.name || 'untitled',
+        path: req.body.path || '/',
+        content: req.body.content || '',
+        projectId: projectId,
+        parentId: req.body.parentId || null,
+        isDirectory: req.body.isDirectory || req.body.isFolder || false,
+        isFolder: req.body.isFolder || req.body.isDirectory || false
+      };
+      
+      const newFile = await storage.createFile(fileData);
+      
+      // Ajouter isFolder pour la compatibilité frontend
+      const fileWithFolder = {
+        ...newFile,
+        isFolder: newFile.isDirectory || newFile.isFolder || false
+      };
+      
+      res.status(201).json(fileWithFolder);
+    } catch (error) {
+      console.error('Error creating file:', error);
+      res.status(500).json({ error: 'Failed to create file' });
     }
   });
 
