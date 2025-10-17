@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code Platform is an advanced AI-powered development platform that streamlines software creation through intelligent, automated deployment and collaboration tools. It provides an integrated development environment with features like GPU computing, advanced monitoring, and comprehensive authentication. The platform enables users to launch complete applications from a single prompt, transforming ideas into running code quickly and efficiently. The project's ambition is to offer a production-ready, highly scalable platform supporting millions of concurrent users with Fortune 500-grade infrastructure. It includes a fully functional React Native mobile app and has achieved 100% functional completion for critical backend features like file operations, AI code generation, live preview, and container orchestration.
+E-Code Platform is an AI-powered development platform project that aims to streamline software creation through automated deployment and collaboration tools. The platform is currently in early development stage with basic infrastructure in place but many features are not yet functional. The project aspires to become a production-ready platform but currently faces significant implementation gaps between the planned architecture and actual working functionality.
 
 ### Latest Status (October 17, 2025)
 - **✅ All email domains updated**: Changed from @ecode.com to @e-code.ai across all pages
