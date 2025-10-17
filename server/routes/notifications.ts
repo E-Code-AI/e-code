@@ -3,16 +3,9 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { storage } from '../storage';
 import { insertNotificationSchema } from '@shared/schema';
+import { ensureAuthenticated } from '../middleware/auth';
 
 const router = Router();
-
-// Middleware to ensure authentication
-const ensureAuthenticated = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: "Unauthorized" });
-};
 
 // Get all notifications for current user
 router.get('/api/notifications', ensureAuthenticated, async (req, res) => {
