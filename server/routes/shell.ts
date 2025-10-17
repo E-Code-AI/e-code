@@ -5,14 +5,7 @@ import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as os from 'os';
-
-// Authentication middleware
-const ensureAuthenticated = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: 'Not authenticated' });
-};
+import { ensureAuthenticated } from '../middleware/auth';
 
 const router = Router();
 
