@@ -87,6 +87,11 @@ import { Store } from "express-session";
 import connectPg from "connect-pg-simple";
 import { client } from "./db";
 import * as crypto from "crypto";
+import {
+  projectImports,
+  type ProjectImport,
+  type InsertProjectImport,
+} from "@shared/schema/imports";
 
 type ApiKeyInsertModel = typeof apiKeys.$inferInsert;
 type CodeReviewInsertModel = typeof codeReviews.$inferInsert;
@@ -348,15 +353,15 @@ export interface IStorage {
   isProjectLiked(projectId: number, userId: number): Promise<boolean>;
   getProjectLikes(projectId: number): Promise<number>;
   trackProjectView(projectId: number, userId: number): Promise<void>;
-  getProjectActivity(projectId: number): Promise<any[]>;
+  getProjectActivity(projectId: number, limit?: number): Promise<any[]>;
   getProjectFiles(projectId: number): Promise<any[]>;
   getFileById(id: number): Promise<any | undefined>;
   getAdminApiKey(provider: string): Promise<any>;
   createCLIToken(userId: number): Promise<any>;
   getUserCLITokens(userId: number): Promise<any[]>;
-  getMobileSession(sessionId: string): Promise<any | undefined>;
+  getMobileSession(userId: number, deviceId: string): Promise<any | undefined>;
   createMobileSession(session: any): Promise<any>;
-  updateMobileSession(sessionId: string, session: any): Promise<any | undefined>;
+  updateMobileSession(userId: number, deviceId: string, session: any): Promise<any | undefined>;
   getUserMobileSessions(userId: number): Promise<any[]>;
   getProjectDeployments(projectId: number): Promise<any[]>;
   getRecentDeployments(userId: number): Promise<any[]>;
@@ -1550,69 +1555,193 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Project Imports
-  async createProjectImport(data: any): Promise<any> {
-    // For now, return a mock import since we don't have the imports table in DB yet
-    const importRecord = {
-      id: Date.now(),
-      ...data,
-      createdAt: new Date(),
-      completedAt: null
+  async createProjectImport(data: any): Promise<ProjectImport> {
+    const importType = (data.importType ?? data.type ?? '').trim();
+    const sourceUrl = data.sourceUrl ?? data.url;
+
+    if (!data.projectId || !data.userId || !importType || !sourceUrl) {
+      throw new Error('Invalid project import data');
+    }
+
+    const insertData: InsertProjectImport = {
+      projectId: data.projectId,
+      userId: data.userId,
+      importType,
+      sourceUrl,
+      status: data.status ?? 'pending',
+      metadata: typeof data.metadata === 'object' && data.metadata !== null ? data.metadata : {},
     };
-    return importRecord;
+
+    if (data.completedAt) {
+      insertData.completedAt = data.completedAt;
+    }
+
+    if (data.error) {
+      insertData.error = data.error;
+    }
+
+    const [created] = await this.db
+      .insert(projectImports)
+      .values(insertData)
+      .returning();
+
+    return {
+      ...created,
+      type: created.importType,
+      url: created.sourceUrl,
+    };
   }
 
-  async updateProjectImport(id: number, updates: any): Promise<any> {
-    // Mock implementation for now
-    return { id, ...updates };
+  async updateProjectImport(id: number, updates: any): Promise<ProjectImport | undefined> {
+    const updateData: Partial<InsertProjectImport> = {};
+
+    if (updates?.projectId) {
+      updateData.projectId = updates.projectId;
+    }
+
+    if (updates?.userId) {
+      updateData.userId = updates.userId;
+    }
+
+    if (updates?.importType || updates?.type) {
+      updateData.importType = updates.importType ?? updates.type;
+    }
+
+    if (updates?.sourceUrl || updates?.url) {
+      updateData.sourceUrl = updates.sourceUrl ?? updates.url;
+    }
+
+    if (updates?.status) {
+      updateData.status = updates.status;
+    }
+
+    if (updates?.metadata !== undefined) {
+      updateData.metadata = typeof updates.metadata === 'object' && updates.metadata !== null
+        ? updates.metadata
+        : {};
+    }
+
+    if (updates?.completedAt !== undefined) {
+      updateData.completedAt = updates.completedAt;
+    }
+
+    if (updates?.error !== undefined) {
+      updateData.error = updates.error;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return await this.getProjectImport(id);
+    }
+
+    const [updated] = await this.db
+      .update(projectImports)
+      .set(updateData)
+      .where(eq(projectImports.id, id))
+      .returning();
+
+    if (!updated) {
+      return undefined;
+    }
+
+    return {
+      ...updated,
+      type: updated.importType,
+      url: updated.sourceUrl,
+    };
   }
 
-  async getProjectImport(id: number): Promise<any | undefined> {
-    // Mock implementation for now
-    return undefined;
+  async getProjectImport(id: number): Promise<ProjectImport | undefined> {
+    const [record] = await this.db
+      .select()
+      .from(projectImports)
+      .where(eq(projectImports.id, id));
+
+    if (!record) {
+      return undefined;
+    }
+
+    return {
+      ...record,
+      type: record.importType,
+      url: record.sourceUrl,
+    };
   }
 
-  async getProjectImports(projectId: number): Promise<any[]> {
-    // Mock implementation for now
-    return [];
+  async getProjectImports(projectId: number): Promise<ProjectImport[]> {
+    const records = await this.db
+      .select()
+      .from(projectImports)
+      .where(eq(projectImports.projectId, projectId))
+      .orderBy(desc(projectImports.createdAt));
+
+    return records.map((record) => ({
+      ...record,
+      type: record.importType,
+      url: record.sourceUrl,
+    }));
   }
-
-
 
   async getImportStatistics(): Promise<any> {
-    // Mock implementation for import statistics
-    return {
-      figma: 12,
-      bolt: 8,
-      lovable: 5,
-      webContent: 23,
-      total: 48,
-      recent: [
-        {
-          id: 1,
-          type: 'figma',
-          url: 'https://figma.com/file/example',
-          projectId: 1,
-          status: 'completed',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 2,
-          type: 'bolt',
-          url: 'https://bolt.new/project',
-          projectId: 2,
-          status: 'completed',
-          createdAt: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-          id: 3,
-          type: 'lovable',
-          url: 'https://lovable.dev/app',
-          projectId: 3,
-          status: 'processing',
-          createdAt: new Date(Date.now() - 7200000).toISOString()
-        }
-      ]
+    const [counts, recent] = await Promise.all([
+      this.db
+        .select({
+          importType: projectImports.importType,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(projectImports)
+        .groupBy(projectImports.importType),
+      this.db
+        .select()
+        .from(projectImports)
+        .orderBy(desc(projectImports.createdAt))
+        .limit(10),
+    ]);
+
+    const stats = {
+      figma: 0,
+      bolt: 0,
+      lovable: 0,
+      webContent: 0,
+      total: 0,
+      byType: {} as Record<string, number>,
+      recent: [] as any[],
     };
+
+    counts.forEach(({ importType, count }) => {
+      const normalized = (importType || '').toLowerCase();
+      const numericCount = Number(count) || 0;
+
+      stats.total += numericCount;
+      stats.byType[importType] = numericCount;
+
+      switch (normalized) {
+        case 'figma':
+          stats.figma = numericCount;
+          break;
+        case 'bolt':
+          stats.bolt = numericCount;
+          break;
+        case 'lovable':
+          stats.lovable = numericCount;
+          break;
+        case 'web':
+        case 'web_content':
+        case 'webcontent':
+        case 'web-import':
+          stats.webContent += numericCount;
+          break;
+        default:
+          break;
+      }
+    });
+
+    stats.recent = recent.map((item) => ({
+      ...item,
+      type: item.importType,
+      url: item.sourceUrl,
+    }));
+
+    return stats;
   }
 
   // Secret management operations
@@ -1737,17 +1866,209 @@ export class DatabaseStorage implements IStorage {
     await this.incrementProjectViews(projectId);
   }
 
-  async getProjectActivity(projectId: number): Promise<any[]> {
-    // Return mock activity for now
-    return [
-      {
-        id: 1,
-        type: 'file_created',
-        userId: 1,
-        timestamp: new Date(),
-        details: { fileName: 'app.js' }
-      }
+  async getProjectActivity(projectId: number, limit = 50): Promise<any[]> {
+    const fetchLimit = Math.max(limit, 20);
+
+    const [taskEvents, screenshotEvents, timeEntries, commentEvents, importEvents, deploymentEvents, fileEvents] = await Promise.all([
+      this.db
+        .select({
+          id: taskSummaries.id,
+          userId: taskSummaries.userId,
+          createdAt: taskSummaries.createdAt,
+          taskDescription: taskSummaries.taskDescription,
+          summary: taskSummaries.summary,
+          completed: taskSummaries.completed,
+          filesChanged: taskSummaries.filesChanged,
+          linesAdded: taskSummaries.linesAdded,
+          linesDeleted: taskSummaries.linesDeleted,
+        })
+        .from(taskSummaries)
+        .where(eq(taskSummaries.projectId, projectId))
+        .orderBy(desc(taskSummaries.createdAt))
+        .limit(fetchLimit),
+      this.db
+        .select({
+          id: projectScreenshots.id,
+          userId: projectScreenshots.userId,
+          createdAt: projectScreenshots.createdAt,
+          url: projectScreenshots.url,
+          thumbnailUrl: projectScreenshots.thumbnailUrl,
+          description: projectScreenshots.description,
+        })
+        .from(projectScreenshots)
+        .where(eq(projectScreenshots.projectId, projectId))
+        .orderBy(desc(projectScreenshots.createdAt))
+        .limit(fetchLimit),
+      this.db
+        .select({
+          id: projectTimeTracking.id,
+          userId: projectTimeTracking.userId,
+          startTime: projectTimeTracking.startTime,
+          endTime: projectTimeTracking.endTime,
+          duration: projectTimeTracking.duration,
+          createdAt: projectTimeTracking.createdAt,
+          active: projectTimeTracking.active,
+        })
+        .from(projectTimeTracking)
+        .where(eq(projectTimeTracking.projectId, projectId))
+        .orderBy(desc(projectTimeTracking.createdAt))
+        .limit(fetchLimit),
+      this.db
+        .select({
+          id: comments.id,
+          authorId: comments.authorId,
+          createdAt: comments.createdAt,
+          content: comments.content,
+          fileId: comments.fileId,
+          lineNumber: comments.lineNumber,
+          resolved: comments.resolved,
+        })
+        .from(comments)
+        .where(eq(comments.projectId, projectId))
+        .orderBy(desc(comments.createdAt))
+        .limit(fetchLimit),
+      this.db
+        .select({
+          id: projectImports.id,
+          userId: projectImports.userId,
+          createdAt: projectImports.createdAt,
+          completedAt: projectImports.completedAt,
+          importType: projectImports.importType,
+          status: projectImports.status,
+          sourceUrl: projectImports.sourceUrl,
+          metadata: projectImports.metadata,
+          error: projectImports.error,
+        })
+        .from(projectImports)
+        .where(eq(projectImports.projectId, projectId))
+        .orderBy(desc(projectImports.createdAt))
+        .limit(fetchLimit),
+      this.db
+        .select({
+          id: deployments.id,
+          createdAt: deployments.createdAt,
+          status: deployments.status,
+          environment: deployments.environment,
+          type: deployments.type,
+          url: deployments.url,
+          metadata: deployments.metadata,
+        })
+        .from(deployments)
+        .where(eq(deployments.projectId, projectId))
+        .orderBy(desc(deployments.createdAt))
+        .limit(fetchLimit),
+      this.db
+        .select({
+          id: files.id,
+          name: files.name,
+          path: files.path,
+          isDirectory: files.isDirectory,
+          createdAt: files.createdAt,
+          updatedAt: files.updatedAt,
+        })
+        .from(files)
+        .where(eq(files.projectId, projectId))
+        .orderBy(desc(files.updatedAt))
+        .limit(fetchLimit),
+    ]);
+
+    const activities = [
+      ...taskEvents.map((task) => ({
+        id: `task-${task.id}`,
+        type: 'task_summary',
+        userId: task.userId,
+        timestamp: task.createdAt,
+        details: {
+          description: task.taskDescription,
+          summary: task.summary,
+          completed: task.completed,
+          filesChanged: task.filesChanged,
+          linesAdded: task.linesAdded,
+          linesDeleted: task.linesDeleted,
+        },
+      })),
+      ...screenshotEvents.map((shot) => ({
+        id: `screenshot-${shot.id}`,
+        type: 'screenshot',
+        userId: shot.userId,
+        timestamp: shot.createdAt,
+        details: {
+          url: shot.url,
+          thumbnailUrl: shot.thumbnailUrl,
+          description: shot.description,
+        },
+      })),
+      ...timeEntries.map((entry) => ({
+        id: `time-${entry.id}`,
+        type: 'time_tracking',
+        userId: entry.userId,
+        timestamp: entry.endTime ?? entry.startTime ?? entry.createdAt,
+        details: {
+          startTime: entry.startTime,
+          endTime: entry.endTime,
+          duration: entry.duration,
+          active: entry.active,
+        },
+      })),
+      ...commentEvents.map((comment) => ({
+        id: `comment-${comment.id}`,
+        type: 'comment',
+        userId: comment.authorId,
+        timestamp: comment.createdAt,
+        details: {
+          content: comment.content,
+          fileId: comment.fileId,
+          lineNumber: comment.lineNumber,
+          resolved: comment.resolved,
+        },
+      })),
+      ...importEvents.map((imp) => ({
+        id: `import-${imp.id}`,
+        type: 'import',
+        userId: imp.userId,
+        timestamp: imp.createdAt,
+        details: {
+          importType: imp.importType,
+          status: imp.status,
+          sourceUrl: imp.sourceUrl,
+          completedAt: imp.completedAt,
+          metadata: imp.metadata,
+          error: imp.error,
+        },
+      })),
+      ...deploymentEvents.map((deployment) => ({
+        id: `deployment-${deployment.id}`,
+        type: 'deployment',
+        timestamp: deployment.createdAt,
+        details: {
+          status: deployment.status,
+          environment: deployment.environment,
+          deploymentType: deployment.type,
+          url: deployment.url,
+          metadata: deployment.metadata,
+        },
+      })),
+      ...fileEvents.map((file) => ({
+        id: `file-${file.id}`,
+        type: file.createdAt?.getTime() === file.updatedAt?.getTime() ? 'file_created' : 'file_updated',
+        timestamp: file.updatedAt ?? file.createdAt,
+        details: {
+          name: file.name,
+          path: file.path,
+          isDirectory: file.isDirectory,
+          createdAt: file.createdAt,
+          updatedAt: file.updatedAt,
+        },
+      })),
     ];
+
+    activities.sort((a, b) => {
+      const aTime = new Date(a.timestamp).getTime();
+      const bTime = new Date(b.timestamp).getTime();
+      return bTime - aTime;
+    });
+
+    return activities.slice(0, limit);
   }
 
   // File methods
@@ -1788,29 +2109,177 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Mobile session methods
-  async getMobileSession(sessionId: string): Promise<any | undefined> {
-    // Mock implementation - would use mobile_sessions table
-    return undefined;
+  async getMobileSession(userOrSessionId: number | string, deviceId?: string): Promise<any | undefined> {
+    if (typeof userOrSessionId === 'number' && deviceId) {
+      const [session] = await this.db
+        .select()
+        .from(mobileDevices)
+        .where(and(
+          eq(mobileDevices.userId, userOrSessionId),
+          eq(mobileDevices.deviceId, deviceId),
+        ))
+        .limit(1);
+
+      return session ? this.formatMobileSession(session) : undefined;
+    }
+
+    const numericId = typeof userOrSessionId === 'string' ? Number(userOrSessionId) : userOrSessionId;
+    if (!Number.isFinite(numericId)) {
+      return undefined;
+    }
+
+    const [byId] = await this.db
+      .select()
+      .from(mobileDevices)
+      .where(eq(mobileDevices.id, numericId))
+      .limit(1);
+
+    return byId ? this.formatMobileSession(byId) : undefined;
   }
 
   async createMobileSession(session: any): Promise<any> {
-    return {
-      id: crypto.randomBytes(16).toString('hex'),
-      ...session,
-      createdAt: new Date()
-    };
+    if (!session?.userId || !session?.deviceId || !session?.platform) {
+      throw new Error('Invalid mobile session data');
+    }
+
+    const existing = await this.getMobileSession(session.userId, session.deviceId);
+    if (existing) {
+      return await this.updateMobileSession(session.userId, session.deviceId, session);
+    }
+
+    const now = new Date();
+
+    const [created] = await this.db
+      .insert(mobileDevices)
+      .values({
+        userId: session.userId,
+        deviceId: session.deviceId,
+        platform: session.platform,
+        deviceName: session.deviceModel ?? session.deviceName ?? session.deviceId,
+        pushToken: session.pushToken ?? null,
+        appVersion: session.appVersion ?? null,
+        isActive: session.isActive ?? true,
+        lastSeen: now,
+      })
+      .returning();
+
+    return this.formatMobileSession(created, {
+      osVersion: session.osVersion,
+      deviceModel: session.deviceModel ?? session.deviceName,
+      lastActiveAt: now,
+      pushToken: session.pushToken,
+      appVersion: session.appVersion,
+      platform: session.platform,
+      isActive: session.isActive ?? true,
+    });
   }
 
-  async updateMobileSession(sessionId: string, session: any): Promise<any | undefined> {
-    return {
-      id: sessionId,
-      ...session,
-      updatedAt: new Date()
-    };
+  async updateMobileSession(userOrSessionId: number, deviceOrUpdates: any, maybeUpdates?: any): Promise<any | undefined> {
+    let whereClause;
+    let updates;
+
+    if (typeof deviceOrUpdates === 'string') {
+      updates = maybeUpdates ?? {};
+      whereClause = and(
+        eq(mobileDevices.userId, userOrSessionId),
+        eq(mobileDevices.deviceId, deviceOrUpdates),
+      );
+    } else {
+      updates = deviceOrUpdates ?? {};
+      whereClause = eq(mobileDevices.id, userOrSessionId);
+    }
+
+    const updateData = this.buildMobileSessionUpdate(updates);
+
+    if (Object.keys(updateData).length === 0) {
+      if (typeof deviceOrUpdates === 'string') {
+        return await this.getMobileSession(userOrSessionId, deviceOrUpdates);
+      }
+
+      return await this.getMobileSession(userOrSessionId);
+    }
+
+    const [updated] = await this.db
+      .update(mobileDevices)
+      .set(updateData)
+      .where(whereClause)
+      .returning();
+
+    if (!updated) {
+      return undefined;
+    }
+
+    return this.formatMobileSession(updated, updates);
   }
 
   async getUserMobileSessions(userId: number): Promise<any[]> {
-    return [];
+    const sessions = await this.db
+      .select()
+      .from(mobileDevices)
+      .where(eq(mobileDevices.userId, userId))
+      .orderBy(desc(mobileDevices.lastSeen));
+
+    return sessions.map((session) => this.formatMobileSession(session));
+  }
+
+  private buildMobileSessionUpdate(updates: any): Record<string, any> {
+    const data: Record<string, any> = {};
+
+    if (updates?.platform !== undefined) {
+      data.platform = updates.platform;
+    }
+
+    if (updates?.appVersion !== undefined) {
+      data.appVersion = updates.appVersion;
+    }
+
+    if (updates?.pushToken !== undefined) {
+      data.pushToken = updates.pushToken;
+    }
+
+    if (updates?.deviceModel !== undefined || updates?.deviceName !== undefined) {
+      data.deviceName = updates.deviceModel ?? updates.deviceName;
+    }
+
+    if (updates?.isActive !== undefined) {
+      data.isActive = updates.isActive;
+    }
+
+    if (updates?.lastActiveAt) {
+      data.lastSeen = updates.lastActiveAt;
+    } else if (updates?.lastSeen) {
+      data.lastSeen = updates.lastSeen;
+    }
+
+    if (Object.keys(data).length > 0 && data.lastSeen === undefined) {
+      data.lastSeen = new Date();
+    }
+
+    return data;
+  }
+
+  private formatMobileSession(record: any, overrides: any = {}) {
+    const lastActive = overrides.lastActiveAt
+      ?? overrides.lastSeen
+      ?? record.lastSeen
+      ?? record.updatedAt
+      ?? record.createdAt
+      ?? new Date();
+
+    return {
+      id: record.id,
+      userId: record.userId,
+      deviceId: record.deviceId,
+      platform: overrides.platform ?? record.platform,
+      appVersion: overrides.appVersion ?? record.appVersion,
+      pushToken: overrides.pushToken ?? record.pushToken,
+      deviceModel: overrides.deviceModel ?? overrides.deviceName ?? record.deviceName ?? null,
+      osVersion: overrides.osVersion ?? record.osVersion ?? 'unknown',
+      isActive: overrides.isActive ?? record.isActive ?? true,
+      lastActiveAt: lastActive,
+      lastActive: lastActive,
+      createdAt: record.createdAt,
+    };
   }
 
   // User Credits and Billing operations
