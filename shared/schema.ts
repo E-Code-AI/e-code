@@ -47,7 +47,7 @@ export const sessions = pgTable(
 // User storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   username: varchar("username").unique(),
   password: varchar("password"),
   email: varchar("email").unique(),
@@ -78,7 +78,7 @@ export const projects = pgTable("projects", {
   description: text("description"),
   visibility: visibilityEnum("visibility").notNull().default('private'),
   language: languageEnum("language").default('javascript'),
-  ownerId: integer("owner_id").notNull().references(() => users.id),
+  ownerId: varchar("owner_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   forkedFromId: integer("forked_from_id"),
@@ -107,7 +107,7 @@ export const files = pgTable("files", {
 // API SDK Tables
 export const apiKeys = pgTable("api_keys", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   name: varchar("name").notNull(),
   key: varchar("key").notNull().unique(),
   permissions: jsonb("permissions").$type<string[]>().default([]),
@@ -130,7 +130,7 @@ export const apiUsage = pgTable("api_usage", {
 // Usage tracking table for billing
 export const usageTracking = pgTable("usage_tracking", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   metricType: varchar("metric_type").notNull(), // compute, storage, bandwidth, etc.
   value: decimal("value", { precision: 10, scale: 2 }).notNull(),
   unit: varchar("unit").notNull(), // hours, GB, etc.
@@ -142,7 +142,7 @@ export const usageTracking = pgTable("usage_tracking", {
 // Credits and billing system
 export const userCredits = pgTable("user_credits", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer("user_id").notNull().references(() => users.id).unique(),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
   monthlyCredits: decimal("monthly_credits", { precision: 10, scale: 2 }).notNull().default('25.00'),
   remainingCredits: decimal("remaining_credits", { precision: 10, scale: 2 }).notNull().default('25.00'),
   extraCredits: decimal("extra_credits", { precision: 10, scale: 2 }).notNull().default('0.00'),
@@ -152,7 +152,7 @@ export const userCredits = pgTable("user_credits", {
 
 export const budgetLimits = pgTable("budget_limits", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer("user_id").notNull().references(() => users.id).unique(),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
   monthlyLimit: decimal("monthly_limit", { precision: 10, scale: 2 }),
   alertThreshold: integer("alert_threshold").default(80), // percentage
   hardStop: boolean("hard_stop").default(true),
@@ -163,7 +163,7 @@ export const budgetLimits = pgTable("budget_limits", {
 
 export const usageAlerts = pgTable("usage_alerts", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   alertType: varchar("alert_type").notNull(), // threshold_reached, limit_exceeded, etc.
   threshold: integer("threshold").notNull(),
   sent: boolean("sent").default(false),
@@ -175,7 +175,7 @@ export const usageAlerts = pgTable("usage_alerts", {
 export const codeReviews = pgTable("code_reviews", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   projectId: integer("project_id").notNull().references(() => projects.id),
-  authorId: integer("author_id").notNull().references(() => users.id),
+  authorId: varchar("author_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   description: text("description"),
   status: reviewStatusEnum("status").default('pending'),
@@ -187,7 +187,7 @@ export const codeReviews = pgTable("code_reviews", {
 export const reviewComments = pgTable("review_comments", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   reviewId: integer("review_id").notNull().references(() => codeReviews.id),
-  authorId: integer("author_id").notNull().references(() => users.id),
+  authorId: varchar("author_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   filePath: varchar("file_path"),
   lineNumber: integer("line_number"),
@@ -197,7 +197,7 @@ export const reviewComments = pgTable("review_comments", {
 export const reviewApprovals = pgTable("review_approvals", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   reviewId: integer("review_id").notNull().references(() => codeReviews.id),
-  reviewerId: integer("reviewer_id").notNull().references(() => users.id),
+  reviewerId: varchar("reviewer_id").notNull().references(() => users.id),
   approved: boolean("approved").notNull(),
   comment: text("comment"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -206,7 +206,7 @@ export const reviewApprovals = pgTable("review_approvals", {
 // Mentorship Tables
 export const mentorProfiles = pgTable("mentor_profiles", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   expertise: jsonb("expertise").$type<string[]>().default([]),
   experience: text("experience"),
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }),
@@ -219,8 +219,8 @@ export const mentorProfiles = pgTable("mentor_profiles", {
 
 export const mentorshipSessions = pgTable("mentorship_sessions", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  mentorId: integer("mentor_id").notNull().references(() => users.id),
-  menteeId: integer("mentee_id").notNull().references(() => users.id),
+  mentorId: varchar("mentor_id").notNull().references(() => users.id),
+  menteeId: varchar("mentee_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   description: text("description"),
   status: mentorshipStatusEnum("status").default('active'),
@@ -246,7 +246,7 @@ export const challenges = pgTable("challenges", {
   solutionCode: text("solution_code"),
   testCases: jsonb("test_cases").$type<any[]>().default([]),
   tags: jsonb("tags").$type<string[]>().default([]),
-  createdBy: integer("created_by").notNull().references(() => users.id),
+  createdBy: varchar("created_by").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -254,7 +254,7 @@ export const challenges = pgTable("challenges", {
 export const challengeSubmissions = pgTable("challenge_submissions", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   challengeId: integer("challenge_id").notNull().references(() => challenges.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   code: text("code").notNull(),
   status: submissionStatusEnum("status").default('pending'),
   score: integer("score").default(0),
@@ -266,7 +266,7 @@ export const challengeSubmissions = pgTable("challenge_submissions", {
 export const challengeLeaderboard = pgTable("challenge_leaderboard", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   challengeId: integer("challenge_id").notNull().references(() => challenges.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   bestScore: integer("best_score").default(0),
   bestTime: integer("best_time"), // in milliseconds
   submissionCount: integer("submission_count").default(0),
@@ -276,7 +276,7 @@ export const challengeLeaderboard = pgTable("challenge_leaderboard", {
 // Mobile App Tables
 export const mobileDevices = pgTable("mobile_devices", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   deviceId: varchar("device_id").notNull(),
   platform: varchar("platform").notNull(), // ios, android
   deviceName: varchar("device_name"),
@@ -289,7 +289,7 @@ export const mobileDevices = pgTable("mobile_devices", {
 
 export const pushNotifications = pgTable("push_notifications", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   body: text("body").notNull(),
   data: jsonb("data").default({}),
@@ -397,7 +397,7 @@ export const teams = pgTable("teams", {
   slug: varchar("slug").notNull().unique(),
   description: text("description"),
   visibility: visibilityEnum("visibility").notNull().default('private'),
-  ownerId: integer("owner_id").notNull().references(() => users.id),
+  ownerId: varchar("owner_id").notNull().references(() => users.id),
   memberCount: integer("member_count").notNull().default(1),
   projectCount: integer("project_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -407,7 +407,7 @@ export const teams = pgTable("teams", {
 export const teamMembers = pgTable("team_members", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: 'cascade' }),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   role: roleEnum("role").notNull().default('member'),
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
 });
@@ -417,7 +417,7 @@ export const comments = pgTable('comments', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
   fileId: integer('file_id').references(() => files.id),
-  authorId: integer('author_id').notNull().references(() => users.id),
+  authorId: varchar('author_id').notNull().references(() => users.id),
   content: text('content').notNull(),
   lineNumber: integer('line_number'),
   resolved: boolean('resolved').default(false),
@@ -433,7 +433,7 @@ export const checkpoints = pgTable('checkpoints', {
   description: text('description'),
   filesSnapshot: jsonb('files_snapshot').notNull().default({}),
   type: varchar('type', { length: 50 }).notNull().default('manual'), // manual, automatic, before_action, error_recovery
-  createdBy: integer('created_by').notNull().references(() => users.id),
+  createdBy: varchar('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   metadata: jsonb('metadata').notNull().default({}),
 });
@@ -464,7 +464,7 @@ export const webrtcSessions = pgTable('webrtc_sessions', {
   sessionType: varchar('session_type').notNull().default('video'), // video, voice, screen-share
   maxParticipants: integer('max_participants').notNull().default(10),
   isActive: boolean('is_active').notNull().default(true),
-  createdBy: integer('created_by').notNull().references(() => users.id),
+  createdBy: varchar('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   endedAt: timestamp('ended_at'),
 });
@@ -472,7 +472,7 @@ export const webrtcSessions = pgTable('webrtc_sessions', {
 export const webrtcParticipants = pgTable('webrtc_participants', {
   id: serial('id').primaryKey(),
   sessionId: integer('session_id').notNull().references(() => webrtcSessions.id, { onDelete: 'cascade' }),
-  userId: integer('user_id').notNull().references(() => users.id),
+  userId: varchar('user_id').notNull().references(() => users.id),
   joinedAt: timestamp('joined_at').defaultNow().notNull(),
   leftAt: timestamp('left_at'),
   connectionId: varchar('connection_id').notNull(),
@@ -494,7 +494,7 @@ export const webrtcRecordings = pgTable('webrtc_recordings', {
 export const collaborationPresence = pgTable('collaboration_presence', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: integer('user_id').notNull().references(() => users.id),
+  userId: varchar('user_id').notNull().references(() => users.id),
   fileId: integer('file_id').references(() => files.id),
   cursorPosition: jsonb('cursor_position').default({}), // {line: number, column: number}
   selection: jsonb('selection').default({}), // {start: {line, column}, end: {line, column}}
@@ -506,7 +506,7 @@ export const collaborationPresence = pgTable('collaboration_presence', {
 export const projectTimeTracking = pgTable('project_time_tracking', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: integer('user_id').notNull().references(() => users.id),
+  userId: varchar('user_id').notNull().references(() => users.id),
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time'),
   duration: integer('duration'),
@@ -522,7 +522,7 @@ export const projectScreenshots = pgTable('project_screenshots', {
   title: text('title').notNull(),
   imageUrl: text('image_url').notNull(),
   description: text('description'),
-  createdBy: integer('created_by').notNull().references(() => users.id),
+  createdBy: varchar('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -537,7 +537,7 @@ export const taskSummaries = pgTable('task_summaries', {
   filesModified: integer('files_modified').default(0),
   linesAdded: integer('lines_added').default(0),
   linesDeleted: integer('lines_deleted').default(0),
-  createdBy: integer('created_by').notNull().references(() => users.id),
+  createdBy: varchar('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -584,7 +584,7 @@ export const keyValueStore = pgTable('key_value_store', {
 export const aiConversations = pgTable('ai_conversations', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id),
-  userId: integer('user_id').notNull().references(() => users.id),
+  userId: varchar('user_id').notNull().references(() => users.id),
   conversationId: varchar('conversation_id').notNull().unique(),
   messages: jsonb('messages').notNull().default([]),
   context: jsonb('context').default({}),
@@ -597,7 +597,7 @@ export const aiConversations = pgTable('ai_conversations', {
 // Dynamic Intelligence settings
 export const dynamicIntelligence = pgTable('dynamic_intelligence', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id).unique(),
+  userId: varchar('user_id').notNull().references(() => users.id).unique(),
   extendedThinking: boolean('extended_thinking').default(false),
   highPowerMode: boolean('high_power_mode').default(false),
   autoWebSearch: boolean('auto_web_search').default(true),
@@ -629,7 +629,7 @@ export const secrets = pgTable('secrets', {
   key: varchar('key').notNull(),
   encryptedValue: text('encrypted_value').notNull(),
   description: text('description'),
-  createdBy: integer('created_by').notNull().references(() => users.id),
+  createdBy: varchar('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
@@ -695,7 +695,7 @@ export const customDomains = pgTable('custom_domains', {
 // AI Usage Tracking Table (for billing)
 export const aiUsageRecords = pgTable('ai_usage_records', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id),
+  userId: varchar('user_id').notNull().references(() => users.id),
   model: varchar('model').notNull(),
   provider: varchar('provider').notNull(), // OpenAI, Anthropic, E-Code
   inputTokens: integer('input_tokens').notNull().default(0),
@@ -868,7 +868,7 @@ export const voiceVideoSessions = pgTable("voice_video_sessions", {
 export const voiceVideoParticipants = pgTable("voice_video_participants", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   sessionId: integer("session_id").notNull().references(() => voiceVideoSessions.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
   leftAt: timestamp("left_at"),
   isMuted: boolean("is_muted").notNull().default(false),
@@ -891,7 +891,7 @@ export const gpuInstances = pgTable("gpu_instances", {
 export const gpuUsage = pgTable("gpu_usage", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   instanceId: integer("instance_id").notNull().references(() => gpuInstances.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time"),
   gpuUtilization: integer("gpu_utilization"), // percentage
@@ -906,7 +906,7 @@ export const assignments = pgTable("assignments", {
   title: varchar("title").notNull(),
   description: text("description"),
   courseId: integer("course_id"), // References to a course if part of structured learning
-  createdBy: integer("created_by").notNull().references(() => users.id),
+  createdBy: varchar("created_by").notNull().references(() => users.id),
   dueDate: timestamp("due_date"),
   points: integer("points").default(100),
   isPublished: boolean("is_published").default(false),
@@ -965,7 +965,7 @@ export const errorLogs = pgTable("error_logs", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
   userAgent: text("user_agent"),
   url: text("url"),
-  userId: integer("user_id").references(() => users.id),
+  userId: varchar("user_id").references(() => users.id),
   sessionId: varchar("session_id"),
   metadata: jsonb("metadata"), // Additional context
   resolved: boolean("resolved").notNull().default(false),
