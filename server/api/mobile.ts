@@ -6,8 +6,7 @@ import { db } from '../db';
 import { projects, files } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
 import { realAIService } from '../services/ai-service';
-import { previewService } from '../services/preview-service';
-import { containerService } from '../services/container-service';
+import { mobileContainerService } from '../services/mobile-container-service';
 
 const router = Router();
 
@@ -177,7 +176,7 @@ router.post('/mobile/projects/:projectId/run', ensureAuthenticated, async (req, 
     const { fileId, code } = req.body;
     
     // Execute code in container
-    const result = await containerService.executeCode({
+    const result = await mobileContainerService.executeCode({
       projectId,
       language: req.body.language || 'javascript',
       code,

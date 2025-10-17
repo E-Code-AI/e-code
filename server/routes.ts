@@ -93,6 +93,7 @@ import { searchEngine } from "./search/search-engine";
 import { extensionManager } from "./extensions/extension-manager";
 import { apiManager } from "./api/api-manager";
 import { MobileAPIService } from './mobile/mobile-api-service';
+import { mobileRouter } from './api/mobile';
 import { enterpriseSSOService } from './sso/enterprise-sso-service';
 import { advancedCollaborationService } from './collaboration/advanced-collaboration-service';
 import { communityService } from './community/community-service';
@@ -7613,9 +7614,11 @@ module.exports = new Solution();`
   // Removed debug middleware to improve performance
 
   // prefix all routes with /api
-  const apiRouter = app.use('/api', (req, res, next) => {
+  app.use('/api', (req, res, next) => {
     next();
   });
+
+  app.use('/api', mobileRouter);
 
   // Get all projects for the authenticated user
   app.get('/api/projects', ensureAuthenticated, async (req, res) => {
