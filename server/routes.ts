@@ -340,14 +340,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
   
-  // Set up auth bypass for development
-  setupAuthBypass(app);
-  
-  // Apply auth bypass middleware to all API routes in development
-  if (process.env.NODE_ENV === 'development') {
+  const enableDevAuthBypass =
+    process.env.NODE_ENV === 'development' &&
+    process.env.ENABLE_DEV_AUTH_BYPASS === 'true' &&
+    !!process.env.DEV_AUTH_BYPASS_TOKEN;
+
+  if (enableDevAuthBypass) {
+    setupAuthBypass(app);
     app.use('/api', devAuthBypass);
+  } else if (process.env.NODE_ENV === 'development') {
+    console.log(
+      'Auth Bypass: Disabled. Set ENABLE_DEV_AUTH_BYPASS=true and provide DEV_AUTH_BYPASS_TOKEN to enable debug endpoints.'
+    );
   }
-  
+
   // Add performance monitoring middleware for all routes
   app.use(performanceMiddleware);
   
@@ -10483,15 +10489,24 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   
   app.use("/api/mcp", mcpRouter);
-  
+
+  const enableMCP = process.env.ENABLE_MCP_SERVER === 'true';
+
   // Open-source Models API
   const openSourceModelsRouter = await import('./api/opensource-models');
   app.use('/api/opensource', openSourceModelsRouter.default);
-  initializeMCPServer(app);
-  
-  // Start the standalone MCP server on port 3200 for AI operations
-  startMCPStandaloneServer();
-  console.log('[MCP] Standalone server starting on port 3200 for tool execution');
+
+  if (enableMCP) {
+    if (initializeMCPServer(app)) {
+      // Start the standalone MCP server on port 3200 for AI operations
+      startMCPStandaloneServer();
+      console.log('[MCP] Standalone server starting on port 3200 for tool execution');
+    } else {
+      console.warn('[MCP] Standalone MCP server initialization failed; skipping standalone server startup');
+    }
+  } else {
+    console.warn('[MCP] Standalone MCP server disabled (set ENABLE_MCP_SERVER="true" to enable)');
+  }
   
   // Shell routes
   app.use("/api/shell", shellRoutes);
