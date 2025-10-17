@@ -73,7 +73,7 @@ export const users = pgTable("users", {
 });
 
 export const projects = pgTable("projects", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   description: text("description"),
   visibility: visibilityEnum("visibility").notNull().default('private'),
@@ -81,7 +81,7 @@ export const projects = pgTable("projects", {
   ownerId: varchar("owner_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  forkedFromId: integer("forked_from_id"),
+  forkedFromId: varchar("forked_from_id"),
   views: integer("views").notNull().default(0),
   likes: integer("likes").notNull().default(0),
   forks: integer("forks").notNull().default(0),
@@ -96,12 +96,12 @@ export const files = pgTable("files", {
   name: text("name").notNull(),
   path: text("path").notNull(),
   content: text("content").default(''),
-  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
-  parentId: integer("parent_id").references(() => files.id, { onDelete: 'cascade' }),
+  projectId: varchar("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
   isDirectory: boolean("is_directory").notNull().default(false),
-  isFolder: boolean("is_folder").notNull().default(false), // Alias for isDirectory to match frontend expectations
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  storageKey: text("storage_key"),
+  storageUrl: text("storage_url"),
 });
 
 // API SDK Tables
@@ -174,7 +174,7 @@ export const usageAlerts = pgTable("usage_alerts", {
 // Code Review Tables
 export const codeReviews = pgTable("code_reviews", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  projectId: integer("project_id").notNull().references(() => projects.id),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
   authorId: varchar("author_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   description: text("description"),
@@ -332,7 +332,7 @@ export const conversationMemory = pgTable("conversation_memory", {
 
 export const deployments = pgTable("deployments", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  projectId: integer("project_id").notNull().references(() => projects.id),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
   deploymentId: varchar("deployment_id").notNull().unique(),
   type: varchar("type").notNull(), // static, autoscale, reserved-vm, serverless, scheduled
   environment: varchar("environment").notNull(), // development, staging, production
@@ -415,7 +415,7 @@ export const teamMembers = pgTable("team_members", {
 // Comments system for projects and files
 export const comments = pgTable('comments', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   fileId: integer('file_id').references(() => files.id),
   authorId: varchar('author_id').notNull().references(() => users.id),
   content: text('content').notNull(),
@@ -428,7 +428,7 @@ export const comments = pgTable('comments', {
 // Checkpoints for version control
 export const checkpoints = pgTable('checkpoints', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   name: text('name').notNull(),
   description: text('description'),
   filesSnapshot: jsonb('files_snapshot').notNull().default({}),
@@ -459,7 +459,7 @@ export const checkpointDatabase = pgTable('checkpoint_database', {
 // WebRTC Voice/Video Session Tables
 export const webrtcSessions = pgTable('webrtc_sessions', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   roomId: varchar('room_id').notNull().unique(),
   sessionType: varchar('session_type').notNull().default('video'), // video, voice, screen-share
   maxParticipants: integer('max_participants').notNull().default(10),
@@ -493,7 +493,7 @@ export const webrtcRecordings = pgTable('webrtc_recordings', {
 // Collaboration Presence Tables
 export const collaborationPresence = pgTable('collaboration_presence', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   userId: varchar('user_id').notNull().references(() => users.id),
   fileId: integer('file_id').references(() => files.id),
   cursorPosition: jsonb('cursor_position').default({}), // {line: number, column: number}
@@ -505,7 +505,7 @@ export const collaborationPresence = pgTable('collaboration_presence', {
 // Time tracking for projects
 export const projectTimeTracking = pgTable('project_time_tracking', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   userId: varchar('user_id').notNull().references(() => users.id),
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time'),
@@ -518,7 +518,7 @@ export const projectTimeTracking = pgTable('project_time_tracking', {
 // Screenshots for projects
 export const projectScreenshots = pgTable('project_screenshots', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   title: text('title').notNull(),
   imageUrl: text('image_url').notNull(),
   description: text('description'),
@@ -529,7 +529,7 @@ export const projectScreenshots = pgTable('project_screenshots', {
 // Task summaries
 export const taskSummaries = pgTable('task_summaries', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   title: text('title').notNull(),
   description: text('description').notNull(),
   completedTasks: jsonb('completed_tasks'),
@@ -544,7 +544,7 @@ export const taskSummaries = pgTable('task_summaries', {
 // Object Storage tables (Google Cloud Storage)
 export const objectStorageBuckets = pgTable('object_storage_buckets', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   bucketName: varchar('bucket_name').notNull().unique(),
   region: varchar('region').notNull().default('us-central1'),
   storageClass: varchar('storage_class').notNull().default('STANDARD'),
@@ -570,7 +570,7 @@ export const objectStorageFiles = pgTable('object_storage_files', {
 // Key-Value Store
 export const keyValueStore = pgTable('key_value_store', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   key: varchar('key').notNull(),
   value: jsonb('value').notNull(),
   expiresAt: timestamp('expires_at'),
@@ -583,7 +583,7 @@ export const keyValueStore = pgTable('key_value_store', {
 // AI Agent Conversations
 export const aiConversations = pgTable('ai_conversations', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   userId: varchar('user_id').notNull().references(() => users.id),
   conversationId: varchar('conversation_id').notNull().unique(),
   messages: jsonb('messages').notNull().default([]),
@@ -625,7 +625,7 @@ export const webSearchHistory = pgTable('web_search_history', {
 // Secrets Management
 export const secrets = pgTable('secrets', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   key: varchar('key').notNull(),
   encryptedValue: text('encrypted_value').notNull(),
   description: text('description'),
@@ -639,7 +639,7 @@ export const secrets = pgTable('secrets', {
 // Environment Variables
 export const environmentVariables = pgTable('environment_variables', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   key: varchar('key').notNull(),
   value: text('value').notNull(),
   environment: varchar('environment').notNull().default('development'), // development, staging, production
@@ -653,7 +653,7 @@ export const environmentVariables = pgTable('environment_variables', {
 // Git Integration
 export const gitRepositories = pgTable('git_repositories', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id).unique(),
+  projectId: varchar('project_id').notNull().references(() => projects.id).unique(),
   provider: varchar('provider').notNull(), // github, gitlab, bitbucket
   repositoryUrl: text('repository_url').notNull(),
   defaultBranch: varchar('default_branch').notNull().default('main'),
@@ -680,7 +680,7 @@ export const gitCommits = pgTable('git_commits', {
 // Custom Domains
 export const customDomains = pgTable('custom_domains', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
   domain: varchar('domain').notNull().unique(),
   subdomain: varchar('subdomain'),
   sslStatus: varchar('ssl_status').notNull().default('pending'), // pending, active, failed
@@ -703,7 +703,7 @@ export const aiUsageRecords = pgTable('ai_usage_records', {
   totalTokens: integer('total_tokens').notNull().default(0),
   creditsCost: decimal('credits_cost', { precision: 10, scale: 4 }).notNull().default('0'),
   purpose: varchar('purpose'), // chat, completion, embedding, code-generation, agent-task
-  projectId: integer('project_id').references(() => projects.id),
+  projectId: varchar('project_id').references(() => projects.id),
   conversationId: varchar('conversation_id'),
   metadata: jsonb('metadata').default({}),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -856,7 +856,7 @@ export type InsertCollaborationPresence = z.infer<typeof insertCollaborationPres
 // Voice/Video Sessions
 export const voiceVideoSessions = pgTable("voice_video_sessions", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  projectId: integer("project_id").notNull().references(() => projects.id),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
   type: varchar("type").notNull(), // 'voice' or 'video'
   status: varchar("status").notNull().default('active'), // 'active', 'ended'
   startedAt: timestamp("started_at").notNull().defaultNow(),
@@ -878,7 +878,7 @@ export const voiceVideoParticipants = pgTable("voice_video_participants", {
 // GPU Resources
 export const gpuInstances = pgTable("gpu_instances", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  projectId: integer("project_id").notNull().references(() => projects.id),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
   gpuType: varchar("gpu_type").notNull(), // 'T4', 'A100', etc.
   instanceId: varchar("instance_id").notNull().unique(),
   status: varchar("status").notNull().default('provisioning'), // 'provisioning', 'active', 'stopped', 'terminated'
