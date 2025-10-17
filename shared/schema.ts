@@ -97,7 +97,9 @@ export const files = pgTable("files", {
   path: text("path").notNull(),
   content: text("content").default(''),
   projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  parentId: integer("parent_id").references(() => files.id, { onDelete: 'cascade' }),
   isDirectory: boolean("is_directory").notNull().default(false),
+  isFolder: boolean("is_folder").notNull().default(false), // Alias for isDirectory to match frontend expectations
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
