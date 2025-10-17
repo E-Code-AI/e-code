@@ -10489,15 +10489,24 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   
   app.use("/api/mcp", mcpRouter);
-  
+
+  const enableMCP = process.env.ENABLE_MCP_SERVER === 'true';
+
   // Open-source Models API
   const openSourceModelsRouter = await import('./api/opensource-models');
   app.use('/api/opensource', openSourceModelsRouter.default);
-  initializeMCPServer(app);
-  
-  // Start the standalone MCP server on port 3200 for AI operations
-  startMCPStandaloneServer();
-  console.log('[MCP] Standalone server starting on port 3200 for tool execution');
+
+  if (enableMCP) {
+    if (initializeMCPServer(app)) {
+      // Start the standalone MCP server on port 3200 for AI operations
+      startMCPStandaloneServer();
+      console.log('[MCP] Standalone server starting on port 3200 for tool execution');
+    } else {
+      console.warn('[MCP] Standalone MCP server initialization failed; skipping standalone server startup');
+    }
+  } else {
+    console.warn('[MCP] Standalone MCP server disabled (set ENABLE_MCP_SERVER="true" to enable)');
+  }
   
   // Shell routes
   app.use("/api/shell", shellRoutes);
