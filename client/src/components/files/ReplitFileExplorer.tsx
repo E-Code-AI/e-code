@@ -113,7 +113,7 @@ export function ReplitFileExplorer({
 
   // Récupération de l'arbre de fichiers
   const { data: fileTree = [], isLoading, refetch } = useQuery<FileNode[]>({
-    queryKey: ["/api/files", projectId],
+    queryKey: [`/api/files/${projectId}`],
     staleTime: 30000, // 30 secondes
   });
 
@@ -129,7 +129,7 @@ export function ReplitFileExplorer({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/files", projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       setCreateDialogOpen(false);
       setNewItemName("");
       toast({
@@ -155,7 +155,7 @@ export function ReplitFileExplorer({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/files", projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       toast({
         title: "Deleted successfully",
         description: "File/folder deleted successfully.",

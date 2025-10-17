@@ -284,7 +284,7 @@ const ProjectPage = () => {
       });
       
       // Refresh file list to get updated timestamps
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
     },
     onError: (error: Error) => {
       setAutoSaveStatus('error');
@@ -316,7 +316,7 @@ const ProjectPage = () => {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       toast({
         title: "File created",
         description: "New file has been created successfully.",
@@ -346,7 +346,7 @@ const ProjectPage = () => {
         setSelectedFile(null);
       }
       
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       toast({
         title: "File deleted",
         description: "File has been deleted successfully.",
@@ -371,7 +371,7 @@ const ProjectPage = () => {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       toast({
         title: "File renamed",
         description: "File has been renamed successfully.",
@@ -608,7 +608,7 @@ const ProjectPage = () => {
                 variant="outline" 
                 onClick={() => {
                   queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
-                  queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
                 }}
               >
                 Try Again
@@ -1126,7 +1126,7 @@ const ProjectPage = () => {
               <FileUploadDropzone 
                 projectId={projectId} 
                 onUploadComplete={() => {
-                  queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
                 }}
               />
             </div>
