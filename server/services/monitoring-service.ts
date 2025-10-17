@@ -58,9 +58,6 @@ export class MonitoringService {
 
   async processMonitoringEvents(event: MonitoringEvent, userId?: number): Promise<void> {
     try {
-      // Temporarily disable monitoring to prevent database errors during startup
-      return;
-      
       // Process errors
       if (event.errors && event.errors.length > 0) {
         await this.processErrors(event.errors, userId);
@@ -117,8 +114,8 @@ export class MonitoringService {
     for (const metric of metrics) {
       try {
         await db.insert(performanceMetrics).values({
-          name: metric.name,
-          value: metric.value,
+          metric_name: metric.name,
+          metric_value: metric.value,
           unit: metric.unit,
           timestamp: new Date(metric.timestamp),
           userId,
@@ -229,11 +226,11 @@ export class MonitoringService {
       
       // Get average response time
       const responseTimeData = await db.select({ 
-        avg: sql<number>`avg(value)` 
+        avg: sql<number>`avg(metric_value)` 
       })
         .from(performanceMetrics)
         .where(and(
-          eq(performanceMetrics.name, 'page_load_time'),
+          eq(performanceMetrics.metric_name, 'page_load_time'),
           gte(performanceMetrics.timestamp, oneHourAgo)
         ));
       
