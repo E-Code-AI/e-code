@@ -9,6 +9,7 @@ import bcrypt from "bcrypt";
 import { storage, sessionStore } from "./storage";
 import { User } from "@shared/schema";
 import { client } from "./db";
+import { ensureAuthenticated } from "./middleware/auth";
 import { 
   generateEmailVerificationToken, 
   generatePasswordResetToken, 
@@ -65,6 +66,8 @@ declare module 'express-session' {
   interface SessionData {
     userAgent?: string;
     ipAddress?: string;
+    userId?: number;
+    lastActivityAt?: string;
   }
 }
 
@@ -127,6 +130,7 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret || randomBytes(32).toString('hex'),
     resave: false, // Changed to false as we're using a store that implements touch
+    saveUninitialized: false, // Only save sessions after meaningful data is set
     saveUninitialized: false, // Do not create sessions until something is stored
     store: sessionStore, // Using PostgreSQL session store
     name: 'plot.sid', // Custom name to avoid using the default
@@ -137,7 +141,8 @@ export function setupAuth(app: Express) {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       path: '/',
       domain: process.env.NODE_ENV === 'development' ? undefined : undefined // Let browser set domain automatically
-    }
+    },
+    rolling: true
   };
   
   // Debug session configuration
@@ -155,9 +160,10 @@ export function setupAuth(app: Express) {
   
   // Middleware to store user agent and IP in session
   app.use((req, res, next) => {
-    if (req.session) {
+    if (req.session && req.session.userId) {
       req.session.userAgent = req.headers['user-agent'] || 'Unknown';
       req.session.ipAddress = req.ip || 'Unknown';
+      req.session.lastActivityAt = new Date().toISOString();
     }
     next();
   });
@@ -264,16 +270,6 @@ export function setupAuth(app: Express) {
   });
 
   // Middleware to ensure a user is authenticated
-  const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    // Apply auth bypass first
-    devAuthBypass(req, res, () => {
-      if (req.isAuthenticated()) {
-        return next();
-      }
-      res.status(401).json({ message: "Unauthorized" });
-    });
-  };
-
   // Register a new user with email verification
   app.post("/api/register", async (req, res, next) => {
     try {
@@ -426,33 +422,45 @@ export function setupAuth(app: Express) {
           // Log successful login
           // Successful login logged
           
-          req.login(authenticatedUser as Express.User, (err: any) => {
-            if (err) {
-              console.error("Login error:", err);
-              return next(err);
+          req.session.regenerate((regenerateErr) => {
+            if (regenerateErr) {
+              console.error('Session regeneration error:', regenerateErr);
+              return next(regenerateErr);
             }
 
-            console.log(`User ${authenticatedUser.username} logged in successfully`);
-
-            // Ensure session is saved before sending response
-            req.session.save((sessionErr) => {
-              if (sessionErr) {
-                console.error('Session save error:', sessionErr);
-                return next(sessionErr);
+            req.login(authenticatedUser as Express.User, (err: any) => {
+              if (err) {
+                console.error("Login error:", err);
+                return next(err);
               }
 
-              // Generate JWT tokens
-              const accessToken = generateAccessToken(authenticatedUser.id, authenticatedUser.username);
-              const refreshToken = generateRefreshToken(authenticatedUser.id);
+              console.log(`User ${authenticatedUser.username} logged in successfully`);
 
-              // Return user info without password
-              const { password, ...userWithoutPassword } = authenticatedUser;
-              res.json({
-                ...userWithoutPassword,
-                tokens: {
-                  access: accessToken,
-                  refresh: refreshToken
+              req.session.userAgent = req.headers['user-agent'] || 'Unknown';
+              req.session.ipAddress = req.ip || 'Unknown';
+              req.session.userId = authenticatedUser.id;
+              req.session.lastActivityAt = new Date().toISOString();
+
+              // Ensure session is saved before sending response
+              req.session.save((sessionErr) => {
+                if (sessionErr) {
+                  console.error('Session save error:', sessionErr);
+                  return next(sessionErr);
                 }
+
+                // Generate JWT tokens
+                const accessToken = generateAccessToken(authenticatedUser.id, authenticatedUser.username);
+                const refreshToken = generateRefreshToken(authenticatedUser.id);
+
+                // Return user info without password
+                const { password, ...userWithoutPassword } = authenticatedUser;
+                res.json({
+                  ...userWithoutPassword,
+                  tokens: {
+                    access: accessToken,
+                    refresh: refreshToken
+                  }
+                });
               });
             });
           });
@@ -1097,11 +1105,18 @@ export function setupAuth(app: Express) {
         secure: false,
         httpOnly: true,
         sameSite: 'lax',
-        saveUninitialized: true,
-        resave: false
-      }
+        saveUninitialized: false,
+        resave: false,
+        rolling: true
+      },
+      storedSession: req.session ? {
+        userId: req.session.userId,
+        userAgent: req.session.userAgent,
+        ipAddress: req.session.ipAddress,
+        lastActivityAt: req.session.lastActivityAt
+      } : null
     };
-    
+
     res.json(debugInfo);
   });
 }
