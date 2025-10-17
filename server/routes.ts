@@ -340,14 +340,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
   
-  // Set up auth bypass for development
-  setupAuthBypass(app);
-  
-  // Apply auth bypass middleware to all API routes in development
-  if (process.env.NODE_ENV === 'development') {
+  const enableDevAuthBypass =
+    process.env.NODE_ENV === 'development' &&
+    process.env.ENABLE_DEV_AUTH_BYPASS === 'true' &&
+    !!process.env.DEV_AUTH_BYPASS_TOKEN;
+
+  if (enableDevAuthBypass) {
+    setupAuthBypass(app);
     app.use('/api', devAuthBypass);
+  } else if (process.env.NODE_ENV === 'development') {
+    console.log(
+      'Auth Bypass: Disabled. Set ENABLE_DEV_AUTH_BYPASS=true and provide DEV_AUTH_BYPASS_TOKEN to enable debug endpoints.'
+    );
   }
-  
+
   // Add performance monitoring middleware for all routes
   app.use(performanceMiddleware);
   
