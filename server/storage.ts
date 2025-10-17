@@ -116,6 +116,8 @@ const normalizeStringArray = (value: unknown, fallback: string[] = []): string[]
   }
 
   return [String(value)];
+};
+
 const toMutableArray = <T>(value: readonly T[] | T[] | null | undefined): T[] | null | undefined => {
   if (Array.isArray(value)) {
     return [...value];
@@ -732,12 +734,6 @@ export class DatabaseStorage implements IStorage {
     } satisfies InsertCodeReview;
 
     const [review] = await this.db.insert(codeReviews).values(values).returning();
-    const normalizedReview: InsertCodeReview = {
-      ...reviewData,
-      filesChanged: toMutableArray<string>(reviewData.filesChanged),
-    };
-
-    const [review] = await this.db.insert(codeReviews).values([normalizedReview]).returning();
     return review;
   }
 
@@ -760,15 +756,11 @@ export class DatabaseStorage implements IStorage {
           }
         : {}),
       updatedAt: new Date(),
-    const normalizedReview: Partial<InsertCodeReview> = {
-      ...reviewData,
-      filesChanged: toMutableArray<string>(reviewData.filesChanged),
     };
 
     const [review] = await this.db
       .update(codeReviews)
       .set(reviewUpdate)
-      .set({ ...normalizedReview, updatedAt: new Date() })
       .where(eq(codeReviews.id, id))
       .returning();
     return review;
@@ -785,13 +777,6 @@ export class DatabaseStorage implements IStorage {
     } satisfies InsertChallenge;
 
     const [challenge] = await this.db.insert(challenges).values(challengeValues).returning();
-    const normalizedChallenge: InsertChallenge = {
-      ...challengeData,
-      tags: toMutableArray<string>(challengeData.tags),
-      testCases: toMutableArray<any>(challengeData.testCases),
-    };
-
-    const [challenge] = await this.db.insert(challenges).values([normalizedChallenge]).returning();
     return challenge;
   }
 
@@ -812,16 +797,11 @@ export class DatabaseStorage implements IStorage {
         ? { tags: normalizeStringArray(challengeData.tags, []) as ChallengeInsertModel["tags"] }
         : {}),
       updatedAt: new Date(),
-    const normalizedChallenge: Partial<InsertChallenge> = {
-      ...challengeData,
-      tags: toMutableArray<string>(challengeData.tags),
-      testCases: toMutableArray<any>(challengeData.testCases),
     };
 
     const [challenge] = await this.db
       .update(challenges)
       .set(challengeUpdate)
-      .set({ ...normalizedChallenge, updatedAt: new Date() })
       .where(eq(challenges.id, id))
       .returning();
     return challenge;
@@ -839,12 +819,6 @@ export class DatabaseStorage implements IStorage {
     } satisfies InsertMentorProfile;
 
     const [profile] = await this.db.insert(mentorProfiles).values(profileValues).returning();
-    const normalizedProfile: InsertMentorProfile = {
-      ...profileData,
-      expertise: toMutableArray<string>(profileData.expertise),
-    };
-
-    const [profile] = await this.db.insert(mentorProfiles).values([normalizedProfile]).returning();
     return profile;
   }
 
@@ -870,15 +844,11 @@ export class DatabaseStorage implements IStorage {
                 : {},
           }
         : {}),
-    const normalizedProfile: Partial<InsertMentorProfile> = {
-      ...profileData,
-      expertise: toMutableArray<string>(profileData.expertise),
     };
 
     const [profile] = await this.db
       .update(mentorProfiles)
       .set(mentorUpdate)
-      .set({ ...normalizedProfile })
       .where(eq(mentorProfiles.userId, userId))
       .returning();
     return profile;
