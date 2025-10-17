@@ -2948,8 +2948,8 @@ npx http-server .
         });
       }
       
-      // In development, bypass auth for easier testing
-      if (process.env.NODE_ENV === 'development' || authBypassEnabled) {
+      // In development, bypass auth for easier testing only if user is not authenticated
+      if ((process.env.NODE_ENV === 'development' || authBypassEnabled) && !req.user) {
         req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
       }
       
