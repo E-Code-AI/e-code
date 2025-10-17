@@ -129,45 +129,45 @@ const toMutableArray = <T>(value: readonly T[] | T[] | null | undefined): T[] | 
 export interface IStorage {
   // Mobile-specific methods
   getUserByUsername(username: string): Promise<User | undefined>;
-  createFile(data: { projectId: number; path: string; content: string }): Promise<File>;
+  createFile(data: { projectId: string; path: string; content: string }): Promise<File>;
   createFile(file: InsertFile): Promise<File>;
   updateFile(fileId: number, data: { content: string }): Promise<void>;
   updateFile(id: number, file: Partial<InsertFile>): Promise<File | undefined>;
   getTrendingProjects(options: { limit: number }): Promise<any[]>;
   getFeaturedProjects(options: { limit: number }): Promise<any[]>;
-  pinProject(projectId: number, userId: number): Promise<void>;
-  unpinProject(projectId: number, userId: number): Promise<void>;
-  trackUsage(userId: number, data: UsageMetricInput): Promise<void>;
-  updateUserStripeInfo(userId: number, data: any): Promise<User | undefined>;
+  pinProject(projectId: string, userId: string): Promise<void>;
+  unpinProject(projectId: string, userId: string): Promise<void>;
+  trackUsage(userId: string, data: UsageMetricInput): Promise<void>;
+  updateUserStripeInfo(userId: string, data: any): Promise<User | undefined>;
   // User operations
-  getUser(id: number): Promise<User | undefined>;
+  getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
-  deleteUser(id: number): Promise<boolean>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
   upsertUser(user: UpsertUser): Promise<User>;
   saveEmailVerificationToken(email: string, token: string): Promise<void>;
 
   // Project operations
-  getProject(id: number): Promise<Project | undefined>;
-  getProjectBySlug(slug: string, ownerId?: number): Promise<Project | null>;
-  getProjectsByUserId(ownerId: number): Promise<Project[]>;
+  getProject(id: string): Promise<Project | undefined>;
+  getProjectBySlug(slug: string, ownerId?: string): Promise<Project | null>;
+  getProjectsByUserId(ownerId: string): Promise<Project[]>;
   createProject(project: InsertProject): Promise<Project>;
-  updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined>;
-  deleteProject(id: number): Promise<boolean>;
-  incrementProjectViews(id: number): Promise<void>;
+  updateProject(id: string, project: Partial<InsertProject>): Promise<Project | undefined>;
+  deleteProject(id: string): Promise<boolean>;
+  incrementProjectViews(id: string): Promise<void>;
 
   // File operations
   getFile(id: number): Promise<File | undefined>;
-  getFilesByProjectId(projectId: number): Promise<File[]>;
+  getFilesByProjectId(projectId: string): Promise<File[]>;
   createFile(file: InsertFile): Promise<File>;
   updateFile(id: number, file: Partial<InsertFile>): Promise<File | undefined>;
   deleteFile(id: number): Promise<boolean>;
 
   // API Key operations
   createApiKey(apiKey: InsertApiKey): Promise<ApiKey>;
-  getUserApiKeys(userId: number): Promise<ApiKey[]>;
+  getUserApiKeys(userId: string): Promise<ApiKey[]>;
   getApiKey(id: number): Promise<ApiKey | undefined>;
   updateApiKey(id: number, apiKey: Partial<InsertApiKey>): Promise<ApiKey | undefined>;
   deleteApiKey(id: number): Promise<boolean>;
@@ -175,7 +175,7 @@ export interface IStorage {
   // Code Review operations
   createCodeReview(review: InsertCodeReview): Promise<CodeReview>;
   getCodeReview(id: number): Promise<CodeReview | undefined>;
-  getProjectCodeReviews(projectId: number): Promise<CodeReview[]>;
+  getProjectCodeReviews(projectId: string): Promise<CodeReview[]>;
   updateCodeReview(id: number, review: Partial<InsertCodeReview>): Promise<CodeReview | undefined>;
 
   // Challenge operations
@@ -186,26 +186,26 @@ export interface IStorage {
 
   // Mentorship operations
   createMentorProfile(profile: InsertMentorProfile): Promise<MentorProfile>;
-  getMentorProfile(userId: number): Promise<MentorProfile | undefined>;
-  updateMentorProfile(userId: number, profile: Partial<InsertMentorProfile>): Promise<MentorProfile | undefined>;
+  getMentorProfile(userId: string): Promise<MentorProfile | undefined>;
+  updateMentorProfile(userId: string, profile: Partial<InsertMentorProfile>): Promise<MentorProfile | undefined>;
 
   // Template operations
   getAllTemplates(publishedOnly?: boolean): Promise<any[]>;
-  pinProject(projectId: number, userId: number): Promise<void>;
-  unpinProject(projectId: number, userId: number): Promise<void>;
+  pinProject(projectId: string, userId: string): Promise<void>;
+  unpinProject(projectId: string, userId: string): Promise<void>;
 
   // Login history operations
   createLoginHistory(history: any): Promise<any>;
 
   // Admin API Key operations (for centralized AI services)
   getActiveAdminApiKey(provider: string): Promise<any>;
-  trackAIUsage(userId: number, tokens: number, mode: string): Promise<void>;
+  trackAIUsage(userId: string, tokens: number, mode: string): Promise<void>;
   createAiUsageRecord(record: any): Promise<any>;
-  updateUserAiTokens(userId: number, tokensUsed: number): Promise<void>;
+  updateUserAiTokens(userId: string, tokensUsed: number): Promise<void>;
 
   // AI Usage Tracking for billing
   createAIUsageRecord(record: {
-    userId: number;
+    userId: string;
     model: string;
     provider: string;
     inputTokens: number;
@@ -213,79 +213,79 @@ export interface IStorage {
     totalTokens: number;
     creditsCost: number;
     purpose?: string;
-    projectId?: number;
+    projectId?: string;
     metadata?: any;
   }): Promise<any>;
-  getAIUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any[]>;
-  getUserCredits(userId: number): Promise<UserCredits | undefined>;
+  getAIUsageStats(userId: string, startDate?: Date, endDate?: Date): Promise<any[]>;
+  getUserCredits(userId: string): Promise<UserCredits | undefined>;
 
   // Deployment operations
   createDeployment(deploymentData: InsertDeployment): Promise<Deployment>;
-  getDeployments(projectId: number): Promise<Deployment[]>;
+  getDeployments(projectId: string): Promise<Deployment[]>;
   updateDeployment(id: number, deploymentData: Partial<InsertDeployment>): Promise<Deployment | undefined>;
 
   // Audit log operations
-  getAuditLogs(filters: { userId?: number; action?: string; dateRange?: string }): Promise<any[]>;
+  getAuditLogs(filters: { userId?: string; action?: string; dateRange?: string }): Promise<any[]>;
 
   // Storage operations
   getStorageBuckets(): Promise<any[]>;
-  createStorageBucket(bucket: { projectId: number; name: string; region: string; isPublic: boolean }): Promise<any>;
-  getProjectStorageBuckets(projectId: number): Promise<any[]>;
+  createStorageBucket(bucket: { projectId: string; name: string; region: string; isPublic: boolean }): Promise<any>;
+  getProjectStorageBuckets(projectId: string): Promise<any[]>;
   getStorageObjects(bucketId: string): Promise<any[]>;
   deleteStorageObject(bucketId: string, objectKey: string): Promise<void>;
 
   // Team operations
-  getUserTeams(userId: number): Promise<any[]>;
+  getUserTeams(userId: string): Promise<any[]>;
 
   // Theme operations  
-  getUserThemeSettings(userId: number): Promise<any>;
-  updateUserThemeSettings(userId: number, settings: any): Promise<any>;
-  getInstalledThemes(userId: number): Promise<any[]>;
-  installTheme(userId: number, themeId: string): Promise<void>;
-  uninstallTheme(userId: number, themeId: string): Promise<void>;
-  createCustomTheme(userId: number, theme: any): Promise<any>;
+  getUserThemeSettings(userId: string): Promise<any>;
+  updateUserThemeSettings(userId: string, settings: any): Promise<any>;
+  getInstalledThemes(userId: string): Promise<any[]>;
+  installTheme(userId: string, themeId: string): Promise<void>;
+  uninstallTheme(userId: string, themeId: string): Promise<void>;
+  createCustomTheme(userId: string, theme: any): Promise<any>;
 
   // Stripe operations
-  updateUserStripeInfo(userId: number, stripeData: {
+  updateUserStripeInfo(userId: string, stripeData: {
     stripeCustomerId?: string;
     stripeSubscriptionId?: string;
     stripePriceId?: string;
     subscriptionStatus?: string;
     subscriptionCurrentPeriodEnd?: Date;
   }): Promise<User | undefined>;
-  updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined>;
+  updateStripeCustomerId(userId: string, customerId: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
 
   // Usage tracking operations
   trackUsage(
-    userId: number,
+    userId: string,
     eventType: string,
     quantity: number,
     metadata?: UsageMetricMetadata
   ): Promise<void>;
-  getUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any>;
-  getUserUsage(userId: number, billingPeriodStart?: Date): Promise<any>;
-  getUsageHistory(userId: number, startDate: Date, endDate: Date, metricType?: string): Promise<any[]>;
-  getUsageSummary(userId: number, period: string): Promise<any>;
+  getUsageStats(userId: string, startDate?: Date, endDate?: Date): Promise<any>;
+  getUserUsage(userId: string, billingPeriodStart?: Date): Promise<any>;
+  getUsageHistory(userId: string, startDate: Date, endDate: Date, metricType?: string): Promise<any[]>;
+  getUsageSummary(userId: string, period: string): Promise<any>;
 
   // Comments operations
   createComment(comment: InsertComment): Promise<Comment>;
-  getProjectComments(projectId: number): Promise<Comment[]>;
+  getProjectComments(projectId: string): Promise<Comment[]>;
   getFileComments(fileId: number): Promise<Comment[]>;
   updateComment(id: number, comment: Partial<InsertComment>): Promise<Comment | undefined>;
   deleteComment(id: number): Promise<boolean>;
 
   // Checkpoints operations
   createCheckpoint(checkpoint: any): Promise<Checkpoint>;
-  getProjectCheckpoints(projectId: number): Promise<Checkpoint[]>;
+  getProjectCheckpoints(projectId: string): Promise<Checkpoint[]>;
   getCheckpoint(id: number): Promise<Checkpoint | undefined>;
   restoreCheckpoint(checkpointId: number): Promise<boolean>;
 
   // Agent operations
-  getAgentWorkSteps(projectId: number, sessionId: string): Promise<any[]>;
+  getAgentWorkSteps(projectId: string, sessionId: string): Promise<any[]>;
   createAgentCheckpoint(checkpoint: {
-    projectId: number;
-    userId: number;
+    projectId: string;
+    userId: string;
     message: string;
     changes: number;
     sessionId: string;
@@ -295,85 +295,85 @@ export interface IStorage {
   // Time tracking operations
   startTimeTracking(tracking: InsertTimeTracking): Promise<TimeTracking>;
   stopTimeTracking(trackingId: number): Promise<TimeTracking | undefined>;
-  getActiveTimeTracking(projectId: number, userId: number): Promise<TimeTracking | undefined>;
-  getProjectTimeTracking(projectId: number): Promise<TimeTracking[]>;
+  getActiveTimeTracking(projectId: string, userId: string): Promise<TimeTracking | undefined>;
+  getProjectTimeTracking(projectId: string): Promise<TimeTracking[]>;
 
   // Screenshot operations
   createScreenshot(screenshot: InsertScreenshot): Promise<Screenshot>;
-  getProjectScreenshots(projectId: number): Promise<Screenshot[]>;
+  getProjectScreenshots(projectId: string): Promise<Screenshot[]>;
   getScreenshot(id: number): Promise<Screenshot | undefined>;
   deleteScreenshot(id: number): Promise<boolean>;
 
   // Task summary operations
   createTaskSummary(summary: InsertTaskSummary): Promise<TaskSummary>;
-  getProjectTaskSummaries(projectId: number): Promise<TaskSummary[]>;
+  getProjectTaskSummaries(projectId: string): Promise<TaskSummary[]>;
   updateTaskSummary(id: number, summary: Partial<InsertTaskSummary>): Promise<TaskSummary | undefined>;
 
   // Voice/Video Session operations
   createVoiceVideoSession(session: InsertVoiceVideoSession): Promise<VoiceVideoSession>;
-  getProjectVoiceVideoSessions(projectId: number): Promise<VoiceVideoSession[]>;
+  getProjectVoiceVideoSessions(projectId: string): Promise<VoiceVideoSession[]>;
   endVoiceVideoSession(sessionId: number): Promise<VoiceVideoSession | undefined>;
   addVoiceVideoParticipant(participant: InsertVoiceVideoParticipant): Promise<VoiceVideoParticipant>;
-  removeVoiceVideoParticipant(sessionId: number, userId: number): Promise<void>;
+  removeVoiceVideoParticipant(sessionId: number, userId: string): Promise<void>;
 
   // GPU Instance operations
   createGpuInstance(instance: InsertGpuInstance): Promise<GpuInstance>;
-  getProjectGpuInstances(projectId: number): Promise<GpuInstance[]>;
+  getProjectGpuInstances(projectId: string): Promise<GpuInstance[]>;
   updateGpuInstanceStatus(instanceId: number, status: string): Promise<GpuInstance | undefined>;
   createGpuUsage(usage: InsertGpuUsage): Promise<GpuUsage>;
   getGpuUsageByInstance(instanceId: number): Promise<GpuUsage[]>;
 
   // Assignment operations
   createAssignment(assignment: InsertAssignment): Promise<Assignment>;
-  getAssignments(filters?: { courseId?: number; createdBy?: number }): Promise<Assignment[]>;
+  getAssignments(filters?: { courseId?: number; createdBy?: string }): Promise<Assignment[]>;
   getAssignment(id: number): Promise<Assignment | undefined>;
   updateAssignment(id: number, assignment: Partial<InsertAssignment>): Promise<Assignment | undefined>;
 
   // Submission operations
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getSubmissionsByAssignment(assignmentId: number): Promise<Submission[]>;
-  getSubmissionsByStudent(studentId: number): Promise<Submission[]>;
-  gradeSubmission(submissionId: number, grade: number, feedback: string, gradedBy: number): Promise<Submission | undefined>;
+  getSubmissionsByStudent(studentId: string): Promise<Submission[]>;
+  gradeSubmission(submissionId: number, grade: number, feedback: string, gradedBy: string): Promise<Submission | undefined>;
 
   // Secret management operations
   createSecret(secret: any): Promise<any>;
-  getProjectSecrets(projectId: number): Promise<any[]>;
+  getProjectSecrets(projectId: string): Promise<any[]>;
   getSecret(id: number): Promise<any | undefined>;
   deleteSecret(id: number): Promise<boolean>;
 
   // Missing methods from routes.ts
-  getProjectCollaborators(projectId: number): Promise<any[]>;
-  isProjectCollaborator(projectId: number, userId: number): Promise<boolean>;
-  forkProject(projectId: number, userId: number): Promise<Project>;
-  likeProject(projectId: number, userId: number): Promise<void>;
-  unlikeProject(projectId: number, userId: number): Promise<void>;
-  isProjectLiked(projectId: number, userId: number): Promise<boolean>;
-  getProjectLikes(projectId: number): Promise<number>;
-  trackProjectView(projectId: number, userId: number): Promise<void>;
-  getProjectActivity(projectId: number): Promise<any[]>;
-  getProjectFiles(projectId: number): Promise<any[]>;
+  getProjectCollaborators(projectId: string): Promise<any[]>;
+  isProjectCollaborator(projectId: string, userId: string): Promise<boolean>;
+  forkProject(projectId: string, userId: string): Promise<Project>;
+  likeProject(projectId: string, userId: string): Promise<void>;
+  unlikeProject(projectId: string, userId: string): Promise<void>;
+  isProjectLiked(projectId: string, userId: string): Promise<boolean>;
+  getProjectLikes(projectId: string): Promise<number>;
+  trackProjectView(projectId: string, userId: string): Promise<void>;
+  getProjectActivity(projectId: string): Promise<any[]>;
+  getProjectFiles(projectId: string): Promise<any[]>;
   getFileById(id: number): Promise<any | undefined>;
   getAdminApiKey(provider: string): Promise<any>;
-  createCLIToken(userId: number): Promise<any>;
-  getUserCLITokens(userId: number): Promise<any[]>;
+  createCLIToken(userId: string): Promise<any>;
+  getUserCLITokens(userId: string): Promise<any[]>;
   getMobileSession(sessionId: string): Promise<any | undefined>;
   createMobileSession(session: any): Promise<any>;
   updateMobileSession(sessionId: string, session: any): Promise<any | undefined>;
-  getUserMobileSessions(userId: number): Promise<any[]>;
-  getProjectDeployments(projectId: number): Promise<any[]>;
-  getRecentDeployments(userId: number): Promise<any[]>;
+  getUserMobileSessions(userId: string): Promise<any[]>;
+  getProjectDeployments(projectId: string): Promise<any[]>;
+  getRecentDeployments(userId: string): Promise<any[]>;
 
   // User Credits and Billing operations
-  getUserCredits(userId: number): Promise<any | undefined>;
+  getUserCredits(userId: string): Promise<any | undefined>;
   createUserCredits(credits: any): Promise<any>;
-  updateUserCredits(userId: number, credits: any): Promise<any | undefined>;
-  addCredits(userId: number, amount: number): Promise<any | undefined>;
-  deductCredits(userId: number, amount: number): Promise<any | undefined>;
-  getBudgetLimits(userId: number): Promise<any | undefined>;
+  updateUserCredits(userId: string, credits: any): Promise<any | undefined>;
+  addCredits(userId: string, amount: number): Promise<any | undefined>;
+  deductCredits(userId: string, amount: number): Promise<any | undefined>;
+  getBudgetLimits(userId: string): Promise<any | undefined>;
   createBudgetLimits(limits: any): Promise<any>;
-  updateBudgetLimits(userId: number, limits: any): Promise<any | undefined>;
+  updateBudgetLimits(userId: string, limits: any): Promise<any | undefined>;
   createUsageAlert(alert: any): Promise<any>;
-  getUsageAlerts(userId: number): Promise<any[]>;
+  getUsageAlerts(userId: string): Promise<any[]>;
   markAlertSent(alertId: number): Promise<void>;
 
   // Deployment Type-Specific operations
@@ -393,7 +393,7 @@ export interface IStorage {
   // Object Storage operations
   createObjectStorageBucket(bucket: any): Promise<any>;
   getObjectStorageBucket(id: number): Promise<any | undefined>;
-  getProjectObjectStorageBuckets(projectId: number): Promise<any[]>;
+  getProjectObjectStorageBuckets(projectId: string): Promise<any[]>;
   deleteObjectStorageBucket(id: number): Promise<boolean>;
   createObjectStorageFile(file: any): Promise<any>;
   getObjectStorageFile(id: number): Promise<any | undefined>;
@@ -401,22 +401,22 @@ export interface IStorage {
   deleteObjectStorageFile(id: number): Promise<boolean>;
 
   // Key-Value Store operations
-  setKeyValue(projectId: number, key: string, value: any, expiresAt?: Date): Promise<any>;
-  getKeyValue(projectId: number, key: string): Promise<any | undefined>;
-  deleteKeyValue(projectId: number, key: string): Promise<boolean>;
-  getProjectKeyValues(projectId: number): Promise<any[]>;
+  setKeyValue(projectId: string, key: string, value: any, expiresAt?: Date): Promise<any>;
+  getKeyValue(projectId: string, key: string): Promise<any | undefined>;
+  deleteKeyValue(projectId: string, key: string): Promise<boolean>;
+  getProjectKeyValues(projectId: string): Promise<any[]>;
 
   // AI Conversation operations
   createAiConversation(conversation: any): Promise<any>;
   getAiConversation(id: number): Promise<any | undefined>;
-  getProjectAiConversations(projectId: number): Promise<any[]>;
+  getProjectAiConversations(projectId: string): Promise<any[]>;
   updateAiConversation(id: number, updates: any): Promise<any | undefined>;
   addMessageToConversation(conversationId: number, message: any): Promise<any | undefined>;
 
   // Dynamic Intelligence operations
-  getDynamicIntelligence(userId: number): Promise<any | undefined>;
+  getDynamicIntelligence(userId: string): Promise<any | undefined>;
   createDynamicIntelligence(settings: any): Promise<any>;
-  updateDynamicIntelligence(userId: number, settings: any): Promise<any | undefined>;
+  updateDynamicIntelligence(userId: string, settings: any): Promise<any | undefined>;
 
   // Web Search operations
   createWebSearchHistory(search: any): Promise<any>;
@@ -424,15 +424,15 @@ export interface IStorage {
 
   // Git Integration operations
   createGitRepository(repo: any): Promise<any>;
-  getGitRepository(projectId: number): Promise<any | undefined>;
-  updateGitRepository(projectId: number, updates: any): Promise<any | undefined>;
+  getGitRepository(projectId: string): Promise<any | undefined>;
+  updateGitRepository(projectId: string, updates: any): Promise<any | undefined>;
   createGitCommit(commit: any): Promise<any>;
   getRepositoryCommits(repositoryId: number): Promise<any[]>;
 
   // Custom Domain operations
   createCustomDomain(domain: any): Promise<any>;
   getCustomDomain(id: number): Promise<any | undefined>;
-  getProjectCustomDomains(projectId: number): Promise<any[]>;
+  getProjectCustomDomains(projectId: string): Promise<any[]>;
   updateCustomDomain(id: number, updates: any): Promise<any | undefined>;
   deleteCustomDomain(id: number): Promise<boolean>;
 
@@ -446,9 +446,9 @@ export interface IStorage {
   
   // Kubernetes User Environment operations
   saveUserEnvironment(environment: any): Promise<void>;
-  getUserEnvironment(userId: number): Promise<any | null>;
+  getUserEnvironment(userId: string): Promise<any | null>;
   updateUserEnvironment(environment: any): Promise<void>;
-  deleteUserEnvironment(userId: number): Promise<void>;
+  deleteUserEnvironment(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -472,7 +472,7 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async pinProject(projectId: number, userId: number): Promise<void> {
+  async pinProject(projectId: string, userId: string): Promise<void> {
     await this.db
       .update(projects)
       .set({ isPinned: true, updatedAt: new Date() })
@@ -482,7 +482,7 @@ export class DatabaseStorage implements IStorage {
     await this.trackUsage(userId, "project.pin", 1, { unit: "action" });
   }
 
-  async unpinProject(projectId: number, userId: number): Promise<void> {
+  async unpinProject(projectId: string, userId: string): Promise<void> {
     await this.db
       .update(projects)
       .set({ isPinned: false, updatedAt: new Date() })
@@ -492,7 +492,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // User operations
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
     const [user] = await this.db.select().from(users).where(eq(users.id, id));
     return user;
   }
@@ -519,7 +519,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
     const [user] = await this.db
       .update(users)
       .set({ ...userData, updatedAt: new Date() })
@@ -528,7 +528,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async deleteUser(id: number): Promise<boolean> {
+  async deleteUser(id: string): Promise<boolean> {
     const result = await this.db.delete(users).where(eq(users.id, id));
     return result.length > 0;
   }
@@ -556,21 +556,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Project operations
-  async getProject(id: number): Promise<Project | undefined> {
+  async getProject(id: string): Promise<Project | undefined> {
     const [project] = await this.db.select().from(projects).where(eq(projects.id, id));
     return project;
   }
 
-  async getProjectsByUser(userId: number): Promise<Project[]> {
+  async getProjectsByUser(userId: string): Promise<Project[]> {
     return await this.db.select().from(projects).where(eq(projects.ownerId, userId));
   }
 
   // Alias for backward compatibility
-  async getProjectsByUserId(userId: number): Promise<Project[]> {
+  async getProjectsByUserId(userId: string): Promise<Project[]> {
     return this.getProjectsByUser(userId);
   }
 
-  async getProjectBySlug(slug: string, ownerId?: number): Promise<Project | null> {
+  async getProjectBySlug(slug: string, ownerId?: string): Promise<Project | null> {
     try {
       const condition =
         ownerId !== undefined
@@ -611,7 +611,7 @@ export class DatabaseStorage implements IStorage {
     return project;
   }
 
-  async updateProject(id: number, projectData: Partial<InsertProject>): Promise<Project | undefined> {
+  async updateProject(id: string, projectData: Partial<InsertProject>): Promise<Project | undefined> {
     const [project] = await this.db
       .update(projects)
       .set({ ...projectData, updatedAt: new Date() })
@@ -620,12 +620,12 @@ export class DatabaseStorage implements IStorage {
     return project;
   }
 
-  async deleteProject(id: number): Promise<boolean> {
+  async deleteProject(id: string): Promise<boolean> {
     const result = await this.db.delete(projects).where(eq(projects.id, id));
     return result.length > 0;
   }
 
-  async incrementProjectViews(id: number): Promise<void> {
+  async incrementProjectViews(id: string): Promise<void> {
     await this.db
       .update(projects)
       .set({ views: sql`${projects.views} + 1` })
@@ -638,14 +638,14 @@ export class DatabaseStorage implements IStorage {
     return file;
   }
 
-  async getFilesByProjectId(projectId: number): Promise<File[]> {
+  async getFilesByProjectId(projectId: string): Promise<File[]> {
     return await this.db.select().from(files).where(eq(files.projectId, projectId)).orderBy(files.path);
   }
 
-  async createFile(data: { projectId: number; path: string; content: string }): Promise<File>;
+  async createFile(data: { projectId: string; path: string; content: string }): Promise<File>;
   async createFile(fileData: InsertFile): Promise<File>;
   async createFile(
-    fileData: InsertFile | { projectId: number; path: string; content: string }
+    fileData: InsertFile | { projectId: string; path: string; content: string }
   ): Promise<File> {
     const values: InsertFile = "name" in fileData
       ? fileData
@@ -700,7 +700,7 @@ export class DatabaseStorage implements IStorage {
     return apiKey;
   }
 
-  async getUserApiKeys(userId: number): Promise<ApiKey[]> {
+  async getUserApiKeys(userId: string): Promise<ApiKey[]> {
     return await this.db.select().from(apiKeys).where(eq(apiKeys.userId, userId)).orderBy(desc(apiKeys.createdAt));
   }
 
@@ -749,7 +749,7 @@ export class DatabaseStorage implements IStorage {
     return review;
   }
 
-  async getProjectCodeReviews(projectId: number): Promise<CodeReview[]> {
+  async getProjectCodeReviews(projectId: string): Promise<CodeReview[]> {
     return await this.db.select().from(codeReviews).where(eq(codeReviews.projectId, projectId)).orderBy(desc(codeReviews.createdAt));
   }
 
@@ -829,12 +829,12 @@ export class DatabaseStorage implements IStorage {
     return profile;
   }
 
-  async getMentorProfile(userId: number): Promise<MentorProfile | undefined> {
+  async getMentorProfile(userId: string): Promise<MentorProfile | undefined> {
     const [profile] = await this.db.select().from(mentorProfiles).where(eq(mentorProfiles.userId, userId));
     return profile;
   }
 
-  async updateMentorProfile(userId: number, profileData: Partial<InsertMentorProfile>): Promise<MentorProfile | undefined> {
+  async updateMentorProfile(userId: string, profileData: Partial<InsertMentorProfile>): Promise<MentorProfile | undefined> {
     const baseMentor = profileData as Partial<MentorProfileInsertModel>;
     const mentorUpdate: Partial<MentorProfileInsertModel> = {
       ...baseMentor,
@@ -967,7 +967,7 @@ export class DatabaseStorage implements IStorage {
     return null;
   }
 
-  async trackAIUsage(userId: number, tokens: number, mode: string): Promise<void> {
+  async trackAIUsage(userId: string, tokens: number, mode: string): Promise<void> {
     // For now, just log the usage
     console.log(`AI usage tracked - User: ${userId}, Tokens: ${tokens}, Mode: ${mode}`);
   }
@@ -978,7 +978,7 @@ export class DatabaseStorage implements IStorage {
     return { id: Date.now(), ...record, createdAt: new Date() };
   }
 
-  async updateUserAiTokens(userId: number, tokensUsed: number): Promise<void> {
+  async updateUserAiTokens(userId: string, tokensUsed: number): Promise<void> {
     // For now, just log the token usage
     console.log(`Updated AI tokens for user ${userId}: ${tokensUsed} tokens used`);
   }
@@ -989,7 +989,7 @@ export class DatabaseStorage implements IStorage {
     return deployment;
   }
 
-  async getDeployments(projectId: number): Promise<Deployment[]> {
+  async getDeployments(projectId: string): Promise<Deployment[]> {
     return await this.db.select().from(deployments).where(eq(deployments.projectId, projectId));
   }
 
@@ -1002,11 +1002,11 @@ export class DatabaseStorage implements IStorage {
     return deployment;
   }
 
-  async getProjectDeployments(projectId: number): Promise<Deployment[]> {
+  async getProjectDeployments(projectId: string): Promise<Deployment[]> {
     return await this.db.select().from(deployments).where(eq(deployments.projectId, projectId));
   }
 
-  async getRecentDeployments(userId: number): Promise<Deployment[]> {
+  async getRecentDeployments(userId: string): Promise<Deployment[]> {
     const userProjects = await this.getProjectsByUser(userId);
     const projectIds = userProjects.map(p => p.id);
 
@@ -1042,7 +1042,7 @@ export class DatabaseStorage implements IStorage {
     ];
   }
 
-  async createStorageBucket(bucket: { projectId: number; name: string; region: string; isPublic: boolean }): Promise<any> {
+  async createStorageBucket(bucket: { projectId: string; name: string; region: string; isPublic: boolean }): Promise<any> {
     // In production, this would create a bucket in the storage_buckets table
     return {
       id: crypto.randomBytes(8).toString('hex'),
@@ -1053,7 +1053,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getProjectStorageBuckets(projectId: number): Promise<any[]> {
+  async getProjectStorageBuckets(projectId: string): Promise<any[]> {
     // Return project-specific buckets - in production, query by projectId
     return [
       {
@@ -1079,7 +1079,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Team operations
-  async getUserTeams(userId: number): Promise<any[]> {
+  async getUserTeams(userId: string): Promise<any[]> {
     const userTeams = await this.db
       .select({
         id: teams.id,
@@ -1098,7 +1098,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Theme operations
-  async getUserThemeSettings(userId: number): Promise<any> {
+  async getUserThemeSettings(userId: string): Promise<any> {
     // In production, query user_theme_settings table
     return {
       theme: 'dark',
@@ -1108,12 +1108,12 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async updateUserThemeSettings(userId: number, settings: any): Promise<any> {
+  async updateUserThemeSettings(userId: string, settings: any): Promise<any> {
     // In production, update user_theme_settings table
     return settings;
   }
 
-  async getInstalledThemes(userId: number): Promise<any[]> {
+  async getInstalledThemes(userId: string): Promise<any[]> {
     // In production, query user_installed_themes table
     return [
       { id: 'dark', name: 'Dark', installed: true },
@@ -1121,17 +1121,17 @@ export class DatabaseStorage implements IStorage {
     ];
   }
 
-  async installTheme(userId: number, themeId: string): Promise<void> {
+  async installTheme(userId: string, themeId: string): Promise<void> {
     // In production, insert into user_installed_themes table
     console.log(`Installing theme ${themeId} for user ${userId}`);
   }
 
-  async uninstallTheme(userId: number, themeId: string): Promise<void> {
+  async uninstallTheme(userId: string, themeId: string): Promise<void> {
     // In production, delete from user_installed_themes table
     console.log(`Uninstalling theme ${themeId} for user ${userId}`);
   }
 
-  async createCustomTheme(userId: number, theme: any): Promise<any> {
+  async createCustomTheme(userId: string, theme: any): Promise<any> {
     // In production, insert into custom_themes table
     return {
       id: `custom-${Date.now()}`,
@@ -1153,7 +1153,7 @@ export class DatabaseStorage implements IStorage {
     return newComment;
   }
 
-  async getProjectComments(projectId: number): Promise<Comment[]> {
+  async getProjectComments(projectId: string): Promise<Comment[]> {
     return await this.db.select().from(comments).where(eq(comments.projectId, projectId)).orderBy(desc(comments.createdAt));
   }
 
@@ -1181,12 +1181,12 @@ export class DatabaseStorage implements IStorage {
     return newCheckpoint;
   }
 
-  async getProjectCheckpoints(projectId: number): Promise<Checkpoint[]> {
+  async getProjectCheckpoints(projectId: string): Promise<Checkpoint[]> {
     return await this.db.select().from(checkpoints).where(eq(checkpoints.projectId, projectId)).orderBy(desc(checkpoints.createdAt));
   }
 
   // Agent operations
-  async getAgentWorkSteps(projectId: number, sessionId: string): Promise<any[]> {
+  async getAgentWorkSteps(projectId: string, sessionId: string): Promise<any[]> {
     // For now, return empty array as we don't have a dedicated table for work steps
     // In a real implementation, this would query a work_steps table
     return [];
@@ -1250,7 +1250,7 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async getActiveTimeTracking(projectId: number, userId: number): Promise<TimeTracking | undefined> {
+  async getActiveTimeTracking(projectId: string, userId: string): Promise<TimeTracking | undefined> {
     const [tracking] = await this.db.select().from(projectTimeTracking)
       .where(and(
         eq(projectTimeTracking.projectId, projectId),
@@ -1260,7 +1260,7 @@ export class DatabaseStorage implements IStorage {
     return tracking;
   }
 
-  async getProjectTimeTracking(projectId: number): Promise<TimeTracking[]> {
+  async getProjectTimeTracking(projectId: string): Promise<TimeTracking[]> {
     return await this.db.select().from(projectTimeTracking).where(eq(projectTimeTracking.projectId, projectId)).orderBy(desc(projectTimeTracking.startTime));
   }
 
@@ -1270,7 +1270,7 @@ export class DatabaseStorage implements IStorage {
     return newScreenshot;
   }
 
-  async getProjectScreenshots(projectId: number): Promise<Screenshot[]> {
+  async getProjectScreenshots(projectId: string): Promise<Screenshot[]> {
     return await this.db.select().from(projectScreenshots).where(eq(projectScreenshots.projectId, projectId)).orderBy(desc(projectScreenshots.createdAt));
   }
 
@@ -1290,7 +1290,7 @@ export class DatabaseStorage implements IStorage {
     return newSummary;
   }
 
-  async getProjectTaskSummaries(projectId: number): Promise<TaskSummary[]> {
+  async getProjectTaskSummaries(projectId: string): Promise<TaskSummary[]> {
     return await this.db.select().from(taskSummaries).where(eq(taskSummaries.projectId, projectId)).orderBy(desc(taskSummaries.createdAt));
   }
 
@@ -1300,9 +1300,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Stripe operations
-  async updateUserStripeInfo(userId: number, data: any): Promise<User | undefined>;
+  async updateUserStripeInfo(userId: string, data: any): Promise<User | undefined>;
   async updateUserStripeInfo(
-    userId: number,
+    userId: string,
     stripeData: {
       stripeCustomerId?: string;
       stripeSubscriptionId?: string;
@@ -1312,7 +1312,7 @@ export class DatabaseStorage implements IStorage {
     }
   ): Promise<User | undefined>;
   async updateUserStripeInfo(
-    userId: number,
+    userId: string,
     stripeData: any
   ): Promise<User | undefined> {
     const updatePayload = {
@@ -1329,7 +1329,7 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined> {
+  async updateStripeCustomerId(userId: string, customerId: string): Promise<User | undefined> {
     const [updated] = await this.db.update(users)
       .set({ stripeCustomerId: customerId, updatedAt: new Date() })
       .where(eq(users.id, userId))
@@ -1342,15 +1342,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Usage tracking operations
-  async trackUsage(userId: number, data: UsageMetricInput): Promise<void>;
+  async trackUsage(userId: string, data: UsageMetricInput): Promise<void>;
   async trackUsage(
-    userId: number,
+    userId: string,
     eventType: string,
     quantity: number,
     metadata?: UsageMetricMetadata
   ): Promise<void>;
   async trackUsage(
-    userId: number,
+    userId: string,
     arg2: UsageMetricInput | string,
     arg3?: number,
     arg4?: UsageMetricMetadata
@@ -1389,7 +1389,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any> {
+  async getUsageStats(userId: string, startDate?: Date, endDate?: Date): Promise<any> {
     let query = eq(usageTracking.userId, userId);
 
     if (startDate && endDate) {
@@ -1423,7 +1423,7 @@ export class DatabaseStorage implements IStorage {
     return stats;
   }
 
-  async getUserUsage(userId: number, billingPeriodStart?: Date): Promise<any> {
+  async getUserUsage(userId: string, billingPeriodStart?: Date): Promise<any> {
     const query = billingPeriodStart 
       ? and(
           eq(usageTracking.userId, userId),
@@ -1452,7 +1452,7 @@ export class DatabaseStorage implements IStorage {
     return usage;
   }
 
-  async getUsageHistory(userId: number, startDate: Date, endDate: Date, metricType?: string): Promise<any[]> {
+  async getUsageHistory(userId: string, startDate: Date, endDate: Date, metricType?: string): Promise<any[]> {
     let query = and(
       eq(usageTracking.userId, userId),
       gte(usageTracking.timestamp, startDate),
@@ -1479,7 +1479,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getUsageSummary(userId: number, period: string): Promise<any> {
+  async getUsageSummary(userId: string, period: string): Promise<any> {
     const now = new Date();
     let startDate: Date;
     let endDate: Date = now;
@@ -1548,7 +1548,7 @@ export class DatabaseStorage implements IStorage {
     return undefined;
   }
 
-  async getProjectImports(projectId: number): Promise<any[]> {
+  async getProjectImports(projectId: string): Promise<any[]> {
     // Mock implementation for now
     return [];
   }
@@ -1603,7 +1603,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getProjectSecrets(projectId: number): Promise<any[]> {
+  async getProjectSecrets(projectId: string): Promise<any[]> {
     const secretsTable = 'secrets';
     const results = await this.db.execute(sql`
       SELECT id, key, description, project_id, created_at, updated_at
@@ -1646,18 +1646,18 @@ export class DatabaseStorage implements IStorage {
 
 
   // Collaboration methods
-  async getProjectCollaborators(projectId: number): Promise<any[]> {
+  async getProjectCollaborators(projectId: string): Promise<any[]> {
     // Return empty array for now - proper implementation would use a collaborators table
     return [];
   }
 
-  async isProjectCollaborator(projectId: number, userId: number): Promise<boolean> {
+  async isProjectCollaborator(projectId: string, userId: string): Promise<boolean> {
     const project = await this.getProject(projectId);
     return project?.ownerId === userId;
   }
 
   // Project activity methods
-  async forkProject(projectId: number, userId: number): Promise<Project> {
+  async forkProject(projectId: string, userId: string): Promise<Project> {
     const originalProject = await this.getProject(projectId);
     if (!originalProject) throw new Error('Project not found');
 
@@ -1685,7 +1685,7 @@ export class DatabaseStorage implements IStorage {
     return forkedProject;
   }
 
-  async likeProject(projectId: number, userId: number): Promise<void> {
+  async likeProject(projectId: string, userId: string): Promise<void> {
     // Placeholder - would use a project_likes table
     await this.db
       .update(projects)
@@ -1693,28 +1693,28 @@ export class DatabaseStorage implements IStorage {
       .where(eq(projects.id, projectId));
   }
 
-  async unlikeProject(projectId: number, userId: number): Promise<void> {
+  async unlikeProject(projectId: string, userId: string): Promise<void> {
     await this.db
       .update(projects)
       .set({ likes: sql`GREATEST(${projects.likes} - 1, 0)` })
       .where(eq(projects.id, projectId));
   }
 
-  async isProjectLiked(projectId: number, userId: number): Promise<boolean> {
+  async isProjectLiked(projectId: string, userId: string): Promise<boolean> {
     // Placeholder - would check project_likes table
     return false;
   }
 
-  async getProjectLikes(projectId: number): Promise<number> {
+  async getProjectLikes(projectId: string): Promise<number> {
     const project = await this.getProject(projectId);
     return project?.likes || 0;
   }
 
-  async trackProjectView(projectId: number, userId: number): Promise<void> {
+  async trackProjectView(projectId: string, userId: string): Promise<void> {
     await this.incrementProjectViews(projectId);
   }
 
-  async getProjectActivity(projectId: number): Promise<any[]> {
+  async getProjectActivity(projectId: string): Promise<any[]> {
     // Return mock activity for now
     return [
       {
@@ -1728,7 +1728,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // File methods
-  async getProjectFiles(projectId: number): Promise<any[]> {
+  async getProjectFiles(projectId: string): Promise<any[]> {
     return await this.getFilesByProjectId(projectId);
   }
 
@@ -1741,7 +1741,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // CLI token methods
-  async createCLIToken(userId: number): Promise<any> {
+  async createCLIToken(userId: string): Promise<any> {
     const token = crypto.randomBytes(32).toString('hex');
     const [created] = await this.db.insert(apiKeys).values({
       userId,
@@ -1753,7 +1753,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getUserCLITokens(userId: number): Promise<any[]> {
+  async getUserCLITokens(userId: string): Promise<any[]> {
     return await this.db
       .select()
       .from(apiKeys)
@@ -1786,12 +1786,12 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserMobileSessions(userId: number): Promise<any[]> {
+  async getUserMobileSessions(userId: string): Promise<any[]> {
     return [];
   }
 
   // User Credits and Billing operations
-  async getUserCredits(userId: number): Promise<UserCredits | undefined> {
+  async getUserCredits(userId: string): Promise<UserCredits | undefined> {
     const [credits] = await this.db.select().from(userCredits).where(eq(userCredits.userId, userId));
 
     // If no credits record exists, create one with default credits
@@ -1811,7 +1811,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateUserCredits(userId: number, credits: Partial<InsertUserCredits>): Promise<UserCredits | undefined> {
+  async updateUserCredits(userId: string, credits: Partial<InsertUserCredits>): Promise<UserCredits | undefined> {
     const [updated] = await this.db
       .update(userCredits)
       .set({ ...credits, updatedAt: new Date() })
@@ -1820,7 +1820,7 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async addCredits(userId: number, amount: number): Promise<UserCredits | undefined> {
+  async addCredits(userId: string, amount: number): Promise<UserCredits | undefined> {
     const [updated] = await this.db
       .update(userCredits)
       .set({ 
@@ -1833,7 +1833,7 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async deductCredits(userId: number, amount: number): Promise<UserCredits | undefined> {
+  async deductCredits(userId: string, amount: number): Promise<UserCredits | undefined> {
     const [updated] = await this.db
       .update(userCredits)
       .set({ 
@@ -1845,7 +1845,7 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async getBudgetLimits(userId: number): Promise<BudgetLimit | undefined> {
+  async getBudgetLimits(userId: string): Promise<BudgetLimit | undefined> {
     const [limits] = await this.db.select().from(budgetLimits).where(eq(budgetLimits.userId, userId));
     return limits;
   }
@@ -1855,7 +1855,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateBudgetLimits(userId: number, limits: Partial<InsertBudgetLimit>): Promise<BudgetLimit | undefined> {
+  async updateBudgetLimits(userId: string, limits: Partial<InsertBudgetLimit>): Promise<BudgetLimit | undefined> {
     const [updated] = await this.db
       .update(budgetLimits)
       .set({ ...limits, updatedAt: new Date() })
@@ -1869,7 +1869,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getUsageAlerts(userId: number): Promise<UsageAlert[]> {
+  async getUsageAlerts(userId: string): Promise<UsageAlert[]> {
     return await this.db.select().from(usageAlerts).where(eq(usageAlerts.userId, userId));
   }
 
@@ -1968,7 +1968,7 @@ export class DatabaseStorage implements IStorage {
     return bucket;
   }
 
-  async getProjectObjectStorageBuckets(projectId: number): Promise<ObjectStorageBucket[]> {
+  async getProjectObjectStorageBuckets(projectId: string): Promise<ObjectStorageBucket[]> {
     return await this.db.select().from(objectStorageBuckets).where(eq(objectStorageBuckets.projectId, projectId));
   }
 
@@ -1997,7 +1997,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Key-Value Store operations
-  async setKeyValue(projectId: number, key: string, value: any, expiresAt?: Date): Promise<KeyValueStore> {
+  async setKeyValue(projectId: string, key: string, value: any, expiresAt?: Date): Promise<KeyValueStore> {
     const existing = await this.getKeyValue(projectId, key);
 
     if (existing) {
@@ -2021,7 +2021,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getKeyValue(projectId: number, key: string): Promise<KeyValueStore | undefined> {
+  async getKeyValue(projectId: string, key: string): Promise<KeyValueStore | undefined> {
     const [kv] = await this.db
       .select()
       .from(keyValueStore)
@@ -2038,7 +2038,7 @@ export class DatabaseStorage implements IStorage {
     return kv;
   }
 
-  async deleteKeyValue(projectId: number, key: string): Promise<boolean> {
+  async deleteKeyValue(projectId: string, key: string): Promise<boolean> {
     const result = await this.db
       .delete(keyValueStore)
       .where(and(
@@ -2048,7 +2048,7 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getProjectKeyValues(projectId: number): Promise<KeyValueStore[]> {
+  async getProjectKeyValues(projectId: string): Promise<KeyValueStore[]> {
     const kvs = await this.db
       .select()
       .from(keyValueStore)
@@ -2070,7 +2070,7 @@ export class DatabaseStorage implements IStorage {
     return conversation;
   }
 
-  async getProjectAiConversations(projectId: number): Promise<AiConversation[]> {
+  async getProjectAiConversations(projectId: string): Promise<AiConversation[]> {
     return await this.db.select().from(aiConversations).where(eq(aiConversations.projectId, projectId));
   }
 
@@ -2101,7 +2101,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Dynamic Intelligence operations
-  async getDynamicIntelligence(userId: number): Promise<DynamicIntelligence | undefined> {
+  async getDynamicIntelligence(userId: string): Promise<DynamicIntelligence | undefined> {
     const [settings] = await this.db.select().from(dynamicIntelligence).where(eq(dynamicIntelligence.userId, userId));
     return settings;
   }
@@ -2111,7 +2111,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateDynamicIntelligence(userId: number, settings: Partial<InsertDynamicIntelligence>): Promise<DynamicIntelligence | undefined> {
+  async updateDynamicIntelligence(userId: string, settings: Partial<InsertDynamicIntelligence>): Promise<DynamicIntelligence | undefined> {
     const [updated] = await this.db
       .update(dynamicIntelligence)
       .set({ ...settings, updatedAt: new Date() })
@@ -2136,12 +2136,12 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getGitRepository(projectId: number): Promise<GitRepository | undefined> {
+  async getGitRepository(projectId: string): Promise<GitRepository | undefined> {
     const [repo] = await this.db.select().from(gitRepositories).where(eq(gitRepositories.projectId, projectId));
     return repo;
   }
 
-  async updateGitRepository(projectId: number, updates: Partial<InsertGitRepository>): Promise<GitRepository | undefined> {
+  async updateGitRepository(projectId: string, updates: Partial<InsertGitRepository>): Promise<GitRepository | undefined> {
     const [updated] = await this.db
       .update(gitRepositories)
       .set({ ...updates, updatedAt: new Date() })
@@ -2170,7 +2170,7 @@ export class DatabaseStorage implements IStorage {
     return domain;
   }
 
-  async getProjectCustomDomains(projectId: number): Promise<CustomDomain[]> {
+  async getProjectCustomDomains(projectId: string): Promise<CustomDomain[]> {
     return await this.db.select().from(customDomains).where(eq(customDomains.projectId, projectId));
   }
 
@@ -2235,7 +2235,7 @@ export class DatabaseStorage implements IStorage {
     // In production, this would save to a database table
   }
   
-  async getUserEnvironment(userId: number): Promise<any | null> {
+  async getUserEnvironment(userId: string): Promise<any | null> {
     return this.userEnvironments.get(userId) || null;
     // In production, this would query from user_environments table
   }
@@ -2245,7 +2245,7 @@ export class DatabaseStorage implements IStorage {
     // In production, this would update the user_environments table
   }
   
-  async deleteUserEnvironment(userId: number): Promise<void> {
+  async deleteUserEnvironment(userId: string): Promise<void> {
     this.userEnvironments.delete(userId);
     // In production, this would delete from user_environments table
   }
@@ -2256,7 +2256,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getProjectVoiceVideoSessions(projectId: number): Promise<VoiceVideoSession[]> {
+  async getProjectVoiceVideoSessions(projectId: string): Promise<VoiceVideoSession[]> {
     return await this.db.select().from(voiceVideoSessions)
       .where(eq(voiceVideoSessions.projectId, projectId))
       .orderBy(desc(voiceVideoSessions.startedAt));
@@ -2279,7 +2279,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async removeVoiceVideoParticipant(sessionId: number, userId: number): Promise<void> {
+  async removeVoiceVideoParticipant(sessionId: number, userId: string): Promise<void> {
     await this.db
       .update(voiceVideoParticipants)
       .set({ leftAt: new Date() })
@@ -2296,7 +2296,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getProjectGpuInstances(projectId: number): Promise<GpuInstance[]> {
+  async getProjectGpuInstances(projectId: string): Promise<GpuInstance[]> {
     return await this.db.select().from(gpuInstances)
       .where(eq(gpuInstances.projectId, projectId))
       .orderBy(desc(gpuInstances.createdAt));
@@ -2437,7 +2437,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getAIUsageStats(userId: number, startDate?: Date, endDate?: Date): Promise<any[]> {
+  async getAIUsageStats(userId: string, startDate?: Date, endDate?: Date): Promise<any[]> {
     const filters: SQL[] = [eq(aiUsageRecords.userId, userId)];
 
     if (startDate) {
