@@ -73,6 +73,7 @@ const ReplitAIAgentPage = lazy(() => import("@/pages/ReplitAIAgentPage"));
 const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
 const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
 const Scalability = lazy(() => import("@/pages/Scalability"));
+const MarketingBounties = lazy(() => import("@/pages/marketing/Bounties"));
 const AuthenticationDemo = lazy(() =>
   import("@/components/AuthenticationDemo").then((module) => ({
     default: module.AuthenticationDemo,
@@ -196,7 +197,11 @@ function AppContent() {
           <Route path="/commercial-agreement" component={CommercialAgreement} />
           <Route path="/report-abuse" component={ReportAbuse} />
           <Route path="/status" component={Status} />
-          
+
+          <Route path="/marketing/bounties" component={MarketingBounties} />
+          <Route path="/marketing/deployments" component={PublicDeploymentsPage} />
+          <Route path="/marketing/teams" component={PublicTeamPage} />
+
           {/* Solutions pages */}
           <Route path="/solutions/app-builder" component={AppBuilder} />
           <Route path="/solutions/website-builder" component={WebsiteBuilder} />
