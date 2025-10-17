@@ -1,0 +1,27 @@
+Constats principaux
+Le client charge les fichiers d’un projet via GET /api/files/${id} et crée/supprime via POST /api/files/${id} ou DELETE /api/files/${fileId}. L’API Express expose pourtant GET /api/projects/:id/files (réponse { files, … }) et des routes génériques /api/files qui attendent projectId, path et isDirectory. Les URL ne correspondent donc pas et la forme de la réponse n’est pas celle attendue (tableau direct).
+
+Les composants d’exploration de fichiers construisent l’arborescence à partir de parentId et isFolder. Le schéma Drizzle n’enregistre ni parentId ni isFolder (seulement path et isDirectory), ce qui empêche de reconstituer l’arbre et de différencier fichiers/dossiers côté UI.
+
+Lors de la création d’un projet, le backend tente d’injecter deux fichiers par défaut mais ne fournit ni path ni isDirectory. La validation échoue (ou insère des valeurs incohérentes), d’où l’absence de contenu initial pour le workspace.
+
+Impact sur l’affichage du workspace
+Appels réseau en échec ou avec payload inattendu
+Le client reçoit soit un 404 (route inexistante), soit un objet { files: … } qui ne se désérialise pas en tableau File[]. Les composants se retrouvent donc avec files = [] et n’affichent rien.
+
+Structure de données incompatible
+Même si les fichiers étaient renvoyés, l’absence de parentId/isFolder dans la réponse empêcherait l’arbre de s’ouvrir, car les composants filtrent explicitement sur ces propriétés pour calculer enfants et dossiers.
+
+Pas de fichiers initiaux
+Après création d’un projet, la base reste vide puisqu’aucun path valide n’est sauvegardé. L’explorateur ne peut donc rien rendre même si la requête aboutit.
+
+Recommandations pour une expérience “vibe coding” proche de Replit
+Aligner les routes et les réponses : exposer GET /api/files/:projectId qui renvoie un tableau pur, ou mettre à jour le client pour consommer GET /api/projects/:id/files avec extraction de files. Harmoniser aussi les routes POST/PATCH/DELETE pour qu’elles partagent la même convention d’URL.
+
+Réviser le modèle de données : ajouter parentId et un booléen cohérent (isDirectory↔︎isFolder) dans le schéma, ou adapter le front pour dériver ces informations depuis path. Sans hiérarchie exploitable, l’explorateur restera plat.
+
+Initialiser correctement les projets : fournir path (par ex. "index.js"), et isDirectory: false lors de la création des fichiers seed afin que l’éditeur dispose de contenu dès l’ouverture.
+
+Rendre cohérents les appels des composants avancés : ReplitFileExplorer utilise les mêmes routes que l’éditeur principal mais attend déjà parentId. Une fois le backend corrigé, valider que ce composant reçoit les bons champs pour que les opérations contextuelles (renommer, déplacer, etc.) fonctionnent réellement.
+
+En appliquant ces corrections, la plateforme disposera d’un flux cohérent création de projet → génération de fichiers → rendu du workspace, base indispensable pour l’expérience type Replit et pour que l’agent AI puisse matérialiser les changements dans l’UI.
