@@ -168,7 +168,7 @@ export class RedisCache {
       const serialized = JSON.stringify(value);
       const expiry = ttl || this.defaultTTL;
 
-      await client.setex(key, expiry, serialized);
+      await client.setEx(key, expiry, serialized);
     } catch (error) {
       logger.error(`Failed to set cache key ${key}:`, error);
     }
