@@ -325,41 +325,43 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // GET login status
-  app.get("/api/login", (req, res) => {
+  const sessionStatusHandler = (req: Request, res: Response) => {
     if (req.isAuthenticated()) {
       const { password, ...userWithoutPassword } = req.user!;
-      res.json({
+      return res.json({
         authenticated: true,
         user: userWithoutPassword
       });
-    } else {
-      res.json({
-        authenticated: false,
-        message: "Not authenticated"
-      });
     }
-  });
 
-  // Login route with enhanced security
-  app.post("/api/login", 
-    // Rate limiting handled by middleware 
-    async (req, res, next) => {
-      const { username, password } = req.body;
-      const ipAddress = req.ip || "unknown";
-      const userAgent = req.headers["user-agent"];
-      
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password are required" });
-      }
-      
-      try {
-        const user = await storage.getUserByUsername(username);
-        console.log('[Auth Debug] User object:', JSON.stringify(user, null, 2));
-        
-        passport.authenticate("local", async (err: any, authenticatedUser: UserForAuth | false, info: { message: string }) => {
+    res.status(401).json({
+      authenticated: false,
+      message: "Not authenticated"
+    });
+  };
+
+  app.get("/api/session", sessionStatusHandler);
+  app.get("/api/login", sessionStatusHandler);
+  app.get("/api/auth/login", sessionStatusHandler);
+  app.get("/api/auth/session", sessionStatusHandler);
+
+  const loginHandler = async (req: Request, res: Response, next: NextFunction) => {
+    // Rate limiting handled by middleware
+    const { username, password } = req.body;
+    const ipAddress = req.ip || "unknown";
+    const userAgent = req.headers["user-agent"];
+
+    if (!username || !password) {
+      return res.status(400).json({ message: "Username and password are required" });
+    }
+
+    try {
+      const user = await storage.getUserByUsername(username);
+      console.log('[Auth Debug] User object:', JSON.stringify(user, null, 2));
+
+      passport.authenticate("local", async (err: any, authenticatedUser: UserForAuth | false, info: { message: string }) => {
           if (err) return next(err);
-          
+
           if (!authenticatedUser) {
             // Log failed attempt
             if (user) {
@@ -420,20 +422,20 @@ export function setupAuth(app: Express) {
               console.error("Login error:", err);
               return next(err);
             }
-            
+
             console.log(`User ${authenticatedUser.username} logged in successfully`);
-            
+
             // Ensure session is saved before sending response
             req.session.save((sessionErr) => {
               if (sessionErr) {
                 console.error('Session save error:', sessionErr);
                 return next(sessionErr);
               }
-              
+
               // Generate JWT tokens
               const accessToken = generateAccessToken(authenticatedUser.id, authenticatedUser.username);
               const refreshToken = generateRefreshToken(authenticatedUser.id);
-              
+
               // Return user info without password
               const { password, ...userWithoutPassword } = authenticatedUser;
               res.json({
@@ -450,16 +452,18 @@ export function setupAuth(app: Express) {
         console.error("Login error:", error);
         next(error);
       }
-    }
-  );
+  };
 
-  // Logout route
-  app.post("/api/logout", (req, res, next) => {
+  // Login route with enhanced security
+  app.post("/api/login", loginHandler);
+  app.post("/api/auth/login", loginHandler);
+
+  const logoutHandler = (req: Request, res: Response, next: NextFunction) => {
     console.log('[Logout] Request received');
     console.log('[Logout] Session ID:', req.sessionID);
     console.log('[Logout] User authenticated:', req.isAuthenticated());
     console.log('[Logout] User:', req.user?.username);
-    
+
     // First logout using Passport
     req.logout((err) => {
       if (err) {
@@ -485,12 +489,16 @@ export function setupAuth(app: Express) {
           secure: process.env.NODE_ENV === 'production',
           sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
         });
-        
+
         console.log('[Logout] Cookie cleared, logout complete');
-        res.sendStatus(200);
+        res.json({ success: true });
       });
     });
-  });
+  };
+
+  // Logout route
+  app.post("/api/logout", logoutHandler);
+  app.post("/api/auth/logout", logoutHandler);
 
   // Email verification endpoint
   app.get("/api/verify-email", async (req, res) => {
