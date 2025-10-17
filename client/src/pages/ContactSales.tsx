@@ -350,7 +350,7 @@ export default function ContactSales() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm">enterprise@ecode.com</span>
+                    <span className="text-sm">enterprise@e-code.ai</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Phone className="h-5 w-5 text-muted-foreground" />
