@@ -400,13 +400,17 @@ export class RedisCache {
       return unescaped;
     }
 
-    try {
-      const decoded = Buffer.from(trimmed, 'base64').toString('utf8').trim();
-      if (decoded) {
-        return decoded.replace(/\r?\n/g, '\n');
+    // Only attempt base64 decode if input is not too large (e.g., <10,000 chars)
+    if (trimmed.length > 0 && trimmed.length < 10000) {
+      try {
+        const decoded = Buffer.from(trimmed, 'base64').toString('utf8').trim();
+        // Validate that the decoded content contains expected certificate markers
+        if (decoded && decoded.includes('-----BEGIN')) {
+          return decoded.replace(/\r?\n/g, '\n');
+        }
+      } catch {
+        // Not base64 encoded, fall back to unescaped text
       }
-    } catch {
-      // Not base64 encoded, fall back to unescaped text
     }
 
     return unescaped;
