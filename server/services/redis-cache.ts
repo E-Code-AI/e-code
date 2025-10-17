@@ -13,6 +13,7 @@ export class RedisCache {
   private client: Redis | null = null;
   private isConnected = false;
   private defaultTTL = 3600; // 1 hour default
+  private static hasLoggedMissingConfig = false;
 
   constructor() {
     this.initialize();
@@ -20,9 +21,24 @@ export class RedisCache {
 
   private async initialize() {
     try {
-      // In production, use REDIS_URL from environment
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      
+      const redisUrl =
+        process.env.REDIS_URL ||
+        process.env.TEST_REDIS_URL ||
+        process.env.VITE_REDIS_URL ||
+        '';
+
+      if (!redisUrl) {
+        if (!RedisCache.hasLoggedMissingConfig) {
+          logger.warn(
+            'Redis URL not provided – Redis cache service disabled. Set REDIS_URL to enable Redis integration.'
+          );
+          RedisCache.hasLoggedMissingConfig = true;
+        }
+        this.client = null;
+        this.isConnected = false;
+        return;
+      }
+
       this.client = new Redis(redisUrl, {
         retryStrategy: (times) => {
           if (times > 10) {
