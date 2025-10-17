@@ -30,7 +30,7 @@ import { devAuthBypass } from "./dev-auth-bypass";
 
 // Define a type that matches what Express.User needs to be
 type UserForAuth = {
-  id: number;
+  id: string | number; // Can be UUID string or numeric ID
   username: string;
   password: string;
   email: string;
@@ -215,8 +215,8 @@ export function setupAuth(app: Express) {
     done(null, user.id);
   });
 
-  // Deserialize user from the session
-  passport.deserializeUser(async (id: number, done) => {
+  // Deserialize user from the session (ID can be string or number)
+  passport.deserializeUser(async (id: string | number, done) => {
     try {
       const user = await storage.getUser(id);
       if (!user) {
