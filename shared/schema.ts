@@ -942,8 +942,8 @@ export const monitoringEvents = pgTable("monitoring_events", {
 
 export const performanceMetrics = pgTable("performance_metrics", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  name: varchar("name").notNull(),
-  value: decimal("value", { precision: 20, scale: 4 }).notNull(),
+  metric_name: varchar("metric_name").notNull(),
+  metric_value: decimal("metric_value", { precision: 20, scale: 4 }).notNull(),
   unit: varchar("unit").notNull(), // 'ms', 'bytes', 'count', 'percentage'
   timestamp: timestamp("timestamp").notNull().defaultNow(),
   userId: integer("user_id").references(() => users.id),
