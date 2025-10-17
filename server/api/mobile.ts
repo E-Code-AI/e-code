@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Router } from 'express';
-import { ensureAuthenticated } from '../auth';
+import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
 import { db } from '../db';
 import { projects, files } from '@shared/schema';
