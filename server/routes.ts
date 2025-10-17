@@ -2894,9 +2894,12 @@ npx http-server .
     try {
       const { username, projectname } = req.params;
       
+      console.log(`[2025-10-17T${new Date().toISOString().split('T')[1]}] [routes] INFO: Slug route accessed: /@${username}/${projectname}`);
+      
       // Check if this is a valid project route
       const user = await storage.getUserByUsername(username);
       if (!user) {
+        console.log(`[2025-10-17T${new Date().toISOString().split('T')[1]}] [routes] INFO: User not found: ${username}, serving React app`);
         // If user doesn't exist, let it fall through to serve the React app
         // which will handle the 404 on the frontend
         return next();
@@ -2904,11 +2907,13 @@ npx http-server .
       
       const project = await storage.getProjectBySlug(projectname, user.id);
       if (!project) {
+        console.log(`[2025-10-17T${new Date().toISOString().split('T')[1]}] [routes] INFO: Project not found: ${projectname} for user ${username}, serving React app`);
         // If project doesn't exist or doesn't belong to user,
         // let it fall through to serve the React app
         return next();
       }
       
+      console.log(`[2025-10-17T${new Date().toISOString().split('T')[1]}] [routes] INFO: Serving project: ${projectname} by ${username}`);
       // Valid project route - serve the React app
       return next();
     } catch (error) {
@@ -20249,81 +20254,12 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
 
-  // REPLIT-STYLE SLUG ROUTING HANDLER
-  // Handle /@username/projectname pattern for project access
-  // This MUST be registered before Vite's catch-all route
-  app.get('/@:username/:slug', async (req, res, next) => {
-    try {
-      const { username, slug } = req.params;
-      
-      // Skip Vite internal routes
-      if (username === 'vite' || username === 'fs' || username === 'react-refresh' || username === 'id') {
-        return next();
-      }
-      
-      logger.info(`Slug route accessed: /@${username}/${slug}`);
-      
-      // Get user by username
-      const user = await storage.getUserByUsername(username);
-      if (!user) {
-        logger.warn(`User not found for slug route: ${username}`);
-        // Fall through to React app which will show 404
-        return next();
-      }
-      
-      // Get project by slug and owner
-      const project = await storage.getProjectBySlug(slug);
-      if (!project || project.ownerId !== user.id) {
-        logger.warn(`Project not found for slug route: ${slug} by user ${username}`);
-        // Fall through to React app which will show 404
-        return next();
-      }
-      
-      // For private projects, check authentication
-      if (project.visibility === 'private') {
-        // Check if user is authenticated
-        if (!req.user) {
-          // Redirect to login
-          return res.redirect(`/login?redirect=${encodeURIComponent(req.originalUrl)}`);
-        }
-        
-        // Check if user has access
-        const hasAccess = req.user.id === project.ownerId || 
-          await storage.isProjectCollaborator(project.id, req.user.id);
-        
-        if (!hasAccess) {
-          logger.warn(`Access denied for private project: ${slug} to user ${req.user.id}`);
-          // Show 403 forbidden
-          return res.status(403).send('Access denied to private project');
-        }
-      }
-      
-      // Project exists and user has access - serve the React app
-      // The React app will handle displaying the project based on the URL
-      logger.info(`Serving project: ${slug} by ${username}`);
-      
-      // Let the React app handle this route
-      next();
-    } catch (error) {
-      logger.error('Error in slug routing handler:', error);
-      next();
-    }
-  });
+  // REPLIT-STYLE SLUG ROUTING HANDLER  
+  // Handle /@username/projectname pattern for project access - removed duplicate
+  // This route is already handled earlier in the file with proper authentication
   
-  // Alternative slug patterns for robustness
-  app.get('/@:username/:slug/*', async (req, res, next) => {
-    // Handle sub-routes within a project
-    const { username, slug } = req.params;
-    
-    // Skip Vite internal routes
-    if (username === 'vite' || username === 'fs' || username === 'react-refresh' || username === 'id') {
-      return next();
-    }
-    
-    logger.info(`Project sub-route accessed: /@${username}/${slug}/${req.params[0]}`);
-    // Let React handle the routing
-    next();
-  });
+  // Alternative slug patterns for robustness - removed duplicate
+  // Sub-routes are handled by the React app once the main route is served
   
   // Legacy compatibility routes
   app.get('/~:username/:slug', async (req, res) => {
