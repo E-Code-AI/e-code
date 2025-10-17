@@ -72,7 +72,7 @@ export class RedisCache {
 
       this.client = client;
 
-      await client.connect();
+      // Removed explicit await client.connect(); to comply with lazyConnect: true best practices.
 
       this.isConnected = true;
     } catch (error) {
