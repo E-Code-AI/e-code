@@ -8,6 +8,8 @@
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "npm run typecheck",
+    "check:tsconfig": "tsc -p tsconfig.check.json",
+    "check": "tsc -p tsconfig.check.json",
     "typecheck": "tsc --noEmit --pretty false --skipLibCheck",
     "typecheck:full": "tsc --noEmit --pretty false --skipLibCheck -p tsconfig.full.json",
     "db:push": "drizzle-kit push",
