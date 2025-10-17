@@ -18,7 +18,7 @@ export class RedisCache {
   private isConnected = false;
   private defaultTTL = 3600; // 1 hour default
   private initializing = false;
-  private reconnectTimeout: any = null;
+  private reconnectTimeout: NodeJS.Timeout | null = null;
   private static hasLoggedMissingConfig = false;
   private initializing: Promise<void> | null = null;
   private nextRetryAt = 0;
