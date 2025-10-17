@@ -9,7 +9,6 @@ import compressionMiddleware from "./middleware/compression";
 import { securityMiddleware, sanitizeInput, securityMonitoring, ipSecurity } from "./middleware/security";
 import { rateLimiters, logRateLimitViolations, dynamicRateLimiter } from "./middleware/rate-limiter";
 import { CDNOptimizationService } from "./services/cdn-optimization";
-import { RedisCache } from "./services/redis-cache";
 import { DatabasePoolManager } from "./services/database-pool";
 // Monitoring imports are handled in routes.ts
 
