@@ -3,11 +3,14 @@
 ## Overview
 E-Code Platform is an AI-powered development platform project that aims to streamline software creation through automated deployment and collaboration tools. The platform is currently in early development stage with basic infrastructure in place but many features are not yet functional. The project aspires to become a production-ready platform but currently faces significant implementation gaps between the planned architecture and actual working functionality.
 
-### Latest Status (October 17, 2025)
+### Latest Status (October 17, 2025 - 13:55 UTC)
+- **✅ Slug routing fixed**: Removed duplicate route handlers, projects accessible at `/@username/projectname`
+- **✅ Authentication bypass working**: Development mode auth bypass preserves logged-in user sessions
+- **✅ Project serving verified**: Server correctly serves projects with proper logging
 - **✅ All email domains updated**: Changed from @ecode.com to @e-code.ai across all pages
 - **✅ Server running**: Express server operational on port 5000
-- **✅ Database connected**: PostgreSQL initialized with test user
-- **✅ API endpoints functional**: All core routes responding correctly
+- **✅ Database connected**: PostgreSQL initialized with test user (admin/admin123 or testauth@e-code.ai/testpass123)
+- **✅ API endpoints functional**: All core routes responding correctly, authentication returns JSON
 - **✅ Package.json fixed**: Resolved syntax errors and duplicate entries
 - **✅ Storage.ts fixed**: Corrected all duplicate declarations and syntax issues
 - **✅ Deployment scripts created**: Added run-start-replit.sh and build-deploy.sh for Replit deployment
@@ -16,6 +19,7 @@ E-Code Platform is an AI-powered development platform project that aims to strea
 - **✅ API routes aligned**: Fixed client-server route mismatches for file operations
 - **✅ Default file initialization**: New projects auto-create index.js and README.md
 - **✅ Monitoring service fixed**: Corrected schema alignment (metric_name/metric_value columns)
+- **✅ tsconfig.json fixed**: Removed duplicate keys ("include" and "target" entries)
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
