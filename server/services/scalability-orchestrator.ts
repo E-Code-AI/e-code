@@ -7,7 +7,7 @@
 
 import { EventEmitter } from 'events';
 import { createLogger } from '../utils/logger';
-import { RedisCache } from './redis-cache';
+import { RedisCache, redisCache } from './redis-cache';
 import { DatabasePoolManager } from './database-pool';
 import { CDNOptimizationService } from './cdn-optimization';
 import { spawn, ChildProcess } from 'child_process';
@@ -74,7 +74,7 @@ export class ScalabilityOrchestrator extends EventEmitter {
 
   private constructor() {
     super();
-    this.redisCache = new RedisCache();
+    this.redisCache = redisCache;
     this.dbPool = new DatabasePoolManager();
     this.cdnService = new CDNOptimizationService();
     this.initialize();
