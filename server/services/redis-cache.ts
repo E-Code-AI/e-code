@@ -193,7 +193,7 @@ export class RedisCache {
     if (!client) return;
 
     try {
-      await client.flushall();
+      await client.flushAll();
       logger.info('Redis cache flushed');
     } catch (error) {
       logger.error('Failed to flush cache:', error);
