@@ -114,10 +114,20 @@ export async function comparePasswords(supplied: string, stored: string): Promis
 // Setup authentication for the Express app
 export function setupAuth(app: Express) {
   // Configure session middleware
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret) {
+    const message = "SESSION_SECRET environment variable must be set";
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`${message} – falling back to an ephemeral secret for local development.`);
+    } else {
+      throw new Error(message);
+    }
+  }
+
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'plot-secret-key-strong-enough-for-development',
+    secret: sessionSecret || randomBytes(32).toString('hex'),
     resave: false, // Changed to false as we're using a store that implements touch
-    saveUninitialized: true, // Set to true to create sessions for authentication
+    saveUninitialized: false, // Do not create sessions until something is stored
     store: sessionStore, // Using PostgreSQL session store
     name: 'plot.sid', // Custom name to avoid using the default
     cookie: {
