@@ -124,6 +124,9 @@ npm run typecheck
 # Full stack type checking (includes client + server placeholders; currently surfaces thousands of TODO typings)
 NODE_OPTIONS="--max-old-space-size=8192" npm run typecheck:full
 
+# Run the automated test suites (requires dependencies installed via `npm install`)
+npm test
+
 # Database operations
 npm run db:push
 
