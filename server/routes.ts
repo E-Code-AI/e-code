@@ -227,7 +227,7 @@ const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) =>
   // Always allow in development mode for testing
   if (process.env.NODE_ENV === 'development' || authBypassEnabled) {
     if (!req.user) {
-      req.user = { id: 1, username: 'admin', email: 'admin@example.com' } as User;
+      req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
     }
     console.log('[POLYGLOT] Auth bypass: User authenticated as admin for development');
     return next();
@@ -254,7 +254,7 @@ const ensureProjectAccess = async (req: Request, res: Response, next: NextFuncti
   // In development, bypass auth for easier testing
   if (process.env.NODE_ENV === 'development' || authBypassEnabled) {
     if (!req.user) {
-      req.user = { id: 1, username: 'admin', email: 'admin@example.com' } as User;
+      req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
     }
   }
   
@@ -2950,7 +2950,7 @@ npx http-server .
       
       // In development, bypass auth for easier testing
       if (process.env.NODE_ENV === 'development' || authBypassEnabled) {
-        req.user = { id: 1, username: 'admin', email: 'admin@example.com' } as User;
+        req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
       }
       
       // Check access for private projects
@@ -3019,16 +3019,16 @@ npx http-server .
       const defaultFiles = [
         {
           name: 'index.js',
+          path: '/index.js',
           content: '// Welcome to your new project!\nconsole.log("Hello, world!");',
-          isFolder: false,
-          parentId: null,
+          isDirectory: false,
           projectId: newProject.id,
         },
         {
           name: 'README.md',
+          path: '/README.md',
           content: `# ${newProject.name}\n\n${newProject.description || 'A new project'}\n`,
-          isFolder: false,
-          parentId: null,
+          isDirectory: false,
           projectId: newProject.id,
         }
       ];

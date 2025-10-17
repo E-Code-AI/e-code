@@ -1720,7 +1720,7 @@ export class DatabaseStorage implements IStorage {
       {
         id: 1,
         type: 'file_created',
-        userId: 1,
+        userId: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293',
         timestamp: new Date(),
         details: { fileName: 'app.js' }
       }
