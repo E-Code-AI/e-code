@@ -932,23 +932,27 @@ export const submissions = pgTable("submissions", {
 // Monitoring Tables (Fortune 500 Production Standards)
 export const monitoringEvents = pgTable("monitoring_events", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  eventType: varchar("event_type").notNull(), // 'user_action', 'system_event', etc.
-  eventData: jsonb("event_data").notNull(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
-  userId: integer("user_id").references(() => users.id),
-  sessionId: varchar("session_id"),
+  eventType: varchar("event_type").notNull(),
+  severity: varchar("severity"),
+  source: varchar("source"),
+  message: text("message"),
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const performanceMetrics = pgTable("performance_metrics", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
   metric_name: varchar("metric_name").notNull(),
   metric_value: decimal("metric_value", { precision: 20, scale: 4 }).notNull(),
-  unit: varchar("unit").notNull(), // 'ms', 'bytes', 'count', 'percentage'
-  timestamp: timestamp("timestamp").notNull().defaultNow(),
-  userId: integer("user_id").references(() => users.id),
-  sessionId: varchar("session_id"),
-  tags: jsonb("tags"), // Additional metadata
+  unit: varchar("unit").notNull(),
+  endpoint: varchar("endpoint"),
+  method: varchar("method"),
+  statusCode: integer("status_code"),
+  durationMs: integer("duration_ms"),
+  memoryUsage: jsonb("memory_usage"),
+  context: jsonb("context"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -118,9 +118,11 @@ export class MonitoringService {
           metric_value: metric.value,
           unit: metric.unit,
           timestamp: new Date(metric.timestamp),
-          userId,
-          sessionId,
-          tags: metric.tags
+          context: {
+            userId,
+            sessionId,
+            tags: metric.tags
+          }
         });
 
         // Check for performance issues
@@ -142,15 +144,18 @@ export class MonitoringService {
       try {
         await db.insert(monitoringEvents).values({
           eventType: 'user_action',
-          eventData: {
+          severity: 'info',
+          source: 'user',
+          message: `User action: ${action.action}`,
+          metadata: {
             action: action.action,
             category: action.category,
             label: action.label,
-            value: action.value
+            value: action.value,
+            userId: action.userId || userId,
+            sessionId: action.sessionId
           },
-          timestamp: new Date(action.timestamp),
-          userId: action.userId || userId,
-          sessionId: action.sessionId
+          timestamp: new Date(action.timestamp)
         });
       } catch (err) {
         logger.error('Failed to store user action:', err);
@@ -234,16 +239,19 @@ export class MonitoringService {
           gte(performanceMetrics.timestamp, oneHourAgo)
         ));
       
-      // Get active users
-      const [activeUserData] = await db.select({ 
-        count: sql<number>`count(distinct user_id)` 
+      // Get active users (from metadata)
+      const activeUserData = await db.select({ 
+        count: sql<number>`count(distinct metadata->>'userId')` 
       })
         .from(monitoringEvents)
-        .where(gte(monitoringEvents.timestamp, oneHourAgo));
+        .where(and(
+          gte(monitoringEvents.timestamp, oneHourAgo),
+          sql`metadata->>'userId' IS NOT NULL`
+        ));
       
       const errorRate = (errorData?.count || 0) / 1000; // Errors per 1000 requests
       const avgResponseTime = responseTimeData[0]?.avg || 0;
-      const activeUsers = activeUserData?.count || 0;
+      const activeUsers = activeUserData[0]?.count || 0;
       
       // System metrics (in production, these would come from actual system monitoring)
       const systemHealth = {
@@ -313,18 +321,19 @@ export class MonitoringService {
   }): Promise<{ id: number }> {
     try {
       const [event] = await db.insert(monitoringEvents).values({
-        type: eventData.type,
-        category: eventData.category,
-        action: eventData.message,
-        label: eventData.metadata?.label,
-        value: eventData.metadata?.value,
-        timestamp: new Date(),
-        userId: eventData.userId,
-        sessionId: eventData.metadata?.sessionId,
-        metadata: eventData.metadata,
-        url: eventData.url,
-        userAgent: eventData.userAgent,
-        ipAddress: eventData.ipAddress
+        eventType: eventData.type,
+        severity: 'info',
+        source: eventData.category,
+        message: eventData.message,
+        metadata: {
+          ...eventData.metadata,
+          userId: eventData.userId,
+          projectId: eventData.projectId,
+          url: eventData.url,
+          userAgent: eventData.userAgent,
+          ipAddress: eventData.ipAddress
+        },
+        timestamp: new Date()
       }).returning({ id: monitoringEvents.id });
 
       logger.info(`Tracked ${eventData.type} event:`, {
@@ -347,8 +356,8 @@ export class MonitoringService {
       
       // Log system health
       await db.insert(performanceMetrics).values({
-        name: 'system_memory_usage',
-        value: metrics.systemHealth.memory,
+        metric_name: 'system_memory_usage',
+        metric_value: metrics.systemHealth.memory,
         unit: 'percentage',
         timestamp: new Date()
       });
