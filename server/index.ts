@@ -23,6 +23,7 @@ app.use(ipSecurity.middleware);
 // Rate limiting - Apply early
 app.use(logRateLimitViolations);
 app.use('/api/auth', rateLimiters.auth);
+app.use('/api', rateLimiters.api);
 app.use('/api', dynamicRateLimiter);
 app.use('/static', rateLimiters.static);
 
@@ -31,15 +32,48 @@ const cdnOptimization = new CDNOptimizationService();
 app.use(cdnOptimization.staticAssetsMiddleware());
 app.use(cdnOptimization.dynamicContentMiddleware());
 
-// Configure CORS for development - allow same-origin requests
-if (process.env.NODE_ENV === 'development') {
-  app.use(cors({
-    origin: true,  // Allow all origins in development
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }));
+const configuredOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_URL || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+if (process.env.NODE_ENV === 'development' && configuredOrigins.length === 0) {
+  configuredOrigins.push('http://localhost:3000', 'http://127.0.0.1:3000');
 }
+
+const allowedOrigins = new Set(configuredOrigins);
+
+if (allowedOrigins.size === 0) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('CORS_ALLOWED_ORIGINS or FRONTEND_URL must be set in production');
+  }
+
+  console.warn('CORS: No allowed origins configured. Only requests without an Origin header will be accepted.');
+} else if (process.env.NODE_ENV === 'development') {
+  console.log('CORS: Allowed origins', Array.from(allowedOrigins));
+}
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+
+    const error = new Error(`CORS origin ${origin} is not permitted`);
+    return callback(error, false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length'],
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
 
 // Enable compression for better performance
 app.use(compressionMiddleware);
