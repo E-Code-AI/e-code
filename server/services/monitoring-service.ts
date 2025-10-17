@@ -116,14 +116,18 @@ export class MonitoringService {
   private async processMetrics(metrics: MonitoringEvent['metrics'], userId?: number, sessionId?: string): Promise<void> {
     for (const metric of metrics) {
       try {
+        const metadata: Record<string, any> = {
+          userId,
+          sessionId,
+        };
+
         await db.insert(performanceMetrics).values({
           name: metric.name,
           value: metric.value,
           unit: metric.unit,
           timestamp: new Date(metric.timestamp),
-          userId,
-          sessionId,
-          tags: metric.tags
+          tags: metric.tags,
+          metadata
         });
 
         // Check for performance issues
@@ -143,17 +147,19 @@ export class MonitoringService {
   private async processActions(actions: MonitoringEvent['actions'], userId?: number): Promise<void> {
     for (const action of actions) {
       try {
-        await db.insert(monitoringEvents).values({
-          eventType: 'user_action',
-          eventData: {
-            action: action.action,
-            category: action.category,
-            label: action.label,
-            value: action.value
-          },
-          timestamp: new Date(action.timestamp),
+        const metadata: Record<string, any> = {
           userId: action.userId || userId,
-          sessionId: action.sessionId
+          sessionId: action.sessionId,
+        };
+
+        await db.insert(monitoringEvents).values({
+          type: 'user_action',
+          category: action.category,
+          action: action.action,
+          label: action.label,
+          value: action.value,
+          timestamp: new Date(action.timestamp),
+          metadata
         });
       } catch (err) {
         logger.error('Failed to store user action:', err);
@@ -238,8 +244,8 @@ export class MonitoringService {
         ));
       
       // Get active users
-      const [activeUserData] = await db.select({ 
-        count: sql<number>`count(distinct user_id)` 
+      const [activeUserData] = await db.select({
+        count: sql<number>`count(distinct (${monitoringEvents.metadata}->>'userId'))`
       })
         .from(monitoringEvents)
         .where(gte(monitoringEvents.timestamp, oneHourAgo));
@@ -315,6 +321,13 @@ export class MonitoringService {
     ipAddress?: string;
   }): Promise<{ id: number }> {
     try {
+      const metadata: Record<string, any> = {
+        ...eventData.metadata,
+        userId: eventData.userId,
+        projectId: eventData.projectId,
+        sessionId: eventData.metadata?.sessionId,
+      };
+
       const [event] = await db.insert(monitoringEvents).values({
         type: eventData.type,
         category: eventData.category,
@@ -322,9 +335,7 @@ export class MonitoringService {
         label: eventData.metadata?.label,
         value: eventData.metadata?.value,
         timestamp: new Date(),
-        userId: eventData.userId,
-        sessionId: eventData.metadata?.sessionId,
-        metadata: eventData.metadata,
+        metadata,
         url: eventData.url,
         userAgent: eventData.userAgent,
         ipAddress: eventData.ipAddress
