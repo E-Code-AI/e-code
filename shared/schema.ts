@@ -930,11 +930,16 @@ export const submissions = pgTable("submissions", {
 // Monitoring Tables (Fortune 500 Production Standards)
 export const monitoringEvents = pgTable("monitoring_events", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  eventType: varchar("event_type").notNull(), // 'user_action', 'system_event', etc.
-  eventData: jsonb("event_data").notNull(),
+  type: varchar("type").notNull(),
+  category: varchar("category").notNull(),
+  action: text("action").notNull(),
+  label: varchar("label"),
+  value: real("value"),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
-  userId: integer("user_id").references(() => users.id),
-  sessionId: varchar("session_id"),
+  metadata: jsonb("metadata").default({}),
+  url: text("url"),
+  userAgent: text("user_agent"),
+  ipAddress: varchar("ip_address"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -944,9 +949,8 @@ export const performanceMetrics = pgTable("performance_metrics", {
   value: decimal("value", { precision: 20, scale: 4 }).notNull(),
   unit: varchar("unit").notNull(), // 'ms', 'bytes', 'count', 'percentage'
   timestamp: timestamp("timestamp").notNull().defaultNow(),
-  userId: integer("user_id").references(() => users.id),
-  sessionId: varchar("session_id"),
   tags: jsonb("tags"), // Additional metadata
+  metadata: jsonb("metadata").default({}),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
