@@ -161,3 +161,14 @@ See the following files for detailed information:
 ## 📄 License
 
 MIT License - see LICENSE file for details
+
+### 🛠️ Troubleshooting
+
+#### Git index lock prevents new commands
+If Git reports `fatal: Unable to create '.../.git/index.lock': File exists`, a previous command may have terminated unexpectedly. Run the helper script to safely remove the stale lock:
+
+```bash
+./scripts/cleanup-git-lock.sh
+```
+
+The script verifies that the repository exists, removes the stale `.git/index.lock` file when necessary, and leaves a confirmation message so you know whether any cleanup was required.
