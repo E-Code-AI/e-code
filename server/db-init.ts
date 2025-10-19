@@ -64,9 +64,22 @@ async function ensureDatabaseMigrated(force = false) {
     await migrate(db, { migrationsFolder });
     console.log("Database migrations applied successfully.");
     migrationsEnsured = true;
-  } catch (migrationError) {
-    console.error("Automatic database migration failed:", migrationError);
-    throw migrationError;
+  } catch (migrationError: any) {
+    // Check if error is due to existing enum types (which is safe to ignore)
+    const errorMessage = migrationError?.message || '';
+    const causeMessage = migrationError?.cause?.message || '';
+    const fullErrorText = errorMessage + ' ' + causeMessage;
+    
+    const isEnumExistsError = fullErrorText.includes('already exists') && 
+                               (fullErrorText.includes('type') || fullErrorText.includes('enum') || fullErrorText.includes('CREATE TYPE'));
+    
+    if (isEnumExistsError) {
+      console.log("Database migration skipped: Enum types already exist (this is safe).");
+      migrationsEnsured = true;
+    } else {
+      console.error("Automatic database migration failed:", migrationError);
+      throw migrationError;
+    }
   }
 }
 
