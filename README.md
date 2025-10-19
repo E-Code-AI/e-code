@@ -65,6 +65,11 @@ cp .env.production.example .env
 #   ANTHROPIC_API_KEY=your-anthropic-key
 #   GOOGLE_GENAI_API_KEY=optional-google-models
 
+# ⚠️ If none of the AI provider keys are supplied on the server process, prompts sent from
+# the workspace UI will fail silently. The frontend suppresses provider errors to avoid
+# leaking implementation details, so always double-check that at least one of
+# `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GOOGLE_GENAI_API_KEY` is configured before
+# testing agent actions.
 # ❗️The application requires a reachable PostgreSQL instance available at `DATABASE_URL`.
 # It is used both by Drizzle for core data and by the `connect-pg-simple` session store.
 # If the database is missing or unreachable, authentication and project creation flows will fail.
