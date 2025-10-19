@@ -8,7 +8,7 @@ import cors from "cors";
 import compressionMiddleware from "./middleware/compression";
 import { securityMiddleware, sanitizeInput, securityMonitoring, ipSecurity } from "./middleware/security";
 import { rateLimiters, logRateLimitViolations, dynamicRateLimiter } from "./middleware/rate-limiter";
-import { CDNOptimizationService } from "./services/cdn-optimization";
+import { cdnOptimization } from "./services/cdn-optimization";
 import { DatabasePoolManager } from "./services/database-pool";
 // Initialize environment configuration with defaults
 import { config } from "./config/environment";
@@ -29,7 +29,6 @@ app.use('/api', dynamicRateLimiter);
 app.use('/static', rateLimiters.static);
 
 // CDN Optimization
-const cdnOptimization = new CDNOptimizationService();
 app.use(cdnOptimization.staticAssetsMiddleware());
 app.use(cdnOptimization.dynamicContentMiddleware());
 
