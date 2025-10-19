@@ -302,7 +302,7 @@ export default function ReportAbuse() {
                   </p>
                   <Button variant="outline" size="sm" className="w-full">
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    abuse@e-code.com
+                    abuse@e-code.ai
                   </Button>
                 </CardContent>
               </Card>
