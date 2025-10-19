@@ -97,7 +97,7 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent 
           side="left" 
-          className="w-full sm:w-[420px] p-0 bg-[var(--ecode-surface)] dark:bg-zinc-950/95 backdrop-blur-2xl border-r border-[var(--ecode-border)] dark:border-zinc-800/50 shadow-2xl"
+          className="w-full sm:w-[420px] p-0 bg-white dark:bg-zinc-950/95 backdrop-blur-2xl border-r border-[var(--ecode-border)] dark:border-zinc-800/50 shadow-2xl"
         >
           {/* Professional Header with Gradient */}
           <div className="relative overflow-hidden">
