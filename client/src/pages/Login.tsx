@@ -165,22 +165,26 @@ export default function Login() {
                 )}
               </Button>
               
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  setFormData({ username: 'admin', password: 'admin123' });
-                  // Trigger form submit after setting values
-                  setTimeout(() => {
-                    const form = document.querySelector('form') as HTMLFormElement;
-                    if (form) form.requestSubmit();
-                  }, 100);
-                }}
-              >
-                <Code className="mr-2 h-4 w-4" />
-                Quick Login (admin/admin123)
-              </Button>
+              {/* Only show Quick Login in development mode */}
+              {import.meta.env.DEV && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    // Use test credentials only in development
+                    setFormData({ username: 'testuser', password: 'testpass' });
+                    // Trigger form submit after setting values
+                    setTimeout(() => {
+                      const form = document.querySelector('form') as HTMLFormElement;
+                      if (form) form.requestSubmit();
+                    }, 100);
+                  }}
+                >
+                  <Code className="mr-2 h-4 w-4" />
+                  Quick Login (Development Only)
+                </Button>
+              )}
               
               <div className="text-center text-sm text-muted-foreground">
                 Don't have an account?{' '}

@@ -4,6 +4,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as crypto from 'crypto';
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import Stripe from "stripe";
@@ -357,11 +358,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
   
   // Development-only simple authentication endpoints
-  if (process.env.NODE_ENV === 'development') {
+  // CRITICAL: These endpoints MUST NEVER be accessible in production
+  const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+  const isProductionBuild = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'prod';
+  
+  // Double-check to prevent any accidental exposure
+  if (isDevelopment && !isProductionBuild) {
+    console.warn('⚠️ WARNING: Development authentication endpoints are being enabled. These MUST NOT be used in production!');
     const bcrypt = await import('bcrypt');
     
-    // Simple development login endpoint
+    // Simple development login endpoint - DEVELOPMENT ONLY
     app.post('/api/dev-login', async (req, res) => {
+      // Additional safety check
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      
       console.log('[DEV AUTH] Development login requested');
       
       try {
@@ -409,8 +421,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
     
-    // Auto-login endpoint for development
+    // Auto-login endpoint for development - DEVELOPMENT ONLY
     app.get('/api/dev-auto-login', async (req, res) => {
+      // Additional safety check
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      
       console.log('[DEV AUTH] Auto-login requested');
       
       try {
@@ -419,7 +436,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (!user) {
           console.log('[DEV AUTH] Creating admin user');
-          const hashedPassword = await bcrypt.hash('admin123', 10);
+          // Use a random secure password for the test user
+          const randomPassword = crypto.randomBytes(32).toString('hex');
+          const hashedPassword = await bcrypt.hash(randomPassword, 10);
           user = await storage.createUser({
             username: 'admin',
             email: 'admin@e-code.ai',
@@ -3639,16 +3658,17 @@ Application will be available at http://localhost:3000
   });
 
   // Handle slug-based routes for frontend (serve React app)
-  app.get('/@:username/:projectname', async (req, res, next) => {
+  // New route format for better compatibility with wouter
+  app.get('/u/:username/:projectname', async (req, res, next) => {
     try {
       const { username, projectname } = req.params;
       
-      console.log(`[2025-10-17T${new Date().toISOString().split('T')[1]}] [routes] INFO: Slug route accessed: /@${username}/${projectname}`);
+      console.log(`[${new Date().toISOString()}] [routes] INFO: New format route accessed: /u/${username}/${projectname}`);
       
       // Check if this is a valid project route
       const user = await storage.getUserByUsername(username);
       if (!user) {
-        console.log(`[2025-10-17T${new Date().toISOString().split('T')[1]}] [routes] INFO: User not found: ${username}, serving React app`);
+        console.log(`[${new Date().toISOString()}] [routes] INFO: User not found: ${username}, serving React app`);
         // If user doesn't exist, let it fall through to serve the React app
         // which will handle the 404 on the frontend
         return next();
@@ -3656,17 +3676,43 @@ Application will be available at http://localhost:3000
       
       const project = await storage.getProjectBySlug(projectname, user.id);
       if (!project) {
-        console.log(`[2025-10-17T${new Date().toISOString().split('T')[1]}] [routes] INFO: Project not found: ${projectname} for user ${username}, serving React app`);
+        console.log(`[${new Date().toISOString()}] [routes] INFO: Project not found: ${projectname} for user ${username}, serving React app`);
         // If project doesn't exist or doesn't belong to user,
         // let it fall through to serve the React app
         return next();
       }
       
-      console.log(`[2025-10-17T${new Date().toISOString().split('T')[1]}] [routes] INFO: Serving project: ${projectname} by ${username}`);
+      console.log(`[${new Date().toISOString()}] [routes] INFO: Serving project: ${projectname} by ${username}`);
       // Valid project route - serve the React app
       return next();
     } catch (error) {
       console.error('Error in slug route handler:', error);
+      return next();
+    }
+  });
+
+  // Keep the old @ route for backward compatibility - redirect to new format
+  app.get('/@:username/:projectname', async (req, res, next) => {
+    try {
+      const { username, projectname } = req.params;
+      
+      // CRITICAL FIX: Don't redirect Vite's internal routes
+      // Check if this is a Vite system route that should not be redirected
+      const viteSystemPrefixes = ['vite', 'fs', 'id', 'react-refresh', 'vite-plugin'];
+      if (viteSystemPrefixes.includes(username)) {
+        console.log(`[${new Date().toISOString()}] [routes] INFO: Vite system route detected: /@${username}/${projectname}, passing through`);
+        return next(); // Let Vite handle its own routes
+      }
+      
+      const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+      
+      console.log(`[${new Date().toISOString()}] [routes] INFO: Legacy @ route accessed: /@${username}/${projectname}`);
+      console.log(`[${new Date().toISOString()}] [routes] INFO: Redirecting to new format: /u/${username}/${projectname}`);
+      
+      // Permanent redirect to the new format
+      return res.redirect(301, `/u/${username}/${projectname}${queryString}`);
+    } catch (error) {
+      console.error('Error in legacy @ route redirect:', error);
       return next();
     }
   });

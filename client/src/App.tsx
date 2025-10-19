@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, useRoute } from "wouter";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -171,24 +171,57 @@ function PageLoader() {
   return <ECodeLoading fullScreen size="lg" text="Loading page..." />;
 }
 
+
+// Wrapper components for Replit-style routes
+function ProjectPageWrapper() {
+  return (
+    <ReplitLayout showSidebar={true}>
+      <ProjectPage />
+    </ReplitLayout>
+  );
+}
+
+function UserProfileWrapper() {
+  return (
+    <ReplitLayout showSidebar={false}>
+      <UserProfile />
+    </ReplitLayout>
+  );
+}
+
+// Redirect components for backward compatibility with @ URLs
+function ProjectRedirect() {
+  const [, navigate] = useLocation();
+  const route = useRoute('/@:username/:projectname');
+  
+  useEffect(() => {
+    if (route[0]) {
+      const { username, projectname } = route[1] as { username: string; projectname: string };
+      navigate(`/u/${username}/${projectname}`, { replace: true });
+    }
+  }, [route, navigate]);
+  
+  return <ECodeLoading fullScreen size="lg" text="Redirecting to project..." />;
+}
+
+function UserProfileRedirect() {
+  const [, navigate] = useLocation();
+  const route = useRoute('/@:username');
+  
+  useEffect(() => {
+    if (route[0]) {
+      const { username } = route[1] as { username: string };
+      navigate(`/u/${username}`, { replace: true });
+    }
+  }, [route, navigate]);
+  
+  return <ECodeLoading fullScreen size="lg" text="Redirecting to profile..." />;
+}
+
 function AppContent() {
   const [location] = useLocation();
   const { isLoading: authLoading } = useAuth();
 
-  // Debug logging for route matching
-  useEffect(() => {
-    console.log('[App.tsx] Current location:', location);
-    console.log('[App.tsx] Auth loading state:', authLoading);
-    
-    // Check if the location contains @ symbol
-    if (location.includes('@')) {
-      console.log('[App.tsx] Slug route detected:', location);
-      const match = location.match(/^\/@([^\/]+)\/(.+)$/);
-      if (match) {
-        console.log('[App.tsx] Parsed slug route - username:', match[1], ', projectname:', match[2]);
-      }
-    }
-  }, [location, authLoading]);
 
   // Show loading state while authentication is being checked
   // This prevents premature route matching and 404s
@@ -452,21 +485,18 @@ function AppContent() {
             />
           )} />
 
+          {/* Test route for @ symbol routing */}
+          
           {/* Generic Replit-style project routes */}
-          {/* Note: This route does NOT use ProtectedRoute to allow initial access
-              Authentication is handled within ProjectPage component */}
-          <Route path="/@:username/:projectname" component={() => (
-            <ReplitLayout showSidebar={true}>
-              <ProjectPage />
-            </ReplitLayout>
-          )} />
-
-          {/* User profile route */}
-          <Route path="/@:username" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <UserProfile />
-            </ReplitLayout>
-          )} />
+          {/* Using /u/ prefix instead of @ for better compatibility with wouter */}
+          <Route path="/u/:username/:projectname" component={ProjectPageWrapper} />
+          
+          {/* Backward compatibility redirect for @ routes */}
+          <Route path="/@:username/:projectname" component={ProjectRedirect} />
+          
+          {/* User profile routes */}
+          <Route path="/u/:username" component={UserProfileWrapper} />
+          <Route path="/@:username" component={UserProfileRedirect} />
           <ProtectedRoute path="/editor/:id" component={() => (
             <ReplitLayout showSidebar={true}>
               <Editor />
@@ -699,11 +729,6 @@ function AppContent() {
           <ProtectedRoute path="/custom-roles" component={() => (
             <ReplitLayout showSidebar={false}>
               <CustomRoles />
-            </ReplitLayout>
-          )} />
-          <ProtectedRoute path="/@:username" component={() => (
-            <ReplitLayout>
-              <UserProfile />
             </ReplitLayout>
           )} />
           <Route component={NotFound} />
