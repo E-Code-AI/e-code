@@ -2763,10 +2763,248 @@ export class DatabaseStorage implements IStorage {
         .where(eq(promptTemplates.id, templateId));
     }
   }
+
+  // Initialize default prompt templates
+  async initializeDefaultPromptTemplates(): Promise<void> {
+    const defaultTemplates = [
+      {
+        name: 'React Component Generator',
+        description: 'Generate a complete React component with proper TypeScript typing and hooks',
+        category: 'code_generation',
+        prompt: `Generate a React functional component named {{componentName}} with TypeScript that:
+- Uses proper TypeScript interfaces for props
+- Includes {{hooks}} hooks if specified
+- Follows React best practices
+- Has proper error boundaries
+- Includes JSDoc documentation
+- Uses shadcn/ui components where appropriate
+Component purpose: {{description}}
+Props needed: {{props}}`,
+        variables: [
+          { name: 'componentName', description: 'Name of the component', defaultValue: 'MyComponent' },
+          { name: 'hooks', description: 'React hooks to include', defaultValue: 'useState, useEffect' },
+          { name: 'description', description: 'What the component does', defaultValue: '' },
+          { name: 'props', description: 'Component props specification', defaultValue: '' }
+        ],
+        isSystem: true,
+        isPublic: true,
+        createdBy: 'system',
+        tags: ['react', 'component', 'typescript'],
+      },
+      {
+        name: 'API Endpoint Creator',
+        description: 'Create a RESTful API endpoint with proper validation and error handling',
+        category: 'code_generation',
+        prompt: `Create a {{method}} API endpoint at {{endpoint}} that:
+- Validates input using Zod schemas
+- Implements proper error handling
+- Uses async/await pattern
+- Includes rate limiting
+- Has comprehensive logging
+- Returns appropriate HTTP status codes
+Functionality: {{functionality}}
+Request body: {{requestBody}}
+Response format: {{responseFormat}}`,
+        variables: [
+          { name: 'method', description: 'HTTP method', defaultValue: 'POST' },
+          { name: 'endpoint', description: 'API endpoint path', defaultValue: '/api/resource' },
+          { name: 'functionality', description: 'What the endpoint does', defaultValue: '' },
+          { name: 'requestBody', description: 'Expected request body structure', defaultValue: '' },
+          { name: 'responseFormat', description: 'Response data format', defaultValue: '' }
+        ],
+        isSystem: true,
+        isPublic: true,
+        createdBy: 'system',
+        tags: ['api', 'backend', 'rest'],
+      },
+      {
+        name: 'Database Schema Designer',
+        description: 'Design database schema with Drizzle ORM',
+        category: 'architecture',
+        prompt: `Design a database schema for {{entityName}} using Drizzle ORM that includes:
+- Proper table definitions with appropriate column types
+- Primary and foreign key constraints
+- Indexes for performance
+- Relations between tables
+- Insert and select schemas with Zod validation
+Requirements: {{requirements}}
+Relationships: {{relationships}}
+Fields needed: {{fields}}`,
+        variables: [
+          { name: 'entityName', description: 'Name of the entity/table', defaultValue: '' },
+          { name: 'requirements', description: 'Business requirements', defaultValue: '' },
+          { name: 'relationships', description: 'Relationships with other tables', defaultValue: '' },
+          { name: 'fields', description: 'Fields and their types', defaultValue: '' }
+        ],
+        isSystem: true,
+        isPublic: true,
+        createdBy: 'system',
+        tags: ['database', 'drizzle', 'schema'],
+      },
+      {
+        name: 'Bug Fix Assistant',
+        description: 'Help identify and fix bugs in code',
+        category: 'debugging',
+        prompt: `Analyze this {{language}} code and help fix the bug:
+Error message: {{errorMessage}}
+Code context: {{codeContext}}
+Expected behavior: {{expectedBehavior}}
+Actual behavior: {{actualBehavior}}
+
+Please:
+1. Identify the root cause
+2. Provide a detailed explanation
+3. Suggest a fix with code
+4. Recommend prevention strategies`,
+        variables: [
+          { name: 'language', description: 'Programming language', defaultValue: 'TypeScript' },
+          { name: 'errorMessage', description: 'Error message received', defaultValue: '' },
+          { name: 'codeContext', description: 'Code around the error', defaultValue: '' },
+          { name: 'expectedBehavior', description: 'What should happen', defaultValue: '' },
+          { name: 'actualBehavior', description: 'What actually happens', defaultValue: '' }
+        ],
+        isSystem: true,
+        isPublic: true,
+        createdBy: 'system',
+        tags: ['debugging', 'troubleshooting'],
+      },
+      {
+        name: 'Code Refactoring Helper',
+        description: 'Refactor code for better maintainability and performance',
+        category: 'refactoring',
+        prompt: `Refactor this {{language}} code to improve:
+- Code readability and maintainability
+- Performance optimization
+- Design patterns implementation
+- {{specificImprovements}}
+
+Current code: {{currentCode}}
+Context: {{context}}
+
+Provide:
+1. Refactored code
+2. Explanation of changes
+3. Performance impact analysis`,
+        variables: [
+          { name: 'language', description: 'Programming language', defaultValue: 'TypeScript' },
+          { name: 'specificImprovements', description: 'Specific improvements needed', defaultValue: '' },
+          { name: 'currentCode', description: 'Code to refactor', defaultValue: '' },
+          { name: 'context', description: 'Additional context', defaultValue: '' }
+        ],
+        isSystem: true,
+        isPublic: true,
+        createdBy: 'system',
+        tags: ['refactoring', 'clean-code'],
+      },
+      {
+        name: 'Documentation Writer',
+        description: 'Generate comprehensive documentation for code',
+        category: 'documentation',
+        prompt: `Generate documentation for this {{language}} {{codeType}}:
+- Include detailed descriptions
+- Add parameter documentation
+- Provide usage examples
+- Include return value documentation
+- Add complexity analysis if applicable
+Style: {{documentationStyle}}
+Code: {{code}}`,
+        variables: [
+          { name: 'language', description: 'Programming language', defaultValue: 'TypeScript' },
+          { name: 'codeType', description: 'Type of code (function, class, module)', defaultValue: 'function' },
+          { name: 'documentationStyle', description: 'Documentation style (JSDoc, Markdown)', defaultValue: 'JSDoc' },
+          { name: 'code', description: 'Code to document', defaultValue: '' }
+        ],
+        isSystem: true,
+        isPublic: true,
+        createdBy: 'system',
+        tags: ['documentation', 'comments'],
+      },
+      {
+        name: 'Test Generator',
+        description: 'Generate comprehensive test cases',
+        category: 'testing',
+        prompt: `Generate {{testFramework}} tests for:
+{{codeToTest}}
+
+Requirements:
+- Cover all edge cases
+- Include positive and negative test cases
+- Mock external dependencies
+- Test error handling
+- Aim for {{coverage}}% coverage
+- Use {{testingApproach}} approach`,
+        variables: [
+          { name: 'testFramework', description: 'Testing framework', defaultValue: 'Jest' },
+          { name: 'codeToTest', description: 'Code that needs testing', defaultValue: '' },
+          { name: 'coverage', description: 'Target coverage percentage', defaultValue: '80' },
+          { name: 'testingApproach', description: 'Testing approach (unit, integration)', defaultValue: 'unit' }
+        ],
+        isSystem: true,
+        isPublic: true,
+        createdBy: 'system',
+        tags: ['testing', 'quality-assurance'],
+      },
+      {
+        name: 'Performance Optimizer',
+        description: 'Optimize code for better performance',
+        category: 'performance',
+        prompt: `Analyze and optimize this code for performance:
+{{code}}
+
+Focus on:
+- Time complexity optimization
+- Space complexity reduction
+- {{specificOptimizations}}
+- Database query optimization (if applicable)
+- Caching strategies
+Environment: {{environment}}
+Constraints: {{constraints}}`,
+        variables: [
+          { name: 'code', description: 'Code to optimize', defaultValue: '' },
+          { name: 'specificOptimizations', description: 'Specific areas to optimize', defaultValue: '' },
+          { name: 'environment', description: 'Runtime environment', defaultValue: 'Node.js' },
+          { name: 'constraints', description: 'Any constraints or limitations', defaultValue: '' }
+        ],
+        isSystem: true,
+        isPublic: true,
+        createdBy: 'system',
+        tags: ['performance', 'optimization'],
+      }
+    ];
+
+    // Check if templates already exist
+    const existingTemplates = await this.db
+      .select()
+      .from(promptTemplates)
+      .where(eq(promptTemplates.isSystem, true));
+
+    if (existingTemplates.length === 0) {
+      // Insert default templates
+      for (const template of defaultTemplates) {
+        await this.db.insert(promptTemplates).values({
+          ...template,
+          usageCount: 0,
+          rating: 0,
+          variables: template.variables as any,
+          tags: template.tags as any,
+        });
+      }
+      console.log('Default prompt templates initialized successfully');
+    }
+  }
 }
 
 // Initialize storage
 export const storage = new DatabaseStorage();
+
+// Initialize default templates on startup
+(async () => {
+  try {
+    await storage.initializeDefaultPromptTemplates();
+  } catch (error) {
+    console.error('Failed to initialize default prompt templates:', error);
+  }
+})();
 
 // Session store with pg pool
 import { Pool } from 'pg';
