@@ -6,6 +6,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { createLogger } from '../utils/logger';
+import { config as appConfig } from '../config/environment';
 
 const logger = createLogger('cdn-optimization');
 
@@ -19,6 +20,9 @@ interface CDNConfig {
   };
   staticAssetMaxAge: number;
   dynamicContentMaxAge: number;
+  htmlBrowserCacheSeconds: number;
+  htmlCdnCacheSeconds: number;
+  apiCacheControlHeader: string;
   edgeLocations: string[];
 }
 
@@ -29,8 +33,10 @@ export class CDNOptimizationService {
     // Detect if running on Replit
     const isReplit = !!(process.env.REPL_ID || process.env.REPLIT_DOMAINS);
     
+    const cdnConfig = appConfig.cdn;
+
     this.config = {
-      enabled: process.env.NODE_ENV === 'production',
+      enabled: cdnConfig.enabled,
       isReplitEnvironment: isReplit,
       providers: {
         // Only check for external CDN providers if not on Replit
@@ -38,9 +44,12 @@ export class CDNOptimizationService {
         cloudfront: !isReplit && !!process.env.CLOUDFRONT_ENABLED,
         fastly: !isReplit && !!process.env.FASTLY_ENABLED
       },
-      staticAssetMaxAge: 31536000, // 1 year
-      dynamicContentMaxAge: 300, // 5 minutes
-      edgeLocations: isReplit ? 
+      staticAssetMaxAge: cdnConfig.staticCacheSeconds || 31536000,
+      dynamicContentMaxAge: cdnConfig.dynamicCacheSeconds || 3600,
+      htmlBrowserCacheSeconds: cdnConfig.htmlBrowserCacheSeconds || 3600,
+      htmlCdnCacheSeconds: cdnConfig.htmlCdnCacheSeconds || 86400,
+      apiCacheControlHeader: cdnConfig.apiCacheControl || 'no-cache, no-store, must-revalidate',
+      edgeLocations: isReplit ?
         ['replit-global-cdn'] : // Replit handles edge locations automatically
         [
           'us-east-1', 'us-west-1', 'eu-west-1', 'ap-southeast-1',
@@ -66,12 +75,21 @@ export class CDNOptimizationService {
   // Middleware for optimizing static assets
   staticAssetsMiddleware() {
     return (req: Request, res: Response, next: NextFunction) => {
-      const isStaticAsset = /\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/i.test(req.path);
-      
+      const assetPath = req.path.toLowerCase();
+      const isStaticAsset = /\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/i.test(assetPath);
+
       if (isStaticAsset) {
-        // Set aggressive caching for static assets
-        res.setHeader('Cache-Control', `public, max-age=${this.config.staticAssetMaxAge}, immutable`);
-        
+        // Set caching headers by asset type
+        if (/\.(js|css)$/i.test(assetPath)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        } else if (/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(assetPath)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000');
+        } else if (/\.(woff|woff2|ttf|eot)$/i.test(assetPath)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000');
+        } else {
+          res.setHeader('Cache-Control', `public, max-age=${this.config.staticAssetMaxAge}`);
+        }
+
         // Add CDN headers
         res.setHeader('X-Content-Type-Options', 'nosniff');
         
@@ -103,18 +121,27 @@ export class CDNOptimizationService {
       }
 
       // Set appropriate caching for dynamic content
-      if (req.method === 'GET') {
-        const cacheControl = req.path.startsWith('/api/public') 
-          ? `public, max-age=${this.config.dynamicContentMaxAge}, stale-while-revalidate=60`
-          : 'private, no-cache, no-store, must-revalidate';
-          
-        res.setHeader('Cache-Control', cacheControl);
+      if (req.path.startsWith('/api')) {
+        res.setHeader('Cache-Control', this.config.apiCacheControlHeader);
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      } else if (req.method === 'GET') {
+        const acceptsHtml = /text\/html/.test(req.headers.accept || '') || req.path.endsWith('.html') || req.path === '/';
+        if (acceptsHtml) {
+          res.setHeader('Cache-Control', `public, max-age=${this.config.htmlBrowserCacheSeconds}, s-maxage=${this.config.htmlCdnCacheSeconds}`);
+        } else {
+          res.setHeader('Cache-Control', `public, max-age=${this.config.dynamicContentMaxAge}`);
+        }
       }
 
-      // Add CDN performance headers
+      // Add CDN performance and security headers
+      const securityHeaders = this.getSecurityHeaders();
+      Object.entries(securityHeaders).forEach(([key, value]) => {
+        res.setHeader(key, value);
+      });
       res.setHeader('X-Frame-Options', 'DENY');
       res.setHeader('X-XSS-Protection', '1; mode=block');
-      
+
       // Add edge location header
       const edgeLocation = this.getNearestEdgeLocation(req);
       res.setHeader('X-Edge-Location', edgeLocation);

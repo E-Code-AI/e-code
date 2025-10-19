@@ -121,7 +121,31 @@ The platform includes comprehensive comparison pages to showcase advantages over
 - Clear CTAs for user conversion
 - All comparison pages are located in `client/src/pages/marketing/`
 
+## Automated Verification Script
+
+**NEW**: Automated script to verify codex PRs created on 19 Oct 2025
+- **Location**: `scripts/verify-codex-prs.sh`
+- **Usage**: `bash scripts/verify-codex-prs.sh [number_of_prs]`
+- **Checks**: Database tables, port conflicts, migrations, TypeScript, duplications, app health
+- **Reports**: Saved to `reports/codex-audits/audit_TIMESTAMP.md`
+- **Documentation**: See `docs/VERIFICATION_GUIDE.md` for complete guide
+- **CI/CD**: GitHub Actions workflow in `.github/workflows/verify-codex-prs.yml`
+
 ## Recent Fixes (October 19, 2025)
+
+### Audit & Fixes - 19 Oct 2025 14:38
+- **Comprehensive PR Audit**: Analyzed all 15 PRs from today (PR #101-115)
+- **Critical Issue #1 Fixed**: Missing `customer_requests` table from PR #115
+  - Migration SQL file existed but was never applied to database
+  - Applied migration: `server/db/migrations/20251020_add_customer_requests_table.sql`
+  - Table now created with all indexes (form_type, status, created_at)
+  - New admin page `/admin/form-requests` now functional
+- **Critical Issue #2 Fixed**: Port 3200 conflict causing MCP server crash
+  - Cleared blocked port, MCP standalone server now running correctly
+- **Verification Complete**: Application running successfully with all services healthy
+- **Full audit report**: `docs/TODAYS_PR_AUDIT_REPORT.md`
+
+### Earlier Fixes - 19 Oct 2025
 - Fixed import error in `server/api/mobile.ts` (wrong ai-service path)
 - Created ScrollToTop component
 - Created all comparison pages (Compare, VsGitHubCodespaces, VsGlitch, VsHeroku, VsCodeSandbox, VsAwsCloud9)
@@ -133,4 +157,18 @@ The platform includes comprehensive comparison pages to showcase advantages over
   - Code Editing settings (AI completion, brackets, indentation, inline chat)
   - Advanced Developer Settings (experimental features, performance mode, debug logging, GPU acceleration)
   - Styled to match Replit's mobile app design with card-based sections
+- **PR #109 Critical Fixes**: Resolved severe merge conflict corruption in test infrastructure files
+  - **test/setup/test-runner.ts**: Removed 3 duplicate implementations concatenated together (lines were repeated 3x)
+  - **test/setup/globals.ts**: Cleaned up 3 different `expect` implementations merged incorrectly
+  - **test/security.test.ts**: Moved imports to top, removed duplicate suite registration
+  - **test/ai-ux-features.test.ts**: Removed duplicate empty suite at end of file
+  - All test files now compile without TypeScript errors
+  - Test infrastructure includes: `.only` and `.skip` support, pattern matching, lifecycle hooks (beforeAll/afterAll/beforeEach/afterEach)
+- **Comprehensive Codex Commits Audit**: Analyzed 15 most recent codex commits (PR #101-115)
+  - 13/15 commits were clean (87% success rate)
+  - PR #109 was the only one with severe merge conflict corruption
+  - PR #112 attempted partial fix but left residual duplications
+  - All missing PRs verified: #101-105 and #115 are all clean
+  - All issues now completely resolved
+  - Full analysis report available in `docs/CODEX_COMMITS_ANALYSIS.md`
 - App now running successfully with all features intact

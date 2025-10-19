@@ -46,6 +46,8 @@
   --ecode-text: #0f172a;
   --ecode-text-secondary: #475569;
   --ecode-text-muted: #64748b;
+  --ecode-text: #0f172a;
+  --ecode-text-secondary: #475569;
   --ecode-accent: #0b63f6;
   --ecode-accent-hover: #084ebd;
   --ecode-danger: #d92d20;
@@ -241,6 +243,8 @@
   --ecode-text: #0f172a;
   --ecode-text-secondary: #475569;
   --ecode-text-muted: #64748b;
+  --ecode-text: #0f172a;
+  --ecode-text-secondary: #475569;
   --ecode-accent: #0b63f6;
   --ecode-accent-hover: #084ebd;
   --ecode-danger: #d92d20;
@@ -492,6 +496,9 @@
   border-color: rgba(245, 158, 11, 0.35);
   background: linear-gradient(135deg, rgba(184, 111, 31, 0.35), rgba(255, 176, 67, 0.22));
   color: rgba(255, 226, 166, 0.95);
+  --ecode-shadow-sm: 0 10px 30px -15px rgba(15, 23, 42, 0.25);
+  --ecode-shadow-md: 0 20px 45px -20px rgba(15, 23, 42, 0.3);
+  --ecode-shadow-lg: 0 35px 65px -30px rgba(15, 23, 42, 0.35);
 }
 
 /* Animations et transitions E-Code */
