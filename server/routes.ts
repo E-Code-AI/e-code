@@ -21546,6 +21546,10 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
 
   // Admin - view customer form requests
+  app.get('/api/admin/form-requests', ensureAuthenticated, async (req, res) => {
+    const isAdminUser = req.user?.role === 'admin' || req.user?.email?.includes('admin');
+    if (!isAdminUser) {
+      return res.status(403).json({ error: 'Admin access required' });
   const requireAdminAccess = (req: Request, res: Response) => {
     if (req.user?.role === 'admin') {
       return true;
@@ -21563,6 +21567,49 @@ Generate a comprehensive application based on the user's request. Include all ne
     try {
       const formTypeParam = typeof req.query.formType === 'string' ? req.query.formType : undefined;
       const statusParam = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const searchParam = typeof req.query.search === 'string' ? req.query.search.trim() : undefined;
+
+      const rawPage = typeof req.query.page === 'string' ? Number(req.query.page) : undefined;
+      const rawPageSize = typeof req.query.pageSize === 'string' ? Number(req.query.pageSize) : undefined;
+
+      const pageParam = Number.isFinite(rawPage) && (rawPage as number) > 0 ? Math.floor(rawPage as number) : undefined;
+      const pageSizeParam = Number.isFinite(rawPageSize) && (rawPageSize as number) > 0 ? Math.floor(rawPageSize as number) : undefined;
+
+      const listResult = await storage.listCustomerRequests({
+        formType: formTypeParam && formTypeParam !== 'all' ? formTypeParam : undefined,
+        status: statusParam && statusParam !== 'all' ? statusParam : undefined,
+        search: searchParam,
+        page: pageParam,
+        pageSize: pageSizeParam,
+      });
+
+      const currentTabSummary = await storage.getCustomerRequestAggregates({
+        formType: formTypeParam && formTypeParam !== 'all' ? formTypeParam : undefined,
+        search: searchParam,
+      });
+
+      const formTypeSummary = await storage.getCustomerRequestAggregates({
+        status: statusParam && statusParam !== 'all' ? statusParam : undefined,
+        search: searchParam,
+      });
+
+      res.json({
+        requests: listResult.requests,
+        pagination: {
+          page: listResult.page,
+          pageSize: listResult.pageSize,
+          total: listResult.total,
+          totalPages: listResult.totalPages,
+        },
+        summary: {
+          currentTab: {
+            total: currentTabSummary.total,
+            byStatus: currentTabSummary.byStatus,
+          },
+          byFormType: formTypeSummary.byFormType,
+          matchedTotal: formTypeSummary.total,
+        },
+      });
 
       const requests = await storage.getCustomerRequests({
         formType: formTypeParam && formTypeParam !== 'all' ? formTypeParam : undefined,
@@ -21577,6 +21624,9 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
 
   app.patch('/api/admin/form-requests/:id', ensureAuthenticated, async (req, res) => {
+    const isAdminUser = req.user?.role === 'admin' || req.user?.email?.includes('admin');
+    if (!isAdminUser) {
+      return res.status(403).json({ error: 'Admin access required' });
     if (!hasAdminRole(req)) {
       return respondAdminAccessRequired(res);
     }
