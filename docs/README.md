@@ -28,6 +28,6 @@ Additional deep dives (billing, API references, extension SDKs) are planned; ope
 
 - **Style guide** – Follow the internal handbook at `docs/style-guide.md` (work in progress).
 - **Change control** – Pair every doc update with a change request in the engineering tracker.
-- **Contact** – Reach the documentation team at [docs@e-code.dev](mailto:docs@e-code.dev).
+- **Contact** – Reach the documentation team at [docs@e-code.ai](mailto:docs@e-code.ai).
 
 _Last reviewed: 2025-10-19_

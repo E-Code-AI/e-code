@@ -225,7 +225,7 @@ export class RealEmailService {
 
       // Set default from address
       if (!config.from) {
-        config.from = process.env.EMAIL_FROM || 'noreply@e-code.app';
+        config.from = process.env.EMAIL_FROM || 'noreply@e-code.ai';
       }
 
       // Try SendGrid first
