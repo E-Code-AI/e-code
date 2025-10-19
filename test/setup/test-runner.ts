@@ -1,4 +1,5 @@
 import { performance } from 'node:perf_hooks';
+import { fileURLToPath } from 'node:url';
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -23,6 +24,7 @@ export type TestSuite = SuiteLifecycle & {
 type RegisteredSuite = {
   name: string;
   suite: TestSuite;
+  filePath?: string;
 };
 
 const registeredSuites: RegisteredSuite[] = [];
@@ -38,6 +40,40 @@ const matchesPattern = (name: string, pattern?: string): boolean => {
   }
 
   return name.toLowerCase().includes(normalized);
+};
+
+const extractFilePathFromStack = (): string | undefined => {
+  const stack = new Error().stack;
+  if (!stack) {
+    return undefined;
+  }
+
+  const frames = stack.split('\n').slice(1);
+  for (const rawFrame of frames) {
+    const frame = rawFrame.trim();
+    const match =
+      frame.match(/\((.*?):\d+:\d+\)$/) ?? frame.match(/at (.*?):\d+:\d+$/);
+    if (!match) {
+      continue;
+    }
+
+    let candidate = match[1];
+    if (candidate.startsWith('file://')) {
+      try {
+        candidate = fileURLToPath(candidate);
+      } catch {
+        // ignore parsing errors and fall back to the raw value
+      }
+    }
+
+    if (candidate.includes('test/setup/test-runner')) {
+      continue;
+    }
+
+    return candidate;
+  }
+
+  return undefined;
 };
 
 const hasFocusedTests = (): boolean =>
@@ -60,7 +96,8 @@ type PhaseError = {
 
 export const testRunner = {
   registerSuite(name: string, suite: TestSuite): void {
-    registeredSuites.push({ name, suite });
+    const filePath = extractFilePathFromStack();
+    registeredSuites.push({ name, suite, filePath });
   },
 
   async run(pattern?: string): Promise<{ failed: number; passed: number }> {
@@ -68,7 +105,7 @@ export const testRunner = {
     let passed = 0;
     const focused = hasFocusedTests();
 
-    for (const { name: suiteName, suite } of registeredSuites) {
+    for (const { name: suiteName, suite, filePath } of registeredSuites) {
       const tests = suite.tests.filter((test) => {
         if (focused && !test.only) {
           return false;
@@ -78,7 +115,15 @@ export const testRunner = {
           return false;
         }
 
-        return matchesPattern(`${suiteName} ${test.name}`, pattern);
+        if (matchesPattern(`${suiteName} ${test.name}`, pattern)) {
+          return true;
+        }
+
+        if (filePath) {
+          return matchesPattern(filePath, pattern);
+        }
+
+        return false;
       });
 
       if (tests.length === 0) {
