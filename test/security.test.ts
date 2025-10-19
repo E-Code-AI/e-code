@@ -51,5 +51,3 @@ testRunner.registerSuite('Security Scanner', {
     },
   ],
 });
-
-
