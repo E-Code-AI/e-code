@@ -6,6 +6,7 @@ import { storage } from '../storage.js';
 import { hashPassword, comparePasswords } from '../auth.js';
 import { generateEmailVerificationToken, generatePasswordResetToken } from '../utils/auth-utils.js';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email-utils.js';
+import { sendAdminAlertEmail } from '../utils/gandi-email.js';
 import { OAuth2Client } from 'google-auth-library';
 import { Octokit } from '@octokit/rest';
 
@@ -70,7 +71,20 @@ router.post('/register', async (req, res) => {
     if (process.env.NODE_ENV !== 'development') {
       await sendVerificationEmail(email, verificationToken);
     }
-    
+
+    await sendAdminAlertEmail({
+      subject: `New platform registration: ${email}`,
+      title: 'New user registration',
+      description: `${displayName} just created an account on E-Code.`,
+      metadata: {
+        email,
+        username,
+        displayName,
+        ipAddress: req.ip || null,
+        userAgent: req.headers['user-agent'] || null,
+      },
+    });
+
     res.status(201).json({
       message: 'Registration successful. Please check your email to verify your account.',
       userId: user.id

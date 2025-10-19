@@ -7,6 +7,7 @@ setupTestGlobals();
 // Import test suites
 import './security.test';
 import './ai-ux-features.test';
+import './newsletter.test';
 
 (async () => {
   const pattern = process.argv[2];

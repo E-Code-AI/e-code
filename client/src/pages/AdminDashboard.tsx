@@ -19,6 +19,7 @@ import { Link } from 'wouter';
 import PerformanceMonitor from '@/pages/admin/PerformanceMonitor';
 import { formatDistanceToNow } from 'date-fns';
 import NewsletterSubscribers from '@/components/admin/NewsletterSubscribers';
+import NewsletterComposer from '@/components/admin/NewsletterComposer';
 
 interface SystemStatus {
   database: { status: string; connections: number };
@@ -396,7 +397,8 @@ export default function AdminDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="newsletter">
+        <TabsContent value="newsletter" className="space-y-6">
+          <NewsletterComposer />
           <NewsletterSubscribers />
         </TabsContent>
 
