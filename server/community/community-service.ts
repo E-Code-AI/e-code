@@ -648,33 +648,35 @@ export class CommunityService {
 
       const { displayName, bio, website, githubUsername, twitterUsername, profileImageUrl } = req.body;
 
-      const updateData: Partial<typeof users.$inferInsert> = {
+      const updateData = {
         updatedAt: new Date(),
-      };
+      } as Partial<typeof users.$inferInsert>;
 
       if (displayName !== undefined) {
         updateData.displayName = displayName;
       }
+
       if (bio !== undefined) {
         updateData.bio = bio;
       }
+
       if (website !== undefined) {
         updateData.website = website;
       }
+
       if (githubUsername !== undefined) {
         updateData.githubUsername = githubUsername;
       }
+
       if (twitterUsername !== undefined) {
         updateData.twitterUsername = twitterUsername;
       }
+
       if (profileImageUrl !== undefined) {
         updateData.profileImageUrl = profileImageUrl;
       }
 
-      await db
-        .update(users)
-        .set(updateData)
-        .where(eq(users.id, userId));
+      await db.update(users).set(updateData).where(eq(users.id, userId));
 
       res.json({ success: true });
     } catch (error) {
