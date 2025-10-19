@@ -21,6 +21,7 @@ import { AnimatedPlatformDemo } from '@/components/AnimatedPlatformDemo';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
+import { getProjectUrl } from '@/lib/utils';
 import { 
   SiPython, SiJavascript, SiHtml5, SiCss3,
   SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
@@ -161,11 +162,9 @@ export default function Landing() {
           // Store prompt in sessionStorage for the AI agent
           window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
           
-          // Ensure we have the owner username
-          const ownerUsername = project.owner?.username || user?.username || 'admin';
-          const projectUrl = `/@${ownerUsername}/${project.slug}`;
+          const projectUrl = getProjectUrl(project, user?.username);
           console.log(`Navigating to: ${projectUrl}`);
-          
+
           // Add a small delay to ensure project is fully created and indexed
           setTimeout(() => {
             // Use window.location for full page reload to ensure auth state is fresh

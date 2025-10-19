@@ -44,6 +44,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { AuthModal } from '@/components/AuthModal';
+import { getProjectUrl } from '@/lib/utils';
 
 export default function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -81,8 +82,7 @@ export default function Home() {
       
       // Add a small delay to ensure project is fully created and indexed
       setTimeout(() => {
-        // Use window.location for full page reload to ensure auth state is fresh
-        const projectUrl = `/@${user?.username || 'admin'}/${data.slug}`;
+        const projectUrl = getProjectUrl(data, user?.username);
         console.log(`Navigating to: ${projectUrl}`);
         window.location.href = projectUrl;
       }, 500);
@@ -243,10 +243,10 @@ export default function Home() {
               displayMode === "grid" ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {sortedProjects.map((project) => (
-                    <Card 
-                      key={project.id} 
+                    <Card
+                      key={project.id}
                       className="bg-card border border-border hover:border-primary transition-colors cursor-pointer"
-                      onClick={() => navigate(`/@${user?.username || 'admin'}/${project.slug}`)}
+                      onClick={() => navigate(getProjectUrl(project, user?.username))}
                     >
                       <CardHeader className="pb-2">
                         <CardTitle className="flex items-center justify-between text-lg">
@@ -319,10 +319,10 @@ export default function Home() {
               ) : (
                 <div className="space-y-2">
                   {sortedProjects.map((project) => (
-                    <div 
+                    <div
                       key={project.id}
                       className="flex items-center p-3 border rounded-md hover:bg-accent cursor-pointer"
-                      onClick={() => navigate(`/@${user?.username || 'admin'}/${project.slug}`)}
+                      onClick={() => navigate(getProjectUrl(project, user?.username))}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
