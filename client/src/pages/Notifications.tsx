@@ -41,7 +41,7 @@ interface Notification {
     username: string;
     avatar: string;
   };
-  metadata?: any;
+  metadata?: Record<string, any>;
 }
 
 interface NotificationSettings {
@@ -79,13 +79,13 @@ export default function Notifications() {
 
   // Fetch notification settings
   const { data: settings, isLoading: settingsLoading } = useQuery<NotificationSettings>({
-    queryKey: ['/api/notifications/settings'],
+    queryKey: ['/api/notifications/preferences'],
   });
 
   // Mark as read mutation
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: number) => {
-      return apiRequest('PUT', `/api/notifications/${notificationId}/read`);
+      return apiRequest('PATCH', `/api/notifications/${notificationId}/read`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
@@ -95,7 +95,7 @@ export default function Notifications() {
   // Mark all as read mutation
   const markAllReadMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('PUT', '/api/notifications/read-all');
+      return apiRequest('PATCH', '/api/notifications/read-all');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
@@ -109,10 +109,10 @@ export default function Notifications() {
   // Update settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('PUT', '/api/notifications/settings', data);
+      return apiRequest('PATCH', '/api/notifications/preferences', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications/settings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications/preferences'] });
       toast({
         title: "Settings updated",
         description: "Your notification preferences have been saved.",

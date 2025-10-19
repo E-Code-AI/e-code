@@ -1620,7 +1620,7 @@ What would you like me to build?`,
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0"
-                  onClick={() => window.location.href = '/billing'}
+                  onClick={() => window.location.href = '/subscribe'}
                 >
                   <DollarSign className="h-4 w-4" />
                 </Button>

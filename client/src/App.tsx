@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, useRoute } from "wouter";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 // Lazy load all pages for better performance
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -45,6 +46,7 @@ const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const AdminUsage = lazy(() => import("@/pages/AdminUsage"));
 const AdminBilling = lazy(() => import("@/pages/AdminBilling"));
 const AdminAIModels = lazy(() => import("@/pages/admin/AIModels"));
+const AdminFormRequests = lazy(() => import("@/pages/admin/FormRequests"));
 const PitchDeck = lazy(() => import("@/pages/admin/PitchDeck"));
 // Public pages
 const Landing = lazy(() => import("@/pages/Landing"));
@@ -59,6 +61,8 @@ const ContactSales = lazy(() => import("@/pages/ContactSales"));
 const Terms = lazy(() => import("@/pages/Terms"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const Status = lazy(() => import("@/pages/Status"));
+const Forum = lazy(() => import("@/pages/Forum"));
+const ComparePage = lazy(() => import("@/pages/compare/ComparePage"));
 
 const MobileAdmin = lazy(() => import("@/pages/mobile"));
 const AI = lazy(() => import("@/pages/AI"));
@@ -74,6 +78,15 @@ const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
 const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
 const Scalability = lazy(() => import("@/pages/Scalability"));
 const MarketingBounties = lazy(() => import("@/pages/marketing/Bounties"));
+
+// Comparison Pages
+const Compare = lazy(() => import("@/pages/marketing/Compare"));
+const VsGitHubCodespaces = lazy(() => import("@/pages/marketing/VsGitHubCodespaces"));
+const VsGlitch = lazy(() => import("@/pages/marketing/VsGlitch"));
+const VsHeroku = lazy(() => import("@/pages/marketing/VsHeroku"));
+const VsCodeSandbox = lazy(() => import("@/pages/marketing/VsCodeSandbox"));
+const VsAwsCloud9 = lazy(() => import("@/pages/marketing/VsAwsCloud9"));
+
 const AuthenticationDemo = lazy(() =>
   import("@/components/AuthenticationDemo").then((module) => ({
     default: module.AuthenticationDemo,
@@ -117,6 +130,8 @@ const SecretManagement = lazy(() => import("@/pages/SecretManagement"));
 const UsageAlerts = lazy(() => import("@/pages/UsageAlerts"));
 // Newsletter pages
 const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
+const NewsletterConfirm = lazy(() => import("@/pages/NewsletterConfirm"));
+const NewsletterUnsubscribe = lazy(() => import("@/pages/NewsletterUnsubscribe"));
 
 // Legal pages
 const DPA = lazy(() => import("@/pages/DPA"));
@@ -124,6 +139,8 @@ const CommercialAgreement = lazy(() => import("@/pages/CommercialAgreement"));
 const ReportAbuse = lazy(() => import("@/pages/ReportAbuse"));
 // Shared snippet page
 const SharedSnippet = lazy(() => import("@/pages/SharedSnippet"));
+// AI Documentation page
+const AIDocumentation = lazy(() => import("@/pages/AIDocumentation"));
 // New feature pages
 const APISDKPage = lazy(() => import("@/pages/APISDKPage"));
 const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
@@ -137,6 +154,7 @@ const WebsiteBuilder = lazy(() => import("@/pages/solutions/WebsiteBuilder"));
 const GameBuilder = lazy(() => import("@/pages/solutions/GameBuilder"));
 const DashboardBuilder = lazy(() => import("@/pages/solutions/DashboardBuilder"));
 const ChatbotBuilder = lazy(() => import("@/pages/solutions/ChatbotBuilder"));
+const InternalAIBuilder = lazy(() => import("@/pages/solutions/InternalAIBuilder"));
 const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
 
 const CodeGeneration = lazy(() => import("@/pages/CodeGeneration"));
@@ -149,32 +167,113 @@ const SolarTechStoreApp = lazy(() => import("@/pages/SolarTechStoreApp"));
 // Advanced Feature Components
 
 import { ProtectedRoute } from "./lib/protected-route";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import { SpotlightSearch } from "@/components/SpotlightSearch";
 import { CommandPalette } from "@/components/CommandPalette";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ApplicationIDEWrapper } from "@/components/ApplicationIDEWrapper";
+const FeaturePlaceholder = lazy(() => import("@/pages/FeaturePlaceholder"));
+
+const placeholderRoutes = [
+  { path: "/assistant", feature: "assistant" },
+  { path: "/database", feature: "database" },
+  { path: "/console", feature: "console" },
+  { path: "/authentication", feature: "authentication" },
+  { path: "/preview", feature: "preview" },
+  { path: "/agent", feature: "agent" },
+  { path: "/code-search", feature: "code-search" },
+  { path: "/packages", feature: "packages" },
+  { path: "/extensions", feature: "extensions" },
+  { path: "/integrations", feature: "integrations" },
+  { path: "/networking", feature: "networking" },
+  { path: "/problems", feature: "problems" },
+  { path: "/kv-store", feature: "kv-store" },
+  { path: "/shell", feature: "shell" },
+  { path: "/threads", feature: "threads" },
+  { path: "/vnc", feature: "vnc" },
+  { path: "/referrals", feature: "referrals" },
+  { path: "/teams/new", feature: "teams/new" },
+];
 
 // Loading fallback component
 function PageLoader() {
   return <ECodeLoading fullScreen size="lg" text="Loading page..." />;
 }
 
-function AppContent() {
 
+// Wrapper components for Replit-style routes
+function ProjectPageWrapper() {
+  return (
+    <ReplitLayout showSidebar={true}>
+      <ProjectPage />
+    </ReplitLayout>
+  );
+}
+
+function UserProfileWrapper() {
+  return (
+    <ReplitLayout showSidebar={false}>
+      <UserProfile />
+    </ReplitLayout>
+  );
+}
+
+// Redirect handler for backward compatibility with @ URLs
+// This component intercepts any path starting with /@ and redirects to /u/
+function AtSymbolRedirectHandler({ children }: { children: React.ReactNode }) {
+  const [location, navigate] = useLocation();
+
+  useEffect(() => {
+    // Check if the current path starts with /@ but exclude Vite system routes
+    if (location.startsWith('/@') && !location.startsWith('/@vite') && !location.startsWith('/@fs') && !location.startsWith('/@id')) {
+      // Remove the /@ prefix and replace with /u/
+      const newPath = location.replace(/^\/@/, '/u/');
+      const search = window.location.search;
+      const hash = window.location.hash;
+
+      console.log('Redirecting from', location, 'to', newPath);
+      navigate(`${newPath}${search}${hash}`, { replace: true });
+    }
+  }, [location, navigate]);
+
+  // If we're on an @ route (but not a Vite system route), show loading while redirecting
+  if (location.startsWith('/@') && !location.startsWith('/@vite') && !location.startsWith('/@fs') && !location.startsWith('/@id')) {
+    return <ECodeLoading fullScreen size="lg" text="Redirecting..." />;
+  }
+
+  return <>{children}</>;
+}
+
+function AppContent() {
+  const [location] = useLocation();
+  const { isLoading: authLoading } = useAuth();
+
+
+  // Show loading state while authentication is being checked
+  // This prevents premature route matching and 404s
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <ECodeLoading fullScreen size="lg" text="Initializing authentication..." />
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>
       <TooltipProvider>
-        <div className="min-h-screen replit-layout-main">
-          <Toaster />
-          <SpotlightSearch />
-          <CommandPalette />
+        <AtSymbolRedirectHandler>
+          <div className="min-h-screen replit-layout-main">
+            <ScrollToTop />
+            <Toaster />
+            <SpotlightSearch />
+            <CommandPalette />
+            <KeyboardShortcuts />
 
-          <Suspense fallback={<PageLoader />}>
-            <Switch>
+            <Suspense fallback={<PageLoader />}>
+              <Switch>
           <Route path="/auth" component={AuthPage} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
@@ -197,10 +296,20 @@ function AppContent() {
           <Route path="/commercial-agreement" component={CommercialAgreement} />
           <Route path="/report-abuse" component={ReportAbuse} />
           <Route path="/status" component={Status} />
+          <Route path="/forum" component={Forum} />
+          <Route path="/compare/:slug" component={ComparePage} />
 
           <Route path="/marketing/bounties" component={MarketingBounties} />
           <Route path="/marketing/deployments" component={PublicDeploymentsPage} />
           <Route path="/marketing/teams" component={PublicTeamPage} />
+
+          {/* Comparison Pages */}
+          <Route path="/compare" component={Compare} />
+          <Route path="/compare/github-codespaces" component={VsGitHubCodespaces} />
+          <Route path="/compare/glitch" component={VsGlitch} />
+          <Route path="/compare/heroku" component={VsHeroku} />
+          <Route path="/compare/codesandbox" component={VsCodeSandbox} />
+          <Route path="/compare/aws-cloud9" component={VsAwsCloud9} />
 
           {/* Solutions pages */}
           <Route path="/solutions/app-builder" component={AppBuilder} />
@@ -208,9 +317,11 @@ function AppContent() {
           <Route path="/solutions/game-builder" component={GameBuilder} />
           <Route path="/solutions/dashboard-builder" component={DashboardBuilder} />
           <Route path="/solutions/chatbot-builder" component={ChatbotBuilder} />
-          
+          <Route path="/solutions/internal-ai-builder" component={InternalAIBuilder} />
+
           <Route path="/mobile" component={MobileAdmin} />
           <Route path="/ai" component={AI} />
+          <Route path="/ai-documentation" component={AIDocumentation} />
           <Route path="/ai-agent" component={AIAgent} />
           <ProtectedRoute path="/ai-agent/studio" component={() => (
             <ReplitLayout showSidebar={false}>
@@ -257,6 +368,8 @@ function AppContent() {
           <Route path="/git" component={Git} />
           {/* Newsletter pages */}
           <Route path="/newsletter-confirmed" component={NewsletterConfirmed} />
+          <Route path="/newsletter/confirm" component={NewsletterConfirm} />
+          <Route path="/newsletter/unsubscribe" component={NewsletterUnsubscribe} />
           {/* Shared snippet page */}
           <Route path="/share/:shareId" component={SharedSnippet} />
 
@@ -275,6 +388,19 @@ function AppContent() {
               <Teams />
             </ReplitLayout>
           )} />
+          {placeholderRoutes
+            .filter((route) => route.path.startsWith("/teams"))
+            .map((route) => (
+              <ProtectedRoute
+                key={route.path}
+                path={route.path}
+                component={() => (
+                  <ReplitLayout showSidebar={false}>
+                    <FeaturePlaceholder featureKey={route.feature} />
+                  </ReplitLayout>
+                )}
+              />
+            ))}
           <ProtectedRoute path="/teams/:id" component={() => (
             <ReplitLayout showSidebar={false}>
               <TeamPage />
@@ -361,6 +487,19 @@ function AppContent() {
               <Notifications />
             </ReplitLayout>
           )} />
+          {placeholderRoutes
+            .filter((route) => !route.path.startsWith("/teams"))
+            .map((route) => (
+              <ProtectedRoute
+                key={route.path}
+                path={route.path}
+                component={() => (
+                  <ReplitLayout showSidebar={false}>
+                    <FeaturePlaceholder featureKey={route.feature} />
+                  </ReplitLayout>
+                )}
+              />
+            ))}
           <ProtectedRoute path="/profile/:username?" component={() => (
             <ReplitLayout>
               <Profile />
@@ -376,6 +515,11 @@ function AppContent() {
               <ProjectsPage />
             </ReplitLayout>
           )} />
+          <ProtectedRoute path="/projects/:id" component={() => (
+            <ReplitLayout showSidebar={true}>
+              <ProjectPage />
+            </ReplitLayout>
+          )} />
           {/* Project Routes - Consolidated and properly ordered */}
           <ProtectedRoute path="/project/:id" component={() => (
             <ReplitLayout showSidebar={true}>
@@ -384,7 +528,7 @@ function AppContent() {
           )} />
 
           {/* SolarTech Applications with specific Replit-style URLs (must come before generic patterns) */}
-          <ProtectedRoute path="/@admin/solartech-ai-chat" component={() => (
+          <ProtectedRoute path="/u/admin/solartech-ai-chat" component={() => (
             <ApplicationIDEWrapper
               projectName="SolarTech AI Chat"
               projectDescription="Professional solar technology AI assistant"
@@ -392,7 +536,7 @@ function AppContent() {
               appComponent={<SolarTechAIChatApp />}
             />
           )} />
-          <ProtectedRoute path="/@admin/solartech-crm" component={() => (
+          <ProtectedRoute path="/u/admin/solartech-crm" component={() => (
             <ApplicationIDEWrapper
               projectName="SolarTech CRM"
               projectDescription="Solar business customer relationship management"
@@ -400,7 +544,7 @@ function AppContent() {
               appComponent={<SolarTechCRMApp />}
             />
           )} />
-          <ProtectedRoute path="/@admin/solartech-fortune500-store" component={() => (
+          <ProtectedRoute path="/u/admin/solartech-fortune500-store" component={() => (
             <ApplicationIDEWrapper
               projectName="Fortune500 Solar Store"
               projectDescription="E-commerce platform for solar technology products"
@@ -410,18 +554,11 @@ function AppContent() {
           )} />
 
           {/* Generic Replit-style project routes */}
-          <ProtectedRoute path="/@:username/:projectname" component={() => (
-            <ReplitLayout showSidebar={true}>
-              <ProjectPage />
-            </ReplitLayout>
-          )} />
+          {/* Using /u/ prefix - @ routes are handled by AtSymbolRedirectHandler */}
+          <Route path="/u/:username/:projectname" component={ProjectPageWrapper} />
 
-          {/* User profile route */}
-          <Route path="/@:username" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <UserProfile />
-            </ReplitLayout>
-          )} />
+          {/* User profile routes */}
+          <Route path="/u/:username" component={UserProfileWrapper} />
           <ProtectedRoute path="/editor/:id" component={() => (
             <ReplitLayout showSidebar={true}>
               <Editor />
@@ -558,6 +695,11 @@ function AppContent() {
               <AdminUsage />
             </ReplitLayout>
           )} />
+          <ProtectedRoute path="/admin/requests" component={() => (
+            <ReplitLayout>
+              <AdminFormRequests />
+            </ReplitLayout>
+          )} />
           <ProtectedRoute path="/admin/billing" component={() => (
             <ReplitLayout>
               <AdminBilling />
@@ -656,15 +798,11 @@ function AppContent() {
               <CustomRoles />
             </ReplitLayout>
           )} />
-          <ProtectedRoute path="/@:username" component={() => (
-            <ReplitLayout>
-              <UserProfile />
-            </ReplitLayout>
-          )} />
           <Route component={NotFound} />
           </Switch>
         </Suspense>
       </div>
+        </AtSymbolRedirectHandler>
     </TooltipProvider>
     </ErrorBoundary>
   );

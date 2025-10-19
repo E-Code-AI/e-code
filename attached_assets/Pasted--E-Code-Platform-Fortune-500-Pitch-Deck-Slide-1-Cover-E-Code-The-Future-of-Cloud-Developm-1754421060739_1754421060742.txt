@@ -285,25 +285,25 @@
 ---
 
 ## Slide 14: Funding Requirements
-### **$15M Series A to Dominate Market**
+### **$25M Series A to accelerate global adoption**
 
 #### **Use of Funds (18-Month Runway):**
-- **Engineering & AI (50% - $7.5M)**: Scale team, enhance AI capabilities
-- **Sales & Marketing (30% - $4.5M)**: Enterprise go-to-market execution
-- **Infrastructure & GPU (15% - $2.25M)**: Global expansion, compute capacity
-- **Operations & Compliance (5% - $750K)**: Legal, security, enterprise readiness
+- **Engineering & AI (50% - $12.5M)**: Scale team, enhance AI capabilities
+- **Sales & Marketing (30% - $7.5M)**: Enterprise go-to-market execution
+- **Infrastructure & GPU (15% - $3.75M)**: Global expansion, compute capacity
+- **Operations & Compliance (5% - $1.25M)**: Legal, security, enterprise readiness
 
 #### **18-Month Milestones:**
 - **500K total users**, 100K paying subscribers
 - **$50M ARR run rate**
 - **100+ enterprise customers** (Fortune 5000)
 - **International expansion**: EU and APAC operations
-- **Series B readiness**: $200M+ valuation target
+- **Next-stage growth optionality**: Profitability milestones toward $200M+ valuation
 
 #### **Investment Terms:**
-- **Pre-money Valuation**: $60M
-- **Post-money Valuation**: $75M
-- **Use of funds**: Achieve profitability and Series B readiness
+- **Pre-money Valuation**: $80M
+- **Post-money Valuation**: $105M
+- **Use of funds**: Scale global adoption and reach profitability
 - **Board composition**: 2 investor seats, quarterly reporting
 
 ---

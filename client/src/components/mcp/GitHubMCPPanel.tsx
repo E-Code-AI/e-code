@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,7 +51,15 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
       if (!response.ok) throw new Error('Failed to fetch repositories');
       return response.json();
     },
-    retry: false
+    retry: false,
+    onSuccess: (data) => {
+      if (data && data.length > 0 && !newPR.repo) {
+        setNewPR(prev => ({
+          ...prev,
+          repo: data[0].name
+        }));
+      }
+    }
   });
 
   // Create repository mutation
@@ -136,11 +144,21 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
 
   const [newPR, setNewPR] = useState({
     repo: '',
-    title: '',
-    body: '',
-    head: '',
+    title: 'Merge changes to main',
+    body: 'This PR merges the latest changes into the main branch.',
+    head: 'develop',
     base: 'main'
   });
+
+  // Auto-fill repo when repos load
+  useEffect(() => {
+    if (repos && repos.length > 0 && !newPR.repo) {
+      setNewPR(prev => ({
+        ...prev,
+        repo: repos[0].name
+      }));
+    }
+  }, [repos, newPR.repo]);
 
   const filteredRepos = repos?.filter(repo => 
     repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

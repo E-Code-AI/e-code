@@ -1,6 +1,5 @@
-// @ts-nocheck
 import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import { cva } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
@@ -12,6 +11,8 @@ const alertVariants = cva(
         default: "bg-background text-foreground",
         destructive:
           "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
+        secondary:
+          "border-secondary/40 bg-secondary/10 text-secondary-foreground [&>svg]:text-secondary",
       },
     },
     defaultVariants: {
@@ -20,17 +21,26 @@ const alertVariants = cva(
   }
 )
 
-const Alert = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
-  <div
-    ref={ref}
-    role="alert"
-    className={cn(alertVariants({ variant }), "rounded-lg", className)}
-    {...props}
-  />
-))
+type AlertVariant = "default" | "destructive" | "secondary"
+
+export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: AlertVariant | null
+}
+
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+  ({ className, variant, ...props }, ref) => (
+    <div
+      ref={ref}
+      role="alert"
+      className={cn(
+        alertVariants({ variant: variant ?? undefined }),
+        "rounded-lg",
+        className
+      )}
+      {...props}
+    />
+  )
+)
 Alert.displayName = "Alert"
 
 const AlertTitle = React.forwardRef<
@@ -58,3 +68,4 @@ const AlertDescription = React.forwardRef<
 AlertDescription.displayName = "AlertDescription"
 
 export { Alert, AlertTitle, AlertDescription }
+

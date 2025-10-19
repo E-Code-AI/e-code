@@ -9,6 +9,8 @@ import { SimpleHttpTransport } from '../mcp/simple-http-transport';
 
 const router = Router();
 
+const isMCPEnabled = () => process.env.ENABLE_MCP_SERVER === 'true';
+
 // Global MCP instances
 let mcpServerInstance: MCPServer | null = null;
 let httpTransport: SimpleHttpTransport | null = null;
@@ -26,7 +28,7 @@ router.get('/servers', (req, res) => {
       {
         id: 'github',
         name: 'GitHub MCP',
-        status: 'active',
+        status: isMCPEnabled() ? 'active' : 'disabled',
         endpoints: [
           '/api/mcp/github/repositories',
           '/api/mcp/github/issues',
@@ -36,7 +38,7 @@ router.get('/servers', (req, res) => {
       {
         id: 'postgres',
         name: 'PostgreSQL MCP',
-        status: 'active',
+        status: isMCPEnabled() ? 'active' : 'disabled',
         endpoints: [
           '/api/mcp/postgres/tables',
           '/api/mcp/postgres/schema/:table',
@@ -47,7 +49,7 @@ router.get('/servers', (req, res) => {
       {
         id: 'memory',
         name: 'Memory MCP',
-        status: 'active',
+        status: isMCPEnabled() ? 'active' : 'disabled',
         endpoints: [
           '/api/mcp/memory/search',
           '/api/mcp/memory/conversations',
@@ -62,6 +64,11 @@ router.get('/servers', (req, res) => {
 // MCP Tools endpoint - list all available MCP tools
 router.get('/tools', async (req, res) => {
   try {
+    if (!isMCPEnabled()) {
+      res.status(503).json({ error: 'MCP server disabled. Set ENABLE_MCP_SERVER="true" to enable.' });
+      return;
+    }
+
     if (!mcpClient) {
       res.status(503).json({ error: 'MCP client not initialized' });
       return;
@@ -77,6 +84,11 @@ router.get('/tools', async (req, res) => {
 // Call MCP tool endpoint
 router.post('/tools/:name', async (req, res) => {
   try {
+    if (!isMCPEnabled()) {
+      res.status(503).json({ error: 'MCP server disabled. Set ENABLE_MCP_SERVER="true" to enable.' });
+      return;
+    }
+
     if (!mcpClient) {
       res.status(503).json({ error: 'MCP client not initialized' });
       return;
@@ -91,6 +103,11 @@ router.post('/tools/:name', async (req, res) => {
 
 // Initialize MCP server with HTTP transport
 export function initializeMCPServer(app: Express) {
+  if (!isMCPEnabled()) {
+    console.warn('[MCP] Skipping MCP server initialization (set ENABLE_MCP_SERVER="true" to enable)');
+    return false;
+  }
+
   try {
     // Create MCP server instance
     mcpServerInstance = new MCPServer();
@@ -119,7 +136,7 @@ export function initializeMCPServer(app: Express) {
     console.log('[MCP] ✅ Server fully initialized with HTTP transport on /mcp/*');
     console.log('[MCP] Available tools: fs_read, fs_write, exec_command, db_query, ai_complete, and 70+ more');
     console.log('[MCP] AI Agent can now use MCP for all operations');
-    
+
     return true;
   } catch (error) {
     console.error('[MCP] ❌ Failed to initialize server:', error);
@@ -134,11 +151,13 @@ export function getMCPClient(): MCPClient | null {
 
 // Get MCP servers with full metadata for UI
 export function getMCPServers() {
+  const status = isMCPEnabled() ? 'active' : 'disabled';
+
   return [
     {
       id: 'core',
       name: 'Core MCP Server',
-      status: 'active',
+      status,
       description: 'Main MCP server with file, command, and database tools',
       tools: [
         { name: 'fs_read', description: 'Read file contents' },
@@ -157,7 +176,7 @@ export function getMCPServers() {
     {
       id: 'github',
       name: 'GitHub MCP',
-      status: 'active',
+      status,
       description: 'GitHub integration for repository management',
       tools: [
         { name: 'github_repos', description: 'List repositories' },
@@ -173,7 +192,7 @@ export function getMCPServers() {
     {
       id: 'postgres',
       name: 'PostgreSQL MCP',
-      status: 'active',
+      status,
       description: 'Database management and queries',
       tools: [
         { name: 'postgres_tables', description: 'List database tables' },
@@ -190,7 +209,7 @@ export function getMCPServers() {
     {
       id: 'memory',
       name: 'Memory MCP',
-      status: 'active',
+      status,
       description: 'Knowledge graph and memory management',
       tools: [
         { name: 'memory_search', description: 'Search memory' },

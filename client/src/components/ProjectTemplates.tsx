@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { getProjectUrl } from '@/lib/utils';
 import { useLocation } from 'wouter';
 
 interface Template {
@@ -123,7 +124,8 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
         description: `"${project.name}" has been created successfully.`,
       });
       // Navigate to the project with AI agent activated
-      navigate(`/@${project.owner?.username || user?.username}/${project.slug}?agent=true&prompt=Enhance this ${project.name} template`);
+      const projectUrl = getProjectUrl(project, project.owner?.username || user?.username);
+      navigate(`${projectUrl}?agent=true&prompt=Enhance this ${project.name} template`);
       setShowCreateDialog(false);
       setShowPreviewDialog(false);
       setProjectName('');

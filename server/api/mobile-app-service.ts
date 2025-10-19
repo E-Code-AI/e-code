@@ -109,6 +109,8 @@ export class MobileAppService {
     userId: number;
     title: string;
     body: string;
+    type?: string;
+    actionUrl?: string;
     data?: Record<string, any>;
     deviceIds?: string[]; // Optional: send to specific devices only
   }) {
@@ -116,10 +118,13 @@ export class MobileAppService {
     const [notification] = await db
       .insert(pushNotifications)
       .values({
-        userId: data.userId,
+        userId: String(data.userId),
         title: data.title,
         body: data.body,
+        type: data.type ?? 'system',
+        actionUrl: data.actionUrl,
         data: data.data || {},
+        read: false,
         sent: false,
         createdAt: new Date()
       })
@@ -204,13 +209,17 @@ export class MobileAppService {
         id: pushNotifications.id,
         title: pushNotifications.title,
         body: pushNotifications.body,
+        type: pushNotifications.type,
+        actionUrl: pushNotifications.actionUrl,
         data: pushNotifications.data,
+        read: pushNotifications.read,
+        readAt: pushNotifications.readAt,
         sent: pushNotifications.sent,
         sentAt: pushNotifications.sentAt,
         createdAt: pushNotifications.createdAt
       })
       .from(pushNotifications)
-      .where(eq(pushNotifications.userId, userId))
+      .where(eq(pushNotifications.userId, String(userId)))
       .orderBy(desc(pushNotifications.createdAt))
       .limit(limit)
       .offset(offset);
