@@ -8,7 +8,7 @@ BEGIN
       AND column_name = 'user_id'
       AND data_type <> 'integer'
   ) THEN
-    ALTER TABLE "notification_preferences"
+    ALTER TABLE IF EXISTS public.notification_preferences
       ALTER COLUMN "user_id" TYPE integer USING "user_id"::integer;
   END IF;
 
@@ -25,9 +25,9 @@ BEGIN
         AND table_schema = 'public'
         AND constraint_name = 'notification_preferences_user_id_users_id_fk'
     ) THEN
-      ALTER TABLE "notification_preferences"
+      ALTER TABLE IF EXISTS public.notification_preferences
         ADD CONSTRAINT "notification_preferences_user_id_users_id_fk"
-          FOREIGN KEY ("user_id") REFERENCES "users" ("id")
+          FOREIGN KEY ("user_id") REFERENCES public.users ("id")
           ON DELETE cascade ON UPDATE no action;
     END IF;
 
@@ -38,7 +38,7 @@ BEGIN
         AND table_schema = 'public'
         AND constraint_type = 'PRIMARY KEY'
     ) THEN
-      ALTER TABLE "notification_preferences"
+      ALTER TABLE IF EXISTS public.notification_preferences
         ADD PRIMARY KEY ("user_id");
     END IF;
   END IF;
