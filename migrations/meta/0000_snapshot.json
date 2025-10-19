@@ -4040,7 +4040,7 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "integer",
+          "type": "varchar",
           "primaryKey": false,
           "notNull": true
         },
@@ -4056,12 +4056,38 @@
           "primaryKey": false,
           "notNull": true
         },
+        "type": {
+          "name": "type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'system'::character varying"
+        },
+        "action_url": {
+          "name": "action_url",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
         "data": {
           "name": "data",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
           "default": "'{}'::jsonb"
+        },
+        "read": {
+          "name": "read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "read_at": {
+          "name": "read_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         },
         "sent": {
           "name": "sent",
@@ -4097,6 +4123,74 @@
             "id"
           ],
           "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.notification_preferences": {
+      "name": "notification_preferences",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "push": {
+          "name": "push",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "frequency": {
+          "name": "frequency",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'instant'::character varying"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "notification_preferences_user_id_users_id_fk": {
+          "name": "notification_preferences_user_id_users_id_fk",
+          "tableFrom": "notification_preferences",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

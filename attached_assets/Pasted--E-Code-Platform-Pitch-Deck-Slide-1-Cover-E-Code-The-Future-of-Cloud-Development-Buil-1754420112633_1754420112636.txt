@@ -301,7 +301,7 @@
 ## Contact Information
 **E-Code Development Team**
 - **Website**: e-code.com
-- **Email**: investors@e-code.com
+- **Email**: investors@e-code.ai
 - **Demo**: demo.e-code.com
 - **GitHub**: github.com/e-code-platform
 

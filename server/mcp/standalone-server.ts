@@ -448,8 +448,27 @@ function removeSession(sessionId: string) {
   }
 }
 
+function getSessionIdFromQuery(query: any): string | undefined {
+  if (!query) return undefined;
+
+  const raw = query.sessionId ?? query.session_id;
+  if (Array.isArray(raw)) {
+    return raw[0];
+  }
+
+  if (raw === undefined || raw === null) {
+    return undefined;
+  }
+
+  return String(raw);
+}
+
 function getSessionFromRequest(req: any) {
-  const sessionId = req.headers['x-session-id'] as string || req.body?.sessionId;
+  const headerSessionId = req.headers['x-session-id'];
+  const sessionId =
+    (Array.isArray(headerSessionId) ? headerSessionId[0] : (headerSessionId as string)) ||
+    req.body?.sessionId ||
+    getSessionIdFromQuery(req.query);
   if (!sessionId || !sessions.has(sessionId)) {
     return null;
   }
