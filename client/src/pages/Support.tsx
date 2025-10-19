@@ -22,6 +22,9 @@ export default function Support() {
   const [ticketType, setTicketType] = useState('');
   const [ticketSubject, setTicketSubject] = useState('');
   const [ticketDescription, setTicketDescription] = useState('');
+  const [ticketName, setTicketName] = useState('');
+  const [ticketEmail, setTicketEmail] = useState('');
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
 
   const faqs = [
     {
@@ -110,16 +113,54 @@ export default function Support() {
     }
   ];
 
-  const handleSubmitTicket = (e: React.FormEvent) => {
+  const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Support ticket created",
-      description: "We'll get back to you within 24-48 hours."
-    });
-    // Reset form
-    setTicketType('');
-    setTicketSubject('');
-    setTicketDescription('');
+    setIsSubmittingTicket(true);
+
+    try {
+      const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/support';
+      const response = await fetch('/api/support/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: ticketName,
+          email: ticketEmail,
+          issueType: ticketType,
+          subject: ticketSubject,
+          description: ticketDescription,
+          pagePath,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: 'Support ticket created',
+          description: data.message || "We'll get back to you within 24-48 hours.",
+        });
+        setTicketType('');
+        setTicketSubject('');
+        setTicketDescription('');
+        setTicketName('');
+        setTicketEmail('');
+      } else {
+        toast({
+          title: 'Unable to submit support ticket',
+          description: data.error || 'Please try again in a few moments.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Network error',
+        description: 'Failed to submit support ticket. Please check your connection and try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmittingTicket(false);
+    }
   };
 
   const toggleFaq = (id: number) => {
@@ -316,6 +357,30 @@ export default function Support() {
                   </select>
                 </div>
 
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="ticket-name">Your Name</Label>
+                    <Input
+                      id="ticket-name"
+                      value={ticketName}
+                      onChange={(e) => setTicketName(e.target.value)}
+                      placeholder="How should we address you?"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ticket-email">Work Email</Label>
+                    <Input
+                      id="ticket-email"
+                      type="email"
+                      value={ticketEmail}
+                      onChange={(e) => setTicketEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject</Label>
                   <Input
@@ -348,8 +413,8 @@ export default function Support() {
                   </ul>
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Submit Support Ticket
+                <Button type="submit" className="w-full" disabled={isSubmittingTicket}>
+                  {isSubmittingTicket ? 'Submitting...' : 'Submit Support Ticket'}
                 </Button>
               </form>
             </CardContent>

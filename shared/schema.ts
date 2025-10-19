@@ -173,6 +173,31 @@ export const newsletterDeliveries = pgTable("newsletter_deliveries", {
   metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
 });
 
+export const customerRequests = pgTable("customer_requests", {
+  id: serial("id").primaryKey(),
+  formType: varchar("form_type", { length: 64 }).notNull(),
+  pagePath: varchar("page_path", { length: 255 }).notNull(),
+  senderName: varchar("sender_name", { length: 255 }),
+  senderEmail: varchar("sender_email", { length: 320 }),
+  senderCompany: varchar("sender_company", { length: 255 }),
+  senderPhone: varchar("sender_phone", { length: 50 }),
+  subject: varchar("subject", { length: 255 }),
+  message: text("message"),
+  status: varchar("status", { length: 32 }).notNull().default('new'),
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export const insertCustomerRequestSchema = createInsertSchema(customerRequests, {
+  metadata: z
+    .object({})
+    .catchall(z.any())
+    .optional(),
+  status: z.enum(['new', 'in_progress', 'resolved', 'archived']).optional(),
+});
+
 // Usage tracking table for billing
 export const usageTracking = pgTable("usage_tracking", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),

@@ -21727,7 +21727,7 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Contact Sales endpoint
   app.post('/api/contact/sales', async (req, res) => {
     try {
-      const { name, email, company, phone, message, companySize, useCase } = req.body;
+      const { name, email, company, phone, message, companySize, useCase, pagePath } = req.body;
       
       // Validate required fields
       if (!name || !email || !message) {
@@ -21744,7 +21744,7 @@ Generate a comprehensive application based on the user's request. Include all ne
         companySize: companySize || 'unknown',
         useCase: useCase || 'general',
         status: 'new',
-        createdAt: new Date()
+        pagePath: pagePath || '/contact-sales'
       });
       
       // Log the inquiry for sales team
@@ -21753,24 +21753,123 @@ Generate a comprehensive application based on the user's request. Include all ne
         name,
         email,
         company,
-        companySize
+        companySize,
+        pagePath: inquiry.pagePath
       });
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         message: 'Thank you for your interest! Our sales team will contact you within 24 hours.',
-        inquiryId: inquiry.id
+        inquiryId: inquiry.id,
+        pagePath: inquiry.pagePath
       });
     } catch (error) {
       logger.error('Contact sales error:', error);
       res.status(500).json({ error: 'Failed to submit sales inquiry. Please try again.' });
     }
   });
-  
+
+  // Support ticket endpoint
+  app.post('/api/support/tickets', async (req, res) => {
+    try {
+      const { name, email, issueType, subject, description, pagePath } = req.body;
+
+      if (!email || !issueType || !subject || !description) {
+        return res.status(400).json({ error: 'Email, issue type, subject, and description are required' });
+      }
+
+      const request = await storage.createCustomerRequest({
+        formType: 'support_ticket',
+        pagePath: pagePath || '/support',
+        senderName: name || null,
+        senderEmail: email,
+        subject: `[${issueType}] ${subject}`,
+        message: description,
+        metadata: {
+          issueType,
+        },
+      });
+
+      logger.info('Support ticket submitted', {
+        id: request.id,
+        email,
+        issueType,
+        pagePath: request.pagePath,
+      });
+
+      res.json({
+        success: true,
+        message: 'Support ticket submitted successfully. Our team will follow up shortly.',
+        ticketId: request.id,
+        pagePath: request.pagePath,
+      });
+    } catch (error) {
+      logger.error('Support ticket submission error:', error);
+      res.status(500).json({ error: 'Failed to submit support ticket. Please try again.' });
+    }
+  });
+
+  // Admin - view customer form requests
+  app.get('/api/admin/form-requests', ensureAuthenticated, async (req, res) => {
+    const isAdminUser = req.user?.role === 'admin' || req.user?.email?.includes('admin');
+    if (!isAdminUser) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    try {
+      const formTypeParam = typeof req.query.formType === 'string' ? req.query.formType : undefined;
+      const statusParam = typeof req.query.status === 'string' ? req.query.status : undefined;
+
+      const requests = await storage.getCustomerRequests({
+        formType: formTypeParam && formTypeParam !== 'all' ? formTypeParam : undefined,
+        status: statusParam && statusParam !== 'all' ? statusParam : undefined,
+      });
+
+      res.json({ requests });
+    } catch (error) {
+      logger.error('Failed to fetch customer requests:', error);
+      res.status(500).json({ error: 'Failed to fetch customer requests' });
+    }
+  });
+
+  app.patch('/api/admin/form-requests/:id', ensureAuthenticated, async (req, res) => {
+    const isAdminUser = req.user?.role === 'admin' || req.user?.email?.includes('admin');
+    if (!isAdminUser) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    try {
+      const id = Number(req.params.id);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid request id' });
+      }
+
+      const updatePayload: any = {
+        status: req.body.status,
+        resolvedAt: req.body.status === 'resolved' ? new Date() : undefined,
+      };
+
+      if (req.body.metadata) {
+        updatePayload.metadata = req.body.metadata;
+      }
+
+      const updated = await storage.updateCustomerRequest(id, updatePayload);
+
+      if (!updated) {
+        return res.status(404).json({ error: 'Request not found' });
+      }
+
+      res.json({ request: updated });
+    } catch (error) {
+      logger.error('Failed to update customer request:', error);
+      res.status(500).json({ error: 'Failed to update customer request' });
+    }
+  });
+
   // Report Abuse endpoint
   app.post('/api/report/abuse', async (req, res) => {
     try {
-      const { reportType, targetUrl, description, reporterEmail } = req.body;
+      const { reportType, targetUrl, description, reporterEmail, username, pagePath } = req.body;
       const userId = req.user?.id || null;
       
       // Validate required fields
@@ -21783,10 +21882,14 @@ Generate a comprehensive application based on the user's request. Include all ne
         reportType,
         targetUrl,
         description,
-        reporterEmail: reporterEmail || '',
-        reporterId: userId,
-        status: 'pending',
-        createdAt: new Date()
+        reporterEmail,
+        username,
+        status: 'new',
+        userId,
+        pagePath: pagePath || '/report-abuse',
+        metadata: {
+          reporterUserId: userId,
+        }
       });
       
       // Log the report for moderation team
@@ -21794,13 +21897,15 @@ Generate a comprehensive application based on the user's request. Include all ne
         id: report.id,
         type: reportType,
         target: targetUrl,
-        reporter: userId || 'anonymous'
+        reporter: userId || 'anonymous',
+        pagePath: report.pagePath
       });
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         message: 'Thank you for helping keep E-Code safe. We\'ll review your report and take appropriate action.',
-        reportId: report.id
+        reportId: report.id,
+        pagePath: report.pagePath
       });
     } catch (error) {
       logger.error('Report abuse error:', error);
