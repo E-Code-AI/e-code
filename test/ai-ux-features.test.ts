@@ -1,16 +1,18 @@
 import { testRunner } from './setup/test-runner';
 
-const ORIGINAL_ENV = { ...process.env };
+const ORIGINAL_ENV = { ...process.env } as Record<string, string | undefined>;
+
+const resetEnv = () => {
+  for (const key of Object.keys(process.env)) {
+    if (!(key in ORIGINAL_ENV)) {
+      delete process.env[key];
+    }
+  }
+  Object.assign(process.env, ORIGINAL_ENV);
+};
 
 testRunner.registerSuite('AI UX Feature Flags', {
-  afterAll: () => {
-    for (const key of Object.keys(process.env)) {
-      if (!(key in ORIGINAL_ENV)) {
-        delete process.env[key];
-      }
-    }
-    Object.assign(process.env, ORIGINAL_ENV);
-  },
+  afterAll: resetEnv,
   tests: [
     {
       name: 'defaultFeatureFlags disable all AI UX toggles',
@@ -56,7 +58,7 @@ testRunner.registerSuite('AI UX Feature Flags', {
         const module = await import(`../server/config/feature-flags.ts?snapshot=${Date.now()}`);
         const { featureFlags } = module;
 
-        expect(featureFlags.aiUx).toMatchObject({
+        expect(featureFlags.aiUx).toEqual({
           improvePrompt: true,
           extendedThinking: false,
           highPowerMode: true,
@@ -85,8 +87,4 @@ testRunner.registerSuite('AI UX Feature Flags', {
       },
     },
   ],
-});
-
-testRunner.registerSuite('AI UX Features', {
-  tests: [],
 });
