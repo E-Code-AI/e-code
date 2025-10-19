@@ -189,7 +189,7 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          name: aiPrompt.slice(0, 30),
+          name: aiPrompt,
           description: aiPrompt,
           language: 'javascript',
           visibility: 'private'

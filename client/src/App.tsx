@@ -158,7 +158,7 @@ const SolarTechStoreApp = lazy(() => import("@/pages/SolarTechStoreApp"));
 // Advanced Feature Components
 
 import { ProtectedRoute } from "./lib/protected-route";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import { SpotlightSearch } from "@/components/SpotlightSearch";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -172,7 +172,33 @@ function PageLoader() {
 }
 
 function AppContent() {
+  const [location] = useLocation();
+  const { isLoading: authLoading } = useAuth();
 
+  // Debug logging for route matching
+  useEffect(() => {
+    console.log('[App.tsx] Current location:', location);
+    console.log('[App.tsx] Auth loading state:', authLoading);
+    
+    // Check if the location contains @ symbol
+    if (location.includes('@')) {
+      console.log('[App.tsx] Slug route detected:', location);
+      const match = location.match(/^\/@([^\/]+)\/(.+)$/);
+      if (match) {
+        console.log('[App.tsx] Parsed slug route - username:', match[1], ', projectname:', match[2]);
+      }
+    }
+  }, [location, authLoading]);
+
+  // Show loading state while authentication is being checked
+  // This prevents premature route matching and 404s
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <ECodeLoading fullScreen size="lg" text="Initializing authentication..." />
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>
@@ -427,7 +453,9 @@ function AppContent() {
           )} />
 
           {/* Generic Replit-style project routes */}
-          <ProtectedRoute path="/@:username/:projectname" component={() => (
+          {/* Note: This route does NOT use ProtectedRoute to allow initial access
+              Authentication is handled within ProjectPage component */}
+          <Route path="/@:username/:projectname" component={() => (
             <ReplitLayout showSidebar={true}>
               <ProjectPage />
             </ReplitLayout>
