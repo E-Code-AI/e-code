@@ -385,7 +385,7 @@ export default function Subprocessors() {
                       Stay informed about changes to our subprocessor list
                     </p>
                     <Button className="w-full" asChild>
-                      <a href="mailto:privacy@e-code.com?subject=Subscribe to Subprocessor Updates">
+                      <a href="mailto:privacy@e-code.ai?subject=Subscribe to Subprocessor Updates">
                         Subscribe to Notifications
                       </a>
                     </Button>
@@ -468,7 +468,7 @@ export default function Subprocessors() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild>
-                  <a href="mailto:privacy@e-code.com">
+                  <a href="mailto:privacy@e-code.ai">
                     <Mail className="mr-2 h-4 w-4" />
                     Contact Privacy Team
                   </a>
