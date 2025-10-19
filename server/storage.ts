@@ -4033,6 +4033,12 @@ export const storage = new DatabaseStorage();
 // Session store with pg pool
 import { Pool } from 'pg';
 
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set before initializing the session store. The application requires an accessible PostgreSQL instance for both data persistence and session management."
+  );
+}
+
 // Create a native pg pool for session store
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
