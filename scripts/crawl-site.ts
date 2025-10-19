@@ -243,6 +243,9 @@ function indicatesNotFoundRedirect(originalUrl: string, finalUrl: string, redire
   }
 }
 
+  error?: string;
+}
+
 async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -300,6 +303,9 @@ async function crawlPath(pathname: string): Promise<CrawlResult> {
         finalUrl,
         notFoundRedirect,
         error: notFoundRedirect ? 'Redirected to not-found page' : undefined,
+        ok: response.ok,
+        redirected: response.redirected,
+        finalUrl: response.url,
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -343,6 +349,7 @@ async function main() {
 
   const results = await crawl(sortedPaths);
   const broken = results.filter((item) => !item.ok);
+  const broken = results.filter((item) => !item.ok || (item.status && item.status >= 400));
 
   const report = {
     generatedAt: new Date().toISOString(),
@@ -365,6 +372,7 @@ async function main() {
       if (item.notFoundRedirect) {
         console.log(`  ${item.path} -> redirected to not-found (${item.finalUrl ?? item.url})`);
       } else if (item.status) {
+      if (item.status) {
         console.log(`  ${item.path} -> ${item.status} (${item.finalUrl ?? item.url})`);
       } else {
         console.log(`  ${item.path} -> ${item.error}`);
