@@ -5,7 +5,7 @@ ALTER TABLE "push_notifications"
   ADD COLUMN IF NOT EXISTS "read_at" timestamp;
 
 CREATE TABLE IF NOT EXISTS "notification_preferences" (
-  "user_id" integer PRIMARY KEY,
+  "user_id" integer NOT NULL PRIMARY KEY,
   "email" jsonb NOT NULL DEFAULT '{}'::jsonb,
   "push" jsonb NOT NULL DEFAULT '{}'::jsonb,
   "frequency" varchar NOT NULL DEFAULT 'instant',
