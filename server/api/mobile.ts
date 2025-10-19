@@ -83,7 +83,12 @@ const verifyMobileRefreshToken = (token: string) => {
       algorithms: ['HS256']
     }) as { userId: number; tokenType?: string };
 
-    if (payload.tokenType !== 'refresh') {
+    // Explicitly reject tokens with tokenType 'access'
+    if (payload.tokenType === 'access') {
+      return null;
+    }
+    // Accept tokens with tokenType 'refresh' or legacy tokens with undefined tokenType
+    if (payload.tokenType && payload.tokenType !== 'refresh') {
       return null;
     }
 
