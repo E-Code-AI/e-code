@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageShell, PageHeader } from '@/components/layout/PageShell';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +49,7 @@ import {
   Github,
   Link,
   Upload,
+  Settings2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -92,13 +94,30 @@ export default function Settings() {
   };
 
   return (
-    <div className="container mx-auto py-6 max-w-6xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and preferences</p>
-      </div>
+    <PageShell>
+      <PageHeader
+        title="Workspace settings"
+        description="Manage your account, security, and IDE preferences from a single place."
+        icon={Settings2}
+        actions={(
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => navigate('/account')}
+            >
+              <User className="h-4 w-4" />
+              Account overview
+            </Button>
+            <Button className="gap-2" onClick={handleSaveProfile}>
+              <Check className="h-4 w-4" />
+              Save changes
+            </Button>
+          </div>
+        )}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
         {/* Sidebar Navigation */}
         <div className="md:col-span-1">
           <nav className="space-y-1">
@@ -693,6 +712,6 @@ export default function Settings() {
           )}
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

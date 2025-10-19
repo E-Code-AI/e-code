@@ -3,8 +3,9 @@ import { ReactNode } from "react";
 import { ReplitHeader } from "./ReplitHeader";
 import { ReplitSidebar } from "./ReplitSidebar";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
-import { Home, Code, Users, User } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { cn } from "@/lib/utils";
+import { mobileNavigation, isActiveNavigationItem } from "@/constants/navigation";
 
 interface ReplitLayoutProps {
   children: ReactNode;
@@ -13,12 +14,14 @@ interface ReplitLayoutProps {
   className?: string;
 }
 
-export function ReplitLayout({ 
-  children, 
-  showSidebar = true, 
+export function ReplitLayout({
+  children,
+  showSidebar = true,
   projectId,
   className = ""
 }: ReplitLayoutProps) {
+  const [location] = useLocation();
+
   return (
     <div className="h-screen flex flex-col bg-[var(--ecode-background)] overflow-hidden">
       <ReplitHeader />
@@ -36,40 +39,44 @@ export function ReplitLayout({
       </div>
       
       {/* Mobile bottom navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 safe-area-inset-bottom">
-        <nav className="flex items-center justify-around h-14">
-          <Button variant="ghost" size="sm" className="flex-1 h-full px-2" asChild>
-            <Link href="/dashboard">
-              <div className="flex flex-col items-center gap-1">
-                <Home className="h-4 w-4" />
-                <span className="text-xs">Home</span>
-              </div>
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" className="flex-1 h-full px-2" asChild>
-            <Link href="/projects">
-              <div className="flex flex-col items-center gap-1">
-                <Code className="h-4 w-4" />
-                <span className="text-xs">Projects</span>
-              </div>
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" className="flex-1 h-full px-2" asChild>
-            <Link href="/community">
-              <div className="flex flex-col items-center gap-1">
-                <Users className="h-4 w-4" />
-                <span className="text-xs">Community</span>
-              </div>
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" className="flex-1 h-full px-2" asChild>
-            <Link href="/account">
-              <div className="flex flex-col items-center gap-1">
-                <User className="h-4 w-4" />
-                <span className="text-xs">Account</span>
-              </div>
-            </Link>
-          </Button>
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 safe-area-inset-bottom">
+        <nav className="flex h-14 items-stretch justify-around">
+          {mobileNavigation.map((item) => {
+            const Icon = item.icon;
+            const isActive = isActiveNavigationItem(location, item);
+
+            return (
+              <Button
+                key={item.key}
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "flex-1 rounded-none px-2",
+                  isActive && "bg-primary/10 text-primary"
+                )}
+                asChild
+              >
+                <Link href={item.path} aria-label={item.ctaLabel || item.label}>
+                  <div className="flex h-full flex-col items-center justify-center gap-1">
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 transition-colors",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "text-xs font-medium",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                </Link>
+              </Button>
+            );
+          })}
         </nav>
       </div>
     </div>
