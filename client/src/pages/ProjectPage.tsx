@@ -136,30 +136,6 @@ const ProjectPage = () => {
     python: { status: 'inactive', port: 8081 }
   });
   
-  // Handle agent mode from URL parameters
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const isAgentMode = searchParams.get('agent') === 'true';
-    const prompt = searchParams.get('prompt');
-    
-    // Use the project ID from the loaded project data
-    const effectiveProjectId = project?.id || projectId;
-    
-    if (isAgentMode && prompt && effectiveProjectId) {
-      // Show the main agent interface with the prompt
-      setAgentPrompt(prompt);
-      setShowMainAgent(true);
-      
-      // Also open the assistant panel for additional help
-      setAiPanelVisible(true);
-      setRightPanelTab('assistant');
-      
-      // Clean up URL without reloading the page
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    }
-  }, [projectId, project]);
-  
   // CHECK POLYGLOT SERVICE STATUS - Like Replit's architecture monitoring
   useEffect(() => {
     const checkPolyglotStatus = async () => {
@@ -269,6 +245,31 @@ const ProjectPage = () => {
     }
   });
 
+  // Handle agent mode from URL parameters
+  // Note: This effect is now placed after the project query to avoid accessing 'project' before initialization
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const isAgentMode = searchParams.get('agent') === 'true';
+    const prompt = searchParams.get('prompt');
+    
+    // Use the project ID from the loaded project data
+    const effectiveProjectId = project?.id || projectId;
+    
+    if (isAgentMode && prompt && effectiveProjectId) {
+      // Show the main agent interface with the prompt
+      setAgentPrompt(prompt);
+      setShowMainAgent(true);
+      
+      // Also open the assistant panel for additional help
+      setAiPanelVisible(true);
+      setRightPanelTab('assistant');
+      
+      // Clean up URL without reloading the page
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [projectId, project]);
+
   // Mutation for saving file changes
   const saveFileMutation = useMutation({
     mutationFn: async ({ id, content }: { id: number, content: string }) => {
@@ -296,7 +297,8 @@ const ProjectPage = () => {
       });
       
       // Refresh file list to get updated timestamps
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      const actualProjectId = project?.id || projectId;
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
     },
     onError: (error: Error) => {
       setAutoSaveStatus('error');
@@ -311,24 +313,26 @@ const ProjectPage = () => {
   // Mutation for creating a new file
   const createFileMutation = useMutation({
     mutationFn: async ({ parentId, name, isFolder }: { parentId: number | null, name: string, isFolder: boolean }) => {
-      if (!projectId) return Promise.reject(new Error('No project ID provided'));
+      const actualProjectId = project?.id || projectId;
+      if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
       
       const newFile = {
         name,
         isDirectory: isFolder,
         path: parentId ? `${parentId}/${name}` : name,
-        projectId,
+        projectId: actualProjectId,
         content: isFolder ? null : '',
       };
       
-      const res = await apiRequest('POST', `/api/files/${projectId}`, newFile);
+      const res = await apiRequest('POST', `/api/files/${actualProjectId}`, newFile);
       if (!res.ok) {
         throw new Error('Failed to create file');
       }
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      const actualProjectId = project?.id || projectId;
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
       toast({
         title: "File created",
         description: "New file has been created successfully.",
@@ -358,7 +362,8 @@ const ProjectPage = () => {
         setSelectedFile(null);
       }
       
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      const actualProjectId = project?.id || projectId;
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
       toast({
         title: "File deleted",
         description: "File has been deleted successfully.",
@@ -383,7 +388,8 @@ const ProjectPage = () => {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      const actualProjectId = project?.id || projectId;
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
       toast({
         title: "File renamed",
         description: "File has been renamed successfully.",
@@ -401,9 +407,10 @@ const ProjectPage = () => {
   // Mutation for starting the project
   const startProjectMutation = useMutation({
     mutationFn: async () => {
-      if (!projectId) return Promise.reject(new Error('No project ID provided'));
+      const actualProjectId = project?.id || projectId;
+      if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('POST', `/api/runtime/${projectId}/start`);
+      const res = await apiRequest('POST', `/api/runtime/${actualProjectId}/start`);
       if (!res.ok) {
         throw new Error('Failed to start project');
       }
@@ -428,9 +435,10 @@ const ProjectPage = () => {
   // Mutation for stopping the project
   const stopProjectMutation = useMutation({
     mutationFn: async () => {
-      if (!projectId) return Promise.reject(new Error('No project ID provided'));
+      const actualProjectId = project?.id || projectId;
+      if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('POST', `/api/runtime/${projectId}/stop`);
+      const res = await apiRequest('POST', `/api/runtime/${actualProjectId}/stop`);
       if (!res.ok) {
         throw new Error('Failed to stop project');
       }
@@ -557,11 +565,12 @@ const ProjectPage = () => {
 
   // Check project status on load
   useEffect(() => {
-    if (!projectId) return;
+    const actualProjectId = project?.id || projectId;
+    if (!actualProjectId) return;
     
     const checkStatus = async () => {
       try {
-        const res = await apiRequest('GET', `/api/runtime/${projectId}/status`);
+        const res = await apiRequest('GET', `/api/runtime/${actualProjectId}/status`);
         if (res.ok) {
           const data = await res.json();
           setProjectRunning(data.status === 'running');
@@ -572,7 +581,7 @@ const ProjectPage = () => {
     };
     
     checkStatus();
-  }, [projectId]);
+  }, [projectId, project]);
 
   // Select the first file when files are loaded
   useEffect(() => {
@@ -619,8 +628,9 @@ const ProjectPage = () => {
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
-                  queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+                  const actualProjectId = project?.id || projectId;
+                  queryClient.invalidateQueries({ queryKey: projectSlug ? ['project-by-slug', projectUsername, projectSlug] : ['project-by-id', actualProjectId] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
                 }}
               >
                 Try Again
@@ -902,12 +912,12 @@ const ProjectPage = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Show Main Agent Interface as Principal when active (like Replit) */}
-        {showMainAgent && projectId ? (
+        {showMainAgent && (project?.id || projectId) ? (
           <div className="flex-1 flex">
             {/* Agent Interface takes center stage */}
             <div className="flex-1 flex flex-col">
               <MainAgentInterface 
-                projectId={projectId}
+                projectId={project?.id || projectId}
                 initialPrompt={agentPrompt}
                 onMinimize={() => setShowMainAgent(false)}
                 className="h-full"
@@ -1138,7 +1148,8 @@ const ProjectPage = () => {
               <FileUploadDropzone 
                 projectId={projectId} 
                 onUploadComplete={() => {
-                  queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+                  const actualProjectId = project?.id || projectId;
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
                 }}
               />
             </div>
