@@ -12,10 +12,13 @@ import Preview from "@/components/Preview";
 import BottomPanel from "@/components/BottomPanel";
 import TopNavbar from "@/components/TopNavbar";
 import { ContextMenu } from "@/components/ContextMenu";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Editor() {
   const { id } = useParams();
   const { toast } = useToast();
+  const { user, isLoading: authLoading } = useAuth();
   const [openFiles, setOpenFiles] = useState<File[]>([]);
   const [activeFileId, setActiveFileId] = useState<number | null>(null);
   const [contextMenu, setContextMenu] = useState<{
@@ -34,12 +37,38 @@ export default function Editor() {
   // Get project data
   const { data: project, isLoading: isProjectLoading } = useQuery<Project>({
     queryKey: [`/api/projects/${id}`],
+    enabled: !!id && !!user,
   });
 
   // Get project files
   const { data: files = [], isLoading: isFilesLoading } = useQuery<File[]>({
     queryKey: [`/api/files/${id}`],
+    enabled: !!id && !!user,
   });
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-muted-foreground">Checking your session...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-semibold">Sign in required</h2>
+          <p className="text-muted-foreground">
+            Log in to access your workspace and edit files.
+          </p>
+          <Button onClick={() => (window.location.href = '/login')}>
+            Go to login
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Save file content mutation
   const saveFileMutation = useMutation({
