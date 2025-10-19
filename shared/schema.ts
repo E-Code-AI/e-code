@@ -420,7 +420,10 @@ export const mobileDevices = pgTable("mobile_devices", {
 
 export const pushNotifications = pgTable("push_notifications", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .$type<number>()
+    .notNull()
+    .references(() => users.id),
   title: varchar("title").notNull(),
   body: text("body").notNull(),
   type: varchar("type").notNull().default('system'),
@@ -434,8 +437,8 @@ export const pushNotifications = pgTable("push_notifications", {
 });
 
 export const notificationPreferences = pgTable("notification_preferences", {
-  userId: varchar("user_id")
-    .$type<string>()
+  userId: integer("user_id")
+    .$type<number>()
     .primaryKey()
     .references(() => users.id, { onDelete: 'cascade' }),
   email: jsonb("email").$type<Record<string, boolean>>().notNull().default({}),

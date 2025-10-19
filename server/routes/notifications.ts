@@ -33,18 +33,33 @@ const normalizeNotificationResponse = (notification: any) => {
   };
 };
 
-const getUserIdOrThrow = (req: any, res: any): string | null => {
-  const userId = req.user?.id;
-  if (!userId) {
+const getUserIdOrThrow = (req: any, res: any): number | null => {
+  const rawUserId = req.user?.id;
+  if (rawUserId === undefined || rawUserId === null) {
     res.status(401).json({ message: 'Not authenticated' });
     return null;
   }
-  return typeof userId === 'string' ? userId : String(userId);
+
+  if (typeof rawUserId === 'number') {
+    if (Number.isInteger(rawUserId)) {
+      return rawUserId;
+    }
+    res.status(400).json({ message: 'Invalid user session' });
+    return null;
+  }
+
+  const normalized = Number.parseInt(String(rawUserId).trim(), 10);
+  if (!Number.isInteger(normalized)) {
+    res.status(400).json({ message: 'Invalid user session' });
+    return null;
+  }
+
+  return normalized;
 };
 
 const getPreferencesHandler = async (req: any, res: any) => {
   const userId = getUserIdOrThrow(req, res);
-  if (!userId) return;
+  if (userId === null) return;
 
   try {
     const preferences = await storage.getNotificationPreferences(userId);
@@ -57,7 +72,7 @@ const getPreferencesHandler = async (req: any, res: any) => {
 
 const updatePreferencesHandler = async (req: any, res: any) => {
   const userId = getUserIdOrThrow(req, res);
-  if (!userId) return;
+  if (userId === null) return;
 
   try {
     const parsed = notificationSettingsUpdateSchema.parse(req.body ?? {});
@@ -77,7 +92,7 @@ const updatePreferencesHandler = async (req: any, res: any) => {
 router.get('/api/notifications', ensureAuthenticated, async (req, res) => {
   try {
     const userId = getUserIdOrThrow(req, res);
-    if (!userId) return;
+    if (userId === null) return;
 
     const unreadParam = req.query.unread;
     const unreadOnly = unreadParam === 'true' || unreadParam === '1';
@@ -94,7 +109,7 @@ router.get('/api/notifications', ensureAuthenticated, async (req, res) => {
 router.get('/api/notifications/unread-count', ensureAuthenticated, async (req, res) => {
   try {
     const userId = getUserIdOrThrow(req, res);
-    if (!userId) return;
+    if (userId === null) return;
 
     const count = await storage.getUnreadNotificationCount(userId);
     res.json({ count });
@@ -118,7 +133,7 @@ router.put('/api/notifications/settings', ensureAuthenticated, updatePreferences
 const markNotificationAsReadHandler = async (req: any, res: any) => {
   try {
     const userId = getUserIdOrThrow(req, res);
-    if (!userId) return;
+    if (userId === null) return;
 
     const notificationId = parseInt(req.params.id, 10);
     if (Number.isNaN(notificationId)) {
@@ -140,7 +155,7 @@ router.put('/api/notifications/:id/read', ensureAuthenticated, markNotificationA
 const markAllNotificationsAsReadHandler = async (req: any, res: any) => {
   try {
     const userId = getUserIdOrThrow(req, res);
-    if (!userId) return;
+    if (userId === null) return;
 
     await storage.markAllNotificationsAsRead(userId);
     res.json({ success: true });
@@ -157,7 +172,7 @@ router.put('/api/notifications/read-all', ensureAuthenticated, markAllNotificati
 router.delete('/api/notifications/:id', ensureAuthenticated, async (req, res) => {
   try {
     const userId = getUserIdOrThrow(req, res);
-    if (!userId) return;
+    if (userId === null) return;
 
     const notificationId = parseInt(req.params.id, 10);
     if (isNaN(notificationId)) {
@@ -176,7 +191,7 @@ router.delete('/api/notifications/:id', ensureAuthenticated, async (req, res) =>
 router.delete('/api/notifications', ensureAuthenticated, async (req, res) => {
   try {
     const userId = getUserIdOrThrow(req, res);
-    if (!userId) return;
+    if (userId === null) return;
 
     await storage.deleteAllNotifications(userId);
     res.json({ success: true });
@@ -190,7 +205,7 @@ router.delete('/api/notifications', ensureAuthenticated, async (req, res) => {
 router.post('/api/notifications', ensureAuthenticated, async (req, res) => {
   try {
     const userId = getUserIdOrThrow(req, res);
-    if (!userId) return;
+    if (userId === null) return;
 
     const payload = {
       ...req.body,
