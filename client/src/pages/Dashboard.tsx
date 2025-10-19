@@ -130,6 +130,35 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTag, setFilterTag] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
+  // Auto-login for development mode
+  useEffect(() => {
+    const autoLogin = async () => {
+      if (import.meta.env.DEV && !user) {
+        console.log('[Dashboard] Development mode - attempting auto-login');
+        try {
+          const response = await fetch('/api/dev-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ username: 'admin' })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('[Dashboard] Auto-login successful:', data.user?.username);
+            window.location.reload(); // Reload to get authenticated state
+          } else {
+            console.log('[Dashboard] Auto-login failed, user can login manually');
+          }
+        } catch (error) {
+          console.error('[Dashboard] Auto-login error:', error);
+        }
+      }
+    };
+    
+    autoLogin();
+  }, [user]);
 
   // Fetch recent projects with deployment status
   const { data: recentProjects = [], isLoading } = useQuery<ProjectWithDeployment[]>({
