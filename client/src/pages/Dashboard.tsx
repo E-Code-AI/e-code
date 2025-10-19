@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   BookOpen,
   FileText,
   BarChart3,
@@ -33,7 +33,9 @@ import {
   GitBranch,
   Star,
   Grid3x3,
-  List
+  List,
+  Sparkles,
+  Rocket
 } from 'lucide-react';
 import { CreditBalance } from '@/components/CreditBalance';
 import { useAuth } from '@/hooks/use-auth';
@@ -47,6 +49,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getProjectUrl } from '@/lib/utils';
+import { PageHeader, PageShell } from '@/components/layout/PageShell';
 
 
 // Icon mapping for quick actions
@@ -267,60 +270,77 @@ export default function Dashboard() {
   const projectTags = ['all', 'deployed', 'private', 'public'];
 
   if (isLoading) {
-    return <ECodeLoading size="lg" />;
+    return (
+      <PageShell>
+        <PageHeader
+          title="Loading your workspace"
+          description="Hang tight while we prepare your personalized dashboard."
+          icon={Sparkles}
+        />
+        <div className="flex justify-center py-24">
+          <ECodeLoading size="lg" />
+        </div>
+      </PageShell>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--ecode-background)]">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Beta banner */}
-        {showBanner && (
-          <Card className="mb-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border border-[var(--ecode-border)] rounded-lg shadow-sm">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <span className="px-2 py-0.5 text-xs font-semibold bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded">
-                  Beta
-                </span>
-                <div>
-                  <h3 className="font-medium text-[var(--ecode-text)] text-sm mb-0.5">
-                    Purchase domains on E-Code
-                  </h3>
-                  <p className="text-xs text-[var(--ecode-text-secondary)]">
-                    Get your dream domain name in just a few clicks.
-                  </p>
-                </div>
+    <PageShell>
+      {showBanner && (
+        <Card className="border-[var(--ecode-border)] bg-gradient-to-r from-blue-50 to-purple-50 p-4 shadow-sm dark:from-blue-950/20 dark:to-purple-950/20">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <span className="rounded bg-gradient-to-r from-blue-500 to-purple-500 px-2 py-0.5 text-xs font-semibold text-white">
+                Beta
+              </span>
+              <div>
+                <h3 className="mb-0.5 text-sm font-medium text-[var(--ecode-text)]">
+                  Purchase domains on E-Code
+                </h3>
+                <p className="text-xs text-[var(--ecode-text-secondary)]">
+                  Get your dream domain name in just a few clicks.
+                </p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowBanner(false)}
-                className="h-7 w-7 hover:bg-white/50 dark:hover:bg-black/20 rounded"
-              >
-                <X className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)]" />
-              </Button>
             </div>
-          </Card>
-        )}
-
-        {/* Main greeting - Lovable.dev style */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <CreditBalance />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowBanner(false)}
+              className="h-7 w-7 rounded hover:bg-white/50 dark:hover:bg-black/20"
+              aria-label="Dismiss domain purchase announcement"
+            >
+              <X className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)]" />
+            </Button>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-[var(--ecode-text)] mb-2">
-            Hi {user?.displayName || user?.username}, what do you want to build?
-          </h1>
-          <p className="text-lg text-[var(--ecode-text-secondary)] font-medium">
-            Describe your idea and watch AI build it instantly
-          </p>
-        </div>
-          
-        {/* Lovable.dev Exact Style AI prompt input */}
-        <form onSubmit={handleCreateProject} className="mb-10">
-          <div className="max-w-3xl mx-auto">
+        </Card>
+      )}
+
+      <PageHeader
+        title={`Hi ${user?.displayName || user?.username}, what do you want to build?`}
+        description="Describe your idea and watch AI build it instantly."
+        icon={Sparkles}
+        actions={(
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="gap-2" onClick={() => navigate('/projects')}>
+              <Code2 className="h-4 w-4" />
+              Browse projects
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => navigate('/deployments')}
+            >
+              <Rocket className="h-4 w-4" />
+              Manage deployments
+            </Button>
+          </div>
+        )}
+      >
+        <div className="flex flex-col items-center gap-8">
+          <CreditBalance />
+          <form onSubmit={handleCreateProject} className="w-full max-w-3xl">
             <div className="relative">
-              {/* Exact Lovable.dev style input */}
-              <div className="bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-xl p-1 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface)] p-1 shadow-sm transition-shadow duration-200 hover:shadow-md">
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
                     <input
@@ -328,12 +348,13 @@ export default function Dashboard() {
                       value={aiPrompt}
                       onChange={(e) => setAiPrompt(e.target.value)}
                       placeholder="What would you like to build?"
-                      className="w-full bg-transparent border-none outline-none text-base placeholder:text-[var(--ecode-text-secondary)]/70 focus:ring-0 px-3 py-3 font-normal text-[var(--ecode-text)]"
+                      className="w-full border-none bg-transparent px-3 py-3 text-base font-normal text-[var(--ecode-text)] outline-none placeholder:text-[var(--ecode-text-secondary)]/70 focus:ring-0"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && aiPrompt.trim()) {
                           handleCreateProject(e);
                         }
                       }}
+                      aria-label="Describe your project idea"
                     />
                   </div>
                   <div className="flex items-center gap-1">
@@ -341,7 +362,8 @@ export default function Dashboard() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 hover:bg-[var(--ecode-surface-secondary)] rounded-md opacity-60 hover:opacity-100 transition-opacity"
+                      className="h-8 w-8 rounded-md opacity-60 transition-opacity hover:bg-[var(--ecode-surface-secondary)] hover:opacity-100"
+                      aria-label="Attach context"
                     >
                       <Paperclip className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
                     </Button>
@@ -349,48 +371,43 @@ export default function Dashboard() {
                       type="submit"
                       size="sm"
                       disabled={!aiPrompt.trim()}
-                      className="bg-violet-600 hover:bg-violet-700 text-white shadow-none border-0 rounded-lg px-4 py-2 text-sm font-medium h-auto"
+                      className="h-auto rounded-lg border-0 bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-none hover:bg-violet-700"
                     >
                       Build
                     </Button>
                   </div>
                 </div>
               </div>
-              
-              {/* Clean feature text */}
-              <p className="text-center mt-3 text-sm text-[var(--ecode-text-secondary)] font-normal">
+              <p className="mt-3 text-center text-sm font-normal text-[var(--ecode-text-secondary)]">
                 Free to use • No setup required • Deploy instantly
               </p>
             </div>
-          </div>
-        </form>
-
-        {/* Quick actions - Enhanced design */}
-        <div className="text-center mb-12">
-          <p className="text-sm text-[var(--ecode-text-secondary)] mb-4 font-medium">
-            Or try these popular examples:
-          </p>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            {quickActions.map((action) => {
-              const IconComponent = iconMap[action.icon] || FileText;
-              return (
-                <Button
-                  key={action.id}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickAction(action)}
-                  className="h-10 px-5 gap-2 text-sm font-medium text-[var(--ecode-text-secondary)] border-[var(--ecode-border)] hover:bg-[var(--ecode-surface)] hover:border-[var(--ecode-accent)]/50 rounded-xl transition-all shadow-sm hover:shadow-md"
-                >
-                  <IconComponent className="h-4 w-4" />
-                  {action.label}
-                </Button>
-              );
-            })}
+          </form>
+          <div className="w-full text-center">
+            <p className="mb-4 text-sm font-medium text-[var(--ecode-text-secondary)]">
+              Or try these popular examples:
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {quickActions.map((action) => {
+                const IconComponent = iconMap[action.icon] || FileText;
+                return (
+                  <Button
+                    key={action.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickAction(action)}
+                    className="h-10 gap-2 rounded-xl border-[var(--ecode-border)] px-5 text-sm font-medium text-[var(--ecode-text-secondary)] shadow-sm transition-all hover:border-[var(--ecode-accent)]/50 hover:bg-[var(--ecode-surface)] hover:shadow-md"
+                  >
+                    <IconComponent className="h-4 w-4" />
+                    {action.label}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
         </div>
-
-
-
+      </PageHeader>
+      <div className="space-y-12">
         {/* Your recent Apps - Enhanced Section */}
         <div>
           <div className="flex items-center justify-between mb-6">
@@ -651,6 +668,6 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

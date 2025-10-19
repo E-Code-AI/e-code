@@ -65,6 +65,12 @@ import { useToast } from "@/hooks/use-toast";
 
 import { ECodeLogo } from "@/components/ECodeLogo";
 import { MobileMenu } from "./MobileMenu";
+import {
+  isActiveNavigationItem,
+  primaryNavigation,
+  secondaryNavigation,
+  type NavigationItem,
+} from "@/constants/navigation";
 
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();
@@ -113,8 +119,8 @@ export function ReplitHeader() {
     logoutMutation.mutate();
   };
 
-  const isActive = (path: string) => location === path;
   const navLinkClass = "replit-nav-link";
+  const headerNavigation: NavigationItem[] = [...primaryNavigation, ...secondaryNavigation];
 
   return (
     <>
@@ -319,83 +325,32 @@ export function ReplitHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Home - Second like Replit */}
-          <Link href="/dashboard">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                navLinkClass,
-                "replit-transition",
-                isActive("/dashboard") ? "replit-nav-link--active" : "replit-nav-link--inactive"
-              )}
-            >
-              Home
-            </Button>
-          </Link>
+          {headerNavigation.map((item) => {
+            const Icon = item.icon;
+            const active = isActiveNavigationItem(location, item);
 
-          {/* Apps - Third like Replit */}
-          <Link href="/projects">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                navLinkClass,
-                "replit-transition",
-                isActive("/projects") ? "replit-nav-link--active" : "replit-nav-link--inactive"
-              )}
-            >
-              Apps
-            </Button>
-          </Link>
-
-          {/* Deployments - Fourth like Replit */}
-          <Link href="/deployments">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                navLinkClass,
-                "replit-transition",
-                isActive("/deployments") ? "replit-nav-link--active" : "replit-nav-link--inactive"
-              )}
-            >
-              Deployments
-            </Button>
-          </Link>
-
-          {/* Usage - Fifth like Replit */}
-          <Link href="/usage">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                navLinkClass,
-                "replit-transition relative",
-                isActive("/usage") ? "replit-nav-link--active" : "replit-nav-link--inactive"
-              )}
-            >
-              Usage
-              <span className="absolute -top-1 -right-2 px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white rounded">
-                Action required
-              </span>
-            </Button>
-          </Link>
-
-          {/* Teams - Sixth like Replit */}
-          <Link href="/teams">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                navLinkClass,
-                "replit-transition",
-                isActive("/teams") ? "replit-nav-link--active" : "replit-nav-link--inactive"
-              )}
-            >
-              Teams
-            </Button>
-          </Link>
+            return (
+              <Link key={item.key} href={item.path} aria-label={item.ctaLabel || item.label}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    navLinkClass,
+                    "replit-transition relative",
+                    active ? "replit-nav-link--active" : "replit-nav-link--inactive"
+                  )}
+                >
+                  {Icon && <Icon className="mr-2 h-4 w-4" />}
+                  {item.label}
+                  {item.badge && (
+                    <span className="absolute -top-1 -right-2 rounded px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            );
+          })}
         </nav>
       </div>
 

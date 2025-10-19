@@ -184,11 +184,6 @@ export default function AdminFormRequests() {
       icon: Archive,
     },
   ], [activeTabLabel, statusCounts, summary.currentTab?.total]);
-  const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: [`/api/admin/form-requests?formType=${activeTab}&status=${statusFilter}`],
-  });
-
-  const requests = data?.requests || [];
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {

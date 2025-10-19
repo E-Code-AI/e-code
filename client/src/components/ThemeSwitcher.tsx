@@ -1,6 +1,5 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
