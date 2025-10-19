@@ -713,6 +713,121 @@ export const aiUsageRecords = pgTable('ai_usage_records', {
   index('ai_usage_created_idx').on(table.createdAt),
 ]);
 
+// Custom Prompts System Tables
+export const promptCategories = pgEnum('prompt_category', [
+  'code_generation', 'debugging', 'documentation', 'refactoring', 
+  'testing', 'performance', 'security', 'architecture', 'other'
+]);
+
+// Prompt Templates - Reusable prompt templates
+export const promptTemplates = pgTable('prompt_templates', {
+  id: serial('id').primaryKey(),
+  name: varchar('name').notNull(),
+  description: text('description'),
+  category: promptCategories('category').notNull().default('other'),
+  prompt: text('prompt').notNull(),
+  variables: jsonb('variables').default([]).$type<Array<{name: string; description: string; defaultValue?: string}>>(),
+  isSystem: boolean('is_system').notNull().default(false), // System-provided templates
+  createdBy: varchar('created_by').references(() => users.id),
+  isPublic: boolean('is_public').notNull().default(false), // Can be shared
+  usageCount: integer('usage_count').notNull().default(0),
+  rating: real('rating').default(0), // Average rating
+  tags: text('tags').array().default([]),
+  examples: jsonb('examples').default([]).$type<Array<{input: string; output: string}>>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('prompt_templates_category_idx').on(table.category),
+  index('prompt_templates_created_by_idx').on(table.createdBy),
+  index('prompt_templates_public_idx').on(table.isPublic),
+]);
+
+// Custom Prompts - User-specific custom prompts
+export const customPrompts = pgTable('custom_prompts', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id').notNull().references(() => users.id),
+  templateId: integer('template_id').references(() => promptTemplates.id), // Optional link to template
+  name: varchar('name').notNull(),
+  description: text('description'),
+  category: promptCategories('category').notNull().default('other'),
+  prompt: text('prompt').notNull(),
+  variables: jsonb('variables').default({}).$type<Record<string, string>>(), // Variable values
+  isFavorite: boolean('is_favorite').notNull().default(false),
+  usageCount: integer('usage_count').notNull().default(0),
+  lastUsedAt: timestamp('last_used_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('custom_prompts_user_idx').on(table.userId),
+  index('custom_prompts_template_idx').on(table.templateId),
+  index('custom_prompts_favorite_idx').on(table.isFavorite),
+]);
+
+// Project AI Rules - AI rules applied to specific projects
+export const projectAiRules = pgTable('project_ai_rules', {
+  id: serial('id').primaryKey(),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
+  customPromptId: integer('custom_prompt_id').references(() => customPrompts.id),
+  templateId: integer('template_id').references(() => promptTemplates.id),
+  name: varchar('name').notNull(),
+  description: text('description'),
+  isActive: boolean('is_active').notNull().default(true),
+  priority: integer('priority').notNull().default(0), // Higher priority rules are applied first
+  conditions: jsonb('conditions').default({}).$type<{
+    fileTypes?: string[];
+    paths?: string[];
+    keywords?: string[];
+  }>(), // When to apply this rule
+  settings: jsonb('settings').default({}).$type<{
+    autoApply?: boolean;
+    maxTokens?: number;
+    temperature?: number;
+  }>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('project_ai_rules_project_idx').on(table.projectId),
+  index('project_ai_rules_prompt_idx').on(table.customPromptId),
+  index('project_ai_rules_template_idx').on(table.templateId),
+  index('project_ai_rules_active_idx').on(table.isActive),
+]);
+
+// Prompt Usage History - Track usage of prompts
+export const promptUsageHistory = pgTable('prompt_usage_history', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id').notNull().references(() => users.id),
+  projectId: varchar('project_id').references(() => projects.id),
+  customPromptId: integer('custom_prompt_id').references(() => customPrompts.id),
+  templateId: integer('template_id').references(() => promptTemplates.id),
+  prompt: text('prompt').notNull(), // The actual prompt used
+  variables: jsonb('variables').default({}), // Variables used
+  response: text('response'), // AI response
+  inputTokens: integer('input_tokens').default(0),
+  outputTokens: integer('output_tokens').default(0),
+  model: varchar('model'),
+  rating: integer('rating'), // User rating 1-5
+  feedback: text('feedback'), // User feedback
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('prompt_usage_user_idx').on(table.userId),
+  index('prompt_usage_project_idx').on(table.projectId),
+  index('prompt_usage_created_idx').on(table.createdAt),
+]);
+
+// Prompt Template Ratings - User ratings for templates
+export const promptTemplateRatings = pgTable('prompt_template_ratings', {
+  id: serial('id').primaryKey(),
+  templateId: integer('template_id').notNull().references(() => promptTemplates.id),
+  userId: varchar('user_id').notNull().references(() => users.id),
+  rating: integer('rating').notNull(), // 1-5
+  comment: text('comment'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('prompt_ratings_template_idx').on(table.templateId),
+  index('prompt_ratings_user_idx').on(table.userId),
+  unique('unique_template_user_rating').on(table.templateId, table.userId),
+]);
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   projects: many(projects),
@@ -794,6 +909,13 @@ export const insertGitRepositorySchema = createInsertSchema(gitRepositories).omi
 export const insertGitCommitSchema = createInsertSchema(gitCommits).omit({ id: true, syncedAt: true });
 export const insertCustomDomainSchema = createInsertSchema(customDomains).omit({ id: true, createdAt: true, updatedAt: true });
 
+// Custom Prompts Insert Schemas
+export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCustomPromptSchema = createInsertSchema(customPrompts).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertProjectAiRuleSchema = createInsertSchema(projectAiRules).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertPromptUsageHistorySchema = createInsertSchema(promptUsageHistory).omit({ id: true, createdAt: true });
+export const insertPromptTemplateRatingSchema = createInsertSchema(promptTemplateRatings).omit({ id: true, createdAt: true });
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -852,6 +974,22 @@ export type InsertWebrtcRecording = z.infer<typeof insertWebrtcRecordingSchema>;
 
 export type CollaborationPresence = typeof collaborationPresence.$inferSelect;
 export type InsertCollaborationPresence = z.infer<typeof insertCollaborationPresenceSchema>;
+
+// Custom Prompts Types
+export type PromptTemplate = typeof promptTemplates.$inferSelect;
+export type InsertPromptTemplate = z.infer<typeof insertPromptTemplateSchema>;
+
+export type CustomPrompt = typeof customPrompts.$inferSelect;
+export type InsertCustomPrompt = z.infer<typeof insertCustomPromptSchema>;
+
+export type ProjectAiRule = typeof projectAiRules.$inferSelect;
+export type InsertProjectAiRule = z.infer<typeof insertProjectAiRuleSchema>;
+
+export type PromptUsageHistory = typeof promptUsageHistory.$inferSelect;
+export type InsertPromptUsageHistory = z.infer<typeof insertPromptUsageHistorySchema>;
+
+export type PromptTemplateRating = typeof promptTemplateRatings.$inferSelect;
+export type InsertPromptTemplateRating = z.infer<typeof insertPromptTemplateRatingSchema>;
 
 // Voice/Video Sessions
 export const voiceVideoSessions = pgTable("voice_video_sessions", {
