@@ -47,7 +47,8 @@ testRunner.registerSuite('Security Scanner', {
       }
     }
   ]
+});
 
 testRunner.registerSuite('Security', {
-  tests: [],
+  tests: []
 });
