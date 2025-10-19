@@ -18,6 +18,8 @@ The E‑Code platform delivers a secure, enterprise-ready developer workspace th
 | **Team Management** | RBAC roles, invitation flows, usage analytics, billing hooks, and enterprise SSO readiness.
 | **Observability** | Structured logging, real-time activity feeds, health checks, and CDN optimization middleware.
 | **Data Tooling** | Live PostgreSQL explorer surfaces real tables, schema metadata, query execution results, and backup artefacts through the MCP endpoints.
+| **Source Control** | GitHub MCP routes now call the live Octokit client with per-user tokens for repository, issue, and pull request management.
+| **Knowledge Management** | Memory MCP APIs persist knowledge graph nodes, edges, and conversations in PostgreSQL for searchable workspace context.
 
 ### Workspace Tooling Parity
 
