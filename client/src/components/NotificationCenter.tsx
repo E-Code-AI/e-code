@@ -39,10 +39,10 @@ interface Notification {
   type: string;
   title: string;
   message: string;
-  url?: string;
+  actionUrl?: string;
   read: boolean;
   timestamp: string;
-  metadata?: any;
+  metadata?: Record<string, any>;
 }
 
 // Icon mapping for notification types
@@ -88,10 +88,18 @@ export function NotificationCenter() {
     refetchInterval: 60000, // Refetch every minute
   });
 
+  const formatRelativeTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+      return 'Just now';
+    }
+    return formatDistanceToNow(date, { addSuffix: true });
+  };
+
   // Mark notification as read mutation
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: number) => {
-      await apiRequest('POST', `/api/notifications/${notificationId}/read`);
+      await apiRequest('PATCH', `/api/notifications/${notificationId}/read`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
@@ -101,7 +109,7 @@ export function NotificationCenter() {
   // Mark all notifications as read mutation
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest('POST', '/api/notifications/read-all');
+      await apiRequest('PATCH', '/api/notifications/read-all');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
@@ -146,9 +154,9 @@ export function NotificationCenter() {
     }
 
     // Navigate to link if provided
-    if (notification.link) {
+    if (notification.actionUrl) {
       setIsOpen(false);
-      navigate(notification.link);
+      navigate(notification.actionUrl);
     }
   };
 
@@ -254,7 +262,7 @@ export function NotificationCenter() {
                                 {notification.message}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+                                {formatRelativeTime(notification.timestamp)}
                               </p>
                             </div>
                             <div className="opacity-0 hover:opacity-100">
@@ -308,7 +316,7 @@ export function NotificationCenter() {
                             {notification.message}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+                            {formatRelativeTime(notification.timestamp)}
                           </p>
                         </div>
                         {notification.read && (

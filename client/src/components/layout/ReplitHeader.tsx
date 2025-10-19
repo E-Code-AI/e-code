@@ -114,12 +114,13 @@ export function ReplitHeader() {
   };
 
   const isActive = (path: string) => location === path;
+  const navLinkClass = "replit-nav-link";
 
   return (
     <>
-    <header className="h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition shadow-sm">
+    <header className="replit-header h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition">
       {/* Logo et navigation principale */}
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
         {/* Mobile menu button - only on mobile */}
         <div className="lg:hidden mr-2">
           <MobileMenu onOpenSpotlight={() => setSpotlightOpen(true)} />
@@ -280,14 +281,14 @@ export function ReplitHeader() {
         )}
 
         {/* Navigation principale - hidden on mobile */}
-        <nav className="hidden lg:flex items-center space-x-1 ml-8">
+        <nav className="replit-nav">
           {/* Create Button - First like Replit */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] replit-transition"
+                className={cn(navLinkClass, "replit-nav-link--trigger replit-transition")}
               >
                 <Plus className="mr-1 h-4 w-4" />
                 Create
@@ -321,13 +322,13 @@ export function ReplitHeader() {
           {/* Home - Second like Replit */}
           <Link href="/dashboard">
             <Button
-              variant={isActive("/dashboard") ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              className={`replit-transition ${
-                isActive("/dashboard")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
+              className={cn(
+                navLinkClass,
+                "replit-transition",
+                isActive("/dashboard") ? "replit-nav-link--active" : "replit-nav-link--inactive"
+              )}
             >
               Home
             </Button>
@@ -336,13 +337,13 @@ export function ReplitHeader() {
           {/* Apps - Third like Replit */}
           <Link href="/projects">
             <Button
-              variant={isActive("/projects") ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              className={`replit-transition ${
-                isActive("/projects")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
+              className={cn(
+                navLinkClass,
+                "replit-transition",
+                isActive("/projects") ? "replit-nav-link--active" : "replit-nav-link--inactive"
+              )}
             >
               Apps
             </Button>
@@ -351,13 +352,13 @@ export function ReplitHeader() {
           {/* Deployments - Fourth like Replit */}
           <Link href="/deployments">
             <Button
-              variant={isActive("/deployments") ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              className={`replit-transition ${
-                isActive("/deployments")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
+              className={cn(
+                navLinkClass,
+                "replit-transition",
+                isActive("/deployments") ? "replit-nav-link--active" : "replit-nav-link--inactive"
+              )}
             >
               Deployments
             </Button>
@@ -366,13 +367,13 @@ export function ReplitHeader() {
           {/* Usage - Fifth like Replit */}
           <Link href="/usage">
             <Button
-              variant={isActive("/usage") ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              className={`replit-transition relative ${
-                isActive("/usage")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
+              className={cn(
+                navLinkClass,
+                "replit-transition relative",
+                isActive("/usage") ? "replit-nav-link--active" : "replit-nav-link--inactive"
+              )}
             >
               Usage
               <span className="absolute -top-1 -right-2 px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white rounded">
@@ -384,13 +385,13 @@ export function ReplitHeader() {
           {/* Teams - Sixth like Replit */}
           <Link href="/teams">
             <Button
-              variant={isActive("/teams") ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              className={`replit-transition ${
-                isActive("/teams")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
+              className={cn(
+                navLinkClass,
+                "replit-transition",
+                isActive("/teams") ? "replit-nav-link--active" : "replit-nav-link--inactive"
+              )}
             >
               Teams
             </Button>
@@ -401,8 +402,8 @@ export function ReplitHeader() {
       {/* Search bar - only on larger screens */}
       <div className="flex-1 max-w-md mx-4 sm:mx-6 hidden lg:block">
         <Button
-          variant="outline"
-          className="w-full justify-start text-left font-normal bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text-secondary)] hover:bg-[var(--ecode-sidebar-hover)]"
+          variant="ghost"
+          className="replit-header-search"
           onClick={() => setSpotlightOpen(true)}
         >
           <Search className="mr-2 h-4 w-4" />
@@ -415,7 +416,7 @@ export function ReplitHeader() {
       </div>
 
       {/* Actions utilisateur */}
-      <div className="flex items-center space-x-2 md:space-x-3">
+      <div className="replit-header-controls flex items-center gap-2 md:gap-3">
         {/* Bouton Plan Pro */}
         <Button
           variant="outline"

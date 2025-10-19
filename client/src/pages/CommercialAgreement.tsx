@@ -202,7 +202,7 @@ export default function CommercialAgreement() {
               <p className="text-sm text-muted-foreground">
                 <strong>Version:</strong> 2.0<br />
                 <strong>Last Updated:</strong> January 1, 2025<br />
-                For questions about this agreement, please contact <a href="mailto:enterprise@e-code.com" className="text-primary hover:underline">enterprise@e-code.com</a>
+                For questions about this agreement, please contact <a href="mailto:enterprise@e-code.ai" className="text-primary hover:underline">enterprise@e-code.ai</a>
               </p>
             </div>
           </div>
