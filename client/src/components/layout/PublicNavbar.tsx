@@ -257,9 +257,6 @@ export function PublicNavbar() {
                   <SheetHeader className="mb-6">
                     <div className="flex items-center justify-between">
                       <ECodeLogo size="sm" />
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMobileMenuOpen(false)}>
-                        <X className="h-4 w-4" />
-                      </Button>
                     </div>
                     <div className="mt-4 relative">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-text-muted)] dark:text-slate-400" />

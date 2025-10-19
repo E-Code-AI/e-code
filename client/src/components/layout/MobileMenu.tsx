@@ -118,14 +118,6 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
                     <p className="text-xs text-[var(--ecode-text-muted)] dark:text-zinc-400">Professional Development Platform</p>
                   </div>
                 </motion.div>
-                <motion.button
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setOpen(false)}
-                  className="h-10 w-10 rounded-full bg-[var(--ecode-surface-secondary)] dark:bg-[var(--ecode-surface-secondary)] dark:bg-zinc-800/50 backdrop-blur-xl flex items-center justify-center border border-[var(--ecode-border)] dark:border-[var(--ecode-border)] dark:border-zinc-700/50 transition-all hover:bg-[var(--ecode-surface-tertiary)] dark:hover:bg-zinc-700/50"
-                >
-                  <X className="h-5 w-5 text-[var(--ecode-text-secondary)] dark:text-zinc-300" />
-                </motion.button>
               </div>
             </div>
           </div>
