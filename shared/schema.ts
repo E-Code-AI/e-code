@@ -434,7 +434,8 @@ export const pushNotifications = pgTable("push_notifications", {
 });
 
 export const notificationPreferences = pgTable("notification_preferences", {
-  userId: integer("user_id")
+  userId: varchar("user_id")
+    .$type<string>()
     .primaryKey()
     .references(() => users.id, { onDelete: 'cascade' }),
   email: jsonb("email").$type<Record<string, boolean>>().notNull().default({}),
