@@ -36,7 +36,7 @@ import {
 
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
-  mobileDevices, pushNotifications, teams, teamMembers, deployments,
+  mobileDevices, pushNotifications, notificationPreferences, teams, teamMembers, deployments,
   comments, checkpoints, projectTimeTracking, projectScreenshots, taskSummaries, usageTracking,
   userCredits, budgetLimits, usageAlerts, autoscaleDeployments, reservedVmDeployments,
   scheduledDeployments, staticDeployments, objectStorageBuckets, objectStorageFiles,
@@ -54,7 +54,9 @@ import {
   insertDynamicIntelligenceSchema, insertWebSearchHistorySchema,
   insertGitRepositorySchema, insertGitCommitSchema, insertCustomDomainSchema,
   insertSecretSchema, insertEnvironmentVariableSchema,
-  insertNewsletterSubscriberSchema, insertNewsletterCampaignSchema, insertNewsletterDeliverySchema
+  insertNewsletterSubscriberSchema, insertNewsletterCampaignSchema, insertNewsletterDeliverySchema,
+  insertNotificationSchema, insertNotificationPreferenceSchema,
+  customerRequests, insertCustomerRequestSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -91,8 +93,120 @@ type GitCommit = typeof gitCommits.$inferSelect;
 type InsertGitCommit = z.infer<typeof insertGitCommitSchema>;
 type CustomDomain = typeof customDomains.$inferSelect;
 type InsertCustomDomain = z.infer<typeof insertCustomDomainSchema>;
+type CustomerRequest = typeof customerRequests.$inferSelect;
+type InsertCustomerRequest = z.infer<typeof insertCustomerRequestSchema>;
 
-import { eq, and, desc, isNull, sql, inArray, gte, lte, SQL } from "drizzle-orm";
+type NotificationRecord = typeof pushNotifications.$inferSelect;
+type InsertNotificationRecord = z.infer<typeof insertNotificationSchema>;
+type NotificationPreferenceRecord = typeof notificationPreferences.$inferSelect;
+type InsertNotificationPreferenceRecord = z.infer<typeof insertNotificationPreferenceSchema>;
+type NotificationPreferencesPayload = Partial<{
+  email: Record<string, any> | null | undefined;
+  push: Record<string, any> | null | undefined;
+  frequency: string | null | undefined;
+}>;
+type NotificationFrequency = 'instant' | 'hourly' | 'daily' | 'weekly';
+
+const EMAIL_NOTIFICATION_KEYS = [
+  'comments',
+  'likes',
+  'follows',
+  'mentions',
+  'teamUpdates',
+  'deployments',
+  'security',
+  'marketing',
+] as const;
+
+const PUSH_NOTIFICATION_KEYS = [
+  'comments',
+  'likes',
+  'follows',
+  'mentions',
+  'teamUpdates',
+  'deployments',
+  'security',
+] as const;
+
+const VALID_NOTIFICATION_FREQUENCIES = new Set<NotificationFrequency>([
+  'instant',
+  'hourly',
+  'daily',
+  'weekly',
+]);
+
+const DEFAULT_NOTIFICATION_PREFERENCES: {
+  email: Record<(typeof EMAIL_NOTIFICATION_KEYS)[number], boolean>;
+  push: Record<(typeof PUSH_NOTIFICATION_KEYS)[number], boolean>;
+  frequency: NotificationFrequency;
+} = {
+  email: {
+    comments: true,
+    likes: true,
+    follows: true,
+    mentions: true,
+    teamUpdates: true,
+    deployments: true,
+    security: true,
+    marketing: false,
+  },
+  push: {
+    comments: true,
+    likes: true,
+    follows: true,
+    mentions: true,
+    teamUpdates: true,
+    deployments: true,
+    security: true,
+  },
+  frequency: 'instant',
+};
+
+const normalizeUserId = (userId: string | number): string =>
+  typeof userId === 'string' ? userId : String(userId);
+
+const normalizePreferenceSection = (
+  keys: readonly string[],
+  defaults: Record<string, boolean>,
+  ...sources: (Record<string, any> | null | undefined)[]
+) => {
+  const normalized: Record<string, boolean> = { ...defaults };
+  for (const source of sources) {
+    if (!source) continue;
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        normalized[key] = Boolean(source[key]);
+      }
+    }
+  }
+  return normalized;
+};
+
+const normalizePreferences = (
+  existing?: NotificationPreferencesPayload,
+  updates?: NotificationPreferencesPayload,
+) => {
+  const email = normalizePreferenceSection(
+    EMAIL_NOTIFICATION_KEYS,
+    DEFAULT_NOTIFICATION_PREFERENCES.email,
+    existing?.email ?? undefined,
+    updates?.email ?? undefined,
+  );
+  const push = normalizePreferenceSection(
+    PUSH_NOTIFICATION_KEYS,
+    DEFAULT_NOTIFICATION_PREFERENCES.push,
+    existing?.push ?? undefined,
+    updates?.push ?? undefined,
+  );
+  const candidate = (updates?.frequency ?? existing?.frequency) as string | undefined;
+  const frequency = VALID_NOTIFICATION_FREQUENCIES.has(candidate as NotificationFrequency)
+    ? (candidate as NotificationFrequency)
+    : DEFAULT_NOTIFICATION_PREFERENCES.frequency;
+
+  return { email, push, frequency };
+};
+
+import { eq, and, desc, isNull, sql, inArray, gte, lte, SQL, or, ilike } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";
@@ -151,6 +265,21 @@ export interface IStorage {
   unpinProject(projectId: string, userId: string): Promise<void>;
   trackUsage(userId: string, data: UsageMetricInput): Promise<void>;
   updateUserStripeInfo(userId: string, data: any): Promise<User | undefined>;
+
+  // Notification operations
+  getNotifications(userId: string | number, unreadOnly?: boolean): Promise<NotificationRecord[]>;
+  getUnreadNotificationCount(userId: string | number): Promise<number>;
+  getNotificationPreferences(userId: string | number): Promise<NotificationPreferenceRecord>;
+  updateNotificationPreferences(
+    userId: string | number,
+    preferences: NotificationPreferencesPayload,
+  ): Promise<NotificationPreferenceRecord>;
+  markNotificationAsRead(notificationId: number, userId: string | number): Promise<void>;
+  markAllNotificationsAsRead(userId: string | number): Promise<void>;
+  deleteNotification(notificationId: number, userId: string | number): Promise<void>;
+  deleteAllNotifications(userId: string | number): Promise<void>;
+  createNotification(notification: InsertNotificationRecord): Promise<NotificationRecord>;
+  updatePushNotification(id: number, data: Partial<NotificationRecord>): Promise<void>;
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -2617,42 +2746,402 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Sales and Support operations
-  async createSalesInquiry(inquiry: any): Promise<any> {
+  async createCustomerRequest(request: InsertCustomerRequest): Promise<CustomerRequest> {
+    const payload = {
+      ...request,
+      metadata: request.metadata ?? {},
+      status: request.status ?? 'new',
+      createdAt: request.createdAt ?? new Date(),
+      updatedAt: request.updatedAt ?? new Date(),
+    };
+
+    const [created] = await this.db
+      .insert(customerRequests)
+      .values(payload)
+      .returning();
+
+    return created;
+  }
+
+  async getCustomerRequests(filters?: { formType?: string; status?: string; limit?: number }): Promise<CustomerRequest[]> {
+    const conditions: SQL<unknown>[] = [];
+
+    if (filters?.formType) {
+      conditions.push(eq(customerRequests.formType, filters.formType));
+    }
+
+    if (filters?.status) {
+      conditions.push(eq(customerRequests.status, filters.status));
+    }
+
+    let query = this.db
+      .select()
+      .from(customerRequests)
+      .orderBy(desc(customerRequests.createdAt));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+
+    return await query;
+  }
+
+  async listCustomerRequests(filters?: {
+    formType?: string;
+    status?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{
+    requests: CustomerRequest[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
+    const conditions: SQL<unknown>[] = [];
+
+    if (filters?.formType) {
+      conditions.push(eq(customerRequests.formType, filters.formType));
+    }
+
+    if (filters?.status) {
+      conditions.push(eq(customerRequests.status, filters.status));
+    }
+
+    if (filters?.search) {
+      const term = `%${filters.search.toLowerCase()}%`;
+      conditions.push(
+        or(
+          ilike(customerRequests.senderName, term),
+          ilike(customerRequests.senderEmail, term),
+          ilike(customerRequests.senderCompany, term),
+          ilike(customerRequests.subject, term),
+          ilike(customerRequests.message, term),
+          ilike(customerRequests.pagePath, term),
+        ),
+      );
+    }
+
+    const page = Math.max(1, filters?.page ?? 1);
+    const pageSize = Math.min(Math.max(filters?.pageSize ?? 25, 1), 100);
+    const offset = (page - 1) * pageSize;
+
+    const filterClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    let listQuery = this.db
+      .select()
+      .from(customerRequests);
+
+    if (filterClause) {
+      listQuery = listQuery.where(filterClause);
+    }
+
+    listQuery = listQuery.orderBy(desc(customerRequests.createdAt)).limit(pageSize).offset(offset);
+
+    const requests = await listQuery;
+
+    let totalQuery = this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(customerRequests);
+
+    if (filterClause) {
+      totalQuery = totalQuery.where(filterClause);
+    }
+
+    const totalResult = await totalQuery;
+    const total = Number(totalResult[0]?.count ?? 0);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
+
     return {
-      id: Date.now(),
+      requests,
+      total,
+      page,
+      pageSize,
+      totalPages,
+    };
+  }
+
+  async getCustomerRequestAggregates(filters?: {
+    formType?: string;
+    status?: string;
+    search?: string;
+  }): Promise<{
+    total: number;
+    byStatus: Record<string, number>;
+    byFormType: Record<string, number>;
+  }> {
+    const conditions: SQL<unknown>[] = [];
+
+    if (filters?.formType) {
+      conditions.push(eq(customerRequests.formType, filters.formType));
+    }
+
+    if (filters?.status) {
+      conditions.push(eq(customerRequests.status, filters.status));
+    }
+
+    if (filters?.search) {
+      const term = `%${filters.search.toLowerCase()}%`;
+      conditions.push(
+        or(
+          ilike(customerRequests.senderName, term),
+          ilike(customerRequests.senderEmail, term),
+          ilike(customerRequests.senderCompany, term),
+          ilike(customerRequests.subject, term),
+          ilike(customerRequests.message, term),
+          ilike(customerRequests.pagePath, term),
+        ),
+      );
+    }
+
+    const filterClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    let totalQuery = this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(customerRequests);
+
+    if (filterClause) {
+      totalQuery = totalQuery.where(filterClause);
+    }
+
+    const totalResult = await totalQuery;
+    const total = Number(totalResult[0]?.count ?? 0);
+
+    let statusQuery = this.db
+      .select({ status: customerRequests.status, count: sql<number>`count(*)` })
+      .from(customerRequests);
+
+    if (filterClause) {
+      statusQuery = statusQuery.where(filterClause);
+    }
+
+    statusQuery = statusQuery.groupBy(customerRequests.status);
+    const statusRows = await statusQuery;
+
+    let formTypeQuery = this.db
+      .select({ formType: customerRequests.formType, count: sql<number>`count(*)` })
+      .from(customerRequests);
+
+    if (filterClause) {
+      formTypeQuery = formTypeQuery.where(filterClause);
+    }
+
+    formTypeQuery = formTypeQuery.groupBy(customerRequests.formType);
+    const formTypeRows = await formTypeQuery;
+
+    const byStatus = statusRows.reduce((acc: Record<string, number>, row) => {
+      if (row.status) {
+        acc[row.status] = Number(row.count);
+      }
+      return acc;
+    }, {});
+
+    const byFormType = formTypeRows.reduce((acc: Record<string, number>, row) => {
+      if (row.formType) {
+        acc[row.formType] = Number(row.count);
+      }
+      return acc;
+    }, {});
+
+    return {
+      total,
+      byStatus,
+      byFormType,
+    };
+  }
+
+  async updateCustomerRequest(id: number, updates: Partial<CustomerRequest>): Promise<CustomerRequest | undefined> {
+    const payload: Partial<CustomerRequest> = {
+      ...updates,
+      updatedAt: new Date(),
+    };
+
+    if (payload.resolvedAt === undefined) {
+      delete payload.resolvedAt;
+    }
+
+    if (payload.metadata === undefined) {
+      delete payload.metadata;
+    }
+
+    const [updated] = await this.db
+      .update(customerRequests)
+      .set(payload)
+      .where(eq(customerRequests.id, id))
+      .returning();
+
+    return updated;
+  }
+
+  async createSalesInquiry(inquiry: any): Promise<any> {
+    const request = await this.createCustomerRequest({
+      formType: 'contact_sales',
+      pagePath: inquiry.pagePath || '/contact-sales',
+      senderName: inquiry.name,
+      senderEmail: inquiry.email,
+      senderCompany: inquiry.company,
+      senderPhone: inquiry.phone,
+      subject: inquiry.subject || (inquiry.useCase ? `Sales inquiry - ${inquiry.useCase}` : 'Sales inquiry'),
+      message: inquiry.message,
+      status: inquiry.status ?? 'new',
+      metadata: {
+        companySize: inquiry.companySize || 'unknown',
+        useCase: inquiry.useCase || 'general',
+        ...(inquiry.metadata || {}),
+      },
+    });
+
+    return {
       ...inquiry,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      id: request.id,
+      status: request.status,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+      pagePath: request.pagePath,
     };
   }
 
   async getSalesInquiries(status?: string): Promise<any[]> {
-    // Would query from sales_inquiries table
-    return [];
+    const inquiries = await this.getCustomerRequests({
+      formType: 'contact_sales',
+      status: status || undefined,
+    });
+
+    return inquiries.map((request) => ({
+      id: request.id,
+      name: request.senderName,
+      email: request.senderEmail,
+      company: request.senderCompany,
+      phone: request.senderPhone,
+      message: request.message,
+      subject: request.subject,
+      companySize: request.metadata?.companySize || 'unknown',
+      useCase: request.metadata?.useCase || 'general',
+      status: request.status,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+      pagePath: request.pagePath,
+    }));
   }
 
   async updateSalesInquiry(id: number, updates: any): Promise<any | undefined> {
-    // Would update sales_inquiries table
-    return { id, ...updates };
+    const updated = await this.updateCustomerRequest(id, {
+      senderName: updates.name,
+      senderEmail: updates.email,
+      senderCompany: updates.company,
+      senderPhone: updates.phone,
+      message: updates.message,
+      subject: updates.subject,
+      status: updates.status,
+      metadata: {
+        companySize: updates.companySize,
+        useCase: updates.useCase,
+        ...(updates.metadata || {}),
+      },
+    });
+
+    if (!updated) {
+      return undefined;
+    }
+
+    return {
+      id: updated.id,
+      name: updated.senderName,
+      email: updated.senderEmail,
+      company: updated.senderCompany,
+      phone: updated.senderPhone,
+      message: updated.message,
+      subject: updated.subject,
+      companySize: updated.metadata?.companySize || 'unknown',
+      useCase: updated.metadata?.useCase || 'general',
+      status: updated.status,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+      pagePath: updated.pagePath,
+    };
   }
 
   async createAbuseReport(report: any): Promise<any> {
+    const request = await this.createCustomerRequest({
+      formType: 'report_abuse',
+      pagePath: report.pagePath || '/report-abuse',
+      senderName: report.reporterName,
+      senderEmail: report.reporterEmail,
+      subject: `Abuse report - ${report.reportType}`,
+      message: report.description,
+      metadata: {
+        reportType: report.reportType,
+        targetUrl: report.targetUrl,
+        username: report.username,
+        reporterUserId: report.userId,
+        ...(report.metadata || {}),
+      },
+    });
+
     return {
-      id: Date.now(),
       ...report,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      id: request.id,
+      status: request.status,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+      pagePath: request.pagePath,
     };
   }
 
   async getAbuseReports(status?: string): Promise<any[]> {
-    // Would query from abuse_reports table
-    return [];
+    const reports = await this.getCustomerRequests({
+      formType: 'report_abuse',
+      status: status || undefined,
+    });
+
+    return reports.map((request) => ({
+      id: request.id,
+      reportType: request.metadata?.reportType,
+      targetUrl: request.metadata?.targetUrl,
+      description: request.message,
+      reporterEmail: request.senderEmail,
+      username: request.metadata?.username,
+      status: request.status,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+      pagePath: request.pagePath,
+    }));
   }
 
   async updateAbuseReport(id: number, updates: any): Promise<any | undefined> {
-    // Would update abuse_reports table
-    return { id, ...updates };
+    const updated = await this.updateCustomerRequest(id, {
+      message: updates.description,
+      senderEmail: updates.reporterEmail,
+      status: updates.status,
+      metadata: {
+        reportType: updates.reportType,
+        targetUrl: updates.targetUrl,
+        username: updates.username,
+        ...(updates.metadata || {}),
+      },
+    });
+
+    if (!updated) {
+      return undefined;
+    }
+
+    return {
+      id: updated.id,
+      reportType: updated.metadata?.reportType,
+      targetUrl: updated.metadata?.targetUrl,
+      description: updated.message,
+      reporterEmail: updated.senderEmail,
+      username: updated.metadata?.username,
+      status: updated.status,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+      pagePath: updated.pagePath,
+    };
   }
 
   // Kubernetes User Environment operations
@@ -2883,6 +3372,206 @@ export class DatabaseStorage implements IStorage {
       .from(aiUsageRecords)
       .where(whereClause)
       .orderBy(desc(aiUsageRecords.createdAt));
+  }
+
+  // Notification implementations
+  async getNotifications(userId: string | number, unreadOnly: boolean = false): Promise<NotificationRecord[]> {
+    const normalizedUserId = normalizeUserId(userId);
+    const condition = unreadOnly
+      ? and(eq(pushNotifications.userId, normalizedUserId), eq(pushNotifications.read, false))
+      : eq(pushNotifications.userId, normalizedUserId);
+
+    return await this.db
+      .select()
+      .from(pushNotifications)
+      .where(condition)
+      .orderBy(desc(pushNotifications.createdAt));
+  }
+
+  async getUnreadNotificationCount(userId: string | number): Promise<number> {
+    const normalizedUserId = normalizeUserId(userId);
+    const [result] = await this.db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(pushNotifications)
+      .where(and(eq(pushNotifications.userId, normalizedUserId), eq(pushNotifications.read, false)));
+
+    return Number(result?.count ?? 0);
+  }
+
+  async getNotificationPreferences(userId: string | number): Promise<NotificationPreferenceRecord> {
+    const normalizedUserId = normalizeUserId(userId);
+    const [existing] = await this.db
+      .select()
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, normalizedUserId));
+
+    if (existing) {
+      const normalized = normalizePreferences(existing, undefined);
+
+      const needsUpdate =
+        JSON.stringify(existing.email ?? {}) !== JSON.stringify(normalized.email) ||
+        JSON.stringify(existing.push ?? {}) !== JSON.stringify(normalized.push) ||
+        existing.frequency !== normalized.frequency;
+
+      if (needsUpdate) {
+        const [updated] = await this.db
+          .update(notificationPreferences)
+          .set({ ...normalized, updatedAt: new Date() })
+          .where(eq(notificationPreferences.userId, normalizedUserId))
+          .returning();
+
+        return updated ?? { ...existing, ...normalized };
+      }
+
+      return {
+        ...existing,
+        email: normalized.email,
+        push: normalized.push,
+        frequency: normalized.frequency,
+      };
+    }
+
+    const defaults = normalizePreferences();
+    const [created] = await this.db
+      .insert(notificationPreferences)
+      .values({
+        userId: normalizedUserId,
+        email: defaults.email,
+        push: defaults.push,
+        frequency: defaults.frequency,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    return (
+      created ?? {
+        userId: normalizedUserId,
+        email: defaults.email,
+        push: defaults.push,
+        frequency: defaults.frequency,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+    );
+  }
+
+  async updateNotificationPreferences(
+    userId: string | number,
+    preferences: NotificationPreferencesPayload,
+  ): Promise<NotificationPreferenceRecord> {
+    const normalizedUserId = normalizeUserId(userId);
+    const current = await this.getNotificationPreferences(normalizedUserId);
+    const normalized = normalizePreferences(current, preferences);
+    const [updated] = await this.db
+      .insert(notificationPreferences)
+      .values({
+        userId: normalizedUserId,
+        email: normalized.email,
+        push: normalized.push,
+        frequency: normalized.frequency,
+        createdAt: current?.createdAt ?? new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: notificationPreferences.userId,
+        set: {
+          email: normalized.email,
+          push: normalized.push,
+          frequency: normalized.frequency,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    return (
+      updated ?? {
+        userId: normalizedUserId,
+        email: normalized.email,
+        push: normalized.push,
+        frequency: normalized.frequency,
+        createdAt: current?.createdAt ?? new Date(),
+        updatedAt: new Date(),
+      }
+    );
+  }
+
+  async markNotificationAsRead(notificationId: number, userId: string | number): Promise<void> {
+    const normalizedUserId = normalizeUserId(userId);
+    await this.db
+      .update(pushNotifications)
+      .set({ read: true, readAt: new Date() })
+      .where(and(eq(pushNotifications.id, notificationId), eq(pushNotifications.userId, normalizedUserId)));
+  }
+
+  async markAllNotificationsAsRead(userId: string | number): Promise<void> {
+    const normalizedUserId = normalizeUserId(userId);
+    await this.db
+      .update(pushNotifications)
+      .set({ read: true, readAt: new Date() })
+      .where(and(eq(pushNotifications.userId, normalizedUserId), eq(pushNotifications.read, false)));
+  }
+
+  async deleteNotification(notificationId: number, userId: string | number): Promise<void> {
+    const normalizedUserId = normalizeUserId(userId);
+    await this.db
+      .delete(pushNotifications)
+      .where(and(eq(pushNotifications.id, notificationId), eq(pushNotifications.userId, normalizedUserId)));
+  }
+
+  async deleteAllNotifications(userId: string | number): Promise<void> {
+    const normalizedUserId = normalizeUserId(userId);
+    await this.db.delete(pushNotifications).where(eq(pushNotifications.userId, normalizedUserId));
+  }
+
+  async createNotification(notification: InsertNotificationRecord): Promise<NotificationRecord> {
+    const normalizedUserId = normalizeUserId(notification.userId);
+    const parsed = insertNotificationSchema.parse({ ...notification, userId: normalizedUserId });
+    const [created] = await this.db
+      .insert(pushNotifications)
+      .values({
+        ...parsed,
+        userId: normalizedUserId,
+        type: parsed.type ?? 'system',
+        data: parsed.data ?? {},
+        read: false,
+        sent: false,
+        createdAt: new Date(),
+      })
+      .returning();
+
+    if (!created) {
+      throw new Error('Failed to create notification');
+    }
+
+    return created;
+  }
+
+  async updatePushNotification(id: number, data: Partial<NotificationRecord>): Promise<void> {
+    if (Object.keys(data).length === 0) {
+      return;
+    }
+
+    const updates: Partial<NotificationRecord> = { ...data };
+    delete (updates as any).id;
+    if (updates.userId !== undefined) {
+      updates.userId = normalizeUserId(updates.userId);
+    }
+
+    if (updates.read !== undefined && updates.readAt === undefined) {
+      updates.readAt = updates.read ? new Date() : null;
+    }
+
+    for (const key of Object.keys(updates) as (keyof NotificationRecord)[]) {
+      if (updates[key] === undefined) {
+        delete updates[key];
+      }
+    }
+
+    await this.db
+      .update(pushNotifications)
+      .set(updates)
+      .where(eq(pushNotifications.id, id));
   }
 
   // Custom Prompts implementations
