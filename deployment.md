@@ -22,6 +22,19 @@ This guide covers the production deployment configuration for E-Code platform.
 - `NEWSLETTER_SEND_MAX_RETRIES` - Number of retry attempts for failed deliveries (optional, default 2)
 - `NEWSLETTER_SEND_RETRY_BASE_MS` - Base delay in milliseconds for exponential backoff when retrying deliveries (optional, default 500)
 
+### Monitoring
+- `SENTRY_DSN` - Enables centralized error and performance monitoring (optional but recommended)
+- `LOG_AGGREGATION_ENABLED` - Disable to turn off in-process log aggregation (optional)
+
+### Performance & Caching
+- `CDN_BASE_URL` - Fully qualified URL for serving static assets via CDN (optional)
+- `ASSET_BASE_URL` - Legacy alias for CDN asset prefix (optional)
+- `CDN_HTML_BROWSER_CACHE_SECONDS` - Override browser cache TTL for HTML (optional, default 3600)
+- `CDN_HTML_CDN_CACHE_SECONDS` - Override CDN edge cache TTL for HTML (optional, default 86400)
+- `CDN_API_CACHE_CONTROL` - Override default no-cache directive applied to API responses (optional)
+- `REDIS_URL` - Connection string for Redis caching layer (optional but recommended for production)
+- `DB_SLOW_QUERY_THRESHOLD_MS` - Override default slow-query threshold used for instrumentation (optional)
+
 ### OAuth Configuration (Optional)
 - `GITHUB_CLIENT_ID` - For GitHub import/integration
 - `GITHUB_CLIENT_SECRET` - For GitHub integration
@@ -42,22 +55,22 @@ This guide covers the production deployment configuration for E-Code platform.
 - [x] Lazy loading for pages
 - [x] Asset optimization (minification)
 - [x] Gzip compression enabled
-- [ ] CDN configuration for static assets
-- [ ] Database query optimization
-- [ ] Redis caching layer (optional)
+- [x] CDN configuration for static assets
+- [x] Database query optimization
+- [x] Redis caching layer (optional)
 
 ### Monitoring
-- [ ] Error tracking (Sentry or similar)
-- [ ] Performance monitoring
-- [ ] Uptime monitoring
-- [ ] Log aggregation
-- [ ] Analytics tracking
+- [x] Error tracking (Sentry or similar)
+- [x] Performance monitoring
+- [x] Uptime monitoring
+- [x] Log aggregation
+- [x] Analytics tracking
 
 ### Database
 - [x] Production database configured
 - [x] Database migrations ready
 - [x] Backup strategy defined
-- [ ] Connection pooling optimized
+- [x] Connection pooling optimized
 
 ### Deployment Process
 1. Build the production bundle: `npm run build`
