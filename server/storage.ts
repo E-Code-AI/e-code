@@ -162,25 +162,20 @@ const DEFAULT_NOTIFICATION_PREFERENCES: {
   frequency: 'instant',
 };
 
-const normalizeUserId = (userId: string | number): number => {
+const normalizeUserId = (userId: string | number): string => {
   if (typeof userId === 'number') {
     if (Number.isInteger(userId)) {
-      return userId;
+      return String(userId);
     }
     throw new TypeError('User ID must be an integer');
   }
 
   const trimmed = userId.trim();
-  if (!/^-?\d+$/.test(trimmed)) {
+  if (trimmed.length === 0) {
     throw new TypeError('Invalid user ID format');
   }
 
-  const parsed = Number.parseInt(trimmed, 10);
-  if (!Number.isFinite(parsed)) {
-    throw new TypeError('Invalid user ID value');
-  }
-
-  return parsed;
+  return trimmed;
 };
 
 const normalizePreferenceSection = (

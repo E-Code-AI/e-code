@@ -33,7 +33,7 @@ const normalizeNotificationResponse = (notification: any) => {
   };
 };
 
-const getUserIdOrThrow = (req: any, res: any): number | null => {
+const getUserIdOrThrow = (req: any, res: any): string | null => {
   const rawUserId = req.user?.id;
   if (rawUserId === undefined || rawUserId === null) {
     res.status(401).json({ message: 'Not authenticated' });
@@ -42,19 +42,21 @@ const getUserIdOrThrow = (req: any, res: any): number | null => {
 
   if (typeof rawUserId === 'number') {
     if (Number.isInteger(rawUserId)) {
-      return rawUserId;
+      return String(rawUserId);
     }
     res.status(400).json({ message: 'Invalid user session' });
     return null;
   }
 
-  const normalized = Number.parseInt(String(rawUserId).trim(), 10);
-  if (!Number.isInteger(normalized)) {
-    res.status(400).json({ message: 'Invalid user session' });
-    return null;
+  if (typeof rawUserId === 'string') {
+    const trimmed = rawUserId.trim();
+    if (trimmed.length > 0) {
+      return trimmed;
+    }
   }
 
-  return normalized;
+  res.status(400).json({ message: 'Invalid user session' });
+  return null;
 };
 
 const getPreferencesHandler = async (req: any, res: any) => {
