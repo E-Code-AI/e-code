@@ -1,174 +1,94 @@
-# E-Code Platform 🚀
+# E‑Code Platform
 
-A complete Replit-like development platform with AI-powered code generation, real-time collaboration, and container orchestration.
+The E‑Code platform delivers a secure, enterprise-ready developer workspace that pairs AI-assisted coding with fully managed build and deployment pipelines. The project combines a modern React front end, an Express/Node.js control plane, and orchestration services for running containerized sandboxes.
 
-## ✨ Features
+## Why Engineering Teams Choose E‑Code
 
-- **🤖 AI Code Generation**: Autonomous code generation with Claude 4 Sonnet and GPT-4
-- **🔥 Real-time Collaboration**: Multi-user editing with WebSocket-based collaboration
-- **📦 Container Orchestration**: Full Kubernetes-based container management
-- **🖥️ Live Preview System**: Real-time preview with multiple device modes
-- **🗄️ Database Management**: PostgreSQL hosting with web interface
-- **🔧 Multi-language Support**: JavaScript, Python, Go, and 50+ languages
-- **⚡ Terminal Access**: Full WebSocket-based terminal with command history
-- **📁 File Management**: Complete file system with Git integration
-- **🎯 Deployment System**: One-click deployment with SSL and custom domains
-- **🛒 Templates & Marketplace**: Pre-built templates and extensions
+- **AI-accelerated workflow** – Integrations with OpenAI, Anthropic, and Google GenAI power inline code generation, refactoring, and automated reviews directly inside the IDE experience.
+- **Enterprise-grade collaboration** – Shared projects, presence indicators, and multi-user terminals are built on top of WebSocket infrastructure with fine-grained access controls.
+- **Managed runtime fabric** – Docker, Kubernetes, and PostgreSQL integrations simplify provisioning polyglot build environments, storage, and secrets management across teams.
+- **Security and compliance focus** – Centralized session management, audit logging, SSO support, and rate-limiting middleware provide the guardrails required by regulated organizations.
 
-## 🚀 Quick Start
+## Product Experience
 
-### Development
+| Area | Highlights |
+|------|------------|
+| **Studio Workspace** | Monaco-powered editor, terminal integration, AI pair-programmer sidebar, and diff review tools.
+| **Project Operations** | Template catalog, git import/export, environment variable management, one-click redeployments.
+| **Team Management** | RBAC roles, invitation flows, usage analytics, billing hooks, and enterprise SSO readiness.
+| **Observability** | Structured logging, real-time activity feeds, health checks, and CDN optimization middleware.
+
+👉 **Request a guided demo:** Reach the product team at [hello@e-code.dev](mailto:hello@e-code.dev) to schedule a platform walkthrough tailored to your use case.
+
+## Architecture at a Glance
+
+- **Client (`client/`)** – React + Vite application using Tailwind CSS, Radix UI, and TanStack Query for state synchronization.
+- **Server (`server/`)** – Express entry point (`server/index.ts`) orchestrating authentication, rate limiting, telemetry, and API routing.
+- **Runtime Services (`services/`, `containers/`, `sdk/`)** – Worker processes for container lifecycle, AI agent tooling, and external provider integrations.
+- **Database Layer (`migrations/`, `shared/db/`)** – Drizzle ORM schemas and migrations for PostgreSQL plus seeding utilities for local environments.
+
+A deeper breakdown of components, data flow, and security architecture is available in [`docs/architecture/overview.md`](docs/architecture/overview.md).
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm 10+
+- PostgreSQL 15 (local instance or managed service)
+- Docker Desktop (optional, required for local container orchestration features)
+
+### Local Development Workflow
 
 ```bash
-# 1. Clone the repository
+# Clone and install dependencies
 git clone https://github.com/E-Code-AI/e-code.git
 cd e-code
-
-# 2. Install dependencies
 npm install
 
-# 3. Set up environment variables
+# Copy environment template and configure secrets
 cp .env.production.example .env
-# Edit .env with your database and API keys
-# Optional services can be enabled as needed:
-#   ENABLE_MCP_SERVER=true    # Start the standalone MCP server (disabled by default)
-#   REDIS_URL=redis://...     # Enable Redis-backed caching
+# Populate the following minimum variables:
+#   DATABASE_URL=postgresql://user:pass@localhost:5432/ecode_dev
+#   SESSION_SECRET=replace-with-random-string
+#   OPENAI_API_KEY=your-openai-key
+#   ANTHROPIC_API_KEY=your-anthropic-key
+#   GOOGLE_GENAI_API_KEY=optional-google-models
 
-# 4. Start PostgreSQL (or use Docker)
-docker run --name ecode-postgres -e POSTGRES_DB=ecode_dev -e POSTGRES_USER=ecode -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15
-
-# 5. Set up database
+# Provision the database schema
 npm run db:push
 
-# 6. Start development server
+# Launch the full stack in development mode
 npm run dev
 ```
 
-### Production Deployment
+During development, the server listens on `http://localhost:5000` and proxies frontend assets through Vite for hot module reloading. A seeded account (`testuser` / `testpass123`) is created automatically when running in development mode.
 
-```bash
-# 1. Set environment variables
-export DATABASE_URL="postgresql://user:pass@host:5432/dbname"
-export SESSION_SECRET="your-secret-key"
-export OPENAI_API_KEY="your-openai-key"
-export ANTHROPIC_API_KEY="your-anthropic-key"
+### Production Deployment Snapshot
 
-# 2. Run deployment script
-./deploy-production.sh
+The repository includes automation scripts for container-based deployments:
 
-# 3. Start production server
-NODE_ENV=production npm start
-```
+1. Export production secrets (`DATABASE_URL`, `SESSION_SECRET`, provider keys, storage credentials).
+2. Build distributable bundles: `npm run build`.
+3. Execute `./deploy-production.sh` to provision infrastructure, apply migrations, and start the Express server.
+4. Configure HTTPS termination and desired port mappings (Cloud Run, Kubernetes, or VM-based targets).
 
-## 🏗️ Architecture
+For Google Cloud reference architectures and scaling strategies, see [`docs/operations/deployment-playbook.md`](docs/operations/deployment-playbook.md).
 
-### Single-Port Production Architecture (Replit Deploy Ready)
+## Testing & Quality Gates
 
-The platform uses a **single-port architecture** optimized for Replit Deploy:
+- `npm test` – Runs integration and smoke tests from `test/`.
+- `npm run typecheck` – Validates shared TypeScript contracts.
+- `npm run typecheck:full` – Performs exhaustive client + server type validation (requires ~8 GB RAM).
+- `npm run build` – Bundles the client and server for production deployments.
 
-- **Main Server**: Express.js + React (Port 5000 → External Port 80)
-  - All services accessible through path-based routing
-  - WebSocket support for real-time features
-  
-**Internal Services** (localhost only):
-- **Go Runtime**: Container & file operations (Port 8080)
-  - Proxied through `/polyglot/go/*`
-- **Python ML**: AI/ML processing (Port 8081)
-  - Proxied through `/polyglot/python/*`
-- **Preview Services**: Live preview system (Ports 8000+)
-  - Proxied through `/preview/:projectId/:port/*`
+CI pipelines can be configured to require all commands above prior to merging changes.
 
-**Benefits**:
-- ✅ Single external port (compatible with Replit Deploy)
-- ✅ No wildcard subdomains required
-- ✅ WebSocket support maintained
-- ✅ Internal services secured (localhost only)
+## Documentation Index
 
-📖 See [REPLIT_SINGLE_PORT_ARCHITECTURE.md](./REPLIT_SINGLE_PORT_ARCHITECTURE.md) for detailed documentation.
+- [`docs/getting-started.md`](docs/getting-started.md) – Extended onboarding, environment variables, and troubleshooting.
+- [`docs/product-tour.md`](docs/product-tour.md) – Feature walkthroughs with UI entry points and workflow checklists.
+- [`docs/architecture/overview.md`](docs/architecture/overview.md) – System diagrams, runtime topology, and module ownership.
+- [`docs/operations/deployment-playbook.md`](docs/operations/deployment-playbook.md) – Deployment patterns, observability, and rollback procedures.
 
-## 🧪 Platform Status
-
-✅ **100% Functional** - Ready for production use like Replit.com
-
-- All core features implemented and tested
-- Container orchestration with UI integration
-- AI agent system with 70+ tools
-- Real-time collaboration and terminal
-- Deployment system with SSL support
-- Multi-language runtime support
-- Authentication and billing systems
-
-### Testing Single-Port Architecture
-
-```bash
-# Verify the implementation
-./verify-single-port.sh
-
-# Start development server
-npm run dev
-
-# Test proxy routes:
-# - Main app: http://localhost:5000/
-# - Preview: http://localhost:5000/preview/:projectId/:port/
-# - Go runtime: http://localhost:5000/polyglot/go/health
-# - Python ML: http://localhost:5000/polyglot/python/health
-```
-
-## 🔧 Development
-
-```bash
-# Build the application
-npm run build
-
-# Type checking
-# Shared schema only (fast sanity check used in CI)
-npm run typecheck
-
-# Full stack type checking (includes client + server placeholders; currently surfaces thousands of TODO typings)
-NODE_OPTIONS="--max-old-space-size=8192" npm run typecheck:full
-
-# Run the automated test suites (requires dependencies installed via `npm install`)
-npm test
-
-# Database operations
-npm run db:push
-
-# Test platform features
-npm run dev
-```
-
-## 🌟 Test Users
-
-- **Username**: `testuser`
-- **Password**: `testpass123`
-- **Email**: `test@example.com`
-
-## 📚 Documentation
-
-See the following files for detailed information:
-- `REPLIT_PARITY_AUDIT_FINAL.md` - Feature parity analysis
-- `test-platform-features.md` - Operational status
-- `DEPLOYMENT.md` - Production deployment guide
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-### 🛠️ Troubleshooting
-
-#### Git index lock prevents new commands
-If Git reports `fatal: Unable to create '.../.git/index.lock': File exists`, a previous command may have terminated unexpectedly. Run the helper script to safely remove the stale lock:
-
-```bash
-./scripts/cleanup-git-lock.sh
-```
-
-The script verifies that the repository exists, removes the stale `.git/index.lock` file when necessary, and leaves a confirmation message so you know whether any cleanup was required.
+We update documentation alongside each release; please open an issue or contact [docs@e-code.dev](mailto:docs@e-code.dev) for questions or requests.
