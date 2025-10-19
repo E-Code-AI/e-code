@@ -12,7 +12,6 @@ type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 type Expectation<T> = {
   toBe(expected: Primitive | T): void;
   toEqual(expected: unknown): void;
-  toBeDefined(): void;
   toBeTruthy(): void;
   toBeFalsy(): void;
   toContain(expected: unknown): void;
@@ -47,12 +46,12 @@ function createExpectation<T>(actual: T): Expectation<T> {
   return {
     toBe(expected) {
       if (!Object.is(actual, expected)) {
-        throw new Error(`Expected ${formatValue(actual)} to be ${formatValue(expected)}`);
+        assertionError(`Expected ${formatValue(actual)} to be ${formatValue(expected)}`);
       }
     },
     toEqual(expected) {
       if (!deepEqual(actual, expected)) {
-        throw new Error(`Expected ${formatValue(actual)} to equal ${formatValue(expected)}`);
+        throw new Error(`Expected ${formatValue(actual)} to deeply equal ${formatValue(expected)}`);
       }
     },
     toBeDefined() {
@@ -136,6 +135,9 @@ function createExpectation<T>(actual: T): Expectation<T> {
       if (typeof actual !== 'number') {
         throw new TypeError('toBeGreaterThan requires a numeric value');
       }
+    },
+    toBeGreaterThan(expected) {
+      ensureNumber(actual, 'toBeGreaterThan');
       if (!(actual > expected)) {
         throw new Error(`Expected ${formatValue(actual)} to be greater than ${formatValue(expected)}`);
       }
@@ -164,7 +166,7 @@ function createExpectation<T>(actual: T): Expectation<T> {
         throw new Error(`Expected ${formatValue(actual)} to be less than or equal to ${formatValue(expected)}`);
       }
     },
-  };
+  });
 }
 
 export function setupTestGlobals(): void {
