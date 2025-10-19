@@ -2572,6 +2572,197 @@ export class DatabaseStorage implements IStorage {
       .where(whereClause)
       .orderBy(desc(aiUsageRecords.createdAt));
   }
+
+  // Custom Prompts implementations
+  async createPromptTemplate(template: InsertPromptTemplate): Promise<PromptTemplate> {
+    const [created] = await this.db.insert(promptTemplates).values(template).returning();
+    return created;
+  }
+
+  async getPromptTemplates(filters?: { category?: string; isSystem?: boolean; isPublic?: boolean }): Promise<PromptTemplate[]> {
+    let query = this.db.select().from(promptTemplates);
+    const conditions: SQL[] = [];
+
+    if (filters?.category) {
+      conditions.push(eq(promptTemplates.category, filters.category));
+    }
+    if (filters?.isSystem !== undefined) {
+      conditions.push(eq(promptTemplates.isSystem, filters.isSystem));
+    }
+    if (filters?.isPublic !== undefined) {
+      conditions.push(eq(promptTemplates.isPublic, filters.isPublic));
+    }
+
+    if (conditions.length > 0) {
+      const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
+      query = query.where(whereClause);
+    }
+
+    return await query.orderBy(desc(promptTemplates.usageCount), desc(promptTemplates.createdAt));
+  }
+
+  async getPromptTemplate(id: number): Promise<PromptTemplate | undefined> {
+    const [template] = await this.db.select().from(promptTemplates).where(eq(promptTemplates.id, id));
+    return template;
+  }
+
+  async updatePromptTemplate(id: number, template: Partial<InsertPromptTemplate>): Promise<PromptTemplate | undefined> {
+    const [updated] = await this.db
+      .update(promptTemplates)
+      .set({ ...template, updatedAt: new Date() })
+      .where(eq(promptTemplates.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deletePromptTemplate(id: number): Promise<boolean> {
+    const deleted = await this.db.delete(promptTemplates).where(eq(promptTemplates.id, id));
+    return deleted.rowCount > 0;
+  }
+
+  async createCustomPrompt(prompt: InsertCustomPrompt): Promise<CustomPrompt> {
+    const [created] = await this.db.insert(customPrompts).values(prompt).returning();
+    return created;
+  }
+
+  async getUserCustomPrompts(userId: string): Promise<CustomPrompt[]> {
+    return await this.db
+      .select()
+      .from(customPrompts)
+      .where(eq(customPrompts.userId, userId))
+      .orderBy(desc(customPrompts.isFavorite), desc(customPrompts.usageCount));
+  }
+
+  async getCustomPrompt(id: number): Promise<CustomPrompt | undefined> {
+    const [prompt] = await this.db.select().from(customPrompts).where(eq(customPrompts.id, id));
+    return prompt;
+  }
+
+  async updateCustomPrompt(id: number, prompt: Partial<InsertCustomPrompt>): Promise<CustomPrompt | undefined> {
+    const [updated] = await this.db
+      .update(customPrompts)
+      .set({ ...prompt, updatedAt: new Date() })
+      .where(eq(customPrompts.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCustomPrompt(id: number): Promise<boolean> {
+    const deleted = await this.db.delete(customPrompts).where(eq(customPrompts.id, id));
+    return deleted.rowCount > 0;
+  }
+
+  async createProjectAiRule(rule: InsertProjectAiRule): Promise<ProjectAiRule> {
+    const [created] = await this.db.insert(projectAiRules).values(rule).returning();
+    return created;
+  }
+
+  async getProjectAiRules(projectId: string, activeOnly?: boolean): Promise<ProjectAiRule[]> {
+    let query = this.db.select().from(projectAiRules).where(eq(projectAiRules.projectId, projectId));
+    
+    if (activeOnly) {
+      query = query.where(and(eq(projectAiRules.projectId, projectId), eq(projectAiRules.isActive, true)));
+    }
+
+    return await query.orderBy(desc(projectAiRules.priority));
+  }
+
+  async getProjectAiRule(id: number): Promise<ProjectAiRule | undefined> {
+    const [rule] = await this.db.select().from(projectAiRules).where(eq(projectAiRules.id, id));
+    return rule;
+  }
+
+  async updateProjectAiRule(id: number, rule: Partial<InsertProjectAiRule>): Promise<ProjectAiRule | undefined> {
+    const [updated] = await this.db
+      .update(projectAiRules)
+      .set({ ...rule, updatedAt: new Date() })
+      .where(eq(projectAiRules.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteProjectAiRule(id: number): Promise<boolean> {
+    const deleted = await this.db.delete(projectAiRules).where(eq(projectAiRules.id, id));
+    return deleted.rowCount > 0;
+  }
+
+  async createPromptUsageHistory(usage: InsertPromptUsageHistory): Promise<PromptUsageHistory> {
+    const [created] = await this.db.insert(promptUsageHistory).values(usage).returning();
+    
+    // Update usage count for associated prompt or template
+    if (usage.customPromptId) {
+      await this.db
+        .update(customPrompts)
+        .set({ 
+          usageCount: sql`${customPrompts.usageCount} + 1`,
+          lastUsedAt: new Date()
+        })
+        .where(eq(customPrompts.id, usage.customPromptId));
+    }
+    if (usage.templateId) {
+      await this.db
+        .update(promptTemplates)
+        .set({ 
+          usageCount: sql`${promptTemplates.usageCount} + 1`
+        })
+        .where(eq(promptTemplates.id, usage.templateId));
+    }
+
+    return created;
+  }
+
+  async getPromptUsageHistory(filters: { userId?: string; projectId?: string; limit?: number }): Promise<PromptUsageHistory[]> {
+    let query = this.db.select().from(promptUsageHistory);
+    const conditions: SQL[] = [];
+
+    if (filters.userId) {
+      conditions.push(eq(promptUsageHistory.userId, filters.userId));
+    }
+    if (filters.projectId) {
+      conditions.push(eq(promptUsageHistory.projectId, filters.projectId));
+    }
+
+    if (conditions.length > 0) {
+      const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
+      query = query.where(whereClause);
+    }
+
+    query = query.orderBy(desc(promptUsageHistory.createdAt));
+    
+    if (filters.limit) {
+      query = query.limit(filters.limit);
+    }
+
+    return await query;
+  }
+
+  async createPromptTemplateRating(rating: InsertPromptTemplateRating): Promise<PromptTemplateRating> {
+    const [created] = await this.db.insert(promptTemplateRatings).values(rating).returning();
+    
+    // Update average rating for the template
+    await this.updatePromptTemplateRating(rating.templateId);
+    
+    return created;
+  }
+
+  async getPromptTemplateRatings(templateId: number): Promise<PromptTemplateRating[]> {
+    return await this.db
+      .select()
+      .from(promptTemplateRatings)
+      .where(eq(promptTemplateRatings.templateId, templateId))
+      .orderBy(desc(promptTemplateRatings.createdAt));
+  }
+
+  async updatePromptTemplateRating(templateId: number): Promise<void> {
+    const ratings = await this.getPromptTemplateRatings(templateId);
+    if (ratings.length > 0) {
+      const average = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+      await this.db
+        .update(promptTemplates)
+        .set({ rating: average })
+        .where(eq(promptTemplates.id, templateId));
+    }
+  }
 }
 
 // Initialize storage

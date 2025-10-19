@@ -8896,6 +8896,204 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
+  // Custom Prompts API endpoints
+  // Prompt Templates
+  app.get('/api/ai/prompt-templates', ensureAuthenticated, async (req, res) => {
+    try {
+      const { category, isSystem, isPublic } = req.query;
+      const filters = {
+        category: category as string,
+        isSystem: isSystem === 'true',
+        isPublic: isPublic === 'true'
+      };
+      
+      const templates = await storage.getPromptTemplates(filters);
+      res.json(templates);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error fetching templates:', error);
+      res.status(500).json({ error: 'Failed to fetch prompt templates' });
+    }
+  });
+
+  app.post('/api/ai/prompt-templates', ensureAuthenticated, async (req, res) => {
+    try {
+      const template = await storage.createPromptTemplate({
+        ...req.body,
+        createdBy: req.user.id,
+        isSystem: false
+      });
+      res.json(template);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error creating template:', error);
+      res.status(500).json({ error: 'Failed to create prompt template' });
+    }
+  });
+
+  app.put('/api/ai/prompt-templates/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const template = await storage.updatePromptTemplate(parseInt(id), req.body);
+      res.json(template);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error updating template:', error);
+      res.status(500).json({ error: 'Failed to update prompt template' });
+    }
+  });
+
+  app.delete('/api/ai/prompt-templates/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await storage.deletePromptTemplate(parseInt(id));
+      res.json({ success: result });
+    } catch (error) {
+      logger.error('[Custom Prompts] Error deleting template:', error);
+      res.status(500).json({ error: 'Failed to delete prompt template' });
+    }
+  });
+
+  // Custom Prompts
+  app.get('/api/ai/custom-prompts', ensureAuthenticated, async (req, res) => {
+    try {
+      const prompts = await storage.getUserCustomPrompts(req.user.id);
+      res.json(prompts);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error fetching custom prompts:', error);
+      res.status(500).json({ error: 'Failed to fetch custom prompts' });
+    }
+  });
+
+  app.post('/api/ai/custom-prompts', ensureAuthenticated, async (req, res) => {
+    try {
+      const prompt = await storage.createCustomPrompt({
+        ...req.body,
+        userId: req.user.id
+      });
+      res.json(prompt);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error creating custom prompt:', error);
+      res.status(500).json({ error: 'Failed to create custom prompt' });
+    }
+  });
+
+  app.put('/api/ai/custom-prompts/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const prompt = await storage.updateCustomPrompt(parseInt(id), req.body);
+      res.json(prompt);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error updating custom prompt:', error);
+      res.status(500).json({ error: 'Failed to update custom prompt' });
+    }
+  });
+
+  app.delete('/api/ai/custom-prompts/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await storage.deleteCustomPrompt(parseInt(id));
+      res.json({ success: result });
+    } catch (error) {
+      logger.error('[Custom Prompts] Error deleting custom prompt:', error);
+      res.status(500).json({ error: 'Failed to delete custom prompt' });
+    }
+  });
+
+  // Project AI Rules
+  app.get('/api/projects/:projectId/ai-rules', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { activeOnly } = req.query;
+      const rules = await storage.getProjectAiRules(projectId, activeOnly === 'true');
+      res.json(rules);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error fetching project AI rules:', error);
+      res.status(500).json({ error: 'Failed to fetch project AI rules' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/ai-rules', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const rule = await storage.createProjectAiRule({
+        ...req.body,
+        projectId
+      });
+      res.json(rule);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error creating project AI rule:', error);
+      res.status(500).json({ error: 'Failed to create project AI rule' });
+    }
+  });
+
+  app.put('/api/ai-rules/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const rule = await storage.updateProjectAiRule(parseInt(id), req.body);
+      res.json(rule);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error updating project AI rule:', error);
+      res.status(500).json({ error: 'Failed to update project AI rule' });
+    }
+  });
+
+  app.delete('/api/ai-rules/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await storage.deleteProjectAiRule(parseInt(id));
+      res.json({ success: result });
+    } catch (error) {
+      logger.error('[Custom Prompts] Error deleting project AI rule:', error);
+      res.status(500).json({ error: 'Failed to delete project AI rule' });
+    }
+  });
+
+  // Prompt Usage History
+  app.get('/api/ai/prompt-history', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, limit } = req.query;
+      const history = await storage.getPromptUsageHistory({
+        userId: req.user.id,
+        projectId: projectId as string,
+        limit: limit ? parseInt(limit as string) : 50
+      });
+      res.json(history);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error fetching prompt history:', error);
+      res.status(500).json({ error: 'Failed to fetch prompt history' });
+    }
+  });
+
+  app.post('/api/ai/prompt-history', ensureAuthenticated, async (req, res) => {
+    try {
+      const history = await storage.createPromptUsageHistory({
+        ...req.body,
+        userId: req.user.id
+      });
+      res.json(history);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error creating prompt history:', error);
+      res.status(500).json({ error: 'Failed to create prompt history' });
+    }
+  });
+
+  // Template Ratings
+  app.post('/api/ai/prompt-templates/:id/rate', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { rating, comment } = req.body;
+      
+      const ratingRecord = await storage.createPromptTemplateRating({
+        templateId: parseInt(id),
+        userId: req.user.id,
+        rating,
+        comment
+      });
+      res.json(ratingRecord);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error rating template:', error);
+      res.status(500).json({ error: 'Failed to rate template' });
+    }
+  });
+  
   // AI Assistant endpoint for project chat
   app.post('/api/projects/:projectId/ai/chat', ensureAuthenticated, async (req, res) => {
     try {
