@@ -31,7 +31,7 @@ class TestRunner {
 
     const stack = new Error().stack?.split('\n') ?? [];
     for (const line of stack) {
-      const match = line.match(/(\/[^:]+\.(?:test|spec)\.[tj]sx?)/i);
+      const match = line.match(/((?:[A-Za-z]:)?[\\/][^:]+?\.(?:test|spec)\.[tj]sx?)/i);
       if (match) {
         const resolved = match[1];
         const relative = path.relative(process.cwd(), resolved);
