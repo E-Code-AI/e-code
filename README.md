@@ -77,7 +77,8 @@ For Google Cloud reference architectures and scaling strategies, see [`docs/oper
 
 ## Testing & Quality Gates
 
-- `npm test` – Runs integration and smoke tests from `test/`.
+- `npm test` – Executes all suites via the lightweight TypeScript runner in `test/run-tests.ts`.
+  - Pass an optional filter to scope execution: `npm test -- "Security"` runs only matching suites/tests.
 - `npm run typecheck` – Validates shared TypeScript contracts.
 - `npm run typecheck:full` – Performs exhaustive client + server type validation (requires ~8 GB RAM).
 - `npm run build` – Bundles the client and server for production deployments.

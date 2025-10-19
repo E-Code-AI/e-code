@@ -18,6 +18,7 @@ This directory curates the source of truth for onboarding, platform architecture
 - `architecture/overview.md`
 - `operations/deployment-playbook.md`
 - `preview.md` – UI preview configuration reference.
+- `testing.md` – Lightweight TypeScript runner usage and authoring guidance.
 - `AI_UX_FEATURES.md` – Details of the AI UX experimentation toolkit.
 - `git-troubleshooting.md` – FAQ for resolving Git integration issues.
 
