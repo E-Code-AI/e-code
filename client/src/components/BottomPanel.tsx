@@ -1,14 +1,16 @@
 // @ts-nocheck
 import { useState } from "react";
 import { File } from "@shared/schema";
-import { Terminal, AlertCircle, X } from "lucide-react";
+import { Terminal, AlertCircle, Workflow, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { ReplitWorkflows } from "@/components/ReplitWorkflows";
 
 interface BottomPanelProps {
   activeFile: File | undefined;
+  projectId?: number;
 }
 
 type LogType = "info" | "error" | "warning" | "success";
@@ -20,7 +22,7 @@ interface LogMessage {
   timestamp: Date;
 }
 
-const BottomPanel = ({ activeFile }: BottomPanelProps) => {
+const BottomPanel = ({ activeFile, projectId }: BottomPanelProps) => {
   const [logs, setLogs] = useState<LogMessage[]>([
     { id: 1, type: "info", message: "Running application...", timestamp: new Date() },
     { id: 2, type: "success", message: "Application started successfully", timestamp: new Date() },
@@ -84,10 +86,14 @@ const BottomPanel = ({ activeFile }: BottomPanelProps) => {
                 {problems.length}
               </Badge>
             </TabsTrigger>
+            <TabsTrigger value="workflows" className="flex gap-2 h-8">
+              <Workflow className="h-4 w-4" />
+              <span>Workflows</span>
+            </TabsTrigger>
           </TabsList>
-          
+
           <div className="flex items-center pr-2">
-            <button 
+            <button
               className="p-1 hover:bg-accent hover:text-accent-foreground rounded-sm"
               onClick={() => setLogs([])}
               title="Clear console"
@@ -124,7 +130,7 @@ const BottomPanel = ({ activeFile }: BottomPanelProps) => {
             </div>
           </ScrollArea>
         </TabsContent>
-        
+
         <TabsContent value="problems" className="flex-1 p-0 m-0">
           <ScrollArea className="h-full">
             <div className="p-4 space-y-2">
@@ -152,6 +158,20 @@ const BottomPanel = ({ activeFile }: BottomPanelProps) => {
                     </div>
                   </div>
                 ))
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="workflows" className="flex-1 p-0 m-0">
+          <ScrollArea className="h-full">
+            <div className="p-4">
+              {projectId ? (
+                <ReplitWorkflows projectId={projectId} />
+              ) : (
+                <div className="text-sm text-muted-foreground py-8 text-center">
+                  Project information unavailable. Open a project to manage workflows.
+                </div>
               )}
             </div>
           </ScrollArea>
