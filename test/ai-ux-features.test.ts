@@ -85,4 +85,6 @@ testRunner.registerSuite('AI UX Feature Flags', {
       },
     },
   ],
+testRunner.registerSuite('AI UX Features', {
+  tests: [],
 });
