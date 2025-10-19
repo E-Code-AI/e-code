@@ -166,18 +166,42 @@ export default function AI() {
   };
 
   // Transform API data with proper icons
-  const transformedFeatures = aiData ? Object.entries(aiData.features).reduce((acc, [key, feature]) => ({
-    ...acc,
-    [key]: {
-      ...feature,
-      icon: featureIconMap[feature.icon] || Brain
-    }
-  }), {} as Record<FeatureKey, typeof features['autonomous']>) : features;
+  const transformedFeatures = aiData?.features
+    ? Object.entries(aiData.features).reduce((acc, [key, feature]) => {
+        if (!feature || typeof feature !== 'object') {
+          return acc;
+        }
 
-  const useCases = aiData ? aiData.useCases.map(useCase => ({
-    ...useCase,
-    icon: useCaseIconMap[useCase.icon] || Users
-  })) : [
+        const iconName = typeof feature.icon === 'string' ? feature.icon : '';
+        const IconComponent = featureIconMap[iconName] || Brain;
+        const details = Array.isArray(feature.details) ? feature.details : [];
+
+        if (!(key in acc)) {
+          return acc;
+        }
+
+        return {
+          ...acc,
+          [key]: {
+            ...feature,
+            icon: IconComponent,
+            details
+          }
+        };
+      }, { ...features })
+    : features;
+
+  const useCases = Array.isArray(aiData?.useCases) && aiData.useCases.length
+    ? aiData.useCases
+        .filter((useCase) => useCase && typeof useCase === 'object')
+        .map((useCase) => {
+          const iconName = typeof useCase.icon === 'string' ? useCase.icon : '';
+          return {
+            ...useCase,
+            icon: useCaseIconMap[iconName] || Users
+          };
+        })
+    : [
     {
       title: 'Complete Beginners',
       description: 'Never coded before? Describe your app idea and watch it come to life.',
@@ -204,10 +228,17 @@ export default function AI() {
     }
   ];
 
-  const aiTools = aiData ? aiData.aiTools.map(tool => ({
-    ...tool,
-    icon: toolIconMap[tool.icon] || Wrench
-  })) : [
+  const aiTools = Array.isArray(aiData?.aiTools) && aiData.aiTools.length
+    ? aiData.aiTools
+        .filter((tool) => tool && typeof tool === 'object')
+        .map((tool) => {
+          const iconName = typeof tool.icon === 'string' ? tool.icon : '';
+          return {
+            ...tool,
+            icon: toolIconMap[iconName] || Wrench
+          };
+        })
+    : [
     { name: 'Web Search', icon: Search, description: 'Find real-time information' },
     { name: 'Visual Editor', icon: Eye, description: 'Draw designs to convert to code' },
     { name: 'Code Analysis', icon: FileSearch, description: 'Understand existing code' },

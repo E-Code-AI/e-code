@@ -196,6 +196,10 @@ type Expectation<T> = {
   toBeTruthy(): void;
   toBeFalsy(): void;
   toContain(expected: unknown): void;
+  toBeGreaterThan(expected: number): void;
+  toBeGreaterThanOrEqual(expected: number): void;
+  toBeLessThan(expected: number): void;
+  toBeLessThanOrEqual(expected: number): void;
 };
 
 const isPrimitive = (value: unknown): value is Primitive =>
@@ -291,6 +295,38 @@ function createExpectation<T>(actual: T): Expectation<T> {
       }
 
       throw new Error('toContain matcher requires an array or value supporting includes');
+    },
+    toBeGreaterThan(expected) {
+      if (typeof actual !== 'number') {
+        throw new Error('toBeGreaterThan matcher requires a numeric actual value');
+      }
+      if (!(actual > expected)) {
+        throw new Error(`Expected ${formatValue(actual)} to be greater than ${formatValue(expected)}`);
+      }
+    },
+    toBeGreaterThanOrEqual(expected) {
+      if (typeof actual !== 'number') {
+        throw new Error('toBeGreaterThanOrEqual matcher requires a numeric actual value');
+      }
+      if (!(actual >= expected)) {
+        throw new Error(`Expected ${formatValue(actual)} to be greater than or equal to ${formatValue(expected)}`);
+      }
+    },
+    toBeLessThan(expected) {
+      if (typeof actual !== 'number') {
+        throw new Error('toBeLessThan matcher requires a numeric actual value');
+      }
+      if (!(actual < expected)) {
+        throw new Error(`Expected ${formatValue(actual)} to be less than ${formatValue(expected)}`);
+      }
+    },
+    toBeLessThanOrEqual(expected) {
+      if (typeof actual !== 'number') {
+        throw new Error('toBeLessThanOrEqual matcher requires a numeric actual value');
+      }
+      if (!(actual <= expected)) {
+        throw new Error(`Expected ${formatValue(actual)} to be less than or equal to ${formatValue(expected)}`);
+      }
     },
   };
 }
