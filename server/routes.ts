@@ -2060,48 +2060,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const aboutData = {
         values: [
           {
-            icon: 'Lightbulb',
-            title: 'Simple Yet Powerful',
-            description: 'Making complex technology feel easy and approachable for everyone'
+            icon: 'Target',
+            title: 'Impact-Led Vision',
+            description: 'We pair bold imagination with disciplined execution to ship transformative developer experiences.'
           },
           {
             icon: 'Users',
-            title: 'Community for All',
-            description: 'A welcoming space for beginners, students, hobbyists, and professionals alike'
+            title: 'Creator-First Partnerships',
+            description: 'Every workflow is co-designed with customers to move their teams from idea to production faster.'
           },
           {
             icon: 'Globe',
-            title: 'No Barriers to Entry',
-            description: 'Start creating immediately - no downloads, installations, or technical setup'
+            title: 'Global-by-Design Infrastructure',
+            description: 'Six sovereign-ready regions deliver enterprise-grade resiliency, compliance, and reach.'
           },
           {
             icon: 'Heart',
-            title: 'Learning Made Fun',
-            description: 'We make the journey from curious beginner to confident creator enjoyable'
+            title: 'Inclusive Innovation Culture',
+            description: 'We invest in the people behind the code so that creativity, safety, and belonging scale together.'
           }
         ],
         milestones: [
-          { year: '2016', event: 'Founded to make coding accessible to everyone' },
-          { year: '2018', event: 'Introduced real-time collaboration for learning together' },
-          { year: '2020', event: 'Reached 10 million learners and creators worldwide' },
-          { year: '2022', event: 'Added AI helpers to guide beginners' },
-          { year: '2024', event: 'Launched revolutionary AI Agent - build complete apps in seconds' },
-          { year: '2025', event: '20 million people discovering the joy of coding' }
+          { year: '2022', event: 'E-Code founded with a vision to create the Vibe coding platform.' },
+          { year: '2023', event: 'Launched private alpha with design partners across three continents.' },
+          { year: '2024', event: 'Secured lighthouse enterprise customers and orchestrated 5,000 pilot launches.' },
+          { year: 'Q1 2025', event: 'Announced $180M Series B funding and global debut of the Vibe platform.' },
+          { year: 'Q3 2025', event: 'Expanded Fortune 500 partnerships with managed compliance and AI governance.' }
         ],
         team: [
-          { name: 'Simon Benarrous', role: 'CEO', avatar: 'SB' },
-          { name: 'Avraham Ezra', role: 'CTO', avatar: 'AE' },
-          { name: 'Yehzkiel Aboujdid', role: 'VP of Engineering', avatar: 'YA' },
-          { name: 'Avraham Frenkel', role: 'VP of Product', avatar: 'AF' },
-          { name: 'Sabriim Atoudi', role: 'VP of Design', avatar: 'SA' },
-          { name: 'Moise Kim', role: 'VP of Growth', avatar: 'MK' }
+          { name: 'Simon Benarrous', role: 'Chief Executive Officer', avatar: 'SB' },
+          { name: 'Avraham Ezra', role: 'Chief Technology Officer', avatar: 'AE' },
+          { name: 'Yehzkiel Aboujdid', role: 'EVP, Engineering & Cloud', avatar: 'YA' },
+          { name: 'Avraham Frenkel', role: 'Chief Product & Strategy Officer', avatar: 'AF' },
+          { name: 'Sabriim Atoudi', role: 'Chief Experience Officer', avatar: 'SA' },
+          { name: 'Moise Kim', role: 'Chief Revenue Officer', avatar: 'MK' }
         ],
-        stats: {
-          users: '20M+',
-          projects: '100M+',
-          deployments: '50M+',
-          countries: '190+'
-        }
+        stats: [
+          {
+            icon: 'Rocket',
+            label: 'Launch Velocity',
+            value: '11x faster',
+            description: 'Average reduction in time-to-production for enterprise software initiatives.'
+          },
+          {
+            icon: 'Building2',
+            label: 'Strategic Partnerships',
+            value: '80+',
+            description: 'Fortune 500 and high-growth scaleups powering their builders with Vibe workspaces.'
+          },
+          {
+            icon: 'GraduationCap',
+            label: 'Skilling Impact',
+            value: '120K+',
+            description: 'Engineers and analysts upskilled through Vibe-guided learning pathways in 2024 alone.'
+          },
+          {
+            icon: 'Globe',
+            label: 'Global Regions',
+            value: '6',
+            description: 'Enterprise-grade regions with in-market compliance and 24/7 bilingual support.'
+          }
+        ]
       };
       
       res.json(aboutData);
