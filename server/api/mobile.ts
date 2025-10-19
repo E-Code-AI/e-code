@@ -104,7 +104,7 @@ const parseMobileToken = (token: string) => {
       tokenType?: string;
     };
 
-    if (payload.tokenType && payload.tokenType !== 'access') {
+    if (payload.tokenType !== 'access') {
       throw new Error('Invalid token type');
     }
 
