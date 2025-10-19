@@ -113,7 +113,7 @@ All features include comprehensive telemetry tracking:
 Run the focused test suite with the lightweight runner:
 
 ```bash
-npm test -- "AI UX"
+npm test -- test/ai-ux-features.test.ts
 ```
 
 The quoted filter scopes execution to the **AI UX Feature Flags** suite while sharing the common setup harness.
