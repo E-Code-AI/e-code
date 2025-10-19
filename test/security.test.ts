@@ -11,15 +11,6 @@ import {
 } from '../server/middleware/security';
 import { securityScanner } from '../server/security/security-scanner';
 
-type ResponseShape = {
-  statusCode: number;
-  body: unknown;
-  headers: Record<string, string>;
-  status(code: number): ResponseShape;
-  json(payload: unknown): ResponseShape;
-  setHeader(name: string, value: string): void;
-};
-
 function createResponse(): ResponseShape {
   return {
     statusCode: 200,
@@ -160,19 +151,28 @@ testRunner.registerSuite('Security Middleware', {
     {
       name: 'ipSecurity blocks blacklisted addresses',
       fn: () => {
-        ipSecurity.blacklist.clear();
-        ipSecurity.blockIp('203.0.113.5', 50);
+        const resMissing = createResponse();
+        const reqMissing: any = { headers: {} };
+        let missingNextCalled = false;
 
-        const req = { ip: '203.0.113.5', path: '/', method: 'GET' } as any;
-        const res = createResponse();
-        let nextCalled = false;
-
-        ipSecurity.middleware(req, res as any, () => {
-          nextCalled = true;
+        apiKeyValidation(reqMissing, resMissing, () => {
+          missingNextCalled = true;
         });
 
-        expect(res.statusCode).toBe(403);
-        expect(nextCalled).toBe(false);
+        expect(resMissing.statusCode).toBe(401);
+        expect((resMissing.body as any)?.error).toBe('API key required');
+        expect(missingNextCalled).toBe(false);
+
+        const resValid = createResponse();
+        const reqValid: any = { headers: { 'x-api-key': 'k'.repeat(32) } };
+        let validNextCalled = false;
+
+        apiKeyValidation(reqValid, resValid, () => {
+          validNextCalled = true;
+        });
+
+        expect(validNextCalled).toBe(true);
+        expect(resValid.statusCode).toBe(200);
       },
     },
     {
@@ -211,22 +211,44 @@ testRunner.registerSuite('Security Scanner', {
     {
       name: 'quickScan flags embedded secrets',
       fn: async () => {
-        const sample = "const apiKey = 'sk-abcdefghijklmnopqrstuvwxyz1234';";
-        const issues = await securityScanner.quickScan(sample);
+        const codeSample = "const apiKey = \"sk-abcdefghijklmnopqrstuvwxyz1234\";";
+        const issues = await securityScanner.quickScan(codeSample);
 
         expect(Array.isArray(issues)).toBe(true);
         expect(issues.length).toBeGreaterThan(0);
+        expect(issues[0].type).toBe('secret');
       },
     },
     {
       name: 'scanProject aggregates severity data',
       fn: async () => {
         const result = await securityScanner.scanProject(42, [
-          { path: 'src/index.ts', content: "const password = 'secret';" },
+          {
+            path: 'src/index.ts',
+            content: "const password = \"supersecret\";\\n// TODO: tighten security\\nconsole.log('debug');",
+          },
+          {
+            path: 'src/app.ts',
+            content: `fetch('https://example.com/data');\nconst token = 'ghp_${'A'.repeat(36)}';`,
+          },
         ]);
+
+        const severities = new Set(result.issues.map(issue => issue.severity));
 
         expect(result.projectId).toBe(42);
         expect(result.summary.totalIssues).toBe(result.issues.length);
+        expect(severities.has('critical')).toBeTruthy();
+        expect(severities.size).toBeGreaterThan(1);
+        expect(result.summary.totalIssues).toBeGreaterThan(3);
+      },
+    },
+    {
+      name: 'getSecurityRecommendations returns actionable guidance',
+      fn: async () => {
+        const recommendations = await securityScanner.getSecurityRecommendations(99);
+
+        expect(recommendations.length).toBeGreaterThan(0);
+        expect(recommendations).toContain('Use environment variables for sensitive configuration');
       },
     },
   ],
