@@ -4,21 +4,6 @@ ALTER TABLE "push_notifications"
   ADD COLUMN IF NOT EXISTS "read" boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS "read_at" timestamp;
 
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'notification_preferences'
-      AND column_name = 'user_id'
-      AND data_type <> 'integer'
-  ) THEN
-    ALTER TABLE "notification_preferences"
-      ALTER COLUMN "user_id" TYPE integer USING "user_id"::integer;
-  END IF;
-END $$;
-
 CREATE TABLE IF NOT EXISTS "notification_preferences" (
   -- match users.id integer type to keep the foreign key valid
   "user_id" integer PRIMARY KEY,
@@ -35,24 +20,36 @@ DO $$
 BEGIN
   IF EXISTS (
     SELECT 1
-    FROM information_schema.columns
-    WHERE table_name = 'notification_preferences'
-      AND column_name = 'user_id'
-      AND data_type <> 'integer'
-  ) THEN
-    ALTER TABLE "notification_preferences"
-      ALTER COLUMN "user_id" TYPE integer USING "user_id"::integer;
-  END IF;
-
-  IF EXISTS (
-    SELECT 1
     FROM information_schema.tables
-    WHERE table_name = 'notification_preferences'
+    WHERE table_schema = 'public'
+      AND table_name = 'notification_preferences'
   ) THEN
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'notification_preferences'
+        AND column_name = 'user_id'
+        AND data_type <> 'integer'
+    ) THEN
+      IF EXISTS (
+        SELECT 1
+        FROM "notification_preferences"
+        WHERE "user_id" IS NOT NULL
+          AND "user_id" !~ '^[0-9]+$'
+      ) THEN
+        RAISE EXCEPTION 'notification_preferences.user_id contains non-numeric values and cannot be cast to integer safely';
+      END IF;
+
+      ALTER TABLE "notification_preferences"
+        ALTER COLUMN "user_id" TYPE integer USING trim("user_id")::integer;
+    END IF;
+
     IF NOT EXISTS (
       SELECT 1
       FROM information_schema.table_constraints
-      WHERE table_name = 'notification_preferences'
+      WHERE table_schema = 'public'
+        AND table_name = 'notification_preferences'
         AND constraint_name = 'notification_preferences_user_id_users_id_fk'
     ) THEN
       ALTER TABLE "notification_preferences"
@@ -64,7 +61,8 @@ BEGIN
     IF NOT EXISTS (
       SELECT 1
       FROM information_schema.table_constraints
-      WHERE table_name = 'notification_preferences'
+      WHERE table_schema = 'public'
+        AND table_name = 'notification_preferences'
         AND constraint_type = 'PRIMARY KEY'
     ) THEN
       ALTER TABLE "notification_preferences"
