@@ -53,6 +53,11 @@ const logError = (error: unknown): void => {
   }
 };
 
+type PhaseError = {
+  phase: 'beforeEach' | 'test' | 'afterEach';
+  error: unknown;
+};
+
 export const testRunner = {
   registerSuite(name: string, suite: TestSuite): void {
     registeredSuites.push({ name, suite });
@@ -86,50 +91,68 @@ export const testRunner = {
         try {
           await suite.beforeAll();
         } catch (error) {
-          failed += 1;
-          console.error('  ✗ beforeAll hook failed');
-          logError(error);
-          // Continue with remaining suites/tests despite beforeAll failure.
+          for (const test of tests) {
+            failed += 1;
+            console.error(`  ✗ ${test.name} (0ms)`);
+            console.error('    beforeAll failed:');
+            logError(error);
+          }
+
+          if (suite.afterAll) {
+            try {
+              await suite.afterAll();
+            } catch (afterAllError) {
+              console.error('    afterAll cleanup also failed:');
+              logError(afterAllError);
+            }
+          }
+
+          continue;
         }
       }
 
+      const runPhase = async (
+        phase: PhaseError['phase'],
+        fn: () => MaybePromise<void>,
+        errors: PhaseError[],
+      ): Promise<boolean> => {
+        try {
+          await fn();
+          return true;
+        } catch (error) {
+          errors.push({ phase, error });
+          return false;
+        }
+      };
+
       for (const test of tests) {
         const started = performance.now();
-        const errors: unknown[] = [];
+        const errors: PhaseError[] = [];
+        const beforeEachSucceeded = !suite.beforeEach
+          || (await runPhase('beforeEach', suite.beforeEach, errors));
 
-        if (suite.beforeEach) {
-          try {
-            await suite.beforeEach();
-          } catch (error) {
-            errors.push(error);
+        try {
+          if (beforeEachSucceeded) {
+            await runPhase('test', test.fn, errors);
           }
-        }
-
-        if (errors.length === 0) {
-          try {
-            await test.fn();
-          } catch (error) {
-            errors.push(error);
-          }
-        }
-
-        if (suite.afterEach) {
-          try {
-            await suite.afterEach();
-          } catch (error) {
-            errors.push(error);
+        } finally {
+          if (suite.afterEach) {
+            await runPhase('afterEach', suite.afterEach, errors);
           }
         }
 
         const duration = performance.now() - started;
 
-        if (errors.length > 0) {
-          failed += 1;
-          console.error(`  ✗ ${test.name} (${formatDuration(duration)})`);
-          errors.forEach((error) => logError(error));
-        } else {
+        if (errors.length === 0) {
           passed += 1;
           console.log(`  ✓ ${test.name} (${formatDuration(duration)})`);
+        } else {
+          failed += 1;
+          console.error(`  ✗ ${test.name} (${formatDuration(duration)})`);
+          for (const { phase, error } of errors) {
+            console.error(`    ${phase} failed:`);
+            logError(error);
+          }
         }
       }
 
@@ -138,7 +161,7 @@ export const testRunner = {
           await suite.afterAll();
         } catch (error) {
           failed += 1;
-          console.error('  ✗ afterAll hook failed');
+          console.error('  ✗ afterAll failed:');
           logError(error);
         }
       }

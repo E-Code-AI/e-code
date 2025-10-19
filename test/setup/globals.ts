@@ -9,8 +9,8 @@ declare global {
 
 type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
-type Matcher = {
-  toBe(expected: Primitive): void;
+type Expectation<T> = {
+  toBe(expected: Primitive | T): void;
   toEqual(expected: unknown): void;
   toBeDefined(): void;
   toBeTruthy(): void;
@@ -18,135 +18,158 @@ type Matcher = {
   toContain(expected: unknown): void;
   toHaveLength(expected: number): void;
   toMatchObject(expected: Record<string, unknown>): void;
-  toBeInstanceOf(expected: new (...args: any[]) => any): void;
+  toBeInstanceOf(expected: new (...args: any[]) => unknown): void;
+  toThrow(message?: string | RegExp): void;
   toBeGreaterThan(expected: number): void;
   toBeGreaterThanOrEqual(expected: number): void;
   toBeLessThan(expected: number): void;
   toBeLessThanOrEqual(expected: number): void;
-  toThrow(message?: string | RegExp): void;
 };
 
-const formatValue = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : util.inspect(value, { depth: 4, colors: false });
+type ExpectFn = <T>(actual: T) => Expectation<T>;
 
-function createExpect() {
-  const expectFn = (actual: unknown): Matcher => {
-    const assert = (condition: boolean, message: string): void => {
-      if (!condition) {
-        throw new Error(message);
-      }
-    };
+type GlobalExpect = typeof globalThis & { expect: ExpectFn };
 
-    return {
-      toBe(expected) {
-        assert(Object.is(actual, expected), `Expected ${formatValue(actual)} to be ${formatValue(expected)}`);
-      },
-      toEqual(expected) {
-        assert(
-          deepEqual(actual, expected),
-          `Expected ${formatValue(actual)} to deeply equal ${formatValue(expected)}`,
-        );
-      },
-      toBeDefined() {
-        assert(actual !== undefined, 'Expected value to be defined');
-      },
-      toBeTruthy() {
-        assert(Boolean(actual), `Expected ${formatValue(actual)} to be truthy`);
-      },
-      toBeFalsy() {
-        assert(!actual, `Expected ${formatValue(actual)} to be falsy`);
-      },
-      toContain(expected) {
-        if (typeof actual === 'string') {
-          assert(actual.includes(String(expected)), `Expected ${formatValue(actual)} to contain ${formatValue(expected)}`);
-          return;
-        }
+function createExpect(): ExpectFn {
+  return actual => createExpectation(actual);
+}
 
-        if (Array.isArray(actual)) {
-          assert(
-            actual.some((item) => deepEqual(item, expected)),
-            `Expected ${formatValue(actual)} to contain ${formatValue(expected)}`,
-          );
-          return;
-        }
+function createExpectation<T>(actual: T): Expectation<T> {
+  const formatValue = (value: unknown): string =>
+    typeof value === 'string' ? `'${value}'` : util.inspect(value, { depth: 4, colors: false });
 
-        throw new Error('toContain is only supported for strings and arrays');
-      },
-      toHaveLength(expectedLength) {
-        const length = (actual as { length?: number })?.length;
-        assert(
-          typeof length === 'number' && length === expectedLength,
-          `Expected length ${expectedLength}, got ${length}`,
-        );
-      },
-      toMatchObject(expected) {
-        if (typeof actual !== 'object' || actual === null) {
-          throw new Error('toMatchObject requires an object value');
-        }
-
-        assert(
-          matchObject(actual as Record<string, unknown>, expected),
-          `Expected object to match ${formatValue(expected)}, got ${formatValue(actual)}`,
-        );
-      },
-      toBeInstanceOf(expected) {
-        assert(actual instanceof expected, `Expected value to be instance of ${expected?.name ?? 'constructor'}`);
-      },
-      toBeGreaterThan(expected) {
-        assert(typeof actual === 'number', 'toBeGreaterThan matcher requires a numeric actual value');
-        assert((actual as number) > expected, `Expected ${formatValue(actual)} to be greater than ${formatValue(expected)}`);
-      },
-      toBeGreaterThanOrEqual(expected) {
-        assert(typeof actual === 'number', 'toBeGreaterThanOrEqual matcher requires a numeric actual value');
-        assert(
-          (actual as number) >= expected,
-          `Expected ${formatValue(actual)} to be greater than or equal to ${formatValue(expected)}`,
-        );
-      },
-      toBeLessThan(expected) {
-        assert(typeof actual === 'number', 'toBeLessThan matcher requires a numeric actual value');
-        assert((actual as number) < expected, `Expected ${formatValue(actual)} to be less than ${formatValue(expected)}`);
-      },
-      toBeLessThanOrEqual(expected) {
-        assert(typeof actual === 'number', 'toBeLessThanOrEqual matcher requires a numeric actual value');
-        assert(
-          (actual as number) <= expected,
-          `Expected ${formatValue(actual)} to be less than or equal to ${formatValue(expected)}`,
-        );
-      },
-      toThrow(message) {
-        if (typeof actual !== 'function') {
-          throw new Error('toThrow expects a function');
-        }
-
-        let didThrow = false;
-        try {
-          (actual as () => unknown)();
-        } catch (error) {
-          didThrow = true;
-          if (message) {
-            const text = error instanceof Error ? error.message : String(error);
-            if (message instanceof RegExp) {
-              assert(message.test(text), `Expected error message to match ${message}, got ${text}`);
-            } else {
-              assert(text === message, `Expected error message to be ${message}, got ${text}`);
-            }
-          }
-        }
-
-        assert(didThrow, 'Expected function to throw');
-      },
-    } satisfies Matcher;
+  const ensureFunction = (value: unknown): asserts value is () => unknown => {
+    if (typeof value !== 'function') {
+      throw new TypeError('toThrow expects a function');
+    }
   };
 
-  return expectFn;
+  return {
+    toBe(expected) {
+      if (!Object.is(actual, expected)) {
+        throw new Error(`Expected ${formatValue(actual)} to be ${formatValue(expected)}`);
+      }
+    },
+    toEqual(expected) {
+      if (!deepEqual(actual, expected)) {
+        throw new Error(`Expected ${formatValue(actual)} to equal ${formatValue(expected)}`);
+      }
+    },
+    toBeDefined() {
+      if (typeof actual === 'undefined') {
+        throw new Error('Expected value to be defined');
+      }
+    },
+    toBeTruthy() {
+      if (!actual) {
+        throw new Error('Expected value to be truthy');
+      }
+    },
+    toBeFalsy() {
+      if (actual) {
+        throw new Error('Expected value to be falsy');
+      }
+    },
+    toContain(expected) {
+      if (typeof actual === 'string') {
+        if (!actual.includes(String(expected))) {
+          throw new Error(`Expected ${formatValue(actual)} to contain ${formatValue(expected)}`);
+        }
+        return;
+      }
+
+      if (Array.isArray(actual)) {
+        if (!actual.some(item => deepEqual(item, expected))) {
+          throw new Error(`Expected ${formatValue(actual)} to contain ${formatValue(expected)}`);
+        }
+        return;
+      }
+
+      throw new TypeError('toContain is only supported for strings and arrays');
+    },
+    toHaveLength(expected) {
+      const length = (actual as { length?: number })?.length;
+      if (length !== expected) {
+        throw new Error(`Expected length ${expected}, got ${length}`);
+      }
+    },
+    toMatchObject(expected) {
+      if (typeof actual !== 'object' || actual === null) {
+        throw new Error('toMatchObject requires an object value');
+      }
+
+      if (!matchObject(actual as Record<string, unknown>, expected)) {
+        throw new Error(`Expected object to match ${formatValue(expected)} but received ${formatValue(actual)}`);
+      }
+    },
+    toBeInstanceOf(expected) {
+      if (!(actual instanceof expected)) {
+        const name = expected?.name ?? 'constructor';
+        throw new Error(`Expected value to be instance of ${name}`);
+      }
+    },
+    toThrow(message) {
+      ensureFunction(actual);
+
+      let didThrow = false;
+      try {
+        actual();
+      } catch (error) {
+        didThrow = true;
+        if (message) {
+          const text = error instanceof Error ? error.message : String(error);
+          if (message instanceof RegExp) {
+            if (!message.test(text)) {
+              throw new Error(`Expected error message to match ${message}, got ${text}`);
+            }
+          } else if (text !== message) {
+            throw new Error(`Expected error message to be ${message}, got ${text}`);
+          }
+        }
+      }
+
+      if (!didThrow) {
+        throw new Error('Expected function to throw');
+      }
+    },
+    toBeGreaterThan(expected) {
+      if (typeof actual !== 'number') {
+        throw new TypeError('toBeGreaterThan requires a numeric value');
+      }
+      if (!(actual > expected)) {
+        throw new Error(`Expected ${formatValue(actual)} to be greater than ${formatValue(expected)}`);
+      }
+    },
+    toBeGreaterThanOrEqual(expected) {
+      if (typeof actual !== 'number') {
+        throw new TypeError('toBeGreaterThanOrEqual requires a numeric value');
+      }
+      if (!(actual >= expected)) {
+        throw new Error(`Expected ${formatValue(actual)} to be greater than or equal to ${formatValue(expected)}`);
+      }
+    },
+    toBeLessThan(expected) {
+      if (typeof actual !== 'number') {
+        throw new TypeError('toBeLessThan requires a numeric value');
+      }
+      if (!(actual < expected)) {
+        throw new Error(`Expected ${formatValue(actual)} to be less than ${formatValue(expected)}`);
+      }
+    },
+    toBeLessThanOrEqual(expected) {
+      if (typeof actual !== 'number') {
+        throw new TypeError('toBeLessThanOrEqual requires a numeric value');
+      }
+      if (!(actual <= expected)) {
+        throw new Error(`Expected ${formatValue(actual)} to be less than or equal to ${formatValue(expected)}`);
+      }
+    },
+  };
 }
 
 export function setupTestGlobals(): void {
-  if (!(globalThis as { expect?: ReturnType<typeof createExpect> }).expect) {
-    (globalThis as any).expect = createExpect();
-  }
+  const expectFn = createExpect();
+  (globalThis as GlobalExpect).expect = expectFn;
 }
 
-export type ExpectFn = ReturnType<typeof createExpect>;
-export type { Matcher };
+export type { ExpectFn, GlobalExpect };
