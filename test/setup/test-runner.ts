@@ -1,176 +1,221 @@
-export type TestFunction = () => void | Promise<void>;
+import path from 'node:path';
 
 export interface TestCase {
   name: string;
-  fn: TestFunction;
+  fn: () => void | Promise<void>;
 }
 
 export interface TestSuite {
   tests: TestCase[];
   beforeAll?: () => void | Promise<void>;
   afterAll?: () => void | Promise<void>;
-  beforeEach?: () => void | Promise<void>;
-  afterEach?: () => void | Promise<void>;
-}
-
-interface TestSummary {
-  name: string;
-  status: 'passed' | 'failed' | 'skipped';
-  durationMs: number;
-  error?: Error;
-}
-
-interface SuiteSummary {
-  name: string;
-  tests: TestSummary[];
-  durationMs: number;
-}
-
-export interface RunnerResult {
-  total: number;
-  passed: number;
-  failed: number;
-  skipped: number;
-  durationMs: number;
-  suites: SuiteSummary[];
 }
 
 interface RegisteredSuite extends TestSuite {
   name: string;
+  file?: string;
 }
 
-function matchesPattern(name: string, pattern?: string): boolean {
-  if (!pattern) {
-    return true;
-  }
-
-  return name.toLowerCase().includes(pattern.toLowerCase());
+interface TestResults {
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
 }
 
-class TestRunnerImpl {
+class TestRunner {
   private suites: RegisteredSuite[] = [];
 
   registerSuite(name: string, suite: TestSuite): void {
-    this.suites.push({ name, ...suite });
+    let file: string | undefined;
+
+    const stack = new Error().stack?.split('\n') ?? [];
+    for (const line of stack) {
+      const match = line.match(/((?:[A-Za-z]:)?[\\/][^:]+?\.(?:test|spec)\.[tj]sx?)/i);
+      if (match) {
+        const resolved = match[1];
+        const relative = path.relative(process.cwd(), resolved);
+        file = relative || resolved;
+        break;
+      }
+    }
+
+    this.suites.push({ name, file, ...suite });
   }
 
-  async run(pattern?: string): Promise<RunnerResult> {
-    const startTime = Date.now();
-    const summaries: SuiteSummary[] = [];
+  async run(pattern?: string): Promise<TestResults> {
+    const escapeRegex = (value: string) =>
+      value.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const matcher = pattern ? new RegExp(escapeRegex(pattern), 'i') : null;
     let total = 0;
     let passed = 0;
     let failed = 0;
     let skipped = 0;
 
     for (const suite of this.suites) {
-      const suiteStart = Date.now();
-      const matchingTests = suite.tests.filter((test) =>
-        matchesPattern(`${suite.name} ${test.name}`, pattern)
-      );
+      const suiteMatches = matcher
+        ? matcher.test(suite.name) || (suite.file ? matcher.test(suite.file) : false)
+        : true;
 
-      if (matchingTests.length === 0) {
+      if (matcher && !suiteMatches) {
+        const hasMatchingTest = suite.tests.some(test => matcher.test(test.name));
+        if (!hasMatchingTest) {
+          skipped += suite.tests.length;
+          continue;
+        }
+      }
+
+      console.log(`\nSuite: ${suite.name}`);
+import { performance } from 'node:perf_hooks';
+
+type MaybePromise<T> = T | Promise<T>;
+
+export type TestCase = {
+  name: string;
+  fn: () => MaybePromise<void>;
+  skip?: boolean;
+  only?: boolean;
+};
+
+export type SuiteLifecycle = {
+  beforeAll?: () => MaybePromise<void>;
+  afterAll?: () => MaybePromise<void>;
+  beforeEach?: () => MaybePromise<void>;
+  afterEach?: () => MaybePromise<void>;
+};
+
+export type TestSuite = SuiteLifecycle & {
+  tests: TestCase[];
+};
+
+type RegisteredSuite = {
+  name: string;
+  suite: TestSuite;
+};
+
+const registeredSuites: RegisteredSuite[] = [];
+
+const matchesPattern = (name: string, pattern?: string): boolean => {
+  if (!pattern) {
+    return true;
+  }
+
+  const normalized = pattern.trim().toLowerCase();
+  if (!normalized) {
+    return true;
+  }
+
+  return name.toLowerCase().includes(normalized);
+};
+
+const hasFocusedTests = (): boolean =>
+  registeredSuites.some((entry) => entry.suite.tests.some((test) => test.only));
+
+const formatDuration = (ms: number): string => `${ms.toFixed(0)}ms`;
+
+export const testRunner = {
+  registerSuite(name: string, suite: TestSuite): void {
+    registeredSuites.push({ name, suite });
+  },
+
+  async run(pattern?: string): Promise<{ failed: number; passed: number }> {
+    let failed = 0;
+    let passed = 0;
+    const focused = hasFocusedTests();
+
+    for (const { name: suiteName, suite } of registeredSuites) {
+      const tests = suite.tests.filter((test) => {
+        if (focused && !test.only) {
+          return false;
+        }
+
+        if (test.skip) {
+          return false;
+        }
+
+        return matchesPattern(`${suiteName} ${test.name}`, pattern);
+      });
+
+      if (tests.length === 0) {
         continue;
       }
 
-      const testSummaries: TestSummary[] = [];
+      console.log(`\nSuite: ${suiteName}`);
 
       if (suite.beforeAll) {
         await suite.beforeAll();
       }
 
-      for (const test of matchingTests) {
-        const testStart = Date.now();
+      for (const test of suite.tests) {
+        if (
+          matcher &&
+          !matcher.test(test.name) &&
+          !matcher.test(suite.name) &&
+          !(suite.file && matcher.test(suite.file))
+        ) {
+          skipped += 1;
+          continue;
+        }
+
         total += 1;
+        const start = Date.now();
+      for (const test of tests) {
+        if (suite.beforeEach) {
+          await suite.beforeEach();
+        }
+
+        const started = performance.now();
 
         try {
-          if (suite.beforeEach) {
-            await suite.beforeEach();
-          }
-
           await test.fn();
           passed += 1;
-
-          testSummaries.push({
-            name: test.name,
-            status: 'passed',
-            durationMs: Date.now() - testStart,
-          });
+          console.log(`  ✓ ${test.name} (${Date.now() - start}ms)`);
         } catch (error) {
           failed += 1;
-
-          testSummaries.push({
-            name: test.name,
-            status: 'failed',
-            durationMs: Date.now() - testStart,
-            error: error instanceof Error ? error : new Error(String(error)),
-          });
-        } finally {
-          if (suite.afterEach) {
-            await suite.afterEach();
+          console.error(`  ✗ ${test.name}`);
+          if (error instanceof Error) {
+            console.error(`    ${error.message}`);
+            if (error.stack) {
+              console.error(error.stack.split('\n').slice(1).map(line => `    ${line.trim()}`).join('\n'));
+            }
+          } else {
+            console.error(`    ${String(error)}`);
           }
+        }
+          const duration = performance.now() - started;
+          console.log(`  ✓ ${test.name} (${formatDuration(duration)})`);
+        } catch (error) {
+          failed += 1;
+          const duration = performance.now() - started;
+          console.error(`  ✗ ${test.name} (${formatDuration(duration)})`);
+          if (error instanceof Error) {
+            console.error(error.stack ?? error.message);
+          } else {
+            console.error(error);
+          }
+        }
+
+        if (suite.afterEach) {
+          await suite.afterEach();
         }
       }
 
       if (suite.afterAll) {
         await suite.afterAll();
       }
-
-      summaries.push({
-        name: suite.name,
-        tests: testSummaries,
-        durationMs: Date.now() - suiteStart,
-      });
     }
 
-    // Any suites without matching tests are considered skipped
-    if (pattern) {
-      for (const suite of this.suites) {
-        const hasMatchingTests = suite.tests.some((test) =>
-          matchesPattern(`${suite.name} ${test.name}`, pattern)
-        );
+    console.log(`\nTest Results: ${passed} passed, ${failed} failed, ${skipped} skipped`);
 
-        if (!hasMatchingTests) {
-          skipped += suite.tests.length;
-        }
-      }
-    }
-
-    const durationMs = Date.now() - startTime;
-
-    this.printReport({ total, passed, failed, skipped, durationMs, suites: summaries });
-
-    return { total, passed, failed, skipped, durationMs, suites: summaries };
-  }
-
-  private printReport(result: RunnerResult): void {
-    const lines = [
-      '',
-      'Test Results',
-      '------------',
-      `Total:   ${result.total}`,
-      `Passed:  ${result.passed}`,
-      `Failed:  ${result.failed}`,
-      `Skipped: ${result.skipped}`,
-      `Duration: ${result.durationMs}ms`,
-    ];
-
-    for (const suite of result.suites) {
-      lines.push('', `Suite: ${suite.name} (${suite.durationMs}ms)`);
-
-      for (const test of suite.tests) {
-        const statusIcon = test.status === 'passed' ? '✅' : test.status === 'failed' ? '❌' : '⏭️';
-        lines.push(`  ${statusIcon} ${test.name} (${test.durationMs}ms)`);
-
-        if (test.error) {
-          lines.push(`    Error: ${test.error.message}`);
-        }
-      }
-    }
-
-    console.log(lines.join('\n'));
+    return { total, passed, failed, skipped };
   }
 }
 
-export const testRunner = new TestRunnerImpl();
+export const testRunner = new TestRunner();
+    console.log(`\nTest Results: ${passed} passed, ${failed} failed`);
 
+    return { failed, passed };
+  },
+};
 
+export type TestRunner = typeof testRunner;
