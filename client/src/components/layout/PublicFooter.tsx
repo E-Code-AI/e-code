@@ -15,7 +15,7 @@ export function PublicFooter() {
       { label: 'Teams', href: '/teams' },
       { label: 'Deployments', href: '/deployments' },
       { label: 'Pricing', href: '/pricing' },
-      { label: 'Bounties', href: '/bounties' },
+      { label: 'Bounties', href: '/marketing/bounties' },
       { label: 'AI', href: '/ai' },
       { label: 'Templates', href: '/templates' },
     ],
