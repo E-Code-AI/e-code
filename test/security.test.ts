@@ -156,12 +156,20 @@ testRunner.registerSuite('Security Middleware', {
         let missingNextCalled = false;
 
         apiKeyValidation(reqMissing, resMissing, () => {
-          missingNextCalled = true;
+          nextCalled = true;
         });
 
         expect(resMissing.statusCode).toBe(401);
         expect((resMissing.body as any)?.error).toBe('API key required');
-        expect(missingNextCalled).toBe(false);
+        expect(nextCalled).toBe(false);
+
+        const resInvalid = createResponse();
+        const reqInvalid: any = { headers: { 'x-api-key': 'short-key' } };
+        apiKeyValidation(reqInvalid, resInvalid, () => {
+          nextCalled = true;
+        });
+        expect(resInvalid.statusCode).toBe(401);
+        expect((resInvalid.body as any)?.error).toBe('Invalid API key');
 
         const resValid = createResponse();
         const reqValid: any = { headers: { 'x-api-key': 'k'.repeat(32) } };
@@ -225,7 +233,7 @@ testRunner.registerSuite('Security Scanner', {
         const result = await securityScanner.scanProject(42, [
           {
             path: 'src/index.ts',
-            content: "const password = \"supersecret\";\\n// TODO: tighten security\\nconsole.log('debug');",
+            content: `const password = "supersecret";\n// TODO: tighten security\nconsole.log('debug');`,
           },
           {
             path: 'src/app.ts',
