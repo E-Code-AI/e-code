@@ -16,6 +16,11 @@ This guide covers the production deployment configuration for E-Code platform.
 - `SENDGRID_API_KEY` - For email notifications (optional)
 - `GANDI_SMTP_USERNAME` - For newsletter emails (optional)
 - `GANDI_SMTP_PASSWORD` - For newsletter emails (optional)
+- `NEWSLETTER_ADMIN_EMAILS` - Comma-separated list of addresses that receive subscription and campaign alerts (optional)
+- `NEWSLETTER_SEND_BATCH_SIZE` - Max recipients processed concurrently during campaign sends (optional, default 50)
+- `NEWSLETTER_SEND_BATCH_DELAY_MS` - Delay in milliseconds between email batches to respect provider throttles (optional, default 250)
+- `NEWSLETTER_SEND_MAX_RETRIES` - Number of retry attempts for failed deliveries (optional, default 2)
+- `NEWSLETTER_SEND_RETRY_BASE_MS` - Base delay in milliseconds for exponential backoff when retrying deliveries (optional, default 500)
 
 ### OAuth Configuration (Optional)
 - `GITHUB_CLIENT_ID` - For GitHub import/integration
