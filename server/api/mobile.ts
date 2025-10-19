@@ -57,7 +57,7 @@ const checkLoginRateLimit = (key: string) => {
 
 const generateMobileAccessToken = (userId: number, username: string) => {
   return jwt.sign(
-    { userId, username },
+    { userId, username, tokenType: 'access' },
     MOBILE_ACCESS_TOKEN_SECRET,
     {
       expiresIn: MOBILE_ACCESS_TOKEN_EXPIRES_IN,
@@ -68,7 +68,7 @@ const generateMobileAccessToken = (userId: number, username: string) => {
 
 const generateMobileRefreshToken = (userId: number) => {
   return jwt.sign(
-    { userId },
+    { userId, tokenType: 'refresh' },
     MOBILE_REFRESH_TOKEN_SECRET,
     {
       expiresIn: MOBILE_REFRESH_TOKEN_EXPIRES_IN,
@@ -79,9 +79,15 @@ const generateMobileRefreshToken = (userId: number) => {
 
 const verifyMobileRefreshToken = (token: string) => {
   try {
-    return jwt.verify(token, MOBILE_REFRESH_TOKEN_SECRET, {
+    const payload = jwt.verify(token, MOBILE_REFRESH_TOKEN_SECRET, {
       algorithms: ['HS256']
-    }) as { userId: number };
+    }) as { userId: number; tokenType?: string };
+
+    if (payload.tokenType !== 'refresh') {
+      return null;
+    }
+
+    return { userId: payload.userId };
   } catch (error) {
     return null;
   }
@@ -91,7 +97,16 @@ const parseMobileToken = (token: string) => {
   try {
     const payload = jwt.verify(token, MOBILE_ACCESS_TOKEN_SECRET, {
       algorithms: ['HS256']
-    }) as { userId?: number | string; sub?: number | string; iat?: number };
+    }) as {
+      userId?: number | string;
+      sub?: number | string;
+      iat?: number;
+      tokenType?: string;
+    };
+
+    if (payload.tokenType && payload.tokenType !== 'access') {
+      throw new Error('Invalid token type');
+    }
 
     const rawUserId =
       typeof payload.userId !== 'undefined' ? payload.userId : payload.sub;
