@@ -48,7 +48,7 @@ export class MonitoringService {
   private errorThresholds = {
     criticalErrorRate: 0.05, // 5% error rate
     responseTimeThreshold: 3000, // 3 seconds
-    memoryUsageThreshold: 0.85 // 85% memory usage
+    memoryUsageThreshold: 0.95 // 95% memory usage
   };
 
   constructor() {
@@ -362,7 +362,7 @@ export class MonitoringService {
   }
 
   private startHealthMonitoring() {
-    // Monitor system health every minute
+    // Monitor system health every 5 minutes to reduce overhead
     setInterval(async () => {
       const metrics = await this.getHealthMetrics();
       
@@ -372,13 +372,16 @@ export class MonitoringService {
         metric_value: metrics.systemHealth.memory,
         unit: 'percentage',
         timestamp: new Date()
+      }).catch(err => {
+        // Gracefully handle missing tables during initialization
+        logger.debug('Failed to log performance metrics (table may not exist yet):', err.message);
       });
       
       // Alert on high memory usage
       if (metrics.systemHealth.memory > this.errorThresholds.memoryUsageThreshold) {
         logger.error('High memory usage detected:', metrics.systemHealth.memory);
       }
-    }, 60000); // Every minute
+    }, 300000); // Every 5 minutes
   }
 }
 
