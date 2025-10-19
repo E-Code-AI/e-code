@@ -65,6 +65,19 @@ const logError = (error: unknown) => {
   }
 };
 
+const logError = (error: unknown): void => {
+  if (error instanceof Error) {
+    console.error(error.stack ?? error.message);
+  } else {
+    console.error(error);
+  }
+};
+
+type PhaseError = {
+  phase: 'beforeEach' | 'test' | 'afterEach';
+  error: unknown;
+};
+
 export const testRunner = {
   registerSuite(name: string, suite: TestSuite): void {
     this.suites.push({ name, suite, file: getCallingTestFile() });
@@ -95,40 +108,83 @@ export const testRunner = {
       console.log(`\nSuite: ${entry.name}`);
       const { beforeAll, afterAll, beforeEach, afterEach } = entry.suite;
 
-      if (beforeAll) {
-        await beforeAll();
-      }
-
-      for (const test of tests) {
-        if (suite.beforeEach) {
-          await suite.beforeEach();
-        }
-
-        const started = performance.now();
-
+      if (suite.beforeAll) {
         try {
-          if (beforeEach) {
-            await beforeEach();
+          await suite.beforeAll();
+        } catch (error) {
+          for (const test of tests) {
+            failed += 1;
+            console.error(`  ✗ ${test.name} (0ms)`);
+            console.error('    beforeAll failed:');
+            logError(error);
           }
 
-          await test.fn();
-          passed += 1;
-          const duration = performance.now() - started;
-          console.log(`  ✓ ${test.name} (${formatDuration(duration)})`);
-        } catch (error) {
-          failed += 1;
-          const duration = performance.now() - started;
-          console.error(`  ✗ ${test.name} (${formatDuration(duration)})`);
-          logError(error);
-        }
+          if (suite.afterAll) {
+            try {
+              await suite.afterAll();
+            } catch (afterAllError) {
+              console.error('    afterAll cleanup also failed:');
+              logError(afterAllError);
+            }
+          }
 
-        if (suite.afterEach) {
-          await suite.afterEach();
+          continue;
         }
       }
 
-      if (afterAll) {
-        await afterAll();
+      const runPhase = async (
+        phase: PhaseError['phase'],
+        fn: () => MaybePromise<void>,
+        errors: PhaseError[],
+      ): Promise<boolean> => {
+        try {
+          await fn();
+          return true;
+        } catch (error) {
+          errors.push({ phase, error });
+          return false;
+        }
+      };
+
+      for (const test of tests) {
+        const started = performance.now();
+        const errors: PhaseError[] = [];
+        const beforeEachSucceeded = !suite.beforeEach
+          || (await runPhase('beforeEach', suite.beforeEach, errors));
+
+        try {
+          if (beforeEachSucceeded) {
+            await runPhase('test', test.fn, errors);
+          }
+        } finally {
+          if (suite.afterEach) {
+            await runPhase('afterEach', suite.afterEach, errors);
+          }
+        }
+
+        const duration = performance.now() - started;
+
+        if (errors.length === 0) {
+          passed += 1;
+          console.log(`  ✓ ${test.name} (${formatDuration(duration)})`);
+        } else {
+          failed += 1;
+          console.error(`  ✗ ${test.name} (${formatDuration(duration)})`);
+          for (const { phase, error } of errors) {
+            console.error(`    ${phase} failed:`);
+            logError(error);
+          }
+        }
+      }
+
+      if (suite.afterAll) {
+        try {
+          await suite.afterAll();
+        } catch (error) {
+          failed += 1;
+          console.error('  ✗ afterAll failed:');
+          logError(error);
+        }
       }
     }
 
