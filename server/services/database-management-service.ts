@@ -155,8 +155,8 @@ export class DatabaseManagementService {
               AND tc.table_name = $1
               AND tc.table_schema = $2
           ) pk ON columns.column_name = pk.column_name
-          WHERE table_schema = $2 AND table_name = $1
-          ORDER BY ordinal_position;
+          WHERE columns.table_schema = $2 AND columns.table_name = $1
+          ORDER BY columns.ordinal_position;
         `,
         [tableName, schema]
       );
