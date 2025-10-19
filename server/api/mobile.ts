@@ -7,7 +7,7 @@ import { storage } from '../storage';
 import { db } from '../db';
 import { projects, files } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
-import { aiService as realAIService } from '../services/ai-service';
+import { aiService } from '../ai/ai-service';
 import { mobileContainerService } from '../services/mobile-container-service';
 
 const router = Router();
@@ -409,15 +409,17 @@ router.post('/mobile/ai/chat', ensureMobileAuthenticated, async (req, res) => {
   try {
     const { projectId, message, context } = req.body;
     
-    const response = await realAIService.chat({
-      message,
-      context: {
-        projectId,
-        language: context?.language,
-        files: context?.files || []
-      },
-      model: 'gpt-5' // Use latest model for mobile
-    });
+    const response = await aiService.generateResponse(
+      [{ role: 'user', content: message }],
+      {
+        model: 'gpt-5',
+        projectContext: {
+          id: projectId,
+          language: context?.language,
+          files: context?.files || []
+        }
+      }
+    );
     
     res.json({ response });
   } catch (error) {

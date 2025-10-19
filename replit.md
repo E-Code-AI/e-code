@@ -3,12 +3,51 @@
 ## Overview
 E-Code Platform is a production-ready AI-powered development platform that streamlines software creation through automated deployment and collaboration tools. It offers enterprise-grade infrastructure, AI capabilities like custom prompts and a template library, and comprehensive tools for software development lifecycle management. The platform is optimized for performance, security, and scalability, ready for Fortune 500 deployment on Replit.
 
+## Critical Pages - DO NOT REMOVE
+The following pages are essential to the platform and should NEVER be removed:
+
+### Marketing & Comparison Pages
+- **AIDocumentation** (`/ai-documentation`) - Complete AI features documentation
+- **Compare** (`/compare`) - Main comparison landing page
+- **VsGitHubCodespaces** (`/compare/github-codespaces`) - E-Code vs GitHub Codespaces comparison
+- **VsGlitch** (`/compare/glitch`) - E-Code vs Glitch comparison
+- **VsHeroku** (`/compare/heroku`) - E-Code vs Heroku comparison
+- **VsCodeSandbox** (`/compare/codesandbox`) - E-Code vs CodeSandbox comparison
+- **VsAwsCloud9** (`/compare/aws-cloud9`) - E-Code vs AWS Cloud9 comparison
+
+### Core Pages
+- **Landing** (`/`) - Main landing page
+- **Pricing** (`/pricing`) - Pricing information
+- **Features** (`/features`) - Platform features
+- **About** (`/about`) - About the platform
+- **AI** (`/ai`) - AI capabilities overview
+- **AIAgent** (`/ai-agent`) - AI Agent interface
+- **Dashboard** (`/dashboard`) - User dashboard
+- **ProjectPage** (`/u/:username/:projectname`) - Individual project page
+
+### Solutions Pages
+- **AppBuilder** (`/solutions/app-builder`) - App building solution
+- **WebsiteBuilder** (`/solutions/website-builder`) - Website building solution
+- **GameBuilder** (`/solutions/game-builder`) - Game development solution
+- **DashboardBuilder** (`/solutions/dashboard-builder`) - Dashboard creation solution
+- **ChatbotBuilder** (`/solutions/chatbot-builder`) - Chatbot building solution
+
+### Technical Pages
+- **CodeGeneration** (`/code-generation`) - Code generation features
+- **MCPInterface** (`/mcp`) - Model Context Protocol interface
+- **PolyglotBackendPage** (`/polyglot`) - Polyglot backend information
+- **DatabaseManagement** - Database management interface
+- **ObjectStorage** - Object storage management
+- **Secrets** - Secret management
+- **SecurityScanner** - Security scanning tools
+
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
 - **Error Handling**: Comprehensive error handling with proper logging
 - **Performance**: Prioritize optimization for production deployment
 - **Security**: Implement secure practices and avoid unsafe operations
 - **Documentation**: Maintain clear documentation for deployment and architecture
+- **File Management**: NEVER remove existing pages/files without explicit user request. If files are missing, CREATE them instead of removing imports.
 
 ## System Architecture
 
@@ -58,3 +97,32 @@ Features a streamlined interface with a 4-tab layout (Files, Preview, Features, 
 - **Containerization**: Docker.
 - **Caching**: Redis/ioredis.
 - **CDN**: Replit's built-in CDN.
+
+## Development Guidelines
+1. **Never remove existing pages** - If a page import causes an error, CREATE the missing page instead of removing the import
+2. **Check before deleting** - Always verify with the user before removing any functionality
+3. **Preserve all routes** - All routes in App.tsx serve a purpose and should remain
+4. **Create missing files** - When Vite reports missing imports, create the file instead of removing the import
+5. **Document all pages** - Keep this file updated with all important pages and routes
+
+## AI Features (Critical - Do Not Remove)
+- **Custom Prompts System**: Full CRUD for managing AI prompts
+- **AI Documentation Page**: Complete guide at `/ai-documentation`
+- **Multiple AI Models**: GPT-5, Claude 3.5 Sonnet, Gemini Pro
+- **Template Library**: Pre-built templates for common tasks
+- **Model Context Protocol**: MCP integration for enhanced AI capabilities
+
+## Marketing & Comparison Features (Critical - Do Not Remove)
+The platform includes comprehensive comparison pages to showcase advantages over competitors:
+- Main comparison landing page with overview
+- Individual comparison pages for each major competitor
+- Feature-by-feature comparison tables
+- Clear CTAs for user conversion
+- All comparison pages are located in `client/src/pages/marketing/`
+
+## Recent Fixes (October 19, 2025)
+- Fixed import error in `server/api/mobile.ts` (wrong ai-service path)
+- Created ScrollToTop component
+- Created all comparison pages (Compare, VsGitHubCodespaces, VsGlitch, VsHeroku, VsCodeSandbox, VsAwsCloud9)
+- Restored all comparison routes
+- App now running successfully with all features intact

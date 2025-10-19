@@ -272,14 +272,6 @@ function AppContent() {
           <Route path="/marketing/deployments" component={PublicDeploymentsPage} />
           <Route path="/marketing/teams" component={PublicTeamPage} />
 
-          {/* Comparison pages */}
-          <Route path="/compare" component={Compare} />
-          <Route path="/compare/github-codespaces" component={VsGitHubCodespaces} />
-          <Route path="/compare/glitch" component={VsGlitch} />
-          <Route path="/compare/heroku" component={VsHeroku} />
-          <Route path="/compare/codesandbox" component={VsCodeSandbox} />
-          <Route path="/compare/aws-cloud9" component={VsAwsCloud9} />
-
           {/* Solutions pages */}
           <Route path="/solutions/app-builder" component={AppBuilder} />
           <Route path="/solutions/website-builder" component={WebsiteBuilder} />

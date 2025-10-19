@@ -121,7 +121,7 @@ import { realCodeGenerator } from "./ai/real-code-generator";
 import { realCollaborationService } from "./collaboration/real-collaboration";
 import { agentWebSocketService } from './services/agent-websocket-service';
 import containerRoutes from "./routes/containers";
-import { aiService } from "./services/ai-service";
+import { aiService } from "./ai/ai-service";
 
 // POLYGLOT BACKEND INTEGRATION - Using Go and Python services for performance
 import { containerProxy } from './services/polyglot-container-proxy';
