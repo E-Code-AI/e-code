@@ -3713,6 +3713,33 @@ Application will be available at http://localhost:3000
     }
   });
 
+  // Keep the old @ route for user profiles - redirect to new format
+  app.get('/@:username', async (req, res, next) => {
+    try {
+      const { username } = req.params;
+      
+      // CRITICAL FIX: Don't redirect Vite's internal routes
+      // Check if this is a Vite system route that should not be redirected
+      const viteSystemPrefixes = ['vite', 'fs', 'id', 'react-refresh', 'vite-plugin'];
+      if (viteSystemPrefixes.includes(username)) {
+        console.log(`[${new Date().toISOString()}] [routes] INFO: Vite system route detected: /@${username}, passing through`);
+        return next(); // Let Vite handle its own routes
+      }
+      
+      const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+      const hash = req.url.includes('#') ? req.url.substring(req.url.indexOf('#')) : '';
+      
+      console.log(`[${new Date().toISOString()}] [routes] INFO: Legacy @ user profile route accessed: /@${username}`);
+      console.log(`[${new Date().toISOString()}] [routes] INFO: Redirecting to new format: /u/${username}`);
+      
+      // Permanent redirect to the new format
+      return res.redirect(301, `/u/${username}${queryString}${hash}`);
+    } catch (error) {
+      console.error('Error in legacy @ user profile route redirect:', error);
+      return next();
+    }
+  });
+
   // Get project by username and slug (for Replit-style URLs)
   // Note: This endpoint allows public access for public projects - ROBUST SYSTEM
   app.get('/api/users/:username/projects/:slug', async (req, res) => {

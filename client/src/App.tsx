@@ -192,37 +192,30 @@ function UserProfileWrapper() {
   );
 }
 
-// Redirect components for backward compatibility with @ URLs
-function ProjectRedirect() {
-  const [, navigate] = useLocation();
-  const route = useRoute('/@:username/:projectname');
+// Redirect handler for backward compatibility with @ URLs
+// This component intercepts any path starting with /@ and redirects to /u/
+function AtSymbolRedirectHandler({ children }: { children: React.ReactNode }) {
+  const [location, navigate] = useLocation();
   
   useEffect(() => {
-    if (route[0]) {
-      const { username, projectname } = route[1] as { username: string; projectname: string };
+    // Check if the current path starts with /@ but exclude Vite system routes
+    if (location.startsWith('/@') && !location.startsWith('/@vite') && !location.startsWith('/@fs') && !location.startsWith('/@id')) {
+      // Remove the /@ prefix and replace with /u/
+      const newPath = location.replace(/^\/@/, '/u/');
       const search = window.location.search;
       const hash = window.location.hash;
-      navigate(`/u/${username}/${projectname}${search}${hash}`, { replace: true });
+      
+      console.log('Redirecting from', location, 'to', newPath);
+      navigate(`${newPath}${search}${hash}`, { replace: true });
     }
-  }, [route, navigate]);
+  }, [location, navigate]);
   
-  return <ECodeLoading fullScreen size="lg" text="Redirecting to project..." />;
-}
-
-function UserProfileRedirect() {
-  const [, navigate] = useLocation();
-  const route = useRoute('/@:username');
+  // If we're on an @ route (but not a Vite system route), show loading while redirecting
+  if (location.startsWith('/@') && !location.startsWith('/@vite') && !location.startsWith('/@fs') && !location.startsWith('/@id')) {
+    return <ECodeLoading fullScreen size="lg" text="Redirecting..." />;
+  }
   
-  useEffect(() => {
-    if (route[0]) {
-      const { username } = route[1] as { username: string };
-      const search = window.location.search;
-      const hash = window.location.hash;
-      navigate(`/u/${username}${search}${hash}`, { replace: true });
-    }
-  }, [route, navigate]);
-  
-  return <ECodeLoading fullScreen size="lg" text="Redirecting to profile..." />;
+  return <>{children}</>;
 }
 
 function AppContent() {
@@ -243,14 +236,15 @@ function AppContent() {
   return (
     <ErrorBoundary>
       <TooltipProvider>
-        <div className="min-h-screen replit-layout-main">
-          <ScrollToTop />
-          <Toaster />
-          <SpotlightSearch />
-          <CommandPalette />
+        <AtSymbolRedirectHandler>
+          <div className="min-h-screen replit-layout-main">
+            <ScrollToTop />
+            <Toaster />
+            <SpotlightSearch />
+            <CommandPalette />
 
-          <Suspense fallback={<PageLoader />}>
-            <Switch>
+            <Suspense fallback={<PageLoader />}>
+              <Switch>
           <Route path="/auth" component={AuthPage} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
@@ -494,18 +488,12 @@ function AppContent() {
             />
           )} />
 
-          {/* Test route for @ symbol routing */}
-          
           {/* Generic Replit-style project routes */}
-          {/* Using /u/ prefix instead of @ for better compatibility with wouter */}
+          {/* Using /u/ prefix - @ routes are handled by AtSymbolRedirectHandler */}
           <Route path="/u/:username/:projectname" component={ProjectPageWrapper} />
-          
-          {/* Backward compatibility redirect for @ routes */}
-          <Route path="/@:username/:projectname" component={ProjectRedirect} />
           
           {/* User profile routes */}
           <Route path="/u/:username" component={UserProfileWrapper} />
-          <Route path="/@:username" component={UserProfileRedirect} />
           <ProtectedRoute path="/editor/:id" component={() => (
             <ReplitLayout showSidebar={true}>
               <Editor />
@@ -744,6 +732,7 @@ function AppContent() {
           </Switch>
         </Suspense>
       </div>
+        </AtSymbolRedirectHandler>
     </TooltipProvider>
     </ErrorBoundary>
   );
