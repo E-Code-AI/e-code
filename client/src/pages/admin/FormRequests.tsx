@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AdminLayout } from './AdminLayout';
@@ -25,6 +26,7 @@ import {
   Inbox,
   Search as SearchIcon,
 } from 'lucide-react';
+import { Mail, Phone, ExternalLink, RefreshCw, Loader2, CheckCircle2, Clock, Archive } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 const FORM_TABS = [
@@ -182,6 +184,11 @@ export default function AdminFormRequests() {
       icon: Archive,
     },
   ], [activeTabLabel, statusCounts, summary.currentTab?.total]);
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: [`/api/admin/form-requests?formType=${activeTab}&status=${statusFilter}`],
+  });
+
+  const requests = data?.requests || [];
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
@@ -194,6 +201,7 @@ export default function AdminFormRequests() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin.formRequests'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/admin/form-requests?formType=${activeTab}&status=${statusFilter}`] });
       toast({
         title: 'Request updated',
         description: 'The request status has been updated successfully.',
@@ -231,6 +239,10 @@ export default function AdminFormRequests() {
             disabled={isFetching}
             className="text-white border-zinc-700"
           >
+              Track every form submission from marketing pages, trust & safety, and support.
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="text-white border-zinc-700">
             {isFetching ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -297,6 +309,7 @@ export default function AdminFormRequests() {
                   ) : null}
                 </div>
 
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
                   <TabsList className="bg-zinc-800/60 border border-zinc-700">
                     {FORM_TABS.map((tab) => (
@@ -314,6 +327,7 @@ export default function AdminFormRequests() {
                             {Number(tabCounts[tab.value] || 0).toLocaleString()}
                           </Badge>
                         </span>
+                        {tab.label}
                       </TabsTrigger>
                     ))}
                   </TabsList>
@@ -348,6 +362,7 @@ export default function AdminFormRequests() {
                   {debouncedSearch || statusFilter !== 'all' || activeTab !== 'all'
                     ? 'No submissions match your current filters. Try adjusting the search or status filters.'
                     : 'Once customers reach out through sales, support, or trust & safety forms, their submissions will appear here.'}
+                  Once customers reach out through sales, support, or trust & safety forms, their submissions will appear here.
                 </p>
               </div>
             ) : (

@@ -123,6 +123,7 @@ import { agentWebSocketService } from './services/agent-websocket-service';
 import containerRoutes from "./routes/containers";
 import { aiService } from "./ai/ai-service";
 import { chunkArray, executeWithBackoff, delay as newsletterDelay } from './newsletter/dispatch-helpers';
+import { databaseQueryOptimizer } from './services/database-query-optimizer';
 
 // POLYGLOT BACKEND INTEGRATION - Using Go and Python services for performance
 import { containerProxy } from './services/polyglot-container-proxy';
@@ -542,6 +543,10 @@ const jiraLinearService = new JiraLinearService();
 const datadogNewRelicService = new DatadogNewRelicService();
 const webhookService = new WebhookService();
 
+const hasAdminRole = (req: Request): boolean => req.user?.role === 'admin';
+const respondAdminAccessRequired = (res: Response) =>
+  res.status(403).json({ error: 'Admin access required' });
+
 // Middleware to ensure a user is authenticated - ROBUST FORTUNE 500 SYSTEM
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   // Always allow in development mode for testing
@@ -811,30 +816,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/projects/recent', ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
-      const projects = await storage.getProjectsByUser(user.id);
-      
-      // Get deployment status and add owner information for each project
-      const projectsWithStatus = await Promise.all(projects.map(async (project) => {
-        const deployments = await storage.getProjectDeployments(project.id);
-        const activeDeployment = deployments.find(d => d.status === 'active');
-        
-        return {
-          ...project,
-          isDeployed: !!activeDeployment,
-          deploymentUrl: activeDeployment?.url,
-          deploymentStatus: activeDeployment?.status,
-          owner: {
-            id: user.id,
-            username: user.username,
-            email: user.email
-          }
-        };
-      }));
-      
-      // Sort by updatedAt to show most recent first
-      const recentProjects = projectsWithStatus
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 6); // Return only 6 most recent
+      const cacheKey = `user:${user.id}:projects:recent`;
+
+      const recentProjects = await databaseQueryOptimizer.withCache(cacheKey, 120, async () => {
+        const projects = await storage.getProjectsByUser(user.id);
+
+        const projectsWithStatus = await Promise.all(projects.map(async (project) => {
+          const deployments = await storage.getProjectDeployments(project.id);
+          const activeDeployment = deployments.find(d => d.status === 'active');
+
+          return {
+            ...project,
+            isDeployed: !!activeDeployment,
+            deploymentUrl: activeDeployment?.url,
+            deploymentStatus: activeDeployment?.status,
+            owner: {
+              id: user.id,
+              username: user.username,
+              email: user.email
+            },
+            updatedAt: new Date(project.updatedAt).toISOString(),
+            createdAt: project.createdAt ? new Date(project.createdAt).toISOString() : undefined,
+          };
+        }));
+
+        return projectsWithStatus
+          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+          .slice(0, 6);
+      });
+
       res.json(recentProjects);
     } catch (error) {
       console.error('Error fetching recent projects:', error);
@@ -14097,30 +14107,7 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   // Get community categories
   app.get('/api/community/categories', async (req, res) => {
-    try {
-      const categories = [
-        { id: 'all', name: 'All Posts', icon: 'TrendingUp', postCount: 0 },
-        { id: 'showcase', name: 'Showcase', icon: 'Star', postCount: 0 },
-        { id: 'help', name: 'Help', icon: 'MessageSquare', postCount: 0 },
-        { id: 'tutorials', name: 'Tutorials', icon: 'Code', postCount: 0 },
-        { id: 'challenges', name: 'Challenges', icon: 'Trophy', postCount: 0 },
-        { id: 'discussions', name: 'Discussions', icon: 'Users', postCount: 0 },
-      ];
-      
-      // For now, return categories with placeholder counts
-      // In a full implementation, this would query actual post counts from the database
-      categories[0].postCount = 42; // All posts
-      categories[1].postCount = 15; // Showcase
-      categories[2].postCount = 8;  // Help
-      categories[3].postCount = 12; // Tutorials
-      categories[4].postCount = 5;  // Challenges
-      categories[5].postCount = 2;  // Discussions
-      
-      res.json(categories);
-    } catch (error) {
-      console.error('Error fetching community categories:', error);
-      res.status(500).json({ error: 'Failed to fetch categories' });
-    }
+    await communityService.getCategories(req, res);
   });
   
   // Community features routes
@@ -14138,6 +14125,10 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   app.post('/api/community/posts/:id/like', ensureAuthenticated, async (req, res) => {
     await communityService.likeCommunityPost(req, res);
+  });
+
+  app.post('/api/community/posts/:id/bookmark', ensureAuthenticated, async (req, res) => {
+    await communityService.bookmarkCommunityPost(req, res);
   });
 
   app.post('/api/community/posts/:postId/replies', ensureAuthenticated, async (req, res) => {
@@ -14166,6 +14157,14 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   app.post('/api/community/follow/:targetUserId', ensureAuthenticated, async (req, res) => {
     await communityService.followUser(req, res);
+  });
+
+  app.get('/api/community/challenges', async (req, res) => {
+    await communityService.getChallenges(req, res);
+  });
+
+  app.get('/api/community/leaderboard', async (req, res) => {
+    await communityService.getLeaderboard(req, res);
   });
 
   // Simple preview route for HTML/CSS/JS projects (no auth required for preview)
@@ -14648,20 +14647,25 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Get user's recent deployments for dashboard
   app.get('/api/user/deployments/recent', ensureAuthenticated, async (req, res) => {
     try {
-      const deployments = await storage.getDeploymentsByUser(req.user!.id);
-      
-      // Format deployments for dashboard display
-      const recentDeployments = deployments
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-        .slice(0, 5)
-        .map(deployment => ({
-          id: deployment.id,
-          project: deployment.projectName,
-          status: deployment.status,
-          url: deployment.url,
-          time: getRelativeTime(deployment.createdAt),
-        }));
-      
+      const userId = req.user!.id;
+      const cacheKey = `user:${userId}:deployments:recent`;
+
+      const recentDeployments = await databaseQueryOptimizer.withCache(cacheKey, 60, async () => {
+        const deployments = await storage.getDeploymentsByUser(userId);
+
+        return deployments
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .slice(0, 5)
+          .map(deployment => ({
+            id: deployment.id,
+            project: deployment.projectName,
+            status: deployment.status,
+            url: deployment.url,
+            time: getRelativeTime(deployment.createdAt),
+            createdAt: deployment.createdAt.toISOString(),
+          }));
+      });
+
       res.json(recentDeployments);
     } catch (error) {
       console.error('Error fetching recent deployments:', error);
@@ -14672,21 +14676,26 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Get user's storage usage
   app.get('/api/user/storage', ensureAuthenticated, async (req, res) => {
     try {
-      const projects = await storage.getProjectsByUser(req.user!.id);
-      
-      // Calculate total storage used (simplified - count files)
-      let totalSize = 0;
-      for (const project of projects) {
-        const files = await storage.getProjectFiles(project.id);
-        // Estimate file sizes (in real app, track actual sizes)
-        totalSize += files.length * 0.001; // 1KB per file estimate
-      }
-      
-      res.json({
-        used: Math.round(totalSize * 100) / 100, // GB
-        limit: 5, // GB - free tier limit
-        unit: 'GB'
+      const userId = req.user!.id;
+      const cacheKey = `user:${userId}:storage-summary`;
+
+      const storageSummary = await databaseQueryOptimizer.withCache(cacheKey, 300, async () => {
+        const projects = await storage.getProjectsByUser(userId);
+
+        let totalSize = 0;
+        for (const project of projects) {
+          const files = await storage.getProjectFiles(project.id);
+          totalSize += files.length * 0.001;
+        }
+
+        return {
+          used: Math.round(totalSize * 100) / 100,
+          limit: 5,
+          unit: 'GB',
+        };
       });
+
+      res.json(storageSummary);
     } catch (error) {
       console.error('Error calculating storage:', error);
       res.status(500).json({ message: 'Failed to calculate storage' });
@@ -16104,279 +16113,6 @@ Generate a comprehensive application based on the user's request. Include all ne
     } catch (error) {
       console.error('Error fetching newsletter campaigns:', error);
       res.status(500).json({ message: 'Failed to fetch newsletter campaigns' });
-    }
-  });
-
-  // Community API endpoints
-  app.get('/api/community/posts', async (req, res) => {
-    try {
-      const { category, search } = req.query;
-      
-      // Get posts from database
-      let posts = await storage.getAllCommunityPosts(
-        category && category !== 'all' ? category as string : undefined,
-        search as string | undefined
-      );
-      
-      // Get author details for each post
-      const postsWithAuthors = await Promise.all(posts.map(async (post) => {
-        const author = await storage.getUser(post.authorId);
-        
-        // Get author's reputation (based on their posts and activity)
-        const authorPosts = await storage.getCommunityPostsByUser(post.authorId);
-        const reputation = authorPosts.reduce((sum, p) => sum + p.likes + p.comments * 2, 0);
-        
-        // Check if current user liked this post (if authenticated)
-        const isLiked = req.user ? await storage.isProjectLiked(post.projectId || 0, req.user.id) : false;
-        
-        return {
-          id: post.id.toString(),
-          title: post.title,
-          content: post.content,
-          author: {
-            id: author?.id.toString() || '',
-            username: author?.username || 'unknown',
-            displayName: author?.displayName || author?.username || 'Unknown User',
-            avatarUrl: author?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author?.username}`,
-            reputation: reputation,
-          },
-          category: post.category,
-          tags: post.tags,
-          likes: post.likes,
-          comments: post.comments,
-          views: post.views,
-          isLiked: isLiked,
-          isBookmarked: false,
-          createdAt: getRelativeTime(post.createdAt),
-          projectUrl: post.projectId ? `/project/${post.projectId}` : undefined,
-          imageUrl: post.imageUrl || undefined,
-        };
-      }));
-      
-      res.json(postsWithAuthors);
-    } catch (error) {
-      console.error('Error fetching community posts:', error);
-      res.status(500).json({ message: 'Failed to fetch community posts' });
-    }
-  });
-
-  app.get('/api/community/challenges', async (req, res) => {
-    try {
-      const { status, difficulty, category } = req.query;
-      
-      // Get challenges from database
-      const challenges = await storage.getAllChallenges();
-      
-      // Filter challenges based on query parameters
-      let filteredChallenges = challenges;
-      
-      if (status) {
-        filteredChallenges = filteredChallenges.filter(c => c.status === status);
-      }
-      
-      if (difficulty) {
-        filteredChallenges = filteredChallenges.filter(c => c.difficulty === difficulty);
-      }
-      
-      if (category) {
-        filteredChallenges = filteredChallenges.filter(c => c.category === category);
-      }
-      
-      // Transform to API format
-      const formattedChallenges = filteredChallenges.map(challenge => ({
-        id: challenge.id.toString(),
-        title: challenge.title,
-        description: challenge.description,
-        difficulty: challenge.difficulty,
-        category: challenge.category,
-        participants: challenge.participants,
-        submissions: challenge.submissions,
-        prize: challenge.prize,
-        deadline: challenge.deadline.toISOString().split('T')[0],
-        status: challenge.status,
-      }));
-      
-      res.json(formattedChallenges);
-    } catch (error) {
-      console.error('Error fetching challenges:', error);
-      res.status(500).json({ message: 'Failed to fetch challenges' });
-    }
-  });
-
-  app.get('/api/community/leaderboard', async (req, res) => {
-    try {
-      const { period = 'all' } = req.query; // 'all', 'monthly', 'weekly'
-      
-      // Get all users
-      const users = await storage.getAllUsers();
-      
-      // Calculate scores for each user based on their activity
-      const leaderboardData = await Promise.all(users.map(async (user) => {
-        // Get user's posts
-        const posts = await storage.getCommunityPostsByUser(user.id);
-        
-        // Get user's projects
-        const projects = await storage.getProjectsByUser(user.id);
-        
-        // Calculate score based on activity
-        let score = 0;
-        score += posts.reduce((sum, post) => sum + post.likes * 10 + post.comments * 5 + post.views, 0);
-        score += projects.length * 100; // Points for creating projects
-        
-        // Calculate streak days (simplified - based on last activity)
-        const lastActivity = posts.length > 0 ? posts[0].createdAt : user.createdAt;
-        const daysSinceLastActivity = Math.floor((new Date().getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
-        // Calculate real streak based on consecutive days of activity
-        const streakDays = daysSinceLastActivity < 2 ? 1 : 0; // Real streak calculation based on last activity
-        
-        // Determine badges based on activity
-        const badges = [];
-        if (score > 10000) badges.push('top-contributor');
-        if (posts.some(p => p.likes > 100)) badges.push('popular-creator');
-        if (posts.filter(p => p.category === 'help').length > 10) badges.push('helpful');
-        if (projects.length > 5) badges.push('prolific-builder');
-        
-        return {
-          id: user.id.toString(),
-          username: user.username,
-          displayName: user.displayName || user.username,
-          avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
-          score,
-          badges,
-          streakDays,
-        };
-      }));
-      
-      // Sort by score and add rank
-      const sortedLeaderboard = leaderboardData
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 100) // Top 100 users
-        .map((user, index) => ({
-          ...user,
-          rank: index + 1,
-        }));
-      
-      res.json(sortedLeaderboard);
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-      res.status(500).json({ message: 'Failed to fetch leaderboard' });
-    }
-  });
-
-  // Get single community post
-  app.get('/api/community/posts/:id', async (req, res) => {
-    try {
-      const postId = parseInt(req.params.id);
-      if (isNaN(postId)) {
-        return res.status(400).json({ message: 'Invalid post ID' });
-      }
-      
-      // Get post from database
-      const post = await storage.getCommunityPost(postId);
-      
-      if (!post) {
-        return res.status(404).json({ message: 'Post not found' });
-      }
-      
-      // Increment view count
-      await storage.updateCommunityPost(postId, { views: post.views + 1 });
-      
-      // Get author details
-      const author = await storage.getUser(post.authorId);
-      const authorPosts = await storage.getCommunityPostsByUser(post.authorId);
-      const reputation = authorPosts.reduce((sum, p) => sum + p.likes + p.comments * 2, 0);
-      
-      // Check if current user liked this post (if authenticated)
-      const isLiked = req.user ? await storage.isProjectLiked(post.projectId || 0, req.user.id) : false;
-      
-      // Comments and bookmarks would be implemented in a full database schema
-      const commentsData: any[] = [];
-      
-      const formattedPost = {
-        id: post.id.toString(),
-        title: post.title,
-        content: post.content,
-        author: {
-          id: author?.id.toString() || '',
-          username: author?.username || 'unknown',
-          displayName: author?.displayName || author?.username || 'Unknown User',
-          avatarUrl: author?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author?.username}`,
-          reputation: reputation,
-        },
-        category: post.category,
-        tags: post.tags,
-        likes: post.likes,
-        comments: post.comments,
-        views: post.views + 1,
-        isLiked: isLiked,
-        isBookmarked: false,
-        createdAt: getRelativeTime(post.createdAt),
-        projectUrl: post.projectId ? `/project/${post.projectId}` : undefined,
-        imageUrl: post.imageUrl || undefined,
-        commentsData: commentsData,
-      };
-
-      res.json(formattedPost);
-    } catch (error) {
-      console.error('Error fetching post:', error);
-      res.status(500).json({ message: 'Failed to fetch post' });
-    }
-  });
-
-  app.post('/api/community/posts/:id/like', ensureAuthenticated, async (req, res) => {
-    try {
-      const { id } = req.params;
-      // In a real app, toggle like status in database
-      res.json({ success: true, message: 'Post liked' });
-    } catch (error) {
-      console.error('Error liking post:', error);
-      res.status(500).json({ message: 'Failed to like post' });
-    }
-  });
-
-  app.post('/api/community/posts/:id/bookmark', ensureAuthenticated, async (req, res) => {
-    try {
-      const { id } = req.params;
-      // In a real app, toggle bookmark status in database
-      res.json({ success: true, message: 'Post bookmarked' });
-    } catch (error) {
-      console.error('Error bookmarking post:', error);
-      res.status(500).json({ message: 'Failed to bookmark post' });
-    }
-  });
-
-  // Add comment to community post
-  app.post('/api/community/posts/:id/comments', ensureAuthenticated, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { content } = req.body;
-      const userId = req.user?.id;
-      
-      if (!content) {
-        return res.status(400).json({ message: 'Comment content is required' });
-      }
-
-      // In a real app, save comment to database
-      const newComment = {
-        id: `c${Date.now()}`,
-        postId: id,
-        author: {
-          id: userId,
-          username: 'current_user',
-          displayName: 'Current User',
-          avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
-          reputation: 100,
-        },
-        content,
-        likes: 0,
-        isLiked: false,
-        createdAt: 'just now',
-      };
-
-      res.json(newComment);
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      res.status(500).json({ message: 'Failed to add comment' });
     }
   });
 
@@ -21814,6 +21550,18 @@ Generate a comprehensive application based on the user's request. Include all ne
     const isAdminUser = req.user?.role === 'admin' || req.user?.email?.includes('admin');
     if (!isAdminUser) {
       return res.status(403).json({ error: 'Admin access required' });
+  const requireAdminAccess = (req: Request, res: Response) => {
+    if (req.user?.role === 'admin') {
+      return true;
+    }
+
+    res.status(403).json({ error: 'Admin access required' });
+    return false;
+  };
+
+  app.get('/api/admin/form-requests', ensureAuthenticated, async (req, res) => {
+    if (!hasAdminRole(req)) {
+      return respondAdminAccessRequired(res);
     }
 
     try {
@@ -21862,6 +21610,13 @@ Generate a comprehensive application based on the user's request. Include all ne
           matchedTotal: formTypeSummary.total,
         },
       });
+
+      const requests = await storage.getCustomerRequests({
+        formType: formTypeParam && formTypeParam !== 'all' ? formTypeParam : undefined,
+        status: statusParam && statusParam !== 'all' ? statusParam : undefined,
+      });
+
+      res.json({ requests });
     } catch (error) {
       logger.error('Failed to fetch customer requests:', error);
       res.status(500).json({ error: 'Failed to fetch customer requests' });
@@ -21872,6 +21627,8 @@ Generate a comprehensive application based on the user's request. Include all ne
     const isAdminUser = req.user?.role === 'admin' || req.user?.email?.includes('admin');
     if (!isAdminUser) {
       return res.status(403).json({ error: 'Admin access required' });
+    if (!hasAdminRole(req)) {
+      return respondAdminAccessRequired(res);
     }
 
     try {

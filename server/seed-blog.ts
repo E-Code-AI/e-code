@@ -394,7 +394,7 @@ Over 10,000 schools and 5 million students worldwide use E-Code for computer sci
 3. Create your first class
 4. Watch your students thrive
 
-*Questions about E-Code for Education? Contact our education team at education@e-code.com or join our next educator webinar.*`,
+*Questions about E-Code for Education? Contact our education team at education@e-code.ai or join our next educator webinar.*`,
         excerpt: "Discover how E-Code is revolutionizing computer science education with instant development environments, real-time collaboration, and powerful classroom management tools.",
         author: "Dr. Emily Watson",
         authorRole: "Head of Education",
@@ -742,7 +742,7 @@ Ready to transform how your team builds software? Create your team account today
 
 [Create Your Team →]
 
-*Questions? Contact our sales team at teams@e-code.com or schedule a demo to see E-Code Teams in action.*`,
+*Questions? Contact our sales team at teams@e-code.ai or schedule a demo to see E-Code Teams in action.*`,
         excerpt: "Transform how your development team collaborates with shared workspaces, real-time editing, advanced permissions, and powerful analytics.",
         author: "Lisa Martinez",
         authorRole: "VP of Product",

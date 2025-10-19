@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,9 +12,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  TrendingUp, Star, MessageSquare, Users, Code, Heart, 
-  Share2, Bookmark, MoreHorizontal, Calendar, Award,
-  Filter, ChevronRight, Clock, Zap, Trophy, Target, Plus
+  TrendingUp, Star, MessageSquare, Users, Code, Heart,
+  Share2, Bookmark, Calendar, Award,
+  ChevronRight, Zap, Trophy, Target, Plus,
+  Rocket, Briefcase, Building, Globe
 } from 'lucide-react';
 import { Link } from 'wouter';
 import {
@@ -91,7 +92,83 @@ interface Category {
   postCount: number;
 }
 
+const communityInsights = [
+  {
+    id: 'global-impact',
+    title: 'Global Innovation Impact',
+    description: 'Fortune 500 builders and emerging startups collaborate on mission-critical solutions every day.',
+    icon: Globe,
+    metric: '184 countries',
+  },
+  {
+    id: 'enterprise-grade',
+    title: 'Enterprise-Grade Playbooks',
+    description: 'Access proven implementation guides that power automation at scale with compliance built-in.',
+    icon: Briefcase,
+    metric: '340+ guides',
+  },
+  {
+    id: 'launchpad',
+    title: 'Launchpad for Visionary Teams',
+    description: 'Join elite innovation hubs, get curated partner matches, and co-create the future of software.',
+    icon: Rocket,
+    metric: '1,200 partner matches',
+  },
+];
 
+const enterpriseHighlights = [
+  {
+    id: 'innovation-council',
+    title: 'Innovation Council Briefings',
+    description: 'Monthly executive sessions with CTOs, CIOs, and product leaders exploring the next wave of AI-native companies.',
+  },
+  {
+    id: 'center-excellence',
+    title: 'Center of Excellence Templates',
+    description: 'Reusable governance frameworks to scale community-driven development with Fortune 500 rigor.',
+  },
+  {
+    id: 'talent-network',
+    title: 'Global Talent Network',
+    description: 'Tap into Replit creators, mentors, and solution architects for high-priority launches.',
+  },
+];
+
+const upcomingEvents = [
+  {
+    id: 'executive-roundtable',
+    title: 'Enterprise AI Builders Roundtable',
+    description: 'Live strategy session with Fortune 500 program leaders on scaling internal developer platforms.',
+    date: 'Apr 30, 2024',
+  },
+  {
+    id: 'launch-week',
+    title: 'Community Launch Week',
+    description: 'A five-day showcase of flagship community products, customer spotlights, and lightning talks.',
+    date: 'May 13, 2024',
+  },
+  {
+    id: 'global-demo-day',
+    title: 'Global Demo Day',
+    description: 'Team up with cross-industry innovators to present breakthrough solutions in front of partners and investors.',
+    date: 'Jun 7, 2024',
+  },
+];
+
+const spotlightStories = [
+  {
+    id: 'enterprise-sre',
+    company: 'Northwind Logistics',
+    quote: '“The community accelerated our SRE automation roadmap by 18 months and unlocked new revenue streams.”',
+    role: 'VP of Platform Engineering',
+  },
+  {
+    id: 'healthcare-ai',
+    company: 'Atlas Health Systems',
+    quote: '“From prototype to production, the Replit community guided us through every compliance milestone.”',
+    role: 'Chief Innovation Officer',
+  },
+];
 
 export default function Community() {
   const { toast } = useToast();
@@ -125,6 +202,29 @@ export default function Community() {
   const { data: leaderboard = [] } = useQuery<LeaderboardUser[]>({
     queryKey: ['/api/community/leaderboard']
   });
+
+  const totalPosts = useMemo(
+    () => categories.reduce((sum, category) => sum + (category.postCount ?? 0), 0),
+    [categories],
+  );
+
+  const categoriesWithAll = useMemo(() => {
+    const mapped = [...categories];
+    if (!mapped.some((category) => category.id === 'all')) {
+      mapped.unshift({
+        id: 'all',
+        name: 'All Initiatives',
+        icon: 'TrendingUp',
+        postCount: totalPosts,
+      });
+    }
+
+    return mapped.sort((a, b) => {
+      if (a.id === 'all') return -1;
+      if (b.id === 'all') return 1;
+      return 0;
+    });
+  }, [categories, totalPosts]);
 
   // Like post mutation
   const likePostMutation = useMutation({
@@ -176,6 +276,110 @@ export default function Community() {
   return (
     <div className="min-h-screen bg-background overflow-auto">
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
+        <Card className="relative overflow-hidden border-primary/10 bg-gradient-to-br from-background via-background to-primary/5">
+          <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+          <CardContent className="relative p-6 sm:p-8 lg:p-12">
+            <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+              <div className="space-y-4 sm:space-y-6">
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">Global Community Hub</Badge>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">
+                  Build with the creators powering Fortune 500 innovation
+                </h1>
+                <p className="text-muted-foreground text-sm sm:text-base lg:text-lg max-w-2xl">
+                  Discover flagship launches, enterprise-grade playbooks, and partner with the Replit community to ship
+                  resilient software faster. Join executives, founders, and builders reimagining how world-class teams deliver.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Link href="/community/challenges">
+                    <Button size="lg" className="shadow-md">Explore challenges</Button>
+                  </Link>
+                  <Link href="/community/new">
+                    <Button size="lg" variant="outline" className="backdrop-blur border-primary/40">
+                      Partner with creators
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {communityInsights.map((insight) => (
+                  <Card key={insight.id} className="bg-background/80 border-primary/10">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="inline-flex items-center gap-2 text-primary">
+                        <insight.icon className="h-5 w-5" />
+                        <span className="text-xs uppercase tracking-wide">{insight.metric}</span>
+                      </div>
+                      <h3 className="font-semibold text-sm sm:text-base">{insight.title}</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{insight.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg sm:text-xl">Enterprise Community Highlights</CardTitle>
+              <CardDescription>
+                Curated programs and resources designed for global scale teams.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-3">
+              {enterpriseHighlights.map((item) => (
+                <div key={item.id} className="space-y-2">
+                  <h4 className="font-semibold text-sm sm:text-base flex items-center gap-2">
+                    <Building className="h-4 w-4 text-primary" />
+                    {item.title}
+                  </h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg sm:text-xl">Upcoming Flagship Events</CardTitle>
+              <CardDescription>Connect live with global builders and program leaders.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {upcomingEvents.map((event) => (
+                <div key={event.id} className="rounded-lg border border-primary/10 p-3">
+                  <div className="flex items-center justify-between text-xs text-primary font-medium">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>{event.date}</span>
+                  </div>
+                  <h4 className="mt-2 font-semibold text-sm">{event.title}</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{event.description}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="bg-muted/40 border-dashed">
+          <CardContent className="p-4 sm:p-6 lg:p-8 grid gap-6 lg:grid-cols-2">
+            <div className="space-y-3">
+              <h2 className="text-xl sm:text-2xl font-semibold">Community Spotlight</h2>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Stories from leaders accelerating their digital transformation with Replit experts, partner studios, and
+                community mentors.
+              </p>
+            </div>
+            <div className="grid gap-4">
+              {spotlightStories.map((story) => (
+                <div key={story.id} className="rounded-lg bg-background p-4 border border-border/60 shadow-sm">
+                  <p className="text-sm italic leading-relaxed">{story.quote}</p>
+                  <div className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {story.company} • {story.role}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Header */}
         <div className="flex flex-col space-y-3 sm:space-y-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
@@ -209,11 +413,11 @@ export default function Community() {
               <ScrollArea className="w-full -mx-3 sm:-mx-0 px-3 sm:px-0">
                 <TabsList className="inline-flex h-auto p-1 bg-muted rounded-lg">
                   <div className="flex space-x-1">
-                    {categories.map(category => {
+                    {categoriesWithAll.map(category => {
                       const IconComponent = iconMap[category.icon] || TrendingUp;
                       return (
-                        <TabsTrigger 
-                          key={category.id} 
+                        <TabsTrigger
+                          key={category.id}
                           value={category.id}
                           className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-md whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-xs sm:text-sm"
                         >

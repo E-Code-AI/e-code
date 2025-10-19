@@ -36,7 +36,7 @@ import {
 
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
-  mobileDevices, pushNotifications, teams, teamMembers, deployments,
+  mobileDevices, pushNotifications, notificationPreferences, teams, teamMembers, deployments,
   comments, checkpoints, projectTimeTracking, projectScreenshots, taskSummaries, usageTracking,
   userCredits, budgetLimits, usageAlerts, autoscaleDeployments, reservedVmDeployments,
   scheduledDeployments, staticDeployments, objectStorageBuckets, objectStorageFiles,
@@ -55,6 +55,7 @@ import {
   insertGitRepositorySchema, insertGitCommitSchema, insertCustomDomainSchema,
   insertSecretSchema, insertEnvironmentVariableSchema,
   insertNewsletterSubscriberSchema, insertNewsletterCampaignSchema, insertNewsletterDeliverySchema,
+  insertNotificationSchema, insertNotificationPreferenceSchema,
   customerRequests, insertCustomerRequestSchema
 } from "@shared/schema";
 import { z } from "zod";
@@ -94,6 +95,116 @@ type CustomDomain = typeof customDomains.$inferSelect;
 type InsertCustomDomain = z.infer<typeof insertCustomDomainSchema>;
 type CustomerRequest = typeof customerRequests.$inferSelect;
 type InsertCustomerRequest = z.infer<typeof insertCustomerRequestSchema>;
+
+type NotificationRecord = typeof pushNotifications.$inferSelect;
+type InsertNotificationRecord = z.infer<typeof insertNotificationSchema>;
+type NotificationPreferenceRecord = typeof notificationPreferences.$inferSelect;
+type InsertNotificationPreferenceRecord = z.infer<typeof insertNotificationPreferenceSchema>;
+type NotificationPreferencesPayload = Partial<{
+  email: Record<string, any> | null | undefined;
+  push: Record<string, any> | null | undefined;
+  frequency: string | null | undefined;
+}>;
+type NotificationFrequency = 'instant' | 'hourly' | 'daily' | 'weekly';
+
+const EMAIL_NOTIFICATION_KEYS = [
+  'comments',
+  'likes',
+  'follows',
+  'mentions',
+  'teamUpdates',
+  'deployments',
+  'security',
+  'marketing',
+] as const;
+
+const PUSH_NOTIFICATION_KEYS = [
+  'comments',
+  'likes',
+  'follows',
+  'mentions',
+  'teamUpdates',
+  'deployments',
+  'security',
+] as const;
+
+const VALID_NOTIFICATION_FREQUENCIES = new Set<NotificationFrequency>([
+  'instant',
+  'hourly',
+  'daily',
+  'weekly',
+]);
+
+const DEFAULT_NOTIFICATION_PREFERENCES: {
+  email: Record<(typeof EMAIL_NOTIFICATION_KEYS)[number], boolean>;
+  push: Record<(typeof PUSH_NOTIFICATION_KEYS)[number], boolean>;
+  frequency: NotificationFrequency;
+} = {
+  email: {
+    comments: true,
+    likes: true,
+    follows: true,
+    mentions: true,
+    teamUpdates: true,
+    deployments: true,
+    security: true,
+    marketing: false,
+  },
+  push: {
+    comments: true,
+    likes: true,
+    follows: true,
+    mentions: true,
+    teamUpdates: true,
+    deployments: true,
+    security: true,
+  },
+  frequency: 'instant',
+};
+
+const normalizeUserId = (userId: string | number): string =>
+  typeof userId === 'string' ? userId : String(userId);
+
+const normalizePreferenceSection = (
+  keys: readonly string[],
+  defaults: Record<string, boolean>,
+  ...sources: (Record<string, any> | null | undefined)[]
+) => {
+  const normalized: Record<string, boolean> = { ...defaults };
+  for (const source of sources) {
+    if (!source) continue;
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        normalized[key] = Boolean(source[key]);
+      }
+    }
+  }
+  return normalized;
+};
+
+const normalizePreferences = (
+  existing?: NotificationPreferencesPayload,
+  updates?: NotificationPreferencesPayload,
+) => {
+  const email = normalizePreferenceSection(
+    EMAIL_NOTIFICATION_KEYS,
+    DEFAULT_NOTIFICATION_PREFERENCES.email,
+    existing?.email ?? undefined,
+    updates?.email ?? undefined,
+  );
+  const push = normalizePreferenceSection(
+    PUSH_NOTIFICATION_KEYS,
+    DEFAULT_NOTIFICATION_PREFERENCES.push,
+    existing?.push ?? undefined,
+    updates?.push ?? undefined,
+  );
+  const candidate = (updates?.frequency ?? existing?.frequency) as string | undefined;
+  const frequency = VALID_NOTIFICATION_FREQUENCIES.has(candidate as NotificationFrequency)
+    ? (candidate as NotificationFrequency)
+    : DEFAULT_NOTIFICATION_PREFERENCES.frequency;
+
+  return { email, push, frequency };
+};
 
 import { eq, and, desc, isNull, sql, inArray, gte, lte, SQL, or, ilike } from "drizzle-orm";
 import { db } from "./db";
@@ -154,6 +265,21 @@ export interface IStorage {
   unpinProject(projectId: string, userId: string): Promise<void>;
   trackUsage(userId: string, data: UsageMetricInput): Promise<void>;
   updateUserStripeInfo(userId: string, data: any): Promise<User | undefined>;
+
+  // Notification operations
+  getNotifications(userId: string | number, unreadOnly?: boolean): Promise<NotificationRecord[]>;
+  getUnreadNotificationCount(userId: string | number): Promise<number>;
+  getNotificationPreferences(userId: string | number): Promise<NotificationPreferenceRecord>;
+  updateNotificationPreferences(
+    userId: string | number,
+    preferences: NotificationPreferencesPayload,
+  ): Promise<NotificationPreferenceRecord>;
+  markNotificationAsRead(notificationId: number, userId: string | number): Promise<void>;
+  markAllNotificationsAsRead(userId: string | number): Promise<void>;
+  deleteNotification(notificationId: number, userId: string | number): Promise<void>;
+  deleteAllNotifications(userId: string | number): Promise<void>;
+  createNotification(notification: InsertNotificationRecord): Promise<NotificationRecord>;
+  updatePushNotification(id: number, data: Partial<NotificationRecord>): Promise<void>;
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -3246,6 +3372,206 @@ export class DatabaseStorage implements IStorage {
       .from(aiUsageRecords)
       .where(whereClause)
       .orderBy(desc(aiUsageRecords.createdAt));
+  }
+
+  // Notification implementations
+  async getNotifications(userId: string | number, unreadOnly: boolean = false): Promise<NotificationRecord[]> {
+    const normalizedUserId = normalizeUserId(userId);
+    const condition = unreadOnly
+      ? and(eq(pushNotifications.userId, normalizedUserId), eq(pushNotifications.read, false))
+      : eq(pushNotifications.userId, normalizedUserId);
+
+    return await this.db
+      .select()
+      .from(pushNotifications)
+      .where(condition)
+      .orderBy(desc(pushNotifications.createdAt));
+  }
+
+  async getUnreadNotificationCount(userId: string | number): Promise<number> {
+    const normalizedUserId = normalizeUserId(userId);
+    const [result] = await this.db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(pushNotifications)
+      .where(and(eq(pushNotifications.userId, normalizedUserId), eq(pushNotifications.read, false)));
+
+    return Number(result?.count ?? 0);
+  }
+
+  async getNotificationPreferences(userId: string | number): Promise<NotificationPreferenceRecord> {
+    const normalizedUserId = normalizeUserId(userId);
+    const [existing] = await this.db
+      .select()
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, normalizedUserId));
+
+    if (existing) {
+      const normalized = normalizePreferences(existing, undefined);
+
+      const needsUpdate =
+        JSON.stringify(existing.email ?? {}) !== JSON.stringify(normalized.email) ||
+        JSON.stringify(existing.push ?? {}) !== JSON.stringify(normalized.push) ||
+        existing.frequency !== normalized.frequency;
+
+      if (needsUpdate) {
+        const [updated] = await this.db
+          .update(notificationPreferences)
+          .set({ ...normalized, updatedAt: new Date() })
+          .where(eq(notificationPreferences.userId, normalizedUserId))
+          .returning();
+
+        return updated ?? { ...existing, ...normalized };
+      }
+
+      return {
+        ...existing,
+        email: normalized.email,
+        push: normalized.push,
+        frequency: normalized.frequency,
+      };
+    }
+
+    const defaults = normalizePreferences();
+    const [created] = await this.db
+      .insert(notificationPreferences)
+      .values({
+        userId: normalizedUserId,
+        email: defaults.email,
+        push: defaults.push,
+        frequency: defaults.frequency,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    return (
+      created ?? {
+        userId: normalizedUserId,
+        email: defaults.email,
+        push: defaults.push,
+        frequency: defaults.frequency,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+    );
+  }
+
+  async updateNotificationPreferences(
+    userId: string | number,
+    preferences: NotificationPreferencesPayload,
+  ): Promise<NotificationPreferenceRecord> {
+    const normalizedUserId = normalizeUserId(userId);
+    const current = await this.getNotificationPreferences(normalizedUserId);
+    const normalized = normalizePreferences(current, preferences);
+    const [updated] = await this.db
+      .insert(notificationPreferences)
+      .values({
+        userId: normalizedUserId,
+        email: normalized.email,
+        push: normalized.push,
+        frequency: normalized.frequency,
+        createdAt: current?.createdAt ?? new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: notificationPreferences.userId,
+        set: {
+          email: normalized.email,
+          push: normalized.push,
+          frequency: normalized.frequency,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    return (
+      updated ?? {
+        userId: normalizedUserId,
+        email: normalized.email,
+        push: normalized.push,
+        frequency: normalized.frequency,
+        createdAt: current?.createdAt ?? new Date(),
+        updatedAt: new Date(),
+      }
+    );
+  }
+
+  async markNotificationAsRead(notificationId: number, userId: string | number): Promise<void> {
+    const normalizedUserId = normalizeUserId(userId);
+    await this.db
+      .update(pushNotifications)
+      .set({ read: true, readAt: new Date() })
+      .where(and(eq(pushNotifications.id, notificationId), eq(pushNotifications.userId, normalizedUserId)));
+  }
+
+  async markAllNotificationsAsRead(userId: string | number): Promise<void> {
+    const normalizedUserId = normalizeUserId(userId);
+    await this.db
+      .update(pushNotifications)
+      .set({ read: true, readAt: new Date() })
+      .where(and(eq(pushNotifications.userId, normalizedUserId), eq(pushNotifications.read, false)));
+  }
+
+  async deleteNotification(notificationId: number, userId: string | number): Promise<void> {
+    const normalizedUserId = normalizeUserId(userId);
+    await this.db
+      .delete(pushNotifications)
+      .where(and(eq(pushNotifications.id, notificationId), eq(pushNotifications.userId, normalizedUserId)));
+  }
+
+  async deleteAllNotifications(userId: string | number): Promise<void> {
+    const normalizedUserId = normalizeUserId(userId);
+    await this.db.delete(pushNotifications).where(eq(pushNotifications.userId, normalizedUserId));
+  }
+
+  async createNotification(notification: InsertNotificationRecord): Promise<NotificationRecord> {
+    const normalizedUserId = normalizeUserId(notification.userId);
+    const parsed = insertNotificationSchema.parse({ ...notification, userId: normalizedUserId });
+    const [created] = await this.db
+      .insert(pushNotifications)
+      .values({
+        ...parsed,
+        userId: normalizedUserId,
+        type: parsed.type ?? 'system',
+        data: parsed.data ?? {},
+        read: false,
+        sent: false,
+        createdAt: new Date(),
+      })
+      .returning();
+
+    if (!created) {
+      throw new Error('Failed to create notification');
+    }
+
+    return created;
+  }
+
+  async updatePushNotification(id: number, data: Partial<NotificationRecord>): Promise<void> {
+    if (Object.keys(data).length === 0) {
+      return;
+    }
+
+    const updates: Partial<NotificationRecord> = { ...data };
+    delete (updates as any).id;
+    if (updates.userId !== undefined) {
+      updates.userId = normalizeUserId(updates.userId);
+    }
+
+    if (updates.read !== undefined && updates.readAt === undefined) {
+      updates.readAt = updates.read ? new Date() : null;
+    }
+
+    for (const key of Object.keys(updates) as (keyof NotificationRecord)[]) {
+      if (updates[key] === undefined) {
+        delete updates[key];
+      }
+    }
+
+    await this.db
+      .update(pushNotifications)
+      .set(updates)
+      .where(eq(pushNotifications.id, id));
   }
 
   // Custom Prompts implementations

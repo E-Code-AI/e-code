@@ -15,6 +15,20 @@
       "when": 1754571038706,
       "tag": "0001_newsletter_system",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1754571039706,
+      "tag": "0002_notifications_system",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1754571040706,
+      "tag": "0003_align_notification_preferences_user_id",
+      "breakpoints": true
     }
   ]
 }
