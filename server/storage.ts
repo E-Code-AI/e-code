@@ -206,7 +206,7 @@ const normalizePreferences = (
   return { email, push, frequency };
 };
 
-import { eq, and, desc, isNull, sql, inArray, gte, lte, SQL } from "drizzle-orm";
+import { eq, and, desc, isNull, sql, inArray, gte, lte, SQL, or, ilike } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";
@@ -2788,6 +2788,171 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await query;
+  }
+
+  async listCustomerRequests(filters?: {
+    formType?: string;
+    status?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{
+    requests: CustomerRequest[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
+    const conditions: SQL<unknown>[] = [];
+
+    if (filters?.formType) {
+      conditions.push(eq(customerRequests.formType, filters.formType));
+    }
+
+    if (filters?.status) {
+      conditions.push(eq(customerRequests.status, filters.status));
+    }
+
+    if (filters?.search) {
+      const term = `%${filters.search.toLowerCase()}%`;
+      conditions.push(
+        or(
+          ilike(customerRequests.senderName, term),
+          ilike(customerRequests.senderEmail, term),
+          ilike(customerRequests.senderCompany, term),
+          ilike(customerRequests.subject, term),
+          ilike(customerRequests.message, term),
+          ilike(customerRequests.pagePath, term),
+        ),
+      );
+    }
+
+    const page = Math.max(1, filters?.page ?? 1);
+    const pageSize = Math.min(Math.max(filters?.pageSize ?? 25, 1), 100);
+    const offset = (page - 1) * pageSize;
+
+    const filterClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    let listQuery = this.db
+      .select()
+      .from(customerRequests);
+
+    if (filterClause) {
+      listQuery = listQuery.where(filterClause);
+    }
+
+    listQuery = listQuery.orderBy(desc(customerRequests.createdAt)).limit(pageSize).offset(offset);
+
+    const requests = await listQuery;
+
+    let totalQuery = this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(customerRequests);
+
+    if (filterClause) {
+      totalQuery = totalQuery.where(filterClause);
+    }
+
+    const totalResult = await totalQuery;
+    const total = Number(totalResult[0]?.count ?? 0);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
+
+    return {
+      requests,
+      total,
+      page,
+      pageSize,
+      totalPages,
+    };
+  }
+
+  async getCustomerRequestAggregates(filters?: {
+    formType?: string;
+    status?: string;
+    search?: string;
+  }): Promise<{
+    total: number;
+    byStatus: Record<string, number>;
+    byFormType: Record<string, number>;
+  }> {
+    const conditions: SQL<unknown>[] = [];
+
+    if (filters?.formType) {
+      conditions.push(eq(customerRequests.formType, filters.formType));
+    }
+
+    if (filters?.status) {
+      conditions.push(eq(customerRequests.status, filters.status));
+    }
+
+    if (filters?.search) {
+      const term = `%${filters.search.toLowerCase()}%`;
+      conditions.push(
+        or(
+          ilike(customerRequests.senderName, term),
+          ilike(customerRequests.senderEmail, term),
+          ilike(customerRequests.senderCompany, term),
+          ilike(customerRequests.subject, term),
+          ilike(customerRequests.message, term),
+          ilike(customerRequests.pagePath, term),
+        ),
+      );
+    }
+
+    const filterClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    let totalQuery = this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(customerRequests);
+
+    if (filterClause) {
+      totalQuery = totalQuery.where(filterClause);
+    }
+
+    const totalResult = await totalQuery;
+    const total = Number(totalResult[0]?.count ?? 0);
+
+    let statusQuery = this.db
+      .select({ status: customerRequests.status, count: sql<number>`count(*)` })
+      .from(customerRequests);
+
+    if (filterClause) {
+      statusQuery = statusQuery.where(filterClause);
+    }
+
+    statusQuery = statusQuery.groupBy(customerRequests.status);
+    const statusRows = await statusQuery;
+
+    let formTypeQuery = this.db
+      .select({ formType: customerRequests.formType, count: sql<number>`count(*)` })
+      .from(customerRequests);
+
+    if (filterClause) {
+      formTypeQuery = formTypeQuery.where(filterClause);
+    }
+
+    formTypeQuery = formTypeQuery.groupBy(customerRequests.formType);
+    const formTypeRows = await formTypeQuery;
+
+    const byStatus = statusRows.reduce((acc: Record<string, number>, row) => {
+      if (row.status) {
+        acc[row.status] = Number(row.count);
+      }
+      return acc;
+    }, {});
+
+    const byFormType = formTypeRows.reduce((acc: Record<string, number>, row) => {
+      if (row.formType) {
+        acc[row.formType] = Number(row.count);
+      }
+      return acc;
+    }, {});
+
+    return {
+      total,
+      byStatus,
+      byFormType,
+    };
   }
 
   async updateCustomerRequest(id: number, updates: Partial<CustomerRequest>): Promise<CustomerRequest | undefined> {
