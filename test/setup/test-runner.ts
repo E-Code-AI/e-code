@@ -29,17 +29,19 @@ type RegisteredSuite = {
 
 const registeredSuites: RegisteredSuite[] = [];
 
+const normalizeSeparators = (value: string): string => value.replace(/\\/g, '/');
+
 const matchesPattern = (name: string, pattern?: string): boolean => {
   if (!pattern) {
     return true;
   }
 
-  const normalized = pattern.trim().toLowerCase();
-  if (!normalized) {
+  const normalizedPattern = normalizeSeparators(pattern.trim()).toLowerCase();
+  if (!normalizedPattern) {
     return true;
   }
 
-  return name.toLowerCase().includes(normalized);
+  return normalizeSeparators(name).toLowerCase().includes(normalizedPattern);
 };
 
 const extractFilePathFromStack = (): string | undefined => {
@@ -66,11 +68,13 @@ const extractFilePathFromStack = (): string | undefined => {
       }
     }
 
-    if (candidate.includes('test/setup/test-runner')) {
+    const normalizedCandidate = normalizeSeparators(candidate);
+
+    if (normalizedCandidate.includes('test/setup/test-runner')) {
       continue;
     }
 
-    return candidate;
+    return normalizedCandidate;
   }
 
   return undefined;
