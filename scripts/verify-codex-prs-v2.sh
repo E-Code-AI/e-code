@@ -38,10 +38,19 @@ echo "[1/7] Checking Git history..."
 CODEX_PRS=$(git log --all --oneline --merges --grep="codex" --since="7 days ago" 2>/dev/null | grep "Merge pull request #" | head -${NUM_PRS} || true)
 if [ -n "$CODEX_PRS" ]; then
   PRS_TOTAL=$(echo "$CODEX_PRS" | wc -l | tr -d ' ')
-  echo "  Found ${PRS_TOTAL} recent codex PRs"
+  # Extract PR numbers
+  PR_NUMBERS=$(echo "$CODEX_PRS" | grep -oP 'pull request #\K\d+' | tr '\n' ',' | sed 's/,$//' | sed 's/,/, /g')
+  echo "  Found ${PRS_TOTAL} recent codex PRs: #${PR_NUMBERS}"
 else
   echo "  No recent codex PRs found"
   PRS_TOTAL=0
+  PR_NUMBERS=""
+fi
+
+# Add PR numbers to summary section
+if [ -n "$PR_NUMBERS" ]; then
+  echo "" >> "$REPORT_FILE"
+  echo "**PRs Checked:** #${PR_NUMBERS}" >> "$REPORT_FILE"
 fi
 echo "" >> "$REPORT_FILE"
 
@@ -172,6 +181,9 @@ echo "" >> "$REPORT_FILE"
 echo "## Final Summary" >> "$REPORT_FILE"
 echo "" >> "$REPORT_FILE"
 echo "- **PRs Analyzed:** ${PRS_TOTAL}" >> "$REPORT_FILE"
+if [ -n "$PR_NUMBERS" ]; then
+  echo "- **PR Numbers:** #${PR_NUMBERS}" >> "$REPORT_FILE"
+fi
 echo "- **Issues Found:** ${ISSUES_FOUND}" >> "$REPORT_FILE"
 echo "" >> "$REPORT_FILE"
 
