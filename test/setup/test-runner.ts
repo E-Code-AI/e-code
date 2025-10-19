@@ -179,7 +179,13 @@ class TestRunner {
       }
 
       if (suite.afterAll) {
-        await suite.afterAll();
+        try {
+          await suite.afterAll();
+        } catch (error) {
+          failed += 1;
+          console.error('  ✗ afterAll failed:');
+          logError(error);
+        }
       }
     }
 
