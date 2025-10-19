@@ -55,8 +55,9 @@ export default function EditorPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Parse project ID
-  const projectIdNum = projectId ? parseInt(projectId) : 0;
+  // Preserve project ID as string (UUID compatible)
+  const projectIdValue = projectId ?? '';
+  const hasProjectId = projectIdValue.length > 0;
   
   // Get project details
   const { 
@@ -64,12 +65,13 @@ export default function EditorPage() {
     isLoading: isLoadingProject,
     error: projectError,
   } = useQuery({
-    queryKey: ['/api/projects', projectIdNum],
+    queryKey: ['/api/projects', projectIdValue],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/user/projects/${projectIdNum}`);
+      if (!hasProjectId) throw new Error('Missing project id');
+      const res = await apiRequest('GET', `/api/projects/${projectIdValue}`);
       return res.json();
     },
-    enabled: !!projectIdNum && !!user,
+    enabled: hasProjectId && !!user,
   });
   
   // Get project files
@@ -78,12 +80,13 @@ export default function EditorPage() {
     isLoading: isLoadingFiles,
     error: filesError,
   } = useQuery<File[]>({
-    queryKey: ['/api/files', projectIdNum],
+    queryKey: ['/api/files', projectIdValue],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/files/${projectIdNum}`);
+      if (!hasProjectId) throw new Error('Missing project id');
+      const res = await apiRequest('GET', `/api/files/${projectIdValue}`);
       return res.json();
     },
-    enabled: !!projectIdNum && !!user,
+    enabled: hasProjectId && !!user,
   });
   
   // Update file content mutation
@@ -94,8 +97,7 @@ export default function EditorPage() {
     },
     onSuccess: (data) => {
       if (projectId) {
-        const projectIdNum = parseInt(projectId);
-        queryClient.invalidateQueries({ queryKey: ['/api/files', projectIdNum] });
+        queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
       }
     },
     onError: (error: Error) => {
@@ -110,7 +112,7 @@ export default function EditorPage() {
   // Create file mutation
   const createFileMutation = useMutation({
     mutationFn: async ({ name, isFolder, parentId }: { name: string, isFolder: boolean, parentId?: number | null }) => {
-      const res = await apiRequest('POST', `/api/files/${projectId}`, {
+      const res = await apiRequest('POST', `/api/files/${projectIdValue}`, {
         name,
         isFolder,
         parentId: parentId || null,
@@ -120,8 +122,7 @@ export default function EditorPage() {
     },
     onSuccess: (data) => {
       if (projectId) {
-        const projectIdNum = parseInt(projectId);
-        queryClient.invalidateQueries({ queryKey: ['/api/files', projectIdNum] });
+        queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
       }
       toast({
         title: 'File created',
@@ -145,8 +146,7 @@ export default function EditorPage() {
     },
     onSuccess: () => {
       if (projectId) {
-        const projectIdNum = parseInt(projectId);
-        queryClient.invalidateQueries({ queryKey: ['/api/files', projectIdNum] });
+        queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
       }
       toast({
         title: 'File deleted',
@@ -294,7 +294,7 @@ export default function EditorPage() {
           
           {/* Run button - E-Code style */}
           <RunButton 
-            projectId={projectIdNum} 
+            projectId={projectIdValue} 
             language={project?.language || 'javascript'}
             onRunning={(running, execId) => {
               setIsProjectRunning(running);
@@ -311,7 +311,7 @@ export default function EditorPage() {
           {/* Collaboration Presence - Hidden on mobile */}
           {user && !isMobile && (
             <CollaborationPresence 
-              projectId={projectIdNum} 
+              projectId={projectIdValue} 
               currentUserId={user.id}
               compact={true}
               className="mr-2"
@@ -370,7 +370,7 @@ export default function EditorPage() {
               onFileCreate={handleFileCreate}
               onFileDelete={handleFileDelete}
               projectName={project?.name}
-              projectId={projectIdNum}
+              projectId={projectIdValue}
             />
           }
           codeEditor={
@@ -382,12 +382,12 @@ export default function EditorPage() {
           }
           terminal={
             <ResponsiveTerminal 
-              projectId={projectIdNum}
+              projectId={projectIdValue}
             />
           }
           preview={
             <ResponsiveWebPreview 
-              projectId={projectIdNum} 
+              projectId={projectIdValue} 
               isRunning={isProjectRunning}
             />
           }
@@ -395,7 +395,7 @@ export default function EditorPage() {
           isRunning={isProjectRunning}
           onRun={() => {
             // Handle run action - project runs automatically
-            console.log('Running project', projectIdNum);
+            console.log('Running project', projectIdValue);
           }}
         />
       ) : (
@@ -408,7 +408,7 @@ export default function EditorPage() {
               onFileCreate={handleFileCreate}
               onFileDelete={handleFileDelete}
               projectName={project?.name}
-              projectId={projectIdNum}
+              projectId={projectIdValue}
             />
           }
           centerPanel={
@@ -419,50 +419,50 @@ export default function EditorPage() {
             />
           }
           bottomPanel={
-            <ResponsiveTerminal projectId={projectIdNum} />
+            <ResponsiveTerminal projectId={projectIdValue} />
           }
           rightPanels={[
             {
               id: 'console',
               title: 'Console',
               icon: <TerminalIcon className="h-3 w-3" />,
-              content: <ReplitConsole projectId={projectIdNum} isRunning={isProjectRunning} executionId={executionId} />
+              content: <ReplitConsole projectId={projectIdValue} isRunning={isProjectRunning} executionId={executionId} />
             },
             {
               id: 'preview',
               title: 'Webview',
               icon: <Globe className="h-3 w-3" />,
-              content: <ResponsiveWebPreview projectId={projectIdNum} isRunning={isProjectRunning} />
+              content: <ResponsiveWebPreview projectId={projectIdValue} isRunning={isProjectRunning} />
             },
             {
               id: 'database',
               title: 'Database',
               icon: <Database className="h-3 w-3" />,
-              content: <DatabaseBrowser projectId={projectIdNum.toString()} />
+              content: <DatabaseBrowser projectId={projectIdValue} />
             },
             {
               id: 'packages',
               title: 'Packages',
               icon: <PackageIcon className="h-3 w-3" />,
-              content: <PackageViewer projectId={projectIdNum.toString()} />
+              content: <PackageViewer projectId={projectIdValue} />
             },
             {
               id: 'debugger',
               title: 'Debugger',
               icon: <Bug className="h-3 w-3" />,
-              content: <DebuggerPanel projectId={projectIdNum.toString()} />
+              content: <DebuggerPanel projectId={projectIdValue} />
             },
             {
               id: 'deployment',
               title: 'Deploy',
               icon: <Rocket className="h-3 w-3" />,
-              content: <DeploymentManager projectId={projectIdNum} />
+              content: <DeploymentManager projectId={projectIdValue} />
             },
             {
               id: 'tests',
               title: 'Tests',
               icon: <Beaker className="h-3 w-3" />,
-              content: <TestRunner projectId={projectIdNum.toString()} />
+              content: <TestRunner projectId={projectIdValue} />
             }
           ]}
           defaultRightPanel="console"
@@ -472,7 +472,7 @@ export default function EditorPage() {
       {/* Global Search Dialog */}
       {showGlobalSearch && (
         <GlobalSearch
-          projectId={projectIdNum}
+          projectId={projectIdValue}
           isOpen={showGlobalSearch}
           onClose={() => setShowGlobalSearch(false)}
           onFileSelect={(file) => {
