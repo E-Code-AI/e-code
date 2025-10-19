@@ -72,8 +72,8 @@ export function PublicFooter() {
 
   return (
     <footer className="relative border-t border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] dark:border-white/10 dark:bg-slate-950/90 dark:text-slate-200">
-      <div className="absolute inset-0 marketing-gradient" aria-hidden />
-      <div className="absolute inset-0 marketing-grid opacity-60" aria-hidden />
+      <div className="absolute inset-0 marketing-gradient opacity-0 dark:opacity-100" aria-hidden />
+      <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-60" aria-hidden />
       <div className="relative container-responsive py-16">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_2fr]">
           <div className="space-y-6">
