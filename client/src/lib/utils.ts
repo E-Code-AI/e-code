@@ -78,7 +78,21 @@ export function formatBytes(bytes: number, decimals: number = 2): string {
  * Build the canonical workspace URL for a project.
  * Falls back to ID-based routing when the slug or username is unavailable.
  */
-export function getProjectUrl(project: any, fallbackUsername?: string | null): string {
+interface ProjectOwnerLike {
+  username?: string | null;
+}
+
+interface ProjectLike {
+  slug?: string | null;
+  projectSlug?: string | null;
+  owner?: ProjectOwnerLike | null;
+  ownerUsername?: string | null;
+  owner_name?: string | null;
+  id?: number | string | null;
+  projectId?: number | string | null;
+}
+
+export function getProjectUrl(project: ProjectLike, fallbackUsername?: string | null): string {
   if (!project) {
     return '/projects';
   }
