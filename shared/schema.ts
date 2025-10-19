@@ -363,10 +363,23 @@ export const pushNotifications = pgTable("push_notifications", {
   userId: varchar("user_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   body: text("body").notNull(),
+  type: varchar("type").notNull().default('system'),
+  actionUrl: varchar("action_url"),
   data: jsonb("data").default({}),
+  read: boolean("read").notNull().default(false),
+  readAt: timestamp("read_at"),
   sent: boolean("sent").default(false),
   sentAt: timestamp("sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: varchar("user_id").primaryKey().references(() => users.id),
+  email: jsonb("email").$type<Record<string, boolean>>().notNull().default({}),
+  push: jsonb("push").$type<Record<string, boolean>>().notNull().default({}),
+  frequency: varchar("frequency").notNull().default('instant'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Deployments table
@@ -1245,6 +1258,16 @@ export const insertMonitoringEventSchema = createInsertSchema(monitoringEvents).
 export const insertPerformanceMetricSchema = createInsertSchema(performanceMetrics).omit({ id: true, createdAt: true });
 export const insertErrorLogSchema = createInsertSchema(errorLogs).omit({ id: true, createdAt: true, resolved: true });
 export const insertTemplateSchema = createInsertSchema(templates).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertNotificationSchema = createInsertSchema(pushNotifications, {
+  type: z.string().min(1).optional(),
+  actionUrl: z.string().min(1).optional(),
+  data: z.record(z.any()).optional(),
+}).omit({ id: true, createdAt: true, read: true, readAt: true, sent: true, sentAt: true });
+export const insertNotificationPreferenceSchema = createInsertSchema(notificationPreferences, {
+  email: z.record(z.boolean()),
+  push: z.record(z.boolean()),
+  frequency: z.enum(['instant', 'hourly', 'daily', 'weekly']).optional(),
+}).omit({ createdAt: true, updatedAt: true });
 
 // Types
 export type VoiceVideoSession = typeof voiceVideoSessions.$inferSelect;
@@ -1276,3 +1299,7 @@ export type InsertErrorLog = z.infer<typeof insertErrorLogSchema>;
 
 export type Template = typeof templates.$inferSelect;
 export type InsertTemplate = z.infer<typeof insertTemplateSchema>;
+export type Notification = typeof pushNotifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreference = z.infer<typeof insertNotificationPreferenceSchema>;
