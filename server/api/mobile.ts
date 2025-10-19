@@ -68,7 +68,7 @@ const generateMobileAccessToken = (userId: number, username: string) => {
 
 const generateMobileRefreshToken = (userId: number) => {
   return jwt.sign(
-    { userId },
+    { userId, tokenType: 'refresh' },
     MOBILE_REFRESH_TOKEN_SECRET,
     {
       expiresIn: MOBILE_REFRESH_TOKEN_EXPIRES_IN,
@@ -79,9 +79,15 @@ const generateMobileRefreshToken = (userId: number) => {
 
 const verifyMobileRefreshToken = (token: string) => {
   try {
-    return jwt.verify(token, MOBILE_REFRESH_TOKEN_SECRET, {
+    const payload = jwt.verify(token, MOBILE_REFRESH_TOKEN_SECRET, {
       algorithms: ['HS256']
-    }) as { userId: number };
+    }) as { userId?: number; tokenType?: string };
+
+    if (!payload || payload.tokenType !== 'refresh' || !payload.userId) {
+      return null;
+    }
+
+    return { userId: payload.userId };
   } catch (error) {
     return null;
   }
