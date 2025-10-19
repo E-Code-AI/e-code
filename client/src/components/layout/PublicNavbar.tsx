@@ -54,6 +54,7 @@ export function PublicNavbar() {
 
   const resourcesItems = [
     { title: 'Documentation', href: '/docs', description: 'Learn how to use E-Code' },
+    { title: 'AI Documentation', href: '/ai-documentation', description: 'Complete AI capabilities guide' },
     { title: 'Blog', href: '/blog', description: 'News and updates' },
     { title: 'Community', href: '/community', description: 'Connect with developers' },
     { title: 'Templates', href: '/templates', description: 'Start from a template' },
@@ -352,9 +353,11 @@ export function PublicNavbar() {
                           {resourcesItems.map((item) => {
                             const icons: Record<string, any> = {
                               'Documentation': BookOpen,
+                              'AI Documentation': Brain,
                               'Blog': Newspaper,
                               'Community': MessageSquare,
                               'Templates': FileText,
+                              'Languages': Code,
                               'Status': Globe,
                               'Forum': Users
                             };

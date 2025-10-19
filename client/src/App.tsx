@@ -134,6 +134,8 @@ const CommercialAgreement = lazy(() => import("@/pages/CommercialAgreement"));
 const ReportAbuse = lazy(() => import("@/pages/ReportAbuse"));
 // Shared snippet page
 const SharedSnippet = lazy(() => import("@/pages/SharedSnippet"));
+// AI Documentation page
+const AIDocumentation = lazy(() => import("@/pages/AIDocumentation"));
 // New feature pages
 const APISDKPage = lazy(() => import("@/pages/APISDKPage"));
 const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
@@ -289,6 +291,7 @@ function AppContent() {
           
           <Route path="/mobile" component={MobileAdmin} />
           <Route path="/ai" component={AI} />
+          <Route path="/ai-documentation" component={AIDocumentation} />
           <Route path="/ai-agent" component={AIAgent} />
           <ProtectedRoute path="/ai-agent/studio" component={() => (
             <ReplitLayout showSidebar={false}>
