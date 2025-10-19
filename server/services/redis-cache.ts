@@ -596,6 +596,14 @@ export class RedisCache {
       return false;
     }
   }
+
+  isEnabled(): boolean {
+    return !this.disabled;
+  }
+
+  isHealthy(): boolean {
+    return this.isConnected;
+  }
 }
 
 // Export singleton instance

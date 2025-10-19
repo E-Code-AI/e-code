@@ -223,7 +223,7 @@ export default function Press() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
-                <a href="mailto:press@e-code.com">
+                <a href="mailto:press@e-code.ai">
                   <Mail className="mr-2 h-5 w-5" />
                   Contact Press Team
                 </a>
@@ -488,8 +488,8 @@ export default function Press() {
           <div className="text-center mt-8">
             <p className="text-sm text-muted-foreground">
               For custom assets or additional resources, please contact{' '}
-              <a href="mailto:press@e-code.com" className="text-primary hover:underline">
-                press@e-code.com
+              <a href="mailto:press@e-code.ai" className="text-primary hover:underline">
+                press@e-code.ai
               </a>
             </p>
           </div>
@@ -510,8 +510,8 @@ export default function Press() {
               <div className="space-y-4">
                 <div>
                   <p className="font-semibold">Email</p>
-                  <a href="mailto:press@e-code.com" className="text-primary hover:underline">
-                    press@e-code.com
+                  <a href="mailto:press@e-code.ai" className="text-primary hover:underline">
+                    press@e-code.ai
                   </a>
                 </div>
                 <div>
@@ -522,7 +522,7 @@ export default function Press() {
                 </div>
               </div>
               <Button className="mt-8" asChild>
-                <a href="mailto:press@e-code.com">
+                <a href="mailto:press@e-code.ai">
                   <Mail className="mr-2 h-5 w-5" />
                   Contact Press Team
                 </a>
