@@ -21810,11 +21810,18 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
 
   // Admin - view customer form requests
+  const requireAdminAccess = (req: Request, res: Response) => {
+    if (req.user?.role === 'admin') {
+      return true;
+    }
+
+    res.status(403).json({ error: 'Admin access required' });
+    return false;
+  };
+
   app.get('/api/admin/form-requests', ensureAuthenticated, async (req, res) => {
-    const userId = req.user?.id;
-    const user = userId ? await storage.getUser(userId) : null;
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
+    if (!requireAdminAccess(req, res)) {
+      return;
     }
 
     try {
@@ -21834,10 +21841,8 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
 
   app.patch('/api/admin/form-requests/:id', ensureAuthenticated, async (req, res) => {
-    const userId = req.user?.id;
-    const user = userId ? await storage.getUser(userId) : null;
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
+    if (!requireAdminAccess(req, res)) {
+      return;
     }
 
     try {
