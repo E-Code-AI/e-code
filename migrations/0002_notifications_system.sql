@@ -4,6 +4,21 @@ ALTER TABLE "push_notifications"
   ADD COLUMN IF NOT EXISTS "read" boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS "read_at" timestamp;
 
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'notification_preferences'
+      AND column_name = 'user_id'
+      AND data_type <> 'integer'
+  ) THEN
+    ALTER TABLE "notification_preferences"
+      ALTER COLUMN "user_id" TYPE integer USING "user_id"::integer;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS "notification_preferences" (
   -- match users.id integer type to keep the foreign key valid
   "user_id" integer PRIMARY KEY,
