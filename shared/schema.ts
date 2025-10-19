@@ -974,6 +974,31 @@ export const errorLogs = pgTable("error_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Templates table for project templates
+export const templates = pgTable("templates", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  slug: varchar("slug").notNull().unique(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  category: varchar("category").notNull(), // 'web', 'backend', 'bot', 'game', etc.
+  tags: text().array().notNull().default([]),
+  authorName: varchar("author_name").notNull(),
+  authorVerified: boolean("author_verified").notNull().default(false),
+  uses: integer("uses").notNull().default(0),
+  stars: integer("stars").notNull().default(0),
+  forks: integer("forks").notNull().default(0),
+  language: varchar("language").notNull(),
+  framework: varchar("framework"),
+  difficulty: varchar("difficulty").notNull(), // 'beginner', 'intermediate', 'advanced'
+  estimatedTime: integer("estimated_time").notNull(), // in minutes
+  features: text().array().notNull().default([]),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  isOfficial: boolean("is_official").notNull().default(false),
+  isPublished: boolean("is_published").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Insert schemas
 export const insertVoiceVideoSessionSchema = createInsertSchema(voiceVideoSessions).omit({ id: true, createdAt: true });
 export const insertVoiceVideoParticipantSchema = createInsertSchema(voiceVideoParticipants).omit({ id: true });
@@ -984,6 +1009,7 @@ export const insertSubmissionSchema = createInsertSchema(submissions).omit({ id:
 export const insertMonitoringEventSchema = createInsertSchema(monitoringEvents).omit({ id: true, createdAt: true });
 export const insertPerformanceMetricSchema = createInsertSchema(performanceMetrics).omit({ id: true, createdAt: true });
 export const insertErrorLogSchema = createInsertSchema(errorLogs).omit({ id: true, createdAt: true, resolved: true });
+export const insertTemplateSchema = createInsertSchema(templates).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type VoiceVideoSession = typeof voiceVideoSessions.$inferSelect;
@@ -1012,3 +1038,6 @@ export type InsertPerformanceMetric = z.infer<typeof insertPerformanceMetricSche
 
 export type ErrorLog = typeof errorLogs.$inferSelect;
 export type InsertErrorLog = z.infer<typeof insertErrorLogSchema>;
+
+export type Template = typeof templates.$inferSelect;
+export type InsertTemplate = z.infer<typeof insertTemplateSchema>;

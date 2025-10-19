@@ -75,7 +75,7 @@ export class AIService {
     const toolDefinitions = tools ? this.getToolDefinitions() : undefined;
 
     const completion = await openai.chat.completions.create({
-      model: model === 'gpt-4o' ? 'gpt-4o' : 'gpt-4-turbo-preview',
+      model: model === 'gpt-5' ? 'gpt-5' : 'gpt-5',
       messages: messagesWithSystem,
       temperature,
       max_tokens: maxTokens,

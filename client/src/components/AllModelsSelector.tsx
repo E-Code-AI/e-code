@@ -28,7 +28,7 @@ interface ModelInfo {
 
 export function AllModelsSelector() {
   const { toast } = useToast();
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-5');
   const [testPrompt, setTestPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -60,7 +60,7 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'claude-3-opus-20240229',
+      id: 'claude-3-5-sonnet-20241022-legacy',
       name: 'Claude 3 Opus',
       description: 'Powerful model for complex tasks',
       provider: 'Anthropic',

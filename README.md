@@ -30,6 +30,9 @@ npm install
 # 3. Set up environment variables
 cp .env.production.example .env
 # Edit .env with your database and API keys
+# Optional services can be enabled as needed:
+#   ENABLE_MCP_SERVER=true    # Start the standalone MCP server (disabled by default)
+#   REDIS_URL=redis://...     # Enable Redis-backed caching
 
 # 4. Start PostgreSQL (or use Docker)
 docker run --name ecode-postgres -e POSTGRES_DB=ecode_dev -e POSTGRES_USER=ecode -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15
@@ -123,6 +126,9 @@ npm run typecheck
 
 # Full stack type checking (includes client + server placeholders; currently surfaces thousands of TODO typings)
 NODE_OPTIONS="--max-old-space-size=8192" npm run typecheck:full
+
+# Run the automated test suites (requires dependencies installed via `npm install`)
+npm test
 
 # Database operations
 npm run db:push

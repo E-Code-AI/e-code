@@ -1,23 +1,15 @@
 // @ts-nocheck
 import { Router } from 'express';
 import { storage } from '../storage';
-// Import removed - ensureAuthenticated will be defined locally
-
-// Middleware to ensure a user is authenticated
-const ensureAuthenticated = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: "Unauthorized" });
-};
+import { ensureAuthenticated } from '../middleware/auth';
 
 // Middleware to ensure user has access to project
 const ensureProjectAccess = async (req: any, res: any, next: any) => {
-  if (!req.isAuthenticated()) {
+  const userId = req.user?.id;
+
+  if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  
-  const userId = req.user!.id;
   const projectId = parseInt(req.params.projectId || req.params.id);
   
   if (isNaN(projectId)) {

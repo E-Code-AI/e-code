@@ -93,6 +93,7 @@ import { searchEngine } from "./search/search-engine";
 import { extensionManager } from "./extensions/extension-manager";
 import { apiManager } from "./api/api-manager";
 import { MobileAPIService } from './mobile/mobile-api-service';
+import { mobileRouter } from './api/mobile';
 import { enterpriseSSOService } from './sso/enterprise-sso-service';
 import { advancedCollaborationService } from './collaboration/advanced-collaboration-service';
 import { communityService } from './community/community-service';
@@ -119,6 +120,7 @@ import { realCodeGenerator } from "./ai/real-code-generator";
 import { realCollaborationService } from "./collaboration/real-collaboration";
 import { agentWebSocketService } from './services/agent-websocket-service';
 import containerRoutes from "./routes/containers";
+import { aiService } from "./services/ai-service";
 
 // POLYGLOT BACKEND INTEGRATION - Using Go and Python services for performance
 import { containerProxy } from './services/polyglot-container-proxy';
@@ -340,14 +342,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
   
-  // Set up auth bypass for development
-  setupAuthBypass(app);
-  
-  // Apply auth bypass middleware to all API routes in development
-  if (process.env.NODE_ENV === 'development') {
+  const enableDevAuthBypass =
+    process.env.NODE_ENV === 'development' &&
+    process.env.ENABLE_DEV_AUTH_BYPASS === 'true' &&
+    !!process.env.DEV_AUTH_BYPASS_TOKEN;
+
+  if (enableDevAuthBypass) {
+    setupAuthBypass(app);
     app.use('/api', devAuthBypass);
+  } else if (process.env.NODE_ENV === 'development') {
+    console.log(
+      'Auth Bypass: Disabled. Set ENABLE_DEV_AUTH_BYPASS=true and provide DEV_AUTH_BYPASS_TOKEN to enable debug endpoints.'
+    );
   }
-  
+
   // Add performance monitoring middleware for all routes
   app.use(performanceMiddleware);
   
@@ -2018,8 +2026,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { category, featured, search } = req.query;
       
+      // Default templates that are always available
+      const defaultTemplates = [
+        {
+          id: 'nextjs-blog',
+          slug: 'nextjs-blog',
+          name: 'Next.js Blog',
+          description: 'A modern blog with Next.js and Tailwind CSS',
+          category: 'web',
+          tags: ['nextjs', 'react', 'blog', 'tailwind'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 1250,
+          stars: 89,
+          forks: 23,
+          language: 'javascript',
+          framework: 'nextjs',
+          difficulty: 'beginner',
+          estimatedTime: 30,
+          features: ['SEO optimized', 'Dark mode', 'Markdown support'],
+          isFeatured: true,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'react-dashboard',
+          slug: 'react-dashboard',
+          name: 'React Admin Dashboard',
+          description: 'Professional admin dashboard with charts and analytics',
+          category: 'web',
+          tags: ['react', 'dashboard', 'admin', 'charts'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 2100,
+          stars: 156,
+          forks: 45,
+          language: 'javascript',
+          framework: 'react',
+          difficulty: 'intermediate',
+          estimatedTime: 45,
+          features: ['Charts', 'Tables', 'Authentication', 'Responsive'],
+          isFeatured: true,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'express-api',
+          slug: 'express-api',
+          name: 'Express REST API',
+          description: 'Production-ready REST API with Express and JWT auth',
+          category: 'backend',
+          tags: ['express', 'api', 'rest', 'jwt'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 1500,
+          stars: 102,
+          forks: 28,
+          language: 'javascript',
+          framework: 'express',
+          difficulty: 'intermediate',
+          estimatedTime: 35,
+          features: ['JWT Auth', 'Rate limiting', 'Helmet security', 'MongoDB'],
+          isFeatured: true,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'nodejs-api',
+          slug: 'nodejs-api',
+          name: 'Node.js PostgreSQL API',
+          description: 'RESTful API with Node.js, Express, and PostgreSQL',
+          category: 'backend',
+          tags: ['nodejs', 'api', 'postgresql', 'rest'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 980,
+          stars: 67,
+          forks: 19,
+          language: 'javascript',
+          framework: 'nodejs',
+          difficulty: 'intermediate',
+          estimatedTime: 40,
+          features: ['PostgreSQL', 'Connection pooling', 'Testing setup', 'Docker ready'],
+          isFeatured: false,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'python-flask',
+          slug: 'python-flask',
+          name: 'Flask Python API',
+          description: 'Flask web application with SQLAlchemy and authentication',
+          category: 'backend',
+          tags: ['python', 'flask', 'api', 'sqlalchemy'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 1650,
+          stars: 134,
+          forks: 38,
+          language: 'python',
+          framework: 'flask',
+          difficulty: 'intermediate',
+          estimatedTime: 35,
+          features: ['SQLAlchemy ORM', 'JWT auth', 'PostgreSQL', 'Gunicorn'],
+          isFeatured: true,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'vuejs-app',
+          slug: 'vuejs-app',
+          name: 'Vue 3 Application',
+          description: 'Vue 3 application with Composition API, Pinia, and Vue Router',
+          category: 'web',
+          tags: ['vue', 'vue3', 'pinia', 'vite'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 890,
+          stars: 72,
+          forks: 21,
+          language: 'javascript',
+          framework: 'vue',
+          difficulty: 'beginner',
+          estimatedTime: 30,
+          features: ['Composition API', 'Pinia store', 'Vue Router', 'Tailwind CSS'],
+          isFeatured: false,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'discord-bot',
+          slug: 'discord-bot',
+          name: 'Discord Bot',
+          description: 'Feature-rich Discord bot with commands and events',
+          category: 'bot',
+          tags: ['discord', 'bot', 'nodejs', 'discord.js'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 1450,
+          stars: 98,
+          forks: 31,
+          language: 'javascript',
+          framework: 'discord.js',
+          difficulty: 'beginner',
+          estimatedTime: 25,
+          features: ['Slash commands', 'Event handling', 'Database', 'Moderation'],
+          isFeatured: false,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'phaser-game',
+          slug: 'phaser-game',
+          name: 'Phaser 3 Game',
+          description: 'HTML5 game with Phaser 3 physics engine',
+          category: 'game',
+          tags: ['phaser', 'game', 'html5', 'javascript'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 670,
+          stars: 54,
+          forks: 15,
+          language: 'javascript',
+          framework: 'phaser',
+          difficulty: 'intermediate',
+          estimatedTime: 50,
+          features: ['Physics engine', 'Sprite animations', 'Score system', 'Mobile ready'],
+          isFeatured: false,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        }
+      ];
+      
       // Get templates from database
       let templates = await storage.getAllTemplates(true); // Only published templates
+      
+      // If no templates in database, use defaults
+      if (!templates || templates.length === 0) {
+        templates = defaultTemplates;
+      }
       
       // Apply filters
       if (category && typeof category === 'string') {
@@ -2779,6 +2964,487 @@ npx http-server .
 \`\`\`
 ` }
           ]
+        },
+        'nodejs-api': {
+          language: 'nodejs',
+          description: 'RESTful API with Node.js, Express, and PostgreSQL',
+          files: [
+            { name: 'package.json', content: JSON.stringify({
+              name: 'nodejs-api',
+              version: '1.0.0',
+              scripts: {
+                start: 'node src/server.js',
+                dev: 'nodemon src/server.js',
+                test: 'jest --coverage'
+              },
+              dependencies: {
+                express: '^4.18.0',
+                pg: '^8.11.0',
+                dotenv: '^16.3.0',
+                cors: '^2.8.5',
+                'express-validator': '^7.0.0',
+                helmet: '^7.0.0',
+                compression: '^1.7.4',
+                morgan: '^1.10.0'
+              },
+              devDependencies: {
+                nodemon: '^3.0.0',
+                jest: '^29.0.0',
+                supertest: '^6.3.0'
+              }
+            }, null, 2) },
+            { name: 'src/server.js', content: `const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+// Middleware
+app.use(helmet());
+app.use(compression());
+app.use(cors());
+app.use(morgan('combined'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date() });
+});
+
+// Users endpoint
+app.get('/api/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, name, email, created_at FROM users LIMIT 100');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// Create user
+app.post('/api/users', async (req, res) => {
+  const { name, email } = req.body;
+  
+  if (!name || !email) {
+    return res.status(400).json({ error: 'Name and email are required' });
+  }
+  
+  try {
+    const result = await pool.query(
+      'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
+      [name, email]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal server error'
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(\`🚀 Server running on port \${PORT}\`);
+});` },
+            { name: '.env.example', content: `DATABASE_URL=postgresql://user:password@localhost:5432/mydb
+NODE_ENV=development
+PORT=3000` },
+            { name: 'README.md', content: `# Node.js REST API
+
+Production-ready REST API with PostgreSQL database integration.
+
+## Features
+- 🗄️ PostgreSQL database
+- 🛡️ Security best practices
+- 📝 Environment configuration
+- 🧪 Jest testing setup
+- 📊 Error handling
+- 🔄 Connection pooling
+
+## Setup
+1. Copy \`.env.example\` to \`.env\`
+2. Update database credentials
+3. Run \`npm install\`
+4. Run \`npm run dev\`
+
+API will be available at http://localhost:3000
+` }
+          ]
+        },
+        'python-flask': {
+          language: 'python',
+          description: 'Flask web application with SQLAlchemy and authentication',
+          files: [
+            { name: 'requirements.txt', content: `Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-CORS==4.0.0
+Flask-JWT-Extended==4.5.3
+python-dotenv==1.0.0
+gunicorn==21.2.0
+psycopg2-binary==2.9.9
+marshmallow==3.20.1` },
+            { name: 'app.py', content: `from flask import Flask, jsonify, request
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from datetime import datetime, timedelta
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = Flask(__name__)
+
+# Configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///app.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
+
+# Initialize extensions
+db = SQLAlchemy(app)
+CORS(app)
+jwt = JWTManager(app)
+
+# Models
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'created_at': self.created_at.isoformat()
+        }
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    author = db.relationship('User', backref='posts')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'content': self.content,
+            'author': self.author.username,
+            'created_at': self.created_at.isoformat()
+        }
+
+# Routes
+@app.route('/api/health')
+def health():
+    return jsonify({'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()})
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    
+    if not data.get('username') or not data.get('email'):
+        return jsonify({'error': 'Username and email required'}), 400
+    
+    # Check if user exists
+    if User.query.filter_by(username=data['username']).first():
+        return jsonify({'error': 'Username already exists'}), 409
+    
+    # Create new user
+    user = User(
+        username=data['username'],
+        email=data['email'],
+        password_hash='hashed_password_here'  # In production, use werkzeug.security
+    )
+    
+    db.session.add(user)
+    db.session.commit()
+    
+    # Create access token
+    access_token = create_access_token(identity=user.id)
+    
+    return jsonify({
+        'access_token': access_token,
+        'user': user.to_dict()
+    }), 201
+
+@app.route('/api/posts')
+def get_posts():
+    posts = Post.query.order_by(Post.created_at.desc()).limit(20).all()
+    return jsonify([post.to_dict() for post in posts])
+
+@app.route('/api/posts', methods=['POST'])
+@jwt_required()
+def create_post():
+    current_user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    if not data.get('title') or not data.get('content'):
+        return jsonify({'error': 'Title and content required'}), 400
+    
+    post = Post(
+        title=data['title'],
+        content=data['content'],
+        author_id=current_user_id
+    )
+    
+    db.session.add(post)
+    db.session.commit()
+    
+    return jsonify(post.to_dict()), 201
+
+@app.route('/api/user/profile')
+@jwt_required()
+def get_profile():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    return jsonify(user.to_dict())
+
+# Initialize database
+with app.app_context():
+    db.create_all()
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)` },
+            { name: '.env.example', content: `DATABASE_URL=postgresql://user:password@localhost:5432/flaskdb
+JWT_SECRET_KEY=your-secret-key-change-this
+FLASK_ENV=development` },
+            { name: 'README.md', content: `# Flask Python API
+
+Modern Flask application with SQLAlchemy ORM and JWT authentication.
+
+## Features
+- 🐍 Flask 3.0 framework
+- 🗄️ SQLAlchemy ORM
+- 🔐 JWT authentication
+- 📝 RESTful API design
+- 🚀 Production-ready with Gunicorn
+- 🧪 PostgreSQL support
+
+## Setup
+1. Create virtual environment: \`python -m venv venv\`
+2. Activate: \`source venv/bin/activate\` (Linux/Mac) or \`venv\\Scripts\\activate\` (Windows)
+3. Install dependencies: \`pip install -r requirements.txt\`
+4. Copy \`.env.example\` to \`.env\`
+5. Run: \`python app.py\`
+
+API will be available at http://localhost:5000
+` }
+          ]
+        },
+        'vuejs-app': {
+          language: 'nodejs',
+          description: 'Vue 3 application with Composition API, Pinia, and Vue Router',
+          files: [
+            { name: 'package.json', content: JSON.stringify({
+              name: 'vuejs-app',
+              version: '1.0.0',
+              scripts: {
+                dev: 'vite',
+                build: 'vite build',
+                preview: 'vite preview'
+              },
+              dependencies: {
+                vue: '^3.3.0',
+                'vue-router': '^4.2.0',
+                pinia: '^2.1.0',
+                axios: '^1.6.0',
+                '@vueuse/core': '^10.7.0'
+              },
+              devDependencies: {
+                '@vitejs/plugin-vue': '^4.5.0',
+                vite: '^5.0.0',
+                '@vue/compiler-sfc': '^3.3.0',
+                tailwindcss: '^3.4.0',
+                autoprefixer: '^10.4.0',
+                postcss: '^8.4.0'
+              }
+            }, null, 2) },
+            { name: 'src/main.js', content: `import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import router from './router'
+import App from './App.vue'
+import './style.css'
+
+const app = createApp(App)
+const pinia = createPinia()
+
+app.use(pinia)
+app.use(router)
+
+app.mount('#app')` },
+            { name: 'src/App.vue', content: `<template>
+  <div id="app">
+    <nav class="bg-white shadow-sm px-4 py-3">
+      <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Vue App</h1>
+        <div class="space-x-4">
+          <router-link to="/" class="text-blue-600 hover:text-blue-800">Home</router-link>
+          <router-link to="/about" class="text-blue-600 hover:text-blue-800">About</router-link>
+          <router-link to="/todos" class="text-blue-600 hover:text-blue-800">Todos</router-link>
+        </div>
+      </div>
+    </nav>
+    
+    <main class="container mx-auto p-4">
+      <router-view />
+    </main>
+  </div>
+</template>
+
+<script setup>
+import { onMounted } from 'vue'
+import { useMainStore } from './stores/main'
+
+const store = useMainStore()
+
+onMounted(() => {
+  console.log('Vue app mounted!')
+})
+</script>` },
+            { name: 'src/views/Home.vue', content: `<template>
+  <div class="home">
+    <h2 class="text-3xl font-bold mb-4">Welcome to Vue 3!</h2>
+    <p class="text-gray-600 mb-4">
+      This is a modern Vue 3 application with Composition API, Pinia state management, and Vue Router.
+    </p>
+    
+    <div class="bg-blue-50 p-4 rounded-lg">
+      <h3 class="font-semibold mb-2">Counter Example</h3>
+      <p class="mb-4">Count: {{ count }}</p>
+      <div class="space-x-2">
+        <button @click="increment" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          Increment
+        </button>
+        <button @click="decrement" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+          Decrement
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+
+const count = ref(0)
+
+const increment = () => count.value++
+const decrement = () => count.value--
+</script>` },
+            { name: 'src/stores/main.js', content: `import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+
+export const useMainStore = defineStore('main', () => {
+  // State
+  const todos = ref([])
+  const user = ref(null)
+  
+  // Getters
+  const completedTodos = computed(() => 
+    todos.value.filter(todo => todo.completed)
+  )
+  
+  const pendingTodos = computed(() => 
+    todos.value.filter(todo => !todo.completed)
+  )
+  
+  // Actions
+  function addTodo(text) {
+    todos.value.push({
+      id: Date.now(),
+      text,
+      completed: false
+    })
+  }
+  
+  function toggleTodo(id) {
+    const todo = todos.value.find(t => t.id === id)
+    if (todo) {
+      todo.completed = !todo.completed
+    }
+  }
+  
+  function removeTodo(id) {
+    todos.value = todos.value.filter(t => t.id !== id)
+  }
+  
+  function setUser(newUser) {
+    user.value = newUser
+  }
+  
+  return {
+    todos,
+    user,
+    completedTodos,
+    pendingTodos,
+    addTodo,
+    toggleTodo,
+    removeTodo,
+    setUser
+  }
+})` },
+            { name: 'vite.config.js', content: `import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  server: {
+    port: 3000,
+    host: true
+  }
+})` },
+            { name: 'README.md', content: `# Vue 3 Application
+
+Modern Vue 3 application with Composition API, Pinia, and Vue Router.
+
+## Features
+- ⚡ Vue 3 with Composition API
+- 🏪 Pinia state management
+- 🚦 Vue Router for navigation
+- 🎨 Tailwind CSS for styling
+- 🔧 Vite for fast development
+- 📦 Component-based architecture
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+Application will be available at http://localhost:3000
+` }
+          ]
         }
       };
 
@@ -2804,32 +3470,6 @@ npx http-server .
           content: file.content,
         });
       }
-
-      res.json(project);
-    } catch (error) {
-      console.error('Error creating project from template:', error);
-      res.status(500).json({ error: 'Failed to create project from template' });
-    }
-  });
-
-  app.post('/api/projects/from-template', ensureAuthenticated, async (req, res) => {
-    try {
-      const { templateId, name } = req.body;
-      const userId = req.user!.id;
-      
-      if (!templateId || !name) {
-        return res.status(400).json({ error: 'Template ID and name are required' });
-      }
-
-      // Create project from template
-      // In a real implementation, this would copy files and configuration from the template
-      const project = await storage.createProject({
-        name,
-        description: `Created from template: ${templateId}`,
-        language: 'nodejs', // This would come from the template
-        visibility: 'private',
-        ownerId: userId
-      });
 
       res.json(project);
     } catch (error) {
@@ -4026,13 +4666,13 @@ npx http-server .
       console.log('[POLYGLOT] Routing AI generation through Python ML service');
       const result = await polyglotIntegration.generateCompletion(
         prompt,
-        model || 'gpt-4o'
+        model || 'gpt-5'
       );
       
       res.json({ 
         result: result.completion || result,
         service: 'python-ml',
-        model: model || 'gpt-4o',
+        model: model || 'gpt-5',
         temperature,
         maxTokens
       });
@@ -4154,143 +4794,124 @@ npx http-server .
   // CRITICAL FEATURE 2: AI Code Generation - 100% Functional
   app.post('/api/ai/generate', ensureAuthenticated, async (req, res) => {
     try {
-      const { prompt, projectId, model = 'gpt-4o' } = req.body;
+      const { prompt, projectId, language, model = 'gpt-5' } = req.body;
+      
+      logger.info('[AI-GEN] Code generation request received', { 
+        prompt: prompt?.substring(0, 100), 
+        language, 
+        model,
+        projectId,
+        hasOpenAI: !!process.env.OPENAI_API_KEY,
+        hasAnthropic: !!process.env.ANTHROPIC_API_KEY
+      });
       
       if (!prompt) {
-        return res.status(400).json({ error: 'Prompt is required' });
+        logger.error('[AI-GEN] Missing prompt in request');
+        return res.status(400).json({ 
+          error: 'Prompt is required',
+          service: 'validation',
+          isMockResponse: false
+        });
       }
       
-      let generatedCode = '';
-      let service = 'fallback';
+      let result;
+      let service = 'unknown';
+      let isMockResponse = false;
+      let errorDetails = null;
       
-      // Try multiple AI services with fallbacks
       try {
-        // Try Python ML service first
-        if (polyglotIntegration && polyglotIntegration.generateCompletion) {
-          const pythonResult = await polyglotIntegration.generateCompletion(prompt, model);
-          if (pythonResult?.completion) {
-            generatedCode = pythonResult.completion;
-            service = 'python-ml';
-          }
+        // Get available providers
+        const availableProviders = aiService.getAvailableProviders();
+        logger.info('[AI-GEN] Available AI providers:', availableProviders);
+        
+        if (availableProviders.length === 0) {
+          logger.warn('[AI-GEN] No AI providers configured. API keys may be missing.');
+          logger.warn('[AI-GEN] Ensure OPENAI_API_KEY or ANTHROPIC_API_KEY is set in environment');
         }
-      } catch (pythonError) {
-        console.log('[AI-GEN] Python service unavailable');
-      }
-      
-      // Try MCP if Python failed
-      if (!generatedCode) {
-        try {
-          if (mcpServerInstance && mcpServerInstance.executeToolWithRealExecution) {
-            const mcpResult = await mcpServerInstance.executeToolWithRealExecution('ai_complete', {
-              prompt: `Generate production-ready code for: ${prompt}`,
-              model,
-              temperature: 0.7
-            });
-            if (mcpResult?.content?.[0]?.text) {
-              generatedCode = mcpResult.content[0].text;
-              service = 'mcp';
-            }
+        
+        // Try to generate code using the AI service
+        logger.info('[AI-GEN] Calling aiService.generateCode...');
+        result = await aiService.generateCode(prompt, language);
+        
+        // Check if we got a mock response
+        if (result.code.includes('placeholder for AI-generated') || 
+            result.explanation.includes('placeholder for AI-generated')) {
+          isMockResponse = true;
+          service = 'mock-fallback';
+          logger.warn('[AI-GEN] Received mock response from AI service');
+        } else {
+          // Determine which service was actually used
+          if (availableProviders.includes('openai')) {
+            service = 'openai';
+          } else if (availableProviders.includes('anthropic')) {
+            service = 'anthropic';
+          } else {
+            service = 'fallback';
           }
-        } catch (mcpError) {
-          console.log('[AI-GEN] MCP unavailable');
+          logger.info('[AI-GEN] Successfully generated code using:', service);
         }
-      }
-      
-      // Fallback to generating quality example code
-      if (!generatedCode) {
-        const codeExamples = {
-          'fibonacci': `// Fibonacci Number Generator
-function fibonacci(n) {
-  if (n <= 1) return n;
-  let prev = 0, curr = 1;
-  for (let i = 2; i <= n; i++) {
-    [prev, curr] = [curr, prev + curr];
-  }
-  return curr;
-}
-
-// Generate fibonacci sequence
-function fibonacciSequence(count) {
-  const sequence = [];
-  for (let i = 0; i < count; i++) {
-    sequence.push(fibonacci(i));
-  }
-  return sequence;
-}
-
-// Example usage
-console.log("First 10 Fibonacci numbers:", fibonacciSequence(10));
-module.exports = { fibonacci, fibonacciSequence };`,
-          'default': `// ${prompt}
-class Solution {
-  constructor() {
-    this.data = [];
-    this.config = {};
-  }
-  
-  // Main implementation
-  async execute(input) {
-    try {
-      // Process input
-      const processed = this.processInput(input);
-      
-      // Perform main logic
-      const result = await this.performLogic(processed);
-      
-      // Return formatted result
-      return this.formatOutput(result);
-    } catch (error) {
-      console.error('Error:', error);
-      throw error;
-    }
-  }
-  
-  processInput(input) {
-    // Input validation and processing
-    if (!input) throw new Error('Input required');
-    return input;
-  }
-  
-  async performLogic(data) {
-    // Main business logic for: ${prompt}
-    return data;
-  }
-  
-  formatOutput(result) {
-    return {
-      success: true,
-      data: result,
-      timestamp: new Date().toISOString()
-    };
-  }
-}
-
-// Export for use
-module.exports = new Solution();`
+      } catch (aiError) {
+        // Log the full error details for debugging
+        logger.error('[AI-GEN] AI service error:', aiError);
+        errorDetails = {
+          message: aiError.message || 'Unknown error',
+          stack: process.env.NODE_ENV === 'development' ? aiError.stack : undefined,
+          type: aiError.name || 'Error'
         };
         
-        // Use specific example if keyword matches, otherwise use default
-        const lowerPrompt = prompt.toLowerCase();
-        if (lowerPrompt.includes('fibonacci')) {
-          generatedCode = codeExamples.fibonacci;
-        } else {
-          generatedCode = codeExamples.default;
-        }
-        service = 'template-engine';
+        // Return a more informative fallback
+        isMockResponse = true;
+        service = 'error-fallback';
+        result = {
+          code: `// AI Service Error: ${aiError.message || 'Unable to generate code'}
+// This is a fallback response. Please ensure API keys are configured.
+// Required environment variables: OPENAI_API_KEY or ANTHROPIC_API_KEY
+
+// Basic template for: ${prompt}
+function placeholder() {
+  // TODO: Implement ${prompt}
+  console.log('AI service is not available. Please check configuration.');
+}
+
+module.exports = { placeholder };`,
+          explanation: `Failed to generate code: ${aiError.message || 'Unknown error'}. Please check that AI service API keys are properly configured.`
+        };
       }
       
-      console.log(`[AI-GEN] Generated code for prompt: ${prompt.substring(0, 50)}... using ${service}`);
-      res.json({
-        code: generatedCode,
-        model,
+      // Log the response details
+      logger.info(`[AI-GEN] Response prepared`, {
         service,
-        prompt,
+        isMockResponse,
+        codeLength: result.code?.length || 0,
+        hasError: !!errorDetails
+      });
+      
+      // Send response with clear indication of mock vs real
+      res.json({
+        code: result.code,
+        explanation: result.explanation,
+        model: model,
+        service: service,
+        isMockResponse: isMockResponse,
+        prompt: prompt,
+        language: language,
         timestamp: new Date().toISOString(),
-        success: true
+        success: !errorDetails,
+        error: errorDetails,
+        availableProviders: aiService.getAvailableProviders(),
+        message: isMockResponse 
+          ? 'Note: This is a mock response. Configure AI API keys for real generation.' 
+          : 'Code generated successfully using AI service'
       });
     } catch (error) {
-      console.error('Error generating code:', error);
-      res.status(500).json({ error: 'Failed to generate code' });
+      logger.error('[AI-GEN] Unexpected error in endpoint:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate code',
+        message: error.message || 'Internal server error',
+        service: 'error',
+        isMockResponse: true,
+        timestamp: new Date().toISOString()
+      });
     }
   });
   
@@ -7124,7 +7745,7 @@ module.exports = new Solution();`
       // Track usage
       await storage.trackAIUsage(userId, 'chat', {
         provider: 'openai',
-        model: 'gpt-4o',
+        model: 'gpt-5',
         promptTokens: 100,
         completionTokens: 200,
         totalTokens: 300,
@@ -7682,9 +8303,11 @@ module.exports = new Solution();`
   // Removed debug middleware to improve performance
 
   // prefix all routes with /api
-  const apiRouter = app.use('/api', (req, res, next) => {
+  app.use('/api', (req, res, next) => {
     next();
   });
+
+  app.use('/api', mobileRouter);
 
   // Get all projects for the authenticated user
   app.get('/api/projects', ensureAuthenticated, async (req, res) => {
@@ -10558,15 +11181,24 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   
   app.use("/api/mcp", mcpRouter);
-  
+
+  const enableMCP = process.env.ENABLE_MCP_SERVER === 'true';
+
   // Open-source Models API
   const openSourceModelsRouter = await import('./api/opensource-models');
   app.use('/api/opensource', openSourceModelsRouter.default);
-  initializeMCPServer(app);
-  
-  // Start the standalone MCP server on port 3200 for AI operations
-  startMCPStandaloneServer();
-  console.log('[MCP] Standalone server starting on port 3200 for tool execution');
+
+  if (enableMCP) {
+    if (initializeMCPServer(app)) {
+      // Start the standalone MCP server on port 3200 for AI operations
+      startMCPStandaloneServer();
+      console.log('[MCP] Standalone server starting on port 3200 for tool execution');
+    } else {
+      console.warn('[MCP] Standalone MCP server initialization failed; skipping standalone server startup');
+    }
+  } else {
+    console.warn('[MCP] Standalone MCP server disabled (set ENABLE_MCP_SERVER="true" to enable)');
+  }
   
   // Shell routes
   app.use("/api/shell", shellRoutes);
@@ -19685,7 +20317,7 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Initialize Real Backend Services
   
   // 1. AI Service API Endpoints
-  const { aiService } = await import('./ai/ai-service');
+  const { aiService: aiService2 } = await import('./ai/ai-service');
   
   // AI Chat endpoint - using real AI providers
   app.post('/api/ai/chat/:projectId', ensureAuthenticated, async (req, res) => {
@@ -19701,14 +20333,14 @@ Generate a comprehensive application based on the user's request. Include all ne
       
       // Map provider names to models
       const modelMap: Record<string, string> = {
-        openai: 'gpt-4o',
+        openai: 'gpt-5',
         anthropic: 'claude-3-5-sonnet-20241022',
         gemini: 'gemini-pro',
         xai: 'grok-beta',
         perplexity: 'llama-3.1-sonar-small-128k-online'
       };
       
-      const model = modelMap[provider] || 'gpt-4o';
+      const model = modelMap[provider] || 'gpt-5';
       
       // Get project context
       const project = await storage.getProject(parseInt(projectId));
@@ -19721,7 +20353,7 @@ Generate a comprehensive application based on the user's request. Include all ne
         files: files.map(f => ({ path: f.path, content: f.content }))
       };
       
-      const response = await aiService.generateResponse(messages, {
+      const response = await aiService2.generateResponse(messages, {
         model,
         projectContext,
         temperature: 0.7,
@@ -19761,7 +20393,7 @@ Generate a comprehensive application based on the user's request. Include all ne
     try {
       const { actions, projectId } = req.body;
       
-      const response = await aiService.executeActions(actions, projectId);
+      const response = await aiService2.executeActions(actions, projectId);
       
       res.json(response);
     } catch (error) {

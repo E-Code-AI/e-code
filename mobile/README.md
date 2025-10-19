@@ -1,98 +1,85 @@
-# E-Code Mobile App - 100% Functional React Native Application
+# E-Code Mobile App
 
-## 📱 IMPORTANT: This is a MOBILE APP, not a web page!
+A React Native application built with Expo that lets you access your E-Code projects on the go. The app focuses on the most important workflows for mobile users:
 
-The mobile app is a **React Native application** that runs on iOS and Android devices, NOT in a web browser.
+- Authenticate with the platform and persist your session
+- Browse your recent projects and inspect metadata
+- Open a project, view and edit files, and save changes back to the server
+- Execute code through the real mobile execution service and review terminal output
 
-## How to Run the Mobile App
+## Getting started
 
-### Option 1: Using Expo (Recommended)
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 18 or newer
+- [Expo CLI](https://docs.expo.dev/) (`npm install -g expo-cli`) – optional but recommended
+- An E-Code API server running locally on `http://localhost:5000`
+
+### Installation
+
 ```bash
 cd mobile
 npm install
-npx expo start
 ```
-Then scan the QR code with Expo Go app on your phone.
 
-### Option 2: iOS Simulator (Mac only)
+### Running the app
+
 ```bash
-cd mobile
-npm install
-npx react-native run-ios
+npm start
 ```
 
-### Option 3: Android Emulator
+Expo will open an interactive dashboard where you can:
+
+- Press `i` to launch the iOS simulator
+- Press `a` to launch the Android emulator
+- Scan the displayed QR code with the Expo Go app on your device
+
+The application reads the API base URL from the Expo configuration. You can override it by setting `EXPO_PUBLIC_API_BASE` before starting Expo:
+
 ```bash
-cd mobile
-npm install
-npx react-native run-android
+EXPO_PUBLIC_API_BASE="https://your-domain.com/api" npm start
 ```
 
-## What's Implemented (100% Functional)
+## Feature overview
 
-### ✅ Complete Backend Integration
-- **API Endpoints**: All `/mobile/*` paths connected
-- **WebSocket Services**: Real-time terminal, AI, and collaboration
-- **Container Execution**: Code runs in isolated environments
-- **File Operations**: Create, edit, save with persistence
+### Authentication
+- Username/password login against the `/api/mobile/auth/login` endpoint
+- Session tokens stored securely using `AsyncStorage`
+- Automatic restoration of existing sessions on app launch
 
-### ✅ All Screens Functional
-1. **LoginScreen.tsx** - Real authentication with JWT tokens
-2. **HomeScreen.tsx** - Project cards, templates, quick actions
-3. **ProjectsScreen.tsx** - List, search, filter projects
-4. **CodeEditorScreen.tsx** - Monaco editor with syntax highlighting
-5. **TerminalScreen.tsx** - WebSocket-based real terminal
-6. **PreviewScreen.tsx** - Live project preview
-7. **ProfileScreen.tsx** - User data, stats, settings
-8. **SettingsScreen.tsx** - Theme, notifications, preferences
+### Project dashboard
+- Displays the list of recent projects returned by `/api/mobile/projects`
+- Pull-to-refresh support to fetch the latest information
+- Inline error handling with retry affordances
+- Quick access to project language and activity statistics
 
-### ✅ Real Services
-- `mobile-websocket.ts` - WebSocket server for real-time features
-- `mobile-container-service.ts` - Container execution for code
-- `websocket.ts` - Client-side WebSocket connections
-- All storage methods implemented
+### Project workspace
+- Fetches project files from `/api/mobile/projects/:id/files`
+- Select, edit, and save file contents back to the server
+- Run the active file through `/api/mobile/projects/:id/run`
+- Streamlined output viewer showing stdout, stderr, exit code, and execution time
 
-## Backend API Endpoints
+## Project structure
 
-The mobile app connects to these REAL endpoints (not mocks):
-- `POST /mobile/auth/login` - Authentication
-- `POST /mobile/auth/logout` - Logout
-- `GET /mobile/projects` - Get user projects
-- `POST /mobile/projects` - Create project
-- `GET /mobile/projects/:id` - Get project details
-- `GET /mobile/templates` - Get templates
-- `POST /mobile/projects/from-template` - Create from template
-- `POST /mobile/terminal/execute` - Execute terminal commands
-- `GET /mobile/profile` - Get user profile
-- And many more...
+```
+mobile/
+├── app.config.js        # Expo configuration (with API base URL)
+├── App.tsx              # Navigation and session management
+├── src/
+│   ├── navigation/      # Navigation types
+│   ├── screens/         # Login, home, and project screens
+│   ├── services/        # API client and configuration helpers
+│   └── types.ts         # Shared TypeScript interfaces
+└── tsconfig.json        # React Native TypeScript configuration
+```
 
-## WebSocket Namespaces
-- `/terminal` - Real-time terminal I/O
-- `/ai` - AI assistant streaming responses
-- `/collaboration` - Live code sharing
+## Testing the API locally
 
-## Files Proving 100% Functionality
+The mobile app relies on the backend mobile routes that are registered under `/api/mobile/*`. Start the main server (from the repository root):
 
-### Mobile App Files:
-- `mobile/App.tsx` - Main navigation
-- `mobile/screens/*.tsx` - All 8 screens
-- `mobile/services/websocket.ts` - WebSocket client
+```bash
+npm install
+npm run dev
+```
 
-### Backend Integration:
-- `server/api/mobile.ts` - All mobile API endpoints
-- `server/websocket/mobile-websocket.ts` - WebSocket server
-- `server/services/mobile-container-service.ts` - Container execution
-- `server/storage.ts` - All required storage methods (lines 426-428, 561-573)
-- `server/routes.ts` - WebSocket integration (lines 7458-7459)
-
-## Verification
-
-Every single button, link, and interaction in the mobile app:
-- ✅ Has a real click handler
-- ✅ Makes real API calls
-- ✅ Gets real responses
-- ✅ Updates real data
-- ✅ Uses real WebSockets
-- ✅ Executes real code
-
-This is NOT a mockup or demo - it's a fully functional mobile application!
+With the server running you can sign in (default development credentials are `admin` / `admin`), browse your projects, edit files, and execute code directly from the device or emulator.

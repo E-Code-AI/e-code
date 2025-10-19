@@ -1,20 +1,12 @@
 // @ts-nocheck
 import { Router } from 'express';
 import { storage } from '../storage';
-// Import removed - ensureAuthenticated will be defined locally
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
+import { ensureAuthenticated } from '../middleware/auth';
 
 const router = Router();
-
-// Middleware to ensure a user is authenticated
-const ensureAuthenticated = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: "Unauthorized" });
-};
 
 // Configure multer for file uploads
 const upload = multer({
@@ -26,11 +18,11 @@ const upload = multer({
 
 // Middleware to ensure user has access to project
 const ensureProjectAccess = async (req: any, res: any, next: any) => {
-  if (!req.isAuthenticated()) {
+  const userId = req.user?.id;
+
+  if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  
-  const userId = req.user!.id;
   const projectId = parseInt(req.params.projectId || req.params.id);
   
   if (isNaN(projectId)) {

@@ -113,6 +113,11 @@ export class MonitoringService {
   private async processMetrics(metrics: MonitoringEvent['metrics'], userId?: number, sessionId?: string): Promise<void> {
     for (const metric of metrics) {
       try {
+        const metadata: Record<string, any> = {
+          userId,
+          sessionId,
+        };
+
         await db.insert(performanceMetrics).values({
           metric_name: metric.name,
           metric_value: metric.value,
@@ -240,7 +245,7 @@ export class MonitoringService {
         ));
       
       // Get active users (from metadata)
-      const activeUserData = await db.select({ 
+      const [activeUserData] = await db.select({ 
         count: sql<number>`count(distinct metadata->>'userId')` 
       })
         .from(monitoringEvents)
@@ -251,7 +256,7 @@ export class MonitoringService {
       
       const errorRate = (errorData?.count || 0) / 1000; // Errors per 1000 requests
       const avgResponseTime = responseTimeData[0]?.avg || 0;
-      const activeUsers = activeUserData[0]?.count || 0;
+      const activeUsers = activeUserData?.count || 0;
       
       // System metrics (in production, these would come from actual system monitoring)
       const systemHealth = {
@@ -320,6 +325,13 @@ export class MonitoringService {
     ipAddress?: string;
   }): Promise<{ id: number }> {
     try {
+      const metadata: Record<string, any> = {
+        ...eventData.metadata,
+        userId: eventData.userId,
+        projectId: eventData.projectId,
+        sessionId: eventData.metadata?.sessionId,
+      };
+
       const [event] = await db.insert(monitoringEvents).values({
         eventType: eventData.type,
         severity: 'info',
