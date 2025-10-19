@@ -821,6 +821,80 @@ export default function Docs() {
                 </div>
               </section>
 
+              <section className="px-6 pb-12 lg:hidden">
+                <div className="max-w-3xl mx-auto space-y-4">
+                  <div className="space-y-1">
+                    <h2 className="text-xl font-semibold">Browse the documentation</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {searchQuery
+                        ? `Showing results for “${searchQuery}”. Tap a guide to view the full details.`
+                        : 'Explore the full catalog of guides, operational scripts, and governance references.'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {visibleCategories.map(category => (
+                      <Collapsible
+                        key={category.id}
+                        open={expandedCategories.includes(category.id)}
+                        onOpenChange={() => toggleCategory(category.id)}
+                      >
+                        <CollapsibleTrigger className="flex items-center justify-between w-full rounded-lg border px-4 py-3 text-left text-sm font-semibold">
+                          <div className="flex items-center gap-3">
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                              {category.icon}
+                            </span>
+                            <div className="text-left">
+                              <div>{category.title}</div>
+                              <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
+                            </div>
+                          </div>
+                          <ChevronDown
+                            className={cn(
+                              'h-4 w-4 transition-transform',
+                              expandedCategories.includes(category.id) && 'rotate-180'
+                            )}
+                          />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2 space-y-2 rounded-lg border bg-muted/40 p-3">
+                          {category.items.map(item => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => handleDocSelect(item)}
+                              className={cn(
+                                'w-full rounded-md px-3 py-2 text-left text-sm transition-colors',
+                                selectedDoc?.id === item.id
+                                  ? 'bg-accent text-foreground font-medium'
+                                  : 'bg-background text-muted-foreground hover:bg-accent hover:text-foreground'
+                              )}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p>{item.title}</p>
+                                  <p className="mt-1 text-xs text-muted-foreground">{item.summary}</p>
+                                </div>
+                                {item.readiness && (
+                                  <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                                    {readinessLabels[item.readiness]}
+                                  </Badge>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
+                  </div>
+
+                  {!hasResults && (
+                    <p className="text-sm text-muted-foreground">
+                      No documents match “{searchQuery}”. Try a different keyword or clear the search.
+                    </p>
+                  )}
+                </div>
+              </section>
+
               <section className="px-6 py-12 bg-muted/30">
                 <div className="max-w-6xl mx-auto">
                   <h2 className="text-2xl font-bold mb-4">Operational quick links</h2>
