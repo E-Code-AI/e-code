@@ -46,6 +46,7 @@ const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const AdminUsage = lazy(() => import("@/pages/AdminUsage"));
 const AdminBilling = lazy(() => import("@/pages/AdminBilling"));
 const AdminAIModels = lazy(() => import("@/pages/admin/AIModels"));
+const AdminFormRequests = lazy(() => import("@/pages/admin/FormRequests"));
 const PitchDeck = lazy(() => import("@/pages/admin/PitchDeck"));
 // Public pages
 const Landing = lazy(() => import("@/pages/Landing"));
@@ -692,6 +693,11 @@ function AppContent() {
           <ProtectedRoute path="/admin/usage" component={() => (
             <ReplitLayout>
               <AdminUsage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/admin/requests" component={() => (
+            <ReplitLayout>
+              <AdminFormRequests />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin/billing" component={() => (

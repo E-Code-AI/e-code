@@ -129,7 +129,7 @@ export default function StudentDPA() {
                 </a>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <a href="mailto:education@e-code.com">
+                <a href="mailto:education@e-code.ai">
                   <Mail className="mr-2 h-5 w-5" />
                   Contact Education Team
                 </a>
@@ -534,8 +534,8 @@ export default function StudentDPA() {
                   For DPA questions and execution
                 </p>
                 <Button variant="outline" asChild className="w-full">
-                  <a href="mailto:education@e-code.com">
-                    education@e-code.com
+                  <a href="mailto:education@e-code.ai">
+                    education@e-code.ai
                   </a>
                 </Button>
               </CardContent>

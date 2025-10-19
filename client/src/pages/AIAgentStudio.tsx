@@ -362,7 +362,7 @@ export default function AIAgentStudio() {
                 className="space-y-4"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  generatePreviewMutation.mutate();
+                  generatePreviewMutation.mutate(undefined);
                 }}
               >
                 <div className="space-y-2">
@@ -431,7 +431,7 @@ export default function AIAgentStudio() {
                     type="button"
                     variant="secondary"
                     disabled={!result || applyPreviewMutation.isPending}
-                    onClick={() => applyPreviewMutation.mutate()}
+                    onClick={() => applyPreviewMutation.mutate(undefined)}
                   >
                     {applyPreviewMutation.isPending ? (
                       <>
