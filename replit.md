@@ -121,6 +121,16 @@ The platform includes comprehensive comparison pages to showcase advantages over
 - Clear CTAs for user conversion
 - All comparison pages are located in `client/src/pages/marketing/`
 
+## Automated Verification Script
+
+**NEW**: Automated script to verify codex PRs created on 19 Oct 2025
+- **Location**: `scripts/verify-codex-prs.sh`
+- **Usage**: `bash scripts/verify-codex-prs.sh [number_of_prs]`
+- **Checks**: Database tables, port conflicts, migrations, TypeScript, duplications, app health
+- **Reports**: Saved to `reports/codex-audits/audit_TIMESTAMP.md`
+- **Documentation**: See `docs/VERIFICATION_GUIDE.md` for complete guide
+- **CI/CD**: GitHub Actions workflow in `.github/workflows/verify-codex-prs.yml`
+
 ## Recent Fixes (October 19, 2025)
 
 ### Audit & Fixes - 19 Oct 2025 14:38
