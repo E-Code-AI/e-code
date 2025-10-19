@@ -88,11 +88,26 @@ const ProjectPage = () => {
   const [matchSlug, paramsSlug] = useRoute('/@:username/:projectname');
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user, isLoading: authLoading } = useAuth();
+
+  // Debug logging for route detection
+  useEffect(() => {
+    console.log('[ProjectPage] Route matching:', {
+      matchId,
+      paramsId,
+      matchSlug,
+      paramsSlug,
+      user: user?.username,
+      authLoading
+    });
+  }, [matchId, paramsId, matchSlug, paramsSlug, user, authLoading]);
 
   // Determine if we're using ID or slug route
   const isSlugRoute = !!matchSlug && paramsSlug?.username && paramsSlug?.projectname;
   const projectId = matchId && paramsId?.id ? parseInt(paramsId.id) : null;
-  const projectSlug = isSlugRoute ? `@${paramsSlug.username}/${paramsSlug.projectname}` : null;
+  // The projectSlug should just be the slug itself, not the full path
+  const projectSlug = isSlugRoute ? paramsSlug.projectname : null;
+  const projectUsername = isSlugRoute ? paramsSlug.username : null;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, string>>({});
   const [terminalVisible, setTerminalVisible] = useState(true);
@@ -189,7 +204,7 @@ const ProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: projectSlug ? ['project-by-slug', projectSlug] : ['project-by-id', projectId],
+    queryKey: projectSlug ? ['project-by-slug', projectUsername, projectSlug] : ['project-by-id', projectId],
     queryFn: async () => {
       if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
       
