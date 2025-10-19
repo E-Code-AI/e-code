@@ -65,6 +65,10 @@ cp .env.production.example .env
 #   ANTHROPIC_API_KEY=your-anthropic-key
 #   GOOGLE_GENAI_API_KEY=optional-google-models
 
+# ❗️The application requires a reachable PostgreSQL instance available at `DATABASE_URL`.
+# It is used both by Drizzle for core data and by the `connect-pg-simple` session store.
+# If the database is missing or unreachable, authentication and project creation flows will fail.
+
 # Provision the database schema
 npm run db:push
 
