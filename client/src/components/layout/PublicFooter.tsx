@@ -26,12 +26,7 @@ export function PublicFooter() {
       { label: 'Deployments', href: '/marketing/deployments' },
       { label: 'Pricing', href: '/pricing' },
       { label: 'Bounties', href: '/marketing/bounties' },
-<<<<<<< HEAD
-      { label: 'AI', href: '/ai' },
-      { label: 'Templates', href: '/templates' },
-=======
       { label: 'AI Platform', href: '/ai' },
->>>>>>> 4c752902d5721217480595645705955167b5e20d
     ],
     resources: [
       { label: 'Docs', href: '/docs' },

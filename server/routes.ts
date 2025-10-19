@@ -121,11 +121,8 @@ import { realCodeGenerator } from "./ai/real-code-generator";
 import { realCollaborationService } from "./collaboration/real-collaboration";
 import { agentWebSocketService } from './services/agent-websocket-service';
 import containerRoutes from "./routes/containers";
-<<<<<<< HEAD
 import { aiService } from "./ai/ai-service";
-=======
 import { chunkArray, executeWithBackoff, delay as newsletterDelay } from './newsletter/dispatch-helpers';
->>>>>>> 4c752902d5721217480595645705955167b5e20d
 
 // POLYGLOT BACKEND INTEGRATION - Using Go and Python services for performance
 import { containerProxy } from './services/polyglot-container-proxy';
