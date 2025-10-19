@@ -35,6 +35,7 @@ type UserForAuth = {
   username: string;
   password: string;
   email: string;
+  role: string | null;
   displayName: string | null;
   avatarUrl: string | null;
   bio: string | null;
@@ -201,6 +202,7 @@ export function setupAuth(app: Express) {
           username: user.username || '',
           password: user.password || '',
           email: user.email || '',
+          role: user.role ?? null,
           displayName: user.displayName,
           avatarUrl: user.profileImageUrl,
           bio: user.bio,
@@ -245,6 +247,7 @@ export function setupAuth(app: Express) {
         username: user.username || '',
         password: user.password || '',
         email: user.email || '',
+        role: user.role ?? null,
         displayName: user.displayName,
         avatarUrl: user.profileImageUrl,
         bio: user.bio,
