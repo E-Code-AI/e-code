@@ -101,6 +101,7 @@ const ProjectPage = () => {
   const [matchId, paramsId] = useRoute('/project/:id');
   const [matchLegacyId, paramsLegacyId] = useRoute('/projects/:id');
   const [matchSlug, paramsSlug] = useRoute('/@:username/:projectname');
+  const [matchLegacySlug, paramsLegacySlug] = useRoute('/u/:username/:projectname');
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
@@ -112,18 +113,25 @@ const ProjectPage = () => {
       paramsId,
       matchSlug,
       paramsSlug,
+      matchLegacySlug,
+      paramsLegacySlug,
       user: user?.username,
       authLoading
     });
-  }, [matchId, paramsId, matchSlug, paramsSlug, user, authLoading]);
+  }, [matchId, paramsId, matchSlug, paramsSlug, matchLegacySlug, paramsLegacySlug, user, authLoading]);
+
+  const slugMatch = matchSlug || matchLegacySlug;
+  const slugParams = paramsSlug ?? paramsLegacySlug ?? null;
+  const slugUsername = slugParams?.username ?? null;
+  const slugProjectName = slugParams?.projectname ?? null;
 
   // Determine if we're using ID or slug route
-  const isSlugRoute = !!matchSlug && paramsSlug?.username && paramsSlug?.projectname;
+  const isSlugRoute = !!slugMatch && !!slugUsername && !!slugProjectName;
   const projectIdParam = paramsId?.id || paramsLegacyId?.id || null;
   const projectId = projectIdParam ? parseInt(projectIdParam, 10) : null;
   // The projectSlug should just be the slug itself, not the full path
-  const projectSlug = isSlugRoute ? paramsSlug.projectname : null;
-  const projectUsername = isSlugRoute ? paramsSlug.username : null;
+  const projectSlug = isSlugRoute ? slugProjectName : null;
+  const projectUsername = isSlugRoute ? slugUsername : null;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, string>>({});
   const [terminalVisible, setTerminalVisible] = useState(true);
@@ -222,8 +230,8 @@ const ProjectPage = () => {
       if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
       
       // Note: projectname in the route is actually the project slug
-      const url = projectSlug 
-        ? `/api/users/${paramsSlug?.username}/projects/${paramsSlug?.projectname}`
+      const url = projectSlug && projectUsername
+        ? `/api/users/${projectUsername}/projects/${projectSlug}`
         : `/api/projects/${projectId}`;
       
       console.log('Fetching project from:', url);
