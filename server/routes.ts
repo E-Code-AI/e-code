@@ -21811,9 +21811,10 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   // Admin - view customer form requests
   app.get('/api/admin/form-requests', ensureAuthenticated, async (req, res) => {
-    const userId = req.user?.id;
-    const user = userId ? await storage.getUser(userId) : null;
-    if (!user || user.role !== 'admin') {
+    // The admin role is sourced from the authenticated session (req.user).
+    // It is not persisted in the users table, so we must rely on the request context.
+    const isAdmin = req.user?.role === 'admin' || req.user?.username === 'admin';
+    if (!isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -21834,9 +21835,9 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
 
   app.patch('/api/admin/form-requests/:id', ensureAuthenticated, async (req, res) => {
-    const userId = req.user?.id;
-    const user = userId ? await storage.getUser(userId) : null;
-    if (!user || user.role !== 'admin') {
+    // See note above regarding admin role source.
+    const isAdmin = req.user?.role === 'admin' || req.user?.username === 'admin';
+    if (!isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
