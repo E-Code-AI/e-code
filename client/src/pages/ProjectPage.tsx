@@ -38,6 +38,7 @@ import { PostgreSQLMCPPanel } from '@/components/mcp/PostgreSQLMCPPanel';
 import { MemoryMCPPanel } from '@/components/mcp/MemoryMCPPanel';
 import { GPUManagement } from '@/components/GPUManagement';
 import { WorkspaceSettings } from '@/components/WorkspaceSettings';
+import { ReplitWorkflows } from '@/components/ReplitWorkflows';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -1059,6 +1060,7 @@ const ProjectPage = () => {
                     <TabsTrigger value="postgres" className="h-8">Database</TabsTrigger>
                     <TabsTrigger value="memory" className="h-8">Memory</TabsTrigger>
                     <TabsTrigger value="gpu" className="h-8">GPU</TabsTrigger>
+                    <TabsTrigger value="workflows" className="h-8">Workflows</TabsTrigger>
                   </TabsList>
                 </ScrollArea>
                 <Button 
@@ -1135,6 +1137,9 @@ const ProjectPage = () => {
               </TabsContent>
               <TabsContent value="gpu" className="flex-1 overflow-hidden p-4">
                 <GPUManagement projectId={projectId} />
+              </TabsContent>
+              <TabsContent value="workflows" className="flex-1 overflow-hidden p-4">
+                <ReplitWorkflows projectId={projectId} />
               </TabsContent>
             </Tabs>
           </div>
