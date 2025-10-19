@@ -9,12 +9,62 @@ import compressionMiddleware from "./middleware/compression";
 import { securityMiddleware, sanitizeInput, securityMonitoring, ipSecurity } from "./middleware/security";
 import { rateLimiters, logRateLimitViolations, dynamicRateLimiter } from "./middleware/rate-limiter";
 import { cdnOptimization } from "./services/cdn-optimization";
-import { DatabasePoolManager } from "./services/database-pool";
+import { dbPool } from "./services/database-pool";
 // Initialize environment configuration with defaults
 import { config } from "./config/environment";
+import * as Sentry from "@sentry/node";
+import { logAggregator } from "./monitoring/log-aggregator";
+import { uptimeMonitor } from "./services/uptime-monitor";
+import { databaseQueryOptimizer } from "./services/database-query-optimizer";
 // Monitoring imports are handled in routes.ts
 
 const app = express();
+
+if (config.monitoring.sentryDsn) {
+  Sentry.init({
+    dsn: config.monitoring.sentryDsn,
+    environment: config.environment,
+    release: config.release,
+    tracesSampleRate: config.monitoring.sentrySampleRate,
+  });
+
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
+}
+
+const poolManager = dbPool;
+app.locals.dbPoolManager = poolManager;
+app.locals.monitoring = { uptimeMonitor, logAggregator, databaseQueryOptimizer };
+app.locals.assetBaseUrl = config.cdn.assetBaseUrl;
+
+if (config.monitoring.sentryDsn) {
+  databaseQueryOptimizer.on('slow-query', (record) => {
+    Sentry.captureMessage(`Slow query exceeded threshold (${record.duration}ms)`, {
+      level: 'warning',
+      extra: record,
+    });
+  });
+
+  uptimeMonitor.on('incident', (incident) => {
+    Sentry.captureMessage('Runtime incident detected', {
+      level: 'error',
+      extra: incident,
+    });
+  });
+}
+
+const handleShutdown = async () => {
+  try {
+    await poolManager.shutdown();
+  } catch (error) {
+    console.error('Failed to shut down database pool cleanly', error);
+  } finally {
+    process.exit(0);
+  }
+};
+
+process.on('SIGTERM', handleShutdown);
+process.on('SIGINT', handleShutdown);
 
 // Production Security Middleware - Apply first
 app.use(...securityMiddleware());
@@ -31,6 +81,13 @@ app.use('/static', rateLimiters.static);
 // CDN Optimization
 app.use(cdnOptimization.staticAssetsMiddleware());
 app.use(cdnOptimization.dynamicContentMiddleware());
+
+if (config.cdn.enabled && config.cdn.assetBaseUrl) {
+  app.use((_req, res, next) => {
+    res.setHeader('X-Asset-CDN', config.cdn.assetBaseUrl);
+    next();
+  });
+}
 
 // Automatic CORS configuration for Replit deployment
 const configuredOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_URL || '')
@@ -162,13 +219,24 @@ app.use((req, res, next) => {
   // Register routes first
   const server = await registerRoutes(app);
 
+  if (config.monitoring.sentryDsn) {
+    app.use(Sentry.Handlers.errorHandler());
+  }
+
   // Error handling middleware
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    if (status >= 500) {
+      uptimeMonitor.recordIncident('server_error', message, {
+        status,
+        path: req.path,
+        method: req.method,
+      });
+    }
+
     res.status(status).json({ message });
-    throw err;
   });
 
   // Setup Vite or static serving
