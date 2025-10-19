@@ -2,16 +2,9 @@
 import { Router } from 'express';
 import { performanceMonitor } from './performance';
 import { monitoringService } from '../services/monitoring-service';
+import { ensureAuthenticated } from '../middleware/auth';
 
 export const monitoringRouter = Router();
-
-// Middleware to ensure a user is authenticated
-const ensureAuthenticated = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: "Unauthorized" });
-};
 
 // Health check endpoint
 monitoringRouter.get('/health', (req, res) => {

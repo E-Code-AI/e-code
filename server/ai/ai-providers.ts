@@ -25,7 +25,7 @@ export class OpenAIProvider implements AIProvider {
   
   async generateChat(messages: any[], options?: any): Promise<string> {
     const response = await this.client.chat.completions.create({
-      model: options?.model || 'gpt-4o',
+      model: options?.model || 'gpt-5',
       messages,
       ...options
     });

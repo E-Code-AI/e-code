@@ -24,6 +24,7 @@ import {
   GpuUsage, InsertGpuUsage,
   Assignment, InsertAssignment,
   Submission, InsertSubmission,
+  Template, InsertTemplate,
 
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
@@ -34,7 +35,7 @@ import {
   keyValueStore, aiConversations, dynamicIntelligence, webSearchHistory,
   gitRepositories, gitCommits, customDomains, secrets, environmentVariables,
   voiceVideoSessions, voiceVideoParticipants, gpuInstances, gpuUsage,
-  assignments, submissions, aiUsageRecords,
+  assignments, submissions, aiUsageRecords, templates,
   insertUserCreditsSchema, insertBudgetLimitSchema, insertUsageAlertSchema,
   insertAutoscaleDeploymentSchema, insertReservedVmDeploymentSchema,
   insertScheduledDeploymentSchema, insertStaticDeploymentSchema,
@@ -129,7 +130,7 @@ const toMutableArray = <T>(value: readonly T[] | T[] | null | undefined): T[] | 
 export interface IStorage {
   // Mobile-specific methods
   getUserByUsername(username: string): Promise<User | undefined>;
-  createFile(data: { projectId: string; path: string; content: string }): Promise<File>;
+  createFile(data: {projectId: string; path: string; content: string }): Promise<File>;
   createFile(file: InsertFile): Promise<File>;
   updateFile(fileId: number, data: { content: string }): Promise<void>;
   updateFile(id: number, file: Partial<InsertFile>): Promise<File | undefined>;
@@ -190,7 +191,11 @@ export interface IStorage {
   updateMentorProfile(userId: string, profile: Partial<InsertMentorProfile>): Promise<MentorProfile | undefined>;
 
   // Template operations
-  getAllTemplates(publishedOnly?: boolean): Promise<any[]>;
+  getAllTemplates(publishedOnly?: boolean): Promise<Template[]>;
+  getTemplateBySlug(slug: string): Promise<Template | undefined>;
+  createTemplate(template: InsertTemplate): Promise<Template>;
+  updateTemplate(id: string, template: Partial<InsertTemplate>): Promise<Template | undefined>;
+  deleteTemplate(id: string): Promise<boolean>;
   pinProject(projectId: string, userId: string): Promise<void>;
   unpinProject(projectId: string, userId: string): Promise<void>;
 
@@ -325,15 +330,15 @@ export interface IStorage {
 
   // Assignment operations
   createAssignment(assignment: InsertAssignment): Promise<Assignment>;
-  getAssignments(filters?: { courseId?: number; createdBy?: string }): Promise<Assignment[]>;
+  getAssignments(filters?: { courseId?: number; createdBy?: number }): Promise<Assignment[]>;
   getAssignment(id: number): Promise<Assignment | undefined>;
   updateAssignment(id: number, assignment: Partial<InsertAssignment>): Promise<Assignment | undefined>;
 
   // Submission operations
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getSubmissionsByAssignment(assignmentId: number): Promise<Submission[]>;
-  getSubmissionsByStudent(studentId: string): Promise<Submission[]>;
-  gradeSubmission(submissionId: number, grade: number, feedback: string, gradedBy: string): Promise<Submission | undefined>;
+  getSubmissionsByStudent(studentId: number): Promise<Submission[]>;
+  gradeSubmission(submissionId: number, grade: number, feedback: string, gradedBy: number): Promise<Submission | undefined>;
 
   // Secret management operations
   createSecret(secret: any): Promise<any>;
@@ -350,105 +355,18 @@ export interface IStorage {
   isProjectLiked(projectId: string, userId: string): Promise<boolean>;
   getProjectLikes(projectId: string): Promise<number>;
   trackProjectView(projectId: string, userId: string): Promise<void>;
-  getProjectActivity(projectId: string): Promise<any[]>;
+  getProjectActivity(projectId: string, limit?: number): Promise<any[]>;
   getProjectFiles(projectId: string): Promise<any[]>;
   getFileById(id: number): Promise<any | undefined>;
   getAdminApiKey(provider: string): Promise<any>;
   createCLIToken(userId: string): Promise<any>;
   getUserCLITokens(userId: string): Promise<any[]>;
-  getMobileSession(sessionId: string): Promise<any | undefined>;
+  getMobileSession(userId: string, deviceId?: string): Promise<any | undefined>;
   createMobileSession(session: any): Promise<any>;
-  updateMobileSession(sessionId: string, session: any): Promise<any | undefined>;
+  updateMobileSession(userId: string, deviceId: string, session: any): Promise<any | undefined>;
   getUserMobileSessions(userId: string): Promise<any[]>;
   getProjectDeployments(projectId: string): Promise<any[]>;
   getRecentDeployments(userId: string): Promise<any[]>;
-
-  // User Credits and Billing operations
-  getUserCredits(userId: string): Promise<any | undefined>;
-  createUserCredits(credits: any): Promise<any>;
-  updateUserCredits(userId: string, credits: any): Promise<any | undefined>;
-  addCredits(userId: string, amount: number): Promise<any | undefined>;
-  deductCredits(userId: string, amount: number): Promise<any | undefined>;
-  getBudgetLimits(userId: string): Promise<any | undefined>;
-  createBudgetLimits(limits: any): Promise<any>;
-  updateBudgetLimits(userId: string, limits: any): Promise<any | undefined>;
-  createUsageAlert(alert: any): Promise<any>;
-  getUsageAlerts(userId: string): Promise<any[]>;
-  markAlertSent(alertId: number): Promise<void>;
-
-  // Deployment Type-Specific operations
-  createAutoscaleDeployment(config: any): Promise<any>;
-  getAutoscaleDeployment(deploymentId: number): Promise<any | undefined>;
-  updateAutoscaleDeployment(deploymentId: number, config: any): Promise<any | undefined>;
-  createReservedVmDeployment(config: any): Promise<any>;
-  getReservedVmDeployment(deploymentId: number): Promise<any | undefined>;
-  updateReservedVmDeployment(deploymentId: number, config: any): Promise<any | undefined>;
-  createScheduledDeployment(config: any): Promise<any>;
-  getScheduledDeployment(deploymentId: number): Promise<any | undefined>;
-  updateScheduledDeployment(deploymentId: number, config: any): Promise<any | undefined>;
-  createStaticDeployment(config: any): Promise<any>;
-  getStaticDeployment(deploymentId: number): Promise<any | undefined>;
-  updateStaticDeployment(deploymentId: number, config: any): Promise<any | undefined>;
-
-  // Object Storage operations
-  createObjectStorageBucket(bucket: any): Promise<any>;
-  getObjectStorageBucket(id: number): Promise<any | undefined>;
-  getProjectObjectStorageBuckets(projectId: string): Promise<any[]>;
-  deleteObjectStorageBucket(id: number): Promise<boolean>;
-  createObjectStorageFile(file: any): Promise<any>;
-  getObjectStorageFile(id: number): Promise<any | undefined>;
-  getBucketFiles(bucketId: number): Promise<any[]>;
-  deleteObjectStorageFile(id: number): Promise<boolean>;
-
-  // Key-Value Store operations
-  setKeyValue(projectId: string, key: string, value: any, expiresAt?: Date): Promise<any>;
-  getKeyValue(projectId: string, key: string): Promise<any | undefined>;
-  deleteKeyValue(projectId: string, key: string): Promise<boolean>;
-  getProjectKeyValues(projectId: string): Promise<any[]>;
-
-  // AI Conversation operations
-  createAiConversation(conversation: any): Promise<any>;
-  getAiConversation(id: number): Promise<any | undefined>;
-  getProjectAiConversations(projectId: string): Promise<any[]>;
-  updateAiConversation(id: number, updates: any): Promise<any | undefined>;
-  addMessageToConversation(conversationId: number, message: any): Promise<any | undefined>;
-
-  // Dynamic Intelligence operations
-  getDynamicIntelligence(userId: string): Promise<any | undefined>;
-  createDynamicIntelligence(settings: any): Promise<any>;
-  updateDynamicIntelligence(userId: string, settings: any): Promise<any | undefined>;
-
-  // Web Search operations
-  createWebSearchHistory(search: any): Promise<any>;
-  getConversationSearchHistory(conversationId: number): Promise<any[]>;
-
-  // Git Integration operations
-  createGitRepository(repo: any): Promise<any>;
-  getGitRepository(projectId: string): Promise<any | undefined>;
-  updateGitRepository(projectId: string, updates: any): Promise<any | undefined>;
-  createGitCommit(commit: any): Promise<any>;
-  getRepositoryCommits(repositoryId: number): Promise<any[]>;
-
-  // Custom Domain operations
-  createCustomDomain(domain: any): Promise<any>;
-  getCustomDomain(id: number): Promise<any | undefined>;
-  getProjectCustomDomains(projectId: string): Promise<any[]>;
-  updateCustomDomain(id: number, updates: any): Promise<any | undefined>;
-  deleteCustomDomain(id: number): Promise<boolean>;
-
-  // Sales and Support operations
-  createSalesInquiry(inquiry: any): Promise<any>;
-  getSalesInquiries(status?: string): Promise<any[]>;
-  updateSalesInquiry(id: number, updates: any): Promise<any | undefined>;
-  createAbuseReport(report: any): Promise<any>;
-  getAbuseReports(status?: string): Promise<any[]>;
-  updateAbuseReport(id: number, updates: any): Promise<any | undefined>;
-  
-  // Kubernetes User Environment operations
-  saveUserEnvironment(environment: any): Promise<void>;
-  getUserEnvironment(userId: string): Promise<any | null>;
-  updateUserEnvironment(environment: any): Promise<void>;
-  deleteUserEnvironment(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -862,11 +780,61 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Template operations
-  async getAllTemplates(publishedOnly?: boolean): Promise<any[]> {
-    // Return built-in templates for now
-    const templates = [
+  async getAllTemplates(publishedOnly?: boolean): Promise<Template[]> {
+    const query = publishedOnly 
+      ? this.db.select().from(templates).where(eq(templates.isPublished, true))
+      : this.db.select().from(templates);
+    
+    return await query;
+  }
+
+  async getTemplateBySlug(slug: string): Promise<Template | undefined> {
+    const [template] = await this.db
+      .select()
+      .from(templates)
+      .where(eq(templates.slug, slug))
+      .limit(1);
+    return template;
+  }
+
+  async createTemplate(templateData: InsertTemplate): Promise<Template> {
+    const [template] = await this.db
+      .insert(templates)
+      .values(templateData)
+      .returning();
+    return template;
+  }
+
+  async updateTemplate(id: string, templateData: Partial<InsertTemplate>): Promise<Template | undefined> {
+    const [template] = await this.db
+      .update(templates)
+      .set({
+        ...templateData,
+        updatedAt: new Date()
+      })
+      .where(eq(templates.id, id))
+      .returning();
+    return template;
+  }
+
+  async deleteTemplate(id: string): Promise<boolean> {
+    const result = await this.db
+      .delete(templates)
+      .where(eq(templates.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async seedTemplates(): Promise<void> {
+    // Check if templates already exist
+    const existingTemplates = await this.db.select().from(templates).limit(1);
+    if (existingTemplates.length > 0) {
+      console.log('Templates already seeded, skipping...');
+      return;
+    }
+
+    const templateSeeds: InsertTemplate[] = [
       {
-        id: 'nextjs-blog',
         slug: 'nextjs-blog',
         name: 'Next.js Blog',
         description: 'A modern blog with Next.js and Tailwind CSS',
@@ -881,13 +849,12 @@ export class DatabaseStorage implements IStorage {
         framework: 'nextjs',
         difficulty: 'beginner',
         estimatedTime: 30,
-        features: ['SEO optimized', 'Dark mode', 'Markdown support'],
+        features: ['SEO optimized', 'Dark mode', 'Markdown support', 'RSS feed'],
         isFeatured: true,
         isOfficial: true,
-        createdAt: new Date()
+        isPublished: true
       },
       {
-        id: 'react-dashboard',
         slug: 'react-dashboard',
         name: 'React Admin Dashboard',
         description: 'Professional admin dashboard with charts and analytics',
@@ -905,32 +872,140 @@ export class DatabaseStorage implements IStorage {
         features: ['Charts', 'Tables', 'Authentication', 'Responsive'],
         isFeatured: true,
         isOfficial: true,
-        createdAt: new Date()
+        isPublished: true
       },
       {
-        id: 'python-api',
-        slug: 'python-api',
-        name: 'Python REST API',
-        description: 'FastAPI backend with authentication and database',
+        slug: 'express-api',
+        name: 'Express REST API',
+        description: 'RESTful API with Express.js and MongoDB',
         category: 'backend',
-        tags: ['python', 'fastapi', 'api', 'rest'],
+        tags: ['express', 'nodejs', 'api', 'rest', 'mongodb'],
+        authorName: 'E-Code',
+        authorVerified: true,
+        uses: 1500,
+        stars: 98,
+        forks: 32,
+        language: 'javascript',
+        framework: 'express',
+        difficulty: 'intermediate',
+        estimatedTime: 35,
+        features: ['JWT Auth', 'MongoDB', 'Rate limiting', 'API documentation'],
+        isFeatured: false,
+        isOfficial: true,
+        isPublished: true
+      },
+      {
+        slug: 'nodejs-api',
+        name: 'Node.js API Server',
+        description: 'Simple API server with Node.js and PostgreSQL',
+        category: 'backend',
+        tags: ['nodejs', 'api', 'postgresql', 'backend'],
+        authorName: 'E-Code',
+        authorVerified: true,
+        uses: 980,
+        stars: 67,
+        forks: 28,
+        language: 'javascript',
+        framework: 'nodejs',
+        difficulty: 'beginner',
+        estimatedTime: 25,
+        features: ['Database integration', 'CRUD operations', 'Error handling', 'Logging'],
+        isFeatured: false,
+        isOfficial: true,
+        isPublished: true
+      },
+      {
+        slug: 'python-flask',
+        name: 'Python Flask App',
+        description: 'Web application with Flask and SQLAlchemy',
+        category: 'backend',
+        tags: ['python', 'flask', 'sqlalchemy', 'web'],
         authorName: 'E-Code',
         authorVerified: true,
         uses: 1800,
         stars: 120,
         forks: 34,
         language: 'python',
-        framework: 'fastapi',
+        framework: 'flask',
         difficulty: 'intermediate',
         estimatedTime: 40,
-        features: ['JWT Auth', 'PostgreSQL', 'Swagger docs', 'Docker'],
+        features: ['User authentication', 'Database ORM', 'Templates', 'Forms'],
         isFeatured: true,
         isOfficial: true,
-        createdAt: new Date()
+        isPublished: true
+      },
+      {
+        slug: 'vuejs-app',
+        name: 'Vue.js Application',
+        description: 'Modern SPA with Vue 3 and Composition API',
+        category: 'web',
+        tags: ['vuejs', 'vue3', 'spa', 'frontend'],
+        authorName: 'E-Code',
+        authorVerified: true,
+        uses: 750,
+        stars: 54,
+        forks: 19,
+        language: 'javascript',
+        framework: 'vuejs',
+        difficulty: 'intermediate',
+        estimatedTime: 35,
+        features: ['Vue Router', 'Vuex store', 'Composition API', 'TypeScript support'],
+        isFeatured: false,
+        isOfficial: true,
+        isPublished: true
+      },
+      {
+        slug: 'discord-bot',
+        name: 'Discord Bot',
+        description: 'Feature-rich Discord bot with commands and events',
+        category: 'bot',
+        tags: ['discord', 'bot', 'nodejs', 'discord.js'],
+        authorName: 'E-Code',
+        authorVerified: true,
+        uses: 2300,
+        stars: 189,
+        forks: 67,
+        language: 'javascript',
+        framework: 'discord.js',
+        difficulty: 'beginner',
+        estimatedTime: 20,
+        features: ['Slash commands', 'Event handlers', 'Moderation tools', 'Music player'],
+        isFeatured: true,
+        isOfficial: true,
+        isPublished: true
+      },
+      {
+        slug: 'phaser-game',
+        name: 'Phaser Game',
+        description: '2D browser game with Phaser.js framework',
+        category: 'game',
+        tags: ['phaser', 'game', 'javascript', '2d'],
+        authorName: 'E-Code',
+        authorVerified: true,
+        uses: 620,
+        stars: 43,
+        forks: 15,
+        language: 'javascript',
+        framework: 'phaser',
+        difficulty: 'advanced',
+        estimatedTime: 60,
+        features: ['Physics engine', 'Sprite animations', 'Sound effects', 'Level system'],
+        isFeatured: false,
+        isOfficial: true,
+        isPublished: true
       }
     ];
 
-    return publishedOnly ? templates : templates;
+    console.log('Seeding templates...');
+    for (const templateData of templateSeeds) {
+      try {
+        await this.db.insert(templates).values(templateData);
+        console.log(`✓ Seeded template: ${templateData.name}`);
+      } catch (error) {
+        console.error(`Error seeding template ${templateData.name}:`, error);
+      }
+    }
+    console.log('✓ Templates seeding completed');
   }
 
   async createLoginHistory(history: any): Promise<any> {
@@ -1193,8 +1268,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAgentCheckpoint(checkpoint: {
-    projectId: number;
-    userId: number;
+    projectId: string;
+    userId: string;
     message: string;
     changes: number;
     sessionId: string;
@@ -1290,7 +1365,7 @@ export class DatabaseStorage implements IStorage {
     return newSummary;
   }
 
-  async getProjectTaskSummaries(projectId: string): Promise<TaskSummary[]> {
+  async getProjectTaskSummaries(projectId: string): Promise<TaskSummary[] > {
     return await this.db.select().from(taskSummaries).where(eq(taskSummaries.projectId, projectId)).orderBy(desc(taskSummaries.createdAt));
   }
 
@@ -1548,9 +1623,18 @@ export class DatabaseStorage implements IStorage {
     return undefined;
   }
 
-  async getProjectImports(projectId: string): Promise<any[]> {
-    // Mock implementation for now
-    return [];
+  async getProjectImports(projectId: string): Promise<ProjectImport[]> {
+    const records = await this.db
+      .select()
+      .from(projectImports)
+      .where(eq(projectImports.projectId, projectId))
+      .orderBy(desc(projectImports.createdAt));
+
+    return records.map((record) => ({
+      ...record,
+      type: record.importType,
+      url: record.sourceUrl,
+    }));
   }
 
 
@@ -1714,7 +1798,7 @@ export class DatabaseStorage implements IStorage {
     await this.incrementProjectViews(projectId);
   }
 
-  async getProjectActivity(projectId: string): Promise<any[]> {
+  async getProjectActivity(projectId: string, limit?: number): Promise<any[]> {
     // Return mock activity for now
     return [
       {
@@ -1765,7 +1849,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Mobile session methods
-  async getMobileSession(sessionId: string): Promise<any | undefined> {
+  async getMobileSession(userId: string, deviceId?: string): Promise<any | undefined> {
     // Mock implementation - would use mobile_sessions table
     return undefined;
   }
@@ -1778,9 +1862,9 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async updateMobileSession(sessionId: string, session: any): Promise<any | undefined> {
+  async updateMobileSession(userId: string, deviceId: string, session: any): Promise<any | undefined> {
     return {
-      id: sessionId,
+      id: deviceId, // Assuming deviceId is used as session identifier
       ...session,
       updatedAt: new Date()
     };
@@ -2226,25 +2310,25 @@ export class DatabaseStorage implements IStorage {
     // Would update abuse_reports table
     return { id, ...updates };
   }
-  
+
   // Kubernetes User Environment operations
   private userEnvironments = new Map<number, any>();
-  
+
   async saveUserEnvironment(environment: any): Promise<void> {
     this.userEnvironments.set(environment.userId, environment);
     // In production, this would save to a database table
   }
-  
+
   async getUserEnvironment(userId: string): Promise<any | null> {
     return this.userEnvironments.get(userId) || null;
     // In production, this would query from user_environments table
   }
-  
+
   async updateUserEnvironment(environment: any): Promise<void> {
     this.userEnvironments.set(environment.userId, environment);
     // In production, this would update the user_environments table
   }
-  
+
   async deleteUserEnvironment(userId: string): Promise<void> {
     this.userEnvironments.delete(userId);
     // In production, this would delete from user_environments table

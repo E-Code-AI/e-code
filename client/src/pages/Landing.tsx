@@ -11,7 +11,8 @@ import {
   Rocket, Package, Database, Cpu, Cloud, Lock, Star,
   ChevronRight, ArrowRight, CheckCircle, PlayCircle,
   Sparkles, Check, Loader2, MessageSquare, Bot, ShoppingCart,
-  Play, Pause, Volume2, VolumeX, Maximize, Globe2
+  Play, Pause, Volume2, VolumeX, Maximize, Globe2,
+  BookOpen, Store, Briefcase, ListTodo, CloudSun, PenTool
 } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
@@ -297,6 +298,39 @@ export default function Landing() {
                 <p className="text-center mt-3 text-sm text-zinc-500 dark:text-zinc-400 font-normal">
                   Free to start • No setup required • Deploy instantly
                 </p>
+              </div>
+              
+              {/* Popular Examples Section */}
+              <div className="mt-8 text-center">
+                <p className="text-sm text-muted-foreground mb-3">Or try these popular examples:</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[
+                    { id: 1, icon: BookOpen, label: "Blog with Next.js", prompt: "Build a modern blog with Next.js featuring markdown support, categories, tags, search functionality, and a beautiful responsive design" },
+                    { id: 2, icon: Store, label: "E-commerce Store", prompt: "Create an e-commerce store with product catalog, shopping cart, checkout process, payment integration, and admin dashboard" },
+                    { id: 3, icon: Bot, label: "Discord Bot", prompt: "Build a Discord bot with commands, moderation features, welcome messages, role management, and fun interactive features" },
+                    { id: 4, icon: Briefcase, label: "Portfolio Website", prompt: "Create a professional portfolio website with hero section, about me, projects showcase, skills, contact form, and smooth animations" },
+                    { id: 5, icon: ListTodo, label: "Task Manager", prompt: "Build a task manager app with categories, due dates, priority levels, drag and drop, progress tracking, and team collaboration features" },
+                    { id: 6, icon: CloudSun, label: "Weather Dashboard", prompt: "Create a weather dashboard showing current conditions, 5-day forecast, multiple locations, weather maps, and beautiful visualizations" }
+                  ].map((example) => (
+                    <Button
+                      key={example.id}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs hover:bg-violet-50 dark:hover:bg-violet-950 hover:text-violet-700 dark:hover:text-violet-300 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-200 group"
+                      onClick={() => {
+                        setAppDescription(example.prompt);
+                        // Focus on the input to show the filled prompt
+                        const aiInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+                        if (aiInput) {
+                          aiInput.focus();
+                        }
+                      }}
+                    >
+                      <example.icon className="h-3 w-3 mr-1 group-hover:scale-110 transition-transform" />
+                      {example.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
 

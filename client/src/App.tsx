@@ -74,6 +74,15 @@ const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
 const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
 const Scalability = lazy(() => import("@/pages/Scalability"));
 const MarketingBounties = lazy(() => import("@/pages/marketing/Bounties"));
+
+// Comparison Pages
+const Compare = lazy(() => import("@/pages/marketing/Compare"));
+const VsGitHubCodespaces = lazy(() => import("@/pages/marketing/VsGitHubCodespaces"));
+const VsGlitch = lazy(() => import("@/pages/marketing/VsGlitch"));
+const VsHeroku = lazy(() => import("@/pages/marketing/VsHeroku"));
+const VsCodeSandbox = lazy(() => import("@/pages/marketing/VsCodeSandbox"));
+const VsAwsCloud9 = lazy(() => import("@/pages/marketing/VsAwsCloud9"));
+
 const AuthenticationDemo = lazy(() =>
   import("@/components/AuthenticationDemo").then((module) => ({
     default: module.AuthenticationDemo,
@@ -201,6 +210,14 @@ function AppContent() {
           <Route path="/marketing/bounties" component={MarketingBounties} />
           <Route path="/marketing/deployments" component={PublicDeploymentsPage} />
           <Route path="/marketing/teams" component={PublicTeamPage} />
+
+          {/* Comparison pages */}
+          <Route path="/compare" component={Compare} />
+          <Route path="/compare/github-codespaces" component={VsGitHubCodespaces} />
+          <Route path="/compare/glitch" component={VsGlitch} />
+          <Route path="/compare/heroku" component={VsHeroku} />
+          <Route path="/compare/codesandbox" component={VsCodeSandbox} />
+          <Route path="/compare/aws-cloud9" component={VsAwsCloud9} />
 
           {/* Solutions pages */}
           <Route path="/solutions/app-builder" component={AppBuilder} />
