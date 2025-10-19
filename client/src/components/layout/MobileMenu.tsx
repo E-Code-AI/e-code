@@ -58,29 +58,7 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
   };
 
   const quickActions = [
-    {
-      icon: Plus,
-      label: 'Create App',
-      path: '/projects',
-      action: 'create' as const,
-      ctaLabel: 'Create a new application',
-    },
-    {
-      icon: Code,
-      label: 'Import code or design',
-      path: '/github-import',
-      ctaLabel: 'Import an existing codebase or design',
-    },
-  const primaryLinks = [
-    { icon: Home, label: 'Dashboard', path: '/dashboard', description: 'Your workspace' },
-    { icon: Code, label: 'Projects', path: '/projects', description: 'All your apps', count: 12 },
-    { icon: Package, label: 'Deployments', path: '/deployments', description: 'Live services' },
-    { icon: Users, label: 'Teams', path: '/teams', description: 'Collaboration' },
-    { icon: BarChart3, label: 'Analytics', path: '/usage', description: 'Performance & usage' },
-  ];
-
-  const quickActions = [
-    { icon: Plus, label: 'New Project', path: '/agent', color: 'from-blue-500 to-cyan-500', action: 'create' },
+    { icon: Plus, label: 'New Project', path: '/agent', color: 'from-blue-500 to-cyan-500', action: 'create' as const },
     { icon: GitBranch, label: 'Import', path: '/github-import', color: 'from-purple-500 to-pink-500' },
     { icon: Sparkles, label: 'AI Agent', path: '/ai-agent', color: 'from-orange-500 to-red-500' },
     { icon: Book, label: 'Templates', path: '/templates', color: 'from-green-500 to-emerald-500' },
