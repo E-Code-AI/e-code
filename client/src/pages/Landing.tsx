@@ -307,25 +307,28 @@ export default function Landing() {
                     { id: 4, icon: Briefcase, label: "Portfolio Website", prompt: "Create a professional portfolio website with hero section, about me, projects showcase, skills, contact form, and smooth animations" },
                     { id: 5, icon: ListTodo, label: "Task Manager", prompt: "Build a task manager app with categories, due dates, priority levels, drag and drop, progress tracking, and team collaboration features" },
                     { id: 6, icon: CloudSun, label: "Weather Dashboard", prompt: "Create a weather dashboard showing current conditions, 5-day forecast, multiple locations, weather maps, and beautiful visualizations" }
-                  ].map((example) => (
-                    <Button
-                      key={example.id}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs hover:bg-violet-50 dark:hover:bg-violet-950 hover:text-violet-700 dark:hover:text-violet-300 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-200 group"
-                      onClick={() => {
-                        setAppDescription(example.prompt);
-                        // Focus on the input to show the filled prompt
-                        const aiInput = document.querySelector('input[type="text"]') as HTMLInputElement;
-                        if (aiInput) {
-                          aiInput.focus();
-                        }
-                      }}
-                    >
-                      <example.icon className="h-3 w-3 mr-1 group-hover:scale-110 transition-transform" />
-                      {example.label}
-                    </Button>
-                  ))}
+                  ].map((example) => {
+                    const Icon = example.icon;
+                    return (
+                      <Button
+                        key={example.id}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs hover:bg-violet-50 dark:hover:bg-violet-950 hover:text-violet-700 dark:hover:text-violet-300 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-200 group"
+                        onClick={() => {
+                          setAppDescription(example.prompt);
+                          // Focus on the input to show the filled prompt
+                          const aiInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+                          if (aiInput) {
+                            aiInput.focus();
+                          }
+                        }}
+                      >
+                        <Icon className="h-3 w-3 mr-1 group-hover:scale-110 transition-transform" />
+                        {example.label}
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
