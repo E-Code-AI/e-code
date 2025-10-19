@@ -77,7 +77,7 @@ export function ReplitHeader() {
   const { toast } = useToast();
 
   // Get project info from URL - supports both formats: /projects/:id and /@:username/:project
-  const pathMatch = location.match(/^\/projects\/(\d+)/);
+  const pathMatch = location.match(/^\/project(?:s)?\/(\d+)/);
   const projectId = pathMatch ? pathMatch[1] : null;
   
   const replitStyleMatch = location.match(/^\/@([^/]+)\/([^/]+)/);
@@ -155,7 +155,7 @@ export function ReplitHeader() {
                     if (projectInfo?.owner?.username && projectInfo?.slug) {
                       navigate(`/@${projectInfo.owner.username}/${projectInfo.slug}`);
                     } else {
-                      navigate(`/projects/${projectId}`);
+                      navigate(`/project/${projectId}`);
                     }
                   }}
                 >
@@ -202,7 +202,7 @@ export function ReplitHeader() {
                         title: "Project Forked",
                         description: `Successfully forked project as "${forkedProject.name}"`,
                       });
-                      navigate(`/projects/${forkedProject.id}`);
+                      navigate(`/project/${forkedProject.id}`);
                     } catch (error) {
                       toast({
                         title: "Fork Failed",

@@ -8,6 +8,13 @@
       "when": 1754571037706,
       "tag": "0000_tired_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1754571038706,
+      "tag": "0001_newsletter_system",
+      "breakpoints": true
     }
   ]
 }

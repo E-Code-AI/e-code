@@ -106,7 +106,7 @@ export default function About() {
           <div className="text-center space-y-5 sm:space-y-7">
             <Badge variant="secondary" className="mb-2 sm:mb-4 text-xs sm:text-sm">
               <Sparkles className="h-3 w-3 mr-1" />
-              Series B funded · 2025 global launch
+              Series A raise in progress · Targeting $25M for global launch
             </Badge>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
               Orchestrating the <span className="text-primary">Vibe coding era</span> for global enterprises
@@ -183,8 +183,12 @@ export default function About() {
               <Card className="relative">
                 <CardContent className="p-8">
                   <div className="text-center space-y-6">
-                    <div className="text-6xl font-bold text-primary">$180M</div>
-                    <p className="text-xl font-semibold">Series B capital to scale the Vibe platform</p>
+                    <div className="text-6xl font-bold text-primary">$25M</div>
+                    <p className="text-xl font-semibold">Series A growth capital powering the Vibe platform</p>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      The raise accelerates enterprise go-to-market, compliance automation, and sovereign-ready
+                      infrastructure investments so customers can scale with confidence.
+                    </p>
                     <div className="grid grid-cols-3 gap-4 pt-4">
                       <div>
                         <div className="text-2xl font-bold">2025</div>
