@@ -1,5 +1,7 @@
 // @ts-nocheck
 import { Router } from 'express';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import { storage } from '../storage';
 import { db } from '../db';
 import { projects, files } from '@shared/schema';
@@ -10,23 +12,109 @@ import { mobileContainerService } from '../services/mobile-container-service';
 const router = Router();
 
 const MOBILE_TOKEN_MAX_AGE = 1000 * 60 * 60 * 24; // 24 hours
+const MOBILE_ACCESS_TOKEN_SECRET =
+  process.env.MOBILE_ACCESS_TOKEN_SECRET ||
+  process.env.JWT_SECRET ||
+  'mobile-access-secret-change-me';
+const MOBILE_REFRESH_TOKEN_SECRET =
+  process.env.MOBILE_REFRESH_TOKEN_SECRET ||
+  process.env.JWT_SECRET ||
+  'mobile-refresh-secret-change-me';
+const MOBILE_ACCESS_TOKEN_EXPIRES_IN = '24h';
+const MOBILE_REFRESH_TOKEN_EXPIRES_IN = '30d';
+
+type LoginAttemptTracker = {
+  count: number;
+  firstAttemptAt: number;
+};
+
+const loginAttempts = new Map<string, LoginAttemptTracker>();
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+
+const checkLoginRateLimit = (key: string) => {
+  const now = Date.now();
+  const attempt = loginAttempts.get(key);
+
+  if (!attempt) {
+    loginAttempts.set(key, { count: 1, firstAttemptAt: now });
+    return true;
+  }
+
+  if (now - attempt.firstAttemptAt > LOGIN_RATE_LIMIT_WINDOW) {
+    loginAttempts.set(key, { count: 1, firstAttemptAt: now });
+    return true;
+  }
+
+  if (attempt.count >= MAX_LOGIN_ATTEMPTS) {
+    return false;
+  }
+
+  attempt.count += 1;
+  loginAttempts.set(key, attempt);
+  return true;
+};
+
+const generateMobileAccessToken = (userId: number, username: string) => {
+  return jwt.sign(
+    { userId, username },
+    MOBILE_ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: MOBILE_ACCESS_TOKEN_EXPIRES_IN,
+      algorithm: 'HS256'
+    }
+  );
+};
+
+const generateMobileRefreshToken = (userId: number) => {
+  return jwt.sign(
+    { userId },
+    MOBILE_REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: MOBILE_REFRESH_TOKEN_EXPIRES_IN,
+      algorithm: 'HS256'
+    }
+  );
+};
+
+const verifyMobileRefreshToken = (token: string) => {
+  try {
+    return jwt.verify(token, MOBILE_REFRESH_TOKEN_SECRET, {
+      algorithms: ['HS256']
+    }) as { userId: number };
+  } catch (error) {
+    return null;
+  }
+};
 
 const parseMobileToken = (token: string) => {
-  const decoded = Buffer.from(token, 'base64').toString('utf-8');
-  const [userIdPart, issuedAtPart] = decoded.split(':');
+  try {
+    const payload = jwt.verify(token, MOBILE_ACCESS_TOKEN_SECRET, {
+      algorithms: ['HS256']
+    }) as { userId?: number | string; sub?: number | string; iat?: number };
 
-  const userId = Number(userIdPart);
-  const issuedAt = Number(issuedAtPart);
+    const rawUserId =
+      typeof payload.userId !== 'undefined' ? payload.userId : payload.sub;
+    const userId =
+      typeof rawUserId === 'string'
+        ? Number.parseInt(rawUserId, 10)
+        : rawUserId;
 
-  if (!userId || Number.isNaN(userId) || Number.isNaN(issuedAt)) {
-    throw new Error('Invalid token payload');
+    if (!userId || Number.isNaN(userId)) {
+      throw new Error('Invalid token payload');
+    }
+
+    const issuedAtSeconds = payload.iat ?? 0;
+    const issuedAt = issuedAtSeconds ? issuedAtSeconds * 1000 : Date.now();
+
+    if (Date.now() - issuedAt > MOBILE_TOKEN_MAX_AGE) {
+      throw new Error('Token expired');
+    }
+
+    return { userId, issuedAt };
+  } catch (error) {
+    throw new Error('Invalid authentication token');
   }
-
-  if (Date.now() - issuedAt > MOBILE_TOKEN_MAX_AGE) {
-    throw new Error('Token expired');
-  }
-
-  return { userId, issuedAt };
 };
 
 const mobileEnsureAuthenticated = async (req, res, next) => {
