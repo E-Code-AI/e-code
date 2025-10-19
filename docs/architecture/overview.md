@@ -59,6 +59,9 @@ The E‑Code platform is organized into modular layers that balance developer pr
 - **Database:** PostgreSQL schema managed by Drizzle ORM migrations in `migrations/` with TypeScript models in `shared/db/`.
 - **Sessions:** `express-session` backed by PostgreSQL or Redis (configurable).
 - **File Storage:** Integrations with Google Cloud Storage (`@google-cloud/storage`) and local disk options for development.
+- **Operational tooling:** The MCP PostgreSQL endpoints (`server/mcp/api/postgres.ts`) now proxy the production-grade `DatabaseManagementService`, returning live table statistics, schema metadata, query execution results, and backup details instead of mock responses.
+- **Source control automation:** The GitHub MCP routes (`server/mcp/api/github.ts`) invoke Octokit with the authenticated user's stored token to manage repositories, issues, and pull requests against GitHub's live API surface.
+- **Context memory:** The Memory MCP routes (`server/mcp/api/memory.ts`) persist knowledge graph nodes, edges, and conversation history through the shared PostgreSQL schema for durable semantic search.
 
 ## Security Considerations
 
