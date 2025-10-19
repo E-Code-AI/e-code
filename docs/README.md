@@ -1,56 +1,32 @@
-# E-Code Documentation
+# E‑Code Documentation Hub
 
-Welcome to the E-Code documentation! This directory contains comprehensive guides and references for using and developing with E-Code.
+This directory curates the source of truth for onboarding, platform architecture, and operational procedures that support the E‑Code developer workspace. Each guide is written for enterprise customers and internal platform teams who need predictable, audited workflows.
 
-## Documentation Structure
+## How to Use This Hub
 
-### User Documentation
-- [Getting Started Guide](./getting-started.md)
-- [AI Agent Tutorial](./ai-agent-tutorial.md)
-- [Import Guides](./import-guides/)
-  - [GitHub Import](./import-guides/github.md)
-  - [Figma Import](./import-guides/figma.md)
-  - [Bolt Import](./import-guides/bolt.md)
-  - [Lovable Import](./import-guides/lovable.md)
-- [Collaboration Guide](./collaboration.md)
-- [Billing & Credits](./billing.md)
-- [Deployment Guide](./deployment.md)
-- [Database & Storage](./database-storage.md)
-- [Teams Administration](./teams.md)
+| Audience | Start Here | What You Will Learn |
+|----------|------------|---------------------|
+| Individual developers | [Getting Started](./getting-started.md) | Local setup, environment variables, login credentials, and troubleshooting tips. |
+| Product champions | [Product Tour](./product-tour.md) | Walkthrough of workspace capabilities, collaboration flows, and recommended demos. |
+| Solution architects | [Architecture Overview](./architecture/overview.md) | Service map, data flow, and security boundaries for the platform. |
+| SRE / DevOps teams | [Deployment Playbook](./operations/deployment-playbook.md) | Rollout patterns, observability, and recovery procedures. |
 
-### Developer Documentation
-- [API Reference](./api-reference.md)
-- [SDK Documentation](./sdk/)
-- [Webhook Events](./webhooks.md)
-- [Extension Development](./extensions.md)
-- [Template Creation](./templates.md)
+## Live Document Inventory
 
-### Architecture Documentation
-- [System Overview](./architecture/overview.md)
-- [Frontend Architecture](./architecture/frontend.md)
-- [Backend Architecture](./architecture/backend.md)
-- [Database Schema](./architecture/database.md)
-- [Security Model](./architecture/security.md)
+- `getting-started.md`
+- `product-tour.md`
+- `architecture/overview.md`
+- `operations/deployment-playbook.md`
+- `preview.md` – UI preview configuration reference.
+- `AI_UX_FEATURES.md` – Details of the AI UX experimentation toolkit.
+- `git-troubleshooting.md` – FAQ for resolving Git integration issues.
 
-## Quick Links
+Additional deep dives (billing, API references, extension SDKs) are planned; open documentation tickets are tracked in `ACCURATE_STATUS_REPORT.md`.
 
-- **Platform URL**: [https://e-code.com](https://e-code.com)
-- **Status Page**: [https://status.e-code.com](https://status.e-code.com)
-- **API Endpoint**: [https://api.e-code.com](https://api.e-code.com)
-- **Support**: support@e-code.com
+## Feedback & Governance
 
-## Contributing
+- **Style guide** – Follow the internal handbook at `docs/style-guide.md` (work in progress).
+- **Change control** – Pair every doc update with a change request in the engineering tracker.
+- **Contact** – Reach the documentation team at [docs@e-code.dev](mailto:docs@e-code.dev).
 
-To contribute to our documentation:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-Please follow our [documentation style guide](./style-guide.md).
-
-## Version
-
-Current Version: 1.0.0
-Last Updated: August 4, 2025
+_Last reviewed: 2025-10-19_
