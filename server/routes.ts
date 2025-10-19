@@ -232,18 +232,15 @@ const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) =>
     if (!req.user) {
       req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
     }
-    console.log('[POLYGLOT] Auth bypass: User authenticated as admin for development');
     return next();
   }
   
   // Apply auth bypass middleware
   devAuthBypass(req, res, () => {
     if (req.isAuthenticated()) {
-      console.log('[POLYGLOT] User authenticated:', req.user?.username);
       return next();
     }
     
-    console.log('[POLYGLOT] Authentication failed for:', req.path);
     res.status(401).json({ 
       message: "Unauthorized",
       code: "AUTH_REQUIRED",
@@ -262,7 +259,6 @@ const ensureProjectAccess = async (req: Request, res: Response, next: NextFuncti
   }
   
   if (!req.isAuthenticated() && !req.user) {
-    console.log('[POLYGLOT] Project access denied - not authenticated');
     return res.status(401).json({ 
       message: "Unauthorized",
       code: "AUTH_REQUIRED" 

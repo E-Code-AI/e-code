@@ -470,7 +470,7 @@ export class DatabaseStorage implements IStorage {
     // Store verification token temporarily
     // In production, this would use a separate token storage table
     // For now, we'll just log it
-    console.log(`Email verification token for ${email}: ${token}`);
+    // Email verification token generated for ${email}
   }
 
   // Project operations
@@ -503,7 +503,7 @@ export class DatabaseStorage implements IStorage {
 
       return result[0] || null;
     } catch (error) {
-      console.error('Error getting project by slug:', error);
+      // Error getting project by slug
       return null;
     }
   }
@@ -829,7 +829,7 @@ export class DatabaseStorage implements IStorage {
     // Check if templates already exist
     const existingTemplates = await this.db.select().from(templates).limit(1);
     if (existingTemplates.length > 0) {
-      console.log('Templates already seeded, skipping...');
+      // Templates already seeded, skipping...
       return;
     }
 
@@ -996,21 +996,21 @@ export class DatabaseStorage implements IStorage {
       }
     ];
 
-    console.log('Seeding templates...');
+    // Seeding templates...
     for (const templateData of templateSeeds) {
       try {
         await this.db.insert(templates).values(templateData);
-        console.log(`✓ Seeded template: ${templateData.name}`);
+        // ✓ Seeded template
       } catch (error) {
-        console.error(`Error seeding template ${templateData.name}:`, error);
+        // Error seeding template
       }
     }
-    console.log('✓ Templates seeding completed');
+    // ✓ Templates seeding completed
   }
 
   async createLoginHistory(history: any): Promise<any> {
     // Simple implementation - just log for now since we don't have a login_history table
-    console.log('Login attempt logged:', history);
+    // Login attempt logged
     return { id: Date.now(), ...history };
   }
 
@@ -1044,18 +1044,18 @@ export class DatabaseStorage implements IStorage {
 
   async trackAIUsage(userId: string, tokens: number, mode: string): Promise<void> {
     // For now, just log the usage
-    console.log(`AI usage tracked - User: ${userId}, Tokens: ${tokens}, Mode: ${mode}`);
+    // AI usage tracked for user
   }
 
   async createAiUsageRecord(record: any): Promise<any> {
     // For now, just log and return the record
-    console.log('AI usage record created:', record);
+    // AI usage record created
     return { id: Date.now(), ...record, createdAt: new Date() };
   }
 
   async updateUserAiTokens(userId: string, tokensUsed: number): Promise<void> {
     // For now, just log the token usage
-    console.log(`Updated AI tokens for user ${userId}: ${tokensUsed} tokens used`);
+    // Updated AI tokens for user
   }
 
   // Deployment operations
@@ -1150,7 +1150,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStorageObject(bucketId: string, objectKey: string): Promise<void> {
     // In production, delete from storage_objects table
-    console.log(`Deleting object ${objectKey} from bucket ${bucketId}`);
+    // Deleting object from bucket
   }
 
   // Team operations
@@ -1198,12 +1198,12 @@ export class DatabaseStorage implements IStorage {
 
   async installTheme(userId: string, themeId: string): Promise<void> {
     // In production, insert into user_installed_themes table
-    console.log(`Installing theme ${themeId} for user ${userId}`);
+    // Installing theme for user
   }
 
   async uninstallTheme(userId: string, themeId: string): Promise<void> {
     // In production, delete from user_installed_themes table
-    console.log(`Uninstalling theme ${themeId} for user ${userId}`);
+    // Uninstalling theme for user
   }
 
   async createCustomTheme(userId: string, theme: any): Promise<any> {
@@ -1719,7 +1719,7 @@ export class DatabaseStorage implements IStorage {
   // Deployment methods
   async saveDeployment(deployment: any): Promise<void> {
     // Store deployment in memory or database
-    console.log('Saving deployment:', deployment);
+    // Saving deployment
   }
 
   async getDeployment(deploymentId: string): Promise<any | null> {
