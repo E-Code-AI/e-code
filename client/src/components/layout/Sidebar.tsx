@@ -120,6 +120,7 @@ export default function Sidebar() {
               <button
                 onClick={() => logoutMutation.mutate?.()}
                 className="text-xs text-muted-foreground hover:text-foreground"
+                aria-label="Sign out of your account"
               >
                 Sign out
               </button>
