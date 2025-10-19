@@ -31,7 +31,7 @@ router.get('/tables', ensureAuthenticated, async (req, res) => {
         sizeBytes: table.sizeInBytes,
         size: formatBytes(table.sizeInBytes),
         columnCount: table.columns.length,
-        indexCount: table.indexes.length,
+        indexCount: (table.indexes ?? []).length,
       }))
     );
   } catch (error: any) {
