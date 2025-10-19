@@ -241,7 +241,7 @@ export default function Landing() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-12 sm:py-16 lg:py-24">
-        <div className="marketing-grid" aria-hidden />
+        <div className="marketing-grid opacity-0 dark:opacity-100" aria-hidden />
         <div className="container-responsive relative max-w-6xl text-center">
           <div className="space-y-5 sm:space-y-7">
             <Badge variant="secondary" className="mx-auto inline-flex items-center gap-2 rounded-full border-white/20 bg-white/10 text-white backdrop-blur">

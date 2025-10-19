@@ -219,8 +219,8 @@ export function PublicNavbar() {
         </div>
       </div>
 
-      <nav className="relative border-b border-white/10 bg-slate-950/75 backdrop-blur-xl">
-        <div className="absolute inset-0 marketing-grid" aria-hidden />
+      <nav className="relative border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]/95 dark:border-white/10 dark:bg-slate-950/75 backdrop-blur-xl">
+        <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-100" aria-hidden />
         <div className="container-responsive relative">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-6">
@@ -230,7 +230,7 @@ export function PublicNavbar() {
                 </div>
               </Link>
 
-              <div className="hidden lg:block text-slate-200">
+              <div className="hidden lg:block text-[var(--ecode-text)] dark:text-slate-200">
                 {desktopNav}
               </div>
             </div>
@@ -239,7 +239,7 @@ export function PublicNavbar() {
               <ThemeSwitcher />
               <Button
                 variant="ghost"
-                className="text-slate-200 hover:text-white"
+                className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white"
                 onClick={() => window.location.href = '/login'}
               >
                 <LogIn className="mr-2 h-4 w-4" />
@@ -249,7 +249,7 @@ export function PublicNavbar() {
 
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden text-slate-100">
+                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-slate-100">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
