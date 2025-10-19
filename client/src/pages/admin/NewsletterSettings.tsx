@@ -152,7 +152,7 @@ export default function NewsletterSettings() {
                   <ul className="list-disc list-inside mt-2 space-y-1">
                     <li><code className="text-xs bg-muted px-1 py-0.5 rounded">GANDI_SMTP_USER</code> or <code className="text-xs bg-muted px-1 py-0.5 rounded">GANDI_EMAIL</code></li>
                     <li><code className="text-xs bg-muted px-1 py-0.5 rounded">GANDI_SMTP_PASS</code> or <code className="text-xs bg-muted px-1 py-0.5 rounded">GANDI_PASSWORD</code></li>
-                    <li><code className="text-xs bg-muted px-1 py-0.5 rounded">FROM_EMAIL</code> (optional, defaults to noreply@e-code.dev)</li>
+                    <li><code className="text-xs bg-muted px-1 py-0.5 rounded">FROM_EMAIL</code> (optional, defaults to noreply@e-code.ai)</li>
                   </ul>
                 </AlertDescription>
               </Alert>
