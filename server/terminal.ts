@@ -20,7 +20,7 @@ containerExecutor.init().catch(err => {
 });
 
 // Map to store terminal sessions by projectId
-const terminalSessions = new Map<number, {
+const terminalSessions = new Map<string, {
   sessionId: string;
   clients: Set<WebSocket>;
   commandHistory: string[];
@@ -44,15 +44,15 @@ export function setupTerminalWebsocket(server: Server) {
     try {
       // Get the project ID from query params
       const url = new URL(req.url || '', `http://${req.headers.host}`);
-      const projectId = parseInt(url.searchParams.get('projectId') || '');
-      
-      if (isNaN(projectId)) {
+      const projectId = url.searchParams.get('projectId') || '';
+
+      if (!projectId) {
         ws.close(1008, 'Missing or invalid projectId');
         return;
       }
-      
+
       logger.info(`Terminal connection established for project ${projectId}`);
-      
+
       // Create terminal session if it doesn't exist
       if (!terminalSessions.has(projectId)) {
         terminalSessions.set(projectId, {
@@ -64,11 +64,11 @@ export function setupTerminalWebsocket(server: Server) {
             'npm', 'node', 'python', 'python3', 'git', 'curl', 'wget',
             'yarn', 'clear', 'exit', 'kill', 'ps', 'cp', 'mv', 'rm'
           ],
-          currentDirectory: `/project${projectId}`,
+          currentDirectory: `/project/${projectId}`,
           outputBuffer: ''
         });
       }
-      
+
       const terminalSession = terminalSessions.get(projectId)!;
       terminalSession.clients.add(ws);
       
@@ -209,7 +209,7 @@ export function setupTerminalWebsocket(server: Server) {
 }
 
 // Start a terminal process for a project
-async function startProcess(projectId: number, terminalInfo: { 
+async function startProcess(projectId: string, terminalInfo: { 
   process: ChildProcess | null, 
   clients: Set<WebSocket>,
   commandHistory: string[],
@@ -230,7 +230,7 @@ async function startProcess(projectId: number, terminalInfo: {
     }
     
     // Get project files to determine the working directory
-    const files = await storage.getFilesByProject(projectId);
+    const files = await storage.getFilesByProjectId(projectId);
     
     // Create a temporary directory for the project
     const projectDir = await createProjectDir(project, files);
@@ -307,7 +307,7 @@ async function startProcess(projectId: number, terminalInfo: {
 }
 
 // Stop a terminal process
-function stopProcess(projectId: number, terminalInfo: { 
+function stopProcess(projectId: string, terminalInfo: { 
   process: ChildProcess | null, 
   clients: Set<WebSocket>,
   commandHistory: string[],
@@ -349,7 +349,7 @@ function broadcastToClients(clients: Set<WebSocket>, message: TerminalMessage): 
 }
 
 // Create a temporary project directory with all project files
-async function createProjectDir(project: { id: number }, files: File[]): Promise<string> {
+async function createProjectDir(project: { id: string }, files: File[]): Promise<string> {
   const projectDir = path.join(os.tmpdir(), `plot-terminal-${project.id}`);
   
   try {
@@ -377,7 +377,7 @@ async function createProjectDir(project: { id: number }, files: File[]): Promise
 }
 
 // Execute a command using the container executor
-async function executeCommand(projectId: number, command: string) {
+async function executeCommand(projectId: string, command: string) {
   const session = terminalSessions.get(projectId);
   if (!session) return;
   
@@ -458,7 +458,7 @@ async function executeCommand(projectId: number, command: string) {
 }
 
 // Broadcast message to all connected clients for a project
-function broadcast(projectId: number, message: string) {
+function broadcast(projectId: string, message: string) {
   const session = terminalSessions.get(projectId);
   if (!session) return;
   
