@@ -83,7 +83,7 @@ export function PublicNavbar() {
                     href={item.href}
                     className="block rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-sky-500/10"
                   >
-                    <div className="text-sm font-semibold text-white flex items-center gap-2">
+                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-sky-300" />
                       {item.title}
                     </div>
@@ -107,7 +107,7 @@ export function PublicNavbar() {
                     href={item.href}
                     className="block rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-sky-500/10"
                   >
-                    <div className="text-sm font-semibold text-white flex items-center gap-2">
+                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <ArrowUpRight className="h-4 w-4 text-indigo-300" />
                       {item.title}
                     </div>
@@ -131,7 +131,7 @@ export function PublicNavbar() {
                     href={item.href}
                     className="block rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-sky-500/10"
                   >
-                    <div className="text-sm font-semibold text-white flex items-center gap-2">
+                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <Search className="h-4 w-4 text-sky-300" />
                       {item.title}
                     </div>
@@ -155,7 +155,7 @@ export function PublicNavbar() {
                     href={item.href}
                     className="block rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-sky-500/10"
                   >
-                    <div className="text-sm font-semibold text-white flex items-center gap-2">
+                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <ChevronRight className="h-4 w-4 text-indigo-300" />
                       {item.title}
                     </div>
@@ -172,7 +172,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuLink
             href="/pricing"
-            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-white/15 px-5 text-sm font-medium text-slate-200 transition-colors hover:border-white/40 hover:text-white"
+            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/15 px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-[var(--ecode-text)] dark:text-white"
           >
             Pricing
           </NavigationMenuLink>
@@ -181,7 +181,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuLink
             href="/team"
-            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-white/15 px-5 text-sm font-medium text-slate-200 transition-colors hover:border-white/40 hover:text-white"
+            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/15 px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-[var(--ecode-text)] dark:text-white"
           >
             Teams
           </NavigationMenuLink>
@@ -193,7 +193,7 @@ export function PublicNavbar() {
   const primaryCta = (
     <Button
       onClick={() => window.location.href = '/register'}
-      className="hidden sm:inline-flex bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/25"
+      className="hidden sm:inline-flex bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-[var(--ecode-text)] dark:text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/25"
     >
       Get started
     </Button>
@@ -204,13 +204,13 @@ export function PublicNavbar() {
       <div className="hidden md:block border-b border-white/10 bg-gradient-to-r from-sky-500/20 via-indigo-500/20 to-purple-500/20">
         <div className="container-responsive flex h-10 items-center justify-between text-xs text-slate-100">
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="bg-white/15 text-white border-white/25 uppercase tracking-[0.2em]">
+            <Badge variant="secondary" className="bg-white/15 text-[var(--ecode-text)] dark:text-white border-white/25 uppercase tracking-[0.2em]">
               NEW
             </Badge>
             <p className="font-medium">Introducing E-Code Enterprise Cloud with dedicated AI governance and auditability.</p>
           </div>
           <button
-            className="inline-flex items-center gap-1 text-sky-200 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 text-sky-200 hover:text-[var(--ecode-text)] dark:text-white transition-colors"
             onClick={() => navigate('/contact-sales')}
           >
             Talk to an expert
@@ -239,7 +239,7 @@ export function PublicNavbar() {
               <ThemeSwitcher />
               <Button
                 variant="ghost"
-                className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+                className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-[var(--ecode-text)] dark:text-white"
                 onClick={() => window.location.href = '/login'}
               >
                 <LogIn className="mr-2 h-4 w-4" />
@@ -272,14 +272,14 @@ export function PublicNavbar() {
 
                   <div className="px-6">
                     <Button
-                      className="w-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/20"
+                      className="w-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-[var(--ecode-text)] dark:text-white shadow-lg shadow-blue-500/20"
                       onClick={() => window.location.href = '/register'}
                     >
                       Create your account
                     </Button>
                     <Button
                       variant="ghost"
-                      className="mt-3 w-full border border-white/10 text-slate-200 hover:text-white"
+                      className="mt-3 w-full border border-white/10 text-slate-200 hover:text-[var(--ecode-text)] dark:text-white"
                       onClick={() => window.location.href = '/login'}
                     >
                       Sign in
@@ -307,7 +307,7 @@ export function PublicNavbar() {
                                 className="w-full text-left rounded-xl border border-white/10 bg-white/[0.04] p-4 transition hover:bg-white/[0.08]"
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="text-sm font-semibold text-white">{item.title}</span>
+                                  <span className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white">{item.title}</span>
                                   <ChevronRight className="h-4 w-4 text-slate-400" />
                                 </div>
                                 <p className="mt-2 text-xs text-slate-300 leading-relaxed">
