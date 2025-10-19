@@ -212,7 +212,7 @@ export default function Account() {
         icon={User}
         actions={(
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button className="gap-2" onClick={() => handleSaveProfile()}>
+            <Button className="gap-2" onClick={handleSaveProfile}>
               <Check className="h-4 w-4" />
               Save changes
             </Button>
