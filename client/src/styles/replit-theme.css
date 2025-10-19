@@ -86,6 +86,21 @@
   --ecode-shadow-md: 0 20px 45px -20px rgba(15, 23, 42, 0.3);
   --ecode-shadow-lg: 0 35px 65px -30px rgba(15, 23, 42, 0.35);
 
+  /* Marketing surfaces */
+  --marketing-surface-bg: linear-gradient(180deg, #f8fbff 0%, #eef3ff 100%);
+  --marketing-surface-text: #0f172a;
+  --marketing-backdrop: radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 55%),
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 50%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(226, 232, 240, 0.94));
+  --marketing-gradient: radial-gradient(circle at 20% 20%, rgba(14, 165, 233, 0.12), transparent 55%),
+    radial-gradient(circle at 80% 15%, rgba(59, 130, 246, 0.14), transparent 50%),
+    radial-gradient(circle at 50% 75%, rgba(99, 102, 241, 0.12), transparent 45%);
+  --marketing-grid-line: rgba(148, 163, 184, 0.12);
+  --marketing-divider: linear-gradient(90deg, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0));
+  --marketing-glass-bg: rgba(255, 255, 255, 0.65);
+  --marketing-glass-border: rgba(148, 163, 184, 0.35);
+  --marketing-glass-shadow: 0 24px 48px -32px rgba(15, 23, 42, 0.25);
+
   /* Spacing - Replit system */
   --ecode-space-1: 4px;
   --ecode-space-2: 8px;
@@ -195,6 +210,21 @@
   --ecode-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --ecode-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
   --ecode-shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.5);
+
+  /* Marketing surfaces */
+  --marketing-surface-bg: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+  --marketing-surface-text: #e2e8f0;
+  --marketing-backdrop: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 55%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.15), transparent 50%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.92));
+  --marketing-gradient: radial-gradient(circle at 20% 20%, rgba(125, 211, 252, 0.12), transparent 45%),
+    radial-gradient(circle at 80% 20%, rgba(147, 197, 253, 0.12), transparent 50%),
+    radial-gradient(circle at 50% 70%, rgba(129, 140, 248, 0.1), transparent 40%);
+  --marketing-grid-line: rgba(148, 163, 184, 0.07);
+  --marketing-divider: linear-gradient(90deg, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0));
+  --marketing-glass-bg: rgba(15, 23, 42, 0.6);
+  --marketing-glass-border: rgba(148, 163, 184, 0.2);
+  --marketing-glass-shadow: 0 20px 45px -25px rgba(15, 23, 42, 0.6);
 }
 
 /* Keeping light mode selector for compatibility */
