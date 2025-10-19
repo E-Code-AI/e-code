@@ -602,7 +602,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Tailwind</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Create a dashboard to track my expenses with charts and budget alerts')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -698,7 +705,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Prisma</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Build a Slack-like chat app with channels and real-time messaging')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -788,7 +802,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Tailwind</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Create an online store with product catalog, cart, and Stripe checkout')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -880,7 +901,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">TipTap</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Make an AI-powered writing tool with grammar check and style suggestions')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -989,7 +1017,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Zustand</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Build a Kanban board for project management with drag and drop')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -1069,7 +1104,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Recharts</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Create a weather app with forecasts, maps, and location search')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -1176,7 +1218,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Tailwind</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Design a modern portfolio to showcase my work with animations')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
