@@ -195,6 +195,54 @@ interface CrawlResult {
   ok: boolean;
   redirected?: boolean;
   finalUrl?: string;
+  notFoundRedirect?: boolean;
+  error?: string;
+}
+
+const notFoundPathSegments = new Set(['404', '404.html', 'not-found']);
+
+function indicatesNotFoundRedirect(originalUrl: string, finalUrl: string, redirected: boolean): boolean {
+  if (!redirected) return false;
+
+  try {
+    const parsed = new URL(finalUrl);
+    const normalizedPath = parsed.pathname.replace(/\/+$/, '').toLowerCase();
+    const segments = normalizedPath.split('/').filter(Boolean);
+
+    if (segments.length === 0) {
+      return false;
+    }
+
+    if (segments.some((segment) => notFoundPathSegments.has(segment))) {
+      return true;
+    }
+
+    if (segments.length >= 2) {
+      const lastTwo = segments.slice(-2).join('/');
+      if (lastTwo === 'error/404' || lastTwo === 'errors/404') {
+        return true;
+      }
+    }
+
+    for (const key of ['status', 'code', 'error']) {
+      const value = parsed.searchParams.get(key);
+      if (value && value.trim() === '404') {
+        return true;
+      }
+    }
+
+    const hash = parsed.hash?.toLowerCase() ?? '';
+    if (hash.includes('404') || hash.includes('not-found')) {
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.warn(`Unable to inspect final URL for ${originalUrl}:`, error);
+    return false;
+  }
+}
+
   error?: string;
 }
 
@@ -244,10 +292,17 @@ async function crawlPath(pathname: string): Promise<CrawlResult> {
     attempt += 1;
     try {
       const response = await fetchWithTimeout(url, requestTimeoutMs);
+      const finalUrl = response.url;
+      const notFoundRedirect = indicatesNotFoundRedirect(url, finalUrl, response.redirected);
       return {
         path: pathname,
         url,
         status: response.status,
+        ok: response.ok && !notFoundRedirect,
+        redirected: response.redirected,
+        finalUrl,
+        notFoundRedirect,
+        error: notFoundRedirect ? 'Redirected to not-found page' : undefined,
         ok: response.ok,
         redirected: response.redirected,
         finalUrl: response.url,
@@ -293,6 +348,7 @@ async function main() {
   console.log(`📄 Discovered ${sortedPaths.length} unique paths to crawl`);
 
   const results = await crawl(sortedPaths);
+  const broken = results.filter((item) => !item.ok);
   const broken = results.filter((item) => !item.ok || (item.status && item.status >= 400));
 
   const report = {
@@ -313,6 +369,9 @@ async function main() {
   if (broken.length > 0) {
     console.log('❌ Broken or unreachable routes found:');
     for (const item of broken) {
+      if (item.notFoundRedirect) {
+        console.log(`  ${item.path} -> redirected to not-found (${item.finalUrl ?? item.url})`);
+      } else if (item.status) {
       if (item.status) {
         console.log(`  ${item.path} -> ${item.status} (${item.finalUrl ?? item.url})`);
       } else {
