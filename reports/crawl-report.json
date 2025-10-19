@@ -1,0 +1,1409 @@
+{
+  "generatedAt": "2025-10-19T12:57:35.043Z",
+  "baseUrl": "http://localhost:5000",
+  "totalPaths": 175,
+  "brokenCount": 0,
+  "broken": [],
+  "results": [
+    {
+      "path": "/",
+      "url": "http://localhost:5000/",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/"
+    },
+    {
+      "path": "/about",
+      "url": "http://localhost:5000/about",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/about"
+    },
+    {
+      "path": "/account",
+      "url": "http://localhost:5000/account",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/account"
+    },
+    {
+      "path": "/admin",
+      "url": "http://localhost:5000/admin",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/admin"
+    },
+    {
+      "path": "/admin/ai-models",
+      "url": "http://localhost:5000/admin/ai-models",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/admin/ai-models"
+    },
+    {
+      "path": "/admin/billing",
+      "url": "http://localhost:5000/admin/billing",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/admin/billing"
+    },
+    {
+      "path": "/admin/pitch-deck",
+      "url": "http://localhost:5000/admin/pitch-deck",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/admin/pitch-deck"
+    },
+    {
+      "path": "/admin/usage",
+      "url": "http://localhost:5000/admin/usage",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/admin/usage"
+    },
+    {
+      "path": "/advanced/collaboration",
+      "url": "http://localhost:5000/advanced/collaboration",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/advanced/collaboration"
+    },
+    {
+      "path": "/advanced/community",
+      "url": "http://localhost:5000/advanced/community",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/advanced/community"
+    },
+    {
+      "path": "/advanced/mobile",
+      "url": "http://localhost:5000/advanced/mobile",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/advanced/mobile"
+    },
+    {
+      "path": "/advanced/sso",
+      "url": "http://localhost:5000/advanced/sso",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/advanced/sso"
+    },
+    {
+      "path": "/advanced/storage",
+      "url": "http://localhost:5000/advanced/storage",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/advanced/storage"
+    },
+    {
+      "path": "/agent",
+      "url": "http://localhost:5000/agent",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/agent"
+    },
+    {
+      "path": "/ai",
+      "url": "http://localhost:5000/ai",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/ai"
+    },
+    {
+      "path": "/ai-agent",
+      "url": "http://localhost:5000/ai-agent",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/ai-agent"
+    },
+    {
+      "path": "/ai-agent/studio",
+      "url": "http://localhost:5000/ai-agent/studio",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/ai-agent/studio"
+    },
+    {
+      "path": "/ai-documentation",
+      "url": "http://localhost:5000/ai-documentation",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/ai-documentation"
+    },
+    {
+      "path": "/analytics",
+      "url": "http://localhost:5000/analytics",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/analytics"
+    },
+    {
+      "path": "/api-sdk",
+      "url": "http://localhost:5000/api-sdk",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/api-sdk"
+    },
+    {
+      "path": "/assistant",
+      "url": "http://localhost:5000/assistant",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/assistant"
+    },
+    {
+      "path": "/audit-logs",
+      "url": "http://localhost:5000/audit-logs",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/audit-logs"
+    },
+    {
+      "path": "/auth",
+      "url": "http://localhost:5000/auth",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/auth"
+    },
+    {
+      "path": "/authentication",
+      "url": "http://localhost:5000/authentication",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/authentication"
+    },
+    {
+      "path": "/badges",
+      "url": "http://localhost:5000/badges",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/badges"
+    },
+    {
+      "path": "/blog",
+      "url": "http://localhost:5000/blog",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/blog"
+    },
+    {
+      "path": "/blog/:slug",
+      "url": "http://localhost:5000/blog/:slug",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/blog/:slug"
+    },
+    {
+      "path": "/blog/sample-slug",
+      "url": "http://localhost:5000/blog/sample-slug",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/blog/sample-slug"
+    },
+    {
+      "path": "/bounties",
+      "url": "http://localhost:5000/bounties",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/bounties"
+    },
+    {
+      "path": "/careers",
+      "url": "http://localhost:5000/careers",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/careers"
+    },
+    {
+      "path": "/code-generation",
+      "url": "http://localhost:5000/code-generation",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/code-generation"
+    },
+    {
+      "path": "/code-search",
+      "url": "http://localhost:5000/code-search",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/code-search"
+    },
+    {
+      "path": "/collaboration",
+      "url": "http://localhost:5000/collaboration",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/collaboration"
+    },
+    {
+      "path": "/commercial-agreement",
+      "url": "http://localhost:5000/commercial-agreement",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/commercial-agreement"
+    },
+    {
+      "path": "/community",
+      "url": "http://localhost:5000/community",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/community"
+    },
+    {
+      "path": "/community/post/:id",
+      "url": "http://localhost:5000/community/post/:id",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/community/post/:id"
+    },
+    {
+      "path": "/community/post/123",
+      "url": "http://localhost:5000/community/post/123",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/community/post/123"
+    },
+    {
+      "path": "/compare",
+      "url": "http://localhost:5000/compare",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/compare"
+    },
+    {
+      "path": "/compare/:slug",
+      "url": "http://localhost:5000/compare/:slug",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/compare/:slug"
+    },
+    {
+      "path": "/compare/aws-cloud9",
+      "url": "http://localhost:5000/compare/aws-cloud9",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/compare/aws-cloud9"
+    },
+    {
+      "path": "/compare/codesandbox",
+      "url": "http://localhost:5000/compare/codesandbox",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/compare/codesandbox"
+    },
+    {
+      "path": "/compare/github-codespaces",
+      "url": "http://localhost:5000/compare/github-codespaces",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/compare/github-codespaces"
+    },
+    {
+      "path": "/compare/glitch",
+      "url": "http://localhost:5000/compare/glitch",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/compare/glitch"
+    },
+    {
+      "path": "/compare/heroku",
+      "url": "http://localhost:5000/compare/heroku",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/compare/heroku"
+    },
+    {
+      "path": "/compare/sample-slug",
+      "url": "http://localhost:5000/compare/sample-slug",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/compare/sample-slug"
+    },
+    {
+      "path": "/console",
+      "url": "http://localhost:5000/console",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/console"
+    },
+    {
+      "path": "/contact-sales",
+      "url": "http://localhost:5000/contact-sales",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/contact-sales"
+    },
+    {
+      "path": "/custom-roles",
+      "url": "http://localhost:5000/custom-roles",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/custom-roles"
+    },
+    {
+      "path": "/cycles",
+      "url": "http://localhost:5000/cycles",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/cycles"
+    },
+    {
+      "path": "/dashboard",
+      "url": "http://localhost:5000/dashboard",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/dashboard"
+    },
+    {
+      "path": "/database",
+      "url": "http://localhost:5000/database",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/database"
+    },
+    {
+      "path": "/demo",
+      "url": "http://localhost:5000/demo",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/demo"
+    },
+    {
+      "path": "/dependencies",
+      "url": "http://localhost:5000/dependencies",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/dependencies"
+    },
+    {
+      "path": "/deployments",
+      "url": "http://localhost:5000/deployments",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/deployments"
+    },
+    {
+      "path": "/desktop",
+      "url": "http://localhost:5000/desktop",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/desktop"
+    },
+    {
+      "path": "/docs",
+      "url": "http://localhost:5000/docs",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/docs"
+    },
+    {
+      "path": "/dpa",
+      "url": "http://localhost:5000/dpa",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/dpa"
+    },
+    {
+      "path": "/editor/:id",
+      "url": "http://localhost:5000/editor/:id",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/editor/:id"
+    },
+    {
+      "path": "/editor/123",
+      "url": "http://localhost:5000/editor/123",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/editor/123"
+    },
+    {
+      "path": "/education",
+      "url": "http://localhost:5000/education",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/education"
+    },
+    {
+      "path": "/explore",
+      "url": "http://localhost:5000/explore",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/explore"
+    },
+    {
+      "path": "/extensions",
+      "url": "http://localhost:5000/extensions",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/extensions"
+    },
+    {
+      "path": "/features",
+      "url": "http://localhost:5000/features",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/features"
+    },
+    {
+      "path": "/forum",
+      "url": "http://localhost:5000/forum",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/forum"
+    },
+    {
+      "path": "/git",
+      "url": "http://localhost:5000/git",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/git"
+    },
+    {
+      "path": "/github-import",
+      "url": "http://localhost:5000/github-import",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/github-import"
+    },
+    {
+      "path": "/health",
+      "url": "http://localhost:5000/health",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/health"
+    },
+    {
+      "path": "/home",
+      "url": "http://localhost:5000/home",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/home"
+    },
+    {
+      "path": "/integrations",
+      "url": "http://localhost:5000/integrations",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/integrations"
+    },
+    {
+      "path": "/kv-store",
+      "url": "http://localhost:5000/kv-store",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/kv-store"
+    },
+    {
+      "path": "/languages",
+      "url": "http://localhost:5000/languages",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/languages"
+    },
+    {
+      "path": "/learn",
+      "url": "http://localhost:5000/learn",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/learn"
+    },
+    {
+      "path": "/login",
+      "url": "http://localhost:5000/login",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/login"
+    },
+    {
+      "path": "/marketing/bounties",
+      "url": "http://localhost:5000/marketing/bounties",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/marketing/bounties"
+    },
+    {
+      "path": "/marketing/deployments",
+      "url": "http://localhost:5000/marketing/deployments",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/marketing/deployments"
+    },
+    {
+      "path": "/marketing/teams",
+      "url": "http://localhost:5000/marketing/teams",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/marketing/teams"
+    },
+    {
+      "path": "/marketplace",
+      "url": "http://localhost:5000/marketplace",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/marketplace"
+    },
+    {
+      "path": "/mcp",
+      "url": "http://localhost:5000/mcp",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/mcp"
+    },
+    {
+      "path": "/mobile",
+      "url": "http://localhost:5000/mobile",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/mobile"
+    },
+    {
+      "path": "/mobile-admin",
+      "url": "http://localhost:5000/mobile-admin",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/mobile-admin"
+    },
+    {
+      "path": "/mobile-apps",
+      "url": "http://localhost:5000/mobile-apps",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/mobile-apps"
+    },
+    {
+      "path": "/networking",
+      "url": "http://localhost:5000/networking",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/networking"
+    },
+    {
+      "path": "/newsletter-confirmed",
+      "url": "http://localhost:5000/newsletter-confirmed",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/newsletter-confirmed"
+    },
+    {
+      "path": "/newsletter/confirm",
+      "url": "http://localhost:5000/newsletter/confirm",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/newsletter/confirm"
+    },
+    {
+      "path": "/newsletter/unsubscribe",
+      "url": "http://localhost:5000/newsletter/unsubscribe",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/newsletter/unsubscribe"
+    },
+    {
+      "path": "/notifications",
+      "url": "http://localhost:5000/notifications",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/notifications"
+    },
+    {
+      "path": "/object-storage",
+      "url": "http://localhost:5000/object-storage",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/object-storage"
+    },
+    {
+      "path": "/packages",
+      "url": "http://localhost:5000/packages",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/packages"
+    },
+    {
+      "path": "/partners",
+      "url": "http://localhost:5000/partners",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/partners"
+    },
+    {
+      "path": "/plans",
+      "url": "http://localhost:5000/plans",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/plans"
+    },
+    {
+      "path": "/polyglot",
+      "url": "http://localhost:5000/polyglot",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/polyglot"
+    },
+    {
+      "path": "/powerups",
+      "url": "http://localhost:5000/powerups",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/powerups"
+    },
+    {
+      "path": "/press",
+      "url": "http://localhost:5000/press",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/press"
+    },
+    {
+      "path": "/preview",
+      "url": "http://localhost:5000/preview",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/preview"
+    },
+    {
+      "path": "/pricing",
+      "url": "http://localhost:5000/pricing",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/pricing"
+    },
+    {
+      "path": "/privacy",
+      "url": "http://localhost:5000/privacy",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/privacy"
+    },
+    {
+      "path": "/problems",
+      "url": "http://localhost:5000/problems",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/problems"
+    },
+    {
+      "path": "/profile",
+      "url": "http://localhost:5000/profile",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/profile"
+    },
+    {
+      "path": "/profile/demo-user",
+      "url": "http://localhost:5000/profile/demo-user",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/profile/demo-user"
+    },
+    {
+      "path": "/project/:id",
+      "url": "http://localhost:5000/project/:id",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/project/:id"
+    },
+    {
+      "path": "/project/123",
+      "url": "http://localhost:5000/project/123",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/project/123"
+    },
+    {
+      "path": "/projects",
+      "url": "http://localhost:5000/projects",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects"
+    },
+    {
+      "path": "/projects/:id",
+      "url": "http://localhost:5000/projects/:id",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/:id"
+    },
+    {
+      "path": "/projects/:id/database",
+      "url": "http://localhost:5000/projects/:id/database",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/:id/database"
+    },
+    {
+      "path": "/projects/:id/import/bolt",
+      "url": "http://localhost:5000/projects/:id/import/bolt",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/:id/import/bolt"
+    },
+    {
+      "path": "/projects/:id/import/figma",
+      "url": "http://localhost:5000/projects/:id/import/figma",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/:id/import/figma"
+    },
+    {
+      "path": "/projects/:id/import/lovable",
+      "url": "http://localhost:5000/projects/:id/import/lovable",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/:id/import/lovable"
+    },
+    {
+      "path": "/projects/:id/preview",
+      "url": "http://localhost:5000/projects/:id/preview",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/:id/preview"
+    },
+    {
+      "path": "/projects/:id/secrets",
+      "url": "http://localhost:5000/projects/:id/secrets",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/:id/secrets"
+    },
+    {
+      "path": "/projects/123",
+      "url": "http://localhost:5000/projects/123",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/123"
+    },
+    {
+      "path": "/projects/123/database",
+      "url": "http://localhost:5000/projects/123/database",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/123/database"
+    },
+    {
+      "path": "/projects/123/import/bolt",
+      "url": "http://localhost:5000/projects/123/import/bolt",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/123/import/bolt"
+    },
+    {
+      "path": "/projects/123/import/figma",
+      "url": "http://localhost:5000/projects/123/import/figma",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/123/import/figma"
+    },
+    {
+      "path": "/projects/123/import/lovable",
+      "url": "http://localhost:5000/projects/123/import/lovable",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/123/import/lovable"
+    },
+    {
+      "path": "/projects/123/preview",
+      "url": "http://localhost:5000/projects/123/preview",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/123/preview"
+    },
+    {
+      "path": "/projects/123/secrets",
+      "url": "http://localhost:5000/projects/123/secrets",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/projects/123/secrets"
+    },
+    {
+      "path": "/referrals",
+      "url": "http://localhost:5000/referrals",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/referrals"
+    },
+    {
+      "path": "/register",
+      "url": "http://localhost:5000/register",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/register"
+    },
+    {
+      "path": "/report-abuse",
+      "url": "http://localhost:5000/report-abuse",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/report-abuse"
+    },
+    {
+      "path": "/runtime-diagnostics",
+      "url": "http://localhost:5000/runtime-diagnostics",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/runtime-diagnostics"
+    },
+    {
+      "path": "/runtime-test",
+      "url": "http://localhost:5000/runtime-test",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/runtime-test"
+    },
+    {
+      "path": "/runtimes",
+      "url": "http://localhost:5000/runtimes",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/runtimes"
+    },
+    {
+      "path": "/salesforcepro-crm",
+      "url": "http://localhost:5000/salesforcepro-crm",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/salesforcepro-crm"
+    },
+    {
+      "path": "/scalability",
+      "url": "http://localhost:5000/scalability",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/scalability"
+    },
+    {
+      "path": "/search",
+      "url": "http://localhost:5000/search",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/search"
+    },
+    {
+      "path": "/secrets",
+      "url": "http://localhost:5000/secrets",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/secrets"
+    },
+    {
+      "path": "/security",
+      "url": "http://localhost:5000/security",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/security"
+    },
+    {
+      "path": "/security-scanner",
+      "url": "http://localhost:5000/security-scanner",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/security-scanner"
+    },
+    {
+      "path": "/settings",
+      "url": "http://localhost:5000/settings",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/settings"
+    },
+    {
+      "path": "/settings/notifications",
+      "url": "http://localhost:5000/settings/notifications",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/settings/notifications"
+    },
+    {
+      "path": "/share/:shareId",
+      "url": "http://localhost:5000/share/:shareId",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/share/:shareId"
+    },
+    {
+      "path": "/share/share-123",
+      "url": "http://localhost:5000/share/share-123",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/share/share-123"
+    },
+    {
+      "path": "/shell",
+      "url": "http://localhost:5000/shell",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/shell"
+    },
+    {
+      "path": "/solartech-ai-chat",
+      "url": "http://localhost:5000/solartech-ai-chat",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/solartech-ai-chat"
+    },
+    {
+      "path": "/solartech-crm",
+      "url": "http://localhost:5000/solartech-crm",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/solartech-crm"
+    },
+    {
+      "path": "/solartech-fortune500-store",
+      "url": "http://localhost:5000/solartech-fortune500-store",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/solartech-fortune500-store"
+    },
+    {
+      "path": "/solutions/app-builder",
+      "url": "http://localhost:5000/solutions/app-builder",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/solutions/app-builder"
+    },
+    {
+      "path": "/solutions/chatbot-builder",
+      "url": "http://localhost:5000/solutions/chatbot-builder",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/solutions/chatbot-builder"
+    },
+    {
+      "path": "/solutions/dashboard-builder",
+      "url": "http://localhost:5000/solutions/dashboard-builder",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/solutions/dashboard-builder"
+    },
+    {
+      "path": "/solutions/game-builder",
+      "url": "http://localhost:5000/solutions/game-builder",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/solutions/game-builder"
+    },
+    {
+      "path": "/solutions/internal-ai-builder",
+      "url": "http://localhost:5000/solutions/internal-ai-builder",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/solutions/internal-ai-builder"
+    },
+    {
+      "path": "/solutions/website-builder",
+      "url": "http://localhost:5000/solutions/website-builder",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/solutions/website-builder"
+    },
+    {
+      "path": "/ssh",
+      "url": "http://localhost:5000/ssh",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/ssh"
+    },
+    {
+      "path": "/sso-configuration",
+      "url": "http://localhost:5000/sso-configuration",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/sso-configuration"
+    },
+    {
+      "path": "/status",
+      "url": "http://localhost:5000/status",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/status"
+    },
+    {
+      "path": "/student-dpa",
+      "url": "http://localhost:5000/student-dpa",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/student-dpa"
+    },
+    {
+      "path": "/subprocessors",
+      "url": "http://localhost:5000/subprocessors",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/subprocessors"
+    },
+    {
+      "path": "/subscribe",
+      "url": "http://localhost:5000/subscribe",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/subscribe"
+    },
+    {
+      "path": "/support",
+      "url": "http://localhost:5000/support",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/support"
+    },
+    {
+      "path": "/team",
+      "url": "http://localhost:5000/team",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/team"
+    },
+    {
+      "path": "/teams",
+      "url": "http://localhost:5000/teams",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/teams"
+    },
+    {
+      "path": "/teams/:id",
+      "url": "http://localhost:5000/teams/:id",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/teams/:id"
+    },
+    {
+      "path": "/teams/:id/settings",
+      "url": "http://localhost:5000/teams/:id/settings",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/teams/:id/settings"
+    },
+    {
+      "path": "/teams/123",
+      "url": "http://localhost:5000/teams/123",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/teams/123"
+    },
+    {
+      "path": "/teams/123/settings",
+      "url": "http://localhost:5000/teams/123/settings",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/teams/123/settings"
+    },
+    {
+      "path": "/teams/new",
+      "url": "http://localhost:5000/teams/new",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/teams/new"
+    },
+    {
+      "path": "/templates",
+      "url": "http://localhost:5000/templates",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/templates"
+    },
+    {
+      "path": "/templates/languages",
+      "url": "http://localhost:5000/templates/languages",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/templates/languages"
+    },
+    {
+      "path": "/terms",
+      "url": "http://localhost:5000/terms",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/terms"
+    },
+    {
+      "path": "/themes",
+      "url": "http://localhost:5000/themes",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/themes"
+    },
+    {
+      "path": "/threads",
+      "url": "http://localhost:5000/threads",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/threads"
+    },
+    {
+      "path": "/u/:username",
+      "url": "http://localhost:5000/u/:username",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/u/:username"
+    },
+    {
+      "path": "/u/:username/:projectname",
+      "url": "http://localhost:5000/u/:username/:projectname",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/u/:username/:projectname"
+    },
+    {
+      "path": "/u/admin/solartech-ai-chat",
+      "url": "http://localhost:5000/u/admin/solartech-ai-chat",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/u/admin/solartech-ai-chat"
+    },
+    {
+      "path": "/u/admin/solartech-crm",
+      "url": "http://localhost:5000/u/admin/solartech-crm",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/u/admin/solartech-crm"
+    },
+    {
+      "path": "/u/admin/solartech-fortune500-store",
+      "url": "http://localhost:5000/u/admin/solartech-fortune500-store",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/u/admin/solartech-fortune500-store"
+    },
+    {
+      "path": "/u/demo-user",
+      "url": "http://localhost:5000/u/demo-user",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/u/demo-user"
+    },
+    {
+      "path": "/u/demo-user/demo-project",
+      "url": "http://localhost:5000/u/demo-user/demo-project",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/u/demo-user/demo-project"
+    },
+    {
+      "path": "/usage",
+      "url": "http://localhost:5000/usage",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/usage"
+    },
+    {
+      "path": "/usage-alerts",
+      "url": "http://localhost:5000/usage-alerts",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/usage-alerts"
+    },
+    {
+      "path": "/user/:username",
+      "url": "http://localhost:5000/user/:username",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/user/:username"
+    },
+    {
+      "path": "/user/demo-user",
+      "url": "http://localhost:5000/user/demo-user",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/user/demo-user"
+    },
+    {
+      "path": "/user/settings",
+      "url": "http://localhost:5000/user/settings",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/user/settings"
+    },
+    {
+      "path": "/vnc",
+      "url": "http://localhost:5000/vnc",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/vnc"
+    },
+    {
+      "path": "/workflows",
+      "url": "http://localhost:5000/workflows",
+      "status": 200,
+      "ok": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5000/workflows"
+    }
+  ]
+}
