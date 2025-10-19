@@ -35,7 +35,7 @@ export class SimpleGitManager {
     try {
       await execAsync(`cd ${projectDir} && git init`);
       await execAsync(`cd ${projectDir} && git config user.name "E-Code User"`);
-      await execAsync(`cd ${projectDir} && git config user.email "user@e-code.app"`);
+      await execAsync(`cd ${projectDir} && git config user.email "user@e-code.ai"`);
       
       // Create initial commit
       await execAsync(`cd ${projectDir} && git add .`);

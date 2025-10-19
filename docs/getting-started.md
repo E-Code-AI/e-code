@@ -97,4 +97,4 @@ npm run dev
 - Study the [Architecture Overview](./architecture/overview.md) to understand service boundaries before deploying custom integrations.
 - When ready for staging, follow the [Deployment Playbook](./operations/deployment-playbook.md).
 
-For assistance, reach the platform team at [support@e-code.dev](mailto:support@e-code.dev).
+For assistance, reach the platform team at [support@e-code.ai](mailto:support@e-code.ai).
