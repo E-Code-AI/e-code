@@ -1,163 +1,160 @@
-import util from 'node:util';
+import { deepEqual, matchObject } from './utils';
 
-type Primitive = string | number | boolean | bigint | symbol | null | undefined;
-
-type Expectation<T> = {
-  toBe(expected: T): void;
+type Matcher = {
+  toBe(expected: unknown): void;
   toEqual(expected: unknown): void;
-  toBeDefined(): void;
   toBeTruthy(): void;
   toBeFalsy(): void;
   toContain(expected: unknown): void;
+  toHaveLength(expected: number): void;
+  toMatchObject(expected: Record<string, unknown>): void;
+  toBeInstanceOf(expected: new (...args: any[]) => any): void;
+  toBeDefined(): void;
+  toThrow(message?: string | RegExp): void;
   toBeGreaterThan(expected: number): void;
   toBeGreaterThanOrEqual(expected: number): void;
   toBeLessThan(expected: number): void;
   toBeLessThanOrEqual(expected: number): void;
 };
 
-const isPrimitive = (value: unknown): value is Primitive =>
-  value !== Object(value) || typeof value === 'symbol';
-
-const deepEqual = (a: unknown, b: unknown, seen = new WeakMap<object, object>()): boolean => {
-  if (Object.is(a, b)) {
-    return true;
+const formatValue = (value: unknown) => {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
   }
-
-  if (typeof a !== typeof b) {
-    return false;
-  }
-
-  if (a === null || b === null) {
-    return a === b;
-  }
-
-  if (isPrimitive(a) || isPrimitive(b)) {
-    return a === b;
-  }
-
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) {
-      return false;
-    }
-
-    return a.every((item, index) => deepEqual(item, b[index], seen));
-  }
-
-  if (typeof a === 'object' && typeof b === 'object') {
-    const objA = a as Record<string | symbol, unknown>;
-    const objB = b as Record<string | symbol, unknown>;
-
-    if (seen.get(objA) === objB) {
-      return true;
-    }
-    seen.set(objA, objB);
-
-    const keysA = Reflect.ownKeys(objA);
-    const keysB = Reflect.ownKeys(objB);
-
-    if (keysA.length !== keysB.length) {
-      return false;
-    }
-
-    return keysA.every((key) => deepEqual(objA[key], objB[key], seen));
-  }
-
-  return false;
 };
 
-const formatValue = (value: unknown): string =>
-  typeof value === 'string' ? `'${value}'` : util.inspect(value, { depth: 4, colors: false });
+const ensureNumber = (value: unknown, matcherName: string): number => {
+  if (typeof value !== 'number') {
+    throw new Error(`${matcherName} requires the actual value to be a number`);
+  }
 
-function createExpectation<T>(actual: T): Expectation<T> {
+  return value;
+};
+
+function createExpectation(actual: unknown): Matcher {
+  const assertionError = (message: string): never => {
+    throw new Error(message);
+  };
+
   return {
     toBe(expected) {
       if (!Object.is(actual, expected)) {
-        throw new Error(`Expected ${formatValue(actual)} to be ${formatValue(expected)}`);
+        assertionError(`Expected ${formatValue(actual)} to be ${formatValue(expected)}`);
       }
     },
     toEqual(expected) {
       if (!deepEqual(actual, expected)) {
-        throw new Error(`Expected ${formatValue(actual)} to equal ${formatValue(expected)}`);
-      }
-    },
-    toBeDefined() {
-      if (actual === undefined) {
-        throw new Error('Expected value to be defined');
+        assertionError(`Expected ${formatValue(actual)} to deeply equal ${formatValue(expected)}`);
       }
     },
     toBeTruthy() {
       if (!actual) {
-        throw new Error(`Expected ${formatValue(actual)} to be truthy`);
+        assertionError(`Expected value to be truthy but received ${formatValue(actual)}`);
       }
     },
     toBeFalsy() {
       if (actual) {
-        throw new Error(`Expected ${formatValue(actual)} to be falsy`);
+        assertionError(`Expected value to be falsy but received ${formatValue(actual)}`);
       }
     },
     toContain(expected) {
-      const container = actual as unknown as { includes?: (item: unknown) => boolean };
-      if (typeof container.includes === 'function') {
-        if (!container.includes(expected)) {
-          throw new Error(`Expected ${formatValue(actual)} to contain ${formatValue(expected)}`);
+      if (typeof actual === 'string') {
+        if (!actual.includes(String(expected))) {
+          assertionError(`Expected string to contain ${String(expected)}, got ${actual}`);
         }
         return;
       }
 
       if (Array.isArray(actual)) {
-        if (!actual.some((item) => deepEqual(item, expected))) {
-          throw new Error(`Expected ${formatValue(actual)} to contain ${formatValue(expected)}`);
+        if (!actual.some(item => deepEqual(item, expected))) {
+          assertionError(`Expected array to contain ${formatValue(expected)}, got ${formatValue(actual)}`);
         }
         return;
       }
 
-      throw new Error('toContain matcher requires an array or value supporting includes');
+      assertionError('toContain is only supported for strings and arrays');
+    },
+    toHaveLength(expectedLength) {
+      const length = (actual as { length?: number })?.length;
+      if (length !== expectedLength) {
+        assertionError(`Expected length ${expectedLength}, got ${length}`);
+      }
+    },
+    toMatchObject(expected) {
+      if (typeof actual !== 'object' || actual === null) {
+        assertionError('toMatchObject requires an object value');
+      }
+
+      if (!matchObject(actual as Record<string, unknown>, expected)) {
+        assertionError(`Expected object to match ${formatValue(expected)}, got ${formatValue(actual)}`);
+      }
+    },
+    toBeInstanceOf(expected) {
+      if (!(actual instanceof expected)) {
+        const name = expected?.name ?? 'constructor';
+        assertionError(`Expected value to be instance of ${name}`);
+      }
+    },
+    toBeDefined() {
+      if (typeof actual === 'undefined') {
+        assertionError('Expected value to be defined');
+      }
+    },
+    toThrow(message) {
+      if (typeof actual !== 'function') {
+        assertionError('toThrow expects a function');
+      }
+
+      let didThrow = false;
+      try {
+        (actual as () => unknown)();
+      } catch (error) {
+        didThrow = true;
+        if (message) {
+          const text = error instanceof Error ? error.message : String(error);
+          if (message instanceof RegExp) {
+            if (!message.test(text)) {
+              assertionError(`Expected error message to match ${message}, got ${text}`);
+            }
+          } else if (text !== message) {
+            assertionError(`Expected error message to be ${message}, got ${text}`);
+          }
+        }
+      }
+
+      if (!didThrow) {
+        assertionError('Expected function to throw');
+      }
     },
     toBeGreaterThan(expected) {
-      if (typeof actual !== 'number') {
-        throw new Error('toBeGreaterThan matcher requires a numeric actual value');
-      }
-      if (!(actual > expected)) {
-        throw new Error(`Expected ${formatValue(actual)} to be greater than ${formatValue(expected)}`);
+      if (!(ensureNumber(actual, 'toBeGreaterThan') > expected)) {
+        assertionError(`Expected ${formatValue(actual)} to be greater than ${formatValue(expected)}`);
       }
     },
     toBeGreaterThanOrEqual(expected) {
-      if (typeof actual !== 'number') {
-        throw new Error('toBeGreaterThanOrEqual matcher requires a numeric actual value');
-      }
-      if (!(actual >= expected)) {
-        throw new Error(`Expected ${formatValue(actual)} to be greater than or equal to ${formatValue(expected)}`);
+      if (!(ensureNumber(actual, 'toBeGreaterThanOrEqual') >= expected)) {
+        assertionError(`Expected ${formatValue(actual)} to be >= ${formatValue(expected)}`);
       }
     },
     toBeLessThan(expected) {
-      if (typeof actual !== 'number') {
-        throw new Error('toBeLessThan matcher requires a numeric actual value');
-      }
-      if (!(actual < expected)) {
-        throw new Error(`Expected ${formatValue(actual)} to be less than ${formatValue(expected)}`);
+      if (!(ensureNumber(actual, 'toBeLessThan') < expected)) {
+        assertionError(`Expected ${formatValue(actual)} to be less than ${formatValue(expected)}`);
       }
     },
     toBeLessThanOrEqual(expected) {
-      if (typeof actual !== 'number') {
-        throw new Error('toBeLessThanOrEqual matcher requires a numeric actual value');
-      }
-      if (!(actual <= expected)) {
-        throw new Error(`Expected ${formatValue(actual)} to be less than or equal to ${formatValue(expected)}`);
+      if (!(ensureNumber(actual, 'toBeLessThanOrEqual') <= expected)) {
+        assertionError(`Expected ${formatValue(actual)} to be <= ${formatValue(expected)}`);
       }
     },
   };
 }
 
-export type ExpectFn = <T>(actual: T) => Expectation<T>;
+export function setupTestGlobals(): void {
+  if (!(globalThis as any).expect) {
+    (globalThis as any).expect = (received: unknown): Matcher => createExpectation(received);
+  }
+}
 
-export const setupTestGlobals = (): void => {
-  const expectFn: ExpectFn = (actual) => createExpectation(actual);
-
-  Object.assign(globalThis, {
-    expect: expectFn,
-  });
-};
-
-export type GlobalExpect = typeof globalThis & {
-  expect: ExpectFn;
-};
+export type { Matcher };
