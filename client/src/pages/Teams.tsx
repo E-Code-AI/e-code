@@ -26,7 +26,9 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { queryClient, apiRequest } from '@/lib/queryClient';
+import { PageHeader, PageShell } from '@/components/layout/PageShell';
 
 interface Team {
   id: number;
@@ -51,6 +53,7 @@ interface TeamInvitation {
 
 export default function Teams() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
@@ -169,31 +172,44 @@ export default function Teams() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto max-w-6xl py-8 px-6">
+      <PageShell>
+        <PageHeader
+          title="Teams"
+          description="Collaborate with teammates and manage shared workspaces."
+          icon={Users}
+        />
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1,2,3].map(i => (
-              <div key={i} className="h-48 bg-gray-200 rounded"></div>
+          <div className="h-8 w-1/4 rounded bg-muted"></div>
+          <div className="h-4 w-1/2 rounded bg-muted"></div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="h-48 rounded-lg bg-muted"></div>
             ))}
           </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-6xl py-8 px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold flex items-center gap-3">
-          <Users className="h-8 w-8" />
-          Teams
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Collaborate with your team on projects and share resources
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader
+        title="Teams"
+        description="Collaborate with your team on projects and share resources."
+        icon={Users}
+        actions={(
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" className="gap-2" onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4" />
+              Create team
+            </Button>
+            <Button className="gap-2" onClick={() => navigate('/teams/new')}>
+              <UserPlus className="h-4 w-4" />
+              Invite members
+            </Button>
+          </div>
+        )}
+      />
 
       {/* Invitations */}
       {invitations.length > 0 && (
@@ -243,7 +259,7 @@ export default function Teams() {
       )}
 
       {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
@@ -422,6 +438,6 @@ export default function Teams() {
           ))}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

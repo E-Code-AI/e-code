@@ -48,6 +48,12 @@ The E‑Code platform is organized into modular layers that balance developer pr
 - **Language Runtimes:** Go and Python helpers (`Dockerfile.go-runtime`, `Dockerfile.python-ml`) provide polyglot execution environments accessible via reverse proxies.
 - **AI Tooling:** The `sdk/` directory contains reusable clients for AI providers, prompt templates, and tool definitions consumed by the workspace assistant.
 
+## MCP Connectors & Live Systems
+
+- **GitHub Operations:** The `/api/mcp/github` routes proxy directly to the GitHub REST API using stored OAuth tokens. Repository creation, issue filing, and pull-request authoring now operate on the user’s actual GitHub account (`server/mcp/api/github.ts`).
+- **PostgreSQL Insights:** The `/api/mcp/postgres` endpoints query the connected PostgreSQL instance in real time, surfacing schema metadata, usage statistics, and query execution timings (`server/mcp/api/postgres.ts`).
+- **Knowledge Graph Memory:** The `/api/mcp/memory` endpoints persist nodes, edges, and conversation transcripts to the shared knowledge graph tables, enabling AI agents to recall prior context (`server/mcp/api/memory.ts`).
+
 ## Data & Persistence
 
 - **Database:** PostgreSQL schema managed by Drizzle ORM migrations in `migrations/` with TypeScript models in `shared/db/`.
