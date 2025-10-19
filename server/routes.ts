@@ -5578,7 +5578,19 @@ module.exports = { placeholder };`,
         return res.status(404).json({ error: 'Project not found' });
       }
       
-      // Use real deployment service for actual deployment
+      // Return immediately with instructions to use Replit's native deployment
+      return res.json({
+        message: 'Please use Replit\'s built-in deployment system',
+        instructions: 'Click the "Publish" button in your Replit workspace or run "replit deploy" in the shell',
+        status: 'pending',
+        deploymentUrl: null
+      });
+      
+      /*
+      // ⚠️ OLD CODE DISABLED - Was causing infinite loading
+      // This custom deployment implementation hangs indefinitely
+      // Use Replit's native deployment instead
+      
       const deploymentResult = await realDeploymentService.deploy({
         projectId: projectId,
         projectName: project.name,
@@ -5623,6 +5635,7 @@ module.exports = { placeholder };`,
         status: deployment.status,
         url: deployment.url
       });
+      */
     } catch (error) {
       console.error('Error deploying project:', error);
       res.status(500).json({ error: 'Failed to deploy project' });
