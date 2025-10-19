@@ -7,7 +7,7 @@ const GANDI_SMTP_HOST = process.env.GANDI_SMTP_HOST || 'mail.gandi.net';
 const GANDI_SMTP_PORT = parseInt(process.env.GANDI_SMTP_PORT || '587');
 const GANDI_SMTP_USER = process.env.GANDI_SMTP_USER || process.env.GANDI_EMAIL;
 const GANDI_SMTP_PASS = process.env.GANDI_SMTP_PASS || process.env.GANDI_PASSWORD;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@e-code.dev';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@e-code.ai';
 const FROM_NAME = process.env.FROM_NAME || 'E-Code';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
 
