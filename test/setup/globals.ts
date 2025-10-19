@@ -50,8 +50,9 @@ function createExpect() {
         assertionError('toContain is only supported for strings and arrays');
       },
       toHaveLength(expected: number) {
-        if ((actual as any)?.length !== expected) {
-          assertionError(`Expected length ${expected}, got ${(actual as any)?.length}`);
+        const length = (actual as any)?.length;
+        if (length !== expected) {
+          assertionError(`Expected length ${expected}, got ${length}`);
         }
       },
       toMatchObject(expected: Record<string, unknown>) {
