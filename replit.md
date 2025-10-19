@@ -8,6 +8,7 @@ The following pages are essential to the platform and should NEVER be removed:
 
 ### Marketing & Comparison Pages
 - **AIDocumentation** (`/ai-documentation`) - Complete AI features documentation
+- **Bounties** (`/marketing/bounties`) - Developer marketplace and bounties landing page
 - **Compare** (`/compare`) - Main comparison landing page
 - **VsGitHubCodespaces** (`/compare/github-codespaces`) - E-Code vs GitHub Codespaces comparison
 - **VsGlitch** (`/compare/glitch`) - E-Code vs Glitch comparison
@@ -125,4 +126,11 @@ The platform includes comprehensive comparison pages to showcase advantages over
 - Created ScrollToTop component
 - Created all comparison pages (Compare, VsGitHubCodespaces, VsGlitch, VsHeroku, VsCodeSandbox, VsAwsCloud9)
 - Restored all comparison routes
+- **Workspace Settings**: Added comprehensive WorkspaceSettings component and Settings tab in ProjectPage bottom panel
+  - Agent & Assistant settings (audio/push notifications)
+  - App Preview settings (automatic preview, port forwarding)
+  - Appearance settings (font size, theme)
+  - Code Editing settings (AI completion, brackets, indentation, inline chat)
+  - Advanced Developer Settings (experimental features, performance mode, debug logging, GPU acceleration)
+  - Styled to match Replit's mobile app design with card-based sections
 - App now running successfully with all features intact

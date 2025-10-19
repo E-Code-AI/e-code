@@ -37,6 +37,7 @@ import { GitHubMCPPanel } from '@/components/mcp/GitHubMCPPanel';
 import { PostgreSQLMCPPanel } from '@/components/mcp/PostgreSQLMCPPanel';
 import { MemoryMCPPanel } from '@/components/mcp/MemoryMCPPanel';
 import { GPUManagement } from '@/components/GPUManagement';
+import { WorkspaceSettings } from '@/components/WorkspaceSettings';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -114,7 +115,7 @@ const ProjectPage = () => {
   const [terminalHeight, setTerminalHeight] = useState(300);
   const [projectRunning, setProjectRunning] = useState(false);
   const [executionId, setExecutionId] = useState<string | undefined>();
-  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'console' | 'deployment' | 'git' | 'env'>('terminal');
+  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'console' | 'deployment' | 'git' | 'env' | 'settings'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [aiPanelVisible, setAiPanelVisible] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState<'preview' | 'assistant' | 'collaborate' | 'resources' | 'presence' | 'search' | 'stats' | 'packages' | 'share' | 'github' | 'postgres' | 'memory'>('preview');
@@ -960,8 +961,8 @@ const ProjectPage = () => {
                 <div className="flex items-center space-x-4">
                   <Tabs 
                     value={bottomPanelTab} 
-                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'console' | 'deployment' | 'git' | 'env')}
-                    className="w-[600px]"
+                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'console' | 'deployment' | 'git' | 'env' | 'settings')}
+                    className="w-[700px]"
                   >
                     <TabsList className="h-7 bg-transparent">
                       <TabsTrigger 
@@ -996,6 +997,13 @@ const ProjectPage = () => {
                         <KeyRound className="h-4 w-4 mr-1" />
                         Environment
                       </TabsTrigger>
+                      <TabsTrigger 
+                        value="settings" 
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'settings' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        <Settings className="h-4 w-4 mr-1" />
+                        Settings
+                      </TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
@@ -1024,6 +1032,7 @@ const ProjectPage = () => {
                     <EnvironmentPanel projectId={projectId} />
                   </EnvironmentProvider>
                 )}
+                {bottomPanelTab === 'settings' && <WorkspaceSettings projectId={projectId} />}
               </div>
                 </div>
               )}
