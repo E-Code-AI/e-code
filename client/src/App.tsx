@@ -196,7 +196,7 @@ function UserProfileWrapper() {
 // This component intercepts any path starting with /@ and redirects to /u/
 function AtSymbolRedirectHandler({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
-  
+
   useEffect(() => {
     // Check if the current path starts with /@ but exclude Vite system routes
     if (location.startsWith('/@') && !location.startsWith('/@vite') && !location.startsWith('/@fs') && !location.startsWith('/@id')) {
@@ -204,17 +204,17 @@ function AtSymbolRedirectHandler({ children }: { children: React.ReactNode }) {
       const newPath = location.replace(/^\/@/, '/u/');
       const search = window.location.search;
       const hash = window.location.hash;
-      
+
       console.log('Redirecting from', location, 'to', newPath);
       navigate(`${newPath}${search}${hash}`, { replace: true });
     }
   }, [location, navigate]);
-  
+
   // If we're on an @ route (but not a Vite system route), show loading while redirecting
   if (location.startsWith('/@') && !location.startsWith('/@vite') && !location.startsWith('/@fs') && !location.startsWith('/@id')) {
     return <ECodeLoading fullScreen size="lg" text="Redirecting..." />;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -286,7 +286,7 @@ function AppContent() {
           <Route path="/solutions/game-builder" component={GameBuilder} />
           <Route path="/solutions/dashboard-builder" component={DashboardBuilder} />
           <Route path="/solutions/chatbot-builder" component={ChatbotBuilder} />
-          
+
           <Route path="/mobile" component={MobileAdmin} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-documentation" component={AIDocumentation} />
@@ -491,7 +491,7 @@ function AppContent() {
           {/* Generic Replit-style project routes */}
           {/* Using /u/ prefix - @ routes are handled by AtSymbolRedirectHandler */}
           <Route path="/u/:username/:projectname" component={ProjectPageWrapper} />
-          
+
           {/* User profile routes */}
           <Route path="/u/:username" component={UserProfileWrapper} />
           <ProtectedRoute path="/editor/:id" component={() => (
