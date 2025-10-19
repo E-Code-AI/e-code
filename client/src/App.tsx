@@ -59,6 +59,8 @@ const ContactSales = lazy(() => import("@/pages/ContactSales"));
 const Terms = lazy(() => import("@/pages/Terms"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const Status = lazy(() => import("@/pages/Status"));
+const Forum = lazy(() => import("@/pages/Forum"));
+const ComparePage = lazy(() => import("@/pages/compare/ComparePage"));
 
 const MobileAdmin = lazy(() => import("@/pages/mobile"));
 const AI = lazy(() => import("@/pages/AI"));
@@ -117,6 +119,8 @@ const SecretManagement = lazy(() => import("@/pages/SecretManagement"));
 const UsageAlerts = lazy(() => import("@/pages/UsageAlerts"));
 // Newsletter pages
 const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
+const NewsletterConfirm = lazy(() => import("@/pages/NewsletterConfirm"));
+const NewsletterUnsubscribe = lazy(() => import("@/pages/NewsletterUnsubscribe"));
 
 // Legal pages
 const DPA = lazy(() => import("@/pages/DPA"));
@@ -137,6 +141,7 @@ const WebsiteBuilder = lazy(() => import("@/pages/solutions/WebsiteBuilder"));
 const GameBuilder = lazy(() => import("@/pages/solutions/GameBuilder"));
 const DashboardBuilder = lazy(() => import("@/pages/solutions/DashboardBuilder"));
 const ChatbotBuilder = lazy(() => import("@/pages/solutions/ChatbotBuilder"));
+const InternalAIBuilder = lazy(() => import("@/pages/solutions/InternalAIBuilder"));
 const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
 
 const CodeGeneration = lazy(() => import("@/pages/CodeGeneration"));
@@ -156,6 +161,28 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ApplicationIDEWrapper } from "@/components/ApplicationIDEWrapper";
+const FeaturePlaceholder = lazy(() => import("@/pages/FeaturePlaceholder"));
+
+const placeholderRoutes = [
+  { path: "/assistant", feature: "assistant" },
+  { path: "/database", feature: "database" },
+  { path: "/console", feature: "console" },
+  { path: "/authentication", feature: "authentication" },
+  { path: "/preview", feature: "preview" },
+  { path: "/agent", feature: "agent" },
+  { path: "/code-search", feature: "code-search" },
+  { path: "/packages", feature: "packages" },
+  { path: "/extensions", feature: "extensions" },
+  { path: "/integrations", feature: "integrations" },
+  { path: "/networking", feature: "networking" },
+  { path: "/problems", feature: "problems" },
+  { path: "/kv-store", feature: "kv-store" },
+  { path: "/shell", feature: "shell" },
+  { path: "/threads", feature: "threads" },
+  { path: "/vnc", feature: "vnc" },
+  { path: "/referrals", feature: "referrals" },
+  { path: "/teams/new", feature: "teams/new" },
+];
 
 // Loading fallback component
 function PageLoader() {
@@ -172,6 +199,7 @@ function AppContent() {
           <Toaster />
           <SpotlightSearch />
           <CommandPalette />
+          <KeyboardShortcuts />
 
           <Suspense fallback={<PageLoader />}>
             <Switch>
@@ -197,6 +225,8 @@ function AppContent() {
           <Route path="/commercial-agreement" component={CommercialAgreement} />
           <Route path="/report-abuse" component={ReportAbuse} />
           <Route path="/status" component={Status} />
+          <Route path="/forum" component={Forum} />
+          <Route path="/compare/:slug" component={ComparePage} />
 
           <Route path="/marketing/bounties" component={MarketingBounties} />
           <Route path="/marketing/deployments" component={PublicDeploymentsPage} />
@@ -208,7 +238,8 @@ function AppContent() {
           <Route path="/solutions/game-builder" component={GameBuilder} />
           <Route path="/solutions/dashboard-builder" component={DashboardBuilder} />
           <Route path="/solutions/chatbot-builder" component={ChatbotBuilder} />
-          
+          <Route path="/solutions/internal-ai-builder" component={InternalAIBuilder} />
+
           <Route path="/mobile" component={MobileAdmin} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-agent" component={AIAgent} />
@@ -257,6 +288,8 @@ function AppContent() {
           <Route path="/git" component={Git} />
           {/* Newsletter pages */}
           <Route path="/newsletter-confirmed" component={NewsletterConfirmed} />
+          <Route path="/newsletter/confirm" component={NewsletterConfirm} />
+          <Route path="/newsletter/unsubscribe" component={NewsletterUnsubscribe} />
           {/* Shared snippet page */}
           <Route path="/share/:shareId" component={SharedSnippet} />
 
@@ -275,6 +308,19 @@ function AppContent() {
               <Teams />
             </ReplitLayout>
           )} />
+          {placeholderRoutes
+            .filter((route) => route.path.startsWith("/teams"))
+            .map((route) => (
+              <ProtectedRoute
+                key={route.path}
+                path={route.path}
+                component={() => (
+                  <ReplitLayout showSidebar={false}>
+                    <FeaturePlaceholder featureKey={route.feature} />
+                  </ReplitLayout>
+                )}
+              />
+            ))}
           <ProtectedRoute path="/teams/:id" component={() => (
             <ReplitLayout showSidebar={false}>
               <TeamPage />
@@ -361,6 +407,19 @@ function AppContent() {
               <Notifications />
             </ReplitLayout>
           )} />
+          {placeholderRoutes
+            .filter((route) => !route.path.startsWith("/teams"))
+            .map((route) => (
+              <ProtectedRoute
+                key={route.path}
+                path={route.path}
+                component={() => (
+                  <ReplitLayout showSidebar={false}>
+                    <FeaturePlaceholder featureKey={route.feature} />
+                  </ReplitLayout>
+                )}
+              />
+            ))}
           <ProtectedRoute path="/profile/:username?" component={() => (
             <ReplitLayout>
               <Profile />

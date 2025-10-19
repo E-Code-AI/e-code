@@ -134,7 +134,7 @@ export default function Pricing() {
     if (tier.enterprise) {
       navigate('/contact-sales');
     } else if (user) {
-      navigate('/billing');
+      navigate('/subscribe');
     } else {
       navigate('/auth');
     }
