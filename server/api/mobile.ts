@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { Router } from 'express';
-import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
 import { db } from '../db';
 import { projects, files } from '@shared/schema';
@@ -9,6 +8,77 @@ import { realAIService } from '../services/ai-service';
 import { mobileContainerService } from '../services/mobile-container-service';
 
 const router = Router();
+
+const MOBILE_TOKEN_MAX_AGE = 1000 * 60 * 60 * 24; // 24 hours
+
+const parseMobileToken = (token: string) => {
+  const decoded = Buffer.from(token, 'base64').toString('utf-8');
+  const [userIdPart, issuedAtPart] = decoded.split(':');
+
+  const userId = Number(userIdPart);
+  const issuedAt = Number(issuedAtPart);
+
+  if (!userId || Number.isNaN(userId) || Number.isNaN(issuedAt)) {
+    throw new Error('Invalid token payload');
+  }
+
+  if (Date.now() - issuedAt > MOBILE_TOKEN_MAX_AGE) {
+    throw new Error('Token expired');
+  }
+
+  return { userId, issuedAt };
+};
+
+const mobileEnsureAuthenticated = async (req, res, next) => {
+  try {
+    if (process.env.NODE_ENV === 'development') {
+      if (!req.user) {
+        req.user = {
+          id: 1,
+          username: 'admin',
+          email: 'admin@example.com'
+        } as any;
+      }
+      return next();
+    }
+
+    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+      return next();
+    }
+
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    if (!authHeader || typeof authHeader !== 'string') {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    const token = (bearerMatch ? bearerMatch[1] : authHeader).trim();
+
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { userId } = parseMobileToken(token);
+    const user = await storage.getUser(userId);
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid authentication token' });
+    }
+
+    req.user = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl
+    } as any;
+
+    return next();
+  } catch (error) {
+    console.error('Mobile auth validation failed:', error);
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+};
 
 // Mobile-specific authentication with token support
 router.post('/mobile/auth/login', async (req, res) => {
@@ -54,7 +124,7 @@ router.post('/mobile/auth/login', async (req, res) => {
 });
 
 // Get projects for mobile
-router.get('/mobile/projects', ensureAuthenticated, async (req, res) => {
+router.get('/mobile/projects', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
     const userProjects = await db
@@ -85,7 +155,7 @@ router.get('/mobile/projects', ensureAuthenticated, async (req, res) => {
 });
 
 // Create project from mobile
-router.post('/mobile/projects', ensureAuthenticated, async (req, res) => {
+router.post('/mobile/projects', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { name, language, description } = req.body;
     const userId = req.user.id;
@@ -133,7 +203,7 @@ router.post('/mobile/projects', ensureAuthenticated, async (req, res) => {
 });
 
 // Get project files for mobile editor
-router.get('/mobile/projects/:projectId/files', ensureAuthenticated, async (req, res) => {
+router.get('/mobile/projects/:projectId/files', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
     const projectFiles = await db
@@ -155,7 +225,7 @@ router.get('/mobile/projects/:projectId/files', ensureAuthenticated, async (req,
 });
 
 // Save file from mobile editor
-router.put('/mobile/projects/:projectId/files/:fileId', ensureAuthenticated, async (req, res) => {
+router.put('/mobile/projects/:projectId/files/:fileId', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { content } = req.body;
     const fileId = parseInt(req.params.fileId);
@@ -170,7 +240,7 @@ router.put('/mobile/projects/:projectId/files/:fileId', ensureAuthenticated, asy
 });
 
 // Run code from mobile
-router.post('/mobile/projects/:projectId/run', ensureAuthenticated, async (req, res) => {
+router.post('/mobile/projects/:projectId/run', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
     const { fileId, code } = req.body;
@@ -196,7 +266,7 @@ router.post('/mobile/projects/:projectId/run', ensureAuthenticated, async (req, 
 });
 
 // AI chat for mobile
-router.post('/mobile/ai/chat', ensureAuthenticated, async (req, res) => {
+router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { projectId, message, context } = req.body;
     
@@ -244,7 +314,7 @@ router.get('/mobile/explore', async (req, res) => {
 });
 
 // Get notifications for mobile
-router.get('/mobile/notifications', ensureAuthenticated, async (req, res) => {
+router.get('/mobile/notifications', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
     // Return mock notifications for now - in production, fetch from DB
