@@ -109,24 +109,24 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
           className="w-full sm:w-[420px] p-0 bg-white dark:bg-zinc-950 backdrop-blur-2xl border-r border-gray-200 dark:border-zinc-800 shadow-2xl flex flex-col"
         >
           {/* Premium Header */}
-          <div className="relative overflow-hidden border-b border-gray-200 dark:border-zinc-800">
+          <div className="relative border-b border-gray-200 dark:border-zinc-800 flex-shrink-0">
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/20 dark:from-purple-950/20 dark:via-blue-950/10 dark:to-pink-950/5" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/20 dark:from-purple-950/20 dark:via-blue-950/10 dark:to-pink-950/5 overflow-hidden" />
             
-            <div className="relative px-6 py-6">
+            <div className="relative px-6 py-5">
               {/* Logo & Brand */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : -20 }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center justify-between mb-5"
+                className="flex items-center justify-between mb-4"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-lg">
+                  <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-lg flex-shrink-0">
                     <Rocket className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">E-Code</h2>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">E-Code</h2>
                     <p className="text-xs text-gray-600 dark:text-zinc-400">Enterprise Platform</p>
                   </div>
                 </div>
