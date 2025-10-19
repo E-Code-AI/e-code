@@ -373,6 +373,32 @@ export interface IStorage {
   getUserMobileSessions(userId: string): Promise<any[]>;
   getProjectDeployments(projectId: string): Promise<any[]>;
   getRecentDeployments(userId: string): Promise<any[]>;
+
+  // Custom Prompts operations
+  createPromptTemplate(template: InsertPromptTemplate): Promise<PromptTemplate>;
+  getPromptTemplates(filters?: { category?: string; isSystem?: boolean; isPublic?: boolean }): Promise<PromptTemplate[]>;
+  getPromptTemplate(id: number): Promise<PromptTemplate | undefined>;
+  updatePromptTemplate(id: number, template: Partial<InsertPromptTemplate>): Promise<PromptTemplate | undefined>;
+  deletePromptTemplate(id: number): Promise<boolean>;
+  
+  createCustomPrompt(prompt: InsertCustomPrompt): Promise<CustomPrompt>;
+  getUserCustomPrompts(userId: string): Promise<CustomPrompt[]>;
+  getCustomPrompt(id: number): Promise<CustomPrompt | undefined>;
+  updateCustomPrompt(id: number, prompt: Partial<InsertCustomPrompt>): Promise<CustomPrompt | undefined>;
+  deleteCustomPrompt(id: number): Promise<boolean>;
+  
+  createProjectAiRule(rule: InsertProjectAiRule): Promise<ProjectAiRule>;
+  getProjectAiRules(projectId: string, activeOnly?: boolean): Promise<ProjectAiRule[]>;
+  getProjectAiRule(id: number): Promise<ProjectAiRule | undefined>;
+  updateProjectAiRule(id: number, rule: Partial<InsertProjectAiRule>): Promise<ProjectAiRule | undefined>;
+  deleteProjectAiRule(id: number): Promise<boolean>;
+  
+  createPromptUsageHistory(usage: InsertPromptUsageHistory): Promise<PromptUsageHistory>;
+  getPromptUsageHistory(filters: { userId?: string; projectId?: string; limit?: number }): Promise<PromptUsageHistory[]>;
+  
+  createPromptTemplateRating(rating: InsertPromptTemplateRating): Promise<PromptTemplateRating>;
+  getPromptTemplateRatings(templateId: number): Promise<PromptTemplateRating[]>;
+  updatePromptTemplateRating(rating: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
