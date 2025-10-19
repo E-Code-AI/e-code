@@ -1,4 +1,5 @@
 modules = ["nodejs-20", "web", "postgresql-16", "python-3.11"]
+# IMPORTANT: keep the run command on `npm run dev` so Express and Vite share port 5000 for the frontend preview.
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
