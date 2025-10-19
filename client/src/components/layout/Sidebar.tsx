@@ -178,7 +178,7 @@ function NavigationItemRow({ item, isActive, isCollapsed }: NavigationItemProps)
           aria-label={item.ctaLabel || item.label}
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-primary">
               <item.icon className="h-4 w-4" aria-hidden="true" />
             </div>
             <div className="flex flex-col items-start">
