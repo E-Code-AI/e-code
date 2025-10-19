@@ -4,7 +4,6 @@ import { deepEqual, matchObject } from './utils';
 type Expectation<T> = {
   toBe(expected: T): void;
   toEqual(expected: unknown): void;
-  toBeDefined(): void;
   toBeTruthy(): void;
   toBeFalsy(): void;
   toContain(expected: unknown): void;
@@ -38,7 +37,7 @@ function createExpect(): ExpectFn {
   return <T>(actual: T): Expectation<T> => ({
     toBe(expected) {
       if (!Object.is(actual, expected)) {
-        throw new Error(`Expected ${formatValue(actual)} to be ${formatValue(expected)}`);
+        assertionError(`Expected ${formatValue(actual)} to be ${formatValue(expected)}`);
       }
     },
     toEqual(expected) {
@@ -53,18 +52,18 @@ function createExpect(): ExpectFn {
     },
     toBeTruthy() {
       if (!actual) {
-        throw new Error(`Expected ${formatValue(actual)} to be truthy`);
+        assertionError(`Expected value to be truthy but received ${formatValue(actual)}`);
       }
     },
     toBeFalsy() {
       if (actual) {
-        throw new Error(`Expected ${formatValue(actual)} to be falsy`);
+        assertionError(`Expected value to be falsy but received ${formatValue(actual)}`);
       }
     },
     toContain(expected) {
-      if (typeof (actual as unknown as { includes?: (item: unknown) => boolean }).includes === 'function') {
-        if (!(actual as unknown as { includes: (item: unknown) => boolean }).includes(expected)) {
-          throw new Error(`Expected ${formatValue(actual)} to contain ${formatValue(expected)}`);
+      if (typeof actual === 'string') {
+        if (!actual.includes(String(expected))) {
+          assertionError(`Expected string to contain ${String(expected)}, got ${actual}`);
         }
         return;
       }
@@ -76,7 +75,7 @@ function createExpect(): ExpectFn {
         return;
       }
 
-      throw new Error('toContain matcher requires an array or value supporting includes');
+      assertionError('toContain is only supported for strings and arrays');
     },
     toHaveLength(expected) {
       const { length } = actual as unknown as { length?: number };

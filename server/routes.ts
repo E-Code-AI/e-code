@@ -21814,6 +21814,15 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
 
   // Admin - view customer form requests
+  const requireAdminAccess = (req: Request, res: Response) => {
+    if (req.user?.role === 'admin') {
+      return true;
+    }
+
+    res.status(403).json({ error: 'Admin access required' });
+    return false;
+  };
+
   app.get('/api/admin/form-requests', ensureAuthenticated, async (req, res) => {
     if (!hasAdminRole(req)) {
       return respondAdminAccessRequired(res);
