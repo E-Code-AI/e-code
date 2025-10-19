@@ -1116,11 +1116,11 @@ export default function PitchDeck() {
     // Slide 14: Funding Requirements
     {
       title: "Funding Requirements",
-      subtitle: "$15M Series A to Dominate Market",
+      subtitle: "$25M Series A to accelerate global adoption",
       content: (
         <div className="h-full overflow-y-auto">
           <h2 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            $15M Series A to Dominate Market
+            $25M Series A to accelerate global adoption
           </h2>
           
           <div className="grid grid-cols-2 gap-8 mb-8">
@@ -1130,7 +1130,7 @@ export default function PitchDeck() {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold">Engineering & AI</span>
-                    <span className="text-xl font-bold text-blue-600">50% - $7.5M</span>
+                    <span className="text-xl font-bold text-blue-600">50% - $12.5M</span>
                   </div>
                   <div className="bg-blue-200 rounded-full h-4 overflow-hidden">
                     <div className="bg-blue-600 h-full" style={{width: '50%'}}></div>
@@ -1141,7 +1141,7 @@ export default function PitchDeck() {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold">Sales & Marketing</span>
-                    <span className="text-xl font-bold text-green-600">30% - $4.5M</span>
+                    <span className="text-xl font-bold text-green-600">30% - $7.5M</span>
                   </div>
                   <div className="bg-green-200 rounded-full h-4 overflow-hidden">
                     <div className="bg-green-600 h-full" style={{width: '30%'}}></div>
@@ -1152,7 +1152,7 @@ export default function PitchDeck() {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold">Infrastructure & GPU</span>
-                    <span className="text-xl font-bold text-purple-600">15% - $2.25M</span>
+                    <span className="text-xl font-bold text-purple-600">15% - $3.75M</span>
                   </div>
                   <div className="bg-purple-200 rounded-full h-4 overflow-hidden">
                     <div className="bg-purple-600 h-full" style={{width: '15%'}}></div>
@@ -1163,7 +1163,7 @@ export default function PitchDeck() {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold">Operations & Compliance</span>
-                    <span className="text-xl font-bold text-orange-600">5% - $750K</span>
+                    <span className="text-xl font-bold text-orange-600">5% - $1.25M</span>
                   </div>
                   <div className="bg-orange-200 rounded-full h-4 overflow-hidden">
                     <div className="bg-orange-600 h-full" style={{width: '5%'}}></div>
@@ -1206,8 +1206,8 @@ export default function PitchDeck() {
                   <li className="flex items-start">
                     <TrendingUp className="w-5 h-5 mt-1 mr-3 text-green-600 flex-shrink-0" />
                     <div>
-                      <p className="font-semibold">Series B readiness</p>
-                      <p className="text-sm text-gray-600">$200M+ valuation target</p>
+                      <p className="font-semibold">Next-stage growth optionality</p>
+                      <p className="text-sm text-gray-600">Profitability milestones with a path toward $200M+ valuation</p>
                     </div>
                   </li>
                 </ul>
@@ -1218,15 +1218,15 @@ export default function PitchDeck() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Pre-money Valuation:</span>
-                    <span className="font-bold">$60M</span>
+                    <span className="font-bold">$80M</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Post-money Valuation:</span>
-                    <span className="font-bold">$75M</span>
+                    <span className="font-bold">$105M</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Use of funds:</span>
-                    <span className="font-bold">Achieve profitability</span>
+                    <span className="font-bold">Scale global adoption and reach profitability</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Board composition:</span>
