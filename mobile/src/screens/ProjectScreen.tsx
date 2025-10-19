@@ -9,7 +9,8 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  useWindowDimensions
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -31,6 +32,9 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const { width } = useWindowDimensions();
+  const isCompactLayout = width < 768;
 
   const loadFiles = useCallback(async () => {
     setError(null);
@@ -142,8 +146,8 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
         </View>
       ) : null}
 
-      <View style={styles.content}>
-        <View style={styles.fileList}>
+      <View style={[styles.content, isCompactLayout && styles.contentStack]}>
+        <View style={[styles.fileList, isCompactLayout && styles.fileListStack]}>
           <Text style={styles.sectionTitle}>Files</Text>
           <FlatList
             data={files}
@@ -156,7 +160,7 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
           />
         </View>
 
-        <View style={styles.editorContainer}>
+        <View style={[styles.editorContainer, isCompactLayout && styles.editorContainerStack]}>
           <Text style={styles.sectionTitle}>{selectedFile?.path ?? 'Select a file to edit'}</Text>
           <ScrollView style={styles.editorScroll} keyboardShouldPersistTaps="handled">
             <TextInput
@@ -170,7 +174,7 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
             />
           </ScrollView>
 
-          <View style={styles.actions}>
+          <View style={[styles.actions, isCompactLayout && styles.actionsStack]}>
             <TouchableOpacity
               style={[styles.actionButton, styles.saveButton, (!selectedFile || saving) && styles.disabledButton]}
               onPress={handleSave}
@@ -252,12 +256,24 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row'
   },
+  contentStack: {
+    flexDirection: 'column'
+  },
   fileList: {
     width: 140,
     borderRightWidth: 1,
     borderRightColor: '#1e293b',
     padding: 12,
-    gap: 12
+    gap: 12,
+    flexShrink: 0
+  },
+  fileListStack: {
+    width: '100%',
+    borderRightWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+    marginBottom: 12,
+    maxHeight: 260
   },
   fileListContent: {
     gap: 8
@@ -288,6 +304,11 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12
   },
+  editorContainerStack: {
+    width: '100%',
+    paddingHorizontal: 12,
+    paddingTop: 0
+  },
   editorScroll: {
     flex: 1,
     borderWidth: 1,
@@ -304,6 +325,9 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: 12
+  },
+  actionsStack: {
+    flexDirection: 'column'
   },
   actionButton: {
     flex: 1,
