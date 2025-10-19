@@ -138,42 +138,73 @@ class TestRunner {
         const start = performance.now();
         const timeout = test.timeoutMs ?? 5000;
         let timer: NodeJS.Timeout | undefined;
+        const errors: { phase: 'beforeEach' | 'test' | 'afterEach'; error: unknown }[] = [];
+        let beforeEachFailed = false;
 
         try {
+          if (suite.beforeEach) {
+            try {
+              await suite.beforeEach();
+            } catch (error) {
+              beforeEachFailed = true;
+              errors.push({ phase: 'beforeEach', error });
+              throw error;
+            }
+          }
+
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timer = setTimeout(() => {
+              reject(new Error(`Test timed out after ${timeout}ms`));
+            }, timeout);
+          });
+
           await Promise.race([
             (async () => {
-              if (suite.beforeEach) {
-                await suite.beforeEach();
-              }
-
               await test.fn();
-
-              if (suite.afterEach) {
-                await suite.afterEach();
-              }
             })(),
-            new Promise<never>((_, reject) => {
-              timer = setTimeout(() => {
-                reject(new Error(`Test timed out after ${timeout}ms`));
-              }, timeout);
-            }),
+            timeoutPromise,
           ]);
-
-          passed += 1;
-          const duration = performance.now() - start;
-          console.log(`  ✓ ${test.name} (${duration.toFixed(2)}ms)`);
         } catch (error) {
-          failed += 1;
-          const duration = performance.now() - start;
-          console.error(`  ✗ ${test.name} (${duration.toFixed(2)}ms)`);
-          if (error instanceof Error) {
-            console.error(`    ${error.stack ?? error.message}`);
-          } else {
-            console.error(`    ${String(error)}`);
+          if (!beforeEachFailed) {
+            errors.push({ phase: 'test', error });
           }
         } finally {
           if (timer) {
             clearTimeout(timer);
+          }
+
+          if (suite.afterEach) {
+            try {
+              await suite.afterEach();
+            } catch (error) {
+              errors.push({ phase: 'afterEach', error });
+            }
+          }
+        }
+
+        const duration = performance.now() - start;
+
+        if (errors.length === 0) {
+          passed += 1;
+          console.log(`  ✓ ${test.name} (${duration.toFixed(2)}ms)`);
+        } else {
+          failed += 1;
+          console.error(`  ✗ ${test.name} (${duration.toFixed(2)}ms)`);
+          for (const { phase, error } of errors) {
+            if (error instanceof Error) {
+              const message = error.stack ?? error.message;
+              if (phase === 'test') {
+                console.error(`    ${message}`);
+              } else {
+                console.error(`    ${phase} failed: ${message}`);
+              }
+            } else {
+              if (phase === 'test') {
+                console.error(`    ${String(error)}`);
+              } else {
+                console.error(`    ${phase} failed: ${String(error)}`);
+              }
+            }
           }
         }
       }
