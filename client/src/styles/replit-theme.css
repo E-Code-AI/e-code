@@ -37,22 +37,23 @@
   --sidebar-ring: 221 83% 53%;
   --background-rgb: 252, 252, 253;
 
-  /* E-Code corporate light palette */
-  --ecode-background: #fcfcfd;
-  --ecode-surface: #f7f8fa;
-  --ecode-surface-secondary: #f1f3f5;
-  --ecode-border: #dfe3e8;
+  /* E-Code corporate light palette - Pure White Design */
+  --ecode-background: #ffffff;
+  --ecode-surface: #ffffff;
+  --ecode-surface-secondary: #ffffff;
+  --ecode-surface-tertiary: #f8f9fa;
+  --ecode-border: #e0e0e0;
   --ecode-border-strong: #c1c8cd;
-  --ecode-text: #1a1f36;
-  --ecode-text-secondary: #4a5568;
-  --ecode-text-muted: #697386;
+  --ecode-text: #1a1a1a;
+  --ecode-text-secondary: #333333;
+  --ecode-text-muted: #666666;
   --ecode-accent: #0066cc;
   --ecode-accent-hover: #0052a3;
   --ecode-danger: #dc3545;
   --ecode-warning: #f59e0b;
   --ecode-info: #0066cc;
 
-  --ecode-surface-hover: #eef0f3;
+  --ecode-surface-hover: #f5f5f5;
   --ecode-surface-elevated: #ffffff;
 
   --ecode-green: #10b981;
@@ -261,14 +262,15 @@
   --sidebar-ring: 221 83% 53%;
   --background-rgb: 252, 252, 253;
 
-  --ecode-background: #fcfcfd;
-  --ecode-surface: #f7f8fa;
-  --ecode-surface-secondary: #f1f3f5;
-  --ecode-border: #dfe3e8;
+  --ecode-background: #ffffff;
+  --ecode-surface: #ffffff;
+  --ecode-surface-secondary: #ffffff;
+  --ecode-surface-tertiary: #f8f9fa;
+  --ecode-border: #e0e0e0;
   --ecode-border-strong: #c1c8cd;
-  --ecode-text: #1a1f36;
-  --ecode-text-secondary: #4a5568;
-  --ecode-text-muted: #697386;
+  --ecode-text: #1a1a1a;
+  --ecode-text-secondary: #333333;
+  --ecode-text-muted: #666666;
   --ecode-accent: #0066cc;
   --ecode-accent-hover: #0052a3;
   --ecode-danger: #dc3545;
@@ -281,15 +283,15 @@
   --ecode-orange: #f59e0b;
   --ecode-red: #dc3545;
 
-  --ecode-sidebar-bg: #f7f8fa;
-  --ecode-sidebar-hover: #eef0f3;
+  --ecode-sidebar-bg: #ffffff;
+  --ecode-sidebar-hover: #f5f5f5;
   --ecode-sidebar-active: #0066cc;
-  --ecode-sidebar-border: #dfe3e8;
+  --ecode-sidebar-border: #e0e0e0;
 
   --ecode-editor-bg: #ffffff;
-  --ecode-editor-gutter: #f7f8fa;
+  --ecode-editor-gutter: #f8f9fa;
   --ecode-editor-selection: #d4e5ff;
-  --ecode-editor-line-highlight: #f7f8fa;
+  --ecode-editor-line-highlight: #f8f9fa;
 
   --ecode-terminal-bg: #1a1f36;
   --ecode-terminal-text: #f7f8fa;
@@ -297,10 +299,10 @@
 
   --ecode-button-primary: #0066cc;
   --ecode-button-primary-hover: #0052a3;
-  --ecode-button-secondary: #f7f8fa;
-  --ecode-button-secondary-hover: #eef0f3;
+  --ecode-button-secondary: #ffffff;
+  --ecode-button-secondary-hover: #f5f5f5;
 
-  --ecode-surface-hover: #eef0f3;
+  --ecode-surface-hover: #f5f5f5;
   --ecode-surface-elevated: #ffffff;
 
   --ecode-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
