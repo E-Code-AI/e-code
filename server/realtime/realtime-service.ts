@@ -9,7 +9,7 @@ const logger = createLogger('realtime-service');
 
 export interface RealtimeEvent {
   type: 'file-update' | 'file-create' | 'file-delete' | 'build-log' | 'deploy-log' | 'terminal-output' | 'preview-update' | 'collaboration' | 'notification';
-  projectId: number;
+  projectId: string;
   data: any;
   timestamp: Date;
   userId?: number;
@@ -17,7 +17,7 @@ export interface RealtimeEvent {
 
 export class RealtimeService {
   private io: SocketServer;
-  private projectRooms = new Map<number, Set<string>>(); // projectId -> Set of socket IDs
+  private projectRooms = new Map<string, Set<string>>(); // projectId -> Set of socket IDs
   private userSockets = new Map<number, Set<string>>(); // userId -> Set of socket IDs
   
   constructor(server: HttpServer) {
@@ -54,7 +54,7 @@ export class RealtimeService {
     
     this.io.on('connection', async (socket: Socket) => {
       const userId = socket.data.userId;
-      const projectId = parseInt(socket.data.projectId);
+      const projectId = (socket.data.projectId || '').toString();
       
       logger.info(`User ${userId} connected to project ${projectId}`);
       
@@ -71,7 +71,7 @@ export class RealtimeService {
           this.projectRooms.set(projectId, new Set());
         }
         this.projectRooms.get(projectId)!.add(socket.id);
-        
+
         // Send initial project state
         await this.sendProjectState(socket, projectId);
       }
@@ -104,7 +104,7 @@ export class RealtimeService {
       socket.on('disconnect', () => {
         // Clean up
         const userId = socket.data.userId;
-        const projectId = socket.data.projectId;
+        const projectId = (socket.data.projectId || '').toString();
         
         if (userId && this.userSockets.has(userId)) {
           this.userSockets.get(userId)!.delete(socket.id);
@@ -125,7 +125,7 @@ export class RealtimeService {
     });
   }
   
-  private async sendProjectState(socket: Socket, projectId: number) {
+  private async sendProjectState(socket: Socket, projectId: string) {
     try {
       // Send current project files
       const files = await storage.getFilesByProjectId(projectId);

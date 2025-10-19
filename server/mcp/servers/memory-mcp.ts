@@ -1,11 +1,8 @@
 // @ts-nocheck
 import { createLogger } from '../../utils/logger';
-import { pool } from '../../db';
+import { db } from '../../db';
 import { eq, and, or, desc, sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/neon-serverless';
 import * as schema from '@shared/schema';
-
-const db = drizzle({ client: pool, schema });
 
 const logger = createLogger('memory-mcp');
 
@@ -80,9 +77,7 @@ export class MemoryMCPServer {
           role TEXT NOT NULL,
           content TEXT NOT NULL,
           metadata JSONB,
-          timestamp TIMESTAMP DEFAULT NOW(),
-          INDEX idx_user_session (user_id, session_id),
-          INDEX idx_timestamp (timestamp)
+          timestamp TIMESTAMP DEFAULT NOW()
         )
       `);
 
@@ -91,6 +86,8 @@ export class MemoryMCPServer {
         CREATE INDEX IF NOT EXISTS idx_nodes_type ON knowledge_graph_nodes(type);
         CREATE INDEX IF NOT EXISTS idx_nodes_content ON knowledge_graph_nodes USING gin(to_tsvector('english', content));
         CREATE INDEX IF NOT EXISTS idx_edges_relationship ON knowledge_graph_edges(relationship);
+        CREATE INDEX IF NOT EXISTS idx_user_session ON conversation_memory(user_id, session_id);
+        CREATE INDEX IF NOT EXISTS idx_timestamp ON conversation_memory(timestamp);
       `);
 
       logger.info('Memory schema initialized');

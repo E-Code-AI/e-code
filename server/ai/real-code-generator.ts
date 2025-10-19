@@ -224,7 +224,7 @@ Generate the necessary code modifications as a JSON array.`;
       // Try Claude first for better code understanding
       if (process.env.ANTHROPIC_API_KEY) {
         const response = await this.anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           system: systemPrompt,
           messages: [{ role: 'user', content: userPrompt }],
           max_tokens: 4096,
@@ -244,7 +244,7 @@ Generate the necessary code modifications as a JSON array.`;
       // Fallback to OpenAI
       if (process.env.OPENAI_API_KEY) {
         const response = await this.openai.chat.completions.create({
-          model: 'gpt-4o',
+          model: 'gpt-5',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }

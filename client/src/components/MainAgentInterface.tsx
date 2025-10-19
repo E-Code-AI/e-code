@@ -92,6 +92,12 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
   const [progress, setProgress] = useState(0);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const [sessionId] = useState(() => `session-${Date.now()}`);
+  const [detailedProgress, setDetailedProgress] = useState<{
+    phase: string;
+    subSteps: string[];
+    filesProcessed: number;
+    totalFiles: number;
+  } | null>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
   
   // Agent Modes (like Replit)

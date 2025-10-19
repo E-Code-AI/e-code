@@ -44,7 +44,7 @@ interface UserCredits {
 }
 
 export function AIUsageDashboard() {
-  const [selectedModel, setSelectedModel] = useState('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState('gpt-5');
   
   const { data: usage, isLoading: usageLoading } = useQuery<AIUsageData>({
     queryKey: ['/api/ai/usage'],

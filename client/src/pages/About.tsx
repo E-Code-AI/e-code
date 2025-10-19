@@ -28,12 +28,12 @@ interface AboutData {
     role: string;
     avatar: string;
   }>;
-  stats: {
-    users: string;
-    projects: string;
-    deployments: string;
-    countries: string;
-  };
+  stats: Array<{
+    icon: string;
+    label: string;
+    value: string;
+    description: string;
+  }>;
 }
 
 export default function About() {
@@ -72,19 +72,28 @@ export default function About() {
     );
   }
 
-  const { values, milestones, team } = aboutData;
-  
-  // Transform icon names to components
-  const iconMap: Record<string, React.ReactNode> = {
-    'Lightbulb': <Lightbulb className="h-6 w-6" />,
-    'Users': <Users className="h-6 w-6" />,
-    'Globe': <Globe className="h-6 w-6" />,
-    'Heart': <Heart className="h-6 w-6" />
+  const { values, milestones, team, stats } = aboutData;
+
+  const iconComponents: Record<string, React.ComponentType<{ className?: string }>> = {
+    'Lightbulb': Lightbulb,
+    'Users': Users,
+    'Globe': Globe,
+    'Heart': Heart,
+    'Target': Target,
+    'Rocket': Rocket,
+    'Building2': Building2,
+    'GraduationCap': GraduationCap,
+    'Sparkles': Sparkles
   };
-  
+
+  const renderIcon = (iconName: string, className = 'h-6 w-6') => {
+    const IconComponent = iconComponents[iconName] || Lightbulb;
+    return <IconComponent className={className} />;
+  };
+
   const valuesWithIcons = values.map((value) => ({
     ...value,
-    icon: iconMap[value.icon] || <Lightbulb className="h-6 w-6" />
+    icon: renderIcon(value.icon)
   }));
 
   return (
@@ -94,19 +103,33 @@ export default function About() {
       {/* Hero Section */}
       <section className="py-12 sm:py-16 md:py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center space-y-4 sm:space-y-6">
+          <div className="text-center space-y-5 sm:space-y-7">
             <Badge variant="secondary" className="mb-2 sm:mb-4 text-xs sm:text-sm">
-              <Building2 className="h-3 w-3 mr-1" />
-              Our Story
+              <Sparkles className="h-3 w-3 mr-1" />
+              Series A raise in progress · Targeting $25M for global launch
             </Badge>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
-              Making coding{' '}
-              <span className="text-primary">for everyone</span>
+              Orchestrating the <span className="text-primary">Vibe coding era</span> for global enterprises
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
-              We believe coding is a form of creative expression that should be accessible to all. 
-              Whether you're 8 or 80, artist or entrepreneur, we're here to help you create.
+              E-Code partners with the world’s most ambitious engineering, product, and data teams to choreograph
+              creation in the cloud. Our Vibe platform blends human craft with adaptive AI so leaders can launch
+              resilient software, govern responsibly, and scale talent with confidence.
             </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+              <Button size="lg" onClick={() => navigate('/ai-agent')}>
+                Discover the Vibe platform
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate('/contact-sales')}
+                className="w-full sm:w-auto"
+              >
+                Talk with our team
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -118,15 +141,15 @@ export default function About() {
             <div>
               <Badge variant="outline" className="mb-4">
                 <Target className="h-3 w-3 mr-1" />
-                Our Mission
+                Our mandate
               </Badge>
               <h2 className="text-3xl font-bold mb-4">
-                Empowering everyone to create
+                Building the enterprise home for expressive software teams
               </h2>
               <p className="text-lg text-muted-foreground mb-6">
-                We're on a mission to make coding accessible, collaborative, and enjoyable for all. 
-                By eliminating technical barriers and creating a friendly environment, 
-                we help people of all ages and backgrounds bring their ideas to life.
+                Vibe is engineered for leaders who need velocity without compromise. We eliminate friction from
+                discovery to deployment so multidisciplinary teams can ideate, orchestrate, and scale modern
+                applications in one secure operating environment.
               </p>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -134,7 +157,7 @@ export default function About() {
                     <Code className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
                   <p className="text-sm">
-                    <strong>50+ languages</strong> supported with zero setup required
+                    <strong>Adaptive AI co-creators</strong> accelerate architecture reviews, compliance, and delivery.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
@@ -142,7 +165,7 @@ export default function About() {
                     <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <p className="text-sm">
-                    <strong>20M+ people</strong> learning and creating every day
+                    <strong>Enterprise-grade governance</strong> unifies audit trails, secrets, and policy automation.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
@@ -150,7 +173,7 @@ export default function About() {
                     <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
                   <p className="text-sm">
-                    <strong>190+ countries</strong> represented in our community
+                    <strong>Global reach</strong> with sovereign-ready regions and 24/7 multilingual customer success.
                   </p>
                 </div>
               </div>
@@ -160,20 +183,24 @@ export default function About() {
               <Card className="relative">
                 <CardContent className="p-8">
                   <div className="text-center space-y-6">
-                    <div className="text-6xl font-bold text-primary">20M+</div>
-                    <p className="text-xl font-semibold">Learners & creators worldwide</p>
+                    <div className="text-6xl font-bold text-primary">$25M</div>
+                    <p className="text-xl font-semibold">Series A growth capital powering the Vibe platform</p>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      The raise accelerates enterprise go-to-market, compliance automation, and sovereign-ready
+                      infrastructure investments so customers can scale with confidence.
+                    </p>
                     <div className="grid grid-cols-3 gap-4 pt-4">
                       <div>
-                        <div className="text-2xl font-bold">1B+</div>
-                        <p className="text-sm text-muted-foreground">Lines of code</p>
+                        <div className="text-2xl font-bold">2025</div>
+                        <p className="text-sm text-muted-foreground">Global launch</p>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold">50+</div>
-                        <p className="text-sm text-muted-foreground">Languages</p>
+                        <div className="text-2xl font-bold">6</div>
+                        <p className="text-sm text-muted-foreground">Enterprise regions</p>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold">24/7</div>
-                        <p className="text-sm text-muted-foreground">Uptime</p>
+                        <div className="text-2xl font-bold">80+</div>
+                        <p className="text-sm text-muted-foreground">Strategic partners</p>
                       </div>
                     </div>
                   </div>
@@ -190,79 +217,109 @@ export default function About() {
           <div className="text-center mb-12">
             <Badge variant="default" className="mb-4 text-sm px-4 py-1">
               <Sparkles className="h-4 w-4 mr-1" />
-              Revolutionary Innovation
+              The Vibe platform
             </Badge>
             <h2 className="text-4xl font-bold mb-6">
-              AI Agent: The future of software creation
+              Where human rhythm meets autonomous software creation
             </h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Our groundbreaking AI Agent represents the biggest leap forward in making coding accessible. 
-              Now anyone can build complete, professional applications just by describing what they want.
+              Vibe synchronizes secure environments, collaborative workspaces, and adaptive AI agents so every ship
+              cycle feels orchestrated. From regulated industries to global studios, teams compose software with the
+              reliability of an enterprise system and the energy of a creative hub.
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8 mb-12">
             <Card className="border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50/50 to-transparent dark:from-violet-950/20">
               <CardHeader>
                 <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg w-fit mb-3">
                   <Sparkles className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle>Zero to App in Seconds</CardTitle>
+                <CardTitle>Intelligent workstreams</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Watch as complete applications materialize from simple descriptions. No coding knowledge required.
+                  AI conductors coordinate planning, build, and release rituals while respecting your guardrails and
+                  domain expertise.
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card className="border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50/50 to-transparent dark:from-violet-950/20">
               <CardHeader>
                 <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg w-fit mb-3">
                   <Code className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle>Professional Quality</CardTitle>
+                <CardTitle>Enterprise fabric</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Generates clean, maintainable code following industry best practices and modern patterns.
+                  Unified security, observability, and policy automation create a trusted surface for Fortune 500
+                  collaboration.
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card className="border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50/50 to-transparent dark:from-violet-950/20">
               <CardHeader>
                 <div className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg w-fit mb-3">
                   <Users className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle>Democratizing Development</CardTitle>
+                <CardTitle>Global community</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Empowering entrepreneurs, students, and dreamers to build without technical barriers.
+                  Builders, analysts, and designers co-create in shared studios with localized compliance and
+                  round-the-clock support.
                 </p>
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="text-center">
             <div className="inline-flex flex-col sm:flex-row gap-4">
-              <Button 
+              <Button
                 size="lg"
-                onClick={() => navigate('/ai-agent')}
                 className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white"
+                onClick={() => navigate('/solutions/app-builder')}
               >
                 <Sparkles className="h-4 w-4 mr-2" />
-                Explore AI Agent
+                See solution suites
               </Button>
-              <Button 
+              <Button
                 size="lg"
                 variant="outline"
-                onClick={() => user ? navigate('/dashboard') : window.location.href = '/api/login'}
+                onClick={() => (user ? navigate('/dashboard') : window.location.href = '/api/login')}
               >
-                Try It Now
+                Start building now
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-12 sm:py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat) => (
+              <Card key={stat.label} className="h-full border-primary/20">
+                <CardHeader className="flex flex-row items-start justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-3xl font-bold text-primary">{stat.value}</CardTitle>
+                    <CardDescription className="text-base font-semibold text-foreground/80">
+                      {stat.label}
+                    </CardDescription>
+                  </div>
+                  <div className="p-2 rounded-full bg-primary/10 text-primary">
+                    {renderIcon(stat.icon, 'h-6 w-6')}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{stat.description}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -271,9 +328,9 @@ export default function About() {
       <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Our values</h2>
+            <h2 className="text-3xl font-bold mb-4">Our leadership principles</h2>
             <p className="text-lg text-muted-foreground">
-              The principles that guide everything we do
+              The beliefs that shape every line of code, every partnership, and every promise we make.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -286,7 +343,7 @@ export default function About() {
                   <CardTitle className="text-lg">{value.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">{value.description}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{value.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -298,9 +355,9 @@ export default function About() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Our journey</h2>
+            <h2 className="text-3xl font-bold mb-4">Milestones on our climb</h2>
             <p className="text-lg text-muted-foreground">
-              From a simple idea to empowering millions
+              Strategic moments that shaped Vibe into a trusted platform for enterprise creation.
             </p>
           </div>
           <div className="space-y-8">
@@ -315,7 +372,7 @@ export default function About() {
                   <div className="h-full border-l-2 border-muted pl-8 pb-8">
                     <div className="relative">
                       <div className="absolute -left-[41px] w-4 h-4 bg-primary rounded-full" />
-                      <p className="text-lg">{milestone.event}</p>
+                      <p className="text-lg leading-relaxed">{milestone.event}</p>
                     </div>
                   </div>
                 </div>
@@ -329,9 +386,10 @@ export default function About() {
       <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Meet our team</h2>
+            <h2 className="text-3xl font-bold mb-4">Executive leadership</h2>
             <p className="text-lg text-muted-foreground">
-              The people making E-Code possible
+              Operators, technologists, and designers united by a mission to make expressive building a strategic
+              advantage for every enterprise.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -343,8 +401,8 @@ export default function About() {
                       {member.avatar}
                     </div>
                     <div>
-                      <h3 className="font-semibold">{member.name}</h3>
-                      <p className="text-sm text-muted-foreground">{member.role}</p>
+                      <h3 className="font-semibold text-lg">{member.name}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{member.role}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -353,7 +411,7 @@ export default function About() {
           </div>
           <div className="text-center mt-8">
             <Button variant="outline" onClick={() => navigate('/careers')}>
-              Join our team
+              Explore careers at E-Code
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
@@ -364,18 +422,19 @@ export default function About() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-bold mb-4">
-            Ready to start building?
+            Set a new rhythm for your builders
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join our community of creators and bring your ideas to life
+            Partner with E-Code to orchestrate secure, expressive creation across your organization—from the first
+            whiteboard sketch to global deployment.
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center flex-col sm:flex-row">
             <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
-              Get started free
+              Launch your workspace
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/community')}>
-              Join the community
+            <Button size="lg" variant="outline" onClick={() => navigate('/contact-sales')}>
+              Request an executive briefing
             </Button>
           </div>
         </div>

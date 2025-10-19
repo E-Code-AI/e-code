@@ -4,7 +4,7 @@ import { storage } from '../storage';
 import { db } from '../db';
 import { projects, files } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
-import { realAIService } from '../services/ai-service';
+import { aiService } from '../ai/ai-service';
 import { mobileContainerService } from '../services/mobile-container-service';
 
 const router = Router();
@@ -85,24 +85,52 @@ router.post('/mobile/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     
+    // Check rate limiting
+    const rateLimitKey = `${username}_${req.ip}`;
+    if (!checkLoginRateLimit(rateLimitKey)) {
+      return res.status(429).json({ 
+        message: 'Too many login attempts. Please try again later.',
+        error: 'RATE_LIMIT_EXCEEDED'
+      });
+    }
+    
+    // Validate input
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
+    
     const user = await storage.getUserByUsername(username);
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Verify password (simple check for demo - in production use bcrypt)
-    const isValidPassword = user.password === password || 
-                           (username === 'admin' && password === 'admin');
+    // Properly verify password with bcrypt
+    let isValidPassword = false;
+    try {
+      // Check if password is hashed (bcrypt hashes start with $2a$, $2b$, or $2y$)
+      if (user.password && user.password.startsWith('$2')) {
+        isValidPassword = await bcrypt.compare(password, user.password);
+      } else {
+        // Fallback for non-hashed passwords (only for demo/dev)
+        // In production, all passwords should be hashed
+        isValidPassword = user.password === password || 
+                         (username === 'admin' && password === 'admin');
+      }
+    } catch (bcryptError) {
+      console.error('Password verification error:', bcryptError);
+      isValidPassword = false;
+    }
     
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate mobile token (simplified JWT-like token)
-    const token = {
-      access: Buffer.from(`${user.id}:${Date.now()}`).toString('base64'),
-      refresh: Buffer.from(`refresh:${user.id}:${Date.now()}`).toString('base64')
-    };
+    // Generate secure JWT tokens
+    const accessToken = generateMobileAccessToken(user.id, user.username);
+    const refreshToken = generateMobileRefreshToken(user.id);
+    
+    // Clear rate limit on successful login
+    loginAttempts.delete(rateLimitKey);
     
     res.json({
       user: {
@@ -113,13 +141,61 @@ router.post('/mobile/auth/login', async (req, res) => {
         avatarUrl: user.avatarUrl
       },
       tokens: {
-        access: token.access,
-        refresh: token.refresh
+        access: accessToken,
+        refresh: refreshToken
       }
     });
   } catch (error) {
     console.error('Mobile login error:', error);
     res.status(500).json({ message: 'Login failed' });
+  }
+});
+
+// Token refresh endpoint
+router.post('/mobile/auth/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(400).json({ 
+        message: 'Refresh token required',
+        error: 'NO_REFRESH_TOKEN'
+      });
+    }
+    
+    const payload = verifyMobileRefreshToken(refreshToken);
+    if (!payload) {
+      return res.status(401).json({ 
+        message: 'Invalid or expired refresh token',
+        error: 'INVALID_REFRESH_TOKEN'
+      });
+    }
+    
+    // Get user from database to ensure they still exist and are active
+    const user = await storage.getUserById(payload.userId);
+    if (!user) {
+      return res.status(401).json({ 
+        message: 'User not found',
+        error: 'USER_NOT_FOUND'
+      });
+    }
+    
+    // Generate new tokens
+    const newAccessToken = generateMobileAccessToken(user.id, user.username);
+    const newRefreshToken = generateMobileRefreshToken(user.id);
+    
+    res.json({
+      tokens: {
+        access: newAccessToken,
+        refresh: newRefreshToken
+      }
+    });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    res.status(500).json({ 
+      message: 'Token refresh failed',
+      error: 'REFRESH_FAILED'
+    });
   }
 });
 
@@ -270,15 +346,17 @@ router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { projectId, message, context } = req.body;
     
-    const response = await realAIService.chat({
-      message,
-      context: {
-        projectId,
-        language: context?.language,
-        files: context?.files || []
-      },
-      model: 'gpt-4o-mini' // Use faster model for mobile
-    });
+    const response = await aiService.generateResponse(
+      [{ role: 'user', content: message }],
+      {
+        model: 'gpt-5',
+        projectContext: {
+          id: projectId,
+          language: context?.language,
+          files: context?.files || []
+        }
+      }
+    );
     
     res.json({ response });
   } catch (error) {

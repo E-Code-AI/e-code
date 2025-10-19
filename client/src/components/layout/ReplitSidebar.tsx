@@ -36,6 +36,9 @@ import {
   Clock,
   Tag,
   Sparkles,
+  Package,
+  HardDrive,
+  Key,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -294,6 +297,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                  onClick={() => window.dispatchEvent(new CustomEvent('openBottomPanelTab', { detail: { tab: 'console' } }))}
                 >
                   <Terminal className="h-3 w-3 mr-2" />
                   Console
@@ -302,6 +306,16 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                  onClick={() => window.dispatchEvent(new CustomEvent('openBottomPanelTab', { detail: { tab: 'terminal' } }))}
+                >
+                  <Terminal className="h-3 w-3 mr-2" />
+                  Shell
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                  onClick={() => window.dispatchEvent(new CustomEvent('openRightPanelTab', { detail: { tab: 'postgres' } }))}
                 >
                   <Database className="h-3 w-3 mr-2" />
                   Database
@@ -310,9 +324,37 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                  onClick={() => window.dispatchEvent(new CustomEvent('openRightPanelTab', { detail: { tab: 'preview' } }))}
                 >
                   <Globe className="h-3 w-3 mr-2" />
                   Webview
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                  onClick={() => window.dispatchEvent(new CustomEvent('openRightPanelTab', { detail: { tab: 'packages' } }))}
+                >
+                  <Package className="h-3 w-3 mr-2" />
+                  Packager
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                  onClick={() => window.dispatchEvent(new CustomEvent('openRightPanelTab', { detail: { tab: 'storage' } }))}
+                >
+                  <HardDrive className="h-3 w-3 mr-2" />
+                  Object Storage
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                  onClick={() => window.dispatchEvent(new CustomEvent('openBottomPanelTab', { detail: { tab: 'secrets' } }))}
+                >
+                  <Key className="h-3 w-3 mr-2" />
+                  Secrets
                 </Button>
               </CollapsibleContent>
             </Collapsible>

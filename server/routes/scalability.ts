@@ -7,18 +7,17 @@
 import { Request, Response, Router } from 'express';
 import { scalabilityOrchestrator } from '../services/scalability-orchestrator';
 import { loadBalancer } from '../services/load-balancer';
-import { RedisCache } from '../services/redis-cache';
+import { redisCache } from '../services/redis-cache';
 import { DatabasePoolManager } from '../services/database-pool';
-import { CDNOptimizationService } from '../services/cdn-optimization';
+import { cdnOptimization } from '../services/cdn-optimization';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('scalability-routes');
 const router = Router();
 
 // Initialize services
-const redisCache = new RedisCache();
 const dbPool = new DatabasePoolManager();
-const cdnService = new CDNOptimizationService();
+const cdnService = cdnOptimization;
 
 /**
  * Get cluster status and metrics
