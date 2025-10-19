@@ -61,9 +61,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ECodeLoading, ECodeSpinner } from '@/components/ECodeLoading';
+import { PageShell, PageHeader } from '@/components/layout/PageShell';
 import { 
-  Code, 
-  Plus, 
+  Code,
+  Code2,
+  Plus,
   Trash2, 
   Edit, 
   ExternalLink, 
@@ -271,6 +273,8 @@ const ProjectsPage = () => {
     
     return filtered;
   }, [projects, searchQuery, filterLanguage, filterVisibility, sortBy]);
+
+  const projectCount = filteredProjects.length;
 
   // Get unique languages from projects
   const availableLanguages = useMemo(() => {
@@ -614,99 +618,108 @@ const ProjectsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--ecode-background)]">
-      {/* Enhanced Replit-style Projects Header */}
-      <div className="border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] sticky top-0 z-10">
-        <div className="max-w-full px-4 sm:px-6 lg:px-8">
-          {/* Top Bar with Team Selector and Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 gap-4 border-b border-[var(--ecode-border)]">
+    <PageShell padded={false} className="pb-16">
+      <div className="space-y-8">
+      <PageHeader
+        title="Projects"
+        description="Build, organize, and collaborate on your workspaces across every team."
+        icon={Code2}
+        actions={(
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Link href="/github-import" className="hidden sm:block">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Github className="h-4 w-4" />
+                <span className="hidden md:inline">Import from GitHub</span>
+                <span className="md:hidden">Import</span>
+              </Button>
+            </Link>
+            <Link href="/templates" className="hidden sm:block">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                Templates
+              </Button>
+            </Link>
+            <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  className="gap-2 bg-[var(--ecode-accent)] text-white hover:bg-[var(--ecode-accent-hover)]"
+                  data-create-project
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Create Repl</span>
+                  <span className="sm:hidden">Create</span>
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+          </div>
+        )}
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 sm:gap-4">
-              {/* Team Selector - Smaller on mobile */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
+                  <Button variant="ghost" className="flex items-center gap-2 text-sm sm:text-base">
                     {teams.find(t => t.id === selectedTeam)?.icon && (
-                      <div>{React.createElement(teams.find(t => t.id === selectedTeam)!.icon, { className: "h-3 w-3 sm:h-4 sm:w-4" })}</div>
+                      <div>{React.createElement(teams.find(t => t.id === selectedTeam)!.icon, { className: "h-4 w-4" })}</div>
                     )}
                     <span className="hidden sm:inline">{teams.find(t => t.id === selectedTeam)?.name}</span>
                     <span className="sm:hidden">{teams.find(t => t.id === selectedTeam)?.name.slice(0, 8)}</span>
-                    <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  <DropdownMenuLabel>Switch Account</DropdownMenuLabel>
+                  <DropdownMenuLabel>Switch workspace</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {teams.map(team => (
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       key={team.id}
                       onClick={() => setSelectedTeam(team.id)}
                       className="flex items-center gap-2"
                     >
                       {React.createElement(team.icon, { className: "h-4 w-4" })}
                       <span>{team.name}</span>
-                      {selectedTeam === team.id && <Badge variant="secondary" className="ml-auto">Active</Badge>}
+                      {selectedTeam === team.id && (
+                        <Badge variant="secondary" className="ml-auto">Active</Badge>
+                      )}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              
-              <h1 className="text-lg sm:text-2xl font-medium text-[var(--ecode-text)]">My Repls</h1>
+              <span className="text-sm font-medium text-[var(--ecode-text-muted)]">
+                {projectCount} active repl{projectCount === 1 ? '' : 's'}
+              </span>
             </div>
-            
-            <div className="flex items-center gap-2">
-              <Link href="/github-import" className="hidden sm:block">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Github className="h-4 w-4" />
-                  <span className="hidden md:inline">Import from GitHub</span>
-                  <span className="md:hidden">Import</span>
-                </Button>
-              </Link>
-              <Link href="/templates" className="hidden sm:block">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Templates
-                </Button>
-              </Link>
-              <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="gap-2 bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white">
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">Create Repl</span>
-                    <span className="sm:hidden">Create</span>
-                  </Button>
-                </DialogTrigger>
-              </Dialog>
+            <div className="hidden text-sm font-medium text-[var(--ecode-text-muted)] sm:block">
+              Last synced moments ago
             </div>
           </div>
-          
-          {/* Search and Filters Bar */}
-          <div className="py-3 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-            <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {/* Search */}
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
               <div className="relative flex-1 max-w-full sm:max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--ecode-muted)]" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-[var(--ecode-muted)]" />
                 <Input
                   type="text"
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] w-full"
+                  className="w-full border-[var(--ecode-border)] bg-[var(--ecode-sidebar)] pl-10"
                 />
               </div>
-              
-              {/* Mobile controls row */}
-              <div className="flex items-center gap-2">
-                {/* Filters */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none">
-                      <Filter className="h-4 w-4" />
-                      <span className="hidden sm:inline">Filters</span>
-                      {(filterLanguage !== 'all' || filterVisibility !== 'all') && 
-                        <Badge variant="secondary" className="ml-1">Active</Badge>
-                      }
-                    </Button>
-                  </DropdownMenuTrigger>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex-1 gap-2 sm:flex-none">
+                    <Filter className="h-4 w-4" />
+                    <span className="hidden sm:inline">Filters</span>
+                    {(filterLanguage !== 'all' || filterVisibility !== 'all') && (
+                      <Badge variant="secondary" className="ml-1">Active</Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
                   <DropdownMenuLabel>Language</DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -725,7 +738,7 @@ const ProjectsPage = () => {
                       {lang}
                     </DropdownMenuCheckboxItem>
                   ))}
-                  
+
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel>Visibility</DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -755,53 +768,51 @@ const ProjectsPage = () => {
                   </DropdownMenuCheckboxItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              
-                {/* Sort */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none">
-                      <ArrowUpDown className="h-4 w-4" />
-                      <span className="hidden sm:inline">Sort</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => setSortBy('updated')}>
-                      Recently Updated
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy('created')}>
-                      Recently Created
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy('name')}>
-                      Name (A-Z)
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                
-                {/* View Mode Toggle */}
-                <div className="flex items-center gap-1">
-                  <Toggle
-                    pressed={viewMode === 'grid'}
-                    onPressedChange={() => setViewMode('grid')}
-                    size="sm"
-                    aria-label="Grid view"
-                  >
-                    <Grid3X3 className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle
-                    pressed={viewMode === 'list'}
-                    onPressedChange={() => setViewMode('list')}
-                    size="sm"
-                    aria-label="List view"
-                  >
-                    <List className="h-4 w-4" />
-                  </Toggle>
-                </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex-1 gap-2 sm:flex-none">
+                    <ArrowUpDown className="h-4 w-4" />
+                    <span className="hidden sm:inline">Sort</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => setSortBy('updated')}>
+                    Recently Updated
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy('created')}>
+                    Recently Created
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy('name')}>
+                    Name (A-Z)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="flex items-center gap-1">
+                <Toggle
+                  pressed={viewMode === 'grid'}
+                  onPressedChange={() => setViewMode('grid')}
+                  size="sm"
+                  aria-label="Grid view"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </Toggle>
+                <Toggle
+                  pressed={viewMode === 'list'}
+                  onPressedChange={() => setViewMode('list')}
+                  size="sm"
+                  aria-label="List view"
+                >
+                  <List className="h-4 w-4" />
+                </Toggle>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
+      <div className="space-y-6 px-4 sm:px-6 lg:px-8">
       {/* Main Content Area with Folders Sidebar */}
       <div className="flex h-[calc(100vh-180px)]">
         {/* Folders Sidebar - Hidden on mobile/tablet, shown on desktop */}
@@ -1541,7 +1552,9 @@ const ProjectsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+      </div>
+    </PageShell>
   );
 };
 

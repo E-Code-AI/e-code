@@ -8,15 +8,22 @@ import { Badge } from '@/components/ui/badge';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Menu, X, Home, Code, Zap, Globe, Users, Database, Book, 
+import {
+  Menu, X, Home, Code, Zap, Globe, Users, Database, Book,
   Settings, User, HelpCircle, Crown, Plus, Search, FileCode,
   Terminal, GitBranch, Sparkles, Package, Shield, LogOut,
-  ChevronRight, Heart, Star, Briefcase, GraduationCap, Workflow, 
+  ChevronRight, Heart, Star, Briefcase, GraduationCap, Workflow,
   HardDrive, BarChart3, Rocket, Cpu, Activity, ArrowRight,
   Moon, Sun, Palette, Bell, MessageSquare, Key, Cloud, Lock,
   Building2, TrendingUp, Award, Download
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  isActiveNavigationItem,
+  primaryNavigation,
+  secondaryNavigation,
+  type NavigationItem,
+} from '@/constants/navigation';
 
 interface MobileMenuProps {
   onOpenSpotlight?: () => void;
@@ -50,6 +57,20 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
     }, 150);
   };
 
+  const quickActions = [
+    {
+      icon: Plus,
+      label: 'Create App',
+      path: '/projects',
+      action: 'create' as const,
+      ctaLabel: 'Create a new application',
+    },
+    {
+      icon: Code,
+      label: 'Import code or design',
+      path: '/github-import',
+      ctaLabel: 'Import an existing codebase or design',
+    },
   const primaryLinks = [
     { icon: Home, label: 'Dashboard', path: '/dashboard', description: 'Your workspace' },
     { icon: Code, label: 'Projects', path: '/projects', description: 'All your apps', count: 12 },
@@ -65,7 +86,59 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
     { icon: Book, label: 'Templates', path: '/templates', color: 'from-green-500 to-emerald-500' },
   ];
 
-  const handlePrimaryLinkClick = (link: any) => {
+  const navigationLinks: NavigationItem[] = [...primaryNavigation, ...secondaryNavigation];
+
+  type MenuItem =
+    | {
+        key: string;
+        type: 'quick';
+        icon: LucideIcon;
+        label: string;
+        path: string;
+        description?: string;
+        ctaLabel?: string;
+        badge?: string;
+        onSelect: () => void;
+      }
+    | {
+        key: string;
+        type: 'nav';
+        icon: LucideIcon;
+        label: string;
+        path: string;
+        description?: string;
+        ctaLabel?: string;
+        badge?: string;
+        navigation: NavigationItem;
+        onSelect: () => void;
+      };
+
+  const menuItems: MenuItem[] = [
+    ...quickActions.map((action) => ({
+      key: `quick-${action.label.toLowerCase().replace(/\s+/g, '-')}`,
+      type: 'quick' as const,
+      icon: action.icon,
+      label: action.label,
+      path: action.path,
+      description: action.ctaLabel,
+      ctaLabel: action.ctaLabel,
+      onSelect: () => handleQuickActionClick(action),
+    })),
+    ...navigationLinks.map((item) => ({
+      key: `nav-${item.key}`,
+      type: 'nav' as const,
+      icon: item.icon,
+      label: item.label,
+      path: item.path,
+      description: item.description,
+      ctaLabel: item.ctaLabel,
+      badge: item.badge,
+      navigation: item,
+      onSelect: () => handleNavigationClick(item),
+    })),
+  ];
+
+  const handleQuickActionClick = (link: (typeof quickActions)[number]) => {
     if (link.action === 'create') {
       setOpen(false);
       setTimeout(() => {
@@ -80,6 +153,10 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
     } else {
       handleNavigate(link.path);
     }
+  };
+
+  const handleNavigationClick = (item: NavigationItem) => {
+    handleNavigate(item.path);
   };
 
   return (
@@ -197,6 +274,71 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
                 transition={{ duration: 0.3, delay: 0.2 }}
                 className="mb-6"
               >
+                <h3 className="text-xs font-semibold text-[var(--ecode-text-muted)] dark:text-zinc-500 uppercase tracking-wider mb-3 px-1">Main Menu</h3>
+                {menuItems.map((item, index) => {
+                  const Icon = item.icon;
+                  const isActive =
+                    item.type === 'nav'
+                      ? isActiveNavigationItem(location, item.navigation)
+                      : location.startsWith(item.path);
+
+                  return (
+                    <motion.div
+                    key={item.key}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : -20 }}
+                    transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
+                  >
+                    <button
+                      className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all relative group ${
+                        isActive
+                          ? 'bg-gradient-to-r from-[var(--ecode-accent)]/20 to-[var(--ecode-accent)]/10 dark:from-purple-600/20 dark:to-blue-600/20 border border-[var(--ecode-accent)]/30 dark:border-purple-500/30'
+                          : 'hover:bg-[var(--ecode-surface-secondary)] dark:hover:bg-[var(--ecode-surface-secondary)] dark:dark:hover:bg-zinc-800/50 hover:border-[var(--ecode-border)] dark:border-transparent border border-transparent'
+                      }`}
+                      onClick={item.onSelect}
+                      aria-label={item.ctaLabel || item.label}
+                    >
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${
+                        isActive
+                          ? 'bg-gradient-to-br from-[var(--ecode-accent)] to-[var(--ecode-accent-hover)] dark:from-purple-500 dark:to-blue-600 shadow-lg'
+                          : 'bg-[var(--ecode-surface-secondary)] dark:bg-zinc-800/50 group-hover:bg-[var(--ecode-surface-tertiary)] dark:group-hover:bg-zinc-700/50'
+                      }`}>
+                        <Icon
+                          className={`h-5 w-5 ${
+                            isActive
+                              ? 'text-[var(--ecode-text)] dark:text-white'
+                              : 'text-[var(--ecode-text-muted)] dark:text-zinc-400'
+                          }`}
+                        />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p
+                          className={`text-sm font-medium ${
+                            isActive
+                              ? 'text-[var(--ecode-text)] dark:text-white'
+                              : 'text-[var(--ecode-text-secondary)] dark:text-zinc-300'
+                          }`}
+                        >
+                          {item.label}
+                        </p>
+                        {(item.description || item.type === 'quick') && (
+                          <p className="text-xs text-[var(--ecode-text-muted)] dark:text-zinc-500">
+                            {item.description || 'Start building instantly'}
+                          </p>
+                        )}
+                      </div>
+                      {item.badge && (
+                        <span className="px-2 py-1 text-[10px] bg-[var(--ecode-accent)] dark:bg-orange-500 text-[var(--ecode-text)] dark:text-white rounded-full font-medium animate-pulse">
+                          {item.badge}
+                        </span>
+                      )}
+                      {isActive && (
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[var(--ecode-accent)]/5 to-[var(--ecode-accent)]/10 dark:from-purple-600/10 dark:to-blue-600/10 pointer-events-none" />
+                      )}
+                    </button>
+                  </motion.div>
+                  );
+                })}
                 <button
                   className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 flex items-center gap-3 transition-all hover:bg-gray-100 dark:hover:bg-zinc-800 hover:border-blue-300 dark:hover:border-blue-900 hover:shadow-md group"
                   onClick={() => {
