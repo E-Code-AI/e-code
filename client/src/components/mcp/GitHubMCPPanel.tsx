@@ -51,7 +51,15 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
       if (!response.ok) throw new Error('Failed to fetch repositories');
       return response.json();
     },
-    retry: false
+    retry: false,
+    onSuccess: (data) => {
+      if (data && data.length > 0 && !newPR.repo) {
+        setNewPR(prev => ({
+          ...prev,
+          repo: data[0].name
+        }));
+      }
+    }
   });
 
   // Create repository mutation
@@ -135,10 +143,10 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
   });
 
   const [newPR, setNewPR] = useState({
-    repo: '',
-    title: '',
-    body: '',
-    head: '',
+    repo: repos?.[0]?.name || '',
+    title: 'Merge changes to main',
+    body: 'This PR merges the latest changes into the main branch.',
+    head: 'develop',
     base: 'main'
   });
 
