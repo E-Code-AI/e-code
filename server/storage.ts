@@ -2766,6 +2766,25 @@ export class DatabaseStorage implements IStorage {
 
   // Initialize default prompt templates
   async initializeDefaultPromptTemplates(): Promise<void> {
+    try {
+      // Check if prompt_templates table exists first
+      const tableCheck = await this.db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'prompt_templates'
+        );
+      `);
+      
+      if (!tableCheck.rows?.[0]?.exists) {
+        console.log('prompt_templates table does not exist yet, skipping initialization');
+        return;
+      }
+    } catch (error) {
+      console.log('Unable to check for prompt_templates table, skipping initialization:', error.message);
+      return;
+    }
+
     const defaultTemplates = [
       {
         name: 'React Component Generator',
@@ -2972,24 +2991,28 @@ Constraints: {{constraints}}`,
       }
     ];
 
-    // Check if templates already exist
-    const existingTemplates = await this.db
-      .select()
-      .from(promptTemplates)
-      .where(eq(promptTemplates.isSystem, true));
+    try {
+      // Check if templates already exist
+      const existingTemplates = await this.db
+        .select()
+        .from(promptTemplates)
+        .where(eq(promptTemplates.isSystem, true));
 
-    if (existingTemplates.length === 0) {
-      // Insert default templates
-      for (const template of defaultTemplates) {
-        await this.db.insert(promptTemplates).values({
-          ...template,
-          usageCount: 0,
-          rating: 0,
-          variables: template.variables as any,
-          tags: template.tags as any,
-        });
+      if (existingTemplates.length === 0) {
+        // Insert default templates
+        for (const template of defaultTemplates) {
+          await this.db.insert(promptTemplates).values({
+            ...template,
+            usageCount: 0,
+            rating: 0,
+            variables: template.variables as any,
+            tags: template.tags as any,
+          });
+        }
+        console.log('Default prompt templates initialized successfully');
       }
-      console.log('Default prompt templates initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize default prompt templates (table may not exist yet):', error.message);
     }
   }
 }
