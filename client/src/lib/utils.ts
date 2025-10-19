@@ -109,13 +109,13 @@ export function getProjectUrl(project: ProjectLike, fallbackUsername?: string | 
     return `/@${ownerUsername}/${slug}`;
   }
 
-  if (typeof project.id === 'number') {
-    return `/project/${project.id}`;
+  // Prefer `id` over `projectId` if both are present
+  const projectNumericId = 
+    typeof project.id === 'number' ? project.id :
+    typeof project.projectId === 'number' ? project.projectId :
+    null;
+  if (projectNumericId !== null) {
+    return `/project/${projectNumericId}`;
   }
-
-  if (typeof project.projectId === 'number') {
-    return `/project/${project.projectId}`;
-  }
-
   return '/projects';
 }
