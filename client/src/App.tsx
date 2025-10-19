@@ -200,7 +200,9 @@ function ProjectRedirect() {
   useEffect(() => {
     if (route[0]) {
       const { username, projectname } = route[1] as { username: string; projectname: string };
-      navigate(`/u/${username}/${projectname}`, { replace: true });
+      const search = window.location.search;
+      const hash = window.location.hash;
+      navigate(`/u/${username}/${projectname}${search}${hash}`, { replace: true });
     }
   }, [route, navigate]);
   
@@ -214,7 +216,9 @@ function UserProfileRedirect() {
   useEffect(() => {
     if (route[0]) {
       const { username } = route[1] as { username: string };
-      navigate(`/u/${username}`, { replace: true });
+      const search = window.location.search;
+      const hash = window.location.hash;
+      navigate(`/u/${username}${search}${hash}`, { replace: true });
     }
   }, [route, navigate]);
   
@@ -465,7 +469,7 @@ function AppContent() {
           )} />
 
           {/* SolarTech Applications with specific Replit-style URLs (must come before generic patterns) */}
-          <ProtectedRoute path="/@admin/solartech-ai-chat" component={() => (
+          <ProtectedRoute path="/u/admin/solartech-ai-chat" component={() => (
             <ApplicationIDEWrapper
               projectName="SolarTech AI Chat"
               projectDescription="Professional solar technology AI assistant"
@@ -473,7 +477,7 @@ function AppContent() {
               appComponent={<SolarTechAIChatApp />}
             />
           )} />
-          <ProtectedRoute path="/@admin/solartech-crm" component={() => (
+          <ProtectedRoute path="/u/admin/solartech-crm" component={() => (
             <ApplicationIDEWrapper
               projectName="SolarTech CRM"
               projectDescription="Solar business customer relationship management"
@@ -481,7 +485,7 @@ function AppContent() {
               appComponent={<SolarTechCRMApp />}
             />
           )} />
-          <ProtectedRoute path="/@admin/solartech-fortune500-store" component={() => (
+          <ProtectedRoute path="/u/admin/solartech-fortune500-store" component={() => (
             <ApplicationIDEWrapper
               projectName="Fortune500 Solar Store"
               projectDescription="E-commerce platform for solar technology products"
