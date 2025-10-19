@@ -18,6 +18,16 @@ The E‑Code platform delivers a secure, enterprise-ready developer workspace th
 | **Team Management** | RBAC roles, invitation flows, usage analytics, billing hooks, and enterprise SSO readiness.
 | **Observability** | Structured logging, real-time activity feeds, health checks, and CDN optimization middleware.
 
+### Workspace Tooling Parity
+
+E‑Code now mirrors the full Replit workspace layout so onboarding teams can follow familiar workflows:
+
+- **Main editor tabs** – Dedicated drawers for Debugger, Testing, History, and Secrets complement the existing editor, terminal, and AI panels.
+- **Sidebar shortcuts** – Quick-launch entries for Packager, Object Storage, Secrets, Shell, and the new Threads collaboration view.
+- **Right rail panels** – Spotlight Page configuration, Extensions marketplace, coverage insights, and persistent history all live alongside Preview, Assistant, Collaborate, and other productivity widgets.
+
+Each surface is wired to the underlying React panels introduced in this release (`ThreadsPanel`, `CoverageInsightsPanel`, `SpotlightSettingsPanel`, and related workspace components), ensuring the documentation tour aligns with what users see in-product.
+
 👉 **Request a guided demo:** Reach the product team at [hello@e-code.dev](mailto:hello@e-code.dev) to schedule a platform walkthrough tailored to your use case.
 
 ## Architecture at a Glance

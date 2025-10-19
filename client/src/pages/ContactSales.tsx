@@ -8,8 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
-import { 
-  Code, Building2, Users, Mail, Phone, Globe, MessageSquare,
+import {
+  Code, Building2, Users, Mail, Globe, MessageSquare,
   ChevronRight, Check, Calendar, Clock, Shield, Sparkles, ArrowRight
 } from 'lucide-react';
 import { useState } from 'react';
@@ -351,10 +351,6 @@ export default function ContactSales() {
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-muted-foreground" />
                     <span className="text-sm">enterprise@e-code.ai</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm">1-888-ECODE-01</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Clock className="h-5 w-5 text-muted-foreground" />
