@@ -298,8 +298,8 @@ export default function About() {
       <section className="py-12 sm:py-16 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat, index: number) => (
-              <Card key={index} className="h-full border-primary/20">
+            {stats.map((stat) => (
+              <Card key={stat.label} className="h-full border-primary/20">
                 <CardHeader className="flex flex-row items-start justify-between gap-4">
                   <div>
                     <CardTitle className="text-3xl font-bold text-primary">{stat.value}</CardTitle>
