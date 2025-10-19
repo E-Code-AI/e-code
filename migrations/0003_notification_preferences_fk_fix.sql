@@ -1,10 +1,10 @@
--- Ensure notification_preferences.user_id uses integer type and constraints
 DO $$
 BEGIN
   IF EXISTS (
     SELECT 1
     FROM information_schema.columns
     WHERE table_name = 'notification_preferences'
+      AND table_schema = 'public'
       AND column_name = 'user_id'
       AND data_type <> 'integer'
   ) THEN
@@ -16,11 +16,13 @@ BEGIN
     SELECT 1
     FROM information_schema.tables
     WHERE table_name = 'notification_preferences'
+      AND table_schema = 'public'
   ) THEN
     IF NOT EXISTS (
       SELECT 1
       FROM information_schema.table_constraints
       WHERE table_name = 'notification_preferences'
+        AND table_schema = 'public'
         AND constraint_name = 'notification_preferences_user_id_users_id_fk'
     ) THEN
       ALTER TABLE "notification_preferences"
@@ -33,6 +35,7 @@ BEGIN
       SELECT 1
       FROM information_schema.table_constraints
       WHERE table_name = 'notification_preferences'
+        AND table_schema = 'public'
         AND constraint_type = 'PRIMARY KEY'
     ) THEN
       ALTER TABLE "notification_preferences"
@@ -40,3 +43,4 @@ BEGIN
     END IF;
   END IF;
 END $$;
+
