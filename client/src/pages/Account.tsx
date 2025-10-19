@@ -8,9 +8,11 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { PageHeader, PageShell } from '@/components/layout/PageShell';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
 import { 
   User, Mail, Key, Shield, CreditCard, Bell, 
   Globe, Download, Trash2, AlertTriangle, Check,
@@ -22,6 +24,7 @@ import { ECodeSpinner } from '@/components/ECodeLoading';
 export default function Account() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   
   const [profile, setProfile] = useState({
@@ -202,13 +205,25 @@ export default function Account() {
   };
 
   return (
-    <div className="container mx-auto max-w-6xl py-8 px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-[var(--ecode-text)]">Account Settings</h1>
-        <p className="text-[var(--ecode-text-secondary)] mt-2 text-base">
-          Manage your account settings and preferences
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader
+        title="Account settings"
+        description="Manage your profile, security, billing, and notification preferences."
+        icon={User}
+        actions={(
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="gap-2" onClick={() => handleSaveProfile()}>
+              <Check className="h-4 w-4" />
+              Save changes
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={() => navigate('/settings')}>
+              <Shield className="h-4 w-4" />
+              Security center
+            </Button>
+          </div>
+        )}
+      />
+      <div className="space-y-6">
 
       <Tabs defaultValue="profile" className="space-y-4">
         <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
@@ -723,6 +738,7 @@ export default function Account() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </PageShell>
   );
 }
