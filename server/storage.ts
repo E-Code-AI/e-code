@@ -24,18 +24,15 @@ import {
   GpuUsage, InsertGpuUsage,
   Assignment, InsertAssignment,
   Submission, InsertSubmission,
-<<<<<<< HEAD
   Template, InsertTemplate,
   PromptTemplate, InsertPromptTemplate,
   CustomPrompt, InsertCustomPrompt,
   ProjectAiRule, InsertProjectAiRule,
   PromptUsageHistory, InsertPromptUsageHistory,
   PromptTemplateRating, InsertPromptTemplateRating,
-=======
   NewsletterSubscriber, InsertNewsletterSubscriber,
   NewsletterCampaign, InsertNewsletterCampaign,
   NewsletterDelivery, InsertNewsletterDelivery,
->>>>>>> 4c752902d5721217480595645705955167b5e20d
 
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
@@ -46,13 +43,9 @@ import {
   keyValueStore, aiConversations, dynamicIntelligence, webSearchHistory,
   gitRepositories, gitCommits, customDomains, secrets, environmentVariables,
   voiceVideoSessions, voiceVideoParticipants, gpuInstances, gpuUsage,
-<<<<<<< HEAD
   assignments, submissions, aiUsageRecords, templates,
   promptTemplates, customPrompts, projectAiRules, promptUsageHistory, promptTemplateRatings,
-=======
-  assignments, submissions, aiUsageRecords,
   newsletterSubscribers, newsletterCampaigns, newsletterDeliveries,
->>>>>>> 4c752902d5721217480595645705955167b5e20d
   insertUserCreditsSchema, insertBudgetLimitSchema, insertUsageAlertSchema,
   insertAutoscaleDeploymentSchema, insertReservedVmDeploymentSchema,
   insertScheduledDeploymentSchema, insertStaticDeploymentSchema,

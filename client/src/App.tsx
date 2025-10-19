@@ -263,20 +263,13 @@ function AppContent() {
   return (
     <ErrorBoundary>
       <TooltipProvider>
-<<<<<<< HEAD
         <AtSymbolRedirectHandler>
           <div className="min-h-screen replit-layout-main">
             <ScrollToTop />
             <Toaster />
             <SpotlightSearch />
             <CommandPalette />
-=======
-        <div className="min-h-screen replit-layout-main">
-          <Toaster />
-          <SpotlightSearch />
-          <CommandPalette />
-          <KeyboardShortcuts />
->>>>>>> 4c752902d5721217480595645705955167b5e20d
+            <KeyboardShortcuts />
 
             <Suspense fallback={<PageLoader />}>
               <Switch>
@@ -323,10 +316,7 @@ function AppContent() {
           <Route path="/solutions/game-builder" component={GameBuilder} />
           <Route path="/solutions/dashboard-builder" component={DashboardBuilder} />
           <Route path="/solutions/chatbot-builder" component={ChatbotBuilder} />
-<<<<<<< HEAD
-=======
           <Route path="/solutions/internal-ai-builder" component={InternalAIBuilder} />
->>>>>>> 4c752902d5721217480595645705955167b5e20d
 
           <Route path="/mobile" component={MobileAdmin} />
           <Route path="/ai" component={AI} />
