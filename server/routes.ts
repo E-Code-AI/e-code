@@ -5093,7 +5093,7 @@ Application will be available at http://localhost:3000
   });
   
   // OpenAI Agents API endpoints
-  const { openAIAgentsService } = await import('./ai/openai-agents-service');
+  const { openAIAgentsService, MissingOpenAIKeyError } = await import('./ai/openai-agents-service');
   const { enhancedOpenAIProvider } = await import('./ai/openai-enhanced-provider');
   
   // List available OpenAI models
@@ -5102,6 +5102,11 @@ Application will be available at http://localhost:3000
       const models = await openAIAgentsService.listAvailableModels();
       res.json(models);
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error listing OpenAI models:', error);
       res.status(500).json({ error: 'Failed to list models' });
     }
@@ -5129,6 +5134,11 @@ Application will be available at http://localhost:3000
       
       res.json({ assistantId });
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error creating assistant:', error);
       res.status(500).json({ error: 'Failed to create assistant' });
     }
@@ -5141,6 +5151,11 @@ Application will be available at http://localhost:3000
       const threadId = await openAIAgentsService.createOrGetThread(sessionId, req.body.metadata);
       res.json({ threadId });
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error creating thread:', error);
       res.status(500).json({ error: 'Failed to create thread' });
     }
@@ -5170,6 +5185,11 @@ Application will be available at http://localhost:3000
       
       res.json(result);
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error running assistant:', error);
       res.status(500).json({ error: 'Failed to run assistant' });
     }
