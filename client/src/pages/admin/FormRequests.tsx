@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useEffect, useMemo, useState } from 'react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -12,6 +13,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { Input } from '@/components/ui/input';
+import {
+  Mail,
+  Phone,
+  ExternalLink,
+  RefreshCw,
+  Loader2,
+  CheckCircle2,
+  Clock,
+  Archive,
+  Inbox,
+  Search as SearchIcon,
+} from 'lucide-react';
 import { Mail, Phone, ExternalLink, RefreshCw, Loader2, CheckCircle2, Clock, Archive } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -21,6 +35,8 @@ const FORM_TABS = [
   { value: 'support_ticket', label: 'Support Tickets' },
   { value: 'report_abuse', label: 'Abuse Reports' },
 ];
+
+const PAGE_SIZE = 20;
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All statuses' },
@@ -46,6 +62,9 @@ const STATUS_ACTIONS = [
 export default function AdminFormRequests() {
   const [activeTab, setActiveTab] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -64,6 +83,107 @@ export default function AdminFormRequests() {
     );
   }
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim());
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, statusFilter, debouncedSearch]);
+
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: ['admin.formRequests', activeTab, statusFilter, debouncedSearch, page],
+    keepPreviousData: true,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (activeTab !== 'all') {
+        params.set('formType', activeTab);
+      }
+      if (statusFilter !== 'all') {
+        params.set('status', statusFilter);
+      }
+      if (debouncedSearch) {
+        params.set('search', debouncedSearch);
+      }
+      params.set('page', String(page));
+      params.set('pageSize', String(PAGE_SIZE));
+
+      const response = await fetch(`/api/admin/form-requests?${params.toString()}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to load customer requests');
+      }
+
+      return await response.json();
+    },
+  });
+
+  const requests = data?.requests || [];
+  const pagination = data?.pagination || { page: 1, pageSize: PAGE_SIZE, total: 0, totalPages: 1 };
+  const summary = data?.summary || { currentTab: { total: 0, byStatus: {} }, byFormType: {}, matchedTotal: 0 };
+  const statusCounts = summary.currentTab?.byStatus || {};
+
+  const tabCounts = useMemo(() => {
+    const counts = {
+      contact_sales: summary.byFormType?.contact_sales || 0,
+      support_ticket: summary.byFormType?.support_ticket || 0,
+      report_abuse: summary.byFormType?.report_abuse || 0,
+    };
+    const aggregatedTotal = summary.matchedTotal
+      || Object.values(counts).reduce((total, value) => total + value, 0);
+
+    return {
+      all: aggregatedTotal,
+      ...counts,
+    };
+  }, [summary]);
+
+  const activeTabLabel = FORM_TABS.find((tab) => tab.value === activeTab)?.label || 'All Requests';
+
+  const statusHighlights = useMemo(() => [
+    {
+      key: 'total',
+      label: 'Total volume',
+      value: summary.currentTab?.total || 0,
+      description: activeTabLabel,
+      icon: Inbox,
+    },
+    {
+      key: 'new',
+      label: 'New',
+      value: statusCounts.new || 0,
+      description: 'Awaiting triage',
+      icon: Mail,
+    },
+    {
+      key: 'in_progress',
+      label: 'In progress',
+      value: statusCounts.in_progress || 0,
+      description: 'Actively being handled',
+      icon: Clock,
+    },
+    {
+      key: 'resolved',
+      label: 'Resolved',
+      value: statusCounts.resolved || 0,
+      description: 'Completed and closed',
+      icon: CheckCircle2,
+    },
+    {
+      key: 'archived',
+      label: 'Archived',
+      value: statusCounts.archived || 0,
+      description: 'Filed for reference',
+      icon: Archive,
+    },
+  ], [activeTabLabel, statusCounts, summary.currentTab?.total]);
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: [`/api/admin/form-requests?formType=${activeTab}&status=${statusFilter}`],
   });
@@ -80,6 +200,7 @@ export default function AdminFormRequests() {
       return await res.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin.formRequests'] });
       queryClient.invalidateQueries({ queryKey: [`/api/admin/form-requests?formType=${activeTab}&status=${statusFilter}`] });
       toast({
         title: 'Request updated',
@@ -96,6 +217,11 @@ export default function AdminFormRequests() {
   });
 
   const groupedRequests = requests;
+  const startIndex = groupedRequests.length > 0 ? (pagination.page - 1) * pagination.pageSize + 1 : 0;
+  const endIndex = groupedRequests.length > 0
+    ? Math.min(pagination.page * pagination.pageSize, pagination.total)
+    : 0;
+  const canGoNext = pagination.page < (pagination.totalPages || 1);
 
   return (
     <AdminLayout>
@@ -104,6 +230,15 @@ export default function AdminFormRequests() {
           <div>
             <h1 className="text-3xl font-bold text-white">Customer Requests</h1>
             <p className="text-sm text-zinc-400">
+              Track every form submission from marketing pages, trust &amp; safety, and support.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="text-white border-zinc-700"
+          >
               Track every form submission from marketing pages, trust & safety, and support.
             </p>
           </div>
@@ -122,10 +257,58 @@ export default function AdminFormRequests() {
           </Button>
         </div>
 
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {statusHighlights.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Card key={item.key} className="bg-zinc-900 border-zinc-800">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm text-zinc-400">{item.label}</p>
+                      <p className="mt-2 text-2xl font-semibold text-white">
+                        {item.value.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-1">{item.description}</p>
+                    </div>
+                    <div className="p-2 rounded-full bg-zinc-800/60">
+                      <Icon className="h-5 w-5 text-zinc-300" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
         <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader className="pb-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <CardTitle className="text-white">Request Filters</CardTitle>
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-4">
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                  <div className="relative w-full sm:w-72">
+                    <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                    <Input
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Search by sender, company, or message"
+                      className="w-full bg-zinc-800 border-zinc-700 text-white pl-9"
+                    />
+                  </div>
+                  {searchTerm ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-zinc-400 hover:text-white"
+                      onClick={() => setSearchTerm('')}
+                    >
+                      Clear
+                    </Button>
+                  ) : null}
+                </div>
+
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
                   <TabsList className="bg-zinc-800/60 border border-zinc-700">
@@ -135,6 +318,15 @@ export default function AdminFormRequests() {
                         value={tab.value}
                         className="data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
                       >
+                        <span className="flex items-center gap-2">
+                          {tab.label}
+                          <Badge
+                            variant="outline"
+                            className="border-zinc-700 bg-transparent text-xs text-zinc-300"
+                          >
+                            {Number(tabCounts[tab.value] || 0).toLocaleString()}
+                          </Badge>
+                        </span>
                         {tab.label}
                       </TabsTrigger>
                     ))}
@@ -167,6 +359,9 @@ export default function AdminFormRequests() {
                 <CheckCircle2 className="h-10 w-10 mb-3" />
                 <p className="font-medium">No requests to show</p>
                 <p className="text-sm text-zinc-500 mt-1 text-center max-w-md">
+                  {debouncedSearch || statusFilter !== 'all' || activeTab !== 'all'
+                    ? 'No submissions match your current filters. Try adjusting the search or status filters.'
+                    : 'Once customers reach out through sales, support, or trust & safety forms, their submissions will appear here.'}
                   Once customers reach out through sales, support, or trust & safety forms, their submissions will appear here.
                 </p>
               </div>
@@ -285,6 +480,41 @@ export default function AdminFormRequests() {
             )}
           </CardContent>
         </Card>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-zinc-500">
+          <div>
+            {pagination.total > 0 ? (
+              <span>
+                Showing {startIndex.toLocaleString()}–{endIndex.toLocaleString()} of {pagination.total.toLocaleString()} matched requests
+              </span>
+            ) : (
+              <span>No matching requests</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pagination.page <= 1 || isFetching}
+              className="border-zinc-700 text-zinc-200 hover:bg-zinc-800"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+            >
+              Previous
+            </Button>
+            <span className="text-zinc-500">
+              Page {pagination.page} of {(pagination.totalPages || 1).toLocaleString()}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!canGoNext || isFetching}
+              className="border-zinc-700 text-zinc-200 hover:bg-zinc-800"
+              onClick={() => setPage((current) => (canGoNext ? current + 1 : current))}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </div>
     </AdminLayout>
   );

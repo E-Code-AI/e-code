@@ -1,120 +1,254 @@
+import path from 'node:path';
 import { performance } from 'node:perf_hooks';
+import { fileURLToPath } from 'node:url';
 
-type MaybePromise<T> = T | Promise<T>;
+const STACK_PATH_PATTERN =
+  /((?:file:\/\/\/|file:\/\/)?(?:[A-Za-z]:)?[\\/]?[^()\r\n:]+?(?:[\\/][^()\r\n:]+)*\.(?:test|spec)\.[tj]sx?)/i;
 
-export type TestCase = {
+export interface TestCase {
   name: string;
-  fn: () => MaybePromise<void>;
+  fn: () => void | Promise<void>;
+  timeoutMs?: number;
   skip?: boolean;
   only?: boolean;
-};
+}
 
-export type SuiteLifecycle = {
-  beforeAll?: () => MaybePromise<void>;
-  afterAll?: () => MaybePromise<void>;
-  beforeEach?: () => MaybePromise<void>;
-  afterEach?: () => MaybePromise<void>;
-};
+export interface SuiteLifecycle {
+  beforeAll?: () => void | Promise<void>;
+  afterAll?: () => void | Promise<void>;
+  beforeEach?: () => void | Promise<void>;
+  afterEach?: () => void | Promise<void>;
+}
 
-export type TestSuite = SuiteLifecycle & {
+export interface TestSuite extends SuiteLifecycle {
   tests: TestCase[];
-};
+}
 
-type RegisteredSuite = {
+interface RegisteredSuite {
   name: string;
   suite: TestSuite;
+  filePath?: string;
 };
+  file?: string;
+}
 
-const registeredSuites: RegisteredSuite[] = [];
+export interface TestResults {
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+}
 
-const matchesPattern = (name: string, pattern?: string): boolean => {
-  if (!pattern) {
-    return true;
+const escapeRegex = (value: string) => value.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+class TestRunner {
+  private suites: RegisteredSuite[] = [];
+
+  private inferSuiteFile(): string | undefined {
+    const stackLines = new Error().stack?.split('\n') ?? [];
+
+const extractFilePathFromStack = (): string | undefined => {
+  const stack = new Error().stack;
+  if (!stack) {
+    return undefined;
   }
 
-  const normalized = pattern.trim().toLowerCase();
-  if (!normalized) {
-    return true;
+  const frames = stack.split('\n').slice(1);
+  for (const rawFrame of frames) {
+    const frame = rawFrame.trim();
+    const match =
+      frame.match(/\((.*?):\d+:\d+\)$/) ?? frame.match(/at (.*?):\d+:\d+$/);
+    if (!match) {
+      continue;
+    }
+
+    let candidate = match[1];
+    if (candidate.startsWith('file://')) {
+      try {
+        candidate = fileURLToPath(candidate);
+      } catch {
+        // ignore parsing errors and fall back to the raw value
+      }
+    }
+
+    if (candidate.includes('test/setup/test-runner')) {
+      continue;
+    }
+
+    return candidate;
   }
 
-  return name.toLowerCase().includes(normalized);
+  return undefined;
 };
 
 const hasFocusedTests = (): boolean =>
   registeredSuites.some((entry) => entry.suite.tests.some((test) => test.only));
+    for (const line of stackLines) {
+      const match = line.match(STACK_PATH_PATTERN);
+      if (!match) {
+        continue;
+      }
 
-const formatDuration = (ms: number): string => `${ms.toFixed(0)}ms`;
+      let rawPath = match[1];
+      if (/^file:\/\//i.test(rawPath)) {
+        try {
+          rawPath = fileURLToPath(rawPath);
+        } catch (error) {
+          console.error('Failed to normalize file URL from stack trace:', error);
+          continue;
+        }
+      }
 
-export const testRunner = {
+      const absolute = path.isAbsolute(rawPath)
+        ? rawPath
+        : path.resolve(process.cwd(), rawPath);
+      const normalized = path.normalize(absolute);
+      const relative = path.relative(process.cwd(), normalized);
+
+      return relative || normalized;
+    }
+
+    return undefined;
+  }
+
   registerSuite(name: string, suite: TestSuite): void {
-    registeredSuites.push({ name, suite });
+    const filePath = extractFilePathFromStack();
+    registeredSuites.push({ name, suite, filePath });
   },
+    const file = this.inferSuiteFile();
+    this.suites.push({ name, suite, file });
+  }
 
-  async run(pattern?: string): Promise<{ failed: number; passed: number }> {
-    let failed = 0;
+  async run(pattern?: string): Promise<TestResults> {
+    const matcher = pattern ? new RegExp(escapeRegex(pattern), 'i') : null;
+    const matchesPattern = (value?: string) => {
+      if (!matcher || !value) {
+        return false;
+      }
+
+      return new RegExp(matcher.source, matcher.flags).test(value);
+    };
+    const hasFocusedTests = this.suites.some((entry) =>
+      entry.suite.tests.some((test) => test.only),
+    );
+
+    let total = 0;
     let passed = 0;
-    const focused = hasFocusedTests();
+    let failed = 0;
+    let skipped = 0;
 
-    for (const { name: suiteName, suite } of registeredSuites) {
+    for (const { name: suiteName, suite, filePath } of registeredSuites) {
       const tests = suite.tests.filter((test) => {
         if (focused && !test.only) {
           return false;
         }
+    for (const entry of this.suites) {
+      const { name, suite, file } = entry;
+      const suiteMatches = matcher ? matchesPattern(name) || matchesPattern(file) : true;
 
+      const runnableTests: TestCase[] = [];
+
+      for (const test of suite.tests) {
         if (test.skip) {
-          return false;
+          skipped += 1;
+          continue;
         }
 
-        return matchesPattern(`${suiteName} ${test.name}`, pattern);
-      });
+        if (hasFocusedTests && !test.only) {
+          skipped += 1;
+          continue;
+        }
 
-      if (tests.length === 0) {
+        if (matchesPattern(`${suiteName} ${test.name}`, pattern)) {
+          return true;
+        }
+
+        if (filePath) {
+          return matchesPattern(filePath, pattern);
+        }
+
+        return false;
+      });
+        const shouldRun = !matcher || matchesPattern(test.name) || suiteMatches;
+
+        if (!shouldRun) {
+          skipped += 1;
+          continue;
+        }
+
+        runnableTests.push(test);
+      }
+
+      if (runnableTests.length === 0) {
         continue;
       }
 
-      console.log(`\nSuite: ${suiteName}`);
+      console.log(`\nSuite: ${name}`);
 
       if (suite.beforeAll) {
         await suite.beforeAll();
       }
 
-      for (const test of tests) {
-        if (suite.beforeEach) {
-          await suite.beforeEach();
-        }
-
-        const started = performance.now();
+      for (const test of runnableTests) {
+        total += 1;
+        const start = performance.now();
+        const timeout = test.timeoutMs ?? 5000;
+        let timer: NodeJS.Timeout | undefined;
 
         try {
-          await test.fn();
+          await Promise.race([
+            (async () => {
+              if (suite.beforeEach) {
+                await suite.beforeEach();
+              }
+
+              await test.fn();
+
+              if (suite.afterEach) {
+                await suite.afterEach();
+              }
+            })(),
+            new Promise<never>((_, reject) => {
+              timer = setTimeout(() => {
+                reject(new Error(`Test timed out after ${timeout}ms`));
+              }, timeout);
+            }),
+          ]);
+
           passed += 1;
-          const duration = performance.now() - started;
-          console.log(`  ✓ ${test.name} (${formatDuration(duration)})`);
+          const duration = performance.now() - start;
+          console.log(`  ✓ ${test.name} (${duration.toFixed(2)}ms)`);
         } catch (error) {
           failed += 1;
-          const duration = performance.now() - started;
-          console.error(`  ✗ ${test.name} (${formatDuration(duration)})`);
+          const duration = performance.now() - start;
+          console.error(`  ✗ ${test.name} (${duration.toFixed(2)}ms)`);
           if (error instanceof Error) {
-            console.error(error.stack ?? error.message);
+            console.error(`    ${error.stack ?? error.message}`);
           } else {
-            console.error(error);
+            console.error(`    ${String(error)}`);
           }
-        }
-
-        if (suite.afterEach) {
-          await suite.afterEach();
+        } finally {
+          if (timer) {
+            clearTimeout(timer);
+          }
         }
       }
 
       if (suite.afterAll) {
-        await suite.afterAll();
+        try {
+          await suite.afterAll();
+        } catch (error) {
+          failed += 1;
+          console.error('  ✗ afterAll failed:');
+          logError(error);
+        }
       }
     }
 
-    console.log(`\nTest Results: ${passed} passed, ${failed} failed`);
+    console.log(`\nTest Results: ${passed} passed, ${failed} failed, ${skipped} skipped`);
 
-    return { failed, passed };
-  },
-};
+    return { total, passed, failed, skipped };
+  }
+}
 
-export type TestRunner = typeof testRunner;
+export const testRunner = new TestRunner();

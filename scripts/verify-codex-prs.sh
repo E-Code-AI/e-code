@@ -59,26 +59,35 @@ echo "## Database Verification" >> "$REPORT_FILE"
 SCHEMA_TABLES=$(grep -oP 'export const \K\w+(?= = pgTable)' shared/schema.ts 2>/dev/null || echo "")
 
 if [ -n "$DATABASE_URL" ]; then
+  # Get all existing tables in one query (much faster)
+  EXISTING_TABLES=$(timeout 10 psql "$DATABASE_URL" -t -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;" 2>/dev/null | tr -d ' ' | tr '\n' ' ')
+  
   MISSING_TABLES=""
+  TABLE_COUNT=0
+  MISSING_COUNT=0
+  
   for table in $SCHEMA_TABLES; do
     # Convert camelCase to snake_case
     snake_case=$(echo "$table" | sed 's/\([A-Z]\)/_\L\1/g' | sed 's/^_//')
+    ((TABLE_COUNT++))
     
-    EXISTS=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '$snake_case';" 2>/dev/null | tr -d ' ')
-    
-    if [ "$EXISTS" = "0" ]; then
+    # Check if table exists in the list
+    if echo "$EXISTING_TABLES" | grep -qw "$snake_case"; then
+      echo -e "  ${GREEN}✓${NC} Table exists: ${snake_case}"
+    else
       MISSING_TABLES="${MISSING_TABLES}\n- ${snake_case} (defined as ${table})"
       ((ISSUES_FOUND++))
+      ((MISSING_COUNT++))
       echo -e "  ${RED}✗${NC} Missing table: ${snake_case}"
-    else
-      echo -e "  ${GREEN}✓${NC} Table exists: ${snake_case}"
     fi
   done
+  
+  echo -e "  Checked ${TABLE_COUNT} schema tables, ${MISSING_COUNT} missing"
   
   if [ -n "$MISSING_TABLES" ]; then
     echo -e "\n❌ **Missing Tables:**${MISSING_TABLES}\n" >> "$REPORT_FILE"
   else
-    echo -e "\n✅ All schema tables exist in database\n" >> "$REPORT_FILE"
+    echo -e "\n✅ All ${TABLE_COUNT} schema tables exist in database\n" >> "$REPORT_FILE"
   fi
 else
   echo -e "\n⚠️ DATABASE_URL not set, skipping database checks\n" >> "$REPORT_FILE"
