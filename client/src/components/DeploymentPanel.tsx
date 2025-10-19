@@ -61,6 +61,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
   const { data: deploymentResponse, isLoading } = useQuery<{ deployment?: DeploymentData; deployments?: DeploymentData[] }>({
     queryKey: [`/api/projects/${projectId}/deployments`],
     refetchInterval: 30000, // Refresh every 30 seconds
+    enabled: !!projectId, // Prevent undefined polling
   });
 
   // Get the latest deployment from the response
