@@ -4,6 +4,7 @@ import { deepEqual, matchObject } from './utils';
 type Expectation<T> = {
   toBe(expected: T): void;
   toEqual(expected: unknown): void;
+  toBeDefined(): void;
   toBeTruthy(): void;
   toBeFalsy(): void;
   toContain(expected: unknown): void;
@@ -26,6 +27,12 @@ declare global {
 
 const formatValue = (value: unknown): string =>
   typeof value === 'string' ? `'${value}'` : util.inspect(value, { depth: 4, colors: false });
+
+const assertionError = (message: string): never => {
+  const error = new Error(message);
+  error.name = 'AssertionError';
+  throw error;
+};
 
 function ensureNumber(actual: unknown, matcher: string): asserts actual is number {
   if (typeof actual !== 'number') {

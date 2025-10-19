@@ -11,11 +11,20 @@ import {
 } from '../server/middleware/security';
 import { securityScanner } from '../server/security/security-scanner';
 
+type ResponseShape = {
+  statusCode: number;
+  body: unknown;
+  headers: Record<string, string>;
+  status(code: number): ResponseShape;
+  json(payload: unknown): ResponseShape;
+  setHeader(name: string, value: string): void;
+};
+
 function createResponse(): ResponseShape {
   return {
     statusCode: 200,
     body: undefined,
-    headers: {},
+    headers: {} as Record<string, string>,
     status(code: number) {
       this.statusCode = code;
       return this;
@@ -65,7 +74,10 @@ testRunner.registerSuite('Security Middleware', {
         expect(token.length).toBeGreaterThan(32);
         expect(csrf.verify(sessionId, token)).toBe(true);
 
-        const tampered = `${token.slice(0, -1)}0`;
+        const lastChar = token[token.length - 1];
+        const replacement = lastChar === 'a' ? 'b' : 'a';
+        const tampered = `${token.slice(0, -1)}${replacement}`;
+        expect(tampered === token).toBe(false);
         expect(csrf.verify(sessionId, tampered)).toBe(false);
       },
     },

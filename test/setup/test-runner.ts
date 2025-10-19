@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 
 type MaybePromise<T> = T | Promise<T>;
@@ -54,35 +55,29 @@ const getCallingTestFile = (): string | undefined => {
   return undefined;
 };
 
-class TestRunner {
-  private suites: RegisteredSuite[] = [];
-
-const logError = (error: unknown) => {
-  if (error instanceof Error) {
-    console.error(error.stack ?? error.message);
-  } else {
-    console.error(error);
+const formatDuration = (durationMs: number): string => {
+  if (durationMs >= 1000) {
+    return `${(durationMs / 1000).toFixed(2)}s`;
   }
+  return `${durationMs.toFixed(2)}ms`;
 };
 
-export const testRunner = {
+class TestRunnerImpl {
+  private suites: RegisteredSuite[] = [];
+
   registerSuite(name: string, suite: TestSuite): void {
     this.suites.push({ name, suite, file: getCallingTestFile() });
   }
 
-  async run(pattern?: string) {
+  async run(pattern?: string): Promise<{ failed: number; passed: number }> {
     const hasFocusedTests = this.suites.some((entry) => entry.suite.tests.some((test) => test.only));
-    let total = 0;
     let passed = 0;
     let failed = 0;
-    let skipped = 0;
 
     for (const entry of this.suites) {
       const runnableTests: TestCase[] = [];
       for (const test of entry.suite.tests) {
-        total += 1;
         if (test.skip || (hasFocusedTests && !test.only) || !matchesPattern(entry, test, pattern)) {
-          skipped += 1;
           continue;
         }
         runnableTests.push(test);
@@ -99,18 +94,14 @@ export const testRunner = {
         await beforeAll();
       }
 
-      for (const test of tests) {
-        if (suite.beforeEach) {
-          await suite.beforeEach();
+      for (const test of runnableTests) {
+        if (beforeEach) {
+          await beforeEach();
         }
 
         const started = performance.now();
 
         try {
-          if (beforeEach) {
-            await beforeEach();
-          }
-
           await test.fn();
           passed += 1;
           const duration = performance.now() - started;
@@ -120,10 +111,10 @@ export const testRunner = {
           const duration = performance.now() - started;
           console.error(`  ✗ ${test.name} (${formatDuration(duration)})`);
           logError(error);
-        }
-
-        if (suite.afterEach) {
-          await suite.afterEach();
+        } finally {
+          if (afterEach) {
+            await afterEach();
+          }
         }
       }
 
@@ -135,7 +126,17 @@ export const testRunner = {
     console.log(`\nTest Results: ${passed} passed, ${failed} failed`);
 
     return { failed, passed };
-  },
+  }
+}
+
+const logError = (error: unknown) => {
+  if (error instanceof Error) {
+    console.error(error.stack ?? error.message);
+  } else {
+    console.error(error);
+  }
 };
+
+export const testRunner = new TestRunnerImpl();
 
 export type TestRunner = typeof testRunner;
