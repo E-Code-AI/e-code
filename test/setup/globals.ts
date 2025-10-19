@@ -17,19 +17,152 @@ type Expectation<T> = {
   toBeLessThanOrEqual(expected: number): void;
 };
 
-type ExpectFn = <T>(actual: T) => Expectation<T>;
+const isPrimitive = (value: unknown): value is Primitive =>
+  (value !== Object(value)) || typeof value === 'symbol';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var expect: ExpectFn | undefined;
-}
+const toStringTag = (value: unknown): string => Object.prototype.toString.call(value);
+
+const deepEqual = (a: unknown, b: unknown, seen = new WeakMap<object, object>()): boolean => {
+  if (Object.is(a, b)) {
+    return true;
+  }
+
+  if (typeof a !== typeof b) {
+    return false;
+  }
+
+  if (a === null || b === null) {
+    return a === b;
+  }
+
+  if (isPrimitive(a) || isPrimitive(b)) {
+    return a === b;
+  }
+
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) {
+      return false;
+    }
+
+    return a.every((item, index) => deepEqual(item, b[index], seen));
+  }
+
+  if (typeof a === 'object' && typeof b === 'object') {
+    const tagA = toStringTag(a);
+    const tagB = toStringTag(b);
+
+    if (tagA !== tagB) {
+      return false;
+    }
+
+    if (tagA === '[object Date]') {
+      return Object.is((a as Date).getTime(), (b as Date).getTime());
+    }
+
+    if (tagA === '[object RegExp]') {
+      const regexA = a as RegExp;
+      const regexB = b as RegExp;
+      return regexA.source === regexB.source && regexA.flags === regexB.flags;
+    }
+
+    if (tagA === '[object Map]') {
+      const mapA = a as Map<unknown, unknown>;
+      const mapB = b as Map<unknown, unknown>;
+
+      if (mapA.size !== mapB.size) {
+        return false;
+      }
+
+      if (seen.get(mapA as unknown as object) === (mapB as unknown as object)) {
+        return true;
+      }
+      seen.set(mapA as unknown as object, mapB as unknown as object);
+
+      const entriesA = Array.from(mapA.entries());
+      const remaining = Array.from(mapB.entries());
+
+      return entriesA.every(([keyA, valueA]) => {
+        const matchIndex = remaining.findIndex(([keyB, valueB]) =>
+          deepEqual(keyA, keyB, seen) && deepEqual(valueA, valueB, seen),
+        );
+
+        if (matchIndex === -1) {
+          return false;
+        }
+
+        remaining.splice(matchIndex, 1);
+        return true;
+      });
+    }
+
+    if (tagA === '[object Set]') {
+      const setA = a as Set<unknown>;
+      const setB = b as Set<unknown>;
+
+      if (setA.size !== setB.size) {
+        return false;
+      }
+
+      if (seen.get(setA as unknown as object) === (setB as unknown as object)) {
+        return true;
+      }
+      seen.set(setA as unknown as object, setB as unknown as object);
+
+      const remaining = Array.from(setB.values());
+
+      return Array.from(setA.values()).every((valueA) => {
+        const matchIndex = remaining.findIndex((valueB) => deepEqual(valueA, valueB, seen));
+        if (matchIndex === -1) {
+          return false;
+        }
+
+        remaining.splice(matchIndex, 1);
+        return true;
+      });
+    }
+
+    if (ArrayBuffer.isView(a) && ArrayBuffer.isView(b)) {
+      const viewA = a as ArrayBufferView;
+      const viewB = b as ArrayBufferView;
+
+      if (viewA.byteLength !== viewB.byteLength) {
+        return false;
+      }
+
+      const bytesA = new Uint8Array(viewA.buffer, viewA.byteOffset, viewA.byteLength);
+      const bytesB = new Uint8Array(viewB.buffer, viewB.byteOffset, viewB.byteLength);
+
+      for (let i = 0; i < bytesA.length; i += 1) {
+        if (bytesA[i] !== bytesB[i]) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    const objA = a as Record<string | symbol, unknown>;
+    const objB = b as Record<string | symbol, unknown>;
+
+    const protoA = Object.getPrototypeOf(objA);
+    const protoB = Object.getPrototypeOf(objB);
+
+    if (protoA !== protoB) {
+      return false;
+    }
+
+    if (seen.get(objA) === objB) {
+      return true;
+    }
+    seen.set(objA, objB);
+
+    const keysA = Reflect.ownKeys(objA);
+    const keysB = Reflect.ownKeys(objB);
 
 const formatValue = (value: unknown): string =>
   typeof value === 'string' ? `'${value}'` : util.inspect(value, { depth: 4, colors: false });
 
-function ensureNumber(actual: unknown, matcher: string): asserts actual is number {
-  if (typeof actual !== 'number') {
-    throw new Error(`${matcher} matcher requires a numeric actual value`);
+    return keysA.every((key) => Reflect.has(objB, key) && deepEqual(objA[key], objB[key], seen));
   }
 }
 
