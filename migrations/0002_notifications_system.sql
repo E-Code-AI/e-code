@@ -5,7 +5,6 @@ ALTER TABLE "push_notifications"
   ADD COLUMN IF NOT EXISTS "read_at" timestamp;
 
 CREATE TABLE IF NOT EXISTS "notification_preferences" (
-  -- match users.id integer type to keep the foreign key valid
   "user_id" integer PRIMARY KEY,
   "email" jsonb NOT NULL DEFAULT '{}'::jsonb,
   "push" jsonb NOT NULL DEFAULT '{}'::jsonb,
