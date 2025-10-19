@@ -136,9 +136,6 @@ const ProjectPage = () => {
     python: { status: 'inactive', port: 8081 }
   });
   
-  // Get current user for collaboration
-  const { user } = useAuth();
-  
   // Handle agent mode from URL parameters
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
