@@ -53,6 +53,7 @@ The E‑Code platform is organized into modular layers that balance developer pr
 - **Database:** PostgreSQL schema managed by Drizzle ORM migrations in `migrations/` with TypeScript models in `shared/db/`.
 - **Sessions:** `express-session` backed by PostgreSQL or Redis (configurable).
 - **File Storage:** Integrations with Google Cloud Storage (`@google-cloud/storage`) and local disk options for development.
+- **Operational tooling:** The MCP PostgreSQL endpoints (`server/mcp/api/postgres.ts`) now proxy the production-grade `DatabaseManagementService`, returning live table statistics, schema metadata, query execution results, and backup details instead of mock responses.
 
 ## Security Considerations
 
