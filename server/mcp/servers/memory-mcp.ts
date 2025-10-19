@@ -1,11 +1,8 @@
 // @ts-nocheck
 import { createLogger } from '../../utils/logger';
-import { pool } from '../../db';
+import { db } from '../../db';
 import { eq, and, or, desc, sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/neon-serverless';
 import * as schema from '@shared/schema';
-
-const db = drizzle({ client: pool, schema });
 
 const logger = createLogger('memory-mcp');
 

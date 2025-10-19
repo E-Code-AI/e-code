@@ -15,14 +15,19 @@ async function hashPassword(password: string) {
 
 // Initialize the database with default data
 export async function initializeDatabase() {
-  try {
-    console.log("Initializing database...");
-    
-    // Check if tables are created by checking if we have any users
-    const users = await db.select().from(schema.users);
-    if (users && users.length > 0) {
-      console.log("Database already initialized. Skipping initialization.");
-      return;
+  // Add retry logic for database initialization
+  let retries = 3;
+  let lastError = null;
+  
+  while (retries > 0) {
+    try {
+      console.log(`Initializing database... (attempt ${4 - retries})`);
+      
+      // Check if tables are created by checking if we have any users
+      const users = await db.select().from(schema.users);
+      if (users && users.length > 0) {
+        console.log("Database already initialized. Skipping initialization.");
+        return;
     }
     
     // Create admin user
@@ -137,9 +142,23 @@ document.addEventListener('DOMContentLoaded', function() {
       projectId: project.id
     });
     
-    console.log("Database initialized successfully with default data.");
-  } catch (error) {
-    console.error("Error initializing database:", error);
-    throw error;
+      console.log("Database initialized successfully with default data.");
+      return; // Success - exit the function
+      
+    } catch (error) {
+      lastError = error;
+      console.error(`Database initialization attempt failed:`, error.message);
+      retries--;
+      
+      if (retries > 0) {
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, (4 - retries) * 1000));
+      }
+    }
   }
+  
+  // All retries failed
+  console.error("Failed to initialize database after all retries:", lastError);
+  // Don't throw - let the server continue running
+  // Database operations will fail gracefully when accessed
 }
