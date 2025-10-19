@@ -21811,8 +21811,9 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   // Admin - view customer form requests
   app.get('/api/admin/form-requests', ensureAuthenticated, async (req, res) => {
-    const isAdminUser = req.user?.role === 'admin' || req.user?.email?.includes('admin');
-    if (!isAdminUser) {
+    const userId = req.user?.id;
+    const user = userId ? await storage.getUser(userId) : null;
+    if (!user || user.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -21833,8 +21834,9 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
 
   app.patch('/api/admin/form-requests/:id', ensureAuthenticated, async (req, res) => {
-    const isAdminUser = req.user?.role === 'admin' || req.user?.email?.includes('admin');
-    if (!isAdminUser) {
+    const userId = req.user?.id;
+    const user = userId ? await storage.getUser(userId) : null;
+    if (!user || user.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
