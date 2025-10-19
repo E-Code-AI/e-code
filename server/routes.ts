@@ -21810,17 +21810,38 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
 
   // Admin - view customer form requests
-  const requireAdminAccess = (req: Request, res: Response) => {
-    if (req.user?.role === 'admin') {
-      return true;
-    }
+  const requireAdminAccess = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
 
-    res.status(403).json({ error: 'Admin access required' });
-    return false;
+      if (!userId) {
+        res.status(403).json({ error: 'Admin access required' });
+        return false;
+      }
+
+      if ((req.user as any)?.role === 'admin') {
+        return true;
+      }
+
+      const persistedUser = await storage.getUser(String(userId));
+      if (persistedUser?.role === 'admin') {
+        if (req.user) {
+          (req.user as any).role = persistedUser.role;
+        }
+        return true;
+      }
+
+      res.status(403).json({ error: 'Admin access required' });
+      return false;
+    } catch (error) {
+      logger.error('Failed to verify admin access:', error);
+      res.status(500).json({ error: 'Failed to verify admin access' });
+      return false;
+    }
   };
 
   app.get('/api/admin/form-requests', ensureAuthenticated, async (req, res) => {
-    if (!requireAdminAccess(req, res)) {
+    if (!(await requireAdminAccess(req, res))) {
       return;
     }
 
@@ -21841,7 +21862,7 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
 
   app.patch('/api/admin/form-requests/:id', ensureAuthenticated, async (req, res) => {
-    if (!requireAdminAccess(req, res)) {
+    if (!(await requireAdminAccess(req, res))) {
       return;
     }
 
