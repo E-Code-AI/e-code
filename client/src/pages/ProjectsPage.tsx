@@ -120,7 +120,7 @@ interface ProjectWithOwner extends Project {
 const ProjectsPage = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [deleteProjectId, setDeleteProjectId] = useState<number | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -162,18 +162,20 @@ const ProjectsPage = () => {
       const teamsData = await res.json();
       return [
         { id: 'personal', name: 'Personal', icon: User },
-        ...teamsData.map((team: any) => ({ 
-          id: team.id, 
-          name: team.name, 
-          icon: Users 
+        ...teamsData.map((team: any) => ({
+          id: team.id,
+          name: team.name,
+          icon: Users
         }))
       ];
-    }
+    },
+    enabled: !!user
   });
 
   // Fetch folders
   const { data: folders = [] } = useQuery<Array<{ id: string; name: string; count: number }>>({
     queryKey: ['/api/folders'],
+    enabled: !!user
   });
 
   // Fetch pinned projects
@@ -184,7 +186,8 @@ const ProjectsPage = () => {
       if (!res.ok) return [];
       const projects = await res.json();
       return projects.map((p: any) => p.id);
-    }
+    },
+    enabled: !!user
   });
 
   // Query for fetching projects
@@ -196,8 +199,37 @@ const ProjectsPage = () => {
         throw new Error('Failed to fetch projects');
       }
       return res.json();
-    }
+    },
+    enabled: !!user
   });
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <ECodeLoading size="lg" text="Checking your session..." />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Card className="max-w-lg text-center">
+          <CardHeader>
+            <CardTitle>Sign in to view your projects</CardTitle>
+            <CardDescription>
+              You need an active session to access workspaces and project data. Please log in to continue.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => (window.location.href = '/login')} className="w-full">
+              Go to login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Filter and sort projects
   const filteredProjects = useMemo(() => {
