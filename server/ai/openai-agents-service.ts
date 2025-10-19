@@ -123,7 +123,7 @@ export class OpenAIAgentsService {
         - Create unit tests and documentation
         - Analyze code for security vulnerabilities
         Always provide clean, production-ready code with best practices.`,
-      model: 'gpt-4o',
+      model: 'gpt-4-turbo-preview',
       tools: [
         { type: 'code_interpreter' },
         { type: 'file_search' }
@@ -145,7 +145,7 @@ export class OpenAIAgentsService {
         - Compare and analyze multiple sources
         - Generate reports and insights
         Provide accurate, well-sourced information with citations when possible.`,
-      model: 'gpt-4o',
+      model: 'gpt-4-turbo-preview',
       tools: [
         { type: 'file_search' }
       ],
@@ -166,7 +166,7 @@ export class OpenAIAgentsService {
         - Handle errors and retry operations
         - Optimize workflows for efficiency
         Execute tasks step by step, verify results, and provide clear status updates.`,
-      model: 'gpt-4o',
+      model: 'gpt-4-turbo-preview',
       tools: [
         ...functions.map(fn => ({ type: 'function' as const, function: fn })),
         { type: 'code_interpreter' }
@@ -270,7 +270,7 @@ export class OpenAIAgentsService {
       // Track usage for billing
       if (runStatus.usage) {
         await aiBillingService.trackAIUsage(userId, {
-          model: runStatus.model || 'gpt-4o',
+          model: runStatus.model || 'gpt-5',
           provider: 'OpenAI',
           inputTokens: runStatus.usage.prompt_tokens || 0,
           outputTokens: runStatus.usage.completion_tokens || 0,
@@ -374,39 +374,11 @@ export class OpenAIAgentsService {
   }>> {
     return [
       {
-        id: 'gpt-4o',
-        name: 'GPT-4 Omni',
-        capabilities: ['chat', 'vision', 'function_calling', 'code_interpreter', 'file_search'],
-        contextWindow: 128000,
-        maxOutput: 4096,
-      },
-      {
-        id: 'gpt-4o-mini',
-        name: 'GPT-4 Omni Mini',
-        capabilities: ['chat', 'vision', 'function_calling'],
-        contextWindow: 128000,
-        maxOutput: 16384,
-      },
-      {
-        id: 'o1-preview',
-        name: 'O1 Preview (Reasoning)',
-        capabilities: ['chat', 'reasoning', 'complex_analysis'],
-        contextWindow: 128000,
+        id: 'gpt-5',
+        name: 'GPT-5 (Latest)',
+        capabilities: ['chat', 'vision', 'function_calling', 'code_interpreter', 'file_search', 'reasoning', 'complex_analysis'],
+        contextWindow: 256000,
         maxOutput: 32768,
-      },
-      {
-        id: 'o1-mini',
-        name: 'O1 Mini (Fast Reasoning)',
-        capabilities: ['chat', 'reasoning'],
-        contextWindow: 128000,
-        maxOutput: 65536,
-      },
-      {
-        id: 'gpt-3.5-turbo',
-        name: 'GPT-3.5 Turbo',
-        capabilities: ['chat', 'function_calling'],
-        contextWindow: 16385,
-        maxOutput: 4096,
       },
     ];
   }

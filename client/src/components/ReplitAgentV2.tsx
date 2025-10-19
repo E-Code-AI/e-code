@@ -343,7 +343,7 @@ export const ReplitAgentV2: React.FC<ReplitAgentV2Props> = ({
         expandable: true,
         expanded: false,
         details: [
-          'I see the issue - you\'re getting 404 errors because the project routing system is looking for projects with ID 1003, but the correct format should be /@username/projectslug. Let me investigate and fix this routing issue.'
+          'I see the issue - you\'re getting 404 errors because the project routing system is looking for projects with ID 1003, but the correct format should be /u/username/projectslug. Let me investigate and fix this routing issue.'
         ],
         children: [
           {

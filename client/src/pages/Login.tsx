@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2, Code } from 'lucide-react';
 import { Link } from 'wouter';
+import { getProjectUrl } from '@/lib/utils';
 
 export default function Login() {
   const [, navigate] = useLocation();
@@ -38,7 +39,8 @@ export default function Login() {
         const project = await response.json();
         // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
-        navigate(`/@${project.owner?.username || 'user'}/${project.slug}?agent=true&prompt=${encodeURIComponent(description)}`);
+        const projectUrl = getProjectUrl(project, project.owner?.username);
+        navigate(`${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`);
       }
     } catch (error) {
       console.error('Failed to create project:', error);
@@ -165,22 +167,26 @@ export default function Login() {
                 )}
               </Button>
               
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  setFormData({ username: 'admin', password: 'admin' });
-                  // Trigger form submit after setting values
-                  setTimeout(() => {
-                    const form = document.querySelector('form') as HTMLFormElement;
-                    if (form) form.requestSubmit();
-                  }, 100);
-                }}
-              >
-                <Code className="mr-2 h-4 w-4" />
-                Quick Login (admin/admin)
-              </Button>
+              {/* Only show Quick Login in development mode */}
+              {import.meta.env.DEV && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    // Use test credentials only in development
+                    setFormData({ username: 'testuser', password: 'testpass' });
+                    // Trigger form submit after setting values
+                    setTimeout(() => {
+                      const form = document.querySelector('form') as HTMLFormElement;
+                      if (form) form.requestSubmit();
+                    }, 100);
+                  }}
+                >
+                  <Code className="mr-2 h-4 w-4" />
+                  Quick Login (Development Only)
+                </Button>
+              )}
               
               <div className="text-center text-sm text-muted-foreground">
                 Don't have an account?{' '}

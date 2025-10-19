@@ -21,7 +21,19 @@ import {
   Edit,
   Copy,
   Trash,
-  Zap
+  Zap,
+  Search,
+  Filter,
+  Clock,
+  Eye,
+  Users,
+  Share2,
+  Code2,
+  Folder,
+  GitBranch,
+  Star,
+  Grid3x3,
+  List
 } from 'lucide-react';
 import { CreditBalance } from '@/components/CreditBalance';
 import { useAuth } from '@/hooks/use-auth';
@@ -34,6 +46,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { getProjectUrl } from '@/lib/utils';
 
 
 // Icon mapping for quick actions
@@ -115,6 +128,10 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [aiPrompt, setAiPrompt] = useState('');
   const [showBanner, setShowBanner] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterTag, setFilterTag] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
 
   // Fetch recent projects with deployment status
   const { data: recentProjects = [], isLoading } = useQuery<ProjectWithDeployment[]>({
@@ -145,7 +162,7 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          name: aiPrompt.slice(0, 30),
+          name: aiPrompt,
           description: aiPrompt,
           language: 'javascript',
           visibility: 'private'
@@ -159,14 +176,10 @@ export default function Dashboard() {
         // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, aiPrompt);
         
-        // Ensure we have the owner username and slug
-        const ownerUsername = project.owner?.username || user?.username || 'admin';
-        // Use slug if available, otherwise fallback to name (which should be slugified)
-        const projectSlug = project.slug || project.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-        const projectUrl = `/@${ownerUsername}/${projectSlug}`;
+        const projectUrl = getProjectUrl(project, user?.username);
         console.log(`Navigating to: ${projectUrl}`);
         console.log('Project has slug:', project.slug);
-        
+
         // Add a small delay to ensure project is fully created and indexed
         setTimeout(() => {
           // Use window.location for full page reload to ensure auth state is fresh
@@ -211,11 +224,9 @@ export default function Dashboard() {
         // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, prompt);
         
-        // Ensure we have the owner username
-        const ownerUsername = project.owner?.username || user?.username || 'admin';
-        const projectUrl = `/@${ownerUsername}/${project.slug}`;
+        const projectUrl = getProjectUrl(project, user?.username);
         console.log(`Navigating to: ${projectUrl}`);
-        
+
         // Add a small delay to ensure project is fully created and indexed
         setTimeout(() => {
           // Use window.location for full page reload to ensure auth state is fresh
@@ -234,6 +245,26 @@ export default function Dashboard() {
       console.error('Failed to create project:', error);
     }
   };
+
+  // Filter projects based on search and filter
+  const filteredProjects = recentProjects.filter(project => {
+    // Search filter
+    if (searchQuery && !project.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    
+    // Tag filter
+    if (filterTag !== 'all') {
+      if (filterTag === 'deployed' && !project.isDeployed) return false;
+      if (filterTag === 'private' && project.visibility !== 'private') return false;
+      if (filterTag === 'public' && project.visibility !== 'public') return false;
+    }
+    
+    return true;
+  });
+
+  // Get unique languages/tags from projects
+  const projectTags = ['all', 'deployed', 'private', 'public'];
 
   if (isLoading) {
     return <ECodeLoading size="lg" />;
@@ -360,7 +391,7 @@ export default function Dashboard() {
 
 
 
-        {/* Your recent Apps */}
+        {/* Your recent Apps - Enhanced Section */}
         <div>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-medium text-[var(--ecode-text)]">
@@ -376,23 +407,185 @@ export default function Dashboard() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+          
+          {/* Search and Filter Bar */}
+          <div className="flex items-center gap-3 mb-6">
+            {/* Search input */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ecode-text-secondary)]" />
+              <input
+                type="text"
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-lg text-sm text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+              />
+            </div>
+            
+            {/* Filter buttons */}
+            <div className="flex items-center gap-2 border-l pl-3">
+              {projectTags.map(tag => (
+                <Button
+                  key={tag}
+                  variant={filterTag === tag ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 px-3 text-xs capitalize"
+                  onClick={() => setFilterTag(tag)}
+                >
+                  {tag === 'all' ? 'All' : tag}
+                </Button>
+              ))}
+            </div>
+            
+            {/* View mode toggle */}
+            <div className="flex items-center gap-1 border-l pl-3">
+              <Button
+                variant={viewMode === 'grid' ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid3x3 className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
 
-          {recentProjects.length === 0 ? (
+          {filteredProjects.length === 0 ? (
             <Card className="p-16 text-center bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-lg">
               <p className="text-[var(--ecode-text-secondary)] text-base">
-                No apps yet. Create your first one above!
+                {searchQuery || filterTag !== 'all' 
+                  ? 'No apps match your search criteria' 
+                  : 'No apps yet. Create your first one above!'}
               </p>
             </Card>
+          ) : viewMode === 'grid' ? (
+            // Grid view with enhanced cards
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredProjects.map((project) => (
+                <Card 
+                  key={project.id}
+                  className="group relative overflow-hidden bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-violet-500/50 transition-all duration-300 cursor-pointer hover:shadow-lg"
+                  onClick={() => {
+                    const ownerUsername = project.owner?.username || user?.username || 'admin';
+                    const projectUrl = project.slug ? `/u/${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+                    navigate(projectUrl);
+                  }}
+                >
+                  {/* Thumbnail/Preview area */}
+                  <div className="aspect-video bg-gradient-to-br from-violet-500/10 to-blue-500/10 border-b border-[var(--ecode-border)] relative">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Code2 className="h-12 w-12 text-[var(--ecode-text-secondary)]/20" />
+                    </div>
+                    {project.isDeployed && (
+                      <Badge className="absolute top-2 right-2 bg-green-500/90 text-white border-0">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Live
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Card content */}
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base text-[var(--ecode-text)] truncate">
+                          {project.name}
+                        </h3>
+                        <p className="text-xs text-[var(--ecode-text-secondary)] mt-1 line-clamp-2">
+                          {project.description || 'No description'}
+                        </p>
+                      </div>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            const ownerUsername = project.owner?.username || user?.username || 'admin';
+                            const projectUrl = project.slug ? `/u/${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+                            navigate(projectUrl);
+                          }}>
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Open
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                            <Share2 className="h-4 w-4 mr-2" />
+                            Share
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                            <GitBranch className="h-4 w-4 mr-2" />
+                            Fork
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Trash className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    
+                    {/* Stats row */}
+                    <div className="flex items-center justify-between text-xs text-[var(--ecode-text-secondary)]">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{getTimeAgo(project.updatedAt)}</span>
+                        </div>
+                        {project.stats?.views && (
+                          <div className="flex items-center gap-1">
+                            <Eye className="h-3 w-3" />
+                            <span>{project.stats.views}</span>
+                          </div>
+                        )}
+                        {project.collaborators?.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            <span>{project.collaborators.length}</span>
+                          </div>
+                        )}
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        {project.language || 'JavaScript'}
+                      </Badge>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           ) : (
+            // List view (existing style but enhanced)
             <div className="space-y-3">
-              {recentProjects.slice(0, 3).map((project) => (
+              {filteredProjects.map((project) => (
                 <div
                   key={project.id}
                   className="group bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[var(--ecode-border-hover)] transition-colors cursor-pointer rounded-lg p-4"
                   onClick={() => {
-                    // Navigate to the proper Replit-style URL format
-                    const ownerUsername = project.owner?.username || user?.username || 'admin';
-                    const projectUrl = project.slug ? `/@${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+                    const projectUrl = getProjectUrl(project, user?.username);
                     navigate(projectUrl);
                   }}
                 >
@@ -428,8 +621,8 @@ export default function Dashboard() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => {
-                            const ownerUsername = project.owner?.username || user?.username || 'admin';
-                            const projectUrl = project.slug ? `/@${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+                            const ownerUsername = project.owner?.username || user?.username;
+                            const projectUrl = getProjectUrl(project, ownerUsername);
                             navigate(projectUrl);
                           }}>
                             <ExternalLink className="h-4 w-4 mr-2" />

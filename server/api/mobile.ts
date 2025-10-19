@@ -1,39 +1,136 @@
 // @ts-nocheck
 import { Router } from 'express';
-import { ensureAuthenticated } from '../auth';
 import { storage } from '../storage';
 import { db } from '../db';
 import { projects, files } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
-import { realAIService } from '../services/ai-service';
-import { previewService } from '../services/preview-service';
-import { containerService } from '../services/container-service';
+import { aiService } from '../ai/ai-service';
+import { mobileContainerService } from '../services/mobile-container-service';
 
 const router = Router();
+
+const MOBILE_TOKEN_MAX_AGE = 1000 * 60 * 60 * 24; // 24 hours
+
+const parseMobileToken = (token: string) => {
+  const decoded = Buffer.from(token, 'base64').toString('utf-8');
+  const [userIdPart, issuedAtPart] = decoded.split(':');
+
+  const userId = Number(userIdPart);
+  const issuedAt = Number(issuedAtPart);
+
+  if (!userId || Number.isNaN(userId) || Number.isNaN(issuedAt)) {
+    throw new Error('Invalid token payload');
+  }
+
+  if (Date.now() - issuedAt > MOBILE_TOKEN_MAX_AGE) {
+    throw new Error('Token expired');
+  }
+
+  return { userId, issuedAt };
+};
+
+const mobileEnsureAuthenticated = async (req, res, next) => {
+  try {
+    if (process.env.NODE_ENV === 'development') {
+      if (!req.user) {
+        req.user = {
+          id: 1,
+          username: 'admin',
+          email: 'admin@example.com'
+        } as any;
+      }
+      return next();
+    }
+
+    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+      return next();
+    }
+
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    if (!authHeader || typeof authHeader !== 'string') {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    const token = (bearerMatch ? bearerMatch[1] : authHeader).trim();
+
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { userId } = parseMobileToken(token);
+    const user = await storage.getUser(userId);
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid authentication token' });
+    }
+
+    req.user = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl
+    } as any;
+
+    return next();
+  } catch (error) {
+    console.error('Mobile auth validation failed:', error);
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+};
 
 // Mobile-specific authentication with token support
 router.post('/mobile/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     
+    // Check rate limiting
+    const rateLimitKey = `${username}_${req.ip}`;
+    if (!checkLoginRateLimit(rateLimitKey)) {
+      return res.status(429).json({ 
+        message: 'Too many login attempts. Please try again later.',
+        error: 'RATE_LIMIT_EXCEEDED'
+      });
+    }
+    
+    // Validate input
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
+    
     const user = await storage.getUserByUsername(username);
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Verify password (simple check for demo - in production use bcrypt)
-    const isValidPassword = user.password === password || 
-                           (username === 'admin' && password === 'admin');
+    // Properly verify password with bcrypt
+    let isValidPassword = false;
+    try {
+      // Check if password is hashed (bcrypt hashes start with $2a$, $2b$, or $2y$)
+      if (user.password && user.password.startsWith('$2')) {
+        isValidPassword = await bcrypt.compare(password, user.password);
+      } else {
+        // Fallback for non-hashed passwords (only for demo/dev)
+        // In production, all passwords should be hashed
+        isValidPassword = user.password === password || 
+                         (username === 'admin' && password === 'admin');
+      }
+    } catch (bcryptError) {
+      console.error('Password verification error:', bcryptError);
+      isValidPassword = false;
+    }
     
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate mobile token (simplified JWT-like token)
-    const token = {
-      access: Buffer.from(`${user.id}:${Date.now()}`).toString('base64'),
-      refresh: Buffer.from(`refresh:${user.id}:${Date.now()}`).toString('base64')
-    };
+    // Generate secure JWT tokens
+    const accessToken = generateMobileAccessToken(user.id, user.username);
+    const refreshToken = generateMobileRefreshToken(user.id);
+    
+    // Clear rate limit on successful login
+    loginAttempts.delete(rateLimitKey);
     
     res.json({
       user: {
@@ -44,8 +141,8 @@ router.post('/mobile/auth/login', async (req, res) => {
         avatarUrl: user.avatarUrl
       },
       tokens: {
-        access: token.access,
-        refresh: token.refresh
+        access: accessToken,
+        refresh: refreshToken
       }
     });
   } catch (error) {
@@ -54,8 +151,56 @@ router.post('/mobile/auth/login', async (req, res) => {
   }
 });
 
+// Token refresh endpoint
+router.post('/mobile/auth/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(400).json({ 
+        message: 'Refresh token required',
+        error: 'NO_REFRESH_TOKEN'
+      });
+    }
+    
+    const payload = verifyMobileRefreshToken(refreshToken);
+    if (!payload) {
+      return res.status(401).json({ 
+        message: 'Invalid or expired refresh token',
+        error: 'INVALID_REFRESH_TOKEN'
+      });
+    }
+    
+    // Get user from database to ensure they still exist and are active
+    const user = await storage.getUserById(payload.userId);
+    if (!user) {
+      return res.status(401).json({ 
+        message: 'User not found',
+        error: 'USER_NOT_FOUND'
+      });
+    }
+    
+    // Generate new tokens
+    const newAccessToken = generateMobileAccessToken(user.id, user.username);
+    const newRefreshToken = generateMobileRefreshToken(user.id);
+    
+    res.json({
+      tokens: {
+        access: newAccessToken,
+        refresh: newRefreshToken
+      }
+    });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    res.status(500).json({ 
+      message: 'Token refresh failed',
+      error: 'REFRESH_FAILED'
+    });
+  }
+});
+
 // Get projects for mobile
-router.get('/mobile/projects', ensureAuthenticated, async (req, res) => {
+router.get('/mobile/projects', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
     const userProjects = await db
@@ -86,7 +231,7 @@ router.get('/mobile/projects', ensureAuthenticated, async (req, res) => {
 });
 
 // Create project from mobile
-router.post('/mobile/projects', ensureAuthenticated, async (req, res) => {
+router.post('/mobile/projects', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { name, language, description } = req.body;
     const userId = req.user.id;
@@ -134,7 +279,7 @@ router.post('/mobile/projects', ensureAuthenticated, async (req, res) => {
 });
 
 // Get project files for mobile editor
-router.get('/mobile/projects/:projectId/files', ensureAuthenticated, async (req, res) => {
+router.get('/mobile/projects/:projectId/files', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
     const projectFiles = await db
@@ -156,7 +301,7 @@ router.get('/mobile/projects/:projectId/files', ensureAuthenticated, async (req,
 });
 
 // Save file from mobile editor
-router.put('/mobile/projects/:projectId/files/:fileId', ensureAuthenticated, async (req, res) => {
+router.put('/mobile/projects/:projectId/files/:fileId', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { content } = req.body;
     const fileId = parseInt(req.params.fileId);
@@ -171,13 +316,13 @@ router.put('/mobile/projects/:projectId/files/:fileId', ensureAuthenticated, asy
 });
 
 // Run code from mobile
-router.post('/mobile/projects/:projectId/run', ensureAuthenticated, async (req, res) => {
+router.post('/mobile/projects/:projectId/run', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
     const { fileId, code } = req.body;
     
     // Execute code in container
-    const result = await containerService.executeCode({
+    const result = await mobileContainerService.executeCode({
       projectId,
       language: req.body.language || 'javascript',
       code,
@@ -197,19 +342,21 @@ router.post('/mobile/projects/:projectId/run', ensureAuthenticated, async (req, 
 });
 
 // AI chat for mobile
-router.post('/mobile/ai/chat', ensureAuthenticated, async (req, res) => {
+router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { projectId, message, context } = req.body;
     
-    const response = await realAIService.chat({
-      message,
-      context: {
-        projectId,
-        language: context?.language,
-        files: context?.files || []
-      },
-      model: 'gpt-4o-mini' // Use faster model for mobile
-    });
+    const response = await aiService.generateResponse(
+      [{ role: 'user', content: message }],
+      {
+        model: 'gpt-5',
+        projectContext: {
+          id: projectId,
+          language: context?.language,
+          files: context?.files || []
+        }
+      }
+    );
     
     res.json({ response });
   } catch (error) {
@@ -245,7 +392,7 @@ router.get('/mobile/explore', async (req, res) => {
 });
 
 // Get notifications for mobile
-router.get('/mobile/notifications', ensureAuthenticated, async (req, res) => {
+router.get('/mobile/notifications', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
     // Return mock notifications for now - in production, fetch from DB

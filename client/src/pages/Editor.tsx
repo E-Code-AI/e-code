@@ -260,6 +260,7 @@ export default function Editor() {
         bottomPanel={
           <BottomPanel
             activeFile={activeFile}
+            projectId={project?.id}
           />
         }
       />

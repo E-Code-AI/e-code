@@ -53,6 +53,7 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { getProjectUrl } from '@/lib/utils';
 import type { Project } from '@shared/schema';
 
 export function SpotlightSearch() {
@@ -308,7 +309,7 @@ export function SpotlightSearch() {
               {recentProjects.slice(0, 5).map((project) => (
                 <CommandItem
                   key={project.id}
-                  onSelect={() => handleSelect(() => navigate(`/${project.slug}`))}
+                  onSelect={() => handleSelect(() => navigate(getProjectUrl(project, project.owner?.username)))}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   <span>{project.name}</span>

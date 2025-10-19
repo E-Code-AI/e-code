@@ -130,7 +130,7 @@ export function ReplitCoreServices() {
         body: JSON.stringify({
           code: `
             const API_KEY = "sk-1234567890abcdef";
-            const password = "admin123";
+            const password = "p@ssw0rd";
             app.use(cors());
             eval(userInput);
           `

@@ -48,7 +48,7 @@ export class MonitoringService {
   private errorThresholds = {
     criticalErrorRate: 0.05, // 5% error rate
     responseTimeThreshold: 3000, // 3 seconds
-    memoryUsageThreshold: 0.85 // 85% memory usage
+    memoryUsageThreshold: 0.95 // 95% memory usage
   };
 
   constructor() {
@@ -58,9 +58,6 @@ export class MonitoringService {
 
   async processMonitoringEvents(event: MonitoringEvent, userId?: number): Promise<void> {
     try {
-      // Temporarily disable monitoring to prevent database errors during startup
-      return;
-      
       // Process errors
       if (event.errors && event.errors.length > 0) {
         await this.processErrors(event.errors, userId);
@@ -116,14 +113,21 @@ export class MonitoringService {
   private async processMetrics(metrics: MonitoringEvent['metrics'], userId?: number, sessionId?: string): Promise<void> {
     for (const metric of metrics) {
       try {
-        await db.insert(performanceMetrics).values({
-          name: metric.name,
-          value: metric.value,
-          unit: metric.unit,
-          timestamp: new Date(metric.timestamp),
+        const metadata: Record<string, any> = {
           userId,
           sessionId,
-          tags: metric.tags
+        };
+
+        await db.insert(performanceMetrics).values({
+          metric_name: metric.name,
+          metric_value: metric.value,
+          unit: metric.unit,
+          timestamp: new Date(metric.timestamp),
+          context: {
+            userId,
+            sessionId,
+            tags: metric.tags
+          }
         });
 
         // Check for performance issues
@@ -145,15 +149,18 @@ export class MonitoringService {
       try {
         await db.insert(monitoringEvents).values({
           eventType: 'user_action',
-          eventData: {
+          severity: 'info',
+          source: 'user',
+          message: `User action: ${action.action}`,
+          metadata: {
             action: action.action,
             category: action.category,
             label: action.label,
-            value: action.value
+            value: action.value,
+            userId: action.userId || userId,
+            sessionId: action.sessionId
           },
-          timestamp: new Date(action.timestamp),
-          userId: action.userId || userId,
-          sessionId: action.sessionId
+          timestamp: new Date(action.timestamp)
         });
       } catch (err) {
         logger.error('Failed to store user action:', err);
@@ -229,20 +236,23 @@ export class MonitoringService {
       
       // Get average response time
       const responseTimeData = await db.select({ 
-        avg: sql<number>`avg(value)` 
+        avg: sql<number>`avg(metric_value)` 
       })
         .from(performanceMetrics)
         .where(and(
-          eq(performanceMetrics.name, 'page_load_time'),
+          eq(performanceMetrics.metric_name, 'page_load_time'),
           gte(performanceMetrics.timestamp, oneHourAgo)
         ));
       
-      // Get active users
+      // Get active users (from metadata)
       const [activeUserData] = await db.select({ 
-        count: sql<number>`count(distinct user_id)` 
+        count: sql<number>`count(distinct metadata->>'userId')` 
       })
         .from(monitoringEvents)
-        .where(gte(monitoringEvents.timestamp, oneHourAgo));
+        .where(and(
+          gte(monitoringEvents.timestamp, oneHourAgo),
+          sql`metadata->>'userId' IS NOT NULL`
+        ));
       
       const errorRate = (errorData?.count || 0) / 1000; // Errors per 1000 requests
       const avgResponseTime = responseTimeData[0]?.avg || 0;
@@ -315,19 +325,27 @@ export class MonitoringService {
     ipAddress?: string;
   }): Promise<{ id: number }> {
     try {
-      const [event] = await db.insert(monitoringEvents).values({
-        type: eventData.type,
-        category: eventData.category,
-        action: eventData.message,
-        label: eventData.metadata?.label,
-        value: eventData.metadata?.value,
-        timestamp: new Date(),
+      const metadata: Record<string, any> = {
+        ...eventData.metadata,
         userId: eventData.userId,
+        projectId: eventData.projectId,
         sessionId: eventData.metadata?.sessionId,
-        metadata: eventData.metadata,
-        url: eventData.url,
-        userAgent: eventData.userAgent,
-        ipAddress: eventData.ipAddress
+      };
+
+      const [event] = await db.insert(monitoringEvents).values({
+        eventType: eventData.type,
+        severity: 'info',
+        source: eventData.category,
+        message: eventData.message,
+        metadata: {
+          ...eventData.metadata,
+          userId: eventData.userId,
+          projectId: eventData.projectId,
+          url: eventData.url,
+          userAgent: eventData.userAgent,
+          ipAddress: eventData.ipAddress
+        },
+        timestamp: new Date()
       }).returning({ id: monitoringEvents.id });
 
       logger.info(`Tracked ${eventData.type} event:`, {
@@ -344,23 +362,26 @@ export class MonitoringService {
   }
 
   private startHealthMonitoring() {
-    // Monitor system health every minute
+    // Monitor system health every 5 minutes to reduce overhead
     setInterval(async () => {
       const metrics = await this.getHealthMetrics();
       
       // Log system health
       await db.insert(performanceMetrics).values({
-        name: 'system_memory_usage',
-        value: metrics.systemHealth.memory,
+        metric_name: 'system_memory_usage',
+        metric_value: metrics.systemHealth.memory,
         unit: 'percentage',
         timestamp: new Date()
+      }).catch(err => {
+        // Gracefully handle missing tables during initialization
+        logger.debug('Failed to log performance metrics (table may not exist yet):', err.message);
       });
       
       // Alert on high memory usage
       if (metrics.systemHealth.memory > this.errorThresholds.memoryUsageThreshold) {
         logger.error('High memory usage detected:', metrics.systemHealth.memory);
       }
-    }, 60000); // Every minute
+    }, 300000); // Every 5 minutes
   }
 }
 

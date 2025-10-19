@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { cn } from '@/lib/utils';
+import { cn, getProjectUrl } from '@/lib/utils';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -264,12 +264,8 @@ const ProjectsPage = () => {
         title: "Great! Your project is ready",
         description: `"${project.name}" is all set up. Let's start creating!`,
       });
-      // Navigate to the new project using Replit-style URL
-      if (user?.username && project.slug) {
-        setLocation(`/@${user.username}/${project.slug}`);
-      } else {
-        setLocation(`/project/${project.id}`);
-      }
+      const projectUrl = getProjectUrl(project, user?.username);
+      setLocation(projectUrl);
     },
     onError: (error: Error) => {
       toast({
@@ -494,11 +490,8 @@ const ProjectsPage = () => {
   const handleProjectClick = (project: Project) => {
     trackViewMutation.mutate(project.id);
     // Use new Replit-style URL format if we have owner and slug
-    if (project.owner?.username && project.slug) {
-      setLocation(`/@${project.owner.username}/${project.slug}`);
-    } else {
-      setLocation(`/project/${project.id}`);
-    }
+    const projectUrl = getProjectUrl(project, project.owner?.username);
+    setLocation(projectUrl);
   };
 
   // Function to get language icon
