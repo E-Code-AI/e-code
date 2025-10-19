@@ -61,7 +61,7 @@ if (process.env.REPL_ID || process.env.REPLIT_DOMAINS) {
 
 // Add localhost for development
 if (process.env.NODE_ENV === 'development' || configuredOrigins.length === 0) {
-  configuredOrigins.push('http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000');
+  configuredOrigins.push('http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000', 'http://127.0.0.1:5000');
 }
 
 // Ensure we always have some allowed origins for production
