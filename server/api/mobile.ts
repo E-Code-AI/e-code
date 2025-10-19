@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { Router } from 'express';
+import crypto from 'crypto';
 import { storage } from '../storage';
 import { db } from '../db';
 import { projects, files } from '@shared/schema';
@@ -10,23 +11,87 @@ import { mobileContainerService } from '../services/mobile-container-service';
 const router = Router();
 
 const MOBILE_TOKEN_MAX_AGE = 1000 * 60 * 60 * 24; // 24 hours
+const MOBILE_TOKEN_SECRET = process.env.MOBILE_TOKEN_SECRET || process.env.SESSION_SECRET;
 
-const parseMobileToken = (token: string) => {
-  const decoded = Buffer.from(token, 'base64').toString('utf-8');
-  const [userIdPart, issuedAtPart] = decoded.split(':');
+const assertMobileTokenSecret = () => {
+  if (!MOBILE_TOKEN_SECRET) {
+    throw new Error('Mobile token secret is not configured');
+  }
+  return MOBILE_TOKEN_SECRET;
+};
 
-  const userId = Number(userIdPart);
-  const issuedAt = Number(issuedAtPart);
+const base64Encode = (value: string) => Buffer.from(value, 'utf-8').toString('base64');
+const base64Decode = (value: string) => Buffer.from(value, 'base64').toString('utf-8');
 
-  if (!userId || Number.isNaN(userId) || Number.isNaN(issuedAt)) {
+const createSignature = (payloadBase64: string, secret: string) =>
+  crypto.createHmac('sha256', secret).update(payloadBase64).digest();
+
+const createMobileToken = (userId: number, type: 'access' | 'refresh') => {
+  const secret = assertMobileTokenSecret();
+  const payload = {
+    userId,
+    issuedAt: Date.now(),
+    type
+  };
+
+  const payloadBase64 = base64Encode(JSON.stringify(payload));
+  const signature = createSignature(payloadBase64, secret).toString('base64');
+
+  return `${payloadBase64}.${signature}`;
+};
+
+const parseMobileToken = (token: string, expectedType: 'access' | 'refresh') => {
+  const secret = assertMobileTokenSecret();
+  const parts = token.split('.');
+
+  if (parts.length !== 2) {
+    throw new Error('Invalid token format');
+  }
+
+  const [payloadBase64, signatureBase64] = parts;
+
+  if (!payloadBase64 || !signatureBase64) {
+    throw new Error('Invalid token format');
+  }
+
+  const expectedSignature = createSignature(payloadBase64, secret);
+  const providedSignature = Buffer.from(signatureBase64, 'base64');
+
+  if (
+    providedSignature.length !== expectedSignature.length ||
+    !crypto.timingSafeEqual(providedSignature, expectedSignature)
+  ) {
+    throw new Error('Invalid token signature');
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(base64Decode(payloadBase64));
+  } catch (error) {
     throw new Error('Invalid token payload');
   }
 
-  if (Date.now() - issuedAt > MOBILE_TOKEN_MAX_AGE) {
+  const { userId, issuedAt, type } = payload;
+  const numericUserId = Number(userId);
+  const numericIssuedAt = Number(issuedAt);
+
+  if (type !== expectedType) {
+    throw new Error('Invalid token type');
+  }
+
+  if (
+    !Number.isInteger(numericUserId) ||
+    numericUserId <= 0 ||
+    !Number.isFinite(numericIssuedAt)
+  ) {
+    throw new Error('Invalid token payload');
+  }
+
+  if (Date.now() - numericIssuedAt > MOBILE_TOKEN_MAX_AGE) {
     throw new Error('Token expired');
   }
 
-  return { userId, issuedAt };
+  return { userId: numericUserId, issuedAt: numericIssuedAt };
 };
 
 const mobileEnsureAuthenticated = async (req, res, next) => {
@@ -58,7 +123,7 @@ const mobileEnsureAuthenticated = async (req, res, next) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { userId } = parseMobileToken(token);
+    const { userId } = parseMobileToken(token, 'access');
     const user = await storage.getUser(userId);
 
     if (!user) {
@@ -100,8 +165,8 @@ router.post('/mobile/auth/login', async (req, res) => {
 
     // Generate mobile token (simplified JWT-like token)
     const token = {
-      access: Buffer.from(`${user.id}:${Date.now()}`).toString('base64'),
-      refresh: Buffer.from(`refresh:${user.id}:${Date.now()}`).toString('base64')
+      access: createMobileToken(user.id, 'access'),
+      refresh: createMobileToken(user.id, 'refresh')
     };
     
     res.json({
