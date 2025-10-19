@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 // Lazy load all pages for better performance
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -237,6 +238,7 @@ function AppContent() {
     <ErrorBoundary>
       <TooltipProvider>
         <div className="min-h-screen replit-layout-main">
+          <ScrollToTop />
           <Toaster />
           <SpotlightSearch />
           <CommandPalette />
