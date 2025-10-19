@@ -1,4 +1,3 @@
--- Ensure notification_preferences.user_id uses integer type and constraints
 DO $$
 BEGIN
   IF EXISTS (
@@ -8,6 +7,27 @@ BEGIN
       AND column_name = 'user_id'
       AND data_type <> 'integer'
   ) THEN
+    -- Drop constraints that depend on the column type so it can be converted.
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.table_constraints
+      WHERE table_name = 'notification_preferences'
+        AND constraint_name = 'notification_preferences_user_id_users_id_fk'
+    ) THEN
+      ALTER TABLE "notification_preferences"
+        DROP CONSTRAINT "notification_preferences_user_id_users_id_fk";
+    END IF;
+
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.table_constraints
+      WHERE table_name = 'notification_preferences'
+        AND constraint_type = 'PRIMARY KEY'
+    ) THEN
+      ALTER TABLE "notification_preferences"
+        DROP CONSTRAINT IF EXISTS "notification_preferences_pkey";
+    END IF;
+
     ALTER TABLE "notification_preferences"
       ALTER COLUMN "user_id" TYPE integer USING "user_id"::integer;
   END IF;

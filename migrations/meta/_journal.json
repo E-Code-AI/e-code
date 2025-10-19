@@ -27,7 +27,7 @@
       "idx": 3,
       "version": "7",
       "when": 1754571040706,
-      "tag": "0003_align_notification_preferences_user_id",
+      "tag": "0003_notification_preferences_fk_fix",
       "breakpoints": true
     }
   ]
