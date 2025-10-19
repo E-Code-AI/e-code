@@ -24,12 +24,18 @@ import {
   GpuUsage, InsertGpuUsage,
   Assignment, InsertAssignment,
   Submission, InsertSubmission,
+<<<<<<< HEAD
   Template, InsertTemplate,
   PromptTemplate, InsertPromptTemplate,
   CustomPrompt, InsertCustomPrompt,
   ProjectAiRule, InsertProjectAiRule,
   PromptUsageHistory, InsertPromptUsageHistory,
   PromptTemplateRating, InsertPromptTemplateRating,
+=======
+  NewsletterSubscriber, InsertNewsletterSubscriber,
+  NewsletterCampaign, InsertNewsletterCampaign,
+  NewsletterDelivery, InsertNewsletterDelivery,
+>>>>>>> 4c752902d5721217480595645705955167b5e20d
 
   projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
@@ -40,8 +46,13 @@ import {
   keyValueStore, aiConversations, dynamicIntelligence, webSearchHistory,
   gitRepositories, gitCommits, customDomains, secrets, environmentVariables,
   voiceVideoSessions, voiceVideoParticipants, gpuInstances, gpuUsage,
+<<<<<<< HEAD
   assignments, submissions, aiUsageRecords, templates,
   promptTemplates, customPrompts, projectAiRules, promptUsageHistory, promptTemplateRatings,
+=======
+  assignments, submissions, aiUsageRecords,
+  newsletterSubscribers, newsletterCampaigns, newsletterDeliveries,
+>>>>>>> 4c752902d5721217480595645705955167b5e20d
   insertUserCreditsSchema, insertBudgetLimitSchema, insertUsageAlertSchema,
   insertAutoscaleDeploymentSchema, insertReservedVmDeploymentSchema,
   insertScheduledDeploymentSchema, insertStaticDeploymentSchema,
@@ -49,7 +60,8 @@ import {
   insertKeyValueStoreSchema, insertAiConversationSchema,
   insertDynamicIntelligenceSchema, insertWebSearchHistorySchema,
   insertGitRepositorySchema, insertGitCommitSchema, insertCustomDomainSchema,
-  insertSecretSchema, insertEnvironmentVariableSchema
+  insertSecretSchema, insertEnvironmentVariableSchema,
+  insertNewsletterSubscriberSchema, insertNewsletterCampaignSchema, insertNewsletterDeliverySchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -155,6 +167,33 @@ export interface IStorage {
   deleteUser(id: string): Promise<boolean>;
   upsertUser(user: UpsertUser): Promise<User>;
   saveEmailVerificationToken(email: string, token: string): Promise<void>;
+
+  // Newsletter operations
+  subscribeToNewsletter(data: InsertNewsletterSubscriber & { metadata?: Record<string, any> }): Promise<NewsletterSubscriber>;
+  unsubscribeFromNewsletter(email: string, context?: {
+    reason?: string;
+    metadata?: Record<string, any>;
+    ipAddress?: string | null;
+    country?: string | null;
+    userAgent?: string | null;
+    source?: string | null;
+  }): Promise<boolean>;
+  confirmNewsletterSubscription(email: string, token: string): Promise<boolean>;
+  getNewsletterSubscribers(): Promise<NewsletterSubscriber[]>;
+  getActiveNewsletterSubscribers(): Promise<NewsletterSubscriber[]>;
+  getNewsletterStatistics(): Promise<{
+    total: number;
+    active: number;
+    confirmed: number;
+    unsubscribed: number;
+    byCountry: { country: string; count: number }[];
+    campaignsSent: number;
+    lastSentAt: Date | null;
+  }>;
+  createNewsletterCampaign(campaign: InsertNewsletterCampaign & { status?: string }): Promise<NewsletterCampaign>;
+  markNewsletterCampaignSent(campaignId: number, data: Partial<NewsletterCampaign>): Promise<NewsletterCampaign | undefined>;
+  getNewsletterCampaigns(limit?: number): Promise<NewsletterCampaign[]>;
+  logNewsletterDelivery(delivery: InsertNewsletterDelivery): Promise<NewsletterDelivery>;
 
   // Project operations
   getProject(id: string): Promise<Project | undefined>;
@@ -503,6 +542,286 @@ export class DatabaseStorage implements IStorage {
     // In production, this would use a separate token storage table
     // For now, we'll just log it
     // Email verification token generated for ${email}
+  }
+
+  // Newsletter operations
+  async subscribeToNewsletter(data: (InsertNewsletterSubscriber & { metadata?: Record<string, any> })): Promise<NewsletterSubscriber> {
+    const email = data.email.toLowerCase();
+    const now = new Date();
+
+    const existing = await this.db
+      .select()
+      .from(newsletterSubscribers)
+      .where(eq(newsletterSubscribers.email, email));
+
+    if (existing.length > 0) {
+      const subscriber = existing[0];
+
+      if (subscriber.isActive && !subscriber.unsubscribedAt && subscriber.confirmedAt) {
+        throw new Error('Email already subscribed');
+      }
+
+      const mergedMetadata = {
+        ...(subscriber.metadata ?? {}),
+        ...(data.metadata ?? {}),
+        lastSubscriptionAt: now.toISOString(),
+      };
+
+      const [updated] = await this.db
+        .update(newsletterSubscribers)
+        .set({
+          isActive: true,
+          confirmationToken: data.confirmationToken ?? subscriber.confirmationToken,
+          confirmedAt: subscriber.confirmedAt && !subscriber.unsubscribedAt ? subscriber.confirmedAt : null,
+          unsubscribedAt: null,
+          subscribedAt: subscriber.subscribedAt ?? now,
+          lastActivityAt: now,
+          ipAddress: data.ipAddress ?? subscriber.ipAddress,
+          userAgent: data.userAgent ?? subscriber.userAgent,
+          country: data.country ?? subscriber.country,
+          region: data.region ?? subscriber.region,
+          city: data.city ?? subscriber.city,
+          postalCode: data.postalCode ?? subscriber.postalCode,
+          timezone: data.timezone ?? subscriber.timezone,
+          source: data.source ?? subscriber.source,
+          metadata: mergedMetadata,
+        })
+        .where(eq(newsletterSubscribers.id, subscriber.id))
+        .returning();
+
+      return updated;
+    }
+
+    const insertPayload: InsertNewsletterSubscriber = {
+      ...data,
+      email,
+      isActive: data.isActive ?? true,
+      metadata: data.metadata ?? {},
+    };
+
+    const [created] = await this.db
+      .insert(newsletterSubscribers)
+      .values({
+        ...insertPayload,
+        subscribedAt: now,
+        lastActivityAt: now,
+      })
+      .returning();
+
+    return created;
+  }
+
+  async unsubscribeFromNewsletter(email: string, context?: {
+    reason?: string;
+    metadata?: Record<string, any>;
+    ipAddress?: string | null;
+    country?: string | null;
+    userAgent?: string | null;
+    source?: string | null;
+  }): Promise<boolean> {
+    const sanitizedEmail = email.toLowerCase();
+    const [subscriber] = await this.db
+      .select()
+      .from(newsletterSubscribers)
+      .where(eq(newsletterSubscribers.email, sanitizedEmail));
+
+    if (!subscriber) {
+      return false;
+    }
+
+    const now = new Date();
+    const mergedMetadata = {
+      ...(subscriber.metadata ?? {}),
+      ...(context?.metadata ?? {}),
+      lastUnsubscribedAt: now.toISOString(),
+    };
+
+    await this.db
+      .update(newsletterSubscribers)
+      .set({
+        isActive: false,
+        unsubscribedAt: now,
+        lastActivityAt: now,
+        ipAddress: context?.ipAddress ?? subscriber.ipAddress,
+        country: context?.country ?? subscriber.country,
+        userAgent: context?.userAgent ?? subscriber.userAgent,
+        source: context?.source ?? subscriber.source,
+        metadata: {
+          ...mergedMetadata,
+          lastUnsubscribeReason: context?.reason ?? mergedMetadata.lastUnsubscribeReason ?? null,
+        },
+      })
+      .where(eq(newsletterSubscribers.id, subscriber.id));
+
+    return true;
+  }
+
+  async confirmNewsletterSubscription(email: string, token: string): Promise<boolean> {
+    const sanitizedEmail = email.toLowerCase();
+    const [subscriber] = await this.db
+      .select()
+      .from(newsletterSubscribers)
+      .where(eq(newsletterSubscribers.email, sanitizedEmail));
+
+    if (!subscriber || !subscriber.confirmationToken || subscriber.confirmationToken !== token) {
+      return false;
+    }
+
+    const now = new Date();
+
+    await this.db
+      .update(newsletterSubscribers)
+      .set({
+        confirmationToken: null,
+        confirmedAt: now,
+        isActive: true,
+        lastActivityAt: now,
+        metadata: {
+          ...(subscriber.metadata ?? {}),
+          confirmedAt: now.toISOString(),
+        },
+      })
+      .where(eq(newsletterSubscribers.id, subscriber.id));
+
+    return true;
+  }
+
+  async getNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+    return await this.db
+      .select()
+      .from(newsletterSubscribers)
+      .orderBy(desc(newsletterSubscribers.subscribedAt));
+  }
+
+  async getActiveNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+    return await this.db
+      .select()
+      .from(newsletterSubscribers)
+      .where(and(
+        eq(newsletterSubscribers.isActive, true),
+        sql`${newsletterSubscribers.confirmedAt} IS NOT NULL`
+      ));
+  }
+
+  async getNewsletterStatistics(): Promise<{
+    total: number;
+    active: number;
+    confirmed: number;
+    unsubscribed: number;
+    byCountry: { country: string; count: number }[];
+    campaignsSent: number;
+    lastSentAt: Date | null;
+    campaignsByStatus: Record<string, number>;
+    recentFailures: { campaignId: number; email: string; error: string | null; sentAt: Date | null }[];
+  }> {
+    const subscribers = await this.db.select().from(newsletterSubscribers);
+
+    const total = subscribers.length;
+    const active = subscribers.filter((s) => s.isActive).length;
+    const confirmed = subscribers.filter((s) => !!s.confirmedAt).length;
+    const unsubscribed = total - active;
+
+    const countryCounts = new Map<string, number>();
+    for (const subscriber of subscribers) {
+      const country = subscriber.country || 'Unknown';
+      countryCounts.set(country, (countryCounts.get(country) || 0) + 1);
+    }
+
+    const byCountry = Array.from(countryCounts.entries())
+      .map(([country, count]) => ({ country, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const campaigns = await this.db
+      .select({
+        id: newsletterCampaigns.id,
+        status: newsletterCampaigns.status,
+        sentAt: newsletterCampaigns.sentAt,
+      })
+      .from(newsletterCampaigns);
+
+    const campaignsByStatus = campaigns.reduce<Record<string, number>>((acc, campaign) => {
+      const status = campaign.status || 'draft';
+      acc[status] = (acc[status] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    const campaignsSent = (campaignsByStatus['sent'] ?? 0) + (campaignsByStatus['partial'] ?? 0);
+
+    const lastSentAt = campaigns
+      .filter((campaign) => campaign.status === 'sent' || campaign.status === 'partial')
+      .map((campaign) => campaign.sentAt)
+      .filter((value): value is Date => Boolean(value))
+      .sort((a, b) => (b?.getTime?.() ?? 0) - (a?.getTime?.() ?? 0))[0] ?? null;
+
+    const recentFailures = await this.db
+      .select({
+        campaignId: newsletterDeliveries.campaignId,
+        email: newsletterDeliveries.email,
+        error: newsletterDeliveries.error,
+        sentAt: newsletterDeliveries.sentAt,
+      })
+      .from(newsletterDeliveries)
+      .where(eq(newsletterDeliveries.status, 'failed'))
+      .orderBy(desc(newsletterDeliveries.sentAt))
+      .limit(10);
+
+    return {
+      total,
+      active,
+      confirmed,
+      unsubscribed,
+      byCountry,
+      campaignsSent,
+      lastSentAt,
+      campaignsByStatus,
+      recentFailures,
+    };
+  }
+
+  async createNewsletterCampaign(campaign: (InsertNewsletterCampaign & { status?: string })): Promise<NewsletterCampaign> {
+    const payload = {
+      ...campaign,
+      status: campaign.status ?? 'draft',
+      metrics: campaign.metrics ?? {},
+    };
+
+    const [created] = await this.db
+      .insert(newsletterCampaigns)
+      .values(payload)
+      .returning();
+
+    return created;
+  }
+
+  async markNewsletterCampaignSent(campaignId: number, data: Partial<NewsletterCampaign>): Promise<NewsletterCampaign | undefined> {
+    const [updated] = await this.db
+      .update(newsletterCampaigns)
+      .set({
+        ...data,
+        status: data.status ?? 'sent',
+        sentAt: data.sentAt ?? new Date(),
+      })
+      .where(eq(newsletterCampaigns.id, campaignId))
+      .returning();
+
+    return updated;
+  }
+
+  async getNewsletterCampaigns(limit = 20): Promise<NewsletterCampaign[]> {
+    return await this.db
+      .select()
+      .from(newsletterCampaigns)
+      .orderBy(desc(newsletterCampaigns.createdAt))
+      .limit(limit);
+  }
+
+  async logNewsletterDelivery(delivery: InsertNewsletterDelivery): Promise<NewsletterDelivery> {
+    const [created] = await this.db
+      .insert(newsletterDeliveries)
+      .values(delivery)
+      .returning();
+
+    return created;
   }
 
   // Project operations

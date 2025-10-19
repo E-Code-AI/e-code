@@ -46,6 +46,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { getProjectUrl } from '@/lib/utils';
 
 
 // Icon mapping for quick actions
@@ -175,14 +176,18 @@ export default function Dashboard() {
         // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, aiPrompt);
         
+<<<<<<< HEAD
         // Ensure we have the owner username and slug
         const ownerUsername = project.owner?.username || user?.username || 'admin';
         // Use slug if available, otherwise fallback to name (which should be slugified)
         const projectSlug = project.slug || project.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
         const projectUrl = `/u/${ownerUsername}/${projectSlug}`;
+=======
+        const projectUrl = getProjectUrl(project, user?.username);
+>>>>>>> 4c752902d5721217480595645705955167b5e20d
         console.log(`Navigating to: ${projectUrl}`);
         console.log('Project has slug:', project.slug);
-        
+
         // Add a small delay to ensure project is fully created and indexed
         setTimeout(() => {
           // Use window.location for full page reload to ensure auth state is fresh
@@ -227,11 +232,15 @@ export default function Dashboard() {
         // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, prompt);
         
+<<<<<<< HEAD
         // Ensure we have the owner username
         const ownerUsername = project.owner?.username || user?.username || 'admin';
         const projectUrl = `/u/${ownerUsername}/${project.slug}`;
+=======
+        const projectUrl = getProjectUrl(project, user?.username);
+>>>>>>> 4c752902d5721217480595645705955167b5e20d
         console.log(`Navigating to: ${projectUrl}`);
-        
+
         // Add a small delay to ensure project is fully created and indexed
         setTimeout(() => {
           // Use window.location for full page reload to ensure auth state is fresh
@@ -590,9 +599,14 @@ export default function Dashboard() {
                   key={project.id}
                   className="group bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[var(--ecode-border-hover)] transition-colors cursor-pointer rounded-lg p-4"
                   onClick={() => {
+<<<<<<< HEAD
                     // Navigate to the proper Replit-style URL format
                     const ownerUsername = project.owner?.username || user?.username || 'admin';
                     const projectUrl = project.slug ? `/u/${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+=======
+                    const ownerUsername = project.owner?.username || user?.username;
+                    const projectUrl = getProjectUrl(project, ownerUsername);
+>>>>>>> 4c752902d5721217480595645705955167b5e20d
                     navigate(projectUrl);
                   }}
                 >
@@ -628,8 +642,8 @@ export default function Dashboard() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => {
-                            const ownerUsername = project.owner?.username || user?.username || 'admin';
-                            const projectUrl = project.slug ? `/@${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+                            const ownerUsername = project.owner?.username || user?.username;
+                            const projectUrl = getProjectUrl(project, ownerUsername);
                             navigate(projectUrl);
                           }}>
                             <ExternalLink className="h-4 w-4 mr-2" />

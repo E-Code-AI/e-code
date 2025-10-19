@@ -15,13 +15,13 @@ import {
   BookOpen, Store, Briefcase, ListTodo, CloudSun, PenTool
 } from 'lucide-react';
 import { useState, useRef } from 'react';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
-import { PublicFooter } from '@/components/layout/PublicFooter';
+import { MarketingLayout } from '@/components/layout/MarketingLayout';
 import { MobileChatInterface } from '@/components/MobileChatInterface';
 import { AnimatedPlatformDemo } from '@/components/AnimatedPlatformDemo';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
+import { getProjectUrl } from '@/lib/utils';
 import { 
   SiPython, SiJavascript, SiHtml5, SiCss3,
   SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
@@ -162,11 +162,9 @@ export default function Landing() {
           // Store prompt in sessionStorage for the AI agent
           window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
           
-          // Ensure we have the owner username
-          const ownerUsername = project.owner?.username || user?.username || 'admin';
-          const projectUrl = `/@${ownerUsername}/${project.slug}`;
+          const projectUrl = getProjectUrl(project, user?.username);
           console.log(`Navigating to: ${projectUrl}`);
-          
+
           // Add a small delay to ensure project is fully created and indexed
           setTimeout(() => {
             // Use window.location for full page reload to ensure auth state is fresh
@@ -239,24 +237,22 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <PublicNavbar />
+    <MarketingLayout>
 
       {/* Hero Section */}
-      <section className="py-8 sm:py-12 md:py-16 lg:py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
-          <div className="text-center space-y-4 sm:space-y-6">
-            <Badge variant="secondary" className="mb-2 sm:mb-4 animate-pulse text-xs sm:text-sm">
-              <Sparkles className="h-3 w-3 mr-1" />
+      <section className="relative overflow-hidden py-12 sm:py-16 lg:py-24">
+        <div className="marketing-grid" aria-hidden />
+        <div className="container-responsive relative max-w-6xl text-center">
+          <div className="space-y-5 sm:space-y-7">
+            <Badge variant="secondary" className="mx-auto inline-flex items-center gap-2 rounded-full border-white/20 bg-white/10 text-white backdrop-blur">
+              <Sparkles className="h-4 w-4" />
               Build apps and sites with AI
             </Badge>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
-              Build <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">anything</span>
-              <br className="hidden sm:block" />
-              <span className="sm:ml-2">with AI</span>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-white">
+              Fortune 500 development velocity for every team
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0 font-medium">
-              Describe your idea and watch AI build it. From simple websites to complex applications.
+            <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-200">
+              Describe the product. Our AI agents design, code, test, and deploy secure applications in minutes across web, mobile, and cloud.
             </p>
             
             {/* Lovable.dev Exact Style Chat Input */}
@@ -636,7 +632,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Tailwind</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Create a dashboard to track my expenses with charts and budget alerts')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -732,7 +735,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Prisma</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Build a Slack-like chat app with channels and real-time messaging')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -822,7 +832,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Tailwind</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Create an online store with product catalog, cart, and Stripe checkout')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -914,7 +931,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">TipTap</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Make an AI-powered writing tool with grammar check and style suggestions')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -1023,7 +1047,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Zustand</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Build a Kanban board for project management with drag and drop')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -1103,7 +1134,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Recharts</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Create a weather app with forecasts, maps, and location search')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -1210,7 +1248,14 @@ export default function Landing() {
                         <Badge variant="outline" className="text-xs">Tailwind</Badge>
                       </div>
                     </div>
-                    <Button variant="default" size="sm" className="w-full group-hover:shadow-lg transition-all">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full group-hover:shadow-lg transition-all"
+                      onClick={() =>
+                        handleStartBuilding('Design a modern portfolio to showcase my work with animations')
+                      }
+                    >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Build Similar App
                     </Button>
@@ -1526,7 +1571,7 @@ export default function Landing() {
 
       {/* Language Showcase */}
       <section className="py-20 bg-gradient-to-b from-muted/30 to-background">
-        <div className="container mx-auto max-w-6xl px-4">
+        <div className="container-responsive max-w-6xl px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Code in your favorite language
@@ -1741,7 +1786,7 @@ export default function Landing() {
 
       {/* Features Section */}
       <section id="features" className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container-responsive max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Everything you need to succeed
@@ -1778,7 +1823,7 @@ export default function Landing() {
 
       {/* Use Cases */}
       <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container-responsive max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Made for everyone
@@ -1885,7 +1930,7 @@ export default function Landing() {
 
       {/* Testimonials */}
       <section id="testimonials" className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container-responsive max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Loved by developers
@@ -1923,7 +1968,7 @@ export default function Landing() {
 
       {/* CTA Section */}
       <section className="py-20 px-4">
-        <div className="container mx-auto max-w-4xl">
+        <div className="container-responsive max-w-4xl">
           <Card className="bg-primary text-primary-foreground">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -1953,7 +1998,6 @@ export default function Landing() {
         </div>
       </section>
 
-      <PublicFooter />
-    </div>
+    </MarketingLayout>
   );
 }

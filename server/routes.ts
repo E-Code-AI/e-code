@@ -121,7 +121,11 @@ import { realCodeGenerator } from "./ai/real-code-generator";
 import { realCollaborationService } from "./collaboration/real-collaboration";
 import { agentWebSocketService } from './services/agent-websocket-service';
 import containerRoutes from "./routes/containers";
+<<<<<<< HEAD
 import { aiService } from "./ai/ai-service";
+=======
+import { chunkArray, executeWithBackoff, delay as newsletterDelay } from './newsletter/dispatch-helpers';
+>>>>>>> 4c752902d5721217480595645705955167b5e20d
 
 // POLYGLOT BACKEND INTEGRATION - Using Go and Python services for performance
 import { containerProxy } from './services/polyglot-container-proxy';
@@ -143,7 +147,7 @@ function formatBytes(bytes: number): string {
 // Utility function for formatting time ago
 function formatTimeAgo(date: Date): string {
   const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-  
+
   let interval = Math.floor(seconds / 31536000);
   if (interval > 1) return interval + ' years ago';
   if (interval === 1) return '1 year ago';
@@ -159,12 +163,328 @@ function formatTimeAgo(date: Date): string {
   interval = Math.floor(seconds / 3600);
   if (interval > 1) return interval + ' hours ago';
   if (interval === 1) return '1 hour ago';
-  
+
   interval = Math.floor(seconds / 60);
   if (interval > 1) return interval + ' minutes ago';
   if (interval === 1) return '1 minute ago';
   
   return 'Just now';
+}
+
+const BASE_APP_URL = process.env.BASE_URL || process.env.APP_URL || 'http://localhost:5000';
+const NEWSLETTER_UNSUB_PLACEHOLDER = '{{UNSUBSCRIBE_URL}}';
+const NEWSLETTER_EMAIL_PLACEHOLDER = '{{SUBSCRIBER_EMAIL}}';
+
+const parseEnvNumber = (value: string | undefined, fallback: number, min = 0) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  const normalized = Math.floor(parsed);
+  return normalized >= min ? normalized : fallback;
+};
+
+const NEWSLETTER_SEND_BATCH_SIZE = parseEnvNumber(process.env.NEWSLETTER_SEND_BATCH_SIZE, 50, 1);
+const NEWSLETTER_SEND_BATCH_DELAY_MS = parseEnvNumber(process.env.NEWSLETTER_SEND_BATCH_DELAY_MS, 250, 0);
+const NEWSLETTER_SEND_MAX_RETRIES = parseEnvNumber(process.env.NEWSLETTER_SEND_MAX_RETRIES, 2, 0);
+const NEWSLETTER_SEND_RETRY_BASE_MS = parseEnvNumber(process.env.NEWSLETTER_SEND_RETRY_BASE_MS, 500, 0);
+
+type NewsletterSectionInput = {
+  title?: string;
+  body?: string;
+  imageUrl?: string;
+};
+
+type NewsletterCampaignInput = {
+  subject: string;
+  previewText?: string;
+  heroImageUrl?: string;
+  intro: string;
+  highlights?: string[];
+  sections?: NewsletterSectionInput[];
+  cta?: { label: string; url: string };
+  closing?: string;
+  footerNote?: string;
+};
+
+function escapeHtml(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatParagraphs(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => `<p style="margin: 16px 0; line-height: 1.6; color: #425466;">${escapeHtml(line)}</p>`)
+    .join('');
+}
+
+function buildHighlights(highlights?: string[]): string {
+  if (!highlights || highlights.length === 0) {
+    return '';
+  }
+
+  const items = highlights
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => `<li style="margin-bottom: 8px;">${escapeHtml(item)}</li>`)
+    .join('');
+
+  if (!items) {
+    return '';
+  }
+
+  return `
+    <div style="margin: 24px 0;">
+      <h3 style="margin: 0 0 12px; color: #1a1f36; font-size: 16px;">Highlights</h3>
+      <ul style="padding-left: 20px; color: #425466; line-height: 1.6;">${items}</ul>
+    </div>
+  `;
+}
+
+function buildSections(sections?: NewsletterSectionInput[]): string {
+  if (!sections || sections.length === 0) {
+    return '';
+  }
+
+  return sections
+    .filter((section) => section && (section.title || section.body || section.imageUrl))
+    .map((section) => {
+      const title = section.title ? `<h3 style="margin: 0 0 12px; color: #1a1f36; font-size: 18px;">${escapeHtml(section.title)}</h3>` : '';
+      const body = formatParagraphs(section.body);
+      const image = section.imageUrl
+        ? `<div style="margin-top: 16px;"><img src="${escapeHtml(section.imageUrl)}" alt="" style="width: 100%; border-radius: 12px;" /></div>`
+        : '';
+
+      return `
+        <div style="margin: 32px 0; padding: 24px; border: 1px solid #edf2f7; border-radius: 16px; background: #ffffff; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);">
+          ${title}
+          ${body}
+          ${image}
+        </div>
+      `;
+    })
+    .join('');
+}
+
+function parseCountryFromAcceptLanguage(header?: string | string[]): string | null {
+  if (!header) return null;
+  const value = Array.isArray(header) ? header[0] : header;
+  if (!value) return null;
+  const locale = value.split(',')[0]?.trim();
+  if (!locale) return null;
+  const parts = locale.split('-');
+  if (parts.length > 1) {
+    return parts[parts.length - 1].toUpperCase();
+  }
+  if (parts[0].length === 2) {
+    return parts[0].toUpperCase();
+  }
+  return null;
+}
+
+function getClientIp(req: Request): string {
+  const forwarded = (req.headers['x-forwarded-for'] as string) || '';
+  const first = forwarded.split(',').map((ip) => ip.trim()).find(Boolean);
+  return first || req.ip || req.socket?.remoteAddress || '';
+}
+
+function extractNewsletterRequestContext(req: Request) {
+  const forwardedFor = (req.headers['x-forwarded-for'] as string) || '';
+  const acceptLanguage = req.headers['accept-language'] as string | undefined;
+  const countryHeader = (req.headers['cf-ipcountry'] as string) || (req.headers['x-country'] as string) || null;
+  const region = (req.headers['x-region'] as string) || null;
+  const city = (req.headers['x-city'] as string) || null;
+  const postalCode = (req.headers['x-postal-code'] as string) || null;
+  const timezone = (req.headers['x-timezone'] as string) || null;
+  const referer = (req.headers['referer'] as string) || null;
+
+  return {
+    ipAddress: getClientIp(req) || null,
+    country: countryHeader || parseCountryFromAcceptLanguage(acceptLanguage),
+    region,
+    city,
+    postalCode,
+    timezone,
+    source: referer || (req.headers['origin'] as string) || 'direct',
+    userAgent: (req.headers['user-agent'] as string) || 'Unknown',
+    metadata: {
+      forwardedFor: forwardedFor || null,
+      acceptLanguage: acceptLanguage || null,
+      referer,
+      host: req.headers['host'] || null,
+    },
+  };
+}
+
+const NEWSLETTER_EMAIL_STYLES = `
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #f5f7fb;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  .email-wrapper {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 16px;
+  }
+  .email-container {
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  }
+  .email-header {
+    background: radial-gradient(circle at top left, #1f2937, #111827);
+    color: #ffffff;
+    padding: 48px 40px;
+    text-align: left;
+  }
+  .email-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+  }
+  .email-body {
+    padding: 40px;
+    color: #1a1f36;
+    background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  }
+  .email-footer {
+    padding: 32px 40px;
+    background: #0b1120;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 13px;
+  }
+  .email-button {
+    display: inline-block;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.75);
+  }
+  .email-link {
+    color: #6366f1;
+    text-decoration: underline;
+  }
+`;
+
+function buildNewsletterCampaignHtml(payload: NewsletterCampaignInput, unsubscribeToken: string, subscriberEmailToken: string): string {
+  const heroImage = payload.heroImageUrl
+    ? `<div style="margin-bottom: 24px;"><img src="${escapeHtml(payload.heroImageUrl)}" alt="" style="width: 100%; border-radius: 16px; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);" /></div>`
+    : '';
+  const highlights = buildHighlights(payload.highlights);
+  const sections = buildSections(payload.sections);
+  const intro = formatParagraphs(payload.intro);
+  const closing = formatParagraphs(payload.closing);
+  const footerNote = payload.footerNote
+    ? `<p style="margin: 0 0 12px;">${escapeHtml(payload.footerNote)}</p>`
+    : '';
+  const cta = payload.cta && payload.cta.label && payload.cta.url
+    ? `<div style="text-align: center; margin: 40px 0;">
+         <a href="${escapeHtml(payload.cta.url)}" class="email-button">${escapeHtml(payload.cta.label)}</a>
+       </div>`
+    : '';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>${NEWSLETTER_EMAIL_STYLES}</style>
+      </head>
+      <body>
+        <div class="email-wrapper">
+          <div class="email-container">
+            <div class="email-header">
+              <h1>${escapeHtml(payload.subject)}</h1>
+              ${payload.previewText ? `<p style="margin-top: 12px; font-size: 16px; color: rgba(255,255,255,0.75);">${escapeHtml(payload.previewText)}</p>` : ''}
+            </div>
+            <div class="email-body">
+              ${heroImage}
+              ${intro}
+              ${highlights}
+              ${sections}
+              ${cta}
+              ${closing}
+            </div>
+            <div class="email-footer">
+              ${footerNote}
+              <p style="margin: 0 0 8px;">You're receiving this message because you're subscribed to E-Code updates.</p>
+              <p style="margin: 0 0 8px;">Unsubscribe anytime: <a href="${unsubscribeToken}" class="email-link">Manage preferences</a></p>
+              <p style="margin: 8px 0 0;">Sent to ${subscriberEmailToken}</p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+function buildNewsletterCampaignText(payload: NewsletterCampaignInput, unsubscribeToken: string, subscriberEmailToken: string): string {
+  const lines: string[] = [];
+
+  lines.push(payload.subject);
+  if (payload.previewText) {
+    lines.push(payload.previewText);
+  }
+
+  lines.push(payload.intro);
+
+  if (payload.highlights && payload.highlights.length > 0) {
+    lines.push('Highlights:');
+    for (const item of payload.highlights) {
+      if (item) {
+        lines.push(`- ${item}`);
+      }
+    }
+  }
+
+  if (payload.sections && payload.sections.length > 0) {
+    for (const section of payload.sections) {
+      if (section.title) {
+        lines.push('', section.title);
+      }
+      if (section.body) {
+        lines.push(section.body);
+      }
+      if (section.imageUrl) {
+        lines.push(`Image: ${section.imageUrl}`);
+      }
+    }
+  }
+
+  if (payload.cta && payload.cta.label && payload.cta.url) {
+    lines.push('', `${payload.cta.label}: ${payload.cta.url}`);
+  }
+
+  if (payload.closing) {
+    lines.push('', payload.closing);
+  }
+
+  lines.push('', `Unsubscribe: ${unsubscribeToken}`);
+  lines.push(`Sent to: ${subscriberEmailToken}`);
+
+  if (payload.footerNote) {
+    lines.push('', payload.footerNote);
+  }
+
+  return lines.filter(Boolean).join('\n\n');
 }
 import { projectExporter } from "./import-export/exporter";
 import { stripeBillingService } from "./services/stripe-billing-service";
@@ -2099,7 +2419,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { year: '2022', event: 'E-Code founded with a vision to create the Vibe coding platform.' },
           { year: '2023', event: 'Launched private alpha with design partners across three continents.' },
           { year: '2024', event: 'Secured lighthouse enterprise customers and orchestrated 5,000 pilot launches.' },
-          { year: 'Q1 2025', event: 'Announced $180M Series B funding and global debut of the Vibe platform.' },
+          {
+            year: 'Q1 2025',
+            event: 'Launched Series A fundraising targeting $25M to accelerate the global debut of the Vibe platform.'
+          },
           { year: 'Q3 2025', event: 'Expanded Fortune 500 partnerships with managed compliance and AI governance.' }
         ],
         team: [
@@ -15315,35 +15638,61 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.post('/api/newsletter/subscribe', async (req, res) => {
     try {
       const { email } = req.body;
-      
+
       // Import validation utilities
       const { validateEmail, sanitizeEmail } = await import('./utils/email-validator');
-      const { sendNewsletterWelcomeEmail } = await import('./utils/gandi-email');
-      
+      const { sendNewsletterWelcomeEmail, sendAdminAlertEmail } = await import('./utils/gandi-email');
+
       // Validate email with E-Code design standards
       const validation = validateEmail(email);
       if (!validation.valid) {
         return res.status(400).json({ message: validation.error });
       }
-      
+
       // Sanitize email
       const sanitizedEmail = sanitizeEmail(email);
-      
+
+      const context = extractNewsletterRequestContext(req);
+
       // Generate confirmation token
       const confirmationToken = `${Date.now().toString(36)}-${process.hrtime.bigint().toString(36)}`;
-      
+
       // Subscribe to newsletter
       const subscriber = await storage.subscribeToNewsletter({
         email: sanitizedEmail,
         isActive: true,
-        confirmationToken
+        confirmationToken,
+        ipAddress: context.ipAddress,
+        country: context.country,
+        region: context.region,
+        city: context.city,
+        postalCode: context.postalCode,
+        timezone: context.timezone,
+        source: context.source,
+        userAgent: context.userAgent,
+        metadata: {
+          ...context.metadata,
+          route: 'subscribe',
+        },
       });
-      
+
       // Send welcome email with confirmation link
       await sendNewsletterWelcomeEmail(sanitizedEmail, confirmationToken);
-      
-      res.json({ 
-        success: true, 
+
+      await sendAdminAlertEmail({
+        subject: `New newsletter subscriber: ${sanitizedEmail}`,
+        title: 'Newsletter subscription',
+        description: `${sanitizedEmail} just joined the newsletter audience.`,
+        metadata: {
+          email: sanitizedEmail,
+          ipAddress: context.ipAddress,
+          country: context.country,
+          userAgent: context.userAgent,
+        },
+      });
+
+      res.json({
+        success: true,
         message: 'Successfully subscribed! Please check your email to confirm your subscription.',
         data: {
           email: subscriber.email,
@@ -15370,11 +15719,52 @@ Generate a comprehensive application based on the user's request. Include all ne
         return res.status(400).json({ message: 'Email is required' });
       }
       
-      await storage.unsubscribeFromNewsletter(email);
-      
-      res.json({ 
-        success: true, 
-        message: 'Successfully unsubscribed from newsletter' 
+      const context = extractNewsletterRequestContext(req);
+
+      const unsubscribed = await storage.unsubscribeFromNewsletter(email, {
+        reason: 'user_initiated',
+        ipAddress: context.ipAddress,
+        country: context.country,
+        userAgent: context.userAgent,
+        source: context.source,
+        metadata: {
+          ...context.metadata,
+          route: 'unsubscribe',
+        },
+      });
+
+      const { sendAdminAlertEmail } = await import('./utils/gandi-email');
+
+      if (unsubscribed) {
+        await sendAdminAlertEmail({
+          subject: `Newsletter unsubscribe: ${email}`,
+          title: 'Newsletter opt-out',
+          description: `${email} opted out of newsletter communications.`,
+          metadata: {
+            email,
+            ipAddress: context.ipAddress,
+            country: context.country,
+            source: context.source,
+          },
+        });
+      } else {
+        await sendAdminAlertEmail({
+          subject: `Newsletter unsubscribe attempt (no record): ${email}`,
+          title: 'Newsletter unsubscribe attempt',
+          description: `${email} attempted to unsubscribe but no active subscription was found.`,
+          metadata: {
+            email,
+            ipAddress: context.ipAddress,
+            country: context.country,
+            source: context.source,
+            note: 'No subscriber record located',
+          },
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Successfully unsubscribed from newsletter',
       });
     } catch (error) {
       console.error('Newsletter unsubscribe error:', error);
@@ -15420,7 +15810,8 @@ Generate a comprehensive application based on the user's request. Include all ne
       }
       
       const subscribers = await storage.getNewsletterSubscribers();
-      res.json(subscribers);
+      const stats = await storage.getNewsletterStatistics();
+      res.json({ subscribers, stats });
     } catch (error) {
       console.error('Error fetching subscribers:', error);
       res.status(500).json({ message: 'Failed to fetch subscribers' });
@@ -15451,6 +15842,269 @@ Generate a comprehensive application based on the user's request. Include all ne
     } catch (error) {
       console.error('Error testing Gandi connection:', error);
       res.status(500).json({ message: 'Failed to test Gandi connection' });
+    }
+  });
+
+  app.post('/api/newsletter/test-send', ensureAuthenticated, async (req, res) => {
+    try {
+      if (req.user?.username !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: 'Test email address is required' });
+      }
+
+      const sampleCampaign: NewsletterCampaignInput = {
+        subject: 'E-Code Newsletter Test Dispatch',
+        previewText: 'Previewing the latest improvements to your developer workspace.',
+        intro: 'Thanks for verifying your newsletter configuration. This sample message showcases the formatting used for production sends.',
+        highlights: [
+          'Enterprise-ready developer workspaces',
+          'Real-time admin and analytics dashboards',
+          'Managed infrastructure with audit-grade observability',
+        ],
+        sections: [
+          {
+            title: 'What’s included in the newsletter?',
+            body: 'Platform updates, AI workflow enhancements, customer spotlights, and shipping notes from the engineering team.',
+          },
+        ],
+        cta: {
+          label: 'Open the admin console',
+          url: `${BASE_APP_URL}/admin`,
+        },
+        closing: 'This was only a test message. Real newsletters will use the same layout and will respect unsubscribe preferences automatically.',
+        footerNote: 'If you did not request this message, you can safely ignore it.',
+      };
+
+      const htmlTemplate = buildNewsletterCampaignHtml(sampleCampaign, NEWSLETTER_UNSUB_PLACEHOLDER, NEWSLETTER_EMAIL_PLACEHOLDER);
+      const textTemplate = buildNewsletterCampaignText(sampleCampaign, NEWSLETTER_UNSUB_PLACEHOLDER, NEWSLETTER_EMAIL_PLACEHOLDER);
+
+      const unsubscribeUrl = `${BASE_APP_URL}/newsletter/unsubscribe?email=${encodeURIComponent(email)}`;
+      const personalizedHtml = htmlTemplate
+        .split(NEWSLETTER_UNSUB_PLACEHOLDER).join(unsubscribeUrl)
+        .split(NEWSLETTER_EMAIL_PLACEHOLDER).join(email);
+      const personalizedText = textTemplate
+        .split(NEWSLETTER_UNSUB_PLACEHOLDER).join(unsubscribeUrl)
+        .split(NEWSLETTER_EMAIL_PLACEHOLDER).join(email);
+
+      const { sendNewsletterCampaignEmail } = await import('./utils/gandi-email');
+
+      const sendResult = await sendNewsletterCampaignEmail({
+        to: email,
+        subject: sampleCampaign.subject,
+        html: personalizedHtml,
+        text: personalizedText,
+        unsubscribeUrl,
+        previewText: sampleCampaign.previewText,
+      });
+
+      if (!sendResult.success) {
+        console.error('Failed to send newsletter test email:', sendResult.error);
+        return res.status(502).json({
+          success: false,
+          message: 'Failed to send test newsletter email',
+          error: sendResult.error,
+        });
+      }
+
+      res.json({ success: true, message: 'Test newsletter email sent successfully.' });
+    } catch (error) {
+      console.error('Error sending newsletter test email:', error);
+      res.status(500).json({ message: 'Failed to send test newsletter email' });
+    }
+  });
+
+  app.post('/api/newsletter/campaigns/send', ensureAuthenticated, async (req, res) => {
+    try {
+      if (req.user?.username !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const payload: NewsletterCampaignInput = {
+        subject: req.body.subject,
+        previewText: req.body.previewText,
+        heroImageUrl: req.body.heroImageUrl,
+        intro: req.body.intro,
+        highlights: Array.isArray(req.body.highlights) ? req.body.highlights : undefined,
+        sections: Array.isArray(req.body.sections) ? req.body.sections : undefined,
+        cta: req.body.cta,
+        closing: req.body.closing,
+        footerNote: req.body.footerNote,
+      };
+
+      if (!payload.subject || !payload.intro) {
+        return res.status(400).json({ message: 'Subject and introduction are required.' });
+      }
+
+      const htmlTemplate = buildNewsletterCampaignHtml(payload, NEWSLETTER_UNSUB_PLACEHOLDER, NEWSLETTER_EMAIL_PLACEHOLDER);
+      const textTemplate = buildNewsletterCampaignText(payload, NEWSLETTER_UNSUB_PLACEHOLDER, NEWSLETTER_EMAIL_PLACEHOLDER);
+
+      const campaignRecord = await storage.createNewsletterCampaign({
+        subject: payload.subject,
+        previewText: payload.previewText,
+        htmlContent: htmlTemplate,
+        textContent: textTemplate,
+        heroImageUrl: payload.heroImageUrl,
+        status: 'sending',
+        createdBy: req.user!.id,
+        metrics: {
+          sections: payload.sections?.length || 0,
+          highlights: payload.highlights?.length || 0,
+          hasCta: Boolean(payload.cta?.label && payload.cta?.url),
+        },
+      });
+
+      const subscribers = await storage.getActiveNewsletterSubscribers();
+      if (subscribers.length === 0) {
+        await storage.markNewsletterCampaignSent(campaignRecord.id, {
+          status: 'draft',
+          metrics: { ...(campaignRecord.metrics || {}), skipped: true },
+        });
+        return res.status(400).json({ message: 'No active subscribers available for this campaign.' });
+      }
+
+      const { sendNewsletterCampaignEmail, sendAdminAlertEmail } = await import('./utils/gandi-email');
+
+      let sentCount = 0;
+      let failedCount = 0;
+      let totalAttempts = 0;
+      const failedDeliveries: { email: string; error?: string | null }[] = [];
+      const startedAt = Date.now();
+      const batches = chunkArray(subscribers, NEWSLETTER_SEND_BATCH_SIZE);
+
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+
+        const batchResults = await Promise.all(
+          batch.map(async (subscriber) => {
+            const unsubscribeUrl = `${BASE_APP_URL}/newsletter/unsubscribe?email=${encodeURIComponent(subscriber.email)}`;
+            const htmlContent = htmlTemplate
+              .split(NEWSLETTER_UNSUB_PLACEHOLDER).join(unsubscribeUrl)
+              .split(NEWSLETTER_EMAIL_PLACEHOLDER).join(subscriber.email);
+            const textContent = (textTemplate || '')
+              .split(NEWSLETTER_UNSUB_PLACEHOLDER).join(unsubscribeUrl)
+              .split(NEWSLETTER_EMAIL_PLACEHOLDER).join(subscriber.email);
+
+            const deliveryResult = await executeWithBackoff(
+              async () => sendNewsletterCampaignEmail({
+                to: subscriber.email,
+                subject: payload.subject,
+                html: htmlContent,
+                text: textContent,
+                unsubscribeUrl,
+                previewText: payload.previewText,
+              }),
+              {
+                maxRetries: NEWSLETTER_SEND_MAX_RETRIES,
+                baseDelayMs: NEWSLETTER_SEND_RETRY_BASE_MS,
+              }
+            );
+
+            const status = deliveryResult.success ? 'sent' : 'failed';
+            const errorMessage = deliveryResult.success ? null : deliveryResult.error ?? 'Delivery failed';
+
+            if (!deliveryResult.success && failedDeliveries.length < 10) {
+              failedDeliveries.push({ email: subscriber.email, error: errorMessage });
+            }
+
+            await storage.logNewsletterDelivery({
+              campaignId: campaignRecord.id,
+              subscriberId: subscriber.id,
+              email: subscriber.email,
+              status,
+              error: errorMessage,
+              metadata: {
+                country: subscriber.country,
+                ipAddress: subscriber.ipAddress,
+                attempts: deliveryResult.attempts,
+                batch: batchIndex + 1,
+              },
+            });
+
+            return deliveryResult;
+          })
+        );
+
+        for (const result of batchResults) {
+          totalAttempts += result.attempts;
+          if (result.success) {
+            sentCount += 1;
+          } else {
+            failedCount += 1;
+          }
+        }
+
+        if (NEWSLETTER_SEND_BATCH_DELAY_MS > 0 && batchIndex < batches.length - 1) {
+          await newsletterDelay(NEWSLETTER_SEND_BATCH_DELAY_MS);
+        }
+      }
+
+      const durationMs = Date.now() - startedAt;
+      const finalStatus = failedCount > 0 ? 'partial' : 'sent';
+      await storage.markNewsletterCampaignSent(campaignRecord.id, {
+        status: finalStatus,
+        sentAt: new Date(),
+        metrics: {
+          ...(campaignRecord.metrics || {}),
+          total: subscribers.length,
+          sent: sentCount,
+          failed: failedCount,
+          batchSize: NEWSLETTER_SEND_BATCH_SIZE,
+          batches: batches.length,
+          retries: NEWSLETTER_SEND_MAX_RETRIES,
+          totalAttempts,
+          durationMs,
+        },
+      });
+
+      await sendAdminAlertEmail({
+        subject: `Newsletter campaign dispatched: ${payload.subject}`,
+        title: 'Newsletter campaign sent',
+        description: `Campaign ${campaignRecord.id} delivered to ${sentCount} subscribers${failedCount ? ` with ${failedCount} failures` : ''}.`,
+        metadata: {
+          campaignId: campaignRecord.id,
+          sent: sentCount,
+          failed: failedCount,
+          previewText: payload.previewText,
+          batchSize: NEWSLETTER_SEND_BATCH_SIZE,
+          batches: batches.length,
+          retries: NEWSLETTER_SEND_MAX_RETRIES,
+          durationMs,
+          averageAttemptsPerRecipient: subscribers.length ? Number((totalAttempts / subscribers.length).toFixed(2)) : 0,
+          sampleFailures: failedDeliveries,
+        },
+      });
+
+      res.json({
+        success: true,
+        message: `Newsletter sent to ${sentCount} subscribers${failedCount ? ` with ${failedCount} failures` : ''}.`,
+        campaignId: campaignRecord.id,
+        sent: sentCount,
+        failed: failedCount,
+        batchSize: NEWSLETTER_SEND_BATCH_SIZE,
+        batches: batches.length,
+        failures: failedDeliveries,
+      });
+    } catch (error) {
+      console.error('Newsletter campaign send error:', error);
+      res.status(500).json({ message: 'Failed to send newsletter campaign' });
+    }
+  });
+
+  app.get('/api/newsletter/campaigns', ensureAuthenticated, async (req, res) => {
+    try {
+      if (req.user?.username !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const campaigns = await storage.getNewsletterCampaigns(20);
+      res.json(campaigns);
+    } catch (error) {
+      console.error('Error fetching newsletter campaigns:', error);
+      res.status(500).json({ message: 'Failed to fetch newsletter campaigns' });
     }
   });
 

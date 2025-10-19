@@ -127,6 +127,52 @@ export const apiUsage = pgTable("api_usage", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  isActive: boolean("is_active").notNull().default(true),
+  confirmationToken: varchar("confirmation_token", { length: 255 }),
+  confirmedAt: timestamp("confirmed_at"),
+  subscribedAt: timestamp("subscribed_at").notNull().defaultNow(),
+  unsubscribedAt: timestamp("unsubscribed_at"),
+  ipAddress: varchar("ip_address", { length: 128 }),
+  userAgent: text("user_agent"),
+  country: varchar("country", { length: 120 }),
+  region: varchar("region", { length: 120 }),
+  city: varchar("city", { length: 120 }),
+  postalCode: varchar("postal_code", { length: 30 }),
+  timezone: varchar("timezone", { length: 120 }),
+  source: varchar("source", { length: 120 }),
+  lastActivityAt: timestamp("last_activity_at"),
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+});
+
+export const newsletterCampaigns = pgTable("newsletter_campaigns", {
+  id: serial("id").primaryKey(),
+  subject: text("subject").notNull(),
+  previewText: text("preview_text"),
+  htmlContent: text("html_content").notNull(),
+  textContent: text("text_content"),
+  heroImageUrl: text("hero_image_url"),
+  status: varchar("status", { length: 32 }).notNull().default('draft'),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  scheduledFor: timestamp("scheduled_for"),
+  sentAt: timestamp("sent_at"),
+  metrics: jsonb("metrics").$type<Record<string, any>>().default({}),
+});
+
+export const newsletterDeliveries = pgTable("newsletter_deliveries", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").notNull().references(() => newsletterCampaigns.id, { onDelete: 'cascade' }),
+  subscriberId: integer("subscriber_id").notNull().references(() => newsletterSubscribers.id, { onDelete: 'cascade' }),
+  email: varchar("email", { length: 320 }).notNull(),
+  status: varchar("status", { length: 32 }).notNull(),
+  error: text("error"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+});
+
 // Usage tracking table for billing
 export const usageTracking = pgTable("usage_tracking", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -908,6 +954,25 @@ export const insertEnvironmentVariableSchema = createInsertSchema(environmentVar
 export const insertGitRepositorySchema = createInsertSchema(gitRepositories).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertGitCommitSchema = createInsertSchema(gitCommits).omit({ id: true, syncedAt: true });
 export const insertCustomDomainSchema = createInsertSchema(customDomains).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSubscribers).omit({
+  id: true,
+  subscribedAt: true,
+  unsubscribedAt: true,
+  confirmedAt: true,
+  lastActivityAt: true,
+});
+export const insertNewsletterCampaignSchema = createInsertSchema(newsletterCampaigns).omit({
+  id: true,
+  createdAt: true,
+  sentAt: true,
+  scheduledFor: true,
+  status: true,
+  metrics: true,
+});
+export const insertNewsletterDeliverySchema = createInsertSchema(newsletterDeliveries).omit({
+  id: true,
+  sentAt: true,
+});
 
 // Custom Prompts Insert Schemas
 export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).omit({ id: true, createdAt: true, updatedAt: true });
@@ -953,6 +1018,13 @@ export type InsertComment = z.infer<typeof insertCommentSchema>;
 
 export type Checkpoint = typeof checkpoints.$inferSelect;
 export type InsertCheckpoint = z.infer<typeof insertCheckpointSchema>;
+
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
+export type NewsletterCampaign = typeof newsletterCampaigns.$inferSelect;
+export type InsertNewsletterCampaign = z.infer<typeof insertNewsletterCampaignSchema>;
+export type NewsletterDelivery = typeof newsletterDeliveries.$inferSelect;
+export type InsertNewsletterDelivery = z.infer<typeof insertNewsletterDeliverySchema>;
 
 export type TimeTracking = typeof projectTimeTracking.$inferSelect;
 export type InsertTimeTracking = z.infer<typeof insertTimeTrackingSchema>;
