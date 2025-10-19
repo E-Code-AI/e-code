@@ -173,6 +173,31 @@ export const newsletterDeliveries = pgTable("newsletter_deliveries", {
   metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
 });
 
+export const customerRequests = pgTable("customer_requests", {
+  id: serial("id").primaryKey(),
+  formType: varchar("form_type", { length: 64 }).notNull(),
+  pagePath: varchar("page_path", { length: 255 }).notNull(),
+  senderName: varchar("sender_name", { length: 255 }),
+  senderEmail: varchar("sender_email", { length: 320 }),
+  senderCompany: varchar("sender_company", { length: 255 }),
+  senderPhone: varchar("sender_phone", { length: 50 }),
+  subject: varchar("subject", { length: 255 }),
+  message: text("message"),
+  status: varchar("status", { length: 32 }).notNull().default('new'),
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export const insertCustomerRequestSchema = createInsertSchema(customerRequests, {
+  metadata: z
+    .object({})
+    .catchall(z.any())
+    .optional(),
+  status: z.enum(['new', 'in_progress', 'resolved', 'archived']).optional(),
+});
+
 // Usage tracking table for billing
 export const usageTracking = pgTable("usage_tracking", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -319,6 +344,66 @@ export const challengeLeaderboard = pgTable("challenge_leaderboard", {
   lastSubmission: timestamp("last_submission").defaultNow(),
 });
 
+export const communityCategories = pgTable("community_categories", {
+  id: varchar("id").primaryKey(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  icon: varchar("icon").notNull().default('TrendingUp'),
+  position: integer("position").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const communityPosts = pgTable("community_posts", {
+  id: serial("id").primaryKey(),
+  title: varchar("title").notNull(),
+  content: text("content").notNull(),
+  authorId: varchar("author_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  categoryId: varchar("category_id").notNull().references(() => communityCategories.id),
+  tags: jsonb("tags").$type<string[]>().default([]),
+  projectUrl: text("project_url"),
+  imageUrl: text("image_url"),
+  viewCount: integer("view_count").default(0),
+  isPinned: boolean("is_pinned").default(false),
+  isLocked: boolean("is_locked").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const communityPostLikes = pgTable("community_post_likes", {
+  postId: integer("post_id").notNull().references(() => communityPosts.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.postId, table.userId] }),
+}));
+
+export const communityPostBookmarks = pgTable("community_post_bookmarks", {
+  postId: integer("post_id").notNull().references(() => communityPosts.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.postId, table.userId] }),
+}));
+
+export const communityComments = pgTable("community_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => communityPosts.id, { onDelete: 'cascade' }),
+  authorId: varchar("author_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text("content").notNull(),
+  parentCommentId: integer("parent_comment_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const communityFollows = pgTable("community_follows", {
+  followerId: varchar("follower_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  followeeId: varchar("followee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.followerId, table.followeeId] }),
+}));
+
 // Mobile App Tables
 export const mobileDevices = pgTable("mobile_devices", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -338,10 +423,23 @@ export const pushNotifications = pgTable("push_notifications", {
   userId: varchar("user_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   body: text("body").notNull(),
+  type: varchar("type").notNull().default('system'),
+  actionUrl: varchar("action_url"),
   data: jsonb("data").default({}),
+  read: boolean("read").notNull().default(false),
+  readAt: timestamp("read_at"),
   sent: boolean("sent").default(false),
   sentAt: timestamp("sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: varchar("user_id").primaryKey().references(() => users.id),
+  email: jsonb("email").$type<Record<string, boolean>>().notNull().default({}),
+  push: jsonb("push").$type<Record<string, boolean>>().notNull().default({}),
+  frequency: varchar("frequency").notNull().default('instant'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Deployments table
@@ -1220,6 +1318,16 @@ export const insertMonitoringEventSchema = createInsertSchema(monitoringEvents).
 export const insertPerformanceMetricSchema = createInsertSchema(performanceMetrics).omit({ id: true, createdAt: true });
 export const insertErrorLogSchema = createInsertSchema(errorLogs).omit({ id: true, createdAt: true, resolved: true });
 export const insertTemplateSchema = createInsertSchema(templates).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertNotificationSchema = createInsertSchema(pushNotifications, {
+  type: z.string().min(1).optional(),
+  actionUrl: z.string().min(1).optional(),
+  data: z.record(z.any()).optional(),
+}).omit({ id: true, createdAt: true, read: true, readAt: true, sent: true, sentAt: true });
+export const insertNotificationPreferenceSchema = createInsertSchema(notificationPreferences, {
+  email: z.record(z.boolean()),
+  push: z.record(z.boolean()),
+  frequency: z.enum(['instant', 'hourly', 'daily', 'weekly']).optional(),
+}).omit({ createdAt: true, updatedAt: true });
 
 // Types
 export type VoiceVideoSession = typeof voiceVideoSessions.$inferSelect;
@@ -1251,3 +1359,7 @@ export type InsertErrorLog = z.infer<typeof insertErrorLogSchema>;
 
 export type Template = typeof templates.$inferSelect;
 export type InsertTemplate = z.infer<typeof insertTemplateSchema>;
+export type Notification = typeof pushNotifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreference = z.infer<typeof insertNotificationPreferenceSchema>;

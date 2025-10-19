@@ -1,0 +1,47 @@
+~/workspace$ git add .
+~/workspace$ git pull origin main
+remote: Enumerating objects: 52, done.
+remote: Counting objects: 100% (49/49), done.
+remote: Compressing objects: 100% (30/30), done.
+remote: Total 30 (delta 19), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (30/30), 16.13 KiB | 1.47 MiB/s, done.
+From https://github.com/E-Code-AI/e-code
+ * branch              main       -> FETCH_HEAD
+   ab2b602d..6bd2d2c8  main       -> origin/main
+Updating 9033d600..6bd2d2c8
+Fast-forward
+ client/src/components/CoverageInsightsPanel.tsx  |  203 +++++++
+ client/src/components/ECodeLogo.tsx              |   21 +-
+ client/src/components/SpotlightSettingsPanel.tsx |  216 +++++++
+ client/src/components/ThreadsPanel.tsx           |  325 ++++++++++
+ client/src/components/layout/ReplitSidebar.tsx   |   42 ++
+ client/src/pages/EditorPage.tsx                  |   62 +-
+ client/src/pages/ProjectPage.tsx                 |  169 ++++--
+ reports/crawl-report.json                        | 1409 ++++++++++++++++++++++++++++++++++++++++++++
+ reports/full-QA-report-20251019T125605Z.json     |   50 ++
+ reports/full-QA-report-20251019T125605Z.md       |   29 +
+ scripts/crawl-site.ts                            |  389 ++++++++++++
+ server/realtime/realtime-service.ts              |   12 +-
+ server/routes.ts                                 |   76 +--
+ server/terminal.ts                               |   28 +-
+ test/ai-ux-features.test.ts                      |    5 +
+ test/ai-ux-features.test.tsx                     |   72 +++
+ test/security.test.ts                            |   53 ++
+ test/setup/globals.ts                            |  197 +++++++
+ test/setup/test-runner.ts                        |  236 ++++++++
+ 19 files changed, 3459 insertions(+), 135 deletions(-)
+ create mode 100644 client/src/components/CoverageInsightsPanel.tsx
+ create mode 100644 client/src/components/SpotlightSettingsPanel.tsx
+ create mode 100644 client/src/components/ThreadsPanel.tsx
+ create mode 100644 reports/crawl-report.json
+ create mode 100644 reports/full-QA-report-20251019T125605Z.json
+ create mode 100644 reports/full-QA-report-20251019T125605Z.md
+ create mode 100644 scripts/crawl-site.ts
+ create mode 100644 test/ai-ux-features.test.ts
+ create mode 100644 test/ai-ux-features.test.tsx
+ create mode 100644 test/security.test.ts
+ create mode 100644 test/setup/globals.ts
+ create mode 100644 test/setup/test-runner.ts
+~/workspace$ git stash pop
+No stash entries found.
+~/workspace$ 

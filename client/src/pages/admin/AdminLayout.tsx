@@ -2,15 +2,16 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { 
-  LayoutDashboard, 
-  Users, 
-  Key, 
-  FileText, 
-  Ticket, 
+  LayoutDashboard,
+  Users,
+  Key,
+  FileText,
+  Ticket,
   CreditCard,
   Book,
   Activity,
   Settings,
+  Inbox,
   LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const navItems = [
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/admin/requests', icon: Inbox, label: 'Customer Requests' },
     { path: '/admin/users', icon: Users, label: 'Users' },
     { path: '/admin/api-keys', icon: Key, label: 'API Keys' },
     { path: '/admin/cms', icon: FileText, label: 'CMS Pages' },

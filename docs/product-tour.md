@@ -18,8 +18,12 @@ This tour equips solution engineers and sales teams with a structured walkthroug
 - **Flow:**
   1. Open a flagship template (e.g., React + Express) from the templates library.
   2. Demonstrate live collaboration—invite a teammate, show presence cursors, and co-edit a file.
-  3. Run `npm test` in the terminal and point out log streaming with ANSI rendering.
-  4. Trigger the AI assistant to refactor a code block and accept the suggestion.
+  3. Open the new workspace tabs:
+     - **Debugger** and **Testing** drawers in the main editor area.
+     - **Secrets**, **History**, and **Threads** panels from the sidebar shortcuts.
+     - **Coverage Insights** and **Spotlight Page** cards in the right rail.
+  4. Run `npm test` in the terminal and point out log streaming with ANSI rendering.
+  5. Trigger the AI assistant to refactor a code block and accept the suggestion.
 - **Key Messages:** Unified environment for coding, testing, and reviewing without context switching.
 - **Call to Action:** “Spin up a proof-of-concept repo and invite your core squad for a week-long pilot.”
 

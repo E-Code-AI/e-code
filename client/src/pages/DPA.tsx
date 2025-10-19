@@ -186,7 +186,7 @@ export default function DPA() {
               <p className="text-sm text-muted-foreground">
                 <strong>Last Updated:</strong> January 1, 2025<br />
                 <strong>Effective Date:</strong> Upon execution of the Principal Agreement<br />
-                For questions about this DPA, please contact our Data Protection Officer at <a href="mailto:privacy@e-code.com" className="text-primary hover:underline">privacy@e-code.com</a>
+                For questions about this DPA, please contact our Data Protection Officer at <a href="mailto:privacy@e-code.ai" className="text-primary hover:underline">privacy@e-code.ai</a>
               </p>
             </div>
           </div>
