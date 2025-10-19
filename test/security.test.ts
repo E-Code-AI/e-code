@@ -9,6 +9,7 @@ import {
   securityMonitoring,
   ipSecurity
 } from '../server/middleware/security';
+import { securityScanner } from '../server/security/security-scanner';
 
 function createResponse() {
   return {
@@ -254,7 +255,7 @@ testRunner.registerSuite('Security Middleware', {
       },
     },
   ],
-import { securityScanner } from '../server/security/security-scanner';
+});
 
 testRunner.registerSuite('Security Scanner', {
   tests: [
