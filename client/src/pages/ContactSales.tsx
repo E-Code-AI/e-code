@@ -37,8 +37,13 @@ export default function ContactSales() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
+      const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/contact-sales';
+      const subject = formData.interest
+        ? `Enterprise inquiry - ${formData.interest}`
+        : 'Enterprise inquiry';
+
       const response = await fetch('/api/contact/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,7 +55,9 @@ export default function ContactSales() {
           phone: formData.phone,
           message: formData.message,
           companySize: formData.companySize,
-          useCase: formData.interest
+          useCase: formData.interest,
+          subject,
+          pagePath,
         }),
       });
 
