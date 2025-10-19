@@ -583,25 +583,24 @@ const ensureProjectAccess = async (req: Request, res: Response, next: NextFuncti
   }
   
   const userId = req.user!.id;
-  const projectId = parseInt(req.params.projectId || req.params.id);
-  
-  // Check if projectId is valid
-  if (isNaN(projectId)) {
-    console.log('[POLYGLOT] Invalid project ID:', req.params.projectId || req.params.id);
-    return res.status(400).json({ 
+  const projectId = (req.params.projectId || req.params.id || '').toString();
+
+  if (!projectId) {
+    console.log('[POLYGLOT] Missing project ID');
+    return res.status(400).json({
       message: "Invalid project ID",
-      code: "INVALID_PROJECT_ID" 
+      code: "INVALID_PROJECT_ID"
     });
   }
-  
+
   // Get the project
   const project = await storage.getProject(projectId);
   if (!project) {
     console.log('[POLYGLOT] Project not found:', projectId);
-    return res.status(404).json({ 
+    return res.status(404).json({
       message: "Project not found",
       code: "PROJECT_NOT_FOUND",
-      projectId 
+      projectId
     });
   }
   
@@ -870,7 +869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/projects/:projectId/gpu/provision', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.projectId);
+      const projectId = req.params.projectId;
       const { gpuType, region } = req.body;
       
       const { getGpuService } = await import('./services/gpu-service');
@@ -886,7 +885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/projects/:projectId/gpu/instances', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.projectId);
+      const projectId = req.params.projectId;
       const instances = await storage.getProjectGpuInstances(projectId);
       res.json(instances);
     } catch (error) {
@@ -3924,7 +3923,7 @@ Application will be available at http://localhost:3000
 
   app.get('/api/projects/:id', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.id);
+      const projectId = req.params.id;
       const project = await storage.getProject(projectId);
       
       if (!project) {
@@ -4204,7 +4203,7 @@ Application will be available at http://localhost:3000
 
   app.delete('/api/projects/:id', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.id);
+      const projectId = req.params.id;
       await storage.deleteProject(projectId);
       res.status(200).json({ success: true });
     } catch (error) {
@@ -4216,7 +4215,7 @@ Application will be available at http://localhost:3000
   // API Routes for Project Files - ROUTE THROUGH GO SERVICE
   app.get('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.id);
+      const projectId = req.params.id;
       
       // Use TypeScript for database operations
       const files = await storage.getFilesByProjectId(projectId);
@@ -4235,9 +4234,9 @@ Application will be available at http://localhost:3000
     }
   });
 
-  app.post('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
+    app.post('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+      try {
+        const projectId = req.params.id;
       
       // Validate file name
       if (!req.body.name || req.body.name.trim() === '') {
@@ -4274,7 +4273,7 @@ Application will be available at http://localhost:3000
       }
       
       // Check for duplicate file names in the same directory
-      const existingFiles = await storage.getFilesByProjectId(projectId);
+        const existingFiles = await storage.getFilesByProjectId(projectId);
       const duplicate = existingFiles.find(f => 
         f.name === req.body.name && 
         f.parentId === parentId
@@ -4298,7 +4297,7 @@ Application will be available at http://localhost:3000
       const fileData = {
         name: req.body.name.trim(),
         path: filePath,
-        projectId: projectId,
+          projectId: projectId,
         content: req.body.content || '',
         isDirectory: req.body.isFolder || false
       };
@@ -4320,38 +4319,41 @@ Application will be available at http://localhost:3000
   // Route pour récupérer les fichiers d'un projet (compatible avec le client)
   app.get('/api/files/:id', ensureAuthenticated, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      
-      // Check if this is a project ID (fetching all files) or a file ID (fetching single file)
-      // First try as project ID
-      const project = await storage.getProject(id);
+      const idParam = req.params.id;
+
+      // First attempt to treat the parameter as a project ID (string UUID)
+      const project = await storage.getProject(idParam);
       if (project) {
-        // This is a project ID - return all files
         if (project.ownerId !== req.user!.id) {
-          const isCollaborator = await storage.isProjectCollaborator(id, req.user!.id);
+          const isCollaborator = await storage.isProjectCollaborator(idParam, req.user!.id);
           if (!isCollaborator) {
             return res.status(403).json({ error: 'Access denied' });
           }
         }
-        
-        const files = await storage.getFilesByProjectId(id);
+
+        const files = await storage.getFilesByProjectId(idParam);
         // Add isFolder field for frontend compatibility
         const filesWithFolder = files.map(file => ({
           ...file,
           isFolder: file.isDirectory || file.isFolder || false
         }));
-        
+
         // Return array directly (not wrapped in object) as client expects
         return res.json(filesWithFolder);
       }
-      
-      // If not a project, try as a file ID
-      const file = await storage.getFile(id);
-      
+
+      // If not a project, try as a file ID (numeric)
+      const fileId = parseInt(idParam, 10);
+      if (isNaN(fileId)) {
+        return res.status(404).json({ error: 'File or project not found' });
+      }
+
+      const file = await storage.getFile(fileId);
+
       if (!file) {
         return res.status(404).json({ error: 'File or project not found' });
       }
-      
+
       // Ensure user has access to the project this file belongs to
       const fileProject = await storage.getProject(file.projectId);
       if (!fileProject || fileProject.ownerId !== req.user!.id) {
@@ -4429,7 +4431,7 @@ Application will be available at http://localhost:3000
   // Route pour créer un fichier (compatible avec le client qui utilise POST /api/files/${projectId})
   app.post('/api/files/:projectId', ensureAuthenticated, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.projectId);
+      const projectId = req.params.projectId;
       
       // Vérifier l'accès au projet
       const project = await storage.getProject(projectId);
@@ -4449,7 +4451,7 @@ Application will be available at http://localhost:3000
         name: req.body.name || 'untitled',
         path: req.body.path || '/',
         content: req.body.content || '',
-        projectId: projectId,
+        projectId,
         parentId: req.body.parentId || null,
         isDirectory: req.body.isDirectory || req.body.isFolder || false,
         isFolder: req.body.isFolder || req.body.isDirectory || false
