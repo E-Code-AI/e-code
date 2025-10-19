@@ -143,12 +143,22 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
   });
 
   const [newPR, setNewPR] = useState({
-    repo: repos?.[0]?.name || '',
+    repo: '',
     title: 'Merge changes to main',
     body: 'This PR merges the latest changes into the main branch.',
     head: 'develop',
     base: 'main'
   });
+
+  // Auto-fill repo when repos load
+  React.useEffect(() => {
+    if (repos && repos.length > 0 && !newPR.repo) {
+      setNewPR(prev => ({
+        ...prev,
+        repo: repos[0].name
+      }));
+    }
+  }, [repos]);
 
   const filteredRepos = repos?.filter(repo => 
     repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
