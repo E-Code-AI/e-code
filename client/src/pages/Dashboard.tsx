@@ -131,34 +131,6 @@ export default function Dashboard() {
   const [filterTag, setFilterTag] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
-  // Auto-login for development mode
-  useEffect(() => {
-    const autoLogin = async () => {
-      if (import.meta.env.DEV && !user) {
-        console.log('[Dashboard] Development mode - attempting auto-login');
-        try {
-          const response = await fetch('/api/dev-login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ username: 'admin' })
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('[Dashboard] Auto-login successful:', data.user?.username);
-            window.location.reload(); // Reload to get authenticated state
-          } else {
-            console.log('[Dashboard] Auto-login failed, user can login manually');
-          }
-        } catch (error) {
-          console.error('[Dashboard] Auto-login error:', error);
-        }
-      }
-    };
-    
-    autoLogin();
-  }, [user]);
 
   // Fetch recent projects with deployment status
   const { data: recentProjects = [], isLoading } = useQuery<ProjectWithDeployment[]>({
@@ -207,7 +179,7 @@ export default function Dashboard() {
         const ownerUsername = project.owner?.username || user?.username || 'admin';
         // Use slug if available, otherwise fallback to name (which should be slugified)
         const projectSlug = project.slug || project.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-        const projectUrl = `/@${ownerUsername}/${projectSlug}`;
+        const projectUrl = `/u/${ownerUsername}/${projectSlug}`;
         console.log(`Navigating to: ${projectUrl}`);
         console.log('Project has slug:', project.slug);
         
@@ -257,7 +229,7 @@ export default function Dashboard() {
         
         // Ensure we have the owner username
         const ownerUsername = project.owner?.username || user?.username || 'admin';
-        const projectUrl = `/@${ownerUsername}/${project.slug}`;
+        const projectUrl = `/u/${ownerUsername}/${project.slug}`;
         console.log(`Navigating to: ${projectUrl}`);
         
         // Add a small delay to ensure project is fully created and indexed
@@ -508,7 +480,7 @@ export default function Dashboard() {
                   className="group relative overflow-hidden bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-violet-500/50 transition-all duration-300 cursor-pointer hover:shadow-lg"
                   onClick={() => {
                     const ownerUsername = project.owner?.username || user?.username || 'admin';
-                    const projectUrl = project.slug ? `/@${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+                    const projectUrl = project.slug ? `/u/${ownerUsername}/${project.slug}` : `/project/${project.id}`;
                     navigate(projectUrl);
                   }}
                 >
@@ -552,7 +524,7 @@ export default function Dashboard() {
                           <DropdownMenuItem onClick={(e) => {
                             e.stopPropagation();
                             const ownerUsername = project.owner?.username || user?.username || 'admin';
-                            const projectUrl = project.slug ? `/@${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+                            const projectUrl = project.slug ? `/u/${ownerUsername}/${project.slug}` : `/project/${project.id}`;
                             navigate(projectUrl);
                           }}>
                             <ExternalLink className="h-4 w-4 mr-2" />
@@ -620,7 +592,7 @@ export default function Dashboard() {
                   onClick={() => {
                     // Navigate to the proper Replit-style URL format
                     const ownerUsername = project.owner?.username || user?.username || 'admin';
-                    const projectUrl = project.slug ? `/@${ownerUsername}/${project.slug}` : `/project/${project.id}`;
+                    const projectUrl = project.slug ? `/u/${ownerUsername}/${project.slug}` : `/project/${project.id}`;
                     navigate(projectUrl);
                   }}
                 >
