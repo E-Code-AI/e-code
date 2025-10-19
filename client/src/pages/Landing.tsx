@@ -75,10 +75,10 @@ export default function Landing() {
     'Rocket': <Rocket className="h-6 w-6" />
   };
 
-  const features = landingData ? landingData.features.map(feature => ({
+  const features = landingData?.features?.map(feature => ({
     ...feature,
-    icon: iconMap[feature.icon] || <Zap className="h-6 w-6" />
-  })) : [
+    icon: feature?.icon ? (iconMap[feature.icon] || <Zap className="h-6 w-6" />) : <Zap className="h-6 w-6" />
+  })) || [
     {
       icon: <Zap className="h-6 w-6" />,
       title: 'Start in Seconds',
@@ -1804,12 +1804,12 @@ export default function Landing() {
               <Card key={index} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="p-2 bg-primary/10 rounded-lg w-fit mb-2">
-                    {feature.icon}
+                    {feature?.icon || <Zap className="h-6 w-6" />}
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-xl">{feature?.title || 'Feature'}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <p className="text-muted-foreground">{feature?.description || 'Description not available'}</p>
                 </CardContent>
               </Card>
             ))}
