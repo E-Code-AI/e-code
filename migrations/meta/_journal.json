@@ -29,6 +29,13 @@
       "when": 1754571040706,
       "tag": "0003_align_notification_preferences_user_id",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1754571041706,
+      "tag": "0004_notification_preferences_user_id_to_varchar",
+      "breakpoints": true
     }
   ]
 }
