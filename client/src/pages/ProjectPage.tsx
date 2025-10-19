@@ -101,6 +101,7 @@ const ProjectPage = () => {
   const [matchId, paramsId] = useRoute('/project/:id');
   const [matchLegacyId, paramsLegacyId] = useRoute('/projects/:id');
   const [matchSlug, paramsSlug] = useRoute('/@:username/:projectname');
+  const [matchLegacySlug, paramsLegacySlug] = useRoute('/u/:username/:projectname');
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
@@ -112,18 +113,24 @@ const ProjectPage = () => {
       paramsId,
       matchSlug,
       paramsSlug,
+      matchLegacySlug,
+      paramsLegacySlug,
       user: user?.username,
       authLoading
     });
-  }, [matchId, paramsId, matchSlug, paramsSlug, user, authLoading]);
+  }, [matchId, paramsId, matchSlug, paramsSlug, matchLegacySlug, paramsLegacySlug, user, authLoading]);
+
+  const slugMatch = matchSlug || matchLegacySlug;
+  const slugParams = paramsSlug ?? paramsLegacySlug ?? null;
+  const slugUsername = slugParams?.username ?? null;
+  const slugProjectName = slugParams?.projectname ?? null;
 
   // Determine if we're using ID or slug route
-  const isSlugRoute = !!matchSlug && paramsSlug?.username && paramsSlug?.projectname;
+  const isSlugRoute = !!slugMatch && !!slugUsername && !!slugProjectName;
   const projectIdParam = paramsId?.id || paramsLegacyId?.id || null;
-  const projectId = projectIdParam ? parseInt(projectIdParam, 10) : null;
   // The projectSlug should just be the slug itself, not the full path
-  const projectSlug = isSlugRoute ? paramsSlug.projectname : null;
-  const projectUsername = isSlugRoute ? paramsSlug.username : null;
+  const projectSlug = isSlugRoute ? slugProjectName : null;
+  const projectUsername = isSlugRoute ? slugUsername : null;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, string>>({});
   const [terminalVisible, setTerminalVisible] = useState(true);
@@ -217,14 +224,14 @@ const ProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: projectSlug ? ['project-by-slug', projectUsername, projectSlug] : ['project-by-id', projectId],
+    queryKey: projectSlug ? ['project-by-slug', projectUsername, projectSlug] : ['project-by-id', projectIdParam],
     queryFn: async () => {
-      if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
-      
+      if (!projectIdParam && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
+
       // Note: projectname in the route is actually the project slug
-      const url = projectSlug 
-        ? `/api/users/${paramsSlug?.username}/projects/${paramsSlug?.projectname}`
-        : `/api/projects/${projectId}`;
+      const url = projectSlug && projectUsername
+        ? `/api/users/${projectUsername}/projects/${projectSlug}`
+        : `/api/projects/${projectIdParam}`;
       
       console.log('Fetching project from:', url);
       
@@ -244,7 +251,7 @@ const ProjectPage = () => {
       console.log('Project loaded:', projectData);
       return projectData;
     },
-    enabled: !!projectId || !!projectSlug,
+    enabled: !!projectIdParam || !!projectSlug,
     retry: (failureCount, error) => {
       // Don't retry on authentication errors or not found errors
       if (error.message.includes('log in') || error.message.includes('not found')) {
@@ -254,17 +261,19 @@ const ProjectPage = () => {
     }
   });
 
+  const projectId = project?.id ?? projectIdParam ?? null;
+
   // Query for fetching project files
-  const { 
-    data: files, 
-    isLoading: filesLoading, 
-    error: filesError 
+  const {
+    data: files,
+    isLoading: filesLoading,
+    error: filesError
   } = useQuery<File[]>({
-    queryKey: ['/api/projects', project?.id, 'files'],
+    queryKey: ['/api/projects', projectId, 'files'],
     queryFn: async () => {
-      const actualProjectId = project?.id || projectId;
+      const actualProjectId = projectId;
       if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
-      
+
       const res = await apiRequest('GET', `/api/projects/${actualProjectId}/files`);
       if (!res.ok) {
         const error = await res.text();
@@ -275,7 +284,7 @@ const ProjectPage = () => {
       }
       return res.json();
     },
-    enabled: !!(project?.id || projectId),
+    enabled: !!projectId,
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error.message.includes('log in')) {
@@ -293,7 +302,7 @@ const ProjectPage = () => {
     const prompt = searchParams.get('prompt');
     
     // Use the project ID from the loaded project data
-    const effectiveProjectId = project?.id || projectId;
+    const effectiveProjectId = project?.id ?? projectId;
     
     if (isAgentMode && prompt && effectiveProjectId) {
       // Show the main agent interface with the prompt
@@ -337,7 +346,7 @@ const ProjectPage = () => {
       });
       
       // Refresh file list to get updated timestamps
-      const actualProjectId = project?.id || projectId;
+      const actualProjectId = project?.id ?? projectId;
       queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
     },
     onError: (error: Error) => {
@@ -353,7 +362,7 @@ const ProjectPage = () => {
   // Mutation for creating a new file
   const createFileMutation = useMutation({
     mutationFn: async ({ parentId, name, isFolder }: { parentId: number | null, name: string, isFolder: boolean }) => {
-      const actualProjectId = project?.id || projectId;
+      const actualProjectId = project?.id ?? projectId;
       if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
       
       const newFile = {
@@ -371,7 +380,7 @@ const ProjectPage = () => {
       return res.json();
     },
     onSuccess: () => {
-      const actualProjectId = project?.id || projectId;
+      const actualProjectId = project?.id ?? projectId;
       queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
       toast({
         title: "File created",
@@ -402,7 +411,7 @@ const ProjectPage = () => {
         setSelectedFile(null);
       }
       
-      const actualProjectId = project?.id || projectId;
+      const actualProjectId = project?.id ?? projectId;
       queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
       toast({
         title: "File deleted",
@@ -428,7 +437,7 @@ const ProjectPage = () => {
       return res.json();
     },
     onSuccess: () => {
-      const actualProjectId = project?.id || projectId;
+      const actualProjectId = project?.id ?? projectId;
       queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
       toast({
         title: "File renamed",
@@ -447,7 +456,7 @@ const ProjectPage = () => {
   // Mutation for starting the project
   const startProjectMutation = useMutation({
     mutationFn: async () => {
-      const actualProjectId = project?.id || projectId;
+      const actualProjectId = project?.id ?? projectId;
       if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
       
       const res = await apiRequest('POST', `/api/runtime/${actualProjectId}/start`);
@@ -475,7 +484,7 @@ const ProjectPage = () => {
   // Mutation for stopping the project
   const stopProjectMutation = useMutation({
     mutationFn: async () => {
-      const actualProjectId = project?.id || projectId;
+      const actualProjectId = project?.id ?? projectId;
       if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
       
       const res = await apiRequest('POST', `/api/runtime/${actualProjectId}/stop`);
@@ -605,7 +614,7 @@ const ProjectPage = () => {
 
   // Check project status on load
   useEffect(() => {
-    const actualProjectId = project?.id || projectId;
+    const actualProjectId = project?.id ?? projectId;
     if (!actualProjectId) return;
     
     const checkStatus = async () => {
@@ -668,7 +677,7 @@ const ProjectPage = () => {
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  const actualProjectId = project?.id || projectId;
+                  const actualProjectId = project?.id ?? projectId;
                   queryClient.invalidateQueries({ queryKey: projectSlug ? ['project-by-slug', projectUsername, projectSlug] : ['project-by-id', actualProjectId] });
                   queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
                 }}
@@ -952,12 +961,12 @@ const ProjectPage = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Show Main Agent Interface as Principal when active (like Replit) */}
-        {showMainAgent && (project?.id || projectId) ? (
+        {showMainAgent && (project?.id ?? projectId) ? (
           <div className="flex-1 flex">
             {/* Agent Interface takes center stage */}
             <div className="flex-1 flex flex-col">
-              <MainAgentInterface 
-                projectId={project?.id || projectId}
+              <MainAgentInterface
+                projectId={project?.id ?? projectId}
                 initialPrompt={agentPrompt}
                 onMinimize={() => setShowMainAgent(false)}
                 className="h-full"
@@ -966,7 +975,7 @@ const ProjectPage = () => {
             
             {/* Files sidebar on the right when agent is active */}
             <div className="w-64 border-l overflow-auto">
-              <ReplitSidebar projectId={projectId} />
+              <ReplitSidebar projectId={(project?.id ?? projectId) || undefined} />
             </div>
           </div>
         ) : (
@@ -974,7 +983,7 @@ const ProjectPage = () => {
             {/* Traditional layout when agent is not active */}
             {/* Left Sidebar with Files, Agent, Tools, etc. */}
             <div className="w-64 overflow-auto border-r">
-              <ReplitSidebar projectId={projectId || 0} />
+              <ReplitSidebar projectId={(project?.id ?? projectId) || undefined} />
             </div>
             
             {/* Middle Section: Editor and Terminal */}
@@ -1257,8 +1266,8 @@ const ProjectPage = () => {
               <FileUploadDropzone 
                 projectId={projectId} 
                 onUploadComplete={() => {
-                  const actualProjectId = project?.id || projectId;
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
+                  const actualProjectId = project?.id ?? projectId;
+                  queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
                 }}
               />
             </div>
