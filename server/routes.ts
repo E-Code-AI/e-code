@@ -542,6 +542,10 @@ const jiraLinearService = new JiraLinearService();
 const datadogNewRelicService = new DatadogNewRelicService();
 const webhookService = new WebhookService();
 
+const hasAdminRole = (req: Request): boolean => req.user?.role === 'admin';
+const respondAdminAccessRequired = (res: Response) =>
+  res.status(403).json({ error: 'Admin access required' });
+
 // Middleware to ensure a user is authenticated - ROBUST FORTUNE 500 SYSTEM
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   // Always allow in development mode for testing
@@ -21820,8 +21824,8 @@ Generate a comprehensive application based on the user's request. Include all ne
   };
 
   app.get('/api/admin/form-requests', ensureAuthenticated, async (req, res) => {
-    if (!requireAdminAccess(req, res)) {
-      return;
+    if (!hasAdminRole(req)) {
+      return respondAdminAccessRequired(res);
     }
 
     try {
@@ -21841,8 +21845,8 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
 
   app.patch('/api/admin/form-requests/:id', ensureAuthenticated, async (req, res) => {
-    if (!requireAdminAccess(req, res)) {
-      return;
+    if (!hasAdminRole(req)) {
+      return respondAdminAccessRequired(res);
     }
 
     try {

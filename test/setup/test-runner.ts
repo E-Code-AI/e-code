@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 
 type MaybePromise<T> = T | Promise<T>;
@@ -58,6 +57,15 @@ const getCallingTestFile = (): string | undefined => {
 class TestRunner {
   private suites: RegisteredSuite[] = [];
 
+const logError = (error: unknown) => {
+  if (error instanceof Error) {
+    console.error(error.stack ?? error.message);
+  } else {
+    console.error(error);
+  }
+};
+
+export const testRunner = {
   registerSuite(name: string, suite: TestSuite): void {
     this.suites.push({ name, suite, file: getCallingTestFile() });
   }
@@ -91,8 +99,13 @@ class TestRunner {
         await beforeAll();
       }
 
-      for (const test of runnableTests) {
-        const start = performance.now();
+      for (const test of tests) {
+        if (suite.beforeEach) {
+          await suite.beforeEach();
+        }
+
+        const started = performance.now();
+
         try {
           if (beforeEach) {
             await beforeEach();
@@ -100,17 +113,17 @@ class TestRunner {
 
           await test.fn();
           passed += 1;
-          const duration = performance.now() - start;
-          console.log(`  ✓ ${test.name} (${duration.toFixed(0)}ms)`);
+          const duration = performance.now() - started;
+          console.log(`  ✓ ${test.name} (${formatDuration(duration)})`);
         } catch (error) {
           failed += 1;
-          const duration = performance.now() - start;
-          console.error(`  ✗ ${test.name} (${duration.toFixed(0)}ms)`);
-          console.error(error instanceof Error ? error.stack ?? error.message : error);
-        } finally {
-          if (afterEach) {
-            await afterEach();
-          }
+          const duration = performance.now() - started;
+          console.error(`  ✗ ${test.name} (${formatDuration(duration)})`);
+          logError(error);
+        }
+
+        if (suite.afterEach) {
+          await suite.afterEach();
         }
       }
 
@@ -119,15 +132,10 @@ class TestRunner {
       }
     }
 
-    console.log('\nTest Summary:');
-    console.log(`  Total:   ${total}`);
-    console.log(`  Passed:  ${passed}`);
-    console.log(`  Failed:  ${failed}`);
-    console.log(`  Skipped: ${skipped}`);
+    console.log(`\nTest Results: ${passed} passed, ${failed} failed`);
 
-    return { total, passed, failed, skipped };
-  }
-}
+    return { failed, passed };
+  },
+};
 
-export const testRunner = new TestRunner();
-export type TestRunnerInstance = typeof testRunner;
+export type TestRunner = typeof testRunner;
