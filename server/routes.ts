@@ -355,6 +355,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'Auth Bypass: Disabled. Set ENABLE_DEV_AUTH_BYPASS=true and provide DEV_AUTH_BYPASS_TOKEN to enable debug endpoints.'
     );
   }
+  
+  // Development-only simple authentication endpoints
+  if (process.env.NODE_ENV === 'development') {
+    const bcrypt = await import('bcrypt');
+    
+    // Simple development login endpoint
+    app.post('/api/dev-login', async (req, res) => {
+      console.log('[DEV AUTH] Development login requested');
+      
+      try {
+        const testUsername = req.body.username || 'admin';
+        const testEmail = req.body.email || `${testUsername}@e-code.ai`;
+        
+        // Check if user exists
+        let user = await storage.getUserByUsername(testUsername);
+        
+        if (!user) {
+          console.log('[DEV AUTH] Creating test user:', testUsername);
+          // Create a test user with a simple password
+          const hashedPassword = await bcrypt.hash('password123', 10);
+          user = await storage.createUser({
+            username: testUsername,
+            email: testEmail,
+            password: hashedPassword,
+            displayName: testUsername.charAt(0).toUpperCase() + testUsername.slice(1),
+            emailVerified: true,
+          });
+          console.log('[DEV AUTH] Test user created:', user.id);
+        }
+        
+        // Log the user in using passport
+        req.login(user as any, (err) => {
+          if (err) {
+            console.error('[DEV AUTH] Login failed:', err);
+            return res.status(500).json({ error: 'Failed to login' });
+          }
+          
+          console.log('[DEV AUTH] User logged in successfully:', user!.username);
+          res.json({ 
+            success: true, 
+            user: {
+              id: user!.id,
+              username: user!.username,
+              email: user!.email,
+              displayName: user!.displayName
+            }
+          });
+        });
+      } catch (error) {
+        console.error('[DEV AUTH] Error in dev-login:', error);
+        res.status(500).json({ error: 'Failed to create/login test user' });
+      }
+    });
+    
+    // Auto-login endpoint for development
+    app.get('/api/dev-auto-login', async (req, res) => {
+      console.log('[DEV AUTH] Auto-login requested');
+      
+      try {
+        // Auto-create and login admin user
+        let user = await storage.getUserByUsername('admin');
+        
+        if (!user) {
+          console.log('[DEV AUTH] Creating admin user');
+          const hashedPassword = await bcrypt.hash('admin123', 10);
+          user = await storage.createUser({
+            username: 'admin',
+            email: 'admin@e-code.ai',
+            password: hashedPassword,
+            displayName: 'Admin',
+            emailVerified: true,
+          });
+        }
+        
+        req.login(user as any, (err) => {
+          if (err) {
+            return res.status(500).json({ error: 'Failed to auto-login' });
+          }
+          
+          console.log('[DEV AUTH] Auto-login successful');
+          res.redirect('/');
+        });
+      } catch (error) {
+        console.error('[DEV AUTH] Auto-login error:', error);
+        res.status(500).json({ error: 'Auto-login failed' });
+      }
+    });
+    
+    console.log('[DEV AUTH] Development authentication endpoints enabled');
+  }
 
   // Add performance monitoring middleware for all routes
   app.use(performanceMiddleware);
@@ -3647,6 +3737,9 @@ Application will be available at http://localhost:3000
 
   app.post('/api/projects', ensureAuthenticated, async (req, res) => {
     try {
+      console.log('[PROJECT CREATE] Creating new project:', req.body.name);
+      console.log('[PROJECT CREATE] User:', req.user?.username || req.user?.id);
+      
       // Create a schema that excludes ownerId for validation
       const projectValidationSchema = insertProjectSchema.omit({ ownerId: true });
       const result = projectValidationSchema.safeParse(req.body);
@@ -3659,6 +3752,9 @@ Application will be available at http://localhost:3000
         ...result.data,
         ownerId: req.user!.id,
       });
+      
+      console.log('[PROJECT CREATE] Created project with slug:', newProject.slug);
+      console.log('[PROJECT CREATE] Project ID:', newProject.id);
       
       // Create default files for the project
       const defaultFiles = [
@@ -3685,12 +3781,15 @@ Application will be available at http://localhost:3000
       // Get the owner information to include in response
       const owner = await storage.getUser(req.user!.id);
       
+      console.log('[PROJECT CREATE] Returning project with owner:', owner?.username);
+      
       res.status(201).json({
         ...newProject,
-        owner
+        owner,
+        slug: newProject.slug // Ensure slug is explicitly included
       });
     } catch (error) {
-      console.error('Error creating project:', error);
+      console.error('[PROJECT CREATE] Error creating project:', error);
       res.status(500).json({ error: 'Failed to create project' });
     }
   });
