@@ -148,7 +148,7 @@ export default function Usage() {
   };
   
   const handleManageStorage = () => {
-    navigate('/settings/storage');
+    navigate('/settings');
   };
   
   const handleComparePlans = () => {
