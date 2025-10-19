@@ -435,6 +435,11 @@ function AppContent() {
               <ProjectsPage />
             </ReplitLayout>
           )} />
+          <ProtectedRoute path="/projects/:id" component={() => (
+            <ReplitLayout showSidebar={true}>
+              <ProjectPage />
+            </ReplitLayout>
+          )} />
           {/* Project Routes - Consolidated and properly ordered */}
           <ProtectedRoute path="/project/:id" component={() => (
             <ReplitLayout showSidebar={true}>

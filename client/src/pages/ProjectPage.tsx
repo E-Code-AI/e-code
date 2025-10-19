@@ -85,13 +85,15 @@ import { Spinner } from '@/components/ui/spinner';
 
 const ProjectPage = () => {
   const [matchId, paramsId] = useRoute('/project/:id');
+  const [matchLegacyId, paramsLegacyId] = useRoute('/projects/:id');
   const [matchSlug, paramsSlug] = useRoute('/@:username/:projectname');
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
   // Determine if we're using ID or slug route
   const isSlugRoute = !!matchSlug && paramsSlug?.username && paramsSlug?.projectname;
-  const projectId = matchId && paramsId?.id ? parseInt(paramsId.id) : null;
+  const projectIdParam = paramsId?.id || paramsLegacyId?.id || null;
+  const projectId = projectIdParam ? parseInt(projectIdParam, 10) : null;
   const projectSlug = isSlugRoute ? `@${paramsSlug.username}/${paramsSlug.projectname}` : null;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, string>>({});
