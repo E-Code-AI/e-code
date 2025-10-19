@@ -7,9 +7,9 @@
 
 import { EventEmitter } from 'events';
 import { createLogger } from '../utils/logger';
-import { RedisCache } from './redis-cache';
+import { RedisCache, redisCache } from './redis-cache';
 import { DatabasePoolManager } from './database-pool';
-import { CDNOptimizationService } from './cdn-optimization';
+import { cdnOptimization } from './cdn-optimization';
 import { spawn, ChildProcess } from 'child_process';
 import * as os from 'os';
 import * as path from 'path';
@@ -56,7 +56,7 @@ export class ScalabilityOrchestrator extends EventEmitter {
   private scalingPolicies: Map<string, ScalingPolicy> = new Map();
   private redisCache: RedisCache;
   private dbPool: DatabasePoolManager;
-  private cdnService: CDNOptimizationService;
+  private cdnService: typeof cdnOptimization;
   private healthCheckInterval?: NodeJS.Timeout;
   private scalingInterval?: NodeJS.Timeout;
   private loadBalancerIndex: Map<string, number> = new Map();
@@ -74,9 +74,9 @@ export class ScalabilityOrchestrator extends EventEmitter {
 
   private constructor() {
     super();
-    this.redisCache = new RedisCache();
+    this.redisCache = redisCache;
     this.dbPool = new DatabasePoolManager();
-    this.cdnService = new CDNOptimizationService();
+    this.cdnService = cdnOptimization;
     this.initialize();
   }
 

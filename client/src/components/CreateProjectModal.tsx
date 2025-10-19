@@ -16,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle2 } from "lucide-react";
+import { ECodeLoading } from "@/components/ECodeLoading";
 import { 
   Select,
   SelectContent,
@@ -49,6 +50,7 @@ export const CreateProjectModal = ({
   initialDescription = ""
 }: CreateProjectModalProps) => {
   const [aiGenerated, setAiGenerated] = useState(false);
+  const [creationStep, setCreationStep] = useState<'form' | 'creating' | 'initializing' | 'success'>('form');
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -83,20 +85,69 @@ export const CreateProjectModal = ({
     }
   }, [initialDescription, form]);
 
-  const handleSubmit = (values: FormValues) => {
-    onSubmit(values.name);
+  const handleSubmit = async (values: FormValues) => {
+    setCreationStep('creating');
+    
+    // Simulate creation steps
+    setTimeout(() => setCreationStep('initializing'), 1000);
+    setTimeout(() => setCreationStep('success'), 2000);
+    
+    // Call parent submit after showing loading states
+    setTimeout(() => {
+      onSubmit(values.name);
+      setCreationStep('form');
+    }, 2500);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px] bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <DialogHeader>
-            <DialogTitle className="text-2xl text-[var(--ecode-text)]">Create a Repl</DialogTitle>
-            <DialogDescription className="text-[var(--ecode-muted)]">
-              A Repl is an interactive programming environment
-            </DialogDescription>
-          </DialogHeader>
+        {creationStep !== 'form' ? (
+          // Loading states
+          <div className="py-12 flex flex-col items-center justify-center space-y-6">
+            {creationStep === 'creating' && (
+              <>
+                <ECodeLoading size="lg" />
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold text-[var(--ecode-text)]">Creating your project...</h3>
+                  <p className="text-sm text-[var(--ecode-text-secondary)]">Setting up the environment</p>
+                </div>
+              </>
+            )}
+            
+            {creationStep === 'initializing' && (
+              <>
+                <div className="relative">
+                  <ECodeLoading size="lg" />
+                  <Sparkles className="absolute top-0 right-0 h-6 w-6 text-violet-500 animate-pulse" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold text-[var(--ecode-text)]">Initializing template...</h3>
+                  <p className="text-sm text-[var(--ecode-text-secondary)]">Installing dependencies and configuring settings</p>
+                </div>
+              </>
+            )}
+            
+            {creationStep === 'success' && (
+              <>
+                <div className="h-16 w-16 rounded-full bg-green-500 bg-opacity-10 flex items-center justify-center">
+                  <CheckCircle2 className="h-10 w-10 text-green-500" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold text-[var(--ecode-text)]">Project created successfully!</h3>
+                  <p className="text-sm text-[var(--ecode-text-secondary)]">Redirecting to editor...</p>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-[var(--ecode-text)]">Create a Repl</DialogTitle>
+              <DialogDescription className="text-[var(--ecode-muted)]">
+                A Repl is an interactive programming environment
+              </DialogDescription>
+            </DialogHeader>
           <div className="py-6 space-y-5">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-[var(--ecode-text)]">
@@ -150,7 +201,7 @@ export const CreateProjectModal = ({
             </div>
             
             {aiGenerated && (
-              <div className="flex items-center gap-2 p-3 bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)] rounded-md">
+              <div className="flex items-center gap-2 p-3 bg-[var(--ecode-accent)] bg-opacity-10 text-[var(--ecode-accent)] rounded-md">
                 <Sparkles className="h-4 w-4" />
                 <span className="text-sm">AI generated from your description</span>
               </div>
@@ -176,6 +227,7 @@ export const CreateProjectModal = ({
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -24,7 +24,8 @@ export default function ReportAbuse() {
     try {
       const formElement = e.target as HTMLFormElement;
       const formData = new FormData(formElement);
-      
+      const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/report-abuse';
+
       const response = await fetch('/api/report/abuse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -33,7 +34,9 @@ export default function ReportAbuse() {
           reportType: reportType,
           targetUrl: formData.get('url'),
           description: formData.get('description'),
-          reporterEmail: formData.get('email')
+          reporterEmail: formData.get('email'),
+          username: formData.get('username'),
+          pagePath,
         }),
       });
 
@@ -299,7 +302,7 @@ export default function ReportAbuse() {
                   </p>
                   <Button variant="outline" size="sm" className="w-full">
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    abuse@e-code.com
+                    abuse@e-code.ai
                   </Button>
                 </CardContent>
               </Card>

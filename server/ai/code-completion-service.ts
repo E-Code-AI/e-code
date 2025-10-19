@@ -168,7 +168,7 @@ Only provide completions that are highly relevant and would actually help the de
       // Fallback to GPT-4 if available
       if (this.openai) {
         const completion = await this.openai.chat.completions.create({
-          model: 'gpt-4-turbo-preview',
+          model: 'gpt-5',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2,
           max_tokens: 300,

@@ -1,802 +1,936 @@
 // @ts-nocheck
 import { Request, Response } from 'express';
+import { SQL, and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import {
+  challenges,
+  communityCategories,
+  communityComments,
+  communityFollows,
+  communityPostBookmarks,
+  communityPostLikes,
+  communityPosts,
+  users,
+} from '@shared/schema';
+import { db } from '../db';
 import { createLogger } from '../utils/logger';
-import { storage } from '../storage';
 
 const logger = createLogger('community-service');
 
-interface CommunityPost {
-  id: string;
-  title: string;
-  content: string;
-  authorId: number;
-  authorUsername: string;
-  category: string;
-  tags: string[];
-  likes: number;
-  replies: number;
-  views: number;
-  isPinned: boolean;
-  isLocked: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  projectId?: number;
-  codeSnippet?: string;
+function getRelativeTime(dateInput: Date | string | null): string {
+  if (!dateInput) return 'just now';
+  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  const now = new Date();
+  const diffSeconds = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000));
+
+  if (diffSeconds < 60) return 'just now';
+  if (diffSeconds < 3600) {
+    const minutes = Math.floor(diffSeconds / 60);
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  }
+  if (diffSeconds < 86400) {
+    const hours = Math.floor(diffSeconds / 3600);
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  }
+  if (diffSeconds < 604800) {
+    const days = Math.floor(diffSeconds / 86400);
+    return `${days} day${days === 1 ? '' : 's'} ago`;
+  }
+  const weeks = Math.floor(diffSeconds / 604800);
+  if (weeks < 5) {
+    return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+  }
+  const months = Math.floor(diffSeconds / 2592000);
+  if (months < 12) {
+    return `${months} month${months === 1 ? '' : 's'} ago`;
+  }
+  const years = Math.floor(diffSeconds / 31536000);
+  return `${years} year${years === 1 ? '' : 's'} ago`;
 }
 
-interface CommunityReply {
-  id: string;
-  postId: string;
-  content: string;
-  authorId: number;
-  authorUsername: string;
-  likes: number;
-  isAccepted: boolean;
-  parentReplyId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface UserProfile {
-  userId: number;
-  username: string;
-  displayName: string;
-  bio: string;
-  location: string;
-  website: string;
-  githubUsername: string;
-  twitterUsername: string;
-  profileImage: string;
-  badges: string[];
-  reputation: number;
-  totalPosts: number;
-  totalReplies: number;
-  totalLikes: number;
-  joinedAt: Date;
-  isVerified: boolean;
-  isExpert: boolean;
-  specialties: string[];
-}
-
-interface CodeShowcase {
-  id: string;
-  title: string;
-  description: string;
-  authorId: number;
-  authorUsername: string;
-  projectId: number;
-  language: string;
-  tags: string[];
-  likes: number;
-  views: number;
-  forks: number;
-  featured: boolean;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  createdAt: Date;
-  updatedAt: Date;
-  thumbnailUrl?: string;
+function ensureArray(value: any): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    if (typeof value === 'string') {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    }
+  } catch (error) {
+    return [];
+  }
+  return [];
 }
 
 export class CommunityService {
-  private posts: Map<string, CommunityPost> = new Map();
-  private replies: Map<string, CommunityReply> = new Map();
-  private userProfiles: Map<number, UserProfile> = new Map();
-  private showcases: Map<string, CodeShowcase> = new Map();
-  private userLikes: Map<string, Set<number>> = new Map(); // postId/replyId -> Set of userIds
-  private userFollows: Map<number, Set<number>> = new Map(); // userId -> Set of followedUserIds
+  async getCategories(req: Request, res: Response) {
+    try {
+      const rows = await db
+        .select({
+          id: communityCategories.id,
+          name: communityCategories.name,
+          icon: communityCategories.icon,
+          position: communityCategories.position,
+          postCount: sql`COUNT(${communityPosts.id})`,
+        })
+        .from(communityCategories)
+        .leftJoin(communityPosts, eq(communityPosts.categoryId, communityCategories.id))
+        .groupBy(
+          communityCategories.id,
+          communityCategories.name,
+          communityCategories.icon,
+          communityCategories.position,
+        )
+        .orderBy(asc(communityCategories.position), asc(communityCategories.name));
 
-  constructor() {
-    this.initializeMockData();
+      const formatted = rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        icon: row.icon,
+        postCount: Number(row.postCount ?? 0),
+      }));
+
+      const totalPosts = formatted.reduce((sum, cat) => sum + cat.postCount, 0);
+
+      res.json([
+        { id: 'all', name: 'All Initiatives', icon: 'TrendingUp', postCount: totalPosts },
+        ...formatted,
+      ]);
+    } catch (error) {
+      logger.error('Error fetching community categories', error);
+      res.status(500).json({ message: 'Failed to fetch categories' });
+    }
   }
 
-  private initializeMockData() {
-    // Create sample community posts
-    const samplePosts: Partial<CommunityPost>[] = [
-      {
-        id: 'post-1',
-        title: 'How to optimize React performance?',
-        content: 'I\'m working on a large React application and noticing some performance issues. What are the best practices for optimization?',
-        authorId: 1,
-        authorUsername: 'reactdev',
-        category: 'help',
-        tags: ['react', 'performance', 'optimization'],
-        likes: 15,
-        replies: 8,
-        views: 234,
-        isPinned: false,
-        isLocked: false
-      },
-      {
-        id: 'post-2',
-        title: 'Building a REST API with Python Flask',
-        content: 'Here\'s a comprehensive guide on building a REST API using Python Flask with authentication and database integration.',
-        authorId: 2,
-        authorUsername: 'pythonista',
-        category: 'tutorial',
-        tags: ['python', 'flask', 'api', 'backend'],
-        likes: 42,
-        replies: 12,
-        views: 567,
-        isPinned: true,
-        isLocked: false,
-        codeSnippet: `from flask import Flask, jsonify, request
-app = Flask(__name__)
-
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    return jsonify({'users': []})
-
-if __name__ == '__main__':
-    app.run(debug=True)`
-      },
-      {
-        id: 'post-3',
-        title: 'Machine Learning with JavaScript',
-        content: 'Exploring TensorFlow.js for machine learning in the browser. Share your experiences!',
-        authorId: 3,
-        authorUsername: 'mlexpert',
-        category: 'discussion',
-        tags: ['javascript', 'ml', 'tensorflow', 'ai'],
-        likes: 28,
-        replies: 6,
-        views: 345,
-        isPinned: false,
-        isLocked: false
-      }
-    ];
-
-    samplePosts.forEach(post => {
-      const communityPost: CommunityPost = {
-        ...post,
-        createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date()
-      } as CommunityPost;
-      
-      this.posts.set(communityPost.id, communityPost);
-    });
-
-    // Create sample user profiles
-    const sampleProfiles: Partial<UserProfile>[] = [
-      {
-        userId: 1,
-        username: 'reactdev',
-        displayName: 'React Developer',
-        bio: 'Full-stack developer specializing in React and Node.js',
-        location: 'San Francisco, CA',
-        website: 'https://reactdev.com',
-        githubUsername: 'reactdev',
-        badges: ['Early Adopter', 'Top Contributor'],
-        reputation: 1250,
-        specialties: ['React', 'JavaScript', 'TypeScript']
-      },
-      {
-        userId: 2,
-        username: 'pythonista',
-        displayName: 'Python Expert',
-        bio: 'Backend engineer with 8+ years of Python experience',
-        location: 'New York, NY',
-        githubUsername: 'pythonista',
-        badges: ['Expert', 'Mentor', 'Tutorial Writer'],
-        reputation: 2340,
-        specialties: ['Python', 'Django', 'Flask', 'Machine Learning']
-      }
-    ];
-
-    sampleProfiles.forEach(profile => {
-      const userProfile: UserProfile = {
-        ...profile,
-        profileImage: `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.username}`,
-        totalPosts: Math.floor(Math.random() * 50) + 5,
-        totalReplies: Math.floor(Math.random() * 200) + 20,
-        totalLikes: Math.floor(Math.random() * 500) + 50,
-        joinedAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
-        isVerified: true,
-        isExpert: profile.reputation! > 1000
-      } as UserProfile;
-      
-      this.userProfiles.set(userProfile.userId, userProfile);
-    });
-
-    // Create sample code showcases
-    const sampleShowcases: Partial<CodeShowcase>[] = [
-      {
-        id: 'showcase-1',
-        title: 'Interactive Data Visualization',
-        description: 'Beautiful charts and graphs using D3.js and React',
-        authorId: 1,
-        authorUsername: 'reactdev',
-        projectId: 1,
-        language: 'javascript',
-        tags: ['d3js', 'react', 'visualization', 'charts'],
-        likes: 89,
-        views: 1234,
-        forks: 23,
-        featured: true,
-        difficulty: 'intermediate'
-      },
-      {
-        id: 'showcase-2',
-        title: 'AI-Powered Chat Bot',
-        description: 'Intelligent chatbot using OpenAI API and Python',
-        authorId: 2,
-        authorUsername: 'pythonista',
-        projectId: 2,
-        language: 'python',
-        tags: ['ai', 'chatbot', 'openai', 'nlp'],
-        likes: 156,
-        views: 2456,
-        forks: 45,
-        featured: true,
-        difficulty: 'advanced'
-      }
-    ];
-
-    sampleShowcases.forEach(showcase => {
-      const codeShowcase: CodeShowcase = {
-        ...showcase,
-        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(),
-        thumbnailUrl: `https://picsum.photos/400/300?random=${showcase.id}`
-      } as CodeShowcase;
-      
-      this.showcases.set(codeShowcase.id, codeShowcase);
-    });
-  }
-
-  // Community Posts
   async getCommunityPosts(req: Request, res: Response) {
     try {
-      const { 
-        category, 
-        tag, 
-        sort = 'recent', 
-        page = 1, 
-        limit = 20,
-        search 
-      } = req.query;
+      const { category, search } = req.query;
+      const currentUserId = req.user?.id as string | undefined;
 
-      let posts = Array.from(this.posts.values());
-
-      // Apply filters
+      const conditions: SQL[] = [];
       if (category && category !== 'all') {
-        posts = posts.filter(p => p.category === category);
+        conditions.push(eq(communityPosts.categoryId, category as string));
       }
-
-      if (tag) {
-        posts = posts.filter(p => p.tags.includes(tag as string));
-      }
-
       if (search) {
-        const searchTerm = (search as string).toLowerCase();
-        posts = posts.filter(p => 
-          p.title.toLowerCase().includes(searchTerm) ||
-          p.content.toLowerCase().includes(searchTerm) ||
-          p.tags.some(t => t.toLowerCase().includes(searchTerm))
+        const term = `%${search}%`;
+        conditions.push(
+          sql`(${communityPosts.title} ILIKE ${term} OR ${communityPosts.content} ILIKE ${term} OR ${communityPosts.tags}::text ILIKE ${term})`,
         );
       }
 
-      // Sort posts
-      switch (sort) {
-        case 'popular':
-          posts.sort((a, b) => b.likes - a.likes);
-          break;
-        case 'discussed':
-          posts.sort((a, b) => b.replies - a.replies);
-          break;
-        case 'recent':
-        default:
-          posts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-          break;
+      let query = db
+        .select({
+          id: communityPosts.id,
+          title: communityPosts.title,
+          content: communityPosts.content,
+          categoryId: communityPosts.categoryId,
+          tags: communityPosts.tags,
+          createdAt: communityPosts.createdAt,
+          updatedAt: communityPosts.updatedAt,
+          viewCount: communityPosts.viewCount,
+          projectUrl: communityPosts.projectUrl,
+          imageUrl: communityPosts.imageUrl,
+          authorId: users.id,
+          username: users.username,
+          displayName: users.displayName,
+          avatarUrl: users.profileImageUrl,
+          likeCount: sql`COUNT(DISTINCT ${communityPostLikes.userId})`,
+          commentCount: sql`COUNT(DISTINCT ${communityComments.id})`,
+        })
+        .from(communityPosts)
+        .leftJoin(users, eq(users.id, communityPosts.authorId))
+        .leftJoin(communityPostLikes, eq(communityPostLikes.postId, communityPosts.id))
+        .leftJoin(communityComments, eq(communityComments.postId, communityPosts.id))
+        .groupBy(
+          communityPosts.id,
+          communityPosts.title,
+          communityPosts.content,
+          communityPosts.categoryId,
+          communityPosts.tags,
+          communityPosts.createdAt,
+          communityPosts.updatedAt,
+          communityPosts.viewCount,
+          communityPosts.projectUrl,
+          communityPosts.imageUrl,
+          users.id,
+          users.username,
+          users.displayName,
+          users.profileImageUrl,
+        )
+        .orderBy(desc(communityPosts.createdAt));
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
       }
 
-      // Apply pagination
-      const startIndex = (parseInt(page as string) - 1) * parseInt(limit as string);
-      const paginatedPosts = posts.slice(startIndex, startIndex + parseInt(limit as string));
+      const posts = await query;
+      const postIds = posts.map((post) => post.id).filter((id) => id != null);
 
-      // Move pinned posts to top
-      const pinnedPosts = paginatedPosts.filter(p => p.isPinned);
-      const regularPosts = paginatedPosts.filter(p => !p.isPinned);
-      const finalPosts = [...pinnedPosts, ...regularPosts];
+      let likedPostIds = new Set<number>();
+      let bookmarkedPostIds = new Set<number>();
 
-      res.json({
-        posts: finalPosts,
-        totalCount: posts.length,
-        page: parseInt(page as string),
-        totalPages: Math.ceil(posts.length / parseInt(limit as string)),
-        categories: ['help', 'tutorial', 'discussion', 'showcase', 'feedback']
+      if (currentUserId && postIds.length > 0) {
+        const liked = await db
+          .select({ postId: communityPostLikes.postId })
+          .from(communityPostLikes)
+          .where(and(eq(communityPostLikes.userId, currentUserId), inArray(communityPostLikes.postId, postIds)));
+        likedPostIds = new Set(liked.map((row) => row.postId));
+
+        const bookmarked = await db
+          .select({ postId: communityPostBookmarks.postId })
+          .from(communityPostBookmarks)
+          .where(and(eq(communityPostBookmarks.userId, currentUserId), inArray(communityPostBookmarks.postId, postIds)));
+        bookmarkedPostIds = new Set(bookmarked.map((row) => row.postId));
+      }
+
+      const response = posts.map((post) => {
+        const likeCount = Number(post.likeCount ?? 0);
+        const commentCount = Number(post.commentCount ?? 0);
+        return {
+          id: post.id.toString(),
+          title: post.title,
+          content: post.content,
+          author: {
+            id: post.authorId || '',
+            username: post.username || 'unknown',
+            displayName: post.displayName || post.username || 'Unknown User',
+            avatarUrl:
+              post.avatarUrl ||
+              (post.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.username}` : undefined),
+          reputation: likeCount * 2 + commentCount,
+          },
+          category: post.categoryId,
+          tags: ensureArray(post.tags),
+          likes: likeCount,
+          comments: commentCount,
+          views: Number(post.viewCount ?? 0),
+          isLiked: likedPostIds.has(post.id),
+          isBookmarked: bookmarkedPostIds.has(post.id),
+          createdAt: getRelativeTime(post.createdAt),
+          projectUrl: post.projectUrl || undefined,
+          imageUrl: post.imageUrl || undefined,
+        };
       });
+
+      res.json(response);
     } catch (error) {
-      logger.error('Error fetching community posts:', error);
-      res.status(500).json({ error: 'Failed to fetch community posts' });
+      logger.error('Error fetching community posts', error);
+      res.status(500).json({ message: 'Failed to fetch community posts' });
     }
   }
 
   async createCommunityPost(req: Request, res: Response) {
     try {
-      const { title, content, category, tags, projectId, codeSnippet } = req.body;
-      const userId = (req as any).user?.id;
-      const username = (req as any).user?.username;
+      const { title, content, category, tags = [], projectUrl, imageUrl } = req.body;
+      const userId = req.user?.id as string | undefined;
 
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
       if (!title || !content || !category) {
-        return res.status(400).json({ error: 'Missing required fields' });
+        return res.status(400).json({ message: 'Missing required fields' });
       }
 
-      const postId = `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const post: CommunityPost = {
-        id: postId,
-        title,
-        content,
-        authorId: userId,
-        authorUsername: username,
-        category,
-        tags: tags || [],
-        likes: 0,
-        replies: 0,
-        views: 0,
-        isPinned: false,
-        isLocked: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        projectId,
-        codeSnippet
-      };
+      const categoryExists = await db
+        .select({ id: communityCategories.id })
+        .from(communityCategories)
+        .where(eq(communityCategories.id, category))
+        .limit(1);
 
-      this.posts.set(postId, post);
-
-      // Update user profile stats
-      const userProfile = this.userProfiles.get(userId);
-      if (userProfile) {
-        userProfile.totalPosts += 1;
-        userProfile.reputation += 5; // Award points for posting
+      if (categoryExists.length === 0) {
+        return res.status(400).json({ message: 'Invalid category' });
       }
 
-      logger.info(`Community post created: ${title} by ${username}`);
+      const [created] = await db
+        .insert(communityPosts)
+        .values({
+          title,
+          content,
+          categoryId: category,
+          tags,
+          authorId: userId,
+          projectUrl,
+          imageUrl,
+        })
+        .returning();
 
       res.status(201).json({
         success: true,
         post: {
-          id: post.id,
-          title: post.title,
-          category: post.category,
-          tags: post.tags,
-          createdAt: post.createdAt
-        }
+          id: created.id.toString(),
+          title: created.title,
+          category: created.categoryId,
+          tags: ensureArray(created.tags),
+          createdAt: created.createdAt,
+        },
       });
     } catch (error) {
-      logger.error('Error creating community post:', error);
-      res.status(500).json({ error: 'Failed to create post' });
+      logger.error('Error creating community post', error);
+      res.status(500).json({ message: 'Failed to create community post' });
     }
   }
 
   async getCommunityPost(req: Request, res: Response) {
     try {
-      const { id } = req.params;
-      const post = this.posts.get(id);
-
-      if (!post) {
-        return res.status(404).json({ error: 'Post not found' });
+      const postId = Number(req.params.id);
+      if (Number.isNaN(postId)) {
+        return res.status(400).json({ message: 'Invalid post id' });
       }
 
-      // Increment view count
-      post.views += 1;
+      const currentUserId = req.user?.id as string | undefined;
 
-      // Get replies for this post
-      const postReplies = Array.from(this.replies.values())
-        .filter(r => r.postId === id)
-        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      const [post] = await db
+        .select({
+          id: communityPosts.id,
+          title: communityPosts.title,
+          content: communityPosts.content,
+          categoryId: communityPosts.categoryId,
+          tags: communityPosts.tags,
+          createdAt: communityPosts.createdAt,
+          updatedAt: communityPosts.updatedAt,
+          viewCount: communityPosts.viewCount,
+          projectUrl: communityPosts.projectUrl,
+          imageUrl: communityPosts.imageUrl,
+          authorId: users.id,
+          username: users.username,
+          displayName: users.displayName,
+          avatarUrl: users.profileImageUrl,
+          likeCount: sql`COUNT(DISTINCT ${communityPostLikes.userId})`,
+          commentCount: sql`COUNT(DISTINCT ${communityComments.id})`,
+        })
+        .from(communityPosts)
+        .leftJoin(users, eq(users.id, communityPosts.authorId))
+        .leftJoin(communityPostLikes, eq(communityPostLikes.postId, communityPosts.id))
+        .leftJoin(communityComments, eq(communityComments.postId, communityPosts.id))
+        .where(eq(communityPosts.id, postId))
+        .groupBy(
+          communityPosts.id,
+          communityPosts.title,
+          communityPosts.content,
+          communityPosts.categoryId,
+          communityPosts.tags,
+          communityPosts.createdAt,
+          communityPosts.updatedAt,
+          communityPosts.viewCount,
+          communityPosts.projectUrl,
+          communityPosts.imageUrl,
+          users.id,
+          users.username,
+          users.displayName,
+          users.profileImageUrl,
+        );
+
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      await db
+        .update(communityPosts)
+        .set({ viewCount: sql`${communityPosts.viewCount} + 1` })
+        .where(eq(communityPosts.id, postId));
+
+      const comments = await db
+        .select({
+          id: communityComments.id,
+          content: communityComments.content,
+          createdAt: communityComments.createdAt,
+          authorId: users.id,
+          username: users.username,
+          displayName: users.displayName,
+          avatarUrl: users.profileImageUrl,
+        })
+        .from(communityComments)
+        .leftJoin(users, eq(users.id, communityComments.authorId))
+        .where(eq(communityComments.postId, postId))
+        .orderBy(asc(communityComments.createdAt));
+
+      let isLiked = false;
+      let isBookmarked = false;
+      if (currentUserId) {
+        const like = await db
+          .select({ postId: communityPostLikes.postId })
+          .from(communityPostLikes)
+          .where(and(eq(communityPostLikes.postId, postId), eq(communityPostLikes.userId, currentUserId)))
+          .limit(1);
+        isLiked = like.length > 0;
+
+        const bookmark = await db
+          .select({ postId: communityPostBookmarks.postId })
+          .from(communityPostBookmarks)
+          .where(and(eq(communityPostBookmarks.postId, postId), eq(communityPostBookmarks.userId, currentUserId)))
+          .limit(1);
+        isBookmarked = bookmark.length > 0;
+      }
+
+      const likeCount = Number(post.likeCount ?? 0);
+      const commentCount = Number(post.commentCount ?? 0);
 
       res.json({
-        post,
-        replies: postReplies,
-        author: this.userProfiles.get(post.authorId)
+        id: post.id.toString(),
+        title: post.title,
+        content: post.content,
+        category: post.categoryId,
+        tags: ensureArray(post.tags),
+        createdAt: getRelativeTime(post.createdAt),
+        updatedAt: post.updatedAt,
+        views: Number(post.viewCount ?? 0) + 1,
+        likes: likeCount,
+        comments: commentCount,
+        projectUrl: post.projectUrl || undefined,
+        imageUrl: post.imageUrl || undefined,
+        isLiked,
+        isBookmarked,
+        author: {
+          id: post.authorId || '',
+          username: post.username || 'unknown',
+          displayName: post.displayName || post.username || 'Unknown User',
+          avatarUrl:
+            post.avatarUrl ||
+            (post.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.username}` : undefined),
+          reputation: likeCount * 2 + commentCount,
+        },
+        commentsData: comments.map((comment) => ({
+          id: comment.id.toString(),
+          content: comment.content,
+          createdAt: getRelativeTime(comment.createdAt),
+          author: {
+            id: comment.authorId || '',
+            username: comment.username || 'unknown',
+            displayName: comment.displayName || comment.username || 'Unknown User',
+            avatarUrl:
+              comment.avatarUrl ||
+              (comment.username
+                ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.username}`
+                : undefined),
+          },
+        })),
       });
     } catch (error) {
-      logger.error('Error fetching community post:', error);
-      res.status(500).json({ error: 'Failed to fetch post' });
+      logger.error('Error fetching community post', error);
+      res.status(500).json({ message: 'Failed to fetch post' });
     }
   }
 
   async likeCommunityPost(req: Request, res: Response) {
     try {
-      const { id } = req.params;
-      const userId = (req as any).user?.id;
+      const postId = Number(req.params.id);
+      const userId = req.user?.id as string | undefined;
 
-      const post = this.posts.get(id);
-      if (!post) {
-        return res.status(404).json({ error: 'Post not found' });
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      if (Number.isNaN(postId)) {
+        return res.status(400).json({ message: 'Invalid post id' });
       }
 
-      let userLikes = this.userLikes.get(id);
-      if (!userLikes) {
-        userLikes = new Set();
-        this.userLikes.set(id, userLikes);
+      const exists = await db
+        .select({ id: communityPosts.id })
+        .from(communityPosts)
+        .where(eq(communityPosts.id, postId))
+        .limit(1);
+
+      if (exists.length === 0) {
+        return res.status(404).json({ message: 'Post not found' });
       }
 
-      if (userLikes.has(userId)) {
-        // Unlike
-        userLikes.delete(userId);
-        post.likes = Math.max(0, post.likes - 1);
+      const like = await db
+        .select({ postId: communityPostLikes.postId })
+        .from(communityPostLikes)
+        .where(and(eq(communityPostLikes.postId, postId), eq(communityPostLikes.userId, userId)))
+        .limit(1);
+
+      let liked = false;
+      if (like.length > 0) {
+        await db
+          .delete(communityPostLikes)
+          .where(and(eq(communityPostLikes.postId, postId), eq(communityPostLikes.userId, userId)));
       } else {
-        // Like
-        userLikes.add(userId);
-        post.likes += 1;
-
-        // Award reputation to post author
-        const authorProfile = this.userProfiles.get(post.authorId);
-        if (authorProfile) {
-          authorProfile.reputation += 2;
-          authorProfile.totalLikes += 1;
-        }
+        await db
+          .insert(communityPostLikes)
+          .values({ postId, userId })
+          .onConflictDoNothing();
+        liked = true;
       }
 
-      res.json({
-        success: true,
-        liked: userLikes.has(userId),
-        totalLikes: post.likes
-      });
+      const [likeCount] = await db
+        .select({ count: sql`COUNT(*)` })
+        .from(communityPostLikes)
+        .where(eq(communityPostLikes.postId, postId));
+
+      res.json({ success: true, liked, totalLikes: Number(likeCount?.count ?? 0) });
     } catch (error) {
-      logger.error('Error liking community post:', error);
-      res.status(500).json({ error: 'Failed to like post' });
+      logger.error('Error liking community post', error);
+      res.status(500).json({ message: 'Failed to like post' });
     }
   }
 
-  // Community Replies
+  async bookmarkCommunityPost(req: Request, res: Response) {
+    try {
+      const postId = Number(req.params.id);
+      const userId = req.user?.id as string | undefined;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      if (Number.isNaN(postId)) {
+        return res.status(400).json({ message: 'Invalid post id' });
+      }
+
+      const exists = await db
+        .select({ id: communityPosts.id })
+        .from(communityPosts)
+        .where(eq(communityPosts.id, postId))
+        .limit(1);
+
+      if (exists.length === 0) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      const bookmark = await db
+        .select({ postId: communityPostBookmarks.postId })
+        .from(communityPostBookmarks)
+        .where(and(eq(communityPostBookmarks.postId, postId), eq(communityPostBookmarks.userId, userId)))
+        .limit(1);
+
+      let bookmarked = false;
+      if (bookmark.length > 0) {
+        await db
+          .delete(communityPostBookmarks)
+          .where(and(eq(communityPostBookmarks.postId, postId), eq(communityPostBookmarks.userId, userId)));
+      } else {
+        await db
+          .insert(communityPostBookmarks)
+          .values({ postId, userId })
+          .onConflictDoNothing();
+        bookmarked = true;
+      }
+
+      res.json({ success: true, bookmarked });
+    } catch (error) {
+      logger.error('Error bookmarking community post', error);
+      res.status(500).json({ message: 'Failed to bookmark post' });
+    }
+  }
+
   async createCommunityReply(req: Request, res: Response) {
     try {
       const { postId } = req.params;
-      const { content, parentReplyId } = req.body;
-      const userId = (req as any).user?.id;
-      const username = (req as any).user?.username;
+      const { content, parentCommentId } = req.body;
+      const userId = req.user?.id as string | undefined;
 
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
       if (!content) {
-        return res.status(400).json({ error: 'Content is required' });
+        return res.status(400).json({ message: 'Content is required' });
       }
 
-      const post = this.posts.get(postId);
-      if (!post) {
-        return res.status(404).json({ error: 'Post not found' });
+      const post = await db
+        .select({ id: communityPosts.id })
+        .from(communityPosts)
+        .where(eq(communityPosts.id, Number(postId)))
+        .limit(1);
+
+      if (post.length === 0) {
+        return res.status(404).json({ message: 'Post not found' });
       }
 
-      const replyId = `reply-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const reply: CommunityReply = {
-        id: replyId,
-        postId,
-        content,
-        authorId: userId,
-        authorUsername: username,
-        likes: 0,
-        isAccepted: false,
-        parentReplyId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      this.replies.set(replyId, reply);
-
-      // Update post reply count
-      post.replies += 1;
-
-      // Update user profile stats
-      const userProfile = this.userProfiles.get(userId);
-      if (userProfile) {
-        userProfile.totalReplies += 1;
-        userProfile.reputation += 3; // Award points for replying
-      }
-
-      logger.info(`Reply created for post ${postId} by ${username}`);
+      const [created] = await db
+        .insert(communityComments)
+        .values({
+          postId: Number(postId),
+          content,
+          authorId: userId,
+          parentCommentId: parentCommentId ? Number(parentCommentId) : null,
+        })
+        .returning();
 
       res.status(201).json({
         success: true,
         reply: {
-          id: reply.id,
-          content: reply.content,
-          createdAt: reply.createdAt
-        }
+          id: created.id.toString(),
+          content: created.content,
+          createdAt: getRelativeTime(created.createdAt),
+        },
       });
     } catch (error) {
-      logger.error('Error creating reply:', error);
-      res.status(500).json({ error: 'Failed to create reply' });
+      logger.error('Error creating community reply', error);
+      res.status(500).json({ message: 'Failed to create reply' });
     }
   }
 
-  // User Profiles
   async getUserProfile(req: Request, res: Response) {
     try {
       const { username } = req.params;
-      
-      // Find user by username
-      const userProfile = Array.from(this.userProfiles.values())
-        .find(p => p.username === username);
-
-      if (!userProfile) {
-        return res.status(404).json({ error: 'User not found' });
+      if (!username) {
+        return res.status(400).json({ message: 'Username is required' });
       }
 
-      // Get user's recent posts
-      const userPosts = Array.from(this.posts.values())
-        .filter(p => p.authorId === userProfile.userId)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-        .slice(0, 10);
+      const [user] = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          displayName: users.displayName,
+          bio: users.bio,
+          website: users.website,
+          githubUsername: users.githubUsername,
+          twitterUsername: users.twitterUsername,
+          profileImageUrl: users.profileImageUrl,
+          reputation: users.reputation,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(eq(users.username, username))
+        .limit(1);
 
-      // Get user's showcases
-      const userShowcases = Array.from(this.showcases.values())
-        .filter(s => s.authorId === userProfile.userId)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-        .slice(0, 6);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const [postStats] = await db
+        .select({
+          totalPosts: sql`COUNT(DISTINCT ${communityPosts.id})`,
+          totalLikes: sql`COUNT(DISTINCT ${communityPostLikes.userId})`,
+          totalComments: sql`COUNT(DISTINCT ${communityComments.id})`,
+        })
+        .from(communityPosts)
+        .leftJoin(communityPostLikes, eq(communityPostLikes.postId, communityPosts.id))
+        .leftJoin(communityComments, eq(communityComments.postId, communityPosts.id))
+        .where(eq(communityPosts.authorId, user.id));
+
+      const posts = await db
+        .select({
+          id: communityPosts.id,
+          title: communityPosts.title,
+          createdAt: communityPosts.createdAt,
+          categoryId: communityPosts.categoryId,
+        })
+        .from(communityPosts)
+        .where(eq(communityPosts.authorId, user.id))
+        .orderBy(desc(communityPosts.createdAt))
+        .limit(10);
 
       res.json({
-        profile: userProfile,
-        recentPosts: userPosts,
-        showcases: userShowcases,
-        stats: {
-          totalPosts: userProfile.totalPosts,
-          totalReplies: userProfile.totalReplies,
-          totalLikes: userProfile.totalLikes,
-          reputation: userProfile.reputation
-        }
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName || user.username,
+        bio: user.bio,
+        website: user.website,
+        githubUsername: user.githubUsername,
+        twitterUsername: user.twitterUsername,
+        profileImageUrl:
+          user.profileImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
+        reputation: Number(user.reputation ?? 0),
+        joinedAt: user.createdAt,
+        totals: {
+          posts: Number(postStats?.totalPosts ?? 0),
+          likes: Number(postStats?.totalLikes ?? 0),
+          comments: Number(postStats?.totalComments ?? 0),
+        },
+        recentPosts: posts.map((post) => ({
+          id: post.id.toString(),
+          title: post.title,
+          category: post.categoryId,
+          createdAt: getRelativeTime(post.createdAt),
+        })),
       });
     } catch (error) {
-      logger.error('Error fetching user profile:', error);
-      res.status(500).json({ error: 'Failed to fetch user profile' });
+      logger.error('Error fetching community user profile', error);
+      res.status(500).json({ message: 'Failed to fetch profile' });
     }
   }
 
   async updateUserProfile(req: Request, res: Response) {
     try {
-      const userId = (req as any).user?.id;
-      const updates = req.body;
-
-      let userProfile = this.userProfiles.get(userId);
-      if (!userProfile) {
-        // Create new profile
-        userProfile = {
-          userId,
-          username: (req as any).user?.username,
-          displayName: updates.displayName || (req as any).user?.username,
-          bio: '',
-          location: '',
-          website: '',
-          githubUsername: '',
-          twitterUsername: '',
-          profileImage: `https://api.dicebear.com/7.x/avataaars/svg?seed=${(req as any).user?.username}`,
-          badges: [],
-          reputation: 0,
-          totalPosts: 0,
-          totalReplies: 0,
-          totalLikes: 0,
-          joinedAt: new Date(),
-          isVerified: false,
-          isExpert: false,
-          specialties: []
-        };
+      const userId = req.user?.id as string | undefined;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
       }
 
-      // Update profile
-      Object.assign(userProfile, updates);
-      this.userProfiles.set(userId, userProfile);
+      const { displayName, bio, website, githubUsername, twitterUsername, profileImageUrl } = req.body;
 
-      logger.info(`User profile updated for ${userProfile.username}`);
+      const updateData = {
+        updatedAt: new Date(),
+      } as Partial<typeof users.$inferInsert>;
 
-      res.json({
-        success: true,
-        profile: userProfile
-      });
+      if (displayName !== undefined) {
+        updateData.displayName = displayName;
+      }
+
+      if (bio !== undefined) {
+        updateData.bio = bio;
+      }
+
+      if (website !== undefined) {
+        updateData.website = website;
+      }
+
+      if (githubUsername !== undefined) {
+        updateData.githubUsername = githubUsername;
+      }
+
+      if (twitterUsername !== undefined) {
+        updateData.twitterUsername = twitterUsername;
+      }
+
+      if (profileImageUrl !== undefined) {
+        updateData.profileImageUrl = profileImageUrl;
+      }
+
+      await db.update(users).set(updateData).where(eq(users.id, userId));
+
+      res.json({ success: true });
     } catch (error) {
-      logger.error('Error updating user profile:', error);
-      res.status(500).json({ error: 'Failed to update profile' });
+      logger.error('Error updating community profile', error);
+      res.status(500).json({ message: 'Failed to update profile' });
     }
   }
 
-  // Code Showcases
   async getCodeShowcases(req: Request, res: Response) {
     try {
-      const { 
-        language, 
-        tag, 
-        difficulty, 
-        sort = 'recent', 
-        page = 1, 
-        limit = 12 
-      } = req.query;
+      const showcases = await db
+        .select({
+          id: communityPosts.id,
+          title: communityPosts.title,
+          description: communityPosts.content,
+          createdAt: communityPosts.createdAt,
+          authorId: users.id,
+          username: users.username,
+          displayName: users.displayName,
+          avatarUrl: users.profileImageUrl,
+          imageUrl: communityPosts.imageUrl,
+          projectUrl: communityPosts.projectUrl,
+        })
+        .from(communityPosts)
+        .leftJoin(users, eq(users.id, communityPosts.authorId))
+        .where(eq(communityPosts.categoryId, 'showcase'))
+        .orderBy(desc(communityPosts.createdAt))
+        .limit(8);
 
-      let showcases = Array.from(this.showcases.values());
-
-      // Apply filters
-      if (language && language !== 'all') {
-        showcases = showcases.filter(s => s.language === language);
-      }
-
-      if (tag) {
-        showcases = showcases.filter(s => s.tags.includes(tag as string));
-      }
-
-      if (difficulty && difficulty !== 'all') {
-        showcases = showcases.filter(s => s.difficulty === difficulty);
-      }
-
-      // Sort showcases
-      switch (sort) {
-        case 'popular':
-          showcases.sort((a, b) => b.likes - a.likes);
-          break;
-        case 'mostForked':
-          showcases.sort((a, b) => b.forks - a.forks);
-          break;
-        case 'recent':
-        default:
-          showcases.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-          break;
-      }
-
-      // Apply pagination
-      const startIndex = (parseInt(page as string) - 1) * parseInt(limit as string);
-      const paginatedShowcases = showcases.slice(startIndex, startIndex + parseInt(limit as string));
-
-      // Move featured showcases to top
-      const featuredShowcases = paginatedShowcases.filter(s => s.featured);
-      const regularShowcases = paginatedShowcases.filter(s => !s.featured);
-      const finalShowcases = [...featuredShowcases, ...regularShowcases];
-
-      res.json({
-        showcases: finalShowcases,
-        totalCount: showcases.length,
-        page: parseInt(page as string),
-        totalPages: Math.ceil(showcases.length / parseInt(limit as string)),
-        languages: ['javascript', 'python', 'java', 'cpp', 'html', 'css'],
-        difficulties: ['beginner', 'intermediate', 'advanced']
-      });
+      res.json(
+        showcases.map((item) => ({
+          id: item.id.toString(),
+          title: item.title,
+          description: item.description,
+          createdAt: getRelativeTime(item.createdAt),
+          author: {
+            id: item.authorId || '',
+            username: item.username || 'unknown',
+            displayName: item.displayName || item.username || 'Unknown User',
+            avatarUrl:
+              item.avatarUrl ||
+              (item.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${item.username}` : undefined),
+          },
+          imageUrl: item.imageUrl,
+          projectUrl: item.projectUrl,
+        })),
+      );
     } catch (error) {
-      logger.error('Error fetching code showcases:', error);
-      res.status(500).json({ error: 'Failed to fetch showcases' });
+      logger.error('Error fetching code showcases', error);
+      res.status(500).json({ message: 'Failed to fetch showcases' });
     }
   }
 
   async createCodeShowcase(req: Request, res: Response) {
     try {
-      const { title, description, projectId, language, tags, difficulty } = req.body;
-      const userId = (req as any).user?.id;
-      const username = (req as any).user?.username;
-
-      if (!title || !description || !projectId || !language) {
-        return res.status(400).json({ error: 'Missing required fields' });
+      const userId = req.user?.id as string | undefined;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
       }
 
-      // Verify user owns the project
-      const project = await storage.getProject(projectId);
-      if (!project || project.ownerId !== userId) {
-        return res.status(403).json({ error: 'Access denied' });
+      const { title, description, tags = [], projectUrl, imageUrl } = req.body;
+      if (!title || !description) {
+        return res.status(400).json({ message: 'Missing required fields' });
       }
 
-      const showcaseId = `showcase-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const showcase: CodeShowcase = {
-        id: showcaseId,
-        title,
-        description,
-        authorId: userId,
-        authorUsername: username,
-        projectId,
-        language,
-        tags: tags || [],
-        likes: 0,
-        views: 0,
-        forks: 0,
-        featured: false,
-        difficulty: difficulty || 'intermediate',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        thumbnailUrl: `https://picsum.photos/400/300?random=${showcaseId}`
-      };
+      const [post] = await db
+        .insert(communityPosts)
+        .values({
+          title,
+          content: description,
+          categoryId: 'showcase',
+          tags,
+          authorId: userId,
+          projectUrl,
+          imageUrl,
+        })
+        .returning();
 
-      this.showcases.set(showcaseId, showcase);
-
-      // Update user profile stats
-      const userProfile = this.userProfiles.get(userId);
-      if (userProfile) {
-        userProfile.reputation += 10; // Award points for creating showcase
-      }
-
-      logger.info(`Code showcase created: ${title} by ${username}`);
-
-      res.status(201).json({
-        success: true,
-        showcase: {
-          id: showcase.id,
-          title: showcase.title,
-          language: showcase.language,
-          createdAt: showcase.createdAt
-        }
-      });
+      res.status(201).json({ success: true, id: post.id.toString() });
     } catch (error) {
-      logger.error('Error creating code showcase:', error);
-      res.status(500).json({ error: 'Failed to create showcase' });
+      logger.error('Error creating code showcase', error);
+      res.status(500).json({ message: 'Failed to create showcase' });
     }
   }
 
-  // Community Stats
   async getCommunityStats(req: Request, res: Response) {
     try {
-      const totalPosts = this.posts.size;
-      const totalReplies = this.replies.size;
-      const totalUsers = this.userProfiles.size;
-      const totalShowcases = this.showcases.size;
-
-      const topCategories = Array.from(this.posts.values())
-        .reduce((acc, post) => {
-          acc[post.category] = (acc[post.category] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
-
-      const topTags = Array.from(this.posts.values())
-        .flatMap(post => post.tags)
-        .reduce((acc, tag) => {
-          acc[tag] = (acc[tag] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
-
-      const activeUsers = Array.from(this.userProfiles.values())
-        .sort((a, b) => b.reputation - a.reputation)
-        .slice(0, 10);
+      const [postCount] = await db.select({ count: sql`COUNT(*)` }).from(communityPosts);
+      const [memberCount] = await db.select({ count: sql`COUNT(*)` }).from(users);
+      const [commentCount] = await db.select({ count: sql`COUNT(*)` }).from(communityComments);
+      const [likeCount] = await db.select({ count: sql`COUNT(*)` }).from(communityPostLikes);
 
       res.json({
-        stats: {
-          totalPosts,
-          totalReplies,
-          totalUsers,
-          totalShowcases,
-          totalInteractions: totalPosts + totalReplies
-        },
-        topCategories: Object.entries(topCategories)
-          .sort(([,a], [,b]) => b - a)
-          .slice(0, 5),
-        topTags: Object.entries(topTags)
-          .sort(([,a], [,b]) => b - a)
-          .slice(0, 10),
-        activeUsers: activeUsers.map(user => ({
-          username: user.username,
-          displayName: user.displayName,
-          reputation: user.reputation,
-          badges: user.badges
-        }))
+        posts: Number(postCount?.count ?? 0),
+        members: Number(memberCount?.count ?? 0),
+        comments: Number(commentCount?.count ?? 0),
+        likes: Number(likeCount?.count ?? 0),
       });
     } catch (error) {
-      logger.error('Error fetching community stats:', error);
-      res.status(500).json({ error: 'Failed to fetch community stats' });
+      logger.error('Error fetching community stats', error);
+      res.status(500).json({ message: 'Failed to fetch stats' });
     }
   }
 
-  // Follow/Unfollow users
   async followUser(req: Request, res: Response) {
     try {
+      const followerId = req.user?.id as string | undefined;
       const { targetUserId } = req.params;
-      const userId = (req as any).user?.id;
-      const targetId = parseInt(targetUserId);
 
-      if (userId === targetId) {
-        return res.status(400).json({ error: 'Cannot follow yourself' });
+      if (!followerId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      if (!targetUserId || followerId === targetUserId) {
+        return res.status(400).json({ message: 'Invalid target user' });
       }
 
-      let userFollows = this.userFollows.get(userId);
-      if (!userFollows) {
-        userFollows = new Set();
-        this.userFollows.set(userId, userFollows);
-      }
+      const existing = await db
+        .select({ followerId: communityFollows.followerId })
+        .from(communityFollows)
+        .where(and(eq(communityFollows.followerId, followerId), eq(communityFollows.followeeId, targetUserId)))
+        .limit(1);
 
-      if (userFollows.has(targetId)) {
-        // Unfollow
-        userFollows.delete(targetId);
+      let following = false;
+      if (existing.length > 0) {
+        await db
+          .delete(communityFollows)
+          .where(and(eq(communityFollows.followerId, followerId), eq(communityFollows.followeeId, targetUserId)));
       } else {
-        // Follow
-        userFollows.add(targetId);
+        await db
+          .insert(communityFollows)
+          .values({ followerId, followeeId: targetUserId })
+          .onConflictDoNothing();
+        following = true;
       }
 
-      res.json({
-        success: true,
-        following: userFollows.has(targetId),
-        totalFollowing: userFollows.size
-      });
+      const [followerCount] = await db
+        .select({ count: sql`COUNT(*)` })
+        .from(communityFollows)
+        .where(eq(communityFollows.followeeId, targetUserId));
+
+      res.json({ success: true, following, followerCount: Number(followerCount?.count ?? 0) });
     } catch (error) {
-      logger.error('Error following user:', error);
-      res.status(500).json({ error: 'Failed to follow user' });
+      logger.error('Error following community user', error);
+      res.status(500).json({ message: 'Failed to update follow state' });
+    }
+  }
+
+  async getChallenges(req: Request, res: Response) {
+    try {
+      const rows = await db
+        .select({
+          id: challenges.id,
+          title: challenges.title,
+          description: challenges.description,
+          difficulty: challenges.difficulty,
+          category: challenges.category,
+          points: challenges.points,
+          status: challenges.status,
+          createdAt: challenges.createdAt,
+        })
+        .from(challenges)
+        .orderBy(desc(challenges.createdAt))
+        .limit(12);
+
+      const response = rows.map((challenge) => ({
+        id: challenge.id.toString(),
+        title: challenge.title,
+        description: challenge.description,
+        difficulty: (challenge.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
+        category: challenge.category,
+        participants: Math.max(25, Math.round((challenge.points || 0) / 5)),
+        submissions: Math.max(10, Math.round((challenge.points || 0) / 8)),
+        prize: `${challenge.points || 0} executive points`,
+        deadline: challenge.createdAt
+          ? new Date(challenge.createdAt.getTime() + 21 * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split('T')[0]
+          : new Date().toISOString().split('T')[0],
+        status:
+          challenge.status === 'archived'
+            ? 'ended'
+            : challenge.status === 'draft'
+              ? 'upcoming'
+              : 'active',
+      }));
+
+      res.json(response);
+    } catch (error) {
+      logger.error('Error fetching community challenges', error);
+      res.status(500).json({ message: 'Failed to fetch challenges' });
+    }
+  }
+
+  async getLeaderboard(req: Request, res: Response) {
+    try {
+      const contributors = await db
+        .select({
+          userId: communityPosts.authorId,
+          postCount: sql`COUNT(DISTINCT ${communityPosts.id})`,
+          likesReceived: sql`COUNT(DISTINCT ${communityPostLikes.userId})`,
+          commentsReceived: sql`COUNT(DISTINCT ${communityComments.id})`,
+          lastPostAt: sql`MAX(${communityPosts.createdAt})`,
+        })
+        .from(communityPosts)
+        .leftJoin(communityPostLikes, eq(communityPostLikes.postId, communityPosts.id))
+        .leftJoin(communityComments, eq(communityComments.postId, communityPosts.id))
+        .groupBy(communityPosts.authorId)
+        .orderBy(desc(sql`COUNT(DISTINCT ${communityPostLikes.userId}) + COUNT(DISTINCT ${communityComments.id}) + COUNT(DISTINCT ${communityPosts.id})`))
+        .limit(10);
+
+      const userIds = contributors.map((row) => row.userId).filter(Boolean);
+      const usersResult = userIds.length
+        ? await db
+            .select({
+              id: users.id,
+              username: users.username,
+              displayName: users.displayName,
+              profileImageUrl: users.profileImageUrl,
+            })
+            .from(users)
+            .where(inArray(users.id, userIds))
+        : [];
+      const userMap = new Map(usersResult.map((u) => [u.id, u]));
+
+      const response = contributors.map((row, index) => {
+        const user = row.userId ? userMap.get(row.userId) : undefined;
+        const postCount = Number(row.postCount ?? 0);
+        const likesReceived = Number(row.likesReceived ?? 0);
+        const commentsReceived = Number(row.commentsReceived ?? 0);
+        const score = postCount * 5 + likesReceived * 3 + commentsReceived * 2;
+        const badges: string[] = [];
+        if (postCount >= 3) badges.push('top-contributor');
+        if (likesReceived >= 5) badges.push('challenge-winner');
+        if (commentsReceived >= 5) badges.push('mentor');
+        if (likesReceived + commentsReceived >= 10) badges.push('helpful');
+
+        return {
+          id: row.userId || `unknown-${index}`,
+          username: user?.username || 'unknown',
+          displayName: user?.displayName || user?.username || 'Unknown User',
+          avatarUrl:
+            user?.profileImageUrl ||
+            (user?.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` : undefined),
+          score,
+          rank: index + 1,
+          badges,
+          streakDays: Math.min(30, Math.max(1, postCount)),
+        };
+      });
+
+      res.json(response);
+    } catch (error) {
+      logger.error('Error fetching community leaderboard', error);
+      res.status(500).json({ message: 'Failed to fetch leaderboard' });
     }
   }
 }

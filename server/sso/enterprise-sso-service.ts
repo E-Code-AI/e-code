@@ -161,7 +161,7 @@ export class EnterpriseSSOService {
             contactPerson: [{
               contactType: 'technical',
               givenName: 'E-Code Support',
-              emailAddress: 'support@e-code.com'
+              emailAddress: 'support@e-code.ai'
             }],
             assertionConsumerService: [{
               Binding: saml.Constants.namespace.binding.post,

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import * as monaco from 'monaco-editor';
 import { setupMonacoTheme, getMonacoEditorOptions } from "@/lib/monaco-setup";
 import { File } from "@shared/schema";
-import { Search, XCircle, Maximize2, Minimize2, Code, Settings, Share2 } from "lucide-react";
+import { Search, XCircle, Maximize2, Minimize2, Code, Settings, Share2, Save, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ShareSnippetDialog } from "@/components/ShareSnippetDialog";
@@ -76,6 +76,10 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
     bracketPairColorization: true,
     formatOnPaste: true,
     formatOnType: false,
+    lineNumbers: true,
+    folding: true,
+    autoSave: true,
+    autoSaveDelay: 2000,
   });
   const [searchOpen, setSearchOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -84,6 +88,9 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
     lineStart: number;
     lineEnd: number;
   }>({ code: "", lineStart: 1, lineEnd: 1 });
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Update editor when settings change
   const updateEditorSettings = () => {
@@ -103,6 +110,8 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
         },
         formatOnPaste: editorSettings.formatOnPaste,
         formatOnType: editorSettings.formatOnType,
+        lineNumbers: editorSettings.lineNumbers ? 'on' : 'off',
+        folding: editorSettings.folding,
       });
       
       // Update font info measurements for cursor positioning
@@ -168,6 +177,56 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
     setShareDialogOpen(true);
   };
   
+  // Auto-save functionality
+  const handleAutoSave = useRef((content: string) => {
+    if (!editorSettings.autoSave) return;
+    
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    // Set new timeout for auto-save
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      saveFile(content);
+    }, editorSettings.autoSaveDelay);
+  }).current;
+  
+  // Save file function
+  const saveFile = async (content?: string) => {
+    if (!file.id || isSaving) return;
+    
+    setIsSaving(true);
+    try {
+      const fileContent = content ?? monacoEditorRef.current?.getValue() ?? file.content;
+      
+      // Update file via API
+      const response = await fetch(`/api/files/${file.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          content: fileContent,
+        }),
+      });
+      
+      if (response.ok) {
+        setLastSaved(new Date());
+        // Clear timeout after successful save
+        if (autoSaveTimeoutRef.current) {
+          clearTimeout(autoSaveTimeoutRef.current);
+          autoSaveTimeoutRef.current = null;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save file:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
   useEffect(() => {
     // Setup Monaco themes and snippets
     setupMonacoTheme();
@@ -185,6 +244,8 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
         formatOnPaste: editorSettings.formatOnPaste,
         formatOnType: editorSettings.formatOnType,
         renderWhitespace: editorSettings.renderWhitespace as any,
+        lineNumbers: editorSettings.lineNumbers ? 'on' : 'off',
+        folding: editorSettings.folding,
       });
       
       // Create editor instance
@@ -198,6 +259,9 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       monacoEditorRef.current.onDidChangeModelContent((e) => {
         const newValue = monacoEditorRef.current?.getValue() || '';
         onChange(newValue);
+        
+        // Trigger auto-save
+        handleAutoSave(newValue);
         
         // Broadcast file change to real-time service
         fetch(`/api/realtime/${file.projectId}/file-change`, {
@@ -252,7 +316,25 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
         }
       }, 100);
       
-      // Add keyboard shortcut for search (Cmd+F / Ctrl+F)
+      // Add keyboard shortcuts
+      // Ctrl/Cmd+F for search (already provided by Monaco)
+      
+      // Ctrl/Cmd+S to save
+      monacoEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+        saveFile();
+      });
+      
+      // Ctrl/Cmd+/ to toggle line comment
+      monacoEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Slash, () => {
+        monacoEditorRef.current?.trigger('keyboard', 'editor.action.commentLine', {});
+      });
+      
+      // Ctrl/Cmd+Shift+A to toggle block comment
+      monacoEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyA, () => {
+        monacoEditorRef.current?.trigger('keyboard', 'editor.action.blockComment', {});
+      });
+      
+      // Add keyboard shortcut for search (Cmd+F / Ctrl+F) - custom handling
       monacoEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {
         toggleSearch();
       });
@@ -307,11 +389,33 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
     >
       {/* Editor toolbar */}
       <div className="h-10 border-b border-border flex items-center px-2 justify-between">
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-2">
           {/* Language badge */}
           <div className="px-2 py-1 text-xs font-medium rounded bg-secondary text-secondary-foreground">
             {getLanguageFromFilename(file.name)}
           </div>
+          
+          {/* Auto-save indicator */}
+          {editorSettings.autoSave && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              {isSaving ? (
+                <>
+                  <Save className="h-3 w-3 animate-pulse" />
+                  <span>Saving...</span>
+                </>
+              ) : lastSaved ? (
+                <>
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                  <span>Saved {getTimeAgo(lastSaved)}</span>
+                </>
+              ) : (
+                <>
+                  <Save className="h-3 w-3" />
+                  <span>Auto-save enabled</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="flex items-center">
@@ -580,6 +684,20 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
     </div>
   );
 };
+
+// Format time ago helper
+function getTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  
+  if (diffSeconds < 5) return 'just now';
+  if (diffSeconds < 60) return `${diffSeconds}s ago`;
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  return `${diffHours}h ago`;
+}
 
 function getLanguageFromFilename(filename: string): string {
   const extension = filename.split('.').pop()?.toLowerCase() || '';

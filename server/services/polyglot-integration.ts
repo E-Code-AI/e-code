@@ -52,7 +52,7 @@ export class PolyglotIntegration {
   }
 
   // AI/ML Operations - Route through Python service
-  async generateCompletion(prompt: string, model: string = 'gpt-4o') {
+  async generateCompletion(prompt: string, model: string = 'gpt-5') {
     const response = await fetch(`${this.services.python}/ai/completion`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

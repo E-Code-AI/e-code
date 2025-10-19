@@ -224,24 +224,24 @@
 ---
 
 ## Slide 13: Funding Requirements
-### $10M Series A to Accelerate Growth
+### $25M Series A to accelerate global adoption
 
 **Use of Funds:**
-- **Engineering (50% - $5M)**: Scale development team, AI improvements
-- **Sales & Marketing (30% - $3M)**: Go-to-market execution
-- **Infrastructure (15% - $1.5M)**: Global expansion, GPU capacity
-- **Operations (5% - $500K)**: Legal, finance, HR
+- **Engineering (50% - $12.5M)**: Scale development team, AI improvements
+- **Sales & Marketing (30% - $7.5M)**: Go-to-market execution
+- **Infrastructure (15% - $3.75M)**: Global expansion, GPU capacity
+- **Operations (5% - $1.25M)**: Legal, finance, HR
 
 **Key Milestones (18 months):**
 - **100K total users**, 25K paying
 - **$15M ARR run rate**
 - **Enterprise customers**: 50+ companies
 - **International expansion**: EU, APAC regions
-- **Series B readiness**: $100M+ valuation
+- **Next-stage growth optionality**: Profitability milestones toward $150M+ valuation
 
 **Investment Terms:**
-- **Valuation**: $40M pre-money
-- **Use of funds**: 18-month runway to profitability
+- **Valuation**: $80M pre-money ($105M post-money)
+- **Use of funds**: 18-month runway to global scale and profitability
 - **Board composition**: 2 investor seats
 
 ---
@@ -301,7 +301,7 @@
 ## Contact Information
 **E-Code Development Team**
 - **Website**: e-code.com
-- **Email**: investors@e-code.com
+- **Email**: investors@e-code.ai
 - **Demo**: demo.e-code.com
 - **GitHub**: github.com/e-code-platform
 
