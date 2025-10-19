@@ -81,14 +81,9 @@ const verifyMobileRefreshToken = (token: string) => {
   try {
     const payload = jwt.verify(token, MOBILE_REFRESH_TOKEN_SECRET, {
       algorithms: ['HS256']
-    }) as { userId: number; tokenType?: string };
+    }) as { userId?: number; tokenType?: string };
 
-    // Explicitly reject tokens with tokenType 'access'
-    if (payload.tokenType === 'access') {
-      return null;
-    }
-    // Accept tokens with tokenType 'refresh' or legacy tokens with undefined tokenType
-    if (payload.tokenType && payload.tokenType !== 'refresh') {
+    if (!payload || payload.tokenType !== 'refresh' || !payload.userId) {
       return null;
     }
 
