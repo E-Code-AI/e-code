@@ -233,15 +233,6 @@ export default function AdminFormRequests() {
               Track every form submission from marketing pages, trust &amp; safety, and support.
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="text-white border-zinc-700"
-          >
-              Track every form submission from marketing pages, trust & safety, and support.
-            </p>
-          </div>
           <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="text-white border-zinc-700">
             {isFetching ? (
               <>
@@ -327,7 +318,6 @@ export default function AdminFormRequests() {
                             {Number(tabCounts[tab.value] || 0).toLocaleString()}
                           </Badge>
                         </span>
-                        {tab.label}
                       </TabsTrigger>
                     ))}
                   </TabsList>
@@ -347,6 +337,7 @@ export default function AdminFormRequests() {
                 </Select>
               </div>
             </div>
+          </div>
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
@@ -362,7 +353,6 @@ export default function AdminFormRequests() {
                   {debouncedSearch || statusFilter !== 'all' || activeTab !== 'all'
                     ? 'No submissions match your current filters. Try adjusting the search or status filters.'
                     : 'Once customers reach out through sales, support, or trust & safety forms, their submissions will appear here.'}
-                  Once customers reach out through sales, support, or trust & safety forms, their submissions will appear here.
                 </p>
               </div>
             ) : (
