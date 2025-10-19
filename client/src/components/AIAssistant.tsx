@@ -4,7 +4,7 @@ import {
   Bot, Send, Sparkles, Code, FileText, HelpCircle,
   Lightbulb, Zap, RefreshCw, Copy, ThumbsUp, ThumbsDown,
   ChevronDown, ChevronUp, Terminal, History, Settings,
-  X, Minimize2, Maximize2, MessageSquare
+  X, Minimize2, Maximize2, MessageSquare, Wand2, BookTemplate
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { CustomPromptsModal } from './CustomPromptsModal';
+import { useQuery } from '@tanstack/react-query';
 
 interface AIAssistantProps {
   projectId: number;
@@ -73,9 +75,24 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
   const [isMinimized, setIsMinimized] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
+  const [showCustomPrompts, setShowCustomPrompts] = useState(false);
+  const [activePromptRules, setActivePromptRules] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
+
+  // Fetch active AI rules for this project
+  const { data: projectRules = [] } = useQuery({
+    queryKey: [`/api/projects/${projectId}/ai-rules`, { activeOnly: true }],
+    enabled: !!projectId,
+  });
+
+  // Load active rules count
+  useEffect(() => {
+    if (projectRules && projectRules.length > 0) {
+      setActivePromptRules(projectRules.filter((rule: any) => rule.isActive));
+    }
+  }, [projectRules]);
 
   useEffect(() => {
     scrollToBottom();
@@ -332,8 +349,22 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
           <CardTitle className="text-base flex items-center">
             <Bot className="h-4 w-4 mr-2" />
             AI Assistant
+            {activePromptRules.length > 0 && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                {activePromptRules.length} Rule{activePromptRules.length > 1 ? 's' : ''} Active
+              </Badge>
+            )}
           </CardTitle>
           <div className="flex items-center space-x-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setShowCustomPrompts(true)}
+              className="h-7 w-7"
+              title="Manage Custom Prompts"
+            >
+              <Wand2 className="h-3.5 w-3.5" />
+            </Button>
             <Button
               size="icon"
               variant="ghost"
@@ -513,6 +544,13 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
           </TabsContent>
         </Tabs>
       </CardContent>
+      
+      {/* Custom Prompts Modal */}
+      <CustomPromptsModal
+        projectId={String(projectId)}
+        isOpen={showCustomPrompts}
+        onClose={() => setShowCustomPrompts(false)}
+      />
     </Card>
   );
 }
