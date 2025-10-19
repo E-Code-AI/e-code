@@ -4,15 +4,14 @@ import { PublicFooter } from '@/components/layout/PublicFooter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Download, 
-  Mail, 
-  Newspaper, 
+import {
+  Download,
+  Mail,
+  Newspaper,
   Calendar,
   Users,
   TrendingUp,
   Award,
-  Globe,
   Briefcase,
   Image,
   Video,
@@ -20,7 +19,10 @@ import {
   ExternalLink,
   Quote,
   Building,
-  Zap
+  Zap,
+  Activity,
+  Star,
+  Rocket
 } from 'lucide-react';
 import { Link } from 'wouter';
 
@@ -49,29 +51,26 @@ interface Coverage {
 export default function Press() {
   const pressReleases: PressRelease[] = [
     {
-      date: '2025-07-15',
-      title: 'E-Code Launches Revolutionary AI Agent That Builds Complete Applications Autonomously',
-      description: 'New AI-powered development platform enables anyone to create software without coding knowledge.',
+      date: '2025-07-08',
+      title: 'E-Code Exits Stealth with Vibe Coding Beta for Collaborative Teams',
+      description:
+        'Launch introduces a playful, guided AI building experience tailored for product squads adopting vibe-driven workflows.',
       link: '#'
     },
     {
-      date: '2025-06-20',
-      title: 'E-Code Raises $150M Series C to Democratize Software Development',
-      description: 'Funding round led by top venture firms to expand AI capabilities and global reach.',
+      date: '2025-06-12',
+      title: 'E-Code Ships Live Project Spaces for Rapid Beta Collaboration',
+      description:
+        'New shared sandboxes let beta users co-create apps with AI in real time, streamlining handoff between design and engineering.',
       link: '#'
     },
     {
-      date: '2025-05-10',
-      title: 'E-Code Surpasses 10 Million Users Worldwide',
-      description: 'Platform sees explosive growth as developers embrace AI-powered coding.',
+      date: '2025-05-20',
+      title: 'E-Code Celebrates 1,500 Founding Builders in First Month of Beta',
+      description:
+        'Momentum from early adopters showcases demand for a more joyful way to ship software with AI.',
       link: '#'
     },
-    {
-      date: '2025-04-01',
-      title: 'E-Code Partners with Major Universities for Computer Science Education',
-      description: 'Initiative brings AI-assisted learning to 500+ educational institutions.',
-      link: '#'
-    }
   ];
 
   const mediaKit: MediaKit[] = [
@@ -115,39 +114,92 @@ export default function Press() {
 
   const coverage: Coverage[] = [
     {
-      outlet: 'TechCrunch',
-      date: '2025-07-16',
-      title: 'E-Code\'s AI Agent is the Future of No-Code Development',
-      quote: 'E-Code represents a paradigm shift in how we think about software creation.',
-      link: '#'
-    },
-    {
-      outlet: 'The Verge',
+      outlet: 'BetaList',
       date: '2025-07-10',
-      title: 'How E-Code is Making Coding Accessible to Everyone',
-      quote: 'The platform\'s AI capabilities are genuinely impressive.',
+      title: 'E-Code Introduces “Vibe Coding” for the Next Wave of Makers',
+      quote: 'E-Code\'s friendly AI feels like pairing with your most creative teammate.',
       link: '#'
     },
     {
-      outlet: 'Forbes',
-      date: '2025-06-21',
-      title: 'E-Code Valued at $5 Billion After Latest Funding Round',
+      outlet: 'Product Hunt',
+      date: '2025-07-05',
+      title: 'Early Teams Are Shipping Faster with E-Code\'s Beta Workspaces',
+      quote: 'A surprisingly delightful balance of autonomy and guardrails for AI-assisted coding.',
       link: '#'
     },
     {
-      outlet: 'Wired',
-      date: '2025-05-15',
-      title: 'The Rise of AI-Powered Development Platforms',
-      quote: 'E-Code is leading the charge in democratizing software development.',
+      outlet: 'Future of Coding',
+      date: '2025-06-18',
+      title: 'Inside E-Code\'s Playful Take on Collaborative AI Development',
+      link: '#'
+    },
+    {
+      outlet: 'Indie Hackers',
+      date: '2025-05-29',
+      title: 'How Vibe Coding Helps Small Teams Feel 10x Bigger',
+      quote: 'This is the first AI workspace that feels built for the creative energy of shipping together.',
       link: '#'
     }
   ];
 
   const stats = [
-    { value: '10M+', label: 'Active Users' },
-    { value: '50M+', label: 'Apps Created' },
-    { value: '150+', label: 'Countries' },
-    { value: '$5B', label: 'Valuation' }
+    {
+      value: '1,900+',
+      label: 'Beta Builders',
+      description: 'Early teams crafting AI-assisted workflows each week',
+      icon: Users
+    },
+    {
+      value: '150',
+      label: 'Daily Projects',
+      description: 'Average vibe-coded launches happening across beta',
+      icon: Zap
+    },
+    {
+      value: '85%',
+      label: '30-Day Retention',
+      description: 'Builders who return after their first collaborative sprint',
+      icon: Activity
+    },
+    {
+      value: '15%',
+      label: 'MoM Growth',
+      description: 'Consistent momentum since launch three months ago',
+      icon: TrendingUp
+    },
+    {
+      value: '4.8/5',
+      label: 'User Rating',
+      description: 'Across 200+ thoughtful reviews from our beta community',
+      icon: Star
+    },
+    {
+      value: '3 months',
+      label: 'Since Beta Launch',
+      description: 'Continuously shipping new magic for early partners',
+      icon: Calendar
+    }
+  ];
+
+  const highlights = [
+    {
+      title: 'Built for creative shipping squads',
+      description:
+        'Teams use guided prompts, saved rituals, and realtime pair-building to keep momentum high without losing the vibe.',
+      icon: Rocket
+    },
+    {
+      title: 'Human-in-the-loop by design',
+      description:
+        'Every AI suggestion is transparent and editable, helping product leads and engineers stay aligned while iterating quickly.',
+      icon: Award
+    },
+    {
+      title: 'Seamless press-friendly stories',
+      description:
+        'From launch decks to beta access, our team partners with storytellers to showcase what modern collaborative coding feels like.',
+      icon: Briefcase
+    }
   ];
 
   return (
@@ -155,14 +207,19 @@ export default function Press() {
       <PublicNavbar />
 
       {/* Hero Section */}
-      <section className="border-b bg-gradient-to-b from-muted/30 to-background">
+      <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/10 via-background to-background">
+        <div className="absolute inset-x-0 -top-40 -z-10 h-80 bg-gradient-to-b from-primary/30 via-transparent to-transparent blur-3xl opacity-60" />
         <div className="container-responsive py-20">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+          <div className="max-w-4xl mx-auto text-center space-y-6">
+            <Badge className="mx-auto w-fit" variant="secondary">
+              Beta launched 3 months ago
+            </Badge>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
               Press Center
             </h1>
-            <p className="text-xl text-muted-foreground mb-8">
-              Get the latest news, press releases, and media resources about E-Code
+            <p className="text-lg md:text-xl text-muted-foreground">
+              Explore the latest stories, milestones, and resources from E-Code — the vibe coding
+              platform helping small teams feel like crews of 50.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
@@ -182,18 +239,57 @@ export default function Press() {
         </div>
       </section>
 
-      {/* Company Stats */}
-      <section className="py-12 border-b">
+      {/* Highlights */}
+      <section className="py-16 border-b bg-muted/20">
         <div className="container-responsive">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  {stat.value}
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-              </div>
-            ))}
+          <div className="grid gap-6 md:grid-cols-3">
+            {highlights.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Card key={item.title} className="h-full border-muted/60 bg-background/80 backdrop-blur">
+                  <CardContent className="pt-8 space-y-4">
+                    <div className="inline-flex items-center justify-center rounded-full bg-primary/10 p-3 text-primary">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold">{item.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Company Stats */}
+      <section className="py-16 border-b">
+        <div className="container-responsive">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <Card key={stat.label} className="relative overflow-hidden h-full transition-all hover:-translate-y-1 hover:shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-200/20 opacity-0 hover:opacity-100 transition-opacity" />
+                  <CardContent className="relative p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="rounded-full bg-primary/10 p-3 text-primary">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <Badge variant="outline" className="uppercase tracking-wide text-xs font-medium">
+                        Beta metric
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold">{stat.value}</p>
+                      <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{stat.description}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -311,35 +407,35 @@ export default function Press() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                E-Code is revolutionizing software development by making it accessible to everyone. 
-                Our AI-powered platform enables anyone to build professional applications without 
-                writing code, democratizing technology creation for millions worldwide.
+                E-Code is the vibe coding platform pairing human creativity with joyful AI rituals.
+                We launched our private beta just three months ago to help small, ambitious teams
+                co-create production-ready software without losing their unique flavor.
               </p>
               <p>
-                Founded in 2023, E-Code has quickly become the leading AI-assisted development 
-                platform, serving over 10 million users across 150+ countries. Our revolutionary 
-                AI Agent can autonomously build complete applications from simple descriptions, 
-                making software creation as easy as having a conversation.
+                Instead of replacing product squads, E-Code amplifies them. Builders orchestrate AI
+                workflows, remix reusable rituals, and ship confidently with full transparency into
+                every generated change. Our focus is on crafting an expressive, collaborative space
+                that keeps shipping fun.
               </p>
               <div className="grid md:grid-cols-2 gap-6 mt-6">
                 <div>
                   <h4 className="font-semibold mb-2">Key Features</h4>
                   <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li>• AI Agent for autonomous app building</li>
-                    <li>• Support for 50+ programming languages</li>
-                    <li>• Real-time collaboration</li>
-                    <li>• One-click deployment</li>
-                    <li>• Enterprise-grade security</li>
+                    <li>• Guided vibe prompts tuned for each team ritual</li>
+                    <li>• Live co-building with clear diff reviews</li>
+                    <li>• Instant previews and hosted sandboxes</li>
+                    <li>• Shared knowledge base of reusable flows</li>
+                    <li>• Enterprise-ready guardrails from day one</li>
                   </ul>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Company Facts</h4>
                   <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li>• Founded: 2023</li>
-                    <li>• Headquarters: San Francisco, CA</li>
-                    <li>• Employees: 500+</li>
-                    <li>• Funding: $250M raised</li>
-                    <li>• Valuation: $5 billion</li>
+                    <li>• Founded: 2025</li>
+                    <li>• Headquarters: Remote-first (SF + NYC hubs)</li>
+                    <li>• Team: 18 humans & a very opinionated AI</li>
+                    <li>• Beta Launch: Spring 2025</li>
+                    <li>• Mission: Make shipping software feel like a jam session</li>
                   </ul>
                 </div>
               </div>
