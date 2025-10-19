@@ -32,7 +32,9 @@ const baseClient = postgres(process.env.DATABASE_URL, {
   },
 });
 
-export const client = databaseQueryOptimizer.instrument(baseClient);
+// FIXED: Bypassing databaseQueryOptimizer to prevent breaking postgres-js methods
+// The optimizer's Proxy breaks .unsafe().values() chain needed by Drizzle
+export const client = baseClient; // databaseQueryOptimizer.instrument(baseClient);
 
 // Create drizzle database instance with our schema
 export const db = drizzle(client, { schema });
