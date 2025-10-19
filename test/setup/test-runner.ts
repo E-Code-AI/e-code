@@ -27,6 +27,8 @@ export interface TestSuite extends SuiteLifecycle {
 interface RegisteredSuite {
   name: string;
   suite: TestSuite;
+  filePath?: string;
+};
   file?: string;
 }
 
@@ -45,6 +47,42 @@ class TestRunner {
   private inferSuiteFile(): string | undefined {
     const stackLines = new Error().stack?.split('\n') ?? [];
 
+const extractFilePathFromStack = (): string | undefined => {
+  const stack = new Error().stack;
+  if (!stack) {
+    return undefined;
+  }
+
+  const frames = stack.split('\n').slice(1);
+  for (const rawFrame of frames) {
+    const frame = rawFrame.trim();
+    const match =
+      frame.match(/\((.*?):\d+:\d+\)$/) ?? frame.match(/at (.*?):\d+:\d+$/);
+    if (!match) {
+      continue;
+    }
+
+    let candidate = match[1];
+    if (candidate.startsWith('file://')) {
+      try {
+        candidate = fileURLToPath(candidate);
+      } catch {
+        // ignore parsing errors and fall back to the raw value
+      }
+    }
+
+    if (candidate.includes('test/setup/test-runner')) {
+      continue;
+    }
+
+    return candidate;
+  }
+
+  return undefined;
+};
+
+const hasFocusedTests = (): boolean =>
+  registeredSuites.some((entry) => entry.suite.tests.some((test) => test.only));
     for (const line of stackLines) {
       const match = line.match(STACK_PATH_PATTERN);
       if (!match) {
@@ -74,6 +112,9 @@ class TestRunner {
   }
 
   registerSuite(name: string, suite: TestSuite): void {
+    const filePath = extractFilePathFromStack();
+    registeredSuites.push({ name, suite, filePath });
+  },
     const file = this.inferSuiteFile();
     this.suites.push({ name, suite, file });
   }
@@ -96,6 +137,11 @@ class TestRunner {
     let failed = 0;
     let skipped = 0;
 
+    for (const { name: suiteName, suite, filePath } of registeredSuites) {
+      const tests = suite.tests.filter((test) => {
+        if (focused && !test.only) {
+          return false;
+        }
     for (const entry of this.suites) {
       const { name, suite, file } = entry;
       const suiteMatches = matcher ? matchesPattern(name) || matchesPattern(file) : true;
@@ -113,6 +159,16 @@ class TestRunner {
           continue;
         }
 
+        if (matchesPattern(`${suiteName} ${test.name}`, pattern)) {
+          return true;
+        }
+
+        if (filePath) {
+          return matchesPattern(filePath, pattern);
+        }
+
+        return false;
+      });
         const shouldRun = !matcher || matchesPattern(test.name) || suiteMatches;
 
         if (!shouldRun) {
