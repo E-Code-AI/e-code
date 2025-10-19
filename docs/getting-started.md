@@ -47,6 +47,10 @@ Minimum variables to review:
 
 > **Security Note:** Avoid committing the `.env` file. Store production secrets in the organization’s secret manager (e.g., GCP Secret Manager or HashiCorp Vault).
 
+> **AI Agent Reminder:** Without at least one of the AI provider keys set on the server (OpenAI, Anthropic, or Google GenAI),
+> requests made from the AI sidebar will appear to do nothing. The UI intentionally suppresses raw provider errors, so double-check
+> the environment variables when agent interactions seem unresponsive.
+
 ## 3. Provision the Database
 
 The project uses [Drizzle ORM](https://orm.drizzle.team/) to manage schema migrations.

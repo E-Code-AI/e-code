@@ -65,6 +65,12 @@ cp .env.production.example .env
 #   ANTHROPIC_API_KEY=your-anthropic-key
 #   GOOGLE_GENAI_API_KEY=optional-google-models
 
+# ⚠️ If none of the AI provider keys are supplied on the server process, prompts sent from
+# the workspace UI will fail silently. The frontend suppresses provider errors to avoid
+# leaking implementation details, so always double-check that at least one of
+# `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GOOGLE_GENAI_API_KEY` is configured before
+# testing agent actions.
+
 # Provision the database schema
 npm run db:push
 
