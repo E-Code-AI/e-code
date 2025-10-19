@@ -36,7 +36,7 @@ BEGIN
         SELECT 1
         FROM "notification_preferences"
         WHERE "user_id" IS NOT NULL
-          AND "user_id" !~ '^[0-9]+$'
+          AND trim("user_id") !~ '^[0-9]+$'
       ) THEN
         RAISE EXCEPTION 'notification_preferences.user_id contains non-numeric values and cannot be cast to integer safely';
       END IF;
