@@ -1,26 +1,44 @@
 // @ts-nocheck
 import { Router } from 'express';
 import { ensureAuthenticated } from '../../middleware/auth';
+import { DatabaseManagementService } from '../../services/database-management-service';
 
 const router = Router();
+const databaseService = new DatabaseManagementService();
+
+const formatBytes = (bytes: number): string => {
+  if (!bytes || Number.isNaN(bytes)) {
+    return '0 B';
+  }
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / Math.pow(1024, exponent);
+
+  return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[exponent]}`;
+};
 
 // Get database tables
 router.get('/tables', ensureAuthenticated, async (req, res) => {
   try {
-    // Use mock data for development
-    const mockTables = [
-      { name: 'users', schema: 'public', rowCount: 1245, size: '2.3 MB' },
-      { name: 'projects', schema: 'public', rowCount: 3567, size: '8.7 MB' },
-      { name: 'files', schema: 'public', rowCount: 15234, size: '45.2 MB' },
-      { name: 'sessions', schema: 'public', rowCount: 892, size: '1.1 MB' }
-    ];
-    
-    res.json(mockTables);
+    const tables = await databaseService.getTables();
+
+    res.json(
+      tables.map((table) => ({
+        name: table.tableName,
+        schema: table.schema,
+        rowCount: table.rowCount,
+        sizeBytes: table.sizeInBytes,
+        size: formatBytes(table.sizeInBytes),
+        columnCount: table.columns.length,
+        indexCount: table.indexes.length,
+      }))
+    );
   } catch (error: any) {
     console.error('PostgreSQL MCP tables error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch tables',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -29,22 +47,24 @@ router.get('/tables', ensureAuthenticated, async (req, res) => {
 router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
   try {
     const { table } = req.params;
-    
-    // Mock schema data
-    const mockSchema = [
-      { column: 'id', type: 'integer', nullable: false, default: 'nextval', isPrimary: true },
-      { column: 'name', type: 'varchar(255)', nullable: false, default: null, isPrimary: false },
-      { column: 'email', type: 'varchar(255)', nullable: true, default: null, isPrimary: false },
-      { column: 'created_at', type: 'timestamp', nullable: false, default: 'now()', isPrimary: false },
-      { column: 'updated_at', type: 'timestamp', nullable: false, default: 'now()', isPrimary: false }
-    ];
-    
-    res.json(mockSchema);
+    const schemaName = (req.query.schema as string) || 'public';
+
+    const schema = await databaseService.getTableSchema(table, schemaName);
+
+    res.json(
+      schema.map((column) => ({
+        column: column.name,
+        type: column.type,
+        nullable: column.nullable,
+        default: column.defaultValue,
+        isPrimary: column.isPrimaryKey,
+      }))
+    );
   } catch (error: any) {
     console.error('PostgreSQL MCP schema error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch table schema',
-      message: error.message 
+      message: error.message,
     });
   }
 });
@@ -53,44 +73,47 @@ router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
 router.post('/query', ensureAuthenticated, async (req, res) => {
   try {
     const { query } = req.body;
-    
-    // Mock query results for development
-    const mockResults = {
-      'SELECT * FROM users': {
-        columns: ['id', 'username', 'email', 'created_at'],
-        rows: [
-          [1, 'admin', 'admin@example.com', '2025-01-01T00:00:00Z'],
-          [2, 'testuser', 'test@example.com', '2025-01-15T10:30:00Z'],
-          [3, 'developer', 'dev@example.com', '2025-02-01T14:22:00Z']
-        ],
-        rowCount: 3
-      },
-      'SELECT * FROM projects': {
-        columns: ['id', 'name', 'owner_id', 'created_at'],
-        rows: [
-          [1, 'E-Code Platform', 1, '2025-01-01T00:00:00Z'],
-          [2, 'MCP Integration', 1, '2025-02-01T00:00:00Z']
-        ],
-        rowCount: 2
-      }
-    };
-    
-    // Get mock result based on query or return default
-    const result = mockResults[query] || {
-      columns: ['result'],
-      rows: [['Query executed successfully']],
-      rowCount: 1
-    };
-    
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({
+        error: 'Query must be provided as a string',
+        columns: [],
+        rows: [],
+        rowCount: 0,
+        executionTime: 0,
+      });
+    }
+
+    const result = await databaseService.executeQuery(query);
+
+    if (result.error) {
+      return res.status(400).json({
+        error: result.error,
+        columns: [],
+        rows: [],
+        rowCount: 0,
+        executionTime: result.executionTime,
+      });
+    }
+
+    const columns = result.rows.length ? Object.keys(result.rows[0]) : [];
+    const rows = result.rows.map((row: any) => columns.map((column) => row[column]));
+
     res.json({
-      ...result,
-      executionTime: Math.floor(Math.random() * 100) + 10
+      columns,
+      rows,
+      rowCount: result.rowCount,
+      executionTime: result.executionTime,
     });
   } catch (error: any) {
     console.error('PostgreSQL MCP query error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Query execution failed',
-      message: error.message 
+      message: error.message,
+      columns: [],
+      rows: [],
+      rowCount: 0,
+      executionTime: 0,
     });
   }
 });
@@ -98,20 +121,23 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
 // Backup database
 router.post('/backup', ensureAuthenticated, async (req, res) => {
   try {
-    // Mock backup response for development
-    const filename = `backup_${new Date().toISOString().split('T')[0]}.sql`;
-    res.json({ 
+    const { description } = req.body || {};
+    const backup = await databaseService.createBackup(description);
+    const tables = await databaseService.getTables();
+
+    res.json({
       success: true,
-      filename,
-      size: '42.3 MB',
-      tables: ['users', 'projects', 'files', 'sessions'],
-      timestamp: new Date().toISOString()
+      filename: `${backup.id}.sql`,
+      sizeBytes: backup.size,
+      size: formatBytes(backup.size),
+      tables: tables.map((table) => table.tableName),
+      timestamp: backup.timestamp.toISOString(),
     });
   } catch (error: any) {
     console.error('PostgreSQL MCP backup error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to create backup',
-      message: error.message 
+      message: error.message,
     });
   }
 });
