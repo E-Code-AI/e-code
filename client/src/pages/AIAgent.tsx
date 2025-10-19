@@ -25,7 +25,7 @@ export default function AIAgent() {
     if (user) {
       navigate('/ai-agent/studio');
     } else {
-      window.location.href = '/api/login';
+      window.location.href = '/login';
     }
   };
 
