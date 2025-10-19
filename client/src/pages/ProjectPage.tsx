@@ -92,11 +92,7 @@ const ProjectPage = () => {
 
   // Determine if we're using ID or slug route
   const isSlugRoute = !!matchSlug && paramsSlug?.username && paramsSlug?.projectname;
-  const projectIdParam = matchId
-    ? paramsId?.id
-    : matchLegacyId
-      ? paramsLegacyId?.id
-      : null;
+  const projectIdParam = paramsId?.id || paramsLegacyId?.id || null;
   const projectId = projectIdParam ? parseInt(projectIdParam, 10) : null;
   const projectSlug = isSlugRoute ? `@${paramsSlug.username}/${paramsSlug.projectname}` : null;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
