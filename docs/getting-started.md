@@ -59,7 +59,9 @@ The project uses [Drizzle ORM](https://orm.drizzle.team/) to manage schema migra
 npm run db:push
 ```
 
-This command connects to the database defined in `DATABASE_URL`, creates tables, and seeds a QA-friendly dataset including the `testuser` account.
+This command connects to the database defined in `DATABASE_URL`, creates tables, and readies the schema for the automatic seed that runs during development startup.
+
+> **Note:** The seed script only runs when the tables already exist. Always execute `npm run db:push` before launching the dev server.
 
 ## 4. Launch the Development Stack
 
@@ -69,7 +71,9 @@ npm run dev
 
 - The Express API and Vite dev server share port **5000**.
 - The initial build may take 2–3 minutes as Monaco Editor, Radix UI, and AI SDK packages compile.
-- Navigate to `http://localhost:5000` and log in with `testuser` / `testpass123`.
+- Navigate to `http://localhost:5000` and log in with either of the pre-seeded accounts:
+  - `admin` / `demo` (administrator role)
+  - `testuser` / `testpass123` (standard QA account)
 
 ### Verifying Key Features
 

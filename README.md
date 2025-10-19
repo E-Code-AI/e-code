@@ -70,6 +70,9 @@ cp .env.production.example .env
 # leaking implementation details, so always double-check that at least one of
 # `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GOOGLE_GENAI_API_KEY` is configured before
 # testing agent actions.
+# ❗️The application requires a reachable PostgreSQL instance available at `DATABASE_URL`.
+# It is used both by Drizzle for core data and by the `connect-pg-simple` session store.
+# If the database is missing or unreachable, authentication and project creation flows will fail.
 
 # Provision the database schema
 npm run db:push
