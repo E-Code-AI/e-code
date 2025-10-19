@@ -2,6 +2,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from "@shared/schema";
+import { databaseQueryOptimizer } from './services/database-query-optimizer';
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -10,7 +11,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Enhanced postgres client with enterprise-grade connection management
-export const client = postgres(process.env.DATABASE_URL, {
+const baseClient = postgres(process.env.DATABASE_URL, {
   max: 20, // Connection pool size optimized for concurrent users
   idle_timeout: 60, // Keep connections alive for 1 minute when idle
   max_lifetime: 60 * 60, // 1 hour connection lifetime to prevent stale connections
@@ -30,6 +31,8 @@ export const client = postgres(process.env.DATABASE_URL, {
     // Removed verbose logging to improve performance
   },
 });
+
+export const client = databaseQueryOptimizer.instrument(baseClient);
 
 // Create drizzle database instance with our schema
 export const db = drizzle(client, { schema });

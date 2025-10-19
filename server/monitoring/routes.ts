@@ -3,16 +3,24 @@ import { Router } from 'express';
 import { performanceMonitor } from './performance';
 import { monitoringService } from '../services/monitoring-service';
 import { ensureAuthenticated } from '../middleware/auth';
+import { logAggregator } from './log-aggregator';
+import { uptimeMonitor } from '../services/uptime-monitor';
+import { databaseQueryOptimizer } from '../services/database-query-optimizer';
+import { redisCache } from '../services/redis-cache';
 
 export const monitoringRouter = Router();
 
 // Health check endpoint
 monitoringRouter.get('/health', (req, res) => {
+  const uptime = uptimeMonitor.getSummary();
+
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV,
+    availability: uptime.availability,
+    lastHeartbeat: uptime.lastHeartbeat,
   });
 });
 
@@ -34,6 +42,47 @@ monitoringRouter.get('/health/db', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   }
+});
+
+monitoringRouter.get('/logs/recent', ensureAuthenticated, (req, res) => {
+  const limit = parseInt(req.query.limit as string) || 100;
+  res.json({
+    timestamp: new Date().toISOString(),
+    logs: logAggregator.getRecent(Math.min(500, limit)),
+  });
+});
+
+monitoringRouter.get('/logs/stats', ensureAuthenticated, (req, res) => {
+  res.json({
+    timestamp: new Date().toISOString(),
+    stats: logAggregator.getStats(),
+  });
+});
+
+monitoringRouter.get('/uptime', ensureAuthenticated, (req, res) => {
+  res.json({
+    timestamp: new Date().toISOString(),
+    summary: uptimeMonitor.getSummary(),
+  });
+});
+
+monitoringRouter.get('/database/slow-queries', ensureAuthenticated, (req, res) => {
+  const limit = parseInt(req.query.limit as string) || 20;
+  res.json({
+    timestamp: new Date().toISOString(),
+    slowQueries: databaseQueryOptimizer.getSlowQueries(limit),
+    recommendations: databaseQueryOptimizer.getRecommendations(),
+    cache: databaseQueryOptimizer.getCacheStats(),
+  });
+});
+
+monitoringRouter.get('/cache/health', ensureAuthenticated, async (_req, res) => {
+  const healthy = await redisCache.healthCheck();
+  res.json({
+    timestamp: new Date().toISOString(),
+    healthy,
+    stats: databaseQueryOptimizer.getCacheStats(),
+  });
 });
 
 // Performance metrics endpoint (protected)
