@@ -170,7 +170,7 @@ export default function Login() {
                 variant="outline"
                 className="w-full"
                 onClick={() => {
-                  setFormData({ username: 'admin', password: 'admin' });
+                  setFormData({ username: 'admin', password: 'admin123' });
                   // Trigger form submit after setting values
                   setTimeout(() => {
                     const form = document.querySelector('form') as HTMLFormElement;
@@ -179,7 +179,7 @@ export default function Login() {
                 }}
               >
                 <Code className="mr-2 h-4 w-4" />
-                Quick Login (admin/admin)
+                Quick Login (admin/admin123)
               </Button>
               
               <div className="text-center text-sm text-muted-foreground">
