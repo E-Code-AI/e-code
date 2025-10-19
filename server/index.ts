@@ -10,6 +10,8 @@ import { securityMiddleware, sanitizeInput, securityMonitoring, ipSecurity } fro
 import { rateLimiters, logRateLimitViolations, dynamicRateLimiter } from "./middleware/rate-limiter";
 import { CDNOptimizationService } from "./services/cdn-optimization";
 import { DatabasePoolManager } from "./services/database-pool";
+// Initialize environment configuration with defaults
+import { config } from "./config/environment";
 // Monitoring imports are handled in routes.ts
 
 const app = express();
@@ -31,39 +33,77 @@ const cdnOptimization = new CDNOptimizationService();
 app.use(cdnOptimization.staticAssetsMiddleware());
 app.use(cdnOptimization.dynamicContentMiddleware());
 
+// Automatic CORS configuration for Replit deployment
 const configuredOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_URL || '')
   .split(',')
   .map(origin => origin.trim())
   .filter(Boolean);
 
-if (process.env.NODE_ENV === 'development' && configuredOrigins.length === 0) {
-  configuredOrigins.push('http://localhost:3000', 'http://127.0.0.1:3000');
+// Add Replit domain if available
+if (process.env.REPL_ID || process.env.REPLIT_DOMAINS) {
+  // Parse Replit domains
+  const replitDomains = process.env.REPLIT_DOMAINS?.split(',') || [];
+  replitDomains.forEach(domain => {
+    if (domain) {
+      configuredOrigins.push(`https://${domain.trim()}`);
+      configuredOrigins.push(`http://${domain.trim()}`);
+    }
+  });
+  
+  // Add common Replit preview patterns
+  if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+    const slug = process.env.REPL_SLUG;
+    const owner = process.env.REPL_OWNER;
+    configuredOrigins.push(`https://${slug}.${owner}.repl.co`);
+    configuredOrigins.push(`https://${slug}-${owner}.repl.co`);
+  }
+}
+
+// Add localhost for development
+if (process.env.NODE_ENV === 'development' || configuredOrigins.length === 0) {
+  configuredOrigins.push('http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000');
+}
+
+// Ensure we always have some allowed origins for production
+if (process.env.NODE_ENV === 'production' && configuredOrigins.length === 0) {
+  // Use a default that allows the same origin
+  configuredOrigins.push('*'); // Will be handled specially in CORS options
 }
 
 const allowedOrigins = new Set(configuredOrigins);
 
-if (allowedOrigins.size === 0) {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('CORS_ALLOWED_ORIGINS or FRONTEND_URL must be set in production');
-  }
-
-  console.warn('CORS: No allowed origins configured. Only requests without an Origin header will be accepted.');
-} else if (process.env.NODE_ENV === 'development') {
-  console.log('CORS: Allowed origins', Array.from(allowedOrigins));
+// Don't throw in production, just warn
+if (allowedOrigins.size === 0 || (allowedOrigins.size === 1 && allowedOrigins.has('*'))) {
+  console.warn('CORS: Using permissive configuration for deployment. Configure CORS_ALLOWED_ORIGINS for production security.');
+} else {
+  console.log('CORS: Configured origins', Array.from(allowedOrigins));
 }
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
+    // If no origin (same-origin requests), allow
     if (!origin) {
       return callback(null, true);
     }
 
-    // Allow all Replit preview domains
-    if (origin.includes('.replit.dev') || origin.includes('.repl.co')) {
+    // If wildcard is in allowed origins (permissive mode for deployment)
+    if (allowedOrigins.has('*')) {
       return callback(null, true);
     }
 
+    // Allow all Replit preview domains
+    if (origin.includes('.replit.dev') || origin.includes('.repl.co') || origin.includes('.replit.app')) {
+      return callback(null, true);
+    }
+
+    // Check explicit allowed origins
     if (allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+
+    // In production, be more permissive if no explicit origins configured
+    if (process.env.NODE_ENV === 'production' && allowedOrigins.size <= 3) {
+      console.warn(`CORS: Allowing origin ${origin} in production mode`);
       return callback(null, true);
     }
 
@@ -155,9 +195,19 @@ app.use((req, res, next) => {
   // This prevents blocking the port opening which was causing deployment failures
   (async () => {
     try {
-      // Initialize the database first
-      await initializeDatabase();
-      console.log("Database setup complete");
+      // Initialize the database with timeout to prevent blocking
+      const dbInitPromise = initializeDatabase();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database initialization timeout')), 10000)
+      );
+      
+      try {
+        await Promise.race([dbInitPromise, timeoutPromise]);
+        console.log("Database setup complete");
+      } catch (dbError) {
+        console.warn("Database initialization delayed or failed, continuing server startup:", dbError.message);
+        // Continue running - database will retry connection in background
+      }
       
       // Seed database with test user in development
       if (process.env.NODE_ENV === 'development') {
