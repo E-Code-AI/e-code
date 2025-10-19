@@ -54,7 +54,8 @@ import {
   insertDynamicIntelligenceSchema, insertWebSearchHistorySchema,
   insertGitRepositorySchema, insertGitCommitSchema, insertCustomDomainSchema,
   insertSecretSchema, insertEnvironmentVariableSchema,
-  insertNewsletterSubscriberSchema, insertNewsletterCampaignSchema, insertNewsletterDeliverySchema
+  insertNewsletterSubscriberSchema, insertNewsletterCampaignSchema, insertNewsletterDeliverySchema,
+  customerRequests, insertCustomerRequestSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -91,6 +92,8 @@ type GitCommit = typeof gitCommits.$inferSelect;
 type InsertGitCommit = z.infer<typeof insertGitCommitSchema>;
 type CustomDomain = typeof customDomains.$inferSelect;
 type InsertCustomDomain = z.infer<typeof insertCustomDomainSchema>;
+type CustomerRequest = typeof customerRequests.$inferSelect;
+type InsertCustomerRequest = z.infer<typeof insertCustomerRequestSchema>;
 
 import { eq, and, desc, isNull, sql, inArray, gte, lte, SQL } from "drizzle-orm";
 import { db } from "./db";
@@ -2617,42 +2620,237 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Sales and Support operations
+  async createCustomerRequest(request: InsertCustomerRequest): Promise<CustomerRequest> {
+    const payload = {
+      ...request,
+      metadata: request.metadata ?? {},
+      status: request.status ?? 'new',
+      createdAt: request.createdAt ?? new Date(),
+      updatedAt: request.updatedAt ?? new Date(),
+    };
+
+    const [created] = await this.db
+      .insert(customerRequests)
+      .values(payload)
+      .returning();
+
+    return created;
+  }
+
+  async getCustomerRequests(filters?: { formType?: string; status?: string; limit?: number }): Promise<CustomerRequest[]> {
+    const conditions: SQL<unknown>[] = [];
+
+    if (filters?.formType) {
+      conditions.push(eq(customerRequests.formType, filters.formType));
+    }
+
+    if (filters?.status) {
+      conditions.push(eq(customerRequests.status, filters.status));
+    }
+
+    let query = this.db
+      .select()
+      .from(customerRequests)
+      .orderBy(desc(customerRequests.createdAt));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+
+    return await query;
+  }
+
+  async updateCustomerRequest(id: number, updates: Partial<CustomerRequest>): Promise<CustomerRequest | undefined> {
+    const payload: Partial<CustomerRequest> = {
+      ...updates,
+      updatedAt: new Date(),
+    };
+
+    if (payload.resolvedAt === undefined) {
+      delete payload.resolvedAt;
+    }
+
+    if (payload.metadata === undefined) {
+      delete payload.metadata;
+    }
+
+    const [updated] = await this.db
+      .update(customerRequests)
+      .set(payload)
+      .where(eq(customerRequests.id, id))
+      .returning();
+
+    return updated;
+  }
+
   async createSalesInquiry(inquiry: any): Promise<any> {
+    const request = await this.createCustomerRequest({
+      formType: 'contact_sales',
+      pagePath: inquiry.pagePath || '/contact-sales',
+      senderName: inquiry.name,
+      senderEmail: inquiry.email,
+      senderCompany: inquiry.company,
+      senderPhone: inquiry.phone,
+      subject: inquiry.subject || (inquiry.useCase ? `Sales inquiry - ${inquiry.useCase}` : 'Sales inquiry'),
+      message: inquiry.message,
+      status: inquiry.status ?? 'new',
+      metadata: {
+        companySize: inquiry.companySize || 'unknown',
+        useCase: inquiry.useCase || 'general',
+        ...(inquiry.metadata || {}),
+      },
+    });
+
     return {
-      id: Date.now(),
       ...inquiry,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      id: request.id,
+      status: request.status,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+      pagePath: request.pagePath,
     };
   }
 
   async getSalesInquiries(status?: string): Promise<any[]> {
-    // Would query from sales_inquiries table
-    return [];
+    const inquiries = await this.getCustomerRequests({
+      formType: 'contact_sales',
+      status: status || undefined,
+    });
+
+    return inquiries.map((request) => ({
+      id: request.id,
+      name: request.senderName,
+      email: request.senderEmail,
+      company: request.senderCompany,
+      phone: request.senderPhone,
+      message: request.message,
+      subject: request.subject,
+      companySize: request.metadata?.companySize || 'unknown',
+      useCase: request.metadata?.useCase || 'general',
+      status: request.status,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+      pagePath: request.pagePath,
+    }));
   }
 
   async updateSalesInquiry(id: number, updates: any): Promise<any | undefined> {
-    // Would update sales_inquiries table
-    return { id, ...updates };
+    const updated = await this.updateCustomerRequest(id, {
+      senderName: updates.name,
+      senderEmail: updates.email,
+      senderCompany: updates.company,
+      senderPhone: updates.phone,
+      message: updates.message,
+      subject: updates.subject,
+      status: updates.status,
+      metadata: {
+        companySize: updates.companySize,
+        useCase: updates.useCase,
+        ...(updates.metadata || {}),
+      },
+    });
+
+    if (!updated) {
+      return undefined;
+    }
+
+    return {
+      id: updated.id,
+      name: updated.senderName,
+      email: updated.senderEmail,
+      company: updated.senderCompany,
+      phone: updated.senderPhone,
+      message: updated.message,
+      subject: updated.subject,
+      companySize: updated.metadata?.companySize || 'unknown',
+      useCase: updated.metadata?.useCase || 'general',
+      status: updated.status,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+      pagePath: updated.pagePath,
+    };
   }
 
   async createAbuseReport(report: any): Promise<any> {
+    const request = await this.createCustomerRequest({
+      formType: 'report_abuse',
+      pagePath: report.pagePath || '/report-abuse',
+      senderName: report.reporterName,
+      senderEmail: report.reporterEmail,
+      subject: `Abuse report - ${report.reportType}`,
+      message: report.description,
+      metadata: {
+        reportType: report.reportType,
+        targetUrl: report.targetUrl,
+        username: report.username,
+        reporterUserId: report.userId,
+        ...(report.metadata || {}),
+      },
+    });
+
     return {
-      id: Date.now(),
       ...report,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      id: request.id,
+      status: request.status,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+      pagePath: request.pagePath,
     };
   }
 
   async getAbuseReports(status?: string): Promise<any[]> {
-    // Would query from abuse_reports table
-    return [];
+    const reports = await this.getCustomerRequests({
+      formType: 'report_abuse',
+      status: status || undefined,
+    });
+
+    return reports.map((request) => ({
+      id: request.id,
+      reportType: request.metadata?.reportType,
+      targetUrl: request.metadata?.targetUrl,
+      description: request.message,
+      reporterEmail: request.senderEmail,
+      username: request.metadata?.username,
+      status: request.status,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+      pagePath: request.pagePath,
+    }));
   }
 
   async updateAbuseReport(id: number, updates: any): Promise<any | undefined> {
-    // Would update abuse_reports table
-    return { id, ...updates };
+    const updated = await this.updateCustomerRequest(id, {
+      message: updates.description,
+      senderEmail: updates.reporterEmail,
+      status: updates.status,
+      metadata: {
+        reportType: updates.reportType,
+        targetUrl: updates.targetUrl,
+        username: updates.username,
+        ...(updates.metadata || {}),
+      },
+    });
+
+    if (!updated) {
+      return undefined;
+    }
+
+    return {
+      id: updated.id,
+      reportType: updated.metadata?.reportType,
+      targetUrl: updated.metadata?.targetUrl,
+      description: updated.message,
+      reporterEmail: updated.senderEmail,
+      username: updated.metadata?.username,
+      status: updated.status,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+      pagePath: updated.pagePath,
+    };
   }
 
   // Kubernetes User Environment operations
