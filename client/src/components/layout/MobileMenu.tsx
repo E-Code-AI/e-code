@@ -106,7 +106,7 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent 
           side="left" 
-          className="w-full sm:w-[420px] p-0 bg-white dark:bg-zinc-950 backdrop-blur-2xl border-r border-gray-200 dark:border-zinc-800 shadow-2xl"
+          className="w-full sm:w-[420px] p-0 bg-white dark:bg-zinc-950 backdrop-blur-2xl border-r border-gray-200 dark:border-zinc-800 shadow-2xl flex flex-col"
         >
           {/* Premium Header */}
           <div className="relative overflow-hidden border-b border-gray-200 dark:border-zinc-800">
@@ -188,7 +188,7 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
             </div>
           </div>
 
-          <ScrollArea className="h-[calc(100vh-200px)]">
+          <ScrollArea className="flex-1 overflow-auto">
             <div className="px-6 py-6">
               {/* Quick Search */}
               <motion.div
