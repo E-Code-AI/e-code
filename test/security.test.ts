@@ -7,8 +7,9 @@ import {
   fileUploadSecurity,
   apiKeyValidation,
   securityMonitoring,
-  ipSecurity
+  ipSecurity,
 } from '../server/middleware/security';
+import { securityScanner } from '../server/security/security-scanner';
 
 function createResponse() {
   return {
@@ -254,7 +255,7 @@ testRunner.registerSuite('Security Middleware', {
       },
     },
   ],
-import { securityScanner } from '../server/security/security-scanner';
+});
 
 testRunner.registerSuite('Security Scanner', {
   tests: [
@@ -267,7 +268,7 @@ testRunner.registerSuite('Security Scanner', {
         expect(Array.isArray(issues)).toBeTruthy();
         expect(issues.length).toBeGreaterThan(0);
         expect(issues[0].type).toBe('secret');
-      }
+      },
     },
     {
       name: 'scanProject aggregates issue severities',
@@ -290,7 +291,7 @@ testRunner.registerSuite('Security Scanner', {
         expect(severities.has('critical')).toBeTruthy();
         expect(severities.size).toBeGreaterThan(1);
         expect(result.summary.totalIssues).toBeGreaterThan(3);
-      }
+      },
     },
     {
       name: 'getSecurityRecommendations returns actionable guidance',
@@ -299,11 +300,7 @@ testRunner.registerSuite('Security Scanner', {
 
         expect(recommendations.length).toBeGreaterThan(0);
         expect(recommendations).toContain('Use environment variables for sensitive configuration');
-      }
-    }
-  ]
-});
-
-testRunner.registerSuite('Security', {
-  tests: []
+      },
+    },
+  ],
 });
