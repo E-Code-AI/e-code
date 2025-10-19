@@ -113,7 +113,7 @@ All features include comprehensive telemetry tracking:
 Run the test suite:
 
 ```bash
-npm test test/ai-ux-features.test.ts
+npm test -- test/ai-ux-features.test.ts
 ```
 
 ## User Guide
