@@ -14834,7 +14834,7 @@ Generate a comprehensive application based on the user's request. Include all ne
 
       const { sendNewsletterCampaignEmail } = await import('./utils/gandi-email');
 
-      await sendNewsletterCampaignEmail({
+      const sendResult = await sendNewsletterCampaignEmail({
         to: email,
         subject: sampleCampaign.subject,
         html: personalizedHtml,
@@ -14842,6 +14842,15 @@ Generate a comprehensive application based on the user's request. Include all ne
         unsubscribeUrl,
         previewText: sampleCampaign.previewText,
       });
+
+      if (!sendResult.success) {
+        console.error('Failed to send newsletter test email:', sendResult.error);
+        return res.status(502).json({
+          success: false,
+          message: 'Failed to send test newsletter email',
+          error: sendResult.error,
+        });
+      }
 
       res.json({ success: true, message: 'Test newsletter email sent successfully.' });
     } catch (error) {
