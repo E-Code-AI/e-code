@@ -123,6 +123,7 @@ import { agentWebSocketService } from './services/agent-websocket-service';
 import containerRoutes from "./routes/containers";
 import { aiService } from "./ai/ai-service";
 import { chunkArray, executeWithBackoff, delay as newsletterDelay } from './newsletter/dispatch-helpers';
+import { databaseQueryOptimizer } from './services/database-query-optimizer';
 
 // POLYGLOT BACKEND INTEGRATION - Using Go and Python services for performance
 import { containerProxy } from './services/polyglot-container-proxy';
@@ -811,30 +812,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/projects/recent', ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
-      const projects = await storage.getProjectsByUser(user.id);
-      
-      // Get deployment status and add owner information for each project
-      const projectsWithStatus = await Promise.all(projects.map(async (project) => {
-        const deployments = await storage.getProjectDeployments(project.id);
-        const activeDeployment = deployments.find(d => d.status === 'active');
-        
-        return {
-          ...project,
-          isDeployed: !!activeDeployment,
-          deploymentUrl: activeDeployment?.url,
-          deploymentStatus: activeDeployment?.status,
-          owner: {
-            id: user.id,
-            username: user.username,
-            email: user.email
-          }
-        };
-      }));
-      
-      // Sort by updatedAt to show most recent first
-      const recentProjects = projectsWithStatus
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 6); // Return only 6 most recent
+      const cacheKey = `user:${user.id}:projects:recent`;
+
+      const recentProjects = await databaseQueryOptimizer.withCache(cacheKey, 120, async () => {
+        const projects = await storage.getProjectsByUser(user.id);
+
+        const projectsWithStatus = await Promise.all(projects.map(async (project) => {
+          const deployments = await storage.getProjectDeployments(project.id);
+          const activeDeployment = deployments.find(d => d.status === 'active');
+
+          return {
+            ...project,
+            isDeployed: !!activeDeployment,
+            deploymentUrl: activeDeployment?.url,
+            deploymentStatus: activeDeployment?.status,
+            owner: {
+              id: user.id,
+              username: user.username,
+              email: user.email
+            },
+            updatedAt: new Date(project.updatedAt).toISOString(),
+            createdAt: project.createdAt ? new Date(project.createdAt).toISOString() : undefined,
+          };
+        }));
+
+        return projectsWithStatus
+          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+          .slice(0, 6);
+      });
+
       res.json(recentProjects);
     } catch (error) {
       console.error('Error fetching recent projects:', error);
@@ -14648,20 +14654,25 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Get user's recent deployments for dashboard
   app.get('/api/user/deployments/recent', ensureAuthenticated, async (req, res) => {
     try {
-      const deployments = await storage.getDeploymentsByUser(req.user!.id);
-      
-      // Format deployments for dashboard display
-      const recentDeployments = deployments
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-        .slice(0, 5)
-        .map(deployment => ({
-          id: deployment.id,
-          project: deployment.projectName,
-          status: deployment.status,
-          url: deployment.url,
-          time: getRelativeTime(deployment.createdAt),
-        }));
-      
+      const userId = req.user!.id;
+      const cacheKey = `user:${userId}:deployments:recent`;
+
+      const recentDeployments = await databaseQueryOptimizer.withCache(cacheKey, 60, async () => {
+        const deployments = await storage.getDeploymentsByUser(userId);
+
+        return deployments
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .slice(0, 5)
+          .map(deployment => ({
+            id: deployment.id,
+            project: deployment.projectName,
+            status: deployment.status,
+            url: deployment.url,
+            time: getRelativeTime(deployment.createdAt),
+            createdAt: deployment.createdAt.toISOString(),
+          }));
+      });
+
       res.json(recentDeployments);
     } catch (error) {
       console.error('Error fetching recent deployments:', error);
@@ -14672,21 +14683,26 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Get user's storage usage
   app.get('/api/user/storage', ensureAuthenticated, async (req, res) => {
     try {
-      const projects = await storage.getProjectsByUser(req.user!.id);
-      
-      // Calculate total storage used (simplified - count files)
-      let totalSize = 0;
-      for (const project of projects) {
-        const files = await storage.getProjectFiles(project.id);
-        // Estimate file sizes (in real app, track actual sizes)
-        totalSize += files.length * 0.001; // 1KB per file estimate
-      }
-      
-      res.json({
-        used: Math.round(totalSize * 100) / 100, // GB
-        limit: 5, // GB - free tier limit
-        unit: 'GB'
+      const userId = req.user!.id;
+      const cacheKey = `user:${userId}:storage-summary`;
+
+      const storageSummary = await databaseQueryOptimizer.withCache(cacheKey, 300, async () => {
+        const projects = await storage.getProjectsByUser(userId);
+
+        let totalSize = 0;
+        for (const project of projects) {
+          const files = await storage.getProjectFiles(project.id);
+          totalSize += files.length * 0.001;
+        }
+
+        return {
+          used: Math.round(totalSize * 100) / 100,
+          limit: 5,
+          unit: 'GB',
+        };
       });
+
+      res.json(storageSummary);
     } catch (error) {
       console.error('Error calculating storage:', error);
       res.status(500).json({ message: 'Failed to calculate storage' });
