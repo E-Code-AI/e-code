@@ -87,7 +87,7 @@ export function PublicNavbar() {
                       <Sparkles className="h-4 w-4 text-sky-300" />
                       {item.title}
                     </div>
-                    <p className="mt-2 text-sm text-slate-300 leading-relaxed">
+                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
                       {item.description}
                     </p>
                   </Link>
@@ -111,7 +111,7 @@ export function PublicNavbar() {
                       <ArrowUpRight className="h-4 w-4 text-indigo-300" />
                       {item.title}
                     </div>
-                    <p className="mt-2 text-sm text-slate-300 leading-relaxed">
+                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
                       {item.description}
                     </p>
                   </Link>
@@ -135,7 +135,7 @@ export function PublicNavbar() {
                       <Search className="h-4 w-4 text-sky-300" />
                       {item.title}
                     </div>
-                    <p className="mt-2 text-sm text-slate-300 leading-relaxed">
+                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
                       {item.description}
                     </p>
                   </Link>
@@ -159,7 +159,7 @@ export function PublicNavbar() {
                       <ChevronRight className="h-4 w-4 text-indigo-300" />
                       {item.title}
                     </div>
-                    <p className="mt-2 text-sm text-slate-300 leading-relaxed">
+                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
                       {item.description}
                     </p>
                   </Link>
@@ -172,7 +172,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuLink
             href="/pricing"
-            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/15 px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-[var(--ecode-text)] dark:text-white"
+            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/15 px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-white"
           >
             Pricing
           </NavigationMenuLink>
@@ -181,7 +181,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuLink
             href="/team"
-            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/15 px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-[var(--ecode-text)] dark:text-white"
+            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/15 px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-white"
           >
             Teams
           </NavigationMenuLink>
@@ -201,16 +201,16 @@ export function PublicNavbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      <div className="hidden md:block border-b border-white/10 bg-gradient-to-r from-sky-500/20 via-indigo-500/20 to-purple-500/20">
-        <div className="container-responsive flex h-10 items-center justify-between text-xs text-slate-100">
+      <div className="hidden md:block border-b border-[var(--ecode-border)] dark:border-white/10 bg-[var(--ecode-accent)]/5 dark:bg-gradient-to-r dark:from-sky-500/20 dark:via-indigo-500/20 dark:to-purple-500/20">
+        <div className="container-responsive flex h-10 items-center justify-between text-xs text-[var(--ecode-text)] dark:text-slate-100">
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="bg-white/15 text-[var(--ecode-text)] dark:text-white border-white/25 uppercase tracking-[0.2em]">
+            <Badge variant="secondary" className="bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)] dark:bg-white/15 dark:text-white border-[var(--ecode-accent)]/20 dark:border-white/25 uppercase tracking-[0.2em]">
               NEW
             </Badge>
             <p className="font-medium">Introducing E-Code Enterprise Cloud with dedicated AI governance and auditability.</p>
           </div>
           <button
-            className="inline-flex items-center gap-1 text-sky-200 hover:text-[var(--ecode-text)] dark:text-white transition-colors"
+            className="inline-flex items-center gap-1 text-[var(--ecode-accent)] hover:text-[var(--ecode-accent-hover)] dark:text-sky-200 dark:hover:text-white transition-colors"
             onClick={() => navigate('/contact-sales')}
           >
             Talk to an expert
@@ -239,7 +239,7 @@ export function PublicNavbar() {
               <ThemeSwitcher />
               <Button
                 variant="ghost"
-                className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-[var(--ecode-text)] dark:text-white"
+                className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white"
                 onClick={() => window.location.href = '/login'}
               >
                 <LogIn className="mr-2 h-4 w-4" />
@@ -249,11 +249,11 @@ export function PublicNavbar() {
 
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-slate-100">
+                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-[var(--ecode-text)] dark:text-slate-100">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-full sm:w-[420px] bg-slate-950/95 text-slate-100 border-l border-white/10">
+                <SheetContent side="right" className="w-full sm:w-[420px] bg-[var(--ecode-surface)] text-[var(--ecode-text)] dark:bg-slate-950/95 dark:text-[var(--ecode-text)] dark:text-slate-100 border-l border-white/10">
                   <SheetHeader className="mb-6">
                     <div className="flex items-center justify-between">
                       <ECodeLogo size="sm" />
@@ -262,10 +262,10 @@ export function PublicNavbar() {
                       </Button>
                     </div>
                     <div className="mt-4 relative">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-text-muted)] dark:text-slate-400" />
                       <Input
                         placeholder="Search documentation, templates, or people"
-                        className="pl-9 bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-400"
+                        className="pl-9 bg-white/5 border-white/10 text-[var(--ecode-text)] dark:text-slate-100 placeholder:text-[var(--ecode-text-muted)] dark:text-slate-400"
                       />
                     </div>
                   </SheetHeader>
@@ -279,21 +279,21 @@ export function PublicNavbar() {
                     </Button>
                     <Button
                       variant="ghost"
-                      className="mt-3 w-full border border-white/10 text-slate-200 hover:text-[var(--ecode-text)] dark:text-white"
+                      className="mt-3 w-full border border-white/10 text-[var(--ecode-text-secondary)] dark:text-slate-200 hover:text-white dark:hover:text-white"
                       onClick={() => window.location.href = '/login'}
                     >
                       Sign in
                     </Button>
                   </div>
 
-                  <SheetTitle className="px-6 pt-8 pb-3 text-xs uppercase tracking-[0.3em] text-slate-400">
+                  <SheetTitle className="px-6 pt-8 pb-3 text-xs uppercase tracking-[0.3em] text-[var(--ecode-text-muted)] dark:text-slate-400">
                     Navigation
                   </SheetTitle>
                   <ScrollArea className="h-[55vh] px-6">
                     <div className="space-y-8 pb-8">
                       {[{ title: 'Product', items: productItems }, { title: 'Solutions', items: solutionsItems }, { title: 'Resources', items: resourcesItems }, { title: 'Company', items: companyItems }].map((section) => (
                         <div key={section.title}>
-                          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">
+                          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ecode-text-muted)] dark:text-slate-400 mb-3">
                             {section.title}
                           </p>
                           <div className="space-y-3">
@@ -308,9 +308,9 @@ export function PublicNavbar() {
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white">{item.title}</span>
-                                  <ChevronRight className="h-4 w-4 text-slate-400" />
+                                  <ChevronRight className="h-4 w-4 text-[var(--ecode-text-muted)] dark:text-slate-400" />
                                 </div>
-                                <p className="mt-2 text-xs text-slate-300 leading-relaxed">
+                                <p className="mt-2 text-xs text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
                                   {item.description}
                                 </p>
                               </button>
