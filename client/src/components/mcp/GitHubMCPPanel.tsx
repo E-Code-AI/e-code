@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -151,14 +151,14 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
   });
 
   // Auto-fill repo when repos load
-  React.useEffect(() => {
+  useEffect(() => {
     if (repos && repos.length > 0 && !newPR.repo) {
       setNewPR(prev => ({
         ...prev,
         repo: repos[0].name
       }));
     }
-  }, [repos]);
+  }, [repos, newPR.repo]);
 
   const filteredRepos = repos?.filter(repo => 
     repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
