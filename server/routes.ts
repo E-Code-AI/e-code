@@ -1993,7 +1993,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { year: '2022', event: 'E-Code founded with a vision to create the Vibe coding platform.' },
           { year: '2023', event: 'Launched private alpha with design partners across three continents.' },
           { year: '2024', event: 'Secured lighthouse enterprise customers and orchestrated 5,000 pilot launches.' },
-          { year: 'Q1 2025', event: 'Announced $180M Series B funding and global debut of the Vibe platform.' },
+          {
+            year: 'Q1 2025',
+            event: 'Launched Series A fundraising targeting $25M to accelerate the global debut of the Vibe platform.'
+          },
           { year: 'Q3 2025', event: 'Expanded Fortune 500 partnerships with managed compliance and AI governance.' }
         ],
         team: [
