@@ -13,32 +13,48 @@ export default function NewsletterConfirm() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const email = params.get('email');
-    const token = params.get('token');
+    const confirmSubscription = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get('email');
+      const token = params.get('token');
 
-    if (!email || !token) {
-      setStatus('error');
-      setMessage('Invalid confirmation link');
-      return;
-    }
+      if (!email || !token) {
+        setStatus('error');
+        setMessage('Invalid confirmation link');
+        return;
+      }
 
-    // Confirm the email
-    fetch(`/api/newsletter/confirm?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
+      try {
+        const response = await fetch(`/api/newsletter/confirm?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}&format=json`, {
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        let data = null;
+        try {
+          data = await response.json();
+        } catch (_) {
+          data = null;
+        }
+
+        if (response.ok && data?.success) {
           setStatus('success');
           setMessage(data.message || 'Email confirmed successfully!');
         } else {
+          const errorMessage = data?.message || 'Failed to confirm email';
           setStatus('error');
-          setMessage(data.message || 'Failed to confirm email');
+          setMessage(errorMessage);
         }
-      })
-      .catch(() => {
+      } catch (error) {
         setStatus('error');
         setMessage('Something went wrong. Please try again.');
-      });
+      }
+    };
+
+    setStatus('loading');
+    setMessage('');
+    confirmSubscription();
   }, []);
 
   return (
