@@ -291,6 +291,18 @@ export class DeploymentManager {
       } catch (dbError) {
         console.error(`Failed to update deployment status in database:`, dbError);
         // Still mark as active in memory since deployment succeeded
+        // Retry once after a short delay
+        setTimeout(async () => {
+          try {
+            await storage.updateDeploymentStatus(deploymentId, {
+              status: 'active',
+              lastDeployedAt: new Date()
+            });
+            console.log(`✅ Deployment ${deploymentId} retry successful`);
+          } catch (retryError) {
+            console.error(`Database update retry also failed for ${deploymentId}`);
+          }
+        }, 2000);
       }
 
     } catch (error) {
