@@ -268,6 +268,30 @@ export class DeploymentManager {
       
       clearTimeout(deploymentTimeout);
       
+      // Update database FIRST before marking as active in memory
+      try {
+        await storage.updateDeploymentStatus(deploymentId, {
+          status: 'active',
+          lastDeployedAt: new Date()
+        });
+        console.log(`✅ Deployment ${deploymentId} successfully marked as active in database`);
+      } catch (dbError) {
+        console.error(`Failed to update deployment status in database:`, dbError);
+        // Retry once immediately
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await storage.updateDeploymentStatus(deploymentId, {
+            status: 'active',
+            lastDeployedAt: new Date()
+          });
+          console.log(`✅ Deployment ${deploymentId} retry successful`);
+        } catch (retryError) {
+          console.error(`Database update retry also failed for ${deploymentId}`);
+          // Continue anyway - deployment is technically successful
+        }
+      }
+
+      // NOW mark as active in memory
       deployment.status = 'active';
       deployment.lastDeployedAt = new Date();
       
@@ -280,30 +304,6 @@ export class DeploymentManager {
       };
 
       deployment.deploymentLog.push(`🎉 Your app is live at ${deployment.url || deployment.customUrl}`);
-
-      // Update database - ensure this completes before marking as done
-      try {
-        await storage.updateDeploymentStatus(deploymentId, {
-          status: 'active',
-          lastDeployedAt: new Date()
-        });
-        console.log(`✅ Deployment ${deploymentId} successfully marked as active in database`);
-      } catch (dbError) {
-        console.error(`Failed to update deployment status in database:`, dbError);
-        // Still mark as active in memory since deployment succeeded
-        // Retry once after a short delay
-        setTimeout(async () => {
-          try {
-            await storage.updateDeploymentStatus(deploymentId, {
-              status: 'active',
-              lastDeployedAt: new Date()
-            });
-            console.log(`✅ Deployment ${deploymentId} retry successful`);
-          } catch (retryError) {
-            console.error(`Database update retry also failed for ${deploymentId}`);
-          }
-        }, 2000);
-      }
 
     } catch (error) {
       deployment.status = 'failed';
