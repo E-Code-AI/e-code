@@ -24,7 +24,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface DeploymentManagerProps {
-  projectId: number;
+  projectId?: number;
+  project?: any;
+  isOpen?: boolean;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -68,7 +71,9 @@ const REGIONS = [
   { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' }
 ];
 
-export function DeploymentManager({ projectId, className }: DeploymentManagerProps) {
+export function DeploymentManager({ projectId, project, isOpen = true, onClose, className }: DeploymentManagerProps) {
+  // Extract projectId from project if provided
+  const actualProjectId = projectId || project?.id;
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [selectedDeployment, setSelectedDeployment] = useState<Deployment | null>(null);
   const [stats, setStats] = useState<DeploymentStats | null>(null);
@@ -91,6 +96,11 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   const { toast } = useToast();
 
   useEffect(() => {
+    // Only start polling if we have a valid projectId
+    if (!actualProjectId) {
+      return;
+    }
+    
     loadDeployments();
     loadStats();
     // Start container status monitoring
@@ -99,7 +109,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
     }, 5000); // Check every 5 seconds
     
     return () => clearInterval(interval);
-  }, [projectId]);
+  }, [actualProjectId]);
 
   useEffect(() => {
     if (selectedDeployment) {
@@ -109,15 +119,17 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   }, [selectedDeployment]);
 
   const loadDeployments = async () => {
+    if (!actualProjectId) return;
+    
     try {
-      const response = await fetch(`/api/deployment/${projectId}`, {
+      const response = await fetch(`/api/projects/${actualProjectId}/deployments`, {
         credentials: 'include'
       });
       if (response.ok) {
         const data = await response.json();
-        setDeployments(data);
-        if (data.length > 0 && !selectedDeployment) {
-          setSelectedDeployment(data[0]);
+        setDeployments(data.deployments || []);
+        if (data.deployments && data.deployments.length > 0 && !selectedDeployment) {
+          setSelectedDeployment(data.deployments[0]);
         }
       } else {
         console.error('Failed to load deployments:', response.status);
@@ -135,22 +147,30 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   };
 
   const loadStats = async () => {
+    if (!actualProjectId) return;
+    
     try {
-      const response = await fetch(`/api/deployment/${projectId}/stats`);
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      // Stats endpoint doesn't exist yet, set mock data
+      setStats({
+        totalDeployments: 0,
+        activeDeployments: 0,
+        totalRequests: 0,
+        averageResponseTime: 0,
+        errorRate: 0,
+        bandwidth: '0 MB',
+        uptime: 0
+      });
     } catch (error) {
       console.error('Failed to load stats:', error);
-      // Set empty stats on error
       setStats(null);
     }
   };
 
   const checkContainerStatus = async () => {
+    if (!actualProjectId) return;
+    
     try {
-      const response = await fetch(`/api/projects/${projectId}/container/status`, {
+      const response = await fetch(`/api/projects/${actualProjectId}/container/status`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -170,8 +190,10 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   };
 
   const loadContainerLogs = async () => {
+    if (!actualProjectId) return;
+    
     try {
-      const response = await fetch(`/api/projects/${projectId}/container/logs`, {
+      const response = await fetch(`/api/projects/${actualProjectId}/container/logs`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -207,9 +229,11 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   };
 
   const loadEnvVars = async (deploymentId: number) => {
+    if (!actualProjectId) return;
+    
     try {
       // Load environment variables from project - REAL BACKEND
-      const response = await fetch(`/api/environment/${projectId}`, {
+      const response = await fetch(`/api/environment/${actualProjectId}`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -231,10 +255,19 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   };
 
   const handleDeploy = async () => {
+    if (!actualProjectId) {
+      toast({
+        title: "Error",
+        description: "No project selected",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsDeploying(true);
     try {
       // First create the container environment
-      const containerResponse = await fetch(`/api/projects/${projectId}/container`, {
+      const containerResponse = await fetch(`/api/projects/${actualProjectId}/container`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
@@ -245,7 +278,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
       }
 
       // Then trigger deployment
-      const response = await fetch(`/api/projects/${projectId}/deploy`, {
+      const response = await fetch(`/api/projects/${actualProjectId}/deploy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -296,7 +329,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   const handleRedeploy = async (deployment: Deployment) => {
     try {
       // Redeploy by calling the deploy endpoint again - REAL BACKEND
-      const response = await fetch(`/api/deployment/${projectId}/redeploy`, {
+      const response = await fetch(`/api/deployment/${actualProjectId}/redeploy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -322,7 +355,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
   const handleStop = async (deployment: Deployment) => {
     try {
       // First stop the container
-      const containerResponse = await fetch(`/api/projects/${projectId}/container/stop`, {
+      const containerResponse = await fetch(`/api/projects/${actualProjectId}/container/stop`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -354,7 +387,7 @@ export function DeploymentManager({ projectId, className }: DeploymentManagerPro
     if (!newEnvKey.trim()) return;
 
     try {
-      const response = await fetch(`/api/environment/${projectId}`, {
+      const response = await fetch(`/api/environment/${actualProjectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

@@ -3,99 +3,100 @@
   color-scheme: light;
 
   /* Design tokens used by the Tailwind theme */
-  --background: 214 33% 97%;
-  --foreground: 222.2 47.4% 11.2%;
+  --background: 0 0% 99%;
+  --foreground: 222 47% 11%;
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 47.4% 11.2%;
-  --primary: 214 92% 40%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 221 83% 53%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 215 30% 93%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 215 30% 93%;
-  --muted-foreground: 215.4 16.3% 36.9%;
-  --accent: 213 100% 93%;
-  --accent-foreground: 221 47% 15%;
-  --destructive: 0 72.2% 50.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 218 27% 88%;
-  --input: 218 27% 88%;
-  --ring: 214 92% 40%;
-  --chart-1: 214 92% 40%;
-  --chart-2: 160.1 84.1% 39.4%;
-  --chart-3: 24.6 95% 53.1%;
-  --chart-4: 258.3 89.5% 66.3%;
-  --chart-5: 0 84.2% 60.2%;
-  --sidebar-background: 214 35% 96%;
-  --sidebar-foreground: 222.2 47.4% 11.2%;
-  --sidebar-primary: 214 92% 40%;
+  --secondary: 210 17% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 17% 96%;
+  --muted-foreground: 215 16% 40%;
+  --accent: 210 17% 93%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 88%;
+  --input: 214 32% 90%;
+  --ring: 221 83% 53%;
+  --chart-1: 221 83% 53%;
+  --chart-2: 142 71% 45%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 280 87% 65%;
+  --chart-5: 340 82% 52%;
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-primary: 221 83% 53%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 214 45% 92%;
-  --sidebar-accent-foreground: 222.2 47.4% 11.2%;
-  --sidebar-border: 215 26% 85%;
-  --sidebar-ring: 214 92% 40%;
-  --background-rgb: 244, 246, 252;
+  --sidebar-accent: 210 17% 93%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-border: 220 13% 88%;
+  --sidebar-ring: 221 83% 53%;
+  --background-rgb: 252, 252, 253;
 
-  /* E-Code corporate light palette */
-  --ecode-background: #f4f6fb;
+  /* E-Code corporate light palette - Pure White Design */
+  --ecode-background: #ffffff;
   --ecode-surface: #ffffff;
-  --ecode-surface-secondary: #edf1f8;
-  --ecode-border: #d4dae7;
-  --ecode-border-strong: #b6c1d8;
-  --ecode-text: #0f172a;
-  --ecode-text-secondary: #1f2937;
-  --ecode-text-muted: #4b5563;
-  --ecode-accent: #0b53d7;
-  --ecode-accent-hover: #073e9f;
-  --ecode-danger: #c0352b;
-  --ecode-warning: #b54708;
-  --ecode-info: #2563eb;
+  --ecode-surface-secondary: #ffffff;
+  --ecode-surface-tertiary: #f8f9fa;
+  --ecode-border: #e0e0e0;
+  --ecode-border-strong: #c1c8cd;
+  --ecode-text: #1a1a1a;
+  --ecode-text-secondary: #333333;
+  --ecode-text-muted: #666666;
+  --ecode-accent: #0066cc;
+  --ecode-accent-hover: #0052a3;
+  --ecode-danger: #dc3545;
+  --ecode-warning: #f59e0b;
+  --ecode-info: #0066cc;
 
-  --ecode-surface-hover: #e8edf7;
-  --ecode-surface-elevated: rgba(255, 255, 255, 0.96);
+  --ecode-surface-hover: #f5f5f5;
+  --ecode-surface-elevated: #ffffff;
 
-  --ecode-green: #1b7f4d;
-  --ecode-blue: #0b53d7;
-  --ecode-purple: #5f3fdc;
-  --ecode-orange: #ef7c3c;
-  --ecode-red: #d12c4d;
+  --ecode-green: #10b981;
+  --ecode-blue: #0066cc;
+  --ecode-purple: #7c3aed;
+  --ecode-orange: #f59e0b;
+  --ecode-red: #dc3545;
 
-  --ecode-sidebar-bg: #eef2f9;
-  --ecode-sidebar-hover: #e2e8f6;
-  --ecode-sidebar-active: #0b53d7;
-  --ecode-sidebar-border: #c5cfdf;
+  --ecode-sidebar-bg: #f7f8fa;
+  --ecode-sidebar-hover: #eef0f3;
+  --ecode-sidebar-active: #0066cc;
+  --ecode-sidebar-border: #dfe3e8;
 
   --ecode-editor-bg: #ffffff;
-  --ecode-editor-gutter: #eef2f8;
-  --ecode-editor-selection: #d3e0fb;
-  --ecode-editor-line-highlight: #eef3ff;
+  --ecode-editor-gutter: #f7f8fa;
+  --ecode-editor-selection: #d4e5ff;
+  --ecode-editor-line-highlight: #f7f8fa;
 
-  --ecode-terminal-bg: #0f172a;
-  --ecode-terminal-text: #e2e8f0;
-  --ecode-terminal-cursor: #0b53d7;
+  --ecode-terminal-bg: #1a1f36;
+  --ecode-terminal-text: #f7f8fa;
+  --ecode-terminal-cursor: #0066cc;
 
-  --ecode-button-primary: #0b53d7;
-  --ecode-button-primary-hover: #073e9f;
-  --ecode-button-secondary: #e3e8f4;
-  --ecode-button-secondary-hover: #cdd5e6;
+  --ecode-button-primary: #0066cc;
+  --ecode-button-primary-hover: #0052a3;
+  --ecode-button-secondary: #f7f8fa;
+  --ecode-button-secondary-hover: #eef0f3;
 
-  --ecode-shadow-sm: 0 12px 28px -18px rgba(15, 23, 42, 0.35);
-  --ecode-shadow-md: 0 24px 46px -22px rgba(15, 23, 42, 0.32);
-  --ecode-shadow-lg: 0 40px 68px -28px rgba(15, 23, 42, 0.3);
+  --ecode-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --ecode-shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.1);
+  --ecode-shadow-lg: 0 12px 24px -6px rgba(0, 0, 0, 0.12);
 
-  /* Marketing surfaces */
-  --marketing-surface-bg: linear-gradient(180deg, #f8fbff 0%, #eef2fb 100%);
-  --marketing-surface-text: #0f172a;
-  --marketing-backdrop: radial-gradient(circle at 12% 18%, rgba(11, 83, 215, 0.18), transparent 58%),
-    radial-gradient(circle at 82% 12%, rgba(37, 99, 235, 0.16), transparent 54%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(229, 234, 244, 0.92));
-  --marketing-gradient: linear-gradient(135deg, rgba(11, 83, 215, 0.08) 0%, rgba(29, 78, 216, 0.16) 45%, rgba(30, 64, 175, 0.1) 100%);
-  --marketing-grid-line: rgba(148, 163, 184, 0.18);
-  --marketing-divider: linear-gradient(90deg, rgba(11, 83, 215, 0), rgba(11, 83, 215, 0.35), rgba(11, 83, 215, 0));
-  --marketing-glass-bg: rgba(255, 255, 255, 0.75);
-  --marketing-glass-border: rgba(164, 174, 196, 0.45);
-  --marketing-glass-shadow: 0 30px 60px -32px rgba(15, 23, 42, 0.3);
+  /* Marketing surfaces - Clean and professional */
+  --marketing-surface-bg: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+  --marketing-surface-text: #212529;
+  --marketing-backdrop: linear-gradient(180deg, rgba(248, 249, 250, 0.95), rgba(233, 236, 239, 0.95));
+  --marketing-gradient: radial-gradient(circle at 20% 20%, rgba(13, 110, 253, 0.05), transparent 50%),
+    radial-gradient(circle at 80% 15%, rgba(25, 135, 84, 0.05), transparent 50%),
+    radial-gradient(circle at 50% 75%, rgba(111, 66, 193, 0.05), transparent 45%);
+  --marketing-grid-line: rgba(206, 212, 218, 0.6);
+  --marketing-divider: linear-gradient(90deg, rgba(206, 212, 218, 0), rgba(206, 212, 218, 1), rgba(206, 212, 218, 0));
+  --marketing-glass-bg: rgba(255, 255, 255, 0.9);
+  --marketing-glass-border: rgba(206, 212, 218, 0.8);
+  --marketing-glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 
   /* Spacing - Replit system */
   --ecode-space-1: 4px;
@@ -261,14 +262,15 @@
   --sidebar-ring: 221 83% 53%;
   --background-rgb: 252, 252, 253;
 
-  --ecode-background: #fcfcfd;
-  --ecode-surface: #f7f8fa;
-  --ecode-surface-secondary: #f1f3f5;
-  --ecode-border: #dfe3e8;
+  --ecode-background: #ffffff;
+  --ecode-surface: #ffffff;
+  --ecode-surface-secondary: #ffffff;
+  --ecode-surface-tertiary: #f8f9fa;
+  --ecode-border: #e0e0e0;
   --ecode-border-strong: #c1c8cd;
-  --ecode-text: #1a1f36;
-  --ecode-text-secondary: #4a5568;
-  --ecode-text-muted: #697386;
+  --ecode-text: #1a1a1a;
+  --ecode-text-secondary: #333333;
+  --ecode-text-muted: #666666;
   --ecode-accent: #0066cc;
   --ecode-accent-hover: #0052a3;
   --ecode-danger: #dc3545;
@@ -281,15 +283,15 @@
   --ecode-orange: #f59e0b;
   --ecode-red: #dc3545;
 
-  --ecode-sidebar-bg: #f7f8fa;
-  --ecode-sidebar-hover: #eef0f3;
+  --ecode-sidebar-bg: #ffffff;
+  --ecode-sidebar-hover: #f5f5f5;
   --ecode-sidebar-active: #0066cc;
-  --ecode-sidebar-border: #dfe3e8;
+  --ecode-sidebar-border: #e0e0e0;
 
   --ecode-editor-bg: #ffffff;
-  --ecode-editor-gutter: #f7f8fa;
+  --ecode-editor-gutter: #f8f9fa;
   --ecode-editor-selection: #d4e5ff;
-  --ecode-editor-line-highlight: #f7f8fa;
+  --ecode-editor-line-highlight: #f8f9fa;
 
   --ecode-terminal-bg: #1a1f36;
   --ecode-terminal-text: #f7f8fa;
@@ -297,10 +299,10 @@
 
   --ecode-button-primary: #0066cc;
   --ecode-button-primary-hover: #0052a3;
-  --ecode-button-secondary: #f7f8fa;
-  --ecode-button-secondary-hover: #eef0f3;
+  --ecode-button-secondary: #ffffff;
+  --ecode-button-secondary-hover: #f5f5f5;
 
-  --ecode-surface-hover: #eef0f3;
+  --ecode-surface-hover: #f5f5f5;
   --ecode-surface-elevated: #ffffff;
 
   --ecode-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);

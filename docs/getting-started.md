@@ -47,6 +47,10 @@ Minimum variables to review:
 
 > **Security Note:** Avoid committing the `.env` file. Store production secrets in the organization’s secret manager (e.g., GCP Secret Manager or HashiCorp Vault).
 
+> **AI Agent Reminder:** Without at least one of the AI provider keys set on the server (OpenAI, Anthropic, or Google GenAI),
+> requests made from the AI sidebar will appear to do nothing. The UI intentionally suppresses raw provider errors, so double-check
+> the environment variables when agent interactions seem unresponsive.
+
 ## 3. Provision the Database
 
 The project uses [Drizzle ORM](https://orm.drizzle.team/) to manage schema migrations.
@@ -55,7 +59,9 @@ The project uses [Drizzle ORM](https://orm.drizzle.team/) to manage schema migra
 npm run db:push
 ```
 
-This command connects to the database defined in `DATABASE_URL`, creates tables, and seeds a QA-friendly dataset including the `testuser` account.
+This command connects to the database defined in `DATABASE_URL`, creates tables, and readies the schema for the automatic seed that runs during development startup.
+
+> **Note:** The seed script only runs when the tables already exist. Always execute `npm run db:push` before launching the dev server.
 
 ## 4. Launch the Development Stack
 
@@ -65,7 +71,9 @@ npm run dev
 
 - The Express API and Vite dev server share port **5000**.
 - The initial build may take 2–3 minutes as Monaco Editor, Radix UI, and AI SDK packages compile.
-- Navigate to `http://localhost:5000` and log in with `testuser` / `testpass123`.
+- Navigate to `http://localhost:5000` and log in with either of the pre-seeded accounts:
+  - `admin` / `demo` (administrator role)
+  - `testuser` / `testpass123` (standard QA account)
 
 ### Verifying Key Features
 
@@ -89,4 +97,4 @@ npm run dev
 - Study the [Architecture Overview](./architecture/overview.md) to understand service boundaries before deploying custom integrations.
 - When ready for staging, follow the [Deployment Playbook](./operations/deployment-playbook.md).
 
-For assistance, reach the platform team at [support@e-code.dev](mailto:support@e-code.dev).
+For assistance, reach the platform team at [support@e-code.ai](mailto:support@e-code.ai).

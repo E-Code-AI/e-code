@@ -324,6 +324,35 @@ function extractNewsletterRequestContext(req: Request) {
   };
 }
 
+function shouldRespondWithJson(req: Request): boolean {
+  const formatParam = typeof req.query.format === 'string' ? req.query.format.toLowerCase() : null;
+  if (formatParam === 'json') {
+    return true;
+  }
+
+  if (formatParam === 'html') {
+    return false;
+  }
+
+  const secFetchMode = (req.headers['sec-fetch-mode'] as string | undefined)?.toLowerCase();
+  if (secFetchMode && secFetchMode !== 'navigate') {
+    return true;
+  }
+
+  const acceptHeader = req.headers.accept;
+  const accepts = Array.isArray(acceptHeader) ? acceptHeader.join(',') : (acceptHeader ?? '');
+  if (accepts.toLowerCase().includes('application/json')) {
+    return true;
+  }
+
+  const requestedWith = (req.headers['x-requested-with'] as string | undefined)?.toLowerCase();
+  if (requestedWith === 'xmlhttprequest') {
+    return true;
+  }
+
+  return false;
+}
+
 const NEWSLETTER_EMAIL_STYLES = `
   body {
     margin: 0;
@@ -5093,7 +5122,7 @@ Application will be available at http://localhost:3000
   });
   
   // OpenAI Agents API endpoints
-  const { openAIAgentsService } = await import('./ai/openai-agents-service');
+  const { openAIAgentsService, MissingOpenAIKeyError } = await import('./ai/openai-agents-service');
   const { enhancedOpenAIProvider } = await import('./ai/openai-enhanced-provider');
   
   // List available OpenAI models
@@ -5102,6 +5131,11 @@ Application will be available at http://localhost:3000
       const models = await openAIAgentsService.listAvailableModels();
       res.json(models);
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error listing OpenAI models:', error);
       res.status(500).json({ error: 'Failed to list models' });
     }
@@ -5129,6 +5163,11 @@ Application will be available at http://localhost:3000
       
       res.json({ assistantId });
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error creating assistant:', error);
       res.status(500).json({ error: 'Failed to create assistant' });
     }
@@ -5141,6 +5180,11 @@ Application will be available at http://localhost:3000
       const threadId = await openAIAgentsService.createOrGetThread(sessionId, req.body.metadata);
       res.json({ threadId });
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error creating thread:', error);
       res.status(500).json({ error: 'Failed to create thread' });
     }
@@ -5170,6 +5214,11 @@ Application will be available at http://localhost:3000
       
       res.json(result);
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error running assistant:', error);
       res.status(500).json({ error: 'Failed to run assistant' });
     }
@@ -5558,7 +5607,19 @@ module.exports = { placeholder };`,
         return res.status(404).json({ error: 'Project not found' });
       }
       
-      // Use real deployment service for actual deployment
+      // Return immediately with instructions to use Replit's native deployment
+      return res.json({
+        message: 'Please use Replit\'s built-in deployment system',
+        instructions: 'Click the "Publish" button in your Replit workspace or run "replit deploy" in the shell',
+        status: 'pending',
+        deploymentUrl: null
+      });
+      
+      /*
+      // ⚠️ OLD CODE DISABLED - Was causing infinite loading
+      // This custom deployment implementation hangs indefinitely
+      // Use Replit's native deployment instead
+      
       const deploymentResult = await realDeploymentService.deploy({
         projectId: projectId,
         projectName: project.name,
@@ -5603,6 +5664,7 @@ module.exports = { placeholder };`,
         status: deployment.status,
         url: deployment.url
       });
+      */
     } catch (error) {
       console.error('Error deploying project:', error);
       res.status(500).json({ error: 'Failed to deploy project' });
@@ -15781,31 +15843,57 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   
   app.get('/api/newsletter/confirm', async (req, res) => {
+    const expectsJson = shouldRespondWithJson(req);
+
     try {
       const { email, token } = req.query;
-      
+
       if (!email || !token) {
-        return res.status(400).json({ message: 'Email and token are required' });
+        const message = 'Email and token are required';
+        if (expectsJson) {
+          return res.status(400).json({ success: false, message });
+        }
+
+        return res.redirect(`/newsletter-confirmed?success=false&error=${encodeURIComponent(message)}`);
       }
-      
+
+      const sanitizedEmail = email as string;
+      const sanitizedToken = token as string;
+
       const confirmed = await storage.confirmNewsletterSubscription(
-        email as string,
-        token as string
+        sanitizedEmail,
+        sanitizedToken
       );
-      
+
       if (confirmed) {
-        // Send confirmation success email
         const { sendNewsletterConfirmedEmail } = await import('./utils/gandi-email');
-        await sendNewsletterConfirmedEmail(email as string);
-        
-        // Redirect to success page
-        res.redirect('/newsletter-confirmed?success=true');
-      } else {
-        res.status(400).json({ message: 'Invalid confirmation link' });
+        const delivered = await sendNewsletterConfirmedEmail(sanitizedEmail);
+        if (!delivered) {
+          console.warn('Newsletter confirmation email delivery skipped or failed for', sanitizedEmail);
+        }
+
+        const message = 'Your newsletter subscription has been confirmed!';
+        if (expectsJson) {
+          return res.json({ success: true, message });
+        }
+
+        return res.redirect('/newsletter-confirmed?success=true');
       }
+
+      const message = 'Invalid confirmation link';
+      if (expectsJson) {
+        return res.status(400).json({ success: false, message });
+      }
+
+      return res.redirect(`/newsletter-confirmed?success=false&error=${encodeURIComponent(message)}`);
     } catch (error) {
       console.error('Newsletter confirmation error:', error);
-      res.status(500).json({ message: 'Failed to confirm email' });
+      const message = 'Failed to confirm email';
+      if (expectsJson) {
+        return res.status(500).json({ success: false, message });
+      }
+
+      return res.redirect(`/newsletter-confirmed?success=false&error=${encodeURIComponent(message)}`);
     }
   });
   

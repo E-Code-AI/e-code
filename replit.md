@@ -1,46 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code Platform is a production-ready AI-powered development platform that streamlines software creation through automated deployment and collaboration tools. It offers enterprise-grade infrastructure, AI capabilities like custom prompts and a template library, and comprehensive tools for software development lifecycle management. The platform is optimized for performance, security, and scalability, ready for Fortune 500 deployment on Replit.
-
-## Critical Pages - DO NOT REMOVE
-The following pages are essential to the platform and should NEVER be removed:
-
-### Marketing & Comparison Pages
-- **AIDocumentation** (`/ai-documentation`) - Complete AI features documentation
-- **Bounties** (`/marketing/bounties`) - Developer marketplace and bounties landing page
-- **Compare** (`/compare`) - Main comparison landing page
-- **VsGitHubCodespaces** (`/compare/github-codespaces`) - E-Code vs GitHub Codespaces comparison
-- **VsGlitch** (`/compare/glitch`) - E-Code vs Glitch comparison
-- **VsHeroku** (`/compare/heroku`) - E-Code vs Heroku comparison
-- **VsCodeSandbox** (`/compare/codesandbox`) - E-Code vs CodeSandbox comparison
-- **VsAwsCloud9** (`/compare/aws-cloud9`) - E-Code vs AWS Cloud9 comparison
-
-### Core Pages
-- **Landing** (`/`) - Main landing page
-- **Pricing** (`/pricing`) - Pricing information
-- **Features** (`/features`) - Platform features
-- **About** (`/about`) - About the platform
-- **AI** (`/ai`) - AI capabilities overview
-- **AIAgent** (`/ai-agent`) - AI Agent interface
-- **Dashboard** (`/dashboard`) - User dashboard
-- **ProjectPage** (`/u/:username/:projectname`) - Individual project page
-
-### Solutions Pages
-- **AppBuilder** (`/solutions/app-builder`) - App building solution
-- **WebsiteBuilder** (`/solutions/website-builder`) - Website building solution
-- **GameBuilder** (`/solutions/game-builder`) - Game development solution
-- **DashboardBuilder** (`/solutions/dashboard-builder`) - Dashboard creation solution
-- **ChatbotBuilder** (`/solutions/chatbot-builder`) - Chatbot building solution
-
-### Technical Pages
-- **CodeGeneration** (`/code-generation`) - Code generation features
-- **MCPInterface** (`/mcp`) - Model Context Protocol interface
-- **PolyglotBackendPage** (`/polyglot`) - Polyglot backend information
-- **DatabaseManagement** - Database management interface
-- **ObjectStorage** - Object storage management
-- **Secrets** - Secret management
-- **SecurityScanner** - Security scanning tools
+E-Code Platform is a production-ready, AI-powered development platform designed to streamline software creation through automated deployment and collaboration tools. It provides enterprise-grade infrastructure, advanced AI capabilities including custom prompts and a template library, and comprehensive tools for the entire software development lifecycle. The platform emphasizes performance, security, and scalability, making it suitable for high-demand deployments on Replit Reserved VM.
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
@@ -49,47 +10,52 @@ The following pages are essential to the platform and should NEVER be removed:
 - **Security**: Implement secure practices and avoid unsafe operations
 - **Documentation**: Maintain clear documentation for deployment and architecture
 - **File Management**: NEVER remove existing pages/files without explicit user request. If files are missing, CREATE them instead of removing imports.
+- **Deployment**: Replit Reserved VM with 4-port configuration for optimal performance
 
 ## System Architecture
 
 ### Core Services
-The platform utilizes a polyglot backend architecture:
-- **Go Runtime Service**: Handles container orchestration, file operations, and WebSocket real-time services.
-- **Python ML Service**: Powers AI/ML workloads.
-- **TypeScript Core**: Manages Web API, user management, database operations, and frontend serving.
-- **AI Agent System**: Provides autonomous code generation, leveraging various AI models (Anthropic, OpenAI, etc.) and the OpenAI Assistants API.
-- **Real-time Collaboration**: WebSocket-based collaborative editing and live progress streaming.
-- **Process Isolation System**: Node.js child processes with configurable resource limits.
+The platform employs a polyglot backend architecture:
+- **Go Runtime Service** (Port 8080): Manages container orchestration, file operations, and WebSocket real-time services.
+- **Python ML Service** (Port 8081): Handles AI/ML workloads.
+- **TypeScript Core** (Port 5000): Manages Web API, user management, database operations, and serves the frontend.
+- **MCP Standalone Server** (Port 3200): Facilitates AI Agent operations, tools, and Model Context Protocol integration.
+- **AI Agent System**: Supports autonomous code generation using various AI models (Anthropic, OpenAI, etc.) and the OpenAI Assistants API.
+- **Real-time Collaboration**: WebSocket-based editing and live progress streaming.
+- **Process Isolation**: Node.js child processes with configurable resource limits.
 - **Database Management**: PostgreSQL with Drizzle ORM.
 - **Security Services**: Role-based permissions, audit logs, secret management, advanced authentication (7 OAuth providers, hardware security key support), and secure session management.
-- **Analytics & Monitoring**: Optimized production monitoring with 95% memory threshold and 5-minute intervals.
+- **Analytics & Monitoring**: Production monitoring with a 95% memory threshold and 5-minute intervals.
 
 ### Production Hardening
-Includes Redis caching, CDN optimization via Replit's built-in CDN, multi-tier rate limiting, comprehensive security middleware, database connection pooling, and performance monitoring.
+Includes Redis caching, CDN optimization (via Replit's built-in CDN), multi-tier rate limiting, comprehensive security middleware, database connection pooling, and performance monitoring.
 
 ### Technology Stack
 - **Frontend**: React.js with TypeScript, Tailwind CSS, shadcn/ui, wouter.
 - **Backend**: Express.js with TypeScript, Drizzle ORM.
-- **Deployment**: Replit Deploy with Nix environment support and automatic configuration.
+- **Deployment**: Replit Reserved VM with `cloudrun` deployment target.
 
 ### UI/UX Decisions
-Features a streamlined interface with a 4-tab layout (Files, Preview, Features, Deploy) and a principal AI Agent interface. Routing is backwards compatible with automatic redirects from old URL formats.
+Features a streamlined interface with a 4-tab layout (Files, Preview, Features, Deploy) and a principal AI Agent interface. Routing ensures backwards compatibility with automatic redirects.
 
 ### Technical Implementations
-- **Routing**: Replit-style slug routing (`/u/username/projectname`) with authentication and backwards compatibility.
+- **Routing**: Replit-style slug routing (`/u/username/projectname`) with authentication.
 - **Performance**: Compression, code splitting, caching, and build optimizations.
 - **Security**: CSP headers, input validation.
-- **Deployment**: Dynamic port configuration, non-blocking initialization.
+- **Deployment**: Dynamic 4-port configuration, non-blocking initialization, optimized for Replit Reserved VM.
 - **Preview System**: Live server previews via WebSockets, Eruda developer tools integration, responsive device testing.
 - **Memory Management**: Optimized monitoring (95% threshold, 5-minute intervals).
 - **Database Optimization**: Graceful handling of missing tables, proper SQL syntax, efficient connection pooling.
 
+### Deployment Configuration
+The `.replit` file is configured for Replit Reserved VM deployment with `deploymentTarget = "cloudrun"`. It specifies `npm install` for building and `npm run dev` for running. A 4-port configuration is used, mapping local ports 5000, 3200, 8080, and 8081 to their respective external ports for the main Express server, MCP server, Go Runtime, and Python ML service.
+
 ## External Dependencies
 - **AI Integration**: Anthropic Claude API, OpenAI API, Together AI, Replicate, Hugging Face, Groq, Anyscale.
-- **Deployment Platform**: Replit Deploy.
+- **Deployment Platform**: Replit Reserved VM.
 - **Authentication**: Passport.js (for GitHub, Google, GitLab, Bitbucket, Discord, Slack, Azure AD).
 - **Real-time Communication**: WebSockets.
-- **Database**: PostgreSQL.
+- **Database**: PostgreSQL (111 tables).
 - **Frontend Libraries**: React.js, Tailwind CSS, shadcn/ui, wouter.
 - **Backend Framework**: Express.js.
 - **ORM**: Drizzle ORM.
@@ -98,91 +64,3 @@ Features a streamlined interface with a 4-tab layout (Files, Preview, Features, 
 - **Containerization**: Docker.
 - **Caching**: Redis/ioredis.
 - **CDN**: Replit's built-in CDN.
-
-## Development Guidelines
-1. **Never remove existing pages** - If a page import causes an error, CREATE the missing page instead of removing the import
-2. **Check before deleting** - Always verify with the user before removing any functionality
-3. **Preserve all routes** - All routes in App.tsx serve a purpose and should remain
-4. **Create missing files** - When Vite reports missing imports, create the file instead of removing the import
-5. **Document all pages** - Keep this file updated with all important pages and routes
-
-## AI Features (Critical - Do Not Remove)
-- **Custom Prompts System**: Full CRUD for managing AI prompts
-- **AI Documentation Page**: Complete guide at `/ai-documentation`
-- **Multiple AI Models**: GPT-5, Claude 3.5 Sonnet, Gemini Pro
-- **Template Library**: Pre-built templates for common tasks
-- **Model Context Protocol**: MCP integration for enhanced AI capabilities
-
-## Marketing & Comparison Features (Critical - Do Not Remove)
-The platform includes comprehensive comparison pages to showcase advantages over competitors:
-- Main comparison landing page with overview
-- Individual comparison pages for each major competitor
-- Feature-by-feature comparison tables
-- Clear CTAs for user conversion
-- All comparison pages are located in `client/src/pages/marketing/`
-
-## Automated Verification Script
-
-**NEW**: Automated script to verify codex PRs created on 19 Oct 2025
-- **Location**: `scripts/verify-codex-prs.sh`
-- **Usage**: `bash scripts/verify-codex-prs.sh [number_of_prs]`
-- **Checks**: Database tables, port conflicts, migrations, TypeScript, duplications, app health
-- **Reports**: Saved to `reports/codex-audits/audit_TIMESTAMP.md`
-- **Documentation**: See `docs/VERIFICATION_GUIDE.md` for complete guide
-- **CI/CD**: GitHub Actions workflow in `.github/workflows/verify-codex-prs.yml`
-
-## Recent Fixes (October 19, 2025)
-
-### Database Migration - 19 Oct 2025 16:32
-- **MASSIVE DATABASE UPDATE**: Created 59+ missing tables via direct SQL execution
-  - Schema defined 79 tables, database had only 52 tables
-  - Now has 111 tables total (includes auxiliary tables from other systems)
-  - Created all enterprise features: challenges, community, code reviews, mentorship, GPU, etc.
-  - Added 13 performance indexes for query optimization
-  - Full details in `reports/database-migration-report.md`
-- **Issue**: `npm run db:push` blocked by interactive prompts for enum/column conflicts
-  - Drizzle Kit couldn't run non-interactively with existing data
-  - Solution: Created tables via direct SQL in 4 batches
-- **Tables Created**: api_keys, challenges, custom_prompts, ai_conversations, community features (6 tables), code_reviews (3 tables), mentorship (2 tables), deployments (4 types), mobile/notifications (3 tables), WebRTC (3 tables), collaboration (4 tables), storage (3 tables), Git integration (2 tables), GPU (2 tables), education (2 tables), newsletter (2 tables), and more
-- **Verification Script Optimization**: Updated `scripts/verify-codex-prs.sh` to use single batch query instead of 79 individual queries (much faster)
-- **Status**: All critical tables verified ✓, application running successfully
-
-### Audit & Fixes - 19 Oct 2025 14:38
-- **Comprehensive PR Audit**: Analyzed all 15 PRs from today (PR #101-115)
-- **Critical Issue #1 Fixed**: Missing `customer_requests` table from PR #115
-  - Migration SQL file existed but was never applied to database
-  - Applied migration: `server/db/migrations/20251020_add_customer_requests_table.sql`
-  - Table now created with all indexes (form_type, status, created_at)
-  - New admin page `/admin/form-requests` now functional
-- **Critical Issue #2 Fixed**: Port 3200 conflict causing MCP server crash
-  - Cleared blocked port, MCP standalone server now running correctly
-- **Verification Complete**: Application running successfully with all services healthy
-- **Full audit report**: `docs/TODAYS_PR_AUDIT_REPORT.md`
-
-### Earlier Fixes - 19 Oct 2025
-- Fixed import error in `server/api/mobile.ts` (wrong ai-service path)
-- Created ScrollToTop component
-- Created all comparison pages (Compare, VsGitHubCodespaces, VsGlitch, VsHeroku, VsCodeSandbox, VsAwsCloud9)
-- Restored all comparison routes
-- **Workspace Settings**: Added comprehensive WorkspaceSettings component and Settings tab in ProjectPage bottom panel
-  - Agent & Assistant settings (audio/push notifications)
-  - App Preview settings (automatic preview, port forwarding)
-  - Appearance settings (font size, theme)
-  - Code Editing settings (AI completion, brackets, indentation, inline chat)
-  - Advanced Developer Settings (experimental features, performance mode, debug logging, GPU acceleration)
-  - Styled to match Replit's mobile app design with card-based sections
-- **PR #109 Critical Fixes**: Resolved severe merge conflict corruption in test infrastructure files
-  - **test/setup/test-runner.ts**: Removed 3 duplicate implementations concatenated together (lines were repeated 3x)
-  - **test/setup/globals.ts**: Cleaned up 3 different `expect` implementations merged incorrectly
-  - **test/security.test.ts**: Moved imports to top, removed duplicate suite registration
-  - **test/ai-ux-features.test.ts**: Removed duplicate empty suite at end of file
-  - All test files now compile without TypeScript errors
-  - Test infrastructure includes: `.only` and `.skip` support, pattern matching, lifecycle hooks (beforeAll/afterAll/beforeEach/afterEach)
-- **Comprehensive Codex Commits Audit**: Analyzed 15 most recent codex commits (PR #101-115)
-  - 13/15 commits were clean (87% success rate)
-  - PR #109 was the only one with severe merge conflict corruption
-  - PR #112 attempted partial fix but left residual duplications
-  - All missing PRs verified: #101-105 and #115 are all clean
-  - All issues now completely resolved
-  - Full analysis report available in `docs/CODEX_COMMITS_ANALYSIS.md`
-- App now running successfully with all features intact

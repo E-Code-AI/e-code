@@ -48,11 +48,20 @@ The E‑Code platform is organized into modular layers that balance developer pr
 - **Language Runtimes:** Go and Python helpers (`Dockerfile.go-runtime`, `Dockerfile.python-ml`) provide polyglot execution environments accessible via reverse proxies.
 - **AI Tooling:** The `sdk/` directory contains reusable clients for AI providers, prompt templates, and tool definitions consumed by the workspace assistant.
 
+## MCP Connectors & Live Systems
+
+- **GitHub Operations:** The `/api/mcp/github` routes proxy directly to the GitHub REST API using stored OAuth tokens. Repository creation, issue filing, and pull-request authoring now operate on the user’s actual GitHub account (`server/mcp/api/github.ts`).
+- **PostgreSQL Insights:** The `/api/mcp/postgres` endpoints query the connected PostgreSQL instance in real time, surfacing schema metadata, usage statistics, and query execution timings (`server/mcp/api/postgres.ts`).
+- **Knowledge Graph Memory:** The `/api/mcp/memory` endpoints persist nodes, edges, and conversation transcripts to the shared knowledge graph tables, enabling AI agents to recall prior context (`server/mcp/api/memory.ts`).
+
 ## Data & Persistence
 
 - **Database:** PostgreSQL schema managed by Drizzle ORM migrations in `migrations/` with TypeScript models in `shared/db/`.
 - **Sessions:** `express-session` backed by PostgreSQL or Redis (configurable).
 - **File Storage:** Integrations with Google Cloud Storage (`@google-cloud/storage`) and local disk options for development.
+- **Operational tooling:** The MCP PostgreSQL endpoints (`server/mcp/api/postgres.ts`) now proxy the production-grade `DatabaseManagementService`, returning live table statistics, schema metadata, query execution results, and backup details instead of mock responses.
+- **Source control automation:** The GitHub MCP routes (`server/mcp/api/github.ts`) invoke Octokit with the authenticated user's stored token to manage repositories, issues, and pull requests against GitHub's live API surface.
+- **Context memory:** The Memory MCP routes (`server/mcp/api/memory.ts`) persist knowledge graph nodes, edges, and conversation history through the shared PostgreSQL schema for durable semantic search.
 
 ## Security Considerations
 
