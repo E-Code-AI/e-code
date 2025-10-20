@@ -124,7 +124,7 @@ export function ReplitHeader() {
 
   return (
     <>
-    <header className="replit-header h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition">
+    <header className="replit-header h-14 bg-[#ffffff] dark:bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition">
       {/* Logo et navigation principale */}
       <div className="flex items-center gap-4">
         {/* Mobile menu button - only on mobile */}
