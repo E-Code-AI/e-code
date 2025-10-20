@@ -172,24 +172,6 @@ router.post('/issues', ensureAuthenticated, async (req, res) => {
       });
     }
 
-    const { data } = await octokit.issues.create({
-      owner,
-      repo,
-      title,
-      body,
-      labels,
-    });
-
-    res.status(201).json({
-      number: data.number,
-      title: data.title,
-      body: data.body,
-      labels: data.labels?.map((label: any) => (typeof label === 'string' ? label : label?.name)).filter(Boolean),
-      state: data.state,
-      url: data.html_url,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      author: data.user?.login,
     const issueResult = await githubRequest(
       req.githubToken,
       `https://api.github.com/repos/${coordinates.owner}/${coordinates.repo}/issues`,
