@@ -253,68 +253,145 @@ export function PublicNavbar() {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-full sm:w-[420px] bg-[var(--ecode-surface)] text-[var(--ecode-text)] dark:bg-slate-950/95 dark:text-[var(--ecode-text)] dark:text-slate-100 border-l border-white/10">
-                  <SheetHeader className="mb-6">
-                    <div className="flex items-center justify-between">
+                <SheetContent side="right" className="sheet-content w-full sm:w-[420px] p-0 border-l border-[var(--ecode-border)]/50 bg-gradient-to-b from-[#ffffff] to-[#f8f9fa] dark:from-[var(--ecode-surface)] dark:to-[var(--ecode-surface)]/95 backdrop-blur-xl">
+                  {/* Mobile Header with improved design */}
+                  <div className="mobile-nav-header sticky top-0 z-10 border-b border-[var(--ecode-border)]/20 bg-white/80 dark:bg-[var(--ecode-surface)]/80 px-6 py-5 backdrop-blur-lg">
+                    <div className="flex items-center justify-between mb-4">
                       <ECodeLogo size="sm" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="rounded-full hover:bg-[var(--ecode-sidebar-hover)] transition-all duration-200"
+                      >
+                        <X className="h-5 w-5" />
+                      </Button>
                     </div>
-                    <div className="mt-4 relative">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-text-muted)] dark:text-slate-400" />
+                    <div className="relative group">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-text-muted)] transition-colors group-focus-within:text-[var(--ecode-accent)]" />
                       <Input
-                        placeholder="Search documentation, templates, or people"
-                        className="pl-9 bg-white/5 border-white/10 text-[var(--ecode-text)] dark:text-slate-100 placeholder:text-[var(--ecode-text-muted)] dark:text-slate-400"
+                        placeholder="Search products, docs, or people"
+                        className="pl-10 h-11 bg-white dark:bg-white/5 border-[var(--ecode-border)]/30 hover:border-[var(--ecode-accent)]/50 focus:border-[var(--ecode-accent)] transition-all duration-200 rounded-xl text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-muted)]"
                       />
                     </div>
-                  </SheetHeader>
+                  </div>
 
-                  <div className="px-6">
+                  {/* CTA Buttons with enhanced styling */}
+                  <div className="p-6 border-b border-[var(--ecode-border)]/20">
                     <Button
-                      className="w-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-[var(--ecode-text)] dark:text-white shadow-lg shadow-blue-500/20"
+                      className="w-full h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/25 rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                       onClick={() => window.location.href = '/register'}
                     >
-                      Create your account
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Get Started Free
                     </Button>
                     <Button
-                      variant="ghost"
-                      className="mt-3 w-full border border-white/10 text-[var(--ecode-text-secondary)] dark:text-slate-200 hover:text-white dark:hover:text-white"
+                      variant="outline"
+                      className="mt-3 w-full h-11 border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] hover:bg-[var(--ecode-accent)]/5 rounded-xl transition-all duration-200"
                       onClick={() => window.location.href = '/login'}
                     >
-                      Sign in
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Sign In
                     </Button>
                   </div>
 
-                  <SheetTitle className="px-6 pt-8 pb-3 text-xs uppercase tracking-[0.3em] text-[var(--ecode-text-muted)] dark:text-slate-400">
-                    Navigation
-                  </SheetTitle>
-                  <ScrollArea className="h-[55vh] px-6">
-                    <div className="space-y-8 pb-8">
-                      {[{ title: 'Product', items: productItems }, { title: 'Solutions', items: solutionsItems }, { title: 'Resources', items: resourcesItems }, { title: 'Company', items: companyItems }].map((section) => (
-                        <div key={section.title}>
-                          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ecode-text-muted)] dark:text-slate-400 mb-3">
-                            {section.title}
-                          </p>
-                          <div className="space-y-3">
-                            {section.items.map((item) => (
+                  {/* Navigation Sections with improved design */}
+                  <ScrollArea className="h-[calc(100vh-280px)] mobile-nav-content">
+                    <div className="px-6 py-4">
+                      {[
+                        { 
+                          title: 'Product', 
+                          items: productItems,
+                          icon: '🚀',
+                          color: 'from-sky-500/10 to-blue-500/10 dark:from-sky-500/20 dark:to-blue-500/20'
+                        }, 
+                        { 
+                          title: 'Solutions', 
+                          items: solutionsItems,
+                          icon: '💡',
+                          color: 'from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20'
+                        }, 
+                        { 
+                          title: 'Resources', 
+                          items: resourcesItems,
+                          icon: '📚',
+                          color: 'from-emerald-500/10 to-green-500/10 dark:from-emerald-500/20 dark:to-green-500/20'
+                        }, 
+                        { 
+                          title: 'Company', 
+                          items: companyItems,
+                          icon: '🏢',
+                          color: 'from-orange-500/10 to-red-500/10 dark:from-orange-500/20 dark:to-red-500/20'
+                        }
+                      ].map((section, sectionIndex) => (
+                        <div key={section.title} className={sectionIndex > 0 ? 'mt-8' : ''}>
+                          {/* Section Header with icon */}
+                          <div className="flex items-center gap-2 mb-4">
+                            <span className="text-2xl">{section.icon}</span>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--ecode-text)]">
+                              {section.title}
+                            </h3>
+                          </div>
+                          
+                          {/* Items Grid */}
+                          <div className="grid gap-2">
+                            {section.items.map((item, itemIndex) => (
                               <button
                                 key={item.title}
                                 onClick={() => {
                                   setMobileMenuOpen(false);
-                                  setTimeout(() => navigate(item.href), 120);
+                                  setTimeout(() => navigate(item.href), 150);
                                 }}
-                                className="w-full text-left rounded-xl border border-white/10 bg-white/[0.04] p-4 transition hover:bg-white/[0.08]"
+                                className={`mobile-nav-item group relative overflow-hidden rounded-xl bg-gradient-to-br ${section.color} border border-[var(--ecode-border)]/20 p-4 text-left transition-all duration-300 hover:border-[var(--ecode-accent)]/40 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]`}
+                                style={{
+                                  animation: `fadeInUp 0.3s ease-out ${itemIndex * 0.05}s both`
+                                }}
                               >
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white">{item.title}</span>
-                                  <ChevronRight className="h-4 w-4 text-[var(--ecode-text-muted)] dark:text-slate-400" />
+                                {/* Background gradient effect on hover */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-[var(--ecode-accent)]/0 to-[var(--ecode-accent)]/0 group-hover:from-[var(--ecode-accent)]/10 group-hover:to-transparent transition-all duration-500" />
+                                
+                                <div className="relative">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <span className="text-sm font-semibold text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">
+                                        {item.title}
+                                      </span>
+                                      <p className="mt-1 text-xs text-[var(--ecode-text-secondary)] line-clamp-2">
+                                        {item.description}
+                                      </p>
+                                    </div>
+                                    <ChevronRight className="mobile-nav-icon ml-2 h-4 w-4 text-[var(--ecode-text-muted)] group-hover:text-[var(--ecode-accent)] group-hover:translate-x-1 transition-all duration-300" />
+                                  </div>
                                 </div>
-                                <p className="mt-2 text-xs text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
-                                  {item.description}
-                                </p>
                               </button>
                             ))}
                           </div>
                         </div>
                       ))}
+                      
+                      {/* Footer Links */}
+                      <div className="mt-8 pt-8 border-t border-[var(--ecode-border)]/20">
+                        <div className="grid grid-cols-2 gap-3">
+                          {[
+                            { label: 'Pricing', href: '/pricing', icon: '💎' },
+                            { label: 'Teams', href: '/team', icon: '👥' },
+                            { label: 'Support', href: '/support', icon: '🛟' },
+                            { label: 'Contact', href: '/contact-sales', icon: '📞' }
+                          ].map((link) => (
+                            <button
+                              key={link.label}
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                setTimeout(() => navigate(link.href), 150);
+                              }}
+                              className="flex items-center justify-center gap-2 h-11 rounded-xl border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] bg-white dark:bg-white/5 hover:bg-[var(--ecode-accent)]/5 text-sm font-medium text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] transition-all duration-200"
+                            >
+                              <span>{link.icon}</span>
+                              {link.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </ScrollArea>
                 </SheetContent>
