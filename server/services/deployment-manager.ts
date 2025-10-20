@@ -269,35 +269,55 @@ export class DeploymentManager {
       clearTimeout(deploymentTimeout);
       
       // Update database FIRST before marking as active in memory
+      let dbUpdateSuccess = false;
+      
       try {
         // Get the numeric deployment ID from the database
         const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
-        if (dbDeployment) {
+        
+        if (!dbDeployment) {
+          throw new Error(`Database record not found for deployment ${deploymentId}`);
+        }
+        
+        await storage.updateDeploymentStatus(dbDeployment.id, {
+          status: 'active',
+          lastDeployedAt: new Date()
+        });
+        
+        console.log(`✅ Deployment ${deploymentId} (DB ID: ${dbDeployment.id}) successfully marked as active in database`);
+        dbUpdateSuccess = true;
+        
+      } catch (dbError) {
+        console.error(`Failed to update deployment status in database:`, dbError);
+        
+        // Retry once with delay
+        try {
+          console.log(`🔄 Retrying database update for deployment ${deploymentId}...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+          
+          if (!dbDeployment) {
+            throw new Error(`Database record still not found for deployment ${deploymentId}`);
+          }
+          
           await storage.updateDeploymentStatus(dbDeployment.id, {
             status: 'active',
             lastDeployedAt: new Date()
           });
-          console.log(`✅ Deployment ${deploymentId} (DB ID: ${dbDeployment.id}) successfully marked as active in database`);
-        } else {
-          console.error(`❌ Could not find database record for deployment ${deploymentId}`);
-        }
-      } catch (dbError) {
-        console.error(`Failed to update deployment status in database:`, dbError);
-        // Retry once immediately
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
-          if (dbDeployment) {
-            await storage.updateDeploymentStatus(dbDeployment.id, {
-              status: 'active',
-              lastDeployedAt: new Date()
-            });
-            console.log(`✅ Deployment ${deploymentId} retry successful`);
-          }
+          
+          console.log(`✅ Deployment ${deploymentId} (DB ID: ${dbDeployment.id}) retry successful`);
+          dbUpdateSuccess = true;
+          
         } catch (retryError) {
-          console.error(`Database update retry also failed for ${deploymentId}`);
-          // Continue anyway - deployment is technically successful
+          console.error(`❌ Database update retry also failed for ${deploymentId}:`, retryError);
+          // Log the failure but continue - the deployment is technically successful
+          deployment.deploymentLog.push('⚠️ Warning: Database status update failed, but deployment is active');
         }
+      }
+      
+      if (dbUpdateSuccess) {
+        deployment.deploymentLog.push('✅ Database status synchronized successfully');
       }
 
       // NOW mark as active in memory
