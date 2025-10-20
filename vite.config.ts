@@ -23,7 +23,11 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      // Force React to resolve to a single instance
+      "react": path.resolve(import.meta.dirname, "node_modules", "react"),
+      "react-dom": path.resolve(import.meta.dirname, "node_modules", "react-dom"),
     },
+    dedupe: ["react", "react-dom"],
   },
   base: process.env.CDN_BASE_URL || process.env.ASSET_BASE_URL || '/',
   root: path.resolve(import.meta.dirname, "client"),
