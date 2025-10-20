@@ -1,7 +1,6 @@
 // @ts-nocheck
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { apiRequest } from '../utils/api-utils';
 import { createLogger } from '../utils/logger';
 
@@ -15,8 +14,6 @@ const logger = createLogger('ai-service');
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
-
-const gemini = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
 
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system';
@@ -55,8 +52,6 @@ export class AIService {
       return this.generateOpenAIResponse(messages, { model, tools, temperature, maxTokens, projectContext });
     } else if (model.startsWith('claude')) {
       return this.generateAnthropicResponse(messages, { model, tools, temperature, maxTokens, projectContext });
-    } else if (model.startsWith('gemini') && gemini) {
-      return this.generateGeminiResponse(messages, { model, temperature, maxTokens, projectContext });
     } else {
       throw new Error(`Unsupported model: ${model}`);
     }
@@ -160,42 +155,6 @@ export class AIService {
         completionTokens: response.usage.output_tokens,
         totalTokens: response.usage.input_tokens + response.usage.output_tokens,
       },
-    };
-  }
-
-  private async generateGeminiResponse(
-    messages: AIMessage[],
-    options: any
-  ): Promise<AIResponse> {
-    const { model, temperature, maxTokens, projectContext } = options;
-
-    const geminiModel = gemini!.getGenerativeModel({ 
-      model: model === 'gemini-2.5' ? 'gemini-2.5-pro' : 'gemini-pro' 
-    });
-
-    // Build conversation history
-    const history = messages.slice(0, -1).map(m => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }],
-    }));
-
-    const chat = geminiModel.startChat({
-      history,
-      generationConfig: {
-        temperature,
-        maxOutputTokens: maxTokens,
-      },
-    });
-
-    const result = await chat.sendMessage(messages[messages.length - 1].content);
-    const response = result.response;
-
-    // Parse actions from response
-    const actions = this.parseActionsFromContent(response.text());
-
-    return {
-      content: response.text(),
-      actions,
     };
   }
 

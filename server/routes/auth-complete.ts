@@ -7,7 +7,7 @@ import { hashPassword, comparePasswords } from '../auth.js';
 import { generateEmailVerificationToken, generatePasswordResetToken } from '../utils/auth-utils.js';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email-utils.js';
 import { sendAdminAlertEmail } from '../utils/gandi-email.js';
-import { OAuth2Client } from 'google-auth-library';
+// Note: Google OAuth removed - google-auth-library package not installed for Replit Reserved VM deployment
 import { Octokit } from '@octokit/rest';
 
 const router = Router();
@@ -29,12 +29,8 @@ const verifyEmailSchema = z.object({
   token: z.string()
 });
 
-// Initialize OAuth clients
-const googleClient = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  `${process.env.APP_URL || 'http://localhost:5000'}/api/auth/google/callback`
-) : null;
+// Google OAuth removed for Replit Reserved VM deployment - use Replit Auth or other OAuth providers instead
+const googleClient = null;
 
 // User Registration
 router.post('/register', async (req, res) => {
