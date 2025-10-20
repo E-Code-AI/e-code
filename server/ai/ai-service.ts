@@ -3,11 +3,14 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { apiRequest } from '../utils/api-utils';
+import { createLogger } from '../utils/logger';
 
 // Initialize AI clients
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const logger = createLogger('ai-service');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -99,6 +102,15 @@ export class AIService {
       }
     }
 
+    const cachedTokens = completion.usage?.prompt_tokens_details?.cached_tokens;
+    if (typeof cachedTokens === 'number') {
+      logger.info('OpenAI chat completion cache metrics', {
+        model,
+        cachedTokens,
+        promptTokens: completion.usage?.prompt_tokens,
+      });
+    }
+
     return {
       content: response.message.content || '',
       actions,
@@ -188,9 +200,13 @@ export class AIService {
   }
 
   private buildSystemMessage(projectContext?: any): string {
-    let message = `You are an AI coding assistant integrated into E-Code, a web-based IDE. 
+    let message = `You are an AI coding assistant integrated into E-Code, a web-based IDE.
 You help users build applications by generating code, managing files, and executing commands.
-You have access to the project file system and can create, modify, and delete files.`;
+You have access to the project file system and can create, modify, and delete files.
+
+When suggesting code changes, format them as actions that can be executed.
+For file operations, include the full file path and content.
+For commands, specify the exact command to run.`;
 
     if (projectContext) {
       message += `\n\nProject Context:
@@ -199,10 +215,6 @@ You have access to the project file system and can create, modify, and delete fi
 - Framework: ${projectContext.framework || 'None'}
 - Description: ${projectContext.description}`;
     }
-
-    message += `\n\nWhen suggesting code changes, format them as actions that can be executed.
-For file operations, include the full file path and content.
-For commands, specify the exact command to run.`;
 
     return message;
   }
