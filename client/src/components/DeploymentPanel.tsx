@@ -60,15 +60,18 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
   // Fetch deployment data from the backend
   const { data: deploymentResponse, isLoading, refetch } = useQuery<{ deployment?: DeploymentData; deployments?: DeploymentData[] }>({
     queryKey: [`/api/projects/${projectId}/deployments`],
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // If deployment is in progress, poll more frequently
+      const data = query.state.data;
       const deployment = data?.deployment || (data?.deployments && data.deployments[0]);
       if (deployment?.status === 'building' || deployment?.status === 'deploying') {
         return 3000; // Poll every 3 seconds while deploying
       }
-      return 30000; // Otherwise poll every 30 seconds
+      return false; // Don't poll when not deploying to save resources
     },
-    enabled: !!projectId, // Prevent undefined polling
+    enabled: !!projectId,
+    retry: 3,
+    staleTime: 10000, // Consider data fresh for 10 seconds
   });
 
   // Get the latest deployment from the response
