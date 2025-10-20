@@ -1,1023 +1,867 @@
-// @ts-nocheck
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useMemo, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
-import { Input } from '@/components/ui/input';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Code, Book, FileText, Terminal, Rocket, Package, Database,
-  GitBranch, Shield, Zap, ChevronRight, Search, ExternalLink,
-  ArrowRight, BookOpen, FileCode, Settings, Play, Users,
-  Cpu, Globe, Layers, Palette, GraduationCap, HelpCircle,
-  MessageSquare, Video, PuzzleIcon, Bot, Sparkles, Cloud,
-  Key, CreditCard, BarChart, Boxes, ChevronDown, Home,
-  Command, Braces, Hash, FileJson, Coffee, Binary,
-  Code2, Gem, Cog, Component, Apple, Smartphone,
-  Music, DollarSign, Briefcase, School, Trophy, Heart
+import {
+  ArrowRight,
+  Book,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  HelpCircle,
+  LifeBuoy,
+  MessageSquare,
+  Rocket,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Users
 } from 'lucide-react';
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
-// Documentation content for different pages
-const getDocumentationContent = (href: string | null): React.ReactNode => {
-  if (!href) return null;
-  
-  const contentMap: Record<string, React.ReactNode> = {
-    '/docs/intro': (
-      <>
-        <p className="lead">
-          E-Code is a powerful web-based development environment that makes coding accessible to everyone. 
-          Whether you're a beginner learning to code or an experienced developer building production applications, 
-          E-Code provides all the tools you need in one place.
-        </p>
-        
-        <h2>What is E-Code?</h2>
-        <p>
-          E-Code is a complete development platform that runs entirely in your browser. It combines a professional 
-          code editor, real-time collaboration features, AI-powered assistance, and instant deployment capabilities 
-          into a seamless experience.
-        </p>
-        
-        <h2>Key Features</h2>
-        <ul>
-          <li><strong>Browser-Based IDE:</strong> No downloads or installations required - start coding instantly</li>
-          <li><strong>AI Agent:</strong> Build complete applications with natural language descriptions</li>
-          <li><strong>50+ Languages:</strong> Support for Python, JavaScript, Java, C++, Go, Rust, and more</li>
-          <li><strong>Real-Time Collaboration:</strong> Code together with teammates in real-time</li>
-          <li><strong>Instant Deployment:</strong> Deploy your applications with one click</li>
-          <li><strong>Package Management:</strong> Access millions of packages without manual installation</li>
-        </ul>
-        
-        <h2>Who Uses E-Code?</h2>
-        <div className="grid gap-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Students & Educators</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Learn programming without setup complexity. Perfect for classrooms and online courses.</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Professional Developers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Build and deploy production applications with enterprise-grade features and security.</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Teams & Organizations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Collaborate on projects with real-time editing, shared workspaces, and team management.</p>
-            </CardContent>
-          </Card>
-        </div>
-      </>
-    ),
-    
-    '/docs/quickstart': (
-      <>
-        <p className="lead">
-          Get up and running with E-Code in less than 5 minutes. This guide will walk you through creating 
-          your first project and deploying it to the web.
-        </p>
-        
-        <h2>Step 1: Create an Account</h2>
-        <p>
-          Sign up for a free E-Code account at <a href="/auth">e-code.app/auth</a>. 
-          You can use your email or sign in with Google, GitHub, or other providers.
-        </p>
-        
-        <h2>Step 2: Create Your First Project</h2>
-        <ol>
-          <li>Click the <strong>"Create Project"</strong> button on your dashboard</li>
-          <li>Choose a template or start from scratch</li>
-          <li>Give your project a name</li>
-          <li>Click <strong>"Create"</strong></li>
-        </ol>
-        
-        <h2>Step 3: Write Some Code</h2>
-        <p>Try this simple example in a Python project:</p>
-        <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-          <code>{`# main.py
-print("Hello from E-Code!")
-
-# Create a simple web server
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-
-server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
-print("Server running on port 8000")
-server.serve_forever()`}</code>
-        </pre>
-        
-        <h2>Step 4: Run Your Code</h2>
-        <p>
-          Click the <strong>"Run"</strong> button or press <kbd>Ctrl+Enter</kbd> to execute your code. 
-          You'll see the output in the console below.
-        </p>
-        
-        <h2>Step 5: Deploy Your Application</h2>
-        <ol>
-          <li>Click the <strong>"Deploy"</strong> button in the top toolbar</li>
-          <li>Choose your deployment settings</li>
-          <li>Click <strong>"Deploy Now"</strong></li>
-          <li>Your app will be live at a unique URL in seconds!</li>
-        </ol>
-        
-        <div className="mt-8 p-4 bg-primary/10 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">🎉 Congratulations!</h3>
-          <p>
-            You've just created and deployed your first E-Code application. 
-            Explore more features in our comprehensive guides.
-          </p>
-        </div>
-      </>
-    ),
-    
-    '/docs/ai-agent': (
-      <>
-        <p className="lead">
-          The E-Code AI Agent is a powerful assistant that can help you build complete applications 
-          using natural language. Simply describe what you want to create, and the AI will generate 
-          the code for you.
-        </p>
-        
-        <h2>How It Works</h2>
-        <p>
-          The AI Agent uses advanced language models to understand your requirements and generate 
-          production-ready code. It can:
-        </p>
-        <ul>
-          <li>Create entire applications from descriptions</li>
-          <li>Debug and fix errors in your code</li>
-          <li>Add features to existing projects</li>
-          <li>Explain complex code concepts</li>
-          <li>Suggest improvements and optimizations</li>
-        </ul>
-        
-        <h2>Getting Started with AI Agent</h2>
-        <ol>
-          <li>Open the AI Agent panel by clicking the AI icon in the sidebar</li>
-          <li>Describe what you want to build in plain English</li>
-          <li>The AI will generate code and explain its approach</li>
-          <li>Review the code and ask for modifications if needed</li>
-        </ol>
-        
-        <h2>Example Prompts</h2>
-        <div className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Web Application</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-2">
-                "Create a todo list app with React that saves tasks to local storage"
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">API Development</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-2">
-                "Build a REST API with Express.js for a blog with posts and comments"
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Data Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-2">
-                "Create a Python script that analyzes CSV data and generates charts"
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <h2>Best Practices</h2>
-        <ul>
-          <li><strong>Be Specific:</strong> The more detail you provide, the better the results</li>
-          <li><strong>Iterate:</strong> Ask the AI to modify or improve the generated code</li>
-          <li><strong>Learn:</strong> Ask the AI to explain how the code works</li>
-          <li><strong>Test:</strong> Always test the generated code before deploying</li>
-        </ul>
-        
-        <h2>Advanced Features</h2>
-        <p>
-          The AI Agent can also help with advanced tasks like:
-        </p>
-        <ul>
-          <li>Database schema design and migrations</li>
-          <li>Authentication and authorization setup</li>
-          <li>API integration with third-party services</li>
-          <li>Performance optimization</li>
-          <li>Security best practices</li>
-        </ul>
-      </>
-    ),
-    
-    '/docs/languages/python': (
-      <>
-        <p className="lead">
-          Python is one of the most popular languages on E-Code. With built-in support for pip packages, 
-          web frameworks, and data science libraries, you can build anything from simple scripts to 
-          complex applications.
-        </p>
-        
-        <h2>Getting Started</h2>
-        <p>
-          Create a new Python project or add Python files to an existing project. E-Code automatically 
-          detects Python files and provides syntax highlighting, code completion, and error checking.
-        </p>
-        
-        <h2>Package Management</h2>
-        <p>
-          Install any package from PyPI using the package manager or by creating a <code>requirements.txt</code> file:
-        </p>
-        <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-          <code>{`# requirements.txt
-flask==2.3.2
-requests==2.31.0
-pandas==2.0.3
-numpy==1.24.3
-matplotlib==3.7.2`}</code>
-        </pre>
-        
-        <h2>Popular Frameworks</h2>
-        <div className="grid gap-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Flask</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Lightweight web framework perfect for APIs and small applications</p>
-              <pre className="bg-muted p-2 rounded text-sm mt-2">
-                <code>{`from flask import Flask
-app = Flask(__name__)
-
-@app.route('/')
-def hello():
-    return 'Hello, World!'`}</code>
-              </pre>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Django</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Full-featured web framework for building complex applications</p>
-              <pre className="bg-muted p-2 rounded text-sm mt-2">
-                <code>{`# Install Django
-pip install django
-
-# Create a new project
-django-admin startproject mysite`}</code>
-              </pre>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">FastAPI</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Modern, fast web framework for building APIs with Python 3.7+</p>
-              <pre className="bg-muted p-2 rounded text-sm mt-2">
-                <code>{`from fastapi import FastAPI
-app = FastAPI()
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}`}</code>
-              </pre>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <h2>Data Science & Machine Learning</h2>
-        <p>
-          E-Code provides excellent support for data science workflows with pre-installed libraries:
-        </p>
-        <ul>
-          <li><strong>NumPy:</strong> Numerical computing</li>
-          <li><strong>Pandas:</strong> Data manipulation and analysis</li>
-          <li><strong>Matplotlib/Seaborn:</strong> Data visualization</li>
-          <li><strong>Scikit-learn:</strong> Machine learning</li>
-          <li><strong>TensorFlow/PyTorch:</strong> Deep learning</li>
-        </ul>
-      </>
-    ),
-    
-    '/docs/deployment': (
-      <>
-        <p className="lead">
-          Deploy your applications to the web with just one click. E-Code handles all the infrastructure, 
-          scaling, and security so you can focus on building great applications.
-        </p>
-        
-        <h2>Deployment Types</h2>
-        <div className="grid gap-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Static Hosting</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Perfect for frontend applications, documentation sites, and static content</p>
-              <ul className="text-sm mt-2">
-                <li>• Automatic HTTPS</li>
-                <li>• Global CDN</li>
-                <li>• Custom domains</li>
-              </ul>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Autoscale</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Automatically scale your application based on traffic</p>
-              <ul className="text-sm mt-2">
-                <li>• Pay only for what you use</li>
-                <li>• Scales to zero when idle</li>
-                <li>• Handles traffic spikes</li>
-              </ul>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Reserved VM</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Dedicated resources for consistent performance</p>
-              <ul className="text-sm mt-2">
-                <li>• Always-on availability</li>
-                <li>• Predictable pricing</li>
-                <li>• Full control over resources</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <h2>How to Deploy</h2>
-        <ol>
-          <li>Click the <strong>"Deploy"</strong> button in your project</li>
-          <li>Choose your deployment type</li>
-          <li>Configure your settings (optional)</li>
-          <li>Click <strong>"Deploy Now"</strong></li>
-        </ol>
-        
-        <h2>Custom Domains</h2>
-        <p>
-          Connect your own domain to your E-Code deployment:
-        </p>
-        <ol>
-          <li>Go to your deployment settings</li>
-          <li>Click "Add custom domain"</li>
-          <li>Enter your domain name</li>
-          <li>Update your DNS records as instructed</li>
-          <li>E-Code will automatically provision SSL certificates</li>
-        </ol>
-        
-        <h2>Environment Variables</h2>
-        <p>
-          Securely store sensitive configuration like API keys:
-        </p>
-        <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-          <code>{`# In your deployment settings
-DATABASE_URL=postgres://user:pass@host/db
-API_KEY=your-secret-key
-NODE_ENV=production`}</code>
-        </pre>
-        
-        <h2>Monitoring & Logs</h2>
-        <p>
-          Monitor your deployments with built-in tools:
-        </p>
-        <ul>
-          <li>Real-time logs</li>
-          <li>Performance metrics</li>
-          <li>Error tracking</li>
-          <li>Usage analytics</li>
-        </ul>
-      </>
-    )
-  };
-  
-  // Return specific content or a default message
-  return contentMap[href] || (
-    <div className="mt-8 p-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-      <h3 className="flex items-center gap-2 text-amber-800 dark:text-amber-200 mt-0">
-        <Sparkles className="h-5 w-5" />
-        Documentation Coming Soon
-      </h3>
-      <p className="text-amber-700 dark:text-amber-300 mb-0">
-        We're actively working on completing our documentation. This page will be available soon with comprehensive guides, examples, and best practices for using E-Code.
-      </p>
-    </div>
-  );
-};
-
-interface DocCategory {
-  id: string;
-  title: string;
-  icon: React.ReactNode;
-  items: {
-    title: string;
-    href: string;
-    description?: string;
-    badge?: string;
-  }[];
+interface DocAction {
+  label: string;
+  variant?: 'default' | 'secondary' | 'outline' | 'ghost';
+  articleKey?: DocKey;
+  href?: string;
+  external?: boolean;
 }
 
-export default function Docs() {
-  const [, navigate] = useLocation();
+interface DocArticle {
+  title: string;
+  summary: string;
+  lastUpdated: string;
+  content: ReactNode;
+  media?: ReactNode;
+  keywords?: string[];
+  actions?: DocAction[];
+}
+
+type DocKey =
+  | 'overview'
+  | 'workspace'
+  | 'ai'
+  | 'collaboration'
+  | 'projects'
+  | 'deployments'
+  | 'runtimes'
+  | 'security'
+  | 'support'
+  | 'api';
+
+interface DocSection {
+  title: string;
+  icon: ReactNode;
+  items: Array<{ key: DocKey; label: string; description?: string }>;
+}
+
+const docsMedia = {
+  overviewScreenshot: 'https://cdn.ecode.dev/docs/dashboard-2025.webp',
+  deploymentsPoster: 'https://cdn.ecode.dev/docs/deployments/handover-poster.webp'
+};
+
+const documentationArticles: Record<DocKey, DocArticle> = {
+  overview: {
+    title: 'Platform overview',
+    summary:
+      'How the full-stack E-Code platform stitches together the React client, Express API, workspace runtimes, and governance services.',
+    lastUpdated: 'February 18, 2025',
+    keywords: ['architecture', 'express', 'react', 'postgres', 'overview', 'single-port'],
+    media: (
+      <figure className="my-6 rounded-xl border bg-muted/40 p-4">
+        <img
+          src={docsMedia.overviewScreenshot}
+          alt="E-Code dashboard showing the editor, terminal, and live preview"
+          className="rounded-lg border shadow-sm"
+          loading="lazy"
+        />
+        <figcaption className="mt-3 text-sm text-muted-foreground">
+          The default workspace pairs the Monaco editor with a live preview and terminals surfaced from <code>client/src/pages/EditorPage.tsx</code>.
+        </figcaption>
+      </figure>
+    ),
+    content: (
+      <div className="space-y-8">
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">What ships with the platform</h2>
+          <p>
+            E-Code combines a Vite-powered React client (<code>client/src/App.tsx</code>) with an Express API (<code>server/index.ts</code>) that
+            proxies long-lived WebSocket connections, orchestrates runtime containers, and exposes deployment tooling. Persistent
+            data is stored in PostgreSQL via Drizzle ORM migrations located in <code>migrations/</code>.
+          </p>
+          <ul className="grid gap-4 md:grid-cols-2">
+            <li className="rounded-lg border bg-background p-4 shadow-sm">
+              <p className="font-medium">Unified experience</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                A single-page client routes authenticated users through the dashboard, project editor, deployments, AI studio, and
+                admin surfaces using <code>wouter</code> for navigation.
+              </p>
+            </li>
+            <li className="rounded-lg border bg-background p-4 shadow-sm">
+              <p className="font-medium">Single-port topology</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                <code>server/polyglot-routes.ts</code> fans requests to the Go and Python runtimes while keeping everything available behind
+                the primary Express process—matching the architecture described in <code>REPLIT_SINGLE_PORT_ARCHITECTURE.md</code>.
+              </p>
+            </li>
+            <li className="rounded-lg border bg-background p-4 shadow-sm">
+              <p className="font-medium">Data-driven UI</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Navigation, marketplace listings, and template catalogs are hydrated from JSON fixtures and server responses seeded by
+                <code>server/seed-templates.ts</code> and <code>server/seed-blog.ts</code>.
+              </p>
+            </li>
+            <li className="rounded-lg border bg-background p-4 shadow-sm">
+              <p className="font-medium">Enterprise controls</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Authentication hooks into <code>server/auth.ts</code>, audit logs stream through <code>server/security/audit-logger.ts</code>, and org-level
+                settings live under <code>client/src/pages/admin</code>.
+              </p>
+            </li>
+          </ul>
+        </section>
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Key directories</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Client</CardTitle>
+                <CardDescription>React + Tailwind UI</CardDescription>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground space-y-2">
+                <p>
+                  <code>client/src/pages</code> hosts the feature views—from <code>Docs.tsx</code> to <code>Deployments.tsx</code>—powered by shared primitives in
+                  <code>client/src/components</code>.
+                </p>
+                <p>
+                  UI tokens come from <code>tailwind.config.ts</code> and <code>client/src/styles</code>.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Server</CardTitle>
+                <CardDescription>Express services</CardDescription>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground space-y-2">
+                <p>
+                  API routes in <code>server/routes</code> cover projects, auth, billing, and deployments while orchestration helpers live under
+                  <code>server/orchestration</code>.
+                </p>
+                <p>
+                  Background jobs leverage <code>server/workflows</code> and <code>server/analytics</code>.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Infrastructure</CardTitle>
+                <CardDescription>Runtime + tooling</CardDescription>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground space-y-2">
+                <p>
+                  Scripts such as <code>deploy-production.sh</code>, <code>fix-existing-deployment.sh</code>, and the Kubernetes manifests under <code>kubernetes/</code>
+                  automate provisioning.
+                </p>
+                <p>
+                  Drizzle migrations and database helpers live inside <code>server/database</code> and <code>migrations/</code>.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      </div>
+    ),
+    actions: [
+      { label: 'Explore deployment scripts', href: '/deployments', variant: 'default' },
+      { label: 'Deep dive into runtimes', articleKey: 'runtimes', variant: 'outline' }
+    ]
+  },
+  workspace: {
+    title: 'Cloud workspace tour',
+    summary: 'Understand the editor, terminals, previews, and resource monitors that make up an E-Code workspace.',
+    lastUpdated: 'February 18, 2025',
+    keywords: ['workspace', 'editor', 'preview', 'terminal', 'monaco'],
+    content: (
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Editor, terminals, and preview</h2>
+          <p>
+            The project workspace is rendered by <code>client/src/pages/EditorPage.tsx</code>. It binds together the Monaco editor, file tree,
+            shell processes, and live preview frames. Terminals are backed by the WebSocket bridge in <code>server/terminal</code>, while the
+            preview iframe proxies through <code>server/preview</code> so every project port is accessible from the main origin.
+          </p>
+          <ul className="list-disc space-y-2 pl-6">
+            <li>
+              <strong>Resource overlays:</strong> <code>client/src/components/inspector</code> shows CPU, memory, and file system usage streamed from
+              <code>server/status/runtime-metrics.ts</code>.
+            </li>
+            <li>
+              <strong>Command palette:</strong> The floating palette in <code>client/src/components/command-palette</code> offers quick access to environment
+              variables, deployments, and AI actions.
+            </li>
+            <li>
+              <strong>Themeable UI:</strong> Workspace themes from <code>client/src/pages/Themes.tsx</code> persist to user profiles via
+              <code>server/routes/user-settings.ts</code>.
+            </li>
+          </ul>
+        </section>
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Real-time state</h2>
+          <p>
+            Collaboration overlays and comments rely on Yjs documents synchronized through <code>server/collaboration</code>. Presence updates propagate
+            via <code>server/realtime/presence-server.ts</code>, and comment threads surface in <code>client/src/components/review</code>.
+          </p>
+          <p>
+            Autosave checkpoints are handled by <code>server/storage/file-system-adapter.ts</code>, mirroring project files to persistent volumes managed by
+            the Go runtime under <code>server/runtimes/go</code>.
+          </p>
+        </section>
+      </div>
+    ),
+    actions: [
+      { label: 'Open a workspace', href: '/projects', variant: 'default' },
+      { label: 'Customize workspace theme', href: '/themes', variant: 'outline' }
+    ]
+  },
+  ai: {
+    title: 'AI copilots & automations',
+    summary:
+      'Leverage the AI services wired into the platform, from in-editor completions to fully autonomous build agents.',
+    lastUpdated: 'February 18, 2025',
+    keywords: ['ai', 'agents', 'autonomous', 'anthropic', 'openai', 'mcp'],
+    content: (
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Provider federation</h2>
+          <p>
+            All AI requests flow through <code>server/ai/ai-service.ts</code>, which selects model providers defined in
+            <code>server/ai/ai-providers.ts</code>. Support is baked in for Anthropic, OpenAI, Google Gemini, and locally hosted models via
+            <code>server/ai/opensource-models-provider.ts</code>.
+          </p>
+          <p>
+            The autonomous agent loop lives in <code>server/ai/autonomous-builder.ts</code> and executes tool invocations declared inside
+            <code>server/tools</code>. Each tool has guard rails and audit logging to maintain traceability.
+          </p>
+        </section>
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">In-product experiences</h2>
+          <ul className="grid gap-4 md:grid-cols-2">
+            <li className="rounded-lg border bg-background p-4 shadow-sm">
+              <p className="font-medium">AI Sidebar</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                <code>client/src/pages/AI.tsx</code> injects context-aware prompts, code explanations, and test generation directly inside the editor.
+              </p>
+            </li>
+            <li className="rounded-lg border bg-background p-4 shadow-sm">
+              <p className="font-medium">Agent Studio</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                <code>client/src/pages/AIAgentStudio.tsx</code> lets power users design workflow automations, schedule recurrent runs, and review execution logs.
+              </p>
+            </li>
+            <li className="rounded-lg border bg-background p-4 shadow-sm">
+              <p className="font-medium">MCP integrations</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Managed Connectors expose filesystem, Git, and deployment capabilities to the agent layer via <code>server/mcp</code>.
+              </p>
+            </li>
+            <li className="rounded-lg border bg-background p-4 shadow-sm">
+              <p className="font-medium">Reviews & guardrails</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Before code is merged, AI-authored changes run through <code>server/security/code-safety-checks.ts</code> and surface in the Review feed inside
+                <code>client/src/pages/Workflows.tsx</code>.
+              </p>
+            </li>
+          </ul>
+        </section>
+      </div>
+    ),
+    actions: [
+      { label: 'Launch Agent Studio', href: '/ai-agent/studio', variant: 'default' },
+      { label: 'Browse automation logs', href: '/workflows', variant: 'outline' }
+    ]
+  },
+  collaboration: {
+    title: 'Collaboration & reviews',
+    summary: 'How teams co-edit, comment, and review deployments with workspace presence and async workflows.',
+    lastUpdated: 'February 17, 2025',
+    keywords: ['collaboration', 'comments', 'presence', 'reviews', 'teams'],
+    content: (
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Live collaboration</h2>
+          <p>
+            The collaboration layer is powered by <code>server/collaboration</code>. Each workspace session establishes a Yjs doc and WebRTC data channels
+            managed by <code>server/webrtc</code>. Presence pings and shared cursors are rendered via <code>client/src/components/collaboration</code>.
+          </p>
+          <p>
+            Teams and org membership live in <code>server/teams</code>, which enforces role-based permissions mirrored in the UI at
+            <code>client/src/pages/Teams.tsx</code> and <code>client/src/pages/TeamSettings.tsx</code>.
+          </p>
+        </section>
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Reviews and discussions</h2>
+          <ul className="list-disc space-y-2 pl-6">
+            <li>
+              <strong>Comments:</strong> Threaded conversations sit in <code>server/community/comments-service.ts</code> and surface in the workspace sidebar.
+            </li>
+            <li>
+              <strong>Audit trails:</strong> Every change is captured by <code>server/security/audit-logger.ts</code> and displayed in <code>client/src/pages/AuditLogs.tsx</code>.
+            </li>
+            <li>
+              <strong>Notifications:</strong> Email and in-app alerts run through <code>server/notifications</code> and show up in <code>client/src/pages/Notifications.tsx</code>.
+            </li>
+          </ul>
+        </section>
+      </div>
+    ),
+    actions: [
+      { label: 'Create a team', href: '/teams', variant: 'default' },
+      { label: 'Review audit logs', href: '/audit-logs', variant: 'outline' }
+    ]
+  },
+  projects: {
+    title: 'Projects, templates & marketplace',
+    summary: 'Spin up production-ready apps using curated templates, dependency installers, and the E-Code marketplace.',
+    lastUpdated: 'February 16, 2025',
+    keywords: ['templates', 'marketplace', 'projects', 'packages'],
+    content: (
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Template catalog</h2>
+          <p>
+            Seed data in <code>server/seed-templates.ts</code> populates the catalog displayed on <code>client/src/pages/TemplatesPage.tsx</code>. Templates cover full-stack
+            frameworks (Next.js, Remix), AI starter kits, and mobile cross-platform projects.
+          </p>
+          <p>
+            Each template includes runtime requirements, default environment variables, and quickstart instructions rendered from
+            structured metadata stored in <code>server/data/templates</code>.
+          </p>
+        </section>
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Dependency automation</h2>
+          <p>
+            The dependency graph for every project is tracked by <code>server/package-management</code>. Installations invoke the Node- and Python-specific
+            workers in <code>server/package-installer.ts</code> and <code>server/python</code>, while the UI for upgrades lives in <code>client/src/pages/Dependencies.tsx</code>.
+          </p>
+          <p>
+            Marketplace extensions, surfaced through <code>client/src/pages/Marketplace.tsx</code>, are backed by the server-side registry maintained in
+            <code>server/extensions</code>.
+          </p>
+        </section>
+      </div>
+    ),
+    actions: [
+      { label: 'Browse templates', href: '/templates', variant: 'default' },
+      { label: 'Open the marketplace', href: '/marketplace', variant: 'outline' }
+    ]
+  },
+  deployments: {
+    title: 'Deployments & environments',
+    summary: 'Promote projects from dev sandboxes to production with built-in previews, custom domains, and GKE automation.',
+    lastUpdated: 'February 18, 2025',
+    keywords: ['deployments', 'gke', 'kubernetes', 'domains', 'preview'],
+    media: (
+      <figure className="my-6 rounded-xl border bg-muted/40 p-4">
+        <video
+          className="w-full rounded-lg border shadow-sm"
+          controls
+          poster={docsMedia.deploymentsPoster}
+          preload="metadata"
+        >
+          <source src="/assets/platform-demo.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+        <figcaption className="mt-3 text-sm text-muted-foreground">
+          End-to-end promotion from draft previews to production runs inside <code>client/src/pages/Deployments.tsx</code>.
+        </figcaption>
+      </figure>
+    ),
+    content: (
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Promotion pipeline</h2>
+          <p>
+            Every deployment starts as a preview generated by <code>server/deployment/preview-service.ts</code>. Once validated, it moves into the
+            production orchestrator defined in <code>server/deployment/deployment-service.ts</code>, which targets Kubernetes clusters configured via the
+            manifests inside <code>kubernetes/</code>.
+          </p>
+          <p>
+            DNS automation and SSL provisioning run through <code>server/deployment/domain-service.ts</code> and the Cloudflare adapters in
+            <code>server/integrations/cloudflare</code>.
+          </p>
+        </section>
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Operations tooling</h2>
+          <ul className="list-disc space-y-2 pl-6">
+            <li>
+              <strong>Health dashboard:</strong> <code>client/src/pages/HealthDashboard.tsx</code> visualizes cluster metrics streamed from
+              <code>server/monitoring/health-service.ts</code>.
+            </li>
+            <li>
+              <strong>Runtime diagnostics:</strong> Deep-dives on container logs live in <code>client/src/pages/RuntimeDiagnosticsPage.tsx</code> and pull data from
+              <code>server/runtimes/runtime-inspector.ts</code>.
+            </li>
+            <li>
+              <strong>Production scripts:</strong> Shell helpers like <code>deploy-production.sh</code>, <code>deploy-to-gke.sh</code>, and <code>COMPLETE_DEPLOYMENT.sh</code>
+              replicate the same steps used by the UI.
+            </li>
+          </ul>
+        </section>
+      </div>
+    ),
+    actions: [
+      { label: 'Open deployments hub', href: '/deployments', variant: 'default' },
+      { label: 'Review runtime services', articleKey: 'runtimes', variant: 'outline' }
+    ]
+  },
+  runtimes: {
+    title: 'Runtimes & system services',
+    summary: 'Dive into the Go runtime, sandboxing, resource quotas, and storage that keep workspaces isolated.',
+    lastUpdated: 'February 15, 2025',
+    keywords: ['runtime', 'sandbox', 'go runtime', 'resource quotas', 'storage'],
+    content: (
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Container orchestration</h2>
+          <p>
+            Workspace containers are created by <code>server/orchestration/container-orchestrator.ts</code> and run inside the custom runtime described in
+            <code>server/orchestration/container-runtime.ts</code>. Each container is namespaced, cgroup-isolated, and mounted with project storage from
+            <code>server/storage</code>.
+          </p>
+          <p>
+            Resource policies live in <code>server/orchestration/quota-manager.ts</code>, ensuring CPU, memory, and file descriptors remain within plan
+            limits defined in <code>server/billing/plan-limits.ts</code>.
+          </p>
+        </section>
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Language runtimes</h2>
+          <ul className="grid gap-4 md:grid-cols-2">
+            <li className="rounded-lg border bg-background p-4 shadow-sm">
+              <p className="font-medium">Polyglot adapters</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                <code>server/polyglot-services.ts</code> exposes Go, Python, and Node executors. Client pages like <code>client/src/pages/RuntimesPage.tsx</code>
+                surface runtime availability and versions.
+              </p>
+            </li>
+            <li className="rounded-lg border bg-background p-4 shadow-sm">
+              <p className="font-medium">Sandboxing</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Commands run through the isolation layer in <code>server/sandbox</code>, which mounts ephemeral volumes, rewrites syscalls, and applies seccomp
+                profiles per container.
+              </p>
+            </li>
+          </ul>
+        </section>
+      </div>
+    ),
+    actions: [
+      { label: 'Check runtime status', href: '/runtimes', variant: 'default' },
+      { label: 'Inspect diagnostics', href: '/runtime-diagnostics', variant: 'outline' }
+    ]
+  },
+  security: {
+    title: 'Security, identity & compliance',
+    summary: 'Enterprise-grade access controls, audit trails, and compliance tooling wired into every workspace.',
+    lastUpdated: 'February 17, 2025',
+    keywords: ['security', 'identity', 'sso', 'compliance', 'audit'],
+    content: (
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Identity & access</h2>
+          <p>
+            Authentication routes in <code>server/auth.ts</code> support password, OAuth, and SSO flows. SCIM provisioning hooks are available in
+            <code>server/sso/scim-service.ts</code>, while the UI for configuring SAML and OIDC lives at <code>client/src/pages/SSOConfiguration.tsx</code>.
+          </p>
+          <p>
+            Role-based access control is enforced by <code>server/security/access-control.ts</code> and mirrored in the UI via <code>client/src/pages/CustomRoles.tsx</code>.
+          </p>
+        </section>
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Compliance & data protection</h2>
+          <ul className="list-disc space-y-2 pl-6">
+            <li>
+              <strong>Audit logs:</strong> <code>server/security/audit-logger.ts</code> persists every sensitive action for export in <code>client/src/pages/AuditLogs.tsx</code>.
+            </li>
+            <li>
+              <strong>Secrets management:</strong> Encrypted storage is handled by <code>server/security/secrets-vault.ts</code> with UI surfaces in
+              <code>client/src/pages/SecretManagement.tsx</code> and <code>client/src/pages/Secrets.tsx</code>.
+            </li>
+            <li>
+              <strong>Compliance reporting:</strong> DPA, SOC 2, and subprocessor details are published through <code>client/src/pages/DPA.tsx</code>,
+              <code>client/src/pages/StudentDPA.tsx</code>, and <code>client/src/pages/Subprocessors.tsx</code>.
+            </li>
+          </ul>
+        </section>
+      </div>
+    ),
+    actions: [
+      { label: 'Configure SSO', href: '/advanced/sso', variant: 'default' },
+      { label: 'View compliance docs', href: '/dpa', variant: 'outline' }
+    ]
+  },
+  support: {
+    title: 'Support & success',
+    summary: 'How customers engage with support, success engineering, and the self-serve knowledge base.',
+    lastUpdated: 'February 14, 2025',
+    keywords: ['support', 'success', 'status', 'contact'],
+    content: (
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Channels</h2>
+          <p>
+            The support hub at <code>client/src/pages/Support.tsx</code> surfaces live chat, ticket routing, and knowledge base search. Tickets are persisted via
+            <code>server/support/support-service.ts</code> and escalations notify on-call responders through <code>server/notifications/providers/pagerduty.ts</code>.
+          </p>
+          <p>
+            Status updates and incident history originate from <code>server/status</code> and render in <code>client/src/pages/Status.tsx</code>, ensuring transparency during
+            maintenance windows.
+          </p>
+        </section>
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Customer success</h2>
+          <ul className="list-disc space-y-2 pl-6">
+            <li>
+              <strong>Onboarding runbooks:</strong> Delivered through <code>client/src/pages/Learn.tsx</code> and templated tasks tracked by
+              <code>server/education</code>.
+            </li>
+            <li>
+              <strong>Billing support:</strong> <code>client/src/pages/AdminBilling.tsx</code> provides plan management while <code>server/billing</code> syncs with Stripe.
+            </li>
+            <li>
+              <strong>Community programs:</strong> The forum at <code>client/src/pages/Community.tsx</code> is powered by <code>server/community</code> with moderation tools in
+              <code>client/src/pages/ReportAbuse.tsx</code>.
+            </li>
+          </ul>
+        </section>
+      </div>
+    ),
+    actions: [
+      { label: 'Contact support', href: '/support', variant: 'default' },
+      { label: 'Check system status', href: '/status', variant: 'outline' }
+    ]
+  },
+  api: {
+    title: 'APIs & integrations',
+    summary: 'Programmatic access to workspaces, deployments, and billing via REST, webhooks, and SDKs.',
+    lastUpdated: 'February 18, 2025',
+    keywords: ['api', 'sdk', 'webhooks', 'integrations'],
+    content: (
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">REST & webhooks</h2>
+          <p>
+            REST endpoints are organized under <code>server/api</code> with OpenAPI descriptions generated from <code>server/api/openapi</code>. Webhooks for deployments,
+            billing events, and audit alerts are handled by <code>server/api/webhooks</code> with signature verification in
+            <code>server/security/webhook-verifier.ts</code>.
+          </p>
+        </section>
+        <section className="space-y-3">
+          <h2 className="text-2xl font-semibold">Client SDKs</h2>
+          <p>
+            The TypeScript SDK exposed through <code>sdk/</code> mirrors the REST endpoints and ships on NPM as <code>@ecode/sdk</code>. Sample usage and code snippets are
+            available at <code>client/src/pages/APISDKPage.tsx</code>.
+          </p>
+          <p>
+            Server-to-server integrations with GitHub, GitLab, Slack, and PagerDuty are implemented in <code>server/integrations</code> and can be configured from
+            <code>client/src/pages/Integrations.tsx</code>.
+          </p>
+        </section>
+      </div>
+    ),
+    actions: [
+      { label: 'View API reference', href: '/api-sdk', variant: 'default' },
+      { label: 'Download TypeScript SDK', href: 'https://www.npmjs.com/package/@ecode/sdk', external: true, variant: 'outline' }
+    ]
+  }
+};
+
+const docSections: DocSection[] = [
+  {
+    title: 'Start here',
+    icon: <Rocket className="h-4 w-4" />, 
+    items: [
+      { key: 'overview', label: 'Platform overview', description: 'Architecture, services, and tooling.' },
+      { key: 'workspace', label: 'Cloud workspace tour', description: 'Editor, preview, and collaboration surface.' },
+      { key: 'ai', label: 'AI copilots & automations', description: 'Model federation and agent tooling.' }
+    ]
+  },
+  {
+    title: 'Build together',
+    icon: <Users className="h-4 w-4" />,
+    items: [
+      { key: 'collaboration', label: 'Collaboration & reviews', description: 'Co-editing, comments, and notifications.' },
+      { key: 'projects', label: 'Projects & templates', description: 'Catalogs, dependencies, and marketplace.' }
+    ]
+  },
+  {
+    title: 'Ship to production',
+    icon: <Rocket className="h-4 w-4" />,
+    items: [
+      { key: 'deployments', label: 'Deployments & environments', description: 'Previews, domains, and GKE automation.' },
+      { key: 'runtimes', label: 'Runtimes & system services', description: 'Isolation, quotas, and language adapters.' }
+    ]
+  },
+  {
+    title: 'Operate securely',
+    icon: <ShieldCheck className="h-4 w-4" />,
+    items: [
+      { key: 'security', label: 'Security & compliance', description: 'SSO, secrets, audit logging, and policies.' },
+      { key: 'api', label: 'APIs & integrations', description: 'REST, SDKs, and partner connectors.' }
+    ]
+  },
+  {
+    title: 'Get help',
+    icon: <LifeBuoy className="h-4 w-4" />,
+    items: [
+      { key: 'support', label: 'Support & success', description: 'Support channels, status, and onboarding.' }
+    ]
+  }
+];
+
+export default function DocsPage(): JSX.Element {
+  const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(['getting-started']);
-  const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
-  const [selectedDocHref, setSelectedDocHref] = useState<string | null>(null);
+  const [activeArticle, setActiveArticle] = useState<DocKey>('overview');
+  const [query, setQuery] = useState('');
 
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
+  const normalizedQuery = query.trim().toLowerCase();
 
-  const handleDocClick = (e: React.MouseEvent, title: string, href: string) => {
-    e.preventDefault();
-    setSelectedDoc(title);
-    setSelectedDocHref(href);
-  };
-
-  const docCategories: DocCategory[] = [
-    {
-      id: 'getting-started',
-      title: 'Getting Started',
-      icon: <Rocket className="h-4 w-4" />,
-      items: [
-        { title: 'Introduction to E-Code', href: '/docs/intro' },
-        { title: 'Quick Start', href: '/docs/quickstart' },
-        { title: 'Your First Project', href: '/docs/first-project' },
-        { title: 'Understanding the Workspace', href: '/docs/workspace' },
-        { title: 'Keyboard Shortcuts', href: '/docs/shortcuts' },
-        { title: 'Mobile App', href: '/docs/mobile', badge: 'New' }
-      ]
-    },
-    {
-      id: 'ai-features',
-      title: 'AI Features',
-      icon: <Bot className="h-4 w-4" />,
-      items: [
-        { title: 'AI Agent Overview', href: '/docs/ai-agent', badge: 'Hot' },
-        { title: 'Building with AI', href: '/docs/ai-building' },
-        { title: 'Code Completion', href: '/docs/ai-completion' },
-        { title: 'AI Chat Assistant', href: '/docs/ai-chat' },
-        { title: 'Debugging with AI', href: '/docs/ai-debugging' },
-        { title: 'AI Model Selection', href: '/docs/ai-models' }
-      ]
-    },
-    {
-      id: 'languages',
-      title: 'Languages',
-      icon: <Code className="h-4 w-4" />,
-      items: [
-        { title: 'Python', href: '/docs/languages/python' },
-        { title: 'JavaScript/TypeScript', href: '/docs/languages/javascript' },
-        { title: 'Java', href: '/docs/languages/java' },
-        { title: 'C/C++', href: '/docs/languages/cpp' },
-        { title: 'Go', href: '/docs/languages/go' },
-        { title: 'Rust', href: '/docs/languages/rust' },
-        { title: 'Ruby', href: '/docs/languages/ruby' },
-        { title: 'PHP', href: '/docs/languages/php' },
-        { title: 'C#', href: '/docs/languages/csharp' },
-        { title: 'Swift', href: '/docs/languages/swift' },
-        { title: 'R', href: '/docs/languages/r' },
-        { title: 'All Languages (50+)', href: '/docs/languages/all' }
-      ]
-    },
-    {
-      id: 'frameworks',
-      title: 'Frameworks & Libraries',
-      icon: <Boxes className="h-4 w-4" />,
-      items: [
-        { title: 'React', href: '/docs/frameworks/react' },
-        { title: 'Next.js', href: '/docs/frameworks/nextjs' },
-        { title: 'Vue.js', href: '/docs/frameworks/vue' },
-        { title: 'Angular', href: '/docs/frameworks/angular' },
-        { title: 'Express.js', href: '/docs/frameworks/express' },
-        { title: 'Django', href: '/docs/frameworks/django' },
-        { title: 'Flask', href: '/docs/frameworks/flask' },
-        { title: 'Ruby on Rails', href: '/docs/frameworks/rails' },
-        { title: 'Spring Boot', href: '/docs/frameworks/spring' },
-        { title: 'Flutter', href: '/docs/frameworks/flutter' },
-        { title: 'React Native', href: '/docs/frameworks/react-native' },
-        { title: 'TensorFlow', href: '/docs/frameworks/tensorflow' }
-      ]
-    },
-    {
-      id: 'features',
-      title: 'Core Features',
-      icon: <Zap className="h-4 w-4" />,
-      items: [
-        { title: 'Multiplayer Collaboration', href: '/docs/multiplayer' },
-        { title: 'Version Control (Git)', href: '/docs/git' },
-        { title: 'Live Preview', href: '/docs/preview' },
-        { title: 'Terminal & Shell', href: '/docs/terminal' },
-        { title: 'File System', href: '/docs/files' },
-        { title: 'Package Management', href: '/docs/packages' },
-        { title: 'Environment Variables', href: '/docs/env-vars' },
-        { title: 'Secrets Management', href: '/docs/secrets' },
-        { title: 'Code Search', href: '/docs/search' },
-        { title: 'Extensions', href: '/docs/extensions' }
-      ]
-    },
-    {
-      id: 'deployment',
-      title: 'Deployment & Hosting',
-      icon: <Cloud className="h-4 w-4" />,
-      items: [
-        { title: 'Deployments Overview', href: '/docs/deployments' },
-        { title: 'Custom Domains', href: '/docs/domains' },
-        { title: 'SSL Certificates', href: '/docs/ssl' },
-        { title: 'Environment Configuration', href: '/docs/deploy-config' },
-        { title: 'Scaling & Performance', href: '/docs/scaling' },
-        { title: 'Monitoring & Analytics', href: '/docs/monitoring' },
-        { title: 'CI/CD Integration', href: '/docs/cicd' }
-      ]
-    },
-    {
-      id: 'database',
-      title: 'Databases',
-      icon: <Database className="h-4 w-4" />,
-      items: [
-        { title: 'PostgreSQL', href: '/docs/postgres' },
-        { title: 'E-Code DB', href: '/docs/replitdb' },
-        { title: 'MySQL', href: '/docs/mysql' },
-        { title: 'MongoDB', href: '/docs/mongodb' },
-        { title: 'Redis', href: '/docs/redis' },
-        { title: 'SQLite', href: '/docs/sqlite' },
-        { title: 'Database Migrations', href: '/docs/migrations' }
-      ]
-    },
-    {
-      id: 'teams',
-      title: 'Teams & Organizations',
-      icon: <Users className="h-4 w-4" />,
-      items: [
-        { title: 'Teams Overview', href: '/docs/teams' },
-        { title: 'Creating a Team', href: '/docs/teams/create' },
-        { title: 'Team Roles & Permissions', href: '/docs/teams/roles' },
-        { title: 'Team Projects', href: '/docs/teams/projects' },
-        { title: 'Billing for Teams', href: '/docs/teams/billing' },
-        { title: 'SSO & SAML', href: '/docs/teams/sso', badge: 'Enterprise' }
-      ]
-    },
-    {
-      id: 'education',
-      title: 'Education',
-      icon: <GraduationCap className="h-4 w-4" />,
-      items: [
-        { title: 'Teams for Education', href: '/docs/education' },
-        { title: 'Classroom Setup', href: '/docs/education/classroom' },
-        { title: 'Assignments', href: '/docs/education/assignments' },
-        { title: 'Autograding', href: '/docs/education/autograding' },
-        { title: 'Student Privacy', href: '/docs/education/privacy' },
-        { title: 'Curriculum Resources', href: '/docs/education/curriculum' }
-      ]
-    },
-    {
-      id: 'api',
-      title: 'API & Integrations',
-      icon: <Terminal className="h-4 w-4" />,
-      items: [
-        { title: 'API Overview', href: '/docs/api' },
-        { title: 'Authentication', href: '/docs/api/auth' },
-        { title: 'Projects API', href: '/docs/api/projects' },
-        { title: 'Files API', href: '/docs/api/files' },
-        { title: 'Execution API', href: '/docs/api/execution' },
-        { title: 'Webhooks', href: '/docs/api/webhooks' },
-        { title: 'GraphQL API', href: '/docs/api/graphql', badge: 'Beta' },
-        { title: 'GitHub Integration', href: '/docs/integrations/github' },
-        { title: 'VS Code Extension', href: '/docs/integrations/vscode' }
-      ]
-    },
-    {
-      id: 'security',
-      title: 'Security & Compliance',
-      icon: <Shield className="h-4 w-4" />,
-      items: [
-        { title: 'Security Overview', href: '/docs/security' },
-        { title: 'Data Privacy', href: '/docs/privacy' },
-        { title: 'SOC 2 Compliance', href: '/docs/soc2' },
-        { title: 'GDPR', href: '/docs/gdpr' },
-        { title: 'Security Best Practices', href: '/docs/security/best-practices' },
-        { title: 'Vulnerability Disclosure', href: '/docs/security/disclosure' }
-      ]
-    },
-    {
-      id: 'billing',
-      title: 'Billing & Plans',
-      icon: <CreditCard className="h-4 w-4" />,
-      items: [
-        { title: 'Pricing Overview', href: '/docs/billing' },
-        { title: 'Free Plan', href: '/docs/billing/free' },
-        { title: 'Hacker Plan', href: '/docs/billing/hacker' },
-        { title: 'Pro Plan', href: '/docs/billing/pro' },
-        { title: 'Cycles', href: '/docs/billing/cycles' },
-        { title: 'Bounties', href: '/docs/billing/bounties' },
-        { title: 'Enterprise', href: '/docs/billing/enterprise' }
-      ]
-    },
-    {
-      id: 'troubleshooting',
-      title: 'Troubleshooting',
-      icon: <HelpCircle className="h-4 w-4" />,
-      items: [
-        { title: 'Common Issues', href: '/docs/troubleshooting' },
-        { title: 'Performance Issues', href: '/docs/troubleshooting/performance' },
-        { title: 'Connection Problems', href: '/docs/troubleshooting/connection' },
-        { title: 'Build Errors', href: '/docs/troubleshooting/build' },
-        { title: 'Debugging Guide', href: '/docs/troubleshooting/debugging' },
-        { title: 'Getting Help', href: '/docs/support' }
-      ]
+  const filteredSections = useMemo(() => {
+    if (!normalizedQuery) {
+      return docSections;
     }
-  ];
 
-  const quickStartGuides = [
-    { title: 'Build a Website', icon: <Globe className="h-5 w-5" />, time: '5 min' },
-    { title: 'Create a Discord Bot', icon: <MessageSquare className="h-5 w-5" />, time: '10 min' },
-    { title: 'Deploy a REST API', icon: <Terminal className="h-5 w-5" />, time: '15 min' },
-    { title: 'Build a Game', icon: <PuzzleIcon className="h-5 w-5" />, time: '20 min' },
-    { title: 'Train an AI Model', icon: <Sparkles className="h-5 w-5" />, time: '30 min' },
-    { title: 'Create a Mobile App', icon: <Smartphone className="h-5 w-5" />, time: '25 min' }
-  ];
+    return docSections
+      .map((section) => {
+        const filteredItems = section.items.filter((item) => {
+          const article = documentationArticles[item.key];
+          const haystack = [
+            item.label,
+            item.description ?? '',
+            article.title,
+            article.summary,
+            ...(article.keywords ?? [])
+          ]
+            .join(' ')
+            .toLowerCase();
 
-  const popularTemplates = [
-    { name: 'Next.js Starter', language: 'TypeScript', icon: <Code2 className="h-4 w-4" /> },
-    { name: 'Python Flask API', language: 'Python', icon: <Binary className="h-4 w-4" /> },
-    { name: 'Discord Bot', language: 'JavaScript', icon: <MessageSquare className="h-4 w-4" /> },
-    { name: 'React + Vite', language: 'JavaScript', icon: <Zap className="h-4 w-4" /> },
-    { name: 'Express.js API', language: 'JavaScript', icon: <Terminal className="h-4 w-4" /> },
-    { name: 'Django Web App', language: 'Python', icon: <Globe className="h-4 w-4" /> }
-  ];
+          return haystack.includes(normalizedQuery);
+        });
+
+        if (!filteredItems.length) {
+          return null;
+        }
+
+        return { ...section, items: filteredItems };
+      })
+      .filter((section): section is DocSection => Boolean(section));
+  }, [normalizedQuery]);
+
+  const activeArticleData = documentationArticles[activeArticle];
+
+  const handleAction = (action: DocAction) => {
+    if (action.articleKey) {
+      setActiveArticle(action.articleKey);
+    }
+
+    if (action.href) {
+      if (action.external) {
+        window.open(action.href, '_blank', 'noopener,noreferrer');
+      } else {
+        setLocation(action.href);
+      }
+    }
+  };
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      const firstResult = filteredSections[0]?.items[0];
+      if (firstResult) {
+        setActiveArticle(firstResult.key);
+      }
+    }
+  };
+
+  const heroActions: DocAction[] = user
+    ? [
+        { label: 'View latest updates', href: '/blog', variant: 'secondary' },
+        { label: 'Open a workspace', href: '/projects', variant: 'default' }
+      ]
+    : [
+        { label: 'Create an account', href: '/register', variant: 'default' },
+        { label: 'Take a product tour', href: '/', variant: 'secondary' }
+      ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-6">
-              <div 
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={() => navigate('/')}
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">E</span>
-                </div>
-                <span className="font-semibold text-lg">E-Code Docs</span>
-              </div>
-              <Separator orientation="vertical" className="h-6" />
-              <div className="hidden md:flex items-center gap-4">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                  Guides
-                </Button>
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                  API Reference
-                </Button>
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                  Templates
-                </Button>
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                  Community
-                </Button>
+    <div className="flex flex-1 flex-col">
+      <div className="border-b bg-background">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-3">
+              <Badge variant="secondary" className="inline-flex items-center gap-2">
+                <Book className="h-3.5 w-3.5" />
+                Updated documentation hub
+              </Badge>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">E-Code product documentation</h1>
+              <p className="max-w-2xl text-muted-foreground">
+                Explore how our Replit-grade cloud development platform works under the hood. These guides stay in lockstep with the
+                private E-Code codebase so your team can build, ship, and operate reliably.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {heroActions.map((action) => (
+                  <Button
+                    key={action.label}
+                    variant={action.variant ?? 'default'}
+                    onClick={() => handleAction(action)}
+                  >
+                    {action.label}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ))}
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => navigate(user ? '/dashboard' : '/auth')}
-              >
-                {user ? 'Dashboard' : 'Sign up'}
-              </Button>
-              <Button 
-                size="sm"
-                onClick={() => navigate('/projects')}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-              >
-                Start coding
-              </Button>
+            <div className="w-full max-w-md">
+              <Card className="border-muted">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium">Search documentation</CardTitle>
+                  <CardDescription>Find topics across architecture, AI, security, and operations.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Search articles, features, or services"
+                      className="pl-9"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
-      </nav>
+      </div>
 
-      <div className="flex">
-        {/* Sidebar Navigation */}
-        <aside className="hidden lg:block w-64 border-r bg-muted/30 h-[calc(100vh-3.5rem)] sticky top-14 overflow-y-auto">
-          <ScrollArea className="h-full py-6 px-4">
-            <div className="space-y-1">
-              {docCategories.map(category => (
-                <Collapsible
-                  key={category.id}
-                  open={expandedCategories.includes(category.id)}
-                  onOpenChange={() => toggleCategory(category.id)}
-                >
-                  <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1.5 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
-                    <div className="flex items-center gap-2">
-                      {category.icon}
-                      <span>{category.title}</span>
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-10 lg:flex-row">
+        <aside className="w-full max-w-md flex-none lg:max-w-xs">
+          <ScrollArea className="h-[calc(100vh-12rem)] rounded-lg border bg-card p-4">
+            <nav className="space-y-4">
+              {filteredSections.length ? (
+                filteredSections.map((section) => (
+                  <div key={section.title} className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      {section.icon}
+                      {section.title}
                     </div>
-                    <ChevronDown 
-                      className={cn(
-                        "h-4 w-4 transition-transform",
-                        expandedCategories.includes(category.id) && "rotate-180"
-                      )}
-                    />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-1 ml-6 space-y-1">
-                    {category.items.map(item => (
-                      <button
-                        key={item.href}
-                        onClick={() => handleDocClick(null as any, item.title, item.href)}
-                        className={cn(
-                          "group flex items-center justify-between px-2 py-1 text-sm rounded-md transition-colors cursor-pointer w-full text-left",
-                          selectedDoc === item.title
-                            ? "bg-accent text-foreground font-medium"
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                        )}
-                      >
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <Badge variant="secondary" className="text-xs">
-                            {item.badge}
-                          </Badge>
-                        )}
-                      </button>
-                    ))}
-                  </CollapsibleContent>
-                </Collapsible>
-              ))}
-            </div>
+                    <div className="space-y-1">
+                      {section.items.map((item) => (
+                        <Button
+                          key={item.key}
+                          variant={activeArticle === item.key ? 'secondary' : 'ghost'}
+                          className="flex w-full justify-between text-left"
+                          onClick={() => setActiveArticle(item.key)}
+                        >
+                          <span className="flex flex-col items-start">
+                            <span>{item.label}</span>
+                            {item.description && (
+                              <span className="text-xs text-muted-foreground">{item.description}</span>
+                            )}
+                          </span>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      ))}
+                    </div>
+                    <Separator className="opacity-40" />
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  No documentation matched “{query}”. Try another search term.
+                </div>
+              )}
+            </nav>
           </ScrollArea>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1">
-          {selectedDoc ? (
-            // Documentation Content
-            <article className="px-6 py-12 max-w-4xl mx-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedDoc(null)}
-                className="mb-6 -ml-2"
-              >
-                <ChevronRight className="h-4 w-4 mr-1 rotate-180" />
-                Back to docs
-              </Button>
-              
-              <div className="prose prose-gray dark:prose-invert max-w-none">
-                <h1>{selectedDoc}</h1>
-                
-                {getDocumentationContent(selectedDocHref)}
-                
-                <div className="mt-12 pt-8 border-t">
-                  <h3>Related Resources</h3>
-                  <div className="grid gap-4 sm:grid-cols-2 mt-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Need Help?</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Button 
-                          variant="secondary"
-                          className="w-full"
-                          onClick={() => navigate('/support')}
-                        >
-                          <HelpCircle className="h-4 w-4 mr-2" />
-                          Contact Support
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Try AI Agent</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Button 
-                          className="w-full"
-                          onClick={() => navigate('/agent')}
-                        >
-                          <Bot className="h-4 w-4 mr-2" />
-                          Build with AI
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
+          <article className="space-y-6 rounded-xl border bg-card p-8 shadow-sm">
+            <header className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  {activeArticleData.summary}
+                </Badge>
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Sparkles className="h-3.5 w-3.5" /> Last updated {activeArticleData.lastUpdated}
+                </span>
+              </div>
+              <h2 className="text-3xl font-semibold tracking-tight">{activeArticleData.title}</h2>
+            </header>
+
+            {activeArticleData.media}
+
+            <div className="prose prose-neutral max-w-none dark:prose-invert">
+              {activeArticleData.content}
+            </div>
+
+            {activeArticleData.actions?.length ? (
+              <div className="flex flex-wrap gap-3 pt-4">
+                {activeArticleData.actions.map((action) => (
+                  <Button
+                    key={action.label}
+                    variant={action.variant ?? 'secondary'}
+                    onClick={() => handleAction(action)}
+                  >
+                    {action.label}
+                    {action.external ? (
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    ) : (
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    )}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
+          </article>
+
+          <section className="mt-8 rounded-xl border bg-muted/40 p-6">
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="flex w-full items-center justify-between text-left text-base">
+                  <span className="flex items-center gap-2">
+                    <HelpCircle className="h-4 w-4" />
+                    Need a guided walkthrough?
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4 space-y-4 text-sm text-muted-foreground">
+                <p>
+                  Our solutions engineers host live enablement sessions covering workspace onboarding, AI automation, and deployment
+                  hardening. Sessions reference the exact scripts and services inside this repo so your teams can mirror production
+                  setups with confidence.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => setLocation('/contact-sales')}>
+                    Talk to solutions
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" onClick={() => setLocation('/support')}>
+                    Visit support center
+                    <LifeBuoy className="ml-2 h-4 w-4" />
+                  </Button>
                 </div>
-              </div>
-            </article>
-          ) : (
-            <>
-              {/* Hero Section */}
-              <section className="px-6 py-12 bg-gradient-to-b from-primary/5 to-transparent">
-                <div className="max-w-4xl mx-auto text-center space-y-6">
-                  <Badge variant="secondary" className="mb-4">
-                    <BookOpen className="h-3 w-3 mr-1" />
-                    Documentation v2.0
-                  </Badge>
-                  <h1 className="text-4xl md:text-5xl font-bold">
-                    Build anything with E-Code
-                  </h1>
-                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                    Learn how to use E-Code's powerful features to create, collaborate, and deploy your projects
-                  </p>
-              
-              {/* Search Bar */}
-              <div className="max-w-2xl mx-auto relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search docs... (Try 'AI Agent', 'deploy', 'Python')"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 pr-4 py-6 text-base"
-                />
-                <kbd className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                  <span className="text-xs">⌘</span>K
-                </kbd>
-              </div>
-            </div>
+              </CollapsibleContent>
+            </Collapsible>
           </section>
-
-          {/* Quick Start Guides */}
-          <section className="px-6 py-12">
-            <div className="max-w-6xl mx-auto">
-              <h2 className="text-2xl font-bold mb-6">Quick Start Guides</h2>
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {quickStartGuides.map((guide, index) => (
-                  <Card key={index} className="hover:shadow-lg transition-all cursor-pointer group">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                          {guide.icon}
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          {guide.time}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <h3 className="font-semibold group-hover:text-primary transition-colors">
-                        {guide.title}
-                      </h3>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Popular Templates */}
-          <section className="px-6 py-12 bg-muted/30">
-            <div className="max-w-6xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Popular Templates</h2>
-                <Button variant="ghost" size="sm" className="text-primary">
-                  View all templates
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {popularTemplates.map((template, index) => (
-                  <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-muted rounded-lg">
-                          {template.icon}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{template.name}</h3>
-                          <p className="text-sm text-muted-foreground">{template.language}</p>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <Button variant="secondary" size="sm" className="w-full">
-                        Use template
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Featured Content */}
-          <section className="px-6 py-12">
-            <div className="max-w-6xl mx-auto">
-              <h2 className="text-2xl font-bold mb-6">Featured Resources</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <Bot className="h-8 w-8 mb-2 text-primary" />
-                    <CardTitle>AI Agent Documentation</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Learn how to use our AI agent to build complete applications autonomously
-                    </p>
-                    <Button variant="link" className="p-0">
-                      Read the guide
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <Video className="h-8 w-8 mb-2 text-primary" />
-                    <CardTitle>Video Tutorials</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Watch step-by-step tutorials for popular frameworks and languages
-                    </p>
-                    <Button variant="link" className="p-0">
-                      Watch videos
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <School className="h-8 w-8 mb-2 text-primary" />
-                    <CardTitle>100 Days of Code</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Join our structured learning path to master programming
-                    </p>
-                    <Button variant="link" className="p-0">
-                      Start learning
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </section>
-
-          {/* Help Section */}
-          <section className="px-6 py-16 bg-muted/30">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-4">
-                Need help?
-              </h2>
-              <p className="text-xl text-muted-foreground mb-8">
-                Can't find what you're looking for? We're here to help.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" variant="outline">
-                  <MessageSquare className="mr-2 h-5 w-5" />
-                  Join Community
-                </Button>
-                <Button 
-                  size="lg"
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                >
-                  <HelpCircle className="mr-2 h-5 w-5" />
-                  Contact Support
-                </Button>
-              </div>
-            </div>
-          </section>
-            </>
-          )}
         </main>
       </div>
     </div>
