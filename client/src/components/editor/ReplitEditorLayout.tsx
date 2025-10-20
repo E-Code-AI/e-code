@@ -1,16 +1,13 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { 
-  FileCode, 
-  Terminal as TerminalIcon, 
-  Globe,
+import {
+  Terminal as TerminalIcon,
   X,
-  Maximize2,
-  Minimize2,
+  PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
   Menu
@@ -30,6 +27,13 @@ interface ReplitEditorLayoutProps {
   }[];
   defaultRightPanel?: string;
   onRightPanelChange?: (panelId: string | null) => void;
+  leftPanelOpen?: boolean;
+  onLeftPanelOpenChange?: (open: boolean) => void;
+  rightPanelOpen?: boolean;
+  onRightPanelOpenChange?: (open: boolean) => void;
+  activeRightPanel?: string | null;
+  bottomPanelOpen?: boolean;
+  onBottomPanelOpenChange?: (open: boolean) => void;
 }
 
 export function ReplitEditorLayout({
@@ -38,25 +42,103 @@ export function ReplitEditorLayout({
   bottomPanel,
   rightPanels = [],
   defaultRightPanel,
-  onRightPanelChange
+  onRightPanelChange,
+  leftPanelOpen: leftPanelOpenProp,
+  onLeftPanelOpenChange,
+  rightPanelOpen: rightPanelOpenProp,
+  onRightPanelOpenChange,
+  activeRightPanel: activeRightPanelProp,
+  bottomPanelOpen: bottomPanelOpenProp,
+  onBottomPanelOpenChange,
 }: ReplitEditorLayoutProps) {
-  const [rightPanelOpen, setRightPanelOpen] = useState(true);
-  const [activeRightPanel, setActiveRightPanel] = useState(defaultRightPanel || rightPanels[0]?.id);
-  const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
+  const [internalLeftPanelOpen, setInternalLeftPanelOpen] = useState(leftPanelOpenProp ?? true);
+  const [internalRightPanelOpen, setInternalRightPanelOpen] = useState(rightPanelOpenProp ?? true);
+  const [internalBottomPanelOpen, setInternalBottomPanelOpen] = useState(bottomPanelOpenProp ?? true);
+  const [internalActiveRightPanel, setInternalActiveRightPanel] = useState<string | null>(
+    activeRightPanelProp ?? defaultRightPanel || rightPanels[0]?.id || null
+  );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 1024px)');
   const isTablet = useMediaQuery('(max-width: 1280px)');
 
+  const rightPanelOpen = rightPanelOpenProp ?? internalRightPanelOpen;
+  const bottomPanelOpen = bottomPanelOpenProp ?? internalBottomPanelOpen;
+  const activeRightPanel = activeRightPanelProp ?? internalActiveRightPanel;
+  const leftPanelOpen = leftPanelOpenProp ?? internalLeftPanelOpen;
+
+  useEffect(() => {
+    if (leftPanelOpenProp !== undefined) {
+      setInternalLeftPanelOpen(leftPanelOpenProp);
+    }
+  }, [leftPanelOpenProp]);
+
+  useEffect(() => {
+    if (rightPanelOpenProp !== undefined) {
+      setInternalRightPanelOpen(rightPanelOpenProp);
+    }
+  }, [rightPanelOpenProp]);
+
+  useEffect(() => {
+    if (bottomPanelOpenProp !== undefined) {
+      setInternalBottomPanelOpen(bottomPanelOpenProp);
+    }
+  }, [bottomPanelOpenProp]);
+
+  useEffect(() => {
+    if (activeRightPanelProp !== undefined) {
+      setInternalActiveRightPanel(activeRightPanelProp);
+    }
+  }, [activeRightPanelProp]);
+
   useEffect(() => {
     if (isMobile) {
-      setRightPanelOpen(false);
-      setBottomPanelOpen(false);
+      updateLeftPanelOpen(false);
+      updateRightPanelOpen(false);
+      updateBottomPanelOpen(false);
     }
   }, [isMobile]);
 
+  useEffect(() => {
+    if (rightPanels.length === 0) {
+      setActiveRightPanelState(null);
+      return;
+    }
+
+    if (!activeRightPanel && rightPanels.length > 0) {
+      setActiveRightPanelState(defaultRightPanel || rightPanels[0].id);
+    }
+  }, [rightPanels, defaultRightPanel]);
+
   const handleRightPanelChange = (panelId: string | null) => {
-    setActiveRightPanel(panelId || '');
+    setActiveRightPanelState(panelId || null);
+  };
+
+  const updateLeftPanelOpen = (open: boolean) => {
+    if (leftPanelOpenProp === undefined) {
+      setInternalLeftPanelOpen(open);
+    }
+    onLeftPanelOpenChange?.(open);
+  };
+
+  const updateRightPanelOpen = (open: boolean) => {
+    if (rightPanelOpenProp === undefined) {
+      setInternalRightPanelOpen(open);
+    }
+    onRightPanelOpenChange?.(open);
+  };
+
+  const updateBottomPanelOpen = (open: boolean) => {
+    if (bottomPanelOpenProp === undefined) {
+      setInternalBottomPanelOpen(open);
+    }
+    onBottomPanelOpenChange?.(open);
+  };
+
+  const setActiveRightPanelState = (panelId: string | null) => {
+    if (activeRightPanelProp === undefined) {
+      setInternalActiveRightPanel(panelId);
+    }
     onRightPanelChange?.(panelId);
   };
 
@@ -111,7 +193,7 @@ export function ReplitEditorLayout({
         {/* Mobile Right Panel Tabs */}
         {rightPanels.length > 0 && (
           <div className="border-t border-[var(--ecode-border)]">
-            <Tabs value={activeRightPanel} onValueChange={handleRightPanelChange}>
+            <Tabs value={activeRightPanel || rightPanels[0].id} onValueChange={handleRightPanelChange}>
               <TabsList className="w-full rounded-none h-9">
                 {rightPanels.map((panel) => (
                   <TabsTrigger key={panel.id} value={panel.id} className="flex-1">
@@ -131,14 +213,18 @@ export function ReplitEditorLayout({
     <div className="h-[calc(100vh-48px)] flex">
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* Left Panel - File Explorer */}
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-          <div className="h-full bg-[var(--ecode-background)] border-r border-[var(--ecode-border)]">
-            {leftPanel}
-          </div>
-        </ResizablePanel>
-        
-        <ResizableHandle className="w-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
-        
+        {leftPanelOpen && (
+          <>
+            <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+              <div className="h-full bg-[var(--ecode-background)] border-r border-[var(--ecode-border)]">
+                {leftPanel}
+              </div>
+            </ResizablePanel>
+
+            <ResizableHandle className="w-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
+          </>
+        )}
+
         {/* Center Panel - Code Editor */}
         <ResizablePanel defaultSize={rightPanelOpen ? 50 : 80}>
           <ResizablePanelGroup direction="vertical">
@@ -147,7 +233,7 @@ export function ReplitEditorLayout({
                 {centerPanel}
               </div>
             </ResizablePanel>
-            
+
             {bottomPanel && bottomPanelOpen && (
               <>
                 <ResizableHandle className="h-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
@@ -169,7 +255,7 @@ export function ReplitEditorLayout({
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6"
-                        onClick={() => setBottomPanelOpen(false)}
+                        onClick={() => updateBottomPanelOpen(false)}
                       >
                         <X className="h-3 w-3" />
                       </Button>
@@ -187,7 +273,7 @@ export function ReplitEditorLayout({
         {rightPanelOpen && rightPanels.length > 0 && (
           <>
             <ResizableHandle className="w-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
-            
+
             {/* Right Panel - Output/Preview */}
             <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
               <div className="h-full bg-[var(--ecode-background)] border-l border-[var(--ecode-border)]">
@@ -211,12 +297,12 @@ export function ReplitEditorLayout({
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
-                    onClick={() => setRightPanelOpen(false)}
+                    onClick={() => updateRightPanelOpen(false)}
                   >
                     <PanelRightClose className="h-3 w-3" />
                   </Button>
                 </div>
-                
+
                 {/* Right Panel Content */}
                 <div className="h-[calc(100%-36px)]">
                   {rightPanels.map((panel) => (
@@ -238,23 +324,34 @@ export function ReplitEditorLayout({
       </ResizablePanelGroup>
       
       {/* Floating buttons to reopen panels */}
+      {!leftPanelOpen && (
+        <Button
+          variant="outline"
+          size="icon"
+          className="fixed left-2 top-16 h-8 w-8 shadow-md"
+          onClick={() => updateLeftPanelOpen(true)}
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </Button>
+      )}
+
       {!rightPanelOpen && (
         <Button
           variant="outline"
           size="icon"
           className="fixed right-2 top-16 h-8 w-8 shadow-md"
-          onClick={() => setRightPanelOpen(true)}
+          onClick={() => updateRightPanelOpen(true)}
         >
           <PanelRightOpen className="h-4 w-4" />
         </Button>
       )}
-      
+
       {!bottomPanelOpen && bottomPanel && (
         <Button
           variant="outline"
           size="icon"
           className="fixed bottom-2 left-1/2 -translate-x-1/2 h-8 w-8 shadow-md"
-          onClick={() => setBottomPanelOpen(true)}
+          onClick={() => updateBottomPanelOpen(true)}
         >
           <TerminalIcon className="h-4 w-4" />
         </Button>
