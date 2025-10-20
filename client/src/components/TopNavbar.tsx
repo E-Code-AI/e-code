@@ -84,7 +84,12 @@ const TopNavbar = ({
   const runLabel = useMemo(() => (isRunning ? "Running" : "Run"), [isRunning]);
 
   const handleRun = () => {
+    if (isRunning) {
+      return;
+    }
+
     setIsRunning(true);
+    window.dispatchEvent(new CustomEvent("run-project"));
 
     setTimeout(() => {
       setIsRunning(false);
