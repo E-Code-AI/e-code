@@ -2,7 +2,22 @@
 import { useState } from "react";
 import { Project, File } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
-import { Bell, Settings, Share2, Play, Save, Database, BookMarked, Rocket, Package, Command, Users, Keyboard } from "lucide-react";
+import {
+  Bell,
+  Settings,
+  Share2,
+  Play,
+  Save,
+  Database,
+  BookMarked,
+  Rocket,
+  Package,
+  Command,
+  Users,
+  Keyboard,
+  PanelLeftClose,
+  PanelLeftOpen
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -25,17 +40,21 @@ interface TopNavbarProps {
   onKeyboardShortcutsOpen?: () => void;
   onDatabaseOpen?: () => void;
   onCollaborationOpen?: () => void;
+  onToggleFiles?: () => void;
+  filesOpen?: boolean;
 }
 
-const TopNavbar = ({ 
-  project, 
-  activeFile, 
+const TopNavbar = ({
+  project,
+  activeFile,
   isLoading,
   onNixConfigOpen,
   onCommandPaletteOpen,
   onKeyboardShortcutsOpen,
   onDatabaseOpen,
-  onCollaborationOpen
+  onCollaborationOpen,
+  onToggleFiles,
+  filesOpen = true
 }: TopNavbarProps) => {
   const { user, logoutMutation } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
@@ -75,6 +94,28 @@ const TopNavbar = ({
       <div className="h-14 border-b flex items-center justify-between px-4">
         {/* Left section - Project/file info */}
         <div className="flex items-center gap-4">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onToggleFiles}
+                  disabled={!onToggleFiles}
+                >
+                  {filesOpen ? (
+                    <PanelLeftClose className="h-4 w-4" />
+                  ) : (
+                    <PanelLeftOpen className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{filesOpen ? "Hide files" : "Show files"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           <div className="flex flex-col">
             <h1 className="font-semibold text-sm">
               {isLoading ? "Loading..." : project?.name || "Untitled Project"}
