@@ -69,27 +69,6 @@ router.get('/repositories', ensureAuthenticated, async (req, res) => {
       });
     }
 
-    const { data: repos } = await octokit.repos.listForAuthenticatedUser({
-      per_page: 100,
-      sort: 'updated',
-      direction: 'desc',
-    });
-
-    res.json(
-      repos.map((repo) => ({
-        id: repo.id,
-        name: repo.name,
-        description: repo.description,
-        url: repo.html_url,
-        private: repo.private,
-        stars: repo.stargazers_count,
-        forks: repo.forks_count,
-        language: repo.language,
-        updatedAt: repo.updated_at,
-        defaultBranch: repo.default_branch,
-        owner: currentUser?.login ?? repo.owner?.login,
-      }))
-    );
     const repos = await githubOAuth.getUserRepos(req.githubToken, page, perPage);
     res.json(repos.map(mapRepository));
   } catch (error: any) {
@@ -211,7 +190,7 @@ router.post('/issues', ensureAuthenticated, async (req, res) => {
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       author: data.user?.login,
-    const result = await githubRequest(
+    const issueResult = await githubRequest(
       req.githubToken,
       `https://api.github.com/repos/${coordinates.owner}/${coordinates.repo}/issues`,
       {
@@ -221,14 +200,14 @@ router.post('/issues', ensureAuthenticated, async (req, res) => {
           body,
           labels: Array.isArray(labels) ? labels : undefined,
         }),
-      },
+      }
     );
 
-    if (result.error) {
-      return res.status(result.error.status).json({ error: result.error.message });
+    if (issueResult.error) {
+      return res.status(issueResult.error.status).json({ error: issueResult.error.message });
     }
 
-    const issue = result.data;
+    const issue = issueResult.data;
     res.status(201).json({
       number: issue.number,
       title: issue.title,
