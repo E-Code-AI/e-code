@@ -270,21 +270,30 @@ export class DeploymentManager {
       
       // Update database FIRST before marking as active in memory
       try {
-        await storage.updateDeploymentStatus(deploymentId, {
-          status: 'active',
-          lastDeployedAt: new Date()
-        });
-        console.log(`✅ Deployment ${deploymentId} successfully marked as active in database`);
+        // Get the numeric deployment ID from the database
+        const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+        if (dbDeployment) {
+          await storage.updateDeploymentStatus(dbDeployment.id, {
+            status: 'active',
+            lastDeployedAt: new Date()
+          });
+          console.log(`✅ Deployment ${deploymentId} (DB ID: ${dbDeployment.id}) successfully marked as active in database`);
+        } else {
+          console.error(`❌ Could not find database record for deployment ${deploymentId}`);
+        }
       } catch (dbError) {
         console.error(`Failed to update deployment status in database:`, dbError);
         // Retry once immediately
         try {
           await new Promise(resolve => setTimeout(resolve, 1000));
-          await storage.updateDeploymentStatus(deploymentId, {
-            status: 'active',
-            lastDeployedAt: new Date()
-          });
-          console.log(`✅ Deployment ${deploymentId} retry successful`);
+          const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+          if (dbDeployment) {
+            await storage.updateDeploymentStatus(dbDeployment.id, {
+              status: 'active',
+              lastDeployedAt: new Date()
+            });
+            console.log(`✅ Deployment ${deploymentId} retry successful`);
+          }
         } catch (retryError) {
           console.error(`Database update retry also failed for ${deploymentId}`);
           // Continue anyway - deployment is technically successful
