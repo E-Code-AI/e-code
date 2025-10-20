@@ -1,5 +1,4 @@
 modules = ["nodejs-20", "web", "postgresql-16", "python-3.11"]
-# IMPORTANT: keep the run command on `npm run dev` so Express and Vite share port 5000 for the frontend preview.
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
@@ -8,73 +7,29 @@ channel = "stable-24_05"
 packages = ["glibcLocales", "go", "google-cloud-sdk", "jq", "libxcrypt", "sptk"]
 
 [deployment]
-deploymentTarget = "gce"
-build = ["sh", "-c", "npm run build"]
-run = ["sh", "-c", "npm start"]
+deploymentTarget = "reserved_vm"
+build = ["npm", "install"]
+run = ["npm", "run", "dev"]
 
-[[ports]]
-localPort = 3200
-externalPort = 5000
-
+# Port 5000 - Main Express Server (TypeScript Core)
 [[ports]]
 localPort = 5000
 externalPort = 80
 
+# Port 3200 - MCP Standalone Server (AI Agent Operations)
+[[ports]]
+localPort = 3200
+externalPort = 3200
+
+# Port 8080 - Go Runtime Service (Containers, Files, WebSocket)
 [[ports]]
 localPort = 8080
 externalPort = 8080
 
+# Port 8081 - Python ML Service (AI/ML Workloads)
 [[ports]]
 localPort = 8081
 externalPort = 8081
-
-[[ports]]
-localPort = 35473
-externalPort = 3003
-
-[[ports]]
-localPort = 36271
-externalPort = 3001
-
-[[ports]]
-localPort = 36335
-externalPort = 8008
-
-[[ports]]
-localPort = 37479
-externalPort = 3000
-
-[[ports]]
-localPort = 38787
-externalPort = 5173
-
-[[ports]]
-localPort = 39309
-externalPort = 6000
-
-[[ports]]
-localPort = 41489
-externalPort = 3002
-
-[[ports]]
-localPort = 41949
-externalPort = 8099
-
-[[ports]]
-localPort = 42021
-externalPort = 6800
-
-[[ports]]
-localPort = 42439
-externalPort = 8000
-
-[[ports]]
-localPort = 43655
-externalPort = 9000
-
-[[ports]]
-localPort = 44243
-externalPort = 4200
 
 [workflows]
 runButton = "Project"
