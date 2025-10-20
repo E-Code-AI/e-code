@@ -22,10 +22,15 @@ const formatBytes = (bytes: number): string => {
 // Get database tables
 router.get('/tables', ensureAuthenticated, async (req, res) => {
   try {
+    const schemaFilter = (req.query.schema as string) || undefined;
     const tables = await databaseService.getTables();
 
+    const filtered = schemaFilter
+      ? tables.filter((table) => table.schema === schemaFilter)
+      : tables;
+
     res.json(
-      tables.map((table) => ({
+      filtered.map((table) => ({
         name: table.tableName,
         schema: table.schema,
         rowCount: table.rowCount,
@@ -33,6 +38,8 @@ router.get('/tables', ensureAuthenticated, async (req, res) => {
         size: formatBytes(table.sizeInBytes),
         columnCount: table.columns.length,
         indexCount: (table.indexes ?? []).length,
+        lastModified: table.lastModified ?? null,
+      })),
       }))
     );
   } catch (error: any) {
@@ -40,7 +47,6 @@ router.get('/tables', ensureAuthenticated, async (req, res) => {
     res.status(500).json({
       error: 'Failed to fetch tables',
       message: error.message,
-      message: error.message
     });
   }
 });
@@ -51,15 +57,23 @@ router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
     const { table } = req.params;
     const schemaName = (req.query.schema as string) || 'public';
 
-    const schema = await databaseService.getTableSchema(table, schemaName);
+    const [columns, indexes, constraints] = await Promise.all([
+      databaseService.getTableSchema(table, schemaName),
+      postgresMCP.getTableIndexes(table, schemaName),
+      postgresMCP.getTableConstraints(table, schemaName),
+    ]);
 
-    res.json(
-      schema.map((column) => ({
+    res.json({
+      columns: columns.map((column) => ({
         column: column.name,
         type: column.type,
         nullable: column.nullable,
         default: column.defaultValue,
         isPrimary: column.isPrimaryKey,
+      })),
+      indexes,
+      constraints,
+    });
       }))
     );
   } catch (error: any) {
@@ -67,7 +81,6 @@ router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
     res.status(500).json({
       error: 'Failed to fetch table schema',
       message: error.message,
-      message: error.message
     });
   }
 });
@@ -75,6 +88,33 @@ router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
 // Execute query
 router.post('/query', ensureAuthenticated, async (req, res) => {
   try {
+    const { query, params } = req.body ?? {};
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'SQL query is required' });
+    }
+
+    const lowered = query.trim().toLowerCase();
+    const dangerous = ['drop', 'truncate', 'delete', 'alter', 'grant', 'revoke'];
+
+    if (dangerous.some((keyword) => lowered.startsWith(keyword))) {
+      return res.status(400).json({ error: `Dangerous operation detected: ${query.split(' ')[0]}` });
+    }
+
+    const start = Date.now();
+    const result = await postgresMCP.executeQuery(query, Array.isArray(params) ? params : []);
+    const executionTime = Date.now() - start;
+
+    const columns = result.fields?.map((field: any) => field.name) ?? [];
+    const tabularRows = result.rows?.map((row: any) => columns.map((column) => row[column])) ?? [];
+
+    res.json({
+      columns,
+      rows: tabularRows,
+      rawRows: result.rows,
+      rowCount: result.rowCount,
+      fields: result.fields,
+      executionTime,
     const { query } = req.body;
 
     if (!query || typeof query !== 'string') {
@@ -113,11 +153,6 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
     res.status(500).json({
       error: 'Query execution failed',
       message: error.message,
-      columns: [],
-      rows: [],
-      rowCount: 0,
-      executionTime: 0,
-      message: error.message
     });
   }
 });
@@ -142,7 +177,6 @@ router.post('/backup', ensureAuthenticated, async (req, res) => {
     res.status(500).json({
       error: 'Failed to create backup',
       message: error.message,
-      message: error.message
     });
   }
 });
