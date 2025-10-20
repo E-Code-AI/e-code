@@ -117,34 +117,6 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
       rows,
       rowCount: result.rowCount,
       executionTime: result.executionTime,
-    const { query, params } = req.body ?? {};
-
-    if (!query || typeof query !== 'string') {
-      return res.status(400).json({ error: 'SQL query is required' });
-    }
-
-    const lowered = query.trim().toLowerCase();
-    const dangerous = ['drop', 'truncate', 'delete', 'alter', 'grant', 'revoke'];
-
-    if (dangerous.some((keyword) => lowered.startsWith(keyword))) {
-      return res.status(400).json({ error: `Dangerous operation detected: ${query.split(' ')[0]}` });
-    }
-
-    const start = Date.now();
-    const result = await postgresMCP.executeQuery(query, Array.isArray(params) ? params : []);
-    const executionTime = Date.now() - start;
-
-    const columns = result.fields?.map((field: any) => field.name) ?? [];
-    const tabularRows = result.rows?.map((row: any) => columns.map((column) => row[column])) ?? [];
-
-    res.json({
-      columns,
-      rows: tabularRows,
-      rawRows: result.rows,
-      rowCount: result.rowCount,
-      fields: result.fields,
-      executionTime,
-    });
   } catch (error: any) {
     console.error('PostgreSQL MCP query error:', error);
     res.status(500).json({
