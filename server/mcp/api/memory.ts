@@ -141,6 +141,12 @@ router.post('/nodes', ensureAuthenticated, async (req, res) => {
       });
     }
 
+    const userId = req.user?.id;
+    const username = req.user?.username || 'system';
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
     const node = await memoryMCP.createNode({
       type,
       content,
@@ -160,6 +166,8 @@ router.post('/nodes', ensureAuthenticated, async (req, res) => {
       connections: 0,
       createdAt: toIsoString(node.createdAt),
       lastAccessed: toIsoString(node.updatedAt),
+      createdAt: (node.createdAt instanceof Date ? node.createdAt : new Date(node.createdAt)).toISOString(),
+      lastAccessed: (node.updatedAt instanceof Date ? node.updatedAt : new Date(node.updatedAt)).toISOString(),
     });
   } catch (error: any) {
     console.error('Memory MCP create node error:', error);
@@ -198,6 +206,7 @@ router.post('/edges', ensureAuthenticated, async (req, res) => {
       weight: edge.weight,
       metadata: edge.metadata || {},
       createdAt: toIsoString(edge.createdAt),
+      createdAt: (edge.createdAt instanceof Date ? edge.createdAt : new Date(edge.createdAt)).toISOString(),
     });
   } catch (error: any) {
     console.error('Memory MCP create edge error:', error);
@@ -256,6 +265,14 @@ router.post('/conversations', ensureAuthenticated, async (req, res) => {
       userId,
       createdAt: toIsoString(firstMessage?.timestamp),
       updatedAt: toIsoString(lastMessage?.timestamp),
+      createdAt: (firstMessage?.timestamp instanceof Date
+        ? firstMessage.timestamp
+        : new Date(firstMessage?.timestamp || Date.now())
+      ).toISOString(),
+      updatedAt: (lastMessage?.timestamp instanceof Date
+        ? lastMessage.timestamp
+        : new Date(lastMessage?.timestamp || Date.now())
+      ).toISOString(),
     });
   } catch (error: any) {
     console.error('Memory MCP save conversation error:', error);

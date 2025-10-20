@@ -40,6 +40,7 @@ router.get('/tables', ensureAuthenticated, async (req, res) => {
         indexCount: (table.indexes ?? []).length,
         lastModified: table.lastModified ?? null,
       })),
+      }))
     );
   } catch (error: any) {
     console.error('PostgreSQL MCP tables error:', error);
@@ -73,6 +74,8 @@ router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
       indexes,
       constraints,
     });
+      }))
+    );
   } catch (error: any) {
     console.error('PostgreSQL MCP schema error:', error);
     res.status(500).json({
@@ -112,6 +115,38 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
       rowCount: result.rowCount,
       fields: result.fields,
       executionTime,
+    const { query } = req.body;
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({
+        error: 'Query must be provided as a string',
+        columns: [],
+        rows: [],
+        rowCount: 0,
+        executionTime: 0,
+      });
+    }
+
+    const result = await databaseService.executeQuery(query);
+
+    if (result.error) {
+      return res.status(400).json({
+        error: result.error,
+        columns: [],
+        rows: [],
+        rowCount: 0,
+        executionTime: result.executionTime,
+      });
+    }
+
+    const columns = result.rows.length ? Object.keys(result.rows[0]) : [];
+    const rows = result.rows.map((row: any) => columns.map((column) => row[column]));
+
+    res.json({
+      columns,
+      rows,
+      rowCount: result.rowCount,
+      executionTime: result.executionTime,
     });
   } catch (error: any) {
     console.error('PostgreSQL MCP query error:', error);
