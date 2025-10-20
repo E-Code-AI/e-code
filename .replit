@@ -7,7 +7,7 @@ channel = "stable-24_05"
 packages = ["glibcLocales", "go", "google-cloud-sdk", "jq", "libxcrypt", "sptk"]
 
 [deployment]
-deploymentTarget = "cloudrun"
+deploymentTarget = "gce"
 build = ["npm", "install"]
 run = ["npm", "run", "dev"]
 
