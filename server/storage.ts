@@ -1550,6 +1550,21 @@ export class DatabaseStorage implements IStorage {
     return deployment;
   }
 
+  async getDeploymentByExternalId(deploymentId: string): Promise<Deployment | undefined> {
+    const [deployment] = await this.db
+      .select()
+      .from(deployments)
+      .where(eq(deployments.deploymentId, deploymentId));
+    return deployment;
+  }
+
+  async updateDeploymentStatus(id: number, updates: { status: string; lastDeployedAt?: Date }): Promise<void> {
+    await this.db
+      .update(deployments)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(deployments.id, id));
+  }
+
   async getProjectDeployments(projectId: string): Promise<Deployment[]> {
     return await this.db.select().from(deployments).where(eq(deployments.projectId, projectId));
   }
