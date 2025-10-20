@@ -29,42 +29,59 @@ import {
 import { Link } from 'wouter';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import type { LucideIcon } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
 type FeatureKey = 'autonomous' | 'multilingual' | 'intelligent' | 'realtime';
 
-interface AIFeatureDetail {
-  title: string;
-  description: string;
-  icon: string;
-  details: string[];
-}
-
-interface AIUseCase {
-  title: string;
-  description: string;
-  icon: string;
-  example: string;
-}
-
-interface AITool {
-  name: string;
-  icon: string;
-  description: string;
-}
-
 interface AIData {
-  features: Record<FeatureKey, AIFeatureDetail>;
-  useCases: AIUseCase[];
-  aiTools: AITool[];
+  features?: Record<FeatureKey, {
+    title?: string;
+    description?: string;
+    icon?: string;
+    details?: string[];
+  }>;
+  useCases?: Array<{
+    title?: string;
+    description?: string;
+    icon?: string;
+    example?: string;
+  }>;
+  aiTools?: Array<{
+    name?: string;
+    icon?: string;
+    description?: string;
+  }>;
 }
+
+const fetchAIFeatures = async (): Promise<AIData> => {
+  try {
+    const response = await fetch('/api/ai/features');
+
+    if (!response.ok) {
+      throw new Error('Failed to load AI feature data');
+    }
+
+    return response.json();
+  } catch (cause) {
+    console.error('Unable to fetch AI features from the server', cause);
+    throw new Error('Failed to load AI feature data', { cause });
+  }
+};
 
 export default function AI() {
   const [selectedFeature, setSelectedFeature] = useState<FeatureKey>('autonomous');
-  
+
   // Fetch AI features data from backend
-  const { data: aiData, isLoading, error } = useQuery<AIData>({
-    queryKey: ['/api/ai/features']
+  const {
+    data: aiData,
+    isLoading,
+    error
+  } = useQuery<AIData>({
+    queryKey: ['ai-features'],
+    queryFn: fetchAIFeatures,
+    staleTime: 1000 * 60 * 5,
+    retry: 1
   });
 
   if (isLoading) {
@@ -83,23 +100,23 @@ export default function AI() {
   }
 
   // Icon mapping for features
-  const featureIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  const featureIconMap: Record<string, LucideIcon> = {
     'Brain': Brain,
     'Languages': Languages,
     'Code2': Code2,
     'Zap': Zap
   };
-  
+
   // Icon mapping for use cases
-  const useCaseIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  const useCaseIconMap: Record<string, LucideIcon> = {
     'Users': Users,
     'Rocket': Rocket,
     'Brain': Brain,
     'Shield': Shield
   };
-  
+
   // Icon mapping for AI tools
-  const toolIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  const toolIconMap: Record<string, LucideIcon> = {
     'Search': Search,
     'Eye': Eye,
     'FileSearch': FileSearch,
@@ -112,7 +129,7 @@ export default function AI() {
   const features: Record<FeatureKey, {
     title: string;
     description: string;
-    icon: React.ComponentType<{ className?: string }>;
+    icon: LucideIcon;
     details: string[];
   }> = {
     autonomous: {
@@ -202,31 +219,31 @@ export default function AI() {
           };
         })
     : [
-    {
-      title: 'Complete Beginners',
-      description: 'Never coded before? Describe your app idea and watch it come to life.',
-      icon: Users,
-      example: '"I want a website to track my daily habits with graphs"'
-    },
-    {
-      title: 'Rapid Prototyping',
-      description: 'Build MVPs and prototypes in minutes instead of days.',
-      icon: Rocket,
-      example: '"Create a marketplace for selling handmade crafts"'
-    },
-    {
-      title: 'Learning Projects',
-      description: 'Learn by building. AI explains every line of code it generates.',
-      icon: Brain,
-      example: '"Build a game like Tetris and explain how it works"'
-    },
-    {
-      title: 'Business Solutions',
-      description: 'Create internal tools and business applications without a dev team.',
-      icon: Shield,
-      example: '"Make a dashboard to track our sales and inventory"'
-    }
-  ];
+      {
+        title: 'Complete Beginners',
+        description: 'Never coded before? Describe your app idea and watch it come to life.',
+        icon: Users,
+        example: '"I want a website to track my daily habits with graphs"'
+      },
+      {
+        title: 'Rapid Prototyping',
+        description: 'Build MVPs and prototypes in minutes instead of days.',
+        icon: Rocket,
+        example: '"Create a marketplace for selling handmade crafts"'
+      },
+      {
+        title: 'Learning Projects',
+        description: 'Learn by building. AI explains every line of code it generates.',
+        icon: Brain,
+        example: '"Build a game like Tetris and explain how it works"'
+      },
+      {
+        title: 'Business Solutions',
+        description: 'Create internal tools and business applications without a dev team.',
+        icon: Shield,
+        example: '"Make a dashboard to track our sales and inventory"'
+      }
+    ];
 
   const aiTools = Array.isArray(aiData?.aiTools) && aiData.aiTools.length
     ? aiData.aiTools
@@ -239,13 +256,13 @@ export default function AI() {
           };
         })
     : [
-    { name: 'Web Search', icon: Search, description: 'Find real-time information' },
-    { name: 'Visual Editor', icon: Eye, description: 'Draw designs to convert to code' },
-    { name: 'Code Analysis', icon: FileSearch, description: 'Understand existing code' },
-    { name: 'Performance', icon: Activity, description: 'Optimize for speed' },
-    { name: 'Package Manager', icon: Package, description: 'Install any dependency' },
-    { name: 'Debug Assistant', icon: Wrench, description: 'Fix issues instantly' }
-  ];
+      { name: 'Web Search', icon: Search, description: 'Find real-time information' },
+      { name: 'Visual Editor', icon: Eye, description: 'Draw designs to convert to code' },
+      { name: 'Code Analysis', icon: FileSearch, description: 'Understand existing code' },
+      { name: 'Performance', icon: Activity, description: 'Optimize for speed' },
+      { name: 'Package Manager', icon: Package, description: 'Install any dependency' },
+      { name: 'Debug Assistant', icon: Wrench, description: 'Fix issues instantly' }
+    ];
 
   const stats = [
     { value: '100K+', label: 'Apps Built' },
@@ -257,6 +274,14 @@ export default function AI() {
   return (
     <div className="min-h-screen bg-background">
       <PublicNavbar />
+
+      {error && (
+        <div className="container-responsive pt-6">
+          <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            We couldn't load the latest AI feature data. Displaying default information instead.
+          </div>
+        </div>
+      )}
 
       {/* Hero Section - Fortune 500 Style */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-background to-muted/20">
