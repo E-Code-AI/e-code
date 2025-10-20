@@ -38,15 +38,6 @@ router.post('/search', ensureAuthenticated, async (req, res) => {
       })
     );
 
-      return res.status(400).json({ error: 'Search query is required' });
-    }
-
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const results = await memoryMCP.searchNodes(query, type, Math.min(limit || 10, 50));
     res.json(results);
   } catch (error: any) {
     console.error('Memory MCP search error:', error);
@@ -111,23 +102,6 @@ router.get('/conversations', ensureAuthenticated, async (req, res) => {
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
     res.json(response);
-    const sessionId = req.query.sessionId as string | undefined;
-    const limit = parseInt(req.query.limit as string) || 50;
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const conversations = await memoryMCP.getConversationHistory(userId, sessionId, Math.min(limit, 200));
-
-    res.json(conversations.map(conv => ({
-      id: conv.id,
-      title: conv.metadata?.title || conv.sessionId,
-      messages: conv.metadata?.messageCount || 0,
-      lastMessage: conv.metadata?.lastMessage || conv.content?.slice(0, 120),
-      createdAt: conv.timestamp,
-      metadata: conv.metadata || {}
-    })));
   } catch (error: any) {
     console.error('Memory MCP conversations error:', error);
     res.status(500).json({
@@ -154,14 +128,6 @@ router.post('/nodes', ensureAuthenticated, async (req, res) => {
         error: 'Content is required',
         message: 'Please provide node content.',
       });
-    if (!type || !content) {
-      return res.status(400).json({ error: 'Node type and content are required' });
-    }
-
-    const userId = req.user?.id;
-    const username = req.user?.username || 'system';
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
     }
 
     const node = await memoryMCP.createNode({
@@ -184,14 +150,6 @@ router.post('/nodes', ensureAuthenticated, async (req, res) => {
       createdAt: (node.createdAt instanceof Date ? node.createdAt : new Date(node.createdAt)).toISOString(),
       lastAccessed: (node.updatedAt instanceof Date ? node.updatedAt : new Date(node.updatedAt)).toISOString(),
     });
-        ...metadata,
-        userId,
-        createdBy: username,
-      },
-      embedding
-    });
-
-    res.status(201).json(node);
   } catch (error: any) {
     console.error('Memory MCP create node error:', error);
     res.status(500).json({
@@ -227,23 +185,7 @@ router.post('/edges', ensureAuthenticated, async (req, res) => {
       weight: edge.weight,
       metadata: edge.metadata || {},
       createdAt: (edge.createdAt instanceof Date ? edge.createdAt : new Date(edge.createdAt)).toISOString(),
-      return res.status(400).json({ error: 'fromId, toId, and relationship are required' });
-    }
-
-    const username = req.user?.username || 'system';
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const edge = await memoryMCP.createEdge(fromId, toId, relationship, weight, {
-      ...metadata,
-      createdBy: username,
-      createdAt: new Date().toISOString(),
-      userId,
     });
-
-    res.status(201).json(edge);
   } catch (error: any) {
     console.error('Memory MCP create edge error:', error);
     res.status(500).json({
@@ -308,42 +250,6 @@ router.post('/conversations', ensureAuthenticated, async (req, res) => {
         ? lastMessage.timestamp
         : new Date(lastMessage?.timestamp || Date.now())
       ).toISOString(),
-    const { title, messages, sessionId } = req.body;
-
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: 'At least one message is required to persist a conversation' });
-    }
-
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const normalizedSessionId = sessionId || `session-${Date.now()}`;
-    const savedMessages = [];
-
-    for (const message of messages) {
-      const saved = await memoryMCP.saveConversation(
-        userId,
-        normalizedSessionId,
-        message.role,
-        message.content,
-        {
-          ...message.metadata,
-          title,
-          messageCount: messages.length,
-          lastMessage: message.content,
-        }
-      );
-      savedMessages.push(saved);
-    }
-
-    res.status(201).json({
-      id: normalizedSessionId,
-      title,
-      messages: savedMessages.length,
-      userId,
-      createdAt: savedMessages[0]?.timestamp,
     });
   } catch (error: any) {
     console.error('Memory MCP save conversation error:', error);

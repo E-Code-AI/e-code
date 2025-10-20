@@ -28,8 +28,6 @@ interface RegisteredSuite {
   name: string;
   suite: TestSuite;
   filePath?: string;
-};
-  file?: string;
 }
 
 export interface TestResults {
@@ -41,48 +39,25 @@ export interface TestResults {
 
 const escapeRegex = (value: string) => value.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 
+const logError = (error: unknown) => {
+  if (error instanceof Error) {
+    if (error.stack) {
+      console.error(`    ${error.stack}`);
+    } else {
+      console.error(`    ${error.message}`);
+    }
+    return;
+  }
+
+  console.error(`    ${String(error)}`);
+};
+
 class TestRunner {
   private suites: RegisteredSuite[] = [];
 
   private inferSuiteFile(): string | undefined {
     const stackLines = new Error().stack?.split('\n') ?? [];
 
-const extractFilePathFromStack = (): string | undefined => {
-  const stack = new Error().stack;
-  if (!stack) {
-    return undefined;
-  }
-
-  const frames = stack.split('\n').slice(1);
-  for (const rawFrame of frames) {
-    const frame = rawFrame.trim();
-    const match =
-      frame.match(/\((.*?):\d+:\d+\)$/) ?? frame.match(/at (.*?):\d+:\d+$/);
-    if (!match) {
-      continue;
-    }
-
-    let candidate = match[1];
-    if (candidate.startsWith('file://')) {
-      try {
-        candidate = fileURLToPath(candidate);
-      } catch {
-        // ignore parsing errors and fall back to the raw value
-      }
-    }
-
-    if (candidate.includes('test/setup/test-runner')) {
-      continue;
-    }
-
-    return candidate;
-  }
-
-  return undefined;
-};
-
-const hasFocusedTests = (): boolean =>
-  registeredSuites.some((entry) => entry.suite.tests.some((test) => test.only));
     for (const line of stackLines) {
       const match = line.match(STACK_PATH_PATTERN);
       if (!match) {
@@ -111,23 +86,55 @@ const hasFocusedTests = (): boolean =>
     return undefined;
   }
 
+  private extractFilePathFromStack(): string | undefined {
+    const stack = new Error().stack;
+    if (!stack) {
+      return undefined;
+    }
+
+    const frames = stack.split('\n').slice(1);
+    for (const rawFrame of frames) {
+      const frame = rawFrame.trim();
+      const match =
+        frame.match(/\((.*?):\d+:\d+\)$/) ?? frame.match(/at (.*?):\d+:\d+$/);
+      if (!match) {
+        continue;
+      }
+
+      let candidate = match[1];
+      if (candidate.startsWith('file://')) {
+        try {
+          candidate = fileURLToPath(candidate);
+        } catch {
+          continue;
+        }
+      }
+
+      if (candidate.includes('test/setup/test-runner')) {
+        continue;
+      }
+
+      return candidate;
+    }
+
+    return undefined;
+  }
+
+  private matchesPattern(matcher: RegExp | null, value?: string): boolean {
+    if (!matcher || !value) {
+      return false;
+    }
+
+    return matcher.test(value);
+  }
+
   registerSuite(name: string, suite: TestSuite): void {
-    const filePath = extractFilePathFromStack();
-    registeredSuites.push({ name, suite, filePath });
-  },
-    const file = this.inferSuiteFile();
-    this.suites.push({ name, suite, file });
+    const filePath = this.extractFilePathFromStack() ?? this.inferSuiteFile();
+    this.suites.push({ name, suite, filePath });
   }
 
   async run(pattern?: string): Promise<TestResults> {
     const matcher = pattern ? new RegExp(escapeRegex(pattern), 'i') : null;
-    const matchesPattern = (value?: string) => {
-      if (!matcher || !value) {
-        return false;
-      }
-
-      return new RegExp(matcher.source, matcher.flags).test(value);
-    };
     const hasFocusedTests = this.suites.some((entry) =>
       entry.suite.tests.some((test) => test.only),
     );
@@ -137,14 +144,11 @@ const hasFocusedTests = (): boolean =>
     let failed = 0;
     let skipped = 0;
 
-    for (const { name: suiteName, suite, filePath } of registeredSuites) {
-      const tests = suite.tests.filter((test) => {
-        if (focused && !test.only) {
-          return false;
-        }
-    for (const entry of this.suites) {
-      const { name, suite, file } = entry;
-      const suiteMatches = matcher ? matchesPattern(name) || matchesPattern(file) : true;
+    for (const { name, suite, filePath } of this.suites) {
+      const suiteMatches =
+        !matcher ||
+        this.matchesPattern(matcher, name) ||
+        this.matchesPattern(matcher, filePath);
 
       const runnableTests: TestCase[] = [];
 
@@ -159,19 +163,13 @@ const hasFocusedTests = (): boolean =>
           continue;
         }
 
-        if (matchesPattern(`${suiteName} ${test.name}`, pattern)) {
-          return true;
-        }
+        const testMatches =
+          !matcher ||
+          suiteMatches ||
+          this.matchesPattern(matcher, test.name) ||
+          this.matchesPattern(matcher, `${name} ${test.name}`);
 
-        if (filePath) {
-          return matchesPattern(filePath, pattern);
-        }
-
-        return false;
-      });
-        const shouldRun = !matcher || matchesPattern(test.name) || suiteMatches;
-
-        if (!shouldRun) {
+        if (!testMatches) {
           skipped += 1;
           continue;
         }
@@ -222,11 +220,7 @@ const hasFocusedTests = (): boolean =>
           failed += 1;
           const duration = performance.now() - start;
           console.error(`  ✗ ${test.name} (${duration.toFixed(2)}ms)`);
-          if (error instanceof Error) {
-            console.error(`    ${error.stack ?? error.message}`);
-          } else {
-            console.error(`    ${String(error)}`);
-          }
+          logError(error);
         } finally {
           if (timer) {
             clearTimeout(timer);
