@@ -1163,6 +1163,10 @@ export type InsertPromptUsageHistory = z.infer<typeof insertPromptUsageHistorySc
 export type PromptTemplateRating = typeof promptTemplateRatings.$inferSelect;
 export type InsertPromptTemplateRating = z.infer<typeof insertPromptTemplateRatingSchema>;
 
+// Import tables from separate schema files
+export { projectImports, importTemplates } from './schema/imports';
+export type { ProjectImport, InsertProjectImport, ImportTemplate, InsertImportTemplate } from './schema/imports';
+
 // Voice/Video Sessions
 export const voiceVideoSessions = pgTable("voice_video_sessions", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
