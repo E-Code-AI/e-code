@@ -117,9 +117,18 @@
   }
 }
 
-/* Enhanced mobile sheet styles */
-.sheet-content {
-  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+/* Enhanced mobile sheet styles - scoped to public navbar only */
+.public-mobile-nav [role="dialog"] {
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Override default Sheet animations for public navbar */
+.public-mobile-nav [data-state="open"] {
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.public-mobile-nav [data-state="closed"] {
+  animation: slideOutRight 0.25s cubic-bezier(0.32, 0.72, 0, 1) !important;
 }
 
 /* Improved scrollbar styling for mobile */
