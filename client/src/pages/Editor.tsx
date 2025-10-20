@@ -288,6 +288,11 @@ export default function Editor() {
     setBottomPanelOpen((prev) => !prev);
   };
 
+  const handleCollaborationOpen = () => {
+    setActiveRightPanel("agent");
+    setRightPanelOpen(true);
+  };
+
   const rightPanels = useMemo(() => {
     const panels: any[] = [
       {
@@ -392,6 +397,7 @@ export default function Editor() {
         filesOpen={leftPanelOpen}
         previewOpen={rightPanelOpen && activeRightPanel === "preview"}
         consoleOpen={bottomPanelOpen}
+        filesOpen={leftPanelOpen}
       />
 
       <ReplitEditorLayout

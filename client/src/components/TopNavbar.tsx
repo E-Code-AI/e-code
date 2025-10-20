@@ -19,6 +19,14 @@ import {
   Globe,
   Loader2,
   Sparkles
+  BookMarked,
+  Rocket,
+  Package,
+  Command,
+  Users,
+  Keyboard,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,6 +57,7 @@ interface TopNavbarProps {
   filesOpen?: boolean;
   previewOpen?: boolean;
   consoleOpen?: boolean;
+  filesOpen?: boolean;
 }
 
 const TopNavbar = ({
@@ -66,6 +75,7 @@ const TopNavbar = ({
   filesOpen = true,
   previewOpen = true,
   consoleOpen = true
+  filesOpen = true
 }: TopNavbarProps) => {
   const { user, logoutMutation } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
@@ -134,6 +144,13 @@ const TopNavbar = ({
           <div className="flex flex-col leading-tight">
             <h1 className="font-semibold text-sm text-[var(--ecode-text)]">{projectTitle}</h1>
             <span className="text-xs text-[var(--ecode-text-muted)]">{activeFileTitle}</span>
+          <div className="flex flex-col">
+            <h1 className="font-semibold text-sm">
+              {isLoading ? "Loading..." : project?.name || "Untitled Project"}
+            </h1>
+            <span className="text-xs text-muted-foreground">
+              {activeFile?.name || "No file selected"}
+            </span>
           </div>
 
           <Button

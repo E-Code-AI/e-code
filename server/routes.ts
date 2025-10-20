@@ -324,6 +324,35 @@ function extractNewsletterRequestContext(req: Request) {
   };
 }
 
+function shouldRespondWithJson(req: Request): boolean {
+  const formatParam = typeof req.query.format === 'string' ? req.query.format.toLowerCase() : null;
+  if (formatParam === 'json') {
+    return true;
+  }
+
+  if (formatParam === 'html') {
+    return false;
+  }
+
+  const secFetchMode = (req.headers['sec-fetch-mode'] as string | undefined)?.toLowerCase();
+  if (secFetchMode && secFetchMode !== 'navigate') {
+    return true;
+  }
+
+  const acceptHeader = req.headers.accept;
+  const accepts = Array.isArray(acceptHeader) ? acceptHeader.join(',') : (acceptHeader ?? '');
+  if (accepts.toLowerCase().includes('application/json')) {
+    return true;
+  }
+
+  const requestedWith = (req.headers['x-requested-with'] as string | undefined)?.toLowerCase();
+  if (requestedWith === 'xmlhttprequest') {
+    return true;
+  }
+
+  return false;
+}
+
 const NEWSLETTER_EMAIL_STYLES = `
   body {
     margin: 0;
@@ -15814,31 +15843,57 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   
   app.get('/api/newsletter/confirm', async (req, res) => {
+    const expectsJson = shouldRespondWithJson(req);
+
     try {
       const { email, token } = req.query;
-      
+
       if (!email || !token) {
-        return res.status(400).json({ message: 'Email and token are required' });
+        const message = 'Email and token are required';
+        if (expectsJson) {
+          return res.status(400).json({ success: false, message });
+        }
+
+        return res.redirect(`/newsletter-confirmed?success=false&error=${encodeURIComponent(message)}`);
       }
-      
+
+      const sanitizedEmail = email as string;
+      const sanitizedToken = token as string;
+
       const confirmed = await storage.confirmNewsletterSubscription(
-        email as string,
-        token as string
+        sanitizedEmail,
+        sanitizedToken
       );
-      
+
       if (confirmed) {
-        // Send confirmation success email
         const { sendNewsletterConfirmedEmail } = await import('./utils/gandi-email');
-        await sendNewsletterConfirmedEmail(email as string);
-        
-        // Redirect to success page
-        res.redirect('/newsletter-confirmed?success=true');
-      } else {
-        res.status(400).json({ message: 'Invalid confirmation link' });
+        const delivered = await sendNewsletterConfirmedEmail(sanitizedEmail);
+        if (!delivered) {
+          console.warn('Newsletter confirmation email delivery skipped or failed for', sanitizedEmail);
+        }
+
+        const message = 'Your newsletter subscription has been confirmed!';
+        if (expectsJson) {
+          return res.json({ success: true, message });
+        }
+
+        return res.redirect('/newsletter-confirmed?success=true');
       }
+
+      const message = 'Invalid confirmation link';
+      if (expectsJson) {
+        return res.status(400).json({ success: false, message });
+      }
+
+      return res.redirect(`/newsletter-confirmed?success=false&error=${encodeURIComponent(message)}`);
     } catch (error) {
       console.error('Newsletter confirmation error:', error);
-      res.status(500).json({ message: 'Failed to confirm email' });
+      const message = 'Failed to confirm email';
+      if (expectsJson) {
+        return res.status(500).json({ success: false, message });
+      }
+
+      return res.redirect(`/newsletter-confirmed?success=false&error=${encodeURIComponent(message)}`);
     }
   });
   
