@@ -123,6 +123,16 @@
     @apply text-lg sm:text-xl lg:text-2xl;
   }
   
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+  
   .text-responsive-xl {
     @apply text-xl sm:text-2xl lg:text-3xl;
   }
