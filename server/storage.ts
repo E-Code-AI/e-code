@@ -56,7 +56,8 @@ import {
   insertSecretSchema, insertEnvironmentVariableSchema,
   insertNewsletterSubscriberSchema, insertNewsletterCampaignSchema, insertNewsletterDeliverySchema,
   insertNotificationSchema, insertNotificationPreferenceSchema,
-  customerRequests, insertCustomerRequestSchema
+  customerRequests, insertCustomerRequestSchema,
+  projectImports, // Added import for projectImports
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -95,6 +96,7 @@ type CustomDomain = typeof customDomains.$inferSelect;
 type InsertCustomDomain = z.infer<typeof insertCustomDomainSchema>;
 type CustomerRequest = typeof customerRequests.$inferSelect;
 type InsertCustomerRequest = z.infer<typeof insertCustomerRequestSchema>;
+type ProjectImport = typeof projectImports.$inferSelect; // Added type for ProjectImport
 
 type NotificationRecord = typeof pushNotifications.$inferSelect;
 type InsertNotificationRecord = z.infer<typeof insertNotificationSchema>;
@@ -394,7 +396,12 @@ export interface IStorage {
   // Deployment operations
   createDeployment(deploymentData: InsertDeployment): Promise<Deployment>;
   getDeployments(projectId: string): Promise<Deployment[]>;
-  updateDeployment(id: number, deploymentData: Partial<InsertDeployment>): Promise<Deployment | undefined>;
+  updateDeployment(id: number | string, deploymentData: Partial<InsertDeployment>): Promise<Deployment | undefined>;
+  listDeployments(): Promise<Deployment[]>; // Added listDeployments method
+  getDeploymentByExternalId(deploymentId: string): Promise<Deployment | undefined>;
+  updateDeploymentStatus(id: number, updates: { status: string; lastDeployedAt?: Date }): Promise<void>;
+  getProjectDeployments(projectId: string): Promise<Deployment[]>;
+  getRecentDeployments(userId: string): Promise<Deployment[]>;
 
   // Audit log operations
   getAuditLogs(filters: { userId?: string; action?: string; dateRange?: string }): Promise<any[]>;
@@ -541,25 +548,25 @@ export interface IStorage {
   getPromptTemplate(id: number): Promise<PromptTemplate | undefined>;
   updatePromptTemplate(id: number, template: Partial<InsertPromptTemplate>): Promise<PromptTemplate | undefined>;
   deletePromptTemplate(id: number): Promise<boolean>;
-  
+
   createCustomPrompt(prompt: InsertCustomPrompt): Promise<CustomPrompt>;
   getUserCustomPrompts(userId: string): Promise<CustomPrompt[]>;
   getCustomPrompt(id: number): Promise<CustomPrompt | undefined>;
   updateCustomPrompt(id: number, prompt: Partial<InsertCustomPrompt>): Promise<CustomPrompt | undefined>;
   deleteCustomPrompt(id: number): Promise<boolean>;
-  
+
   createProjectAiRule(rule: InsertProjectAiRule): Promise<ProjectAiRule>;
   getProjectAiRules(projectId: string, activeOnly?: boolean): Promise<ProjectAiRule[]>;
   getProjectAiRule(id: number): Promise<ProjectAiRule | undefined>;
   updateProjectAiRule(id: number, rule: Partial<InsertProjectAiRule>): Promise<ProjectAiRule | undefined>;
   deleteProjectAiRule(id: number): Promise<boolean>;
-  
+
   createPromptUsageHistory(usage: InsertPromptUsageHistory): Promise<PromptUsageHistory>;
   getPromptUsageHistory(filters: { userId?: string; projectId?: string; limit?: number }): Promise<PromptUsageHistory[]>;
-  
+
   createPromptTemplateRating(rating: InsertPromptTemplateRating): Promise<PromptTemplateRating>;
   getPromptTemplateRatings(templateId: number): Promise<PromptTemplateRating[]>;
-  updatePromptTemplateRating(rating: number): Promise<void>;
+  updatePromptTemplateRating(templateId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1254,10 +1261,10 @@ export class DatabaseStorage implements IStorage {
 
   // Template operations
   async getAllTemplates(publishedOnly?: boolean): Promise<Template[]> {
-    const query = publishedOnly 
+    const query = publishedOnly
       ? this.db.select().from(templates).where(eq(templates.isPublished, true))
       : this.db.select().from(templates);
-    
+
     return await query;
   }
 
@@ -1541,13 +1548,29 @@ export class DatabaseStorage implements IStorage {
     return await this.db.select().from(deployments).where(eq(deployments.projectId, projectId));
   }
 
-  async updateDeployment(id: number, deploymentData: Partial<InsertDeployment>): Promise<Deployment | undefined> {
-    const [deployment] = await this.db
+  async updateDeployment(deploymentIdOrNumber: number | string, updates: Partial<InsertDeployment>): Promise<Deployment | undefined> {
+    let deployment;
+
+    if (typeof deploymentIdOrNumber === 'number') {
+      deployment = await this.db.select().from(deployments).where(eq(deployments.id, deploymentIdOrNumber)).limit(1).then(rows => rows[0]);
+    } else {
+      deployment = await this.db.select().from(deployments).where(eq(deployments.deploymentId, deploymentIdOrNumber)).limit(1).then(rows => rows[0]);
+    }
+
+    if (!deployment) {
+      return undefined;
+    }
+
+    const [updated] = await this.db
       .update(deployments)
-      .set({ ...deploymentData, updatedAt: new Date() })
-      .where(eq(deployments.id, id))
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(deployments.id, deployment.id))
       .returning();
-    return deployment;
+    return updated;
+  }
+
+  async listDeployments(): Promise<Deployment[]> {
+    return await this.db.select().from(deployments);
   }
 
   async getDeploymentByExternalId(deploymentId: string): Promise<Deployment | undefined> {
@@ -1584,7 +1607,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Audit log operations
-  async getAuditLogs(filters: { userId?: number; action?: string; dateRange?: string }): Promise<any[]> {
+  async getAuditLogs(filters: { userId?: string; action?: string; dateRange?: string }): Promise<any[]> {
     // For now, return empty array - in production, this would query an audit logs table
     return [];
   }
@@ -1720,7 +1743,7 @@ export class DatabaseStorage implements IStorage {
     return await this.db.select().from(comments).where(eq(comments.projectId, projectId)).orderBy(desc(comments.createdAt));
   }
 
-  async getFileComments(fileId: number): Promise<Comment[]> {
+  async getFileComments(fileId: number): Promise<Comment[] > {
     return await this.db.select().from(comments).where(eq(comments.fileId, fileId)).orderBy(desc(comments.createdAt));
   }
 
@@ -1987,7 +2010,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserUsage(userId: string, billingPeriodStart?: Date): Promise<any> {
-    const query = billingPeriodStart 
+    const query = billingPeriodStart
       ? and(
           eq(usageTracking.userId, userId),
           eq(usageTracking.billingPeriodStart, billingPeriodStart)
@@ -2395,7 +2418,7 @@ export class DatabaseStorage implements IStorage {
   async addCredits(userId: string, amount: number): Promise<UserCredits | undefined> {
     const [updated] = await this.db
       .update(userCredits)
-      .set({ 
+      .set({
         remainingCredits: sql`${userCredits.remainingCredits} + ${amount}`,
         extraCredits: sql`${userCredits.extraCredits} + ${amount}`,
         updatedAt: new Date()
@@ -2408,7 +2431,7 @@ export class DatabaseStorage implements IStorage {
   async deductCredits(userId: string, amount: number): Promise<UserCredits | undefined> {
     const [updated] = await this.db
       .update(userCredits)
-      .set({ 
+      .set({
         remainingCredits: sql`GREATEST(${userCredits.remainingCredits} - ${amount}, 0)`,
         updatedAt: new Date()
       })
@@ -2662,7 +2685,7 @@ export class DatabaseStorage implements IStorage {
     const messages = [...conversation.messages as any[], message];
     const [updated] = await this.db
       .update(aiConversations)
-      .set({ 
+      .set({
         messages,
         totalTokensUsed: sql`${aiConversations.totalTokensUsed} + ${message.tokens || 0}`,
         updatedAt: new Date()
@@ -3197,7 +3220,7 @@ export class DatabaseStorage implements IStorage {
   async endVoiceVideoSession(sessionId: number): Promise<VoiceVideoSession | undefined> {
     const [updated] = await this.db
       .update(voiceVideoSessions)
-      .set({ 
+      .set({
         status: 'ended',
         endedAt: new Date()
       })
@@ -3237,7 +3260,7 @@ export class DatabaseStorage implements IStorage {
   async updateGpuInstanceStatus(instanceId: number, status: string): Promise<GpuInstance | undefined> {
     const [updated] = await this.db
       .update(gpuInstances)
-      .set({ 
+      .set({
         status,
         updatedAt: new Date()
       })
@@ -3318,7 +3341,7 @@ export class DatabaseStorage implements IStorage {
   async gradeSubmission(submissionId: number, grade: number, feedback: string, gradedBy: number): Promise<Submission | undefined> {
     const [updated] = await this.db
       .update(submissions)
-      .set({ 
+      .set({
         grade,
         feedback,
         gradedBy,
@@ -3675,7 +3698,7 @@ export class DatabaseStorage implements IStorage {
 
   async getProjectAiRules(projectId: string, activeOnly?: boolean): Promise<ProjectAiRule[]> {
     let query = this.db.select().from(projectAiRules).where(eq(projectAiRules.projectId, projectId));
-    
+
     if (activeOnly) {
       query = query.where(and(eq(projectAiRules.projectId, projectId), eq(projectAiRules.isActive, true)));
     }
@@ -3704,12 +3727,12 @@ export class DatabaseStorage implements IStorage {
 
   async createPromptUsageHistory(usage: InsertPromptUsageHistory): Promise<PromptUsageHistory> {
     const [created] = await this.db.insert(promptUsageHistory).values(usage).returning();
-    
+
     // Update usage count for associated prompt or template
     if (usage.customPromptId) {
       await this.db
         .update(customPrompts)
-        .set({ 
+        .set({
           usageCount: sql`${customPrompts.usageCount} + 1`,
           lastUsedAt: new Date()
         })
@@ -3718,7 +3741,7 @@ export class DatabaseStorage implements IStorage {
     if (usage.templateId) {
       await this.db
         .update(promptTemplates)
-        .set({ 
+        .set({
           usageCount: sql`${promptTemplates.usageCount} + 1`
         })
         .where(eq(promptTemplates.id, usage.templateId));
@@ -3744,7 +3767,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     query = query.orderBy(desc(promptUsageHistory.createdAt));
-    
+
     if (filters.limit) {
       query = query.limit(filters.limit);
     }
@@ -3754,10 +3777,10 @@ export class DatabaseStorage implements IStorage {
 
   async createPromptTemplateRating(rating: InsertPromptTemplateRating): Promise<PromptTemplateRating> {
     const [created] = await this.db.insert(promptTemplateRatings).values(rating).returning();
-    
+
     // Update average rating for the template
     await this.updatePromptTemplateRating(rating.templateId);
-    
+
     return created;
   }
 
@@ -3786,12 +3809,12 @@ export class DatabaseStorage implements IStorage {
       // Check if prompt_templates table exists first
       const tableCheck = await this.db.execute(sql`
         SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
+          SELECT FROM information_schema.tables
+          WHERE table_schema = 'public'
           AND table_name = 'prompt_templates'
         );
       `);
-      
+
       if (!tableCheck.rows?.[0]?.exists) {
         console.log('prompt_templates table does not exist yet, skipping initialization');
         return;
