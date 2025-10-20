@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Switch, Route, useLocation, useRoute } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -8,8 +8,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
-
-const { useEffect, useState, lazy, Suspense } = React;
 
 // Lazy load all pages for better performance
 const NotFound = lazy(() => import("@/pages/not-found"));
