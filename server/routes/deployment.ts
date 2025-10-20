@@ -86,10 +86,23 @@ router.get('/api/deployments/:deploymentId', async (req, res) => {
       });
     }
 
-    res.json({
+    // Ensure we return complete status information
+    const statusResponse = {
       success: true,
-      deployment
-    });
+      deployment: {
+        ...deployment,
+        status: deployment.status,
+        url: deployment.url || deployment.customUrl,
+        buildLog: deployment.buildLog || [],
+        deploymentLog: deployment.deploymentLog || [],
+        metrics: deployment.metrics || null,
+        sslCertificate: deployment.sslCertificate || null,
+        createdAt: deployment.createdAt,
+        lastDeployedAt: deployment.lastDeployedAt || null
+      }
+    };
+
+    res.json(statusResponse);
   } catch (error) {
     console.error('Get deployment error:', error);
     res.status(500).json({
