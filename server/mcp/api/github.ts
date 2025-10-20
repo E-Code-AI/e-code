@@ -57,11 +57,39 @@ const githubRequest = async (token: string, url: string, options: RequestInit) =
 };
 
 // Get user repositories
-router.get('/repositories', ensureAuthenticated, githubOAuth.requireGitHubAuth, async (req, res) => {
+router.get('/repositories', ensureAuthenticated, async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
     const perPage = Math.min(Math.max(parseInt(req.query.perPage as string, 10) || 30, 1), 100);
 
+    if (error) {
+      return res.status(error.status).json({
+        error: 'GitHub not connected',
+        message: error.message,
+      });
+    }
+
+    const { data: repos } = await octokit.repos.listForAuthenticatedUser({
+      per_page: 100,
+      sort: 'updated',
+      direction: 'desc',
+    });
+
+    res.json(
+      repos.map((repo) => ({
+        id: repo.id,
+        name: repo.name,
+        description: repo.description,
+        url: repo.html_url,
+        private: repo.private,
+        stars: repo.stargazers_count,
+        forks: repo.forks_count,
+        language: repo.language,
+        updatedAt: repo.updated_at,
+        defaultBranch: repo.default_branch,
+        owner: currentUser?.login ?? repo.owner?.login,
+      }))
+    );
     const repos = await githubOAuth.getUserRepos(req.githubToken, page, perPage);
     res.json(repos.map(mapRepository));
   } catch (error: any) {
@@ -74,7 +102,7 @@ router.get('/repositories', ensureAuthenticated, githubOAuth.requireGitHubAuth, 
 });
 
 // Create repository
-router.post('/repositories', ensureAuthenticated, githubOAuth.requireGitHubAuth, async (req, res) => {
+router.post('/repositories', ensureAuthenticated, async (req, res) => {
   try {
     const { name, description, isPrivate } = req.body ?? {};
 
@@ -85,6 +113,35 @@ router.post('/repositories', ensureAuthenticated, githubOAuth.requireGitHubAuth,
       });
     }
 
+    const { octokit, error } = await createGitHubClient(req.user!.id);
+
+    if (error) {
+      return res.status(error.status).json({
+        error: 'GitHub not connected',
+        message: error.message,
+      });
+    }
+
+    const { data } = await octokit.repos.createForAuthenticatedUser({
+      name,
+      description,
+      private: Boolean(isPrivate),
+      auto_init: true,
+    });
+
+    res.status(201).json({
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      url: data.html_url,
+      private: data.private,
+      stars: data.stargazers_count,
+      forks: data.forks_count,
+      language: data.language,
+      updatedAt: data.updated_at,
+      defaultBranch: data.default_branch,
+      owner: data.owner?.login,
+    });
     const result = await githubRequest(req.githubToken, 'https://api.github.com/user/repos', {
       method: 'POST',
       body: JSON.stringify({
@@ -110,7 +167,7 @@ router.post('/repositories', ensureAuthenticated, githubOAuth.requireGitHubAuth,
 });
 
 // Create issue
-router.post('/issues', ensureAuthenticated, githubOAuth.requireGitHubAuth, async (req, res) => {
+router.post('/issues', ensureAuthenticated, async (req, res) => {
   try {
     const { repo, title, body, labels } = req.body ?? {};
 
@@ -136,6 +193,24 @@ router.post('/issues', ensureAuthenticated, githubOAuth.requireGitHubAuth, async
       });
     }
 
+    const { data } = await octokit.issues.create({
+      owner,
+      repo,
+      title,
+      body,
+      labels,
+    });
+
+    res.status(201).json({
+      number: data.number,
+      title: data.title,
+      body: data.body,
+      labels: data.labels?.map((label: any) => (typeof label === 'string' ? label : label?.name)).filter(Boolean),
+      state: data.state,
+      url: data.html_url,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      author: data.user?.login,
     const result = await githubRequest(
       req.githubToken,
       `https://api.github.com/repos/${coordinates.owner}/${coordinates.repo}/issues`,
@@ -177,7 +252,7 @@ router.post('/issues', ensureAuthenticated, githubOAuth.requireGitHubAuth, async
 });
 
 // Create pull request
-router.post('/pull-requests', ensureAuthenticated, githubOAuth.requireGitHubAuth, async (req, res) => {
+router.post('/pull-requests', ensureAuthenticated, async (req, res) => {
   try {
     const { repo, title, body, head, base } = req.body ?? {};
 

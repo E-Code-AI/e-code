@@ -151,36 +151,67 @@ testRunner.registerSuite('Security Middleware', {
     {
       name: 'ipSecurity blocks blacklisted addresses',
       fn: () => {
-        const resMissing = createResponse();
-        const reqMissing: any = { headers: {} };
-        let missingNextCalled = false;
+        const blockedIp = '198.51.100.10';
+        const reqBlocked: any = { ip: blockedIp, path: '/api/users' };
+        const resBlocked = createResponse();
+        let blockedNext = false;
 
-        apiKeyValidation(reqMissing, resMissing, () => {
-          nextCalled = true;
+        ipSecurity.blacklist.add(blockedIp);
+        try {
+          ipSecurity.middleware(reqBlocked, resBlocked, () => {
+            blockedNext = true;
+          });
+
+          expect(blockedNext).toBe(false);
+          expect(resBlocked.statusCode).toBe(403);
+          expect((resBlocked.body as any)?.error).toBe('Access denied');
+        } finally {
+          ipSecurity.blacklist.delete(blockedIp);
+        }
+
+        const allowedReq: any = { ip: '203.0.113.20', path: '/status' };
+        const allowedRes = createResponse();
+        let allowedNext = false;
+
+        ipSecurity.middleware(allowedReq, allowedRes, () => {
+          allowedNext = true;
         });
 
-        expect(resMissing.statusCode).toBe(401);
-        expect((resMissing.body as any)?.error).toBe('API key required');
-        expect(nextCalled).toBe(false);
+        expect(allowedNext).toBe(true);
+        expect(allowedRes.statusCode).toBe(200);
 
-        const resInvalid = createResponse();
-        const reqInvalid: any = { headers: { 'x-api-key': 'short-key' } };
-        apiKeyValidation(reqInvalid, resInvalid, () => {
-          nextCalled = true;
-        });
-        expect(resInvalid.statusCode).toBe(401);
-        expect((resInvalid.body as any)?.error).toBe('Invalid API key');
+        const originalEnv = process.env.NODE_ENV;
+        const originalWhitelist = [...ipSecurity.adminWhitelist];
+        process.env.NODE_ENV = 'production';
+        ipSecurity.adminWhitelist = ['192.0.2.5'];
 
-        const resValid = createResponse();
-        const reqValid: any = { headers: { 'x-api-key': 'k'.repeat(32) } };
-        let validNextCalled = false;
+        try {
+          const adminReqAllowed: any = { ip: '192.0.2.5', path: '/admin/panel' };
+          const adminResAllowed = createResponse();
+          let adminNextAllowed = false;
 
-        apiKeyValidation(reqValid, resValid, () => {
-          validNextCalled = true;
-        });
+          ipSecurity.middleware(adminReqAllowed, adminResAllowed, () => {
+            adminNextAllowed = true;
+          });
 
-        expect(validNextCalled).toBe(true);
-        expect(resValid.statusCode).toBe(200);
+          expect(adminNextAllowed).toBe(true);
+          expect(adminResAllowed.statusCode).toBe(200);
+
+          const adminReqDenied: any = { ip: '203.0.113.44', path: '/admin/panel' };
+          const adminResDenied = createResponse();
+          let adminNextDenied = false;
+
+          ipSecurity.middleware(adminReqDenied, adminResDenied, () => {
+            adminNextDenied = true;
+          });
+
+          expect(adminNextDenied).toBe(false);
+          expect(adminResDenied.statusCode).toBe(403);
+          expect((adminResDenied.body as any)?.error).toBe('Admin access restricted');
+        } finally {
+          process.env.NODE_ENV = originalEnv;
+          ipSecurity.adminWhitelist = originalWhitelist;
+        }
       },
     },
     {
