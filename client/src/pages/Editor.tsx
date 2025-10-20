@@ -268,6 +268,31 @@ export default function Editor() {
     setRightPanelOpen(true);
   };
 
+  const handlePreviewToggle = () => {
+    if (!rightPanelOpen) {
+      setRightPanelOpen(true);
+      setActiveRightPanel("preview");
+      return;
+    }
+
+    if (activeRightPanel !== "preview") {
+      setActiveRightPanel("preview");
+      return;
+    }
+
+    setRightPanelOpen(false);
+    setActiveRightPanel(null);
+  };
+
+  const handleConsoleToggle = () => {
+    setBottomPanelOpen((prev) => !prev);
+  };
+
+  const handleCollaborationOpen = () => {
+    setActiveRightPanel("agent");
+    setRightPanelOpen(true);
+  };
+
   const rightPanels = useMemo(() => {
     const panels: any[] = [
       {
@@ -367,6 +392,11 @@ export default function Editor() {
         onDatabaseOpen={handleDatabaseOpen}
         onCollaborationOpen={handleCollaborationOpen}
         onToggleFiles={() => setLeftPanelOpen(prev => !prev)}
+        onTogglePreview={handlePreviewToggle}
+        onToggleConsole={handleConsoleToggle}
+        filesOpen={leftPanelOpen}
+        previewOpen={rightPanelOpen && activeRightPanel === "preview"}
+        consoleOpen={bottomPanelOpen}
         filesOpen={leftPanelOpen}
       />
 
