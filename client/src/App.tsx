@@ -478,7 +478,7 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/settings" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Settings />
             </ReplitLayout>
           )} />
