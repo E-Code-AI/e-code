@@ -379,7 +379,7 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/explore" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Explore />
             </ReplitLayout>
           )} />
@@ -501,7 +501,7 @@ function AppContent() {
               />
             ))}
           <ProtectedRoute path="/profile/:username?" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Profile />
             </ReplitLayout>
           )} />
@@ -560,27 +560,27 @@ function AppContent() {
           {/* User profile routes */}
           <Route path="/u/:username" component={UserProfileWrapper} />
           <ProtectedRoute path="/editor/:id" component={() => (
-            <ReplitLayout showSidebar={true}>
+            <ReplitLayout showSidebar={false}>
               <Editor />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/runtimes" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <RuntimesPage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/runtime-diagnostics" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <RuntimeDiagnosticsPage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/user/:username" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <UserProfile />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/user/settings" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <UserSettings />
             </ReplitLayout>
           )} />
@@ -595,43 +595,43 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/community/post/:id" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <CommunityPost />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/search" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <SearchPage />
             </ReplitLayout>
           )} />
 
           <ProtectedRoute path="/secrets" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Secrets />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/workflows" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Workflows />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/ssh" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <SSH />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/security-scanner" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <SecurityScanner />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/dependencies" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Dependencies />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/object-storage" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <ObjectStorage />
             </ReplitLayout>
           )} />
@@ -686,27 +686,27 @@ function AppContent() {
             />
           )} />
           <ProtectedRoute path="/admin" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <AdminDashboard />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin/usage" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <AdminUsage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin/requests" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <AdminFormRequests />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin/billing" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <AdminBilling />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/admin/ai-models" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <AdminAIModels />
             </ReplitLayout>
           )} />

@@ -56,17 +56,6 @@ export default function Editor(props: EditorProps = {}) {
   const { data: files = [], isLoading: isFilesLoading } = useQuery<File[]>({
     queryKey: [`/api/files/${resolvedProjectId}`],
     enabled: !!resolvedProjectId && !!user,
-
-  const projectId = id;
-
-  const { data: project, isLoading: isProjectLoading } = useQuery<Project>({
-    queryKey: [`/api/projects/${projectId}`],
-    enabled: !!projectId && !!user,
-  });
-
-  const { data: files = [], isLoading: isFilesLoading } = useQuery<File[]>({
-    queryKey: [`/api/files/${projectId}`],
-    enabled: !!projectId && !!user,
   });
 
   useEffect(() => {
