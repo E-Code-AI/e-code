@@ -69,8 +69,6 @@ router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
         nullable: column.nullable,
         default: column.defaultValue,
         isPrimary: column.isPrimaryKey,
-      }))
-    );
       })),
       indexes,
       constraints,
