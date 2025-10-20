@@ -109,8 +109,22 @@ export function CommunityFeatures() {
 
   // Fetch community data
   const { data: postsData, isLoading: postsLoading } = useQuery({
-    queryKey: ['/api/community/posts', { category: selectedCategory, tag: selectedTag, search: searchQuery }],
-    staleTime: 30000
+    queryKey: ['/api/community/posts', { category: selectedCategory, tag: selectedTag, search: searchQuery, pageSize: 6 }],
+    staleTime: 30000,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory !== 'all') params.set('category', selectedCategory);
+      if (selectedTag) params.set('tag', selectedTag);
+      if (searchQuery) params.set('search', searchQuery);
+      params.set('pageSize', '6');
+      const res = await fetch(`/api/community/posts?${params.toString()}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch community posts');
+      }
+      return res.json();
+    }
   });
 
   const { data: showcasesData, isLoading: showcasesLoading } = useQuery({
