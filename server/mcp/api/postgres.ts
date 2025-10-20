@@ -117,6 +117,7 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
       rows,
       rowCount: result.rowCount,
       executionTime: result.executionTime,
+    });
   } catch (error: any) {
     console.error('PostgreSQL MCP query error:', error);
     res.status(500).json({
