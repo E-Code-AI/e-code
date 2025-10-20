@@ -213,12 +213,16 @@ Important rules:
 6. Include necessary imports and exports
 7. Add helpful comments for complex logic`;
 
-    const userPrompt = `Context:
-${context}
+    const userPrompt = `You will receive the user's request followed by relevant project context. Read all details carefully and respond only with the JSON structure defined above.
 
-User Instruction: ${instruction}
+Task:
+Generate the necessary code modifications as a JSON array.
 
-Generate the necessary code modifications as a JSON array.`;
+User Instruction:
+${instruction}
+
+Project Context:
+${context}`;
 
     try {
       // Try Claude first for better code understanding
@@ -253,6 +257,14 @@ Generate the necessary code modifications as a JSON array.`;
           temperature: 0.2,
           response_format: { type: "json_object" }
         });
+
+        const cachedTokens = response.usage?.prompt_tokens_details?.cached_tokens;
+        if (typeof cachedTokens === 'number') {
+          logger.info('OpenAI real-code-generator cache metrics', {
+            cachedTokens,
+            promptTokens: response.usage?.prompt_tokens,
+          });
+        }
 
         const content = response.choices[0].message.content;
         if (content) {
