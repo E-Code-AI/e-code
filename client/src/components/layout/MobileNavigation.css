@@ -104,3 +104,56 @@
     background-color: rgba(0, 0, 0, 0.8);
   }
 }
+
+/* Fade in up animation for mobile menu items */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced mobile sheet styles */
+.sheet-content {
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Improved scrollbar styling for mobile */
+.mobile-nav-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mobile-nav-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobile-nav-content::-webkit-scrollbar-thumb {
+  background-color: var(--ecode-border);
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.mobile-nav-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ecode-accent);
+}
+
+/* Mobile-specific button press effects */
+@media (max-width: 1023px) {
+  .mobile-nav-item:active {
+    transform: scale(0.98) !important;
+  }
+  
+  /* Ensure touch highlights work properly */
+  .mobile-nav-item {
+    -webkit-tap-highlight-color: rgba(var(--ecode-accent-rgb), 0.1);
+  }
+  
+  /* Bottom spacing for mobile menu to account for browser UI */
+  .mobile-nav-content {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+}
