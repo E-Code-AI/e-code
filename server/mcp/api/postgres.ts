@@ -2,7 +2,6 @@
 import { Router } from 'express';
 import { ensureAuthenticated } from '../../middleware/auth';
 import { DatabaseManagementService } from '../../services/database-management-service';
-import { postgresMCP } from '../servers/postgres-mcp';
 
 const router = Router();
 const databaseService = new DatabaseManagementService();
@@ -37,6 +36,7 @@ router.get('/tables', ensureAuthenticated, async (req, res) => {
         sizeBytes: table.sizeInBytes,
         size: formatBytes(table.sizeInBytes),
         columnCount: table.columns.length,
+        indexCount: table.indexes.length,
         indexCount: (table.indexes ?? []).length,
         lastModified: table.lastModified ?? null,
       }))
@@ -69,6 +69,8 @@ router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
         nullable: column.nullable,
         default: column.defaultValue,
         isPrimary: column.isPrimaryKey,
+      }))
+    );
       })),
       indexes,
       constraints,
@@ -85,6 +87,38 @@ router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
 // Execute query
 router.post('/query', ensureAuthenticated, async (req, res) => {
   try {
+    const { query } = req.body;
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({
+        error: 'Query must be provided as a string',
+        columns: [],
+        rows: [],
+        rowCount: 0,
+        executionTime: 0,
+      });
+    }
+
+    const result = await databaseService.executeQuery(query);
+
+    if (result.error) {
+      return res.status(400).json({
+        error: result.error,
+        columns: [],
+        rows: [],
+        rowCount: 0,
+        executionTime: result.executionTime,
+      });
+    }
+
+    const columns = result.rows.length ? Object.keys(result.rows[0]) : [];
+    const rows = result.rows.map((row: any) => columns.map((column) => row[column]));
+
+    res.json({
+      columns,
+      rows,
+      rowCount: result.rowCount,
+      executionTime: result.executionTime,
     const { query, params } = req.body ?? {};
 
     if (!query || typeof query !== 'string') {
@@ -118,6 +152,10 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
     res.status(500).json({
       error: 'Query execution failed',
       message: error.message,
+      columns: [],
+      rows: [],
+      rowCount: 0,
+      executionTime: 0,
     });
   }
 });

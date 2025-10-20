@@ -18,11 +18,19 @@ import { NixConfig } from "@/components/NixConfig";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 import { Bot, Database, Globe, Package } from "lucide-react";
 
-export default function Editor() {
+type EditorProps = {
+  projectId?: string | null;
+  initialProject?: Project | null;
+};
+
+export default function Editor(props: EditorProps = {}) {
   const { id } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
+
+  const resolvedProjectId = props.projectId ?? id ?? null;
+  const initialProject = props.initialProject ?? null;
 
   const [activeFileId, setActiveFileId] = useState<number | null>(null);
   const [leftPanelOpen, setLeftPanelOpen] = useState(true);
@@ -33,6 +41,21 @@ export default function Editor() {
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
   const [isProjectRunning, setIsProjectRunning] = useState(false);
   const [executionId, setExecutionId] = useState<string | undefined>();
+
+  const { data: project, isLoading: isProjectLoading } = useQuery<Project>({
+    queryKey: [`/api/projects/${resolvedProjectId}`],
+    enabled: !!resolvedProjectId && !!user,
+    initialData:
+      initialProject &&
+      resolvedProjectId &&
+      initialProject.id === resolvedProjectId
+        ? initialProject
+        : undefined,
+  });
+
+  const { data: files = [], isLoading: isFilesLoading } = useQuery<File[]>({
+    queryKey: [`/api/files/${resolvedProjectId}`],
+    enabled: !!resolvedProjectId && !!user,
 
   const projectId = id;
 
@@ -77,6 +100,8 @@ export default function Editor() {
       return await res.json();
     },
     onSuccess: (data) => {
+      if (!resolvedProjectId) return;
+      queryClient.setQueryData<File[]>([`/api/files/${resolvedProjectId}`], (old) => {
       queryClient.setQueryData<File[]>([`/api/files/${projectId}`], (old) => {
         if (!old) return old;
         return old.map(file => file.id === data.id ? { ...file, content: data.content } : file);
@@ -97,6 +122,10 @@ export default function Editor() {
 
   const createFileMutation = useMutation({
     mutationFn: async ({ name, isFolder, parentId }: { name: string, isFolder: boolean, parentId?: number | null }) => {
+      if (!resolvedProjectId) {
+        throw new Error("Project is not available for file creation");
+      }
+      const res = await apiRequest("POST", `/api/files/${resolvedProjectId}`, {
       const res = await apiRequest("POST", `/api/files/${projectId}`, {
         name,
         isFolder,
@@ -106,6 +135,7 @@ export default function Editor() {
       return await res.json();
     },
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${resolvedProjectId}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       toast({
         title: data.isFolder ? "Folder created" : "File created",
@@ -127,6 +157,9 @@ export default function Editor() {
       return fileId;
     },
     onSuccess: (fileId) => {
+      if (resolvedProjectId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/files/${resolvedProjectId}`] });
+      }
       queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
       if (activeFileId === fileId) {
         setActiveFileId(null);
@@ -151,6 +184,8 @@ export default function Editor() {
       return await res.json();
     },
     onSuccess: (data) => {
+      if (!resolvedProjectId) return;
+      queryClient.setQueryData<File[]>([`/api/files/${resolvedProjectId}`], (old) => {
       queryClient.setQueryData<File[]>([`/api/files/${projectId}`], (old) => {
         if (!old) return old;
         return old.map(file => file.id === data.id ? { ...file, name: data.name } : file);
@@ -288,6 +323,7 @@ export default function Editor() {
     setBottomPanelOpen((prev) => !prev);
   };
 
+  const activeProjectId = project?.id ?? resolvedProjectId;
   const handleCollaborationOpen = () => {
     setActiveRightPanel("agent");
     setRightPanelOpen(true);
@@ -299,6 +335,9 @@ export default function Editor() {
         id: "preview",
         title: "Preview",
         icon: <Globe className="h-3.5 w-3.5" />,
+        content: activeProjectId ? (
+          <WebPreview
+            projectId={activeProjectId as any}
         content: project ? (
           <WebPreview
             projectId={project.id as any}
@@ -313,6 +352,7 @@ export default function Editor() {
       }
     ];
 
+    if (activeProjectId) {
     if (project) {
       panels.push({
         id: "agent",
@@ -321,6 +361,7 @@ export default function Editor() {
         content: (
           <div className="h-full overflow-hidden">
             <ReplitAgent
+              projectId={activeProjectId as any}
               projectId={project.id as any}
               selectedFile={activeFile?.name}
               selectedCode={selectedCode}
@@ -336,6 +377,7 @@ export default function Editor() {
         icon: <Database className="h-3.5 w-3.5" />,
         content: (
           <div className="h-full overflow-hidden">
+            <ReplitDB projectId={activeProjectId as any} className="h-full" />
             <ReplitDB projectId={project.id as any} className="h-full" />
           </div>
         )
@@ -347,6 +389,7 @@ export default function Editor() {
         icon: <Package className="h-3.5 w-3.5" />,
         content: (
           <div className="h-full overflow-auto p-4">
+            <NixConfig projectId={activeProjectId as any} />
             <NixConfig projectId={project.id as any} />
           </div>
         )
@@ -354,6 +397,11 @@ export default function Editor() {
     }
 
     return panels;
+  }, [project, activeProjectId, activeFile, selectedCode, isProjectRunning]);
+
+  const bottomPanel = activeProjectId ? (
+    <ReplitConsole
+      projectId={activeProjectId as any}
   }, [project, activeFile, selectedCode, isProjectRunning]);
 
   const bottomPanel = project ? (
@@ -410,6 +458,7 @@ export default function Editor() {
             onFileDelete={handleFileDelete}
             onFileRename={handleFileRename}
             projectName={project?.name}
+            projectId={(project?.id ?? resolvedProjectId) as any}
             projectId={project?.id as any}
             onClose={() => setLeftPanelOpen(false)}
           />
