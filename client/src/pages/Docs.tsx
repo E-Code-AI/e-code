@@ -1088,8 +1088,6 @@ export default function DocsPage(): JSX.Element {
     ? allDocItems.find(item => item.id === selectedDocId) ?? null
     : null;
 
-  const normalizedQuery = query.trim().toLowerCase();
-
   const filteredSections = useMemo(() => {
     if (!normalizedQuery) {
       return docSections;
@@ -1144,6 +1142,19 @@ export default function DocsPage(): JSX.Element {
         setActiveArticle(firstResult.key);
       }
     }
+  };
+
+  const handleDocSelect = (item: DocItem) => {
+    setSelectedDocId(item.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenDocument = (href: string) => {
+    window.open(href, '_blank', 'noopener,noreferrer');
+  };
+
+  const navigate = (href: string) => {
+    setLocation(href);
   };
 
   const heroActions: DocAction[] = user
@@ -1203,623 +1214,75 @@ export default function DocsPage(): JSX.Element {
                   </div>
                 </CardContent>
               </Card>
-  const handleDocSelect = (item: DocItem) => {
-    setSelectedDocId(item.id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleOpenDocument = (href: string) => {
-    window.open(href, '_blank', 'noopener,noreferrer');
-  };
-
-  return (
-    <div className="min-h-screen bg-background">
-      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-6">
-              <div
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={() => navigate('/')}
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">E</span>
-                </div>
-                <span className="font-semibold text-lg">E-Code Documentation</span>
-              </div>
-              <Separator orientation="vertical" className="h-6" />
-              <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
-                <button
-                  type="button"
-                  className="hover:text-foreground"
-                  onClick={() => handleDocSelect(docCategories[0].items[0])}
-                >
-                  Getting started
-                </button>
-                <button
-                  type="button"
-                  className="hover:text-foreground"
-                  onClick={() => handleDocSelect(docCategories[2].items[0])}
-                >
-                  Deployment playbook
-                </button>
-                <button
-                  type="button"
-                  className="hover:text-foreground"
-                  onClick={() => handleDocSelect(docCategories[1].items[0])}
-                >
-                  Architecture
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(user ? '/dashboard' : '/auth')}
-              >
-                {user ? 'Back to workspace' : 'Sign in'}
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => navigate('/contact-sales')}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-              >
-                Talk to us
-              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-10 lg:flex-row">
-        <aside className="w-full max-w-md flex-none lg:max-w-xs">
-          <ScrollArea className="h-[calc(100vh-12rem)] rounded-lg border bg-card p-4">
-            <nav className="space-y-4">
-              {filteredSections.length ? (
-                filteredSections.map((section) => (
-                  <div key={section.title} className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      {section.icon}
-                      {section.title}
-                    </div>
-                    <div className="space-y-1">
+      {/* Main content section starts here */}
+      <div className="mx-auto flex w-full max-w-6xl gap-8 px-6 py-8">
+        <div className="flex-1">
+          {query.trim() ? (
+            filteredSections.length > 0 ? (
+              <div className="space-y-6">
+                {filteredSections.map((section) => (
+                  <div key={section.id} className="space-y-4">
+                    <h2 className="text-xl font-semibold">{section.name}</h2>
+                    <div className="grid gap-4 sm:grid-cols-2">
                       {section.items.map((item) => (
-                        <Button
+                        <Card
                           key={item.key}
-                          variant={activeArticle === item.key ? 'secondary' : 'ghost'}
-                          className="flex w-full justify-between text-left"
+                          className="cursor-pointer transition-all hover:shadow-md"
                           onClick={() => setActiveArticle(item.key)}
                         >
-                          <span className="flex flex-col items-start">
-                            <span>{item.label}</span>
-                            {item.description && (
-                              <span className="text-xs text-muted-foreground">{item.description}</span>
-                            )}
-                          </span>
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      ))}
-                    </div>
-                    <Separator className="opacity-40" />
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  No documentation matched “{query}”. Try another search term.
-                </div>
-              )}
-            </nav>
-          </ScrollArea>
-        </aside>
-
-        <main className="flex-1">
-          <article className="space-y-6 rounded-xl border bg-card p-8 shadow-sm">
-            <header className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  {activeArticleData.summary}
-                </Badge>
-                <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Sparkles className="h-3.5 w-3.5" /> Last updated {activeArticleData.lastUpdated}
-                </span>
-              </div>
-              <h2 className="text-3xl font-semibold tracking-tight">{activeArticleData.title}</h2>
-            </header>
-
-            {activeArticleData.media}
-
-            <div className="prose prose-neutral max-w-none dark:prose-invert">
-              {activeArticleData.content}
-            </div>
-
-            {activeArticleData.actions?.length ? (
-              <div className="flex flex-wrap gap-3 pt-4">
-                {activeArticleData.actions.map((action) => (
-                  <Button
-                    key={action.label}
-                    variant={action.variant ?? 'secondary'}
-                    onClick={() => handleAction(action)}
-                  >
-                    {action.label}
-                    {action.external ? (
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    ) : (
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    )}
-                  </Button>
-                ))}
-              </div>
-            ) : null}
-          </article>
-
-          <section className="mt-8 rounded-xl border bg-muted/40 p-6">
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="flex w-full items-center justify-between text-left text-base">
-                  <span className="flex items-center gap-2">
-                    <HelpCircle className="h-4 w-4" />
-                    Need a guided walkthrough?
-                  </span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-4 space-y-4 text-sm text-muted-foreground">
-                <p>
-                  Our solutions engineers host live enablement sessions covering workspace onboarding, AI automation, and deployment
-                  hardening. Sessions reference the exact scripts and services inside this repo so your teams can mirror production
-                  setups with confidence.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => setLocation('/contact-sales')}>
-                    Talk to solutions
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" onClick={() => setLocation('/support')}>
-                    Visit support center
-                    <LifeBuoy className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </section>
-      <div className="flex">
-        <aside className="hidden lg:block w-72 border-r bg-muted/30 h-[calc(100vh-3.5rem)] sticky top-14 overflow-y-auto">
-          <ScrollArea className="h-full py-6 px-4">
-            <div className="space-y-2">
-              {visibleCategories.map((category: DocCategory) => (
-                <Collapsible
-                  key={category.id}
-                  open={expandedCategories.includes(category.id)}
-                  onOpenChange={() => toggleCategory(category.id)}
-                >
-                  <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
-                    <div className="flex items-center gap-2 text-left">
-                      {category.icon}
-                      <div>
-                        <div>{category.title}</div>
-                        <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
-                      </div>
-                    </div>
-                    <ChevronDown
-                      className={cn(
-                        'h-4 w-4 transition-transform',
-                        expandedCategories.includes(category.id) && 'rotate-180'
-                      )}
-                    />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-1 ml-6 space-y-1">
-                    {category.items.map((item) => {
-                      const docItem = item as DocItem;
-                      return (
-                        <button
-                          key={docItem.id}
-                          type="button"
-                          onClick={() => handleDocSelect(docItem)}
-                          className={cn(
-                            'group flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm text-left transition-colors',
-                            selectedDoc?.id === docItem.id
-                              ? 'bg-accent text-foreground font-medium'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                          )}
-                        >
-                          <span>{docItem.title}</span>
-                          {docItem.readiness && (
-                            <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                              {readinessLabels[docItem.readiness]}
-                            </Badge>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </CollapsibleContent>
-                </Collapsible>
-              ))}
-              {!hasResults && (
-                <p className="text-sm text-muted-foreground px-3 py-2">
-                  No documents match “{searchQuery}”. Try a different keyword or clear the search.
-                </p>
-              )}
-            </div>
-          </ScrollArea>
-        </aside>
-
-        <main className="flex-1">
-          {selectedDoc ? (
-            <article className="px-6 py-12 max-w-4xl mx-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedDocId(null)}
-                className="mb-8 -ml-2"
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Back to overview
-              </Button>
-
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="text-3xl font-bold tracking-tight">{selectedDoc.title}</h1>
-                    {selectedDoc.readiness && (
-                      <Badge className="uppercase tracking-wide">{readinessLabels[selectedDoc.readiness]}</Badge>
-                    )}
-                    {selectedDoc.lastReviewed && (
-                      <Badge variant="secondary">Last reviewed {selectedDoc.lastReviewed}</Badge>
-                    )}
-                  </div>
-                  <p className="text-lg text-muted-foreground max-w-3xl">{selectedDoc.summary}</p>
-                  {selectedDoc.tags && (
-                    <div className="flex flex-wrap gap-2">
-                      {selectedDoc.tags.map(tag => (
-                        <Badge key={tag} variant="outline" className="lowercase">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <section>
-                  <h2 className="text-xl font-semibold">What this covers</h2>
-                  <ul className="mt-4 space-y-3">
-                    {selectedDoc.highlights.map(highlight => (
-                      <li key={highlight.title} className="flex gap-3">
-                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                        <div>
-                          <p className="font-medium leading-none">{highlight.title}</p>
-                          <p className="text-sm text-muted-foreground mt-1">{highlight.description}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-
-                {selectedDoc.resources && selectedDoc.resources.length > 0 && (
-                  <section>
-                    <h2 className="text-xl font-semibold">Related assets</h2>
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      {selectedDoc.resources.map(resource => (
-                        <Card key={resource.href}>
                           <CardHeader>
-                            <CardTitle className="text-base">{resource.label}</CardTitle>
-                            {resource.description && (
-                              <CardDescription>{resource.description}</CardDescription>
+                            <CardTitle className="text-base">{item.label}</CardTitle>
+                            {item.description && (
+                              <CardDescription>{item.description}</CardDescription>
                             )}
                           </CardHeader>
-                          <CardContent>
-                            <Button
-                              variant="outline"
-                              className="w-full"
-                              onClick={() => handleOpenDocument(resource.href)}
-                            >
-                              Open resource
-                              <ExternalLink className="ml-2 h-4 w-4" />
-                            </Button>
-                          </CardContent>
                         </Card>
                       ))}
                     </div>
-                  </section>
-                )}
-
-                <div className="flex flex-wrap gap-3">
-                  <Button onClick={() => handleOpenDocument(selectedDoc.href)}>
-                    View full document
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
-                  >
-                    Request an update
-                  </Button>
-                </div>
-
-                <section className="mt-12 pt-8 border-t">
-                  <h3 className="text-lg font-semibold">Need a hand?</h3>
-                  <div className="grid gap-4 sm:grid-cols-2 mt-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Contact documentation</CardTitle>
-                        <CardDescription>Escalate clarifications or propose edits.</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Button
-                          variant="secondary"
-                          className="w-full"
-                          onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
-                        >
-                          Email docs@e-code.ai
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Talk to support</CardTitle>
-                        <CardDescription>Open a ticket with the platform team.</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Button className="w-full" onClick={() => navigate('/support')}>
-                          <HelpCircle className="h-4 w-4 mr-2" />
-                          Contact support
-                        </Button>
-                      </CardContent>
-                    </Card>
                   </div>
-                </section>
+                ))}
               </div>
-            </article>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Search className="mb-4 h-12 w-12 text-muted-foreground" />
+                <h3 className="text-lg font-semibold">No results found</h3>
+                <p className="text-sm text-muted-foreground">
+                  Try adjusting your search or browse the categories below
+                </p>
+              </div>
+            )
           ) : (
-            <>
-              <section className="px-6 py-12 bg-gradient-to-b from-primary/5 to-transparent">
-                <div className="max-w-4xl mx-auto text-center space-y-6">
-                  <Badge variant="secondary" className="mb-4 uppercase tracking-wide">
-                    <BookOpen className="h-3 w-3 mr-1" />
-                    Documentation hub
-                  </Badge>
-                  <h1 className="text-4xl md:text-5xl font-bold">
-                    Enterprise-ready documentation for every E-Code workflow
-                  </h1>
-                  <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                    Explore verified guides that mirror the current platform release—from environment setup and executive demos to
-                    runtime architecture, deployment controls, and AI operations.
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-3">
-                    <Button size="lg" onClick={() => handleDocSelect(docCategories[0].items[0])}>
-                      Start with onboarding
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
-                    >
-                      Book a documentation review
-                    </Button>
-                  </div>
-                </div>
-              </section>
-
-              <section className="px-6 py-12">
-                <div className="max-w-3xl mx-auto relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Search the documentation (e.g. deployment, preview, AI)"
-                    value={searchQuery}
-                    onChange={event => setSearchQuery(event.target.value)}
-                    className="pl-12 pr-4 py-6 text-base"
-                  />
-                </div>
-              </section>
-
-              <section className="px-6 pb-12">
-                <div className="max-w-6xl mx-auto">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold">Featured guides</h2>
-                    <Button
-                      variant="ghost"
-                      className="text-primary"
-                      onClick={() => handleDocSelect(docCategories[2].items[0])}
-                    >
-                      Review the deployment playbook
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {[
-                      docCategories[0].items[0],
-                      docCategories[1].items[0],
-                      docCategories[2].items[0]
-                    ].map(item => (
+            <div className="space-y-8">
+              {docSections.map((section) => (
+                <div key={section.id} className="space-y-4">
+                  <h2 className="text-xl font-semibold">{section.name}</h2>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {section.items.map((item) => (
                       <Card
-                        key={item.id}
-                        className="hover:shadow-lg transition-all cursor-pointer"
-                        onClick={() => handleDocSelect(item)}
+                        key={item.key}
+                        className="cursor-pointer transition-all hover:shadow-md"
+                        onClick={() => setActiveArticle(item.key)}
                       >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className="p-2 bg-primary/10 rounded-lg">
-                              <BookOpen className="h-5 w-5 text-primary" />
-                            </div>
-                            {item.readiness && (
-                              <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                                {readinessLabels[item.readiness]}
-                              </Badge>
-                            )}
-                          </div>
+                        <CardHeader>
+                          <CardTitle className="text-base">{item.label}</CardTitle>
+                          {item.description && (
+                            <CardDescription>{item.description}</CardDescription>
+                          )}
                         </CardHeader>
-                        <CardContent>
-                          <h3 className="font-semibold mb-2">{item.title}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-3">{item.summary}</p>
-                        </CardContent>
                       </Card>
                     ))}
                   </div>
                 </div>
-              </section>
-
-              <section className="px-6 pb-12 lg:hidden">
-                <div className="max-w-3xl mx-auto space-y-4">
-                  <div className="space-y-1">
-                    <h2 className="text-xl font-semibold">Browse the documentation</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {searchQuery
-                        ? `Showing results for “${searchQuery}”. Tap a guide to view the full details.`
-                        : 'Explore the full catalog of guides, operational scripts, and governance references.'}
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {visibleCategories.map((category: DocCategory) => (
-                      <Collapsible
-                        key={category.id}
-                        open={expandedCategories.includes(category.id)}
-                        onOpenChange={() => toggleCategory(category.id)}
-                      >
-                        <CollapsibleTrigger className="flex items-center justify-between w-full rounded-lg border px-4 py-3 text-left text-sm font-semibold">
-                          <div className="flex items-center gap-3">
-                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                              {category.icon}
-                            </span>
-                            <div className="text-left">
-                              <div>{category.title}</div>
-                              <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
-                            </div>
-                          </div>
-                          <ChevronDown
-                            className={cn(
-                              'h-4 w-4 transition-transform',
-                              expandedCategories.includes(category.id) && 'rotate-180'
-                            )}
-                          />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-2 space-y-2 rounded-lg border bg-muted/40 p-3">
-                          {category.items.map((item) => {
-                            const docItem = item as DocItem;
-                            return (
-                              <button
-                                key={docItem.id}
-                                type="button"
-                                onClick={() => handleDocSelect(docItem)}
-                                className={cn(
-                                  'w-full rounded-md px-3 py-2 text-left text-sm transition-colors',
-                                  selectedDoc?.id === docItem.id
-                                    ? 'bg-accent text-foreground font-medium'
-                                    : 'bg-background text-muted-foreground hover:bg-accent hover:text-foreground'
-                                )}
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <p>{docItem.title}</p>
-                                    <p className="mt-1 text-xs text-muted-foreground">{docItem.summary}</p>
-                                  </div>
-                                  {docItem.readiness && (
-                                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                                      {readinessLabels[docItem.readiness]}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </CollapsibleContent>
-                      </Collapsible>
-                    ))}
-                  </div>
-
-                  {!hasResults && (
-                    <p className="text-sm text-muted-foreground">
-                      No documents match “{searchQuery}”. Try a different keyword or clear the search.
-                    </p>
-                  )}
-                </div>
-              </section>
-
-              <section className="px-6 py-12 bg-muted/30">
-                <div className="max-w-6xl mx-auto">
-                  <h2 className="text-2xl font-bold mb-4">Operational quick links</h2>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Release checklist</CardTitle>
-                        <CardDescription>
-                          Follow the production checklist backed by automated scripts and observability gates.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-3">
-                        <Button
-                          variant="outline"
-                          onClick={() => handleOpenDocument(`${docsRepositoryBase}/PRODUCTION_CHECKLIST.md`)}
-                        >
-                          Open PRODUCTION_CHECKLIST.md
-                          <ExternalLink className="ml-2 h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleOpenDocument(`${docsRepositoryBase}/deploy-production.sh`)}
-                        >
-                          Review deploy-production.sh
-                          <ExternalLink className="ml-2 h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Documentation governance</CardTitle>
-                        <CardDescription>
-                          Ensure every update is tracked with the docs hub guide and accuracy status report.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-3">
-                        <Button
-                          variant="outline"
-                          onClick={() => handleDocSelect(docCategories[4].items[0])}
-                        >
-                          View documentation hub
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleOpenDocument(`${docsRepositoryBase}/ACCURATE_STATUS_REPORT.md`)}
-                        >
-                          Accuracy status report
-                          <ExternalLink className="ml-2 h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              </section>
-
-              <section className="px-6 py-16">
-                <div className="max-w-4xl mx-auto text-center space-y-6">
-                  <h2 className="text-3xl font-bold">Need help aligning the docs with your release?</h2>
-                  <p className="text-lg text-muted-foreground">
-                    Partner with the documentation team to schedule reviews, capture new screenshots, or author bespoke runbooks
-                    for enterprise rollouts.
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-3">
-                    <Button size="lg" onClick={() => navigate('/support')}>
-                      <HelpCircle className="mr-2 h-5 w-5" />
-                      Open a support ticket
-                    </Button>
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
-                    >
-                      Email docs@e-code.ai
-                    </Button>
-                  </div>
-                </div>
-              </section>
-            </>
+              ))}
+            </div>
           )}
-        </main>
+        </div>
       </div>
     </div>
   );
 }
-

@@ -55,7 +55,7 @@ export function ReplitEditorLayout({
   const [internalRightPanelOpen, setInternalRightPanelOpen] = useState(rightPanelOpenProp ?? true);
   const [internalBottomPanelOpen, setInternalBottomPanelOpen] = useState(bottomPanelOpenProp ?? true);
   const [internalActiveRightPanel, setInternalActiveRightPanel] = useState<string | null>(
-    activeRightPanelProp ?? defaultRightPanel || rightPanels[0]?.id || null
+    activeRightPanelProp ?? (defaultRightPanel || rightPanels[0]?.id || null)
   );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
@@ -215,7 +215,6 @@ export function ReplitEditorLayout({
         {/* Left Panel - File Explorer */}
         {leftPanelOpen && (
           <>
-            <ResizablePanel defaultSize={22} minSize={14} maxSize={32}>
             <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
               <div className="h-full bg-[var(--ecode-background)] border-r border-[var(--ecode-border)]">
                 {leftPanel}
@@ -226,7 +225,6 @@ export function ReplitEditorLayout({
               withHandle
               className="bg-transparent data-[panel-group-direction=horizontal]:w-3 data-[panel-group-direction=horizontal]:cursor-col-resize hover:after:bg-[var(--ecode-accent)] after:bg-[var(--ecode-border)]"
             />
-            <ResizableHandle className="w-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
           </>
         )}
 
@@ -257,7 +255,6 @@ export function ReplitEditorLayout({
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
-                        className="h-6 w-6"
                         onClick={() => updateBottomPanelOpen(false)}
                       >
                         <X className="h-3 w-3" />
@@ -312,7 +309,6 @@ export function ReplitEditorLayout({
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
-                    className="h-6 w-6"
                     onClick={() => updateRightPanelOpen(false)}
                   >
                     <PanelRightClose className="h-3 w-3" />
