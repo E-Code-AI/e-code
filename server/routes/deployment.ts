@@ -47,6 +47,8 @@ router.post('/api/projects/:projectId/deploy', async (req, res) => {
     const projectId = parseInt(req.params.projectId);
     const userId = req.user!.id;
 
+    console.log(`📦 Starting deployment for project ${projectId} by user ${userId}`);
+
     // Validate deployment configuration
     const config = deploymentConfigSchema.parse(req.body);
 
@@ -58,17 +60,21 @@ router.post('/api/projects/:projectId/deploy', async (req, res) => {
     };
 
     const deploymentId = await deploymentManager.createDeployment(deploymentConfig);
+    
+    console.log(`✅ Deployment created with ID: ${deploymentId}`);
 
     res.json({
       success: true,
       deploymentId,
+      status: 'building',
       message: 'Deployment started successfully'
     });
   } catch (error) {
     console.error('Deployment creation error:', error);
     res.status(400).json({
       success: false,
-      message: error instanceof Error ? error.message : 'Failed to create deployment'
+      message: error instanceof Error ? error.message : 'Failed to create deployment',
+      error: error instanceof Error ? error.stack : undefined
     });
   }
 });

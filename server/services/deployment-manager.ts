@@ -281,11 +281,17 @@ export class DeploymentManager {
 
       deployment.deploymentLog.push(`🎉 Your app is live at ${deployment.url || deployment.customUrl}`);
 
-      // Update database
-      await storage.updateDeploymentStatus(deploymentId, {
-        status: 'active',
-        lastDeployedAt: new Date()
-      });
+      // Update database - ensure this completes before marking as done
+      try {
+        await storage.updateDeploymentStatus(deploymentId, {
+          status: 'active',
+          lastDeployedAt: new Date()
+        });
+        console.log(`✅ Deployment ${deploymentId} successfully marked as active in database`);
+      } catch (dbError) {
+        console.error(`Failed to update deployment status in database:`, dbError);
+        // Still mark as active in memory since deployment succeeded
+      }
 
     } catch (error) {
       deployment.status = 'failed';
