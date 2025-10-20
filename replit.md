@@ -51,6 +51,22 @@ Features a streamlined interface with a 4-tab layout (Files, Preview, Features, 
 The `.replit` file is configured for Replit Reserved VM deployment with `deploymentTarget = "cloudrun"`. It specifies `npm install` for building and `npm run dev` for running. A 4-port configuration is used, mapping local ports 5000, 3200, 8080, and 8081 to their respective external ports for the main Express server, MCP server, Go Runtime, and Python ML service.
 
 ## Recent Changes (October 20, 2025)
+
+### Critical Bug Fixes
+- **Deployment Button Hanging Fix**: Resolved critical issue where publish/deploy button would get stuck in loading state.
+  - Refactored DeploymentManager to use truly non-blocking container creation via `setTimeout(() => fetch(), 0)` pattern
+  - Implemented manual AbortController with 30-second timeout for better browser compatibility
+  - Container creation now runs fire-and-forget, cannot block deployment flow
+  - Proper cleanup with clearTimeout prevents memory leaks
+  - Clear error messages distinguish timeouts from other failures
+  - Files modified: client/src/components/DeploymentManager.tsx
+
+- **Workspace Loading Error Fix**: Fixed "useQuery is not defined" error preventing workspace from rendering.
+  - Added missing `import { useQuery } from '@tanstack/react-query'` to NixConfig.tsx
+  - Workspace editor now loads correctly, showing file tree, editor toolbar, and deploy button
+  - Files modified: client/src/components/NixConfig.tsx
+
+### Platform Updates
 - **Google Cloud Platform Removal**: All Google Cloud dependencies and deployment references removed. Platform now exclusively uses Replit Reserved VM deployment.
   - Removed packages: @google-cloud/storage, @google/genai, @google/generative-ai, googleapis, google-auth-library
   - Replaced Google Cloud Storage with Replit's built-in Object Storage (server/services/real-object-storage.ts)
