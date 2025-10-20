@@ -235,11 +235,13 @@ export function PublicNavbar() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <ThemeSwitcher />
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:block">
+                <ThemeSwitcher />
+              </div>
               <Button
                 variant="ghost"
-                className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+                className="hidden sm:flex text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white"
                 onClick={() => window.location.href = '/login'}
               >
                 <LogIn className="mr-2 h-4 w-4" />
@@ -249,7 +251,12 @@ export function PublicNavbar() {
 
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-[var(--ecode-text)] dark:text-slate-100">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="lg:hidden relative z-50 text-[var(--ecode-text)] dark:text-slate-100"
+                    aria-label="Open menu"
+                  >
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
@@ -259,14 +266,20 @@ export function PublicNavbar() {
                   <div className="mobile-nav-header flex-shrink-0 border-b border-[var(--ecode-border)]/20 bg-white/80 dark:bg-[var(--ecode-surface)]/80 px-6 py-5 backdrop-blur-lg">
                     <div className="flex items-center justify-between mb-4">
                       <ECodeLogo size="sm" />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="rounded-full hover:bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text)] dark:text-white transition-all duration-200"
-                      >
-                        <X className="h-5 w-5 text-current" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <div className="sm:hidden">
+                          <ThemeSwitcher />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="rounded-full hover:bg-[var(--ecode-sidebar-hover)] hover:bg-opacity-20 transition-all duration-200"
+                          aria-label="Close menu"
+                        >
+                          <X className="h-5 w-5 text-gray-600 dark:text-gray-200" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="relative group">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-text-muted)] transition-colors group-focus-within:text-[var(--ecode-accent)]" />
