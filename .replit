@@ -8,8 +8,8 @@ packages = ["glibcLocales", "go", "google-cloud-sdk", "jq", "libxcrypt", "sptk"]
 
 [deployment]
 deploymentTarget = "gce"
-build = ["npm", "run", "build"]
-run = ["npm", "start"]
+build = ["npm", "install"]
+run = ["sh", "-c", "npm run build"]
 
 [[ports]]
 localPort = 3200
@@ -38,6 +38,10 @@ externalPort = 3003
 [[ports]]
 localPort = 38711
 externalPort = 3001
+
+[[ports]]
+localPort = 42235
+externalPort = 4200
 
 [workflows]
 runButton = "Project"
