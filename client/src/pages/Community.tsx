@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useMemo, useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,6 +49,17 @@ interface CommunityPost {
   createdAt: string;
   projectUrl?: string;
   imageUrl?: string;
+}
+
+interface CommunityPostsResponse {
+  posts: CommunityPost[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
 }
 
 interface Challenge {
@@ -180,18 +191,37 @@ export default function Community() {
     queryKey: ['/api/community/categories']
   });
 
-  // Build query string for posts
-  const queryParams = new URLSearchParams();
-  if (activeCategory !== 'all') queryParams.set('category', activeCategory);
-  if (searchQuery) queryParams.set('search', searchQuery);
-  const queryString = queryParams.toString();
+  const postsQueryKey = ['/api/community/posts', { category: activeCategory, search: searchQuery }];
 
-  // Fetch community posts
-  const { data: posts = [], isLoading: postsLoading } = useQuery<CommunityPost[]>({
-    queryKey: queryString 
-      ? [`/api/community/posts?${queryString}`]
-      : ['/api/community/posts']
+  const {
+    data: postsPages,
+    isLoading: postsInitialLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<CommunityPostsResponse>({
+    queryKey: postsQueryKey,
+    initialPageParam: 1,
+    queryFn: async ({ pageParam = 1 }) => {
+      const params = new URLSearchParams();
+      if (activeCategory !== 'all') params.set('category', activeCategory);
+      if (searchQuery) params.set('search', searchQuery);
+      params.set('page', pageParam.toString());
+      params.set('pageSize', '20');
+      const res = await fetch(`/api/community/posts?${params.toString()}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch community posts (${res.status})`);
+      }
+      return res.json();
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage?.pagination?.hasMore ? lastPage.pagination.page + 1 : undefined,
   });
+
+  const posts = postsPages?.pages?.flatMap((page) => page.posts ?? []) ?? [];
+  const postsLoading = postsInitialLoading && !postsPages;
 
   // Fetch challenges
   const { data: challenges = [] } = useQuery<Challenge[]>({
@@ -451,9 +481,10 @@ export default function Community() {
                     </CardContent>
                   </Card>
                 ) : (
-                  posts.map((post: CommunityPost) => (
-                    <Card key={post.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4 sm:p-6">
+                  <>
+                    {posts.map((post: CommunityPost) => (
+                      <Card key={post.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4 sm:p-6">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 sm:gap-3 mb-3">
@@ -564,9 +595,22 @@ export default function Community() {
                             </div>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {hasNextPage && (
+                      <div className="flex justify-center pt-2">
+                        <Button
+                          onClick={() => fetchNextPage()}
+                          disabled={isFetchingNextPage}
+                          variant="outline"
+                          className="min-w-[160px]"
+                        >
+                          {isFetchingNextPage ? 'Loading more...' : 'Load more posts'}
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </TabsContent>
             </Tabs>
