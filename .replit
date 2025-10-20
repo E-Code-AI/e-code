@@ -7,41 +7,13 @@ channel = "stable-24_05"
 packages = ["glibcLocales", "go", "google-cloud-sdk", "jq", "libxcrypt", "sptk"]
 
 [deployment]
-deploymentTarget = "gce"
+deploymentTarget = "cloudrun"
 build = ["npm", "install"]
 run = ["sh", "-c", "npm run build"]
 
 [[ports]]
-localPort = 3200
-externalPort = 3000
-
-[[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 8080
-externalPort = 8080
-
-[[ports]]
-localPort = 8081
-externalPort = 8081
-
-[[ports]]
-localPort = 33853
-externalPort = 3002
-
-[[ports]]
-localPort = 37033
-externalPort = 3003
-
-[[ports]]
-localPort = 38711
-externalPort = 3001
-
-[[ports]]
-localPort = 42235
-externalPort = 4200
 
 [workflows]
 runButton = "Project"
@@ -67,7 +39,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "npm run prod"
 waitForPort = 5000
 
 [agent]
