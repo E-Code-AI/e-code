@@ -64,35 +64,6 @@ router.get('/repositories', ensureAuthenticated, githubOAuth.requireGitHubAuth, 
 
     const repos = await githubOAuth.getUserRepos(req.githubToken, page, perPage);
     res.json(repos.map(mapRepository));
-    if (error) {
-      return res.status(error.status).json({
-        error: 'GitHub not connected',
-        message: error.message,
-      });
-    }
-
-    const { data: repos } = await octokit.repos.listForAuthenticatedUser({
-      per_page: 100,
-      sort: 'updated',
-      direction: 'desc',
-    });
-
-    res.json(
-      repos.map((repo) => ({
-        id: repo.id,
-        name: repo.name,
-        fullName: repo.full_name,
-        description: repo.description,
-        url: repo.html_url,
-        private: repo.private,
-        stars: repo.stargazers_count,
-        forks: repo.forks_count,
-        language: repo.language,
-        updatedAt: repo.updated_at,
-        defaultBranch: repo.default_branch,
-        owner: currentUser?.login ?? repo.owner?.login,
-      }))
-    );
   } catch (error: any) {
     console.error('GitHub MCP repositories error:', error);
     res.status(500).json({
@@ -129,35 +100,6 @@ router.post('/repositories', ensureAuthenticated, githubOAuth.requireGitHubAuth,
     }
 
     res.status(201).json(mapRepository(result.data));
-    const { octokit, error } = await createGitHubClient(req.user!.id);
-
-    if (error) {
-      return res.status(error.status).json({
-        error: 'GitHub not connected',
-        message: error.message,
-      });
-    }
-
-    const { data } = await octokit.repos.createForAuthenticatedUser({
-      name,
-      description,
-      private: Boolean(isPrivate),
-      auto_init: true,
-    });
-
-    res.status(201).json({
-      id: data.id,
-      name: data.name,
-      description: data.description,
-      url: data.html_url,
-      private: data.private,
-      stars: data.stargazers_count,
-      forks: data.forks_count,
-      language: data.language,
-      updatedAt: data.updated_at,
-      defaultBranch: data.default_branch,
-      owner: data.owner?.login,
-    });
   } catch (error: any) {
     console.error('GitHub MCP create repository error:', error);
     res.status(500).json({
@@ -224,24 +166,6 @@ router.post('/issues', ensureAuthenticated, githubOAuth.requireGitHubAuth, async
       createdAt: issue.created_at,
       updatedAt: issue.updated_at,
       author: issue.user?.login ?? null,
-    const { data } = await octokit.issues.create({
-      owner,
-      repo,
-      title,
-      body,
-      labels,
-    });
-
-    res.status(201).json({
-      number: data.number,
-      title: data.title,
-      body: data.body,
-      labels: data.labels?.map((label: any) => (typeof label === 'string' ? label : label?.name)).filter(Boolean),
-      state: data.state,
-      url: data.html_url,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      author: data.user?.login,
     });
   } catch (error: any) {
     console.error('GitHub MCP create issue error:', error);
