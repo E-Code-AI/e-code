@@ -7,9 +7,9 @@ channel = "stable-24_05"
 packages = ["glibcLocales", "go", "google-cloud-sdk", "jq", "libxcrypt", "sptk"]
 
 [deployment]
-deploymentTarget = "cloudrun"
-build = ["sh", "-c", "echo 'Build step completed'"]
-run = ["sh", "-c", "NODE_ENV=production tsx server/index.ts"]
+deploymentTarget = "autoscale"
+build = ["sh", "-c", "node build-prod.js"]
+run = ["node", "dist/start.js"]
 
 [[ports]]
 localPort = 5000
