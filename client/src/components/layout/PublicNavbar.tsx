@@ -253,7 +253,8 @@ export function PublicNavbar() {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="sheet-content w-full sm:w-[420px] p-0 border-l border-[var(--ecode-border)]/50 bg-gradient-to-b from-[#ffffff] to-[#f8f9fa] dark:from-[var(--ecode-surface)] dark:to-[var(--ecode-surface)]/95 backdrop-blur-xl">
+                <div className="public-mobile-nav">
+                  <SheetContent side="right" className="sheet-content w-full sm:w-[420px] p-0 border-l border-[var(--ecode-border)]/50 bg-gradient-to-b from-[#ffffff] to-[#f8f9fa] dark:from-[var(--ecode-surface)] dark:to-[var(--ecode-surface)]/95 backdrop-blur-xl">
                   {/* Mobile Header with improved design */}
                   <div className="mobile-nav-header sticky top-0 z-10 border-b border-[var(--ecode-border)]/20 bg-white/80 dark:bg-[var(--ecode-surface)]/80 px-6 py-5 backdrop-blur-lg">
                     <div className="flex items-center justify-between mb-4">
@@ -395,6 +396,7 @@ export function PublicNavbar() {
                     </div>
                   </ScrollArea>
                 </SheetContent>
+                </div>
               </Sheet>
             </div>
           </div>
