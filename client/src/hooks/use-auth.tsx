@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { createContext, ReactNode, useContext, useState } from "react";
+import React from "react";
 import {
   useQuery,
   useMutation,
@@ -8,6 +8,9 @@ import {
 import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+const { createContext, useContext, useState } = React;
+type ReactNode = React.ReactNode;
 
 type AuthContextType = {
   user: SelectUser | null;
