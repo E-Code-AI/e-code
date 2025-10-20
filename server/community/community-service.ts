@@ -103,7 +103,13 @@ export class CommunityService {
 
   async getCommunityPosts(req: Request, res: Response) {
     try {
-      const { category, search } = req.query;
+      const { category, search, tag } = req.query;
+      const parsedPage = Number.parseInt((req.query.page as string) ?? '', 10);
+      const parsedPageSize = Number.parseInt((req.query.pageSize as string) ?? '', 10);
+      const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+      const pageSizeRaw = Number.isFinite(parsedPageSize) && parsedPageSize > 0 ? parsedPageSize : 20;
+      const pageSize = Math.min(50, pageSizeRaw);
+      const offset = (page - 1) * pageSize;
       const currentUserId = req.user?.id as string | undefined;
 
       const conditions: SQL[] = [];
@@ -116,6 +122,18 @@ export class CommunityService {
           sql`(${communityPosts.title} ILIKE ${term} OR ${communityPosts.content} ILIKE ${term} OR ${communityPosts.tags}::text ILIKE ${term})`,
         );
       }
+      const tagValue = Array.isArray(tag) ? tag[0] : tag;
+      if (tagValue) {
+        conditions.push(sql`${communityPosts.tags} @> ${JSON.stringify([tagValue])}::jsonb`);
+      }
+
+      const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+
+      let totalQuery = db.select({ total: sql`COUNT(*)` }).from(communityPosts);
+      if (whereCondition) {
+        totalQuery = totalQuery.where(whereCondition);
+      }
+      const [{ total }] = await totalQuery;
 
       let query = db
         .select({
@@ -158,9 +176,11 @@ export class CommunityService {
         )
         .orderBy(desc(communityPosts.createdAt));
 
-      if (conditions.length > 0) {
-        query = query.where(and(...conditions));
+      if (whereCondition) {
+        query = query.where(whereCondition);
       }
+
+      query = query.limit(pageSize).offset(offset);
 
       const posts = await query;
       const postIds = posts.map((post) => post.id).filter((id) => id != null);
@@ -211,7 +231,18 @@ export class CommunityService {
         };
       });
 
-      res.json(response);
+      const totalCount = Number(total ?? 0);
+
+      res.json({
+        posts: response,
+        pagination: {
+          page,
+          pageSize,
+          total: totalCount,
+          totalPages: totalCount === 0 ? 1 : Math.ceil(totalCount / pageSize),
+          hasMore: page * pageSize < totalCount,
+        },
+      });
     } catch (error) {
       logger.error('Error fetching community posts', error);
       res.status(500).json({ message: 'Failed to fetch community posts' });
