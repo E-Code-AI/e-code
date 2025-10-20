@@ -9,10 +9,25 @@ import { Request, Response, NextFunction } from "express";
 // Variable pour activer/désactiver le contournement d'auth
 // DÉSACTIVÉ par défaut même en développement pour assurer la stabilité
 let bypassAuth = false;
+let productionBypassWarningLogged = false;
 const BYPASS_HEADER = 'x-dev-auth-token';
 
-const isBypassFeatureEnabled = () =>
-  process.env.NODE_ENV === 'development' && process.env.ENABLE_DEV_AUTH_BYPASS === 'true';
+const isBypassFeatureEnabled = () => {
+  const enabled = process.env.ENABLE_DEV_AUTH_BYPASS === 'true';
+
+  if (
+    enabled &&
+    process.env.NODE_ENV === 'production' &&
+    !productionBypassWarningLogged
+  ) {
+    productionBypassWarningLogged = true;
+    console.warn(
+      'Auth Bypass: ENABLE_DEV_AUTH_BYPASS est actif alors que NODE_ENV=production. À n\'utiliser que pour le débogage.'
+    );
+  }
+
+  return enabled;
+};
 
 const getBypassSecret = () => process.env.DEV_AUTH_BYPASS_TOKEN;
 
@@ -41,10 +56,13 @@ export const devAuthBypass = (req: Request, res: Response, next: NextFunction) =
     return next();
   }
 
+  const shouldBypassRequest =
+    isBypassFeatureEnabled() && (hasValidBypassToken(req) || bypassAuth);
+
   // Si le contournement est activé, nous simulons un utilisateur authentifié
-  if (bypassAuth && isBypassFeatureEnabled() && hasValidBypassToken(req)) {
+  if (shouldBypassRequest) {
     // Si isAuthenticated() est déjà true, continuez normalement
-    if (req.isAuthenticated()) {
+    if (typeof req.isAuthenticated === 'function' && req.isAuthenticated()) {
       return next();
     }
     

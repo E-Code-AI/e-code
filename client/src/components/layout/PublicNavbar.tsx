@@ -11,487 +11,318 @@ import {
   NavigationMenuTrigger,
 } from '@/components/ui/navigation-menu';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { 
-  Menu, X, ChevronDown, Code, ChevronRight, Sparkles, 
-  Terminal, Users, Smartphone, Monitor, Brain, Rocket, 
-  DollarSign, FileText, BookOpen, MessageSquare, Globe,
-  Briefcase, Building, Newspaper, Handshake, Star,
-  Search, Settings, LogIn
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ThemeSwitcher } from '@/components/ThemeSwitcher';
-import { ECodeLogo } from '@/components/ECodeLogo';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import {
+  Menu,
+  X,
+  ChevronRight,
+  Sparkles,
+  ArrowUpRight,
+  Search,
+  LogIn,
+} from 'lucide-react';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import { ECodeLogo } from '@/components/ECodeLogo';
 import './MobileNavigation.css';
 
 export function PublicNavbar() {
-  const [location, navigate] = useLocation();
+  const [, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const productItems = [
-    { title: 'AI Agent', href: '/ai-agent', description: 'Build apps with AI in seconds' },
-    { title: 'IDE', href: '/features', description: 'Code in your browser' },
-    { title: 'Multiplayer', href: '/features#multiplayer', description: 'Code with your team' },
-    { title: 'Mobile App', href: '/mobile', description: 'Code on the go' },
-    { title: 'Desktop App', href: '/desktop', description: 'Code offline' },
-    { title: 'AI', href: '/ai', description: 'AI-powered coding' },
-    { title: 'Deployments', href: '/marketing/deployments', description: 'Global cloud hosting platform' },
-    { title: 'Bounties', href: '/marketing/bounties', description: 'Developer marketplace for earning' },
-    { title: 'Teams', href: '/marketing/teams', description: 'Collaborate and scale together' },
+    { title: 'AI Agent', href: '/ai-agent', description: 'Build production-ready apps with natural language prompts.' },
+    { title: 'Browser IDE', href: '/features', description: 'Enterprise-grade development workspace built for teams.' },
+    { title: 'Multiplayer', href: '/features#multiplayer', description: 'Live collaboration, pair programming, and shared presence.' },
+    { title: 'Mobile App', href: '/mobile', description: 'Ship from anywhere with a fully-featured mobile IDE.' },
+    { title: 'Desktop App', href: '/desktop', description: 'Optimized offline workflow with secure device sync.' },
+    { title: 'AI Platform', href: '/ai', description: 'Governance, observability, and orchestration for AI workloads.' },
+    { title: 'Deployments', href: '/marketing/deployments', description: 'Global edge infrastructure with Fortune 500 reliability.' },
+    { title: 'Bounties', href: '/marketing/bounties', description: 'Activate an on-demand developer network to accelerate delivery.' },
+    { title: 'Teams', href: '/marketing/teams', description: 'Enterprise controls, compliance, and insights for large orgs.' },
   ];
 
   const solutionsItems = [
-    { title: 'App Builder', href: '/solutions/app-builder', description: 'Build full-stack applications with AI' },
-    { title: 'Website Builder', href: '/solutions/website-builder', description: 'Create stunning websites instantly' },
-    { title: 'Game Builder', href: '/solutions/game-builder', description: 'Design and code games with AI' },
-    { title: 'Dashboard Builder', href: '/solutions/dashboard-builder', description: 'Build data visualizations and dashboards' },
-    { title: 'Chatbot / AI Agent Builder', href: '/solutions/chatbot-builder', description: 'Create intelligent conversational agents' },
-    { title: 'AI Agent Internal Builder', href: '/solutions/internal-ai-builder', description: 'Deploy AI agents for your team' },
+    { title: 'App Builder', href: '/solutions/app-builder', description: 'Rapidly prototype and deploy full-stack applications.' },
+    { title: 'Website Builder', href: '/solutions/website-builder', description: 'Create polished marketing sites with zero setup.' },
+    { title: 'Game Builder', href: '/solutions/game-builder', description: 'Design and launch interactive experiences powered by AI.' },
+    { title: 'Dashboard Builder', href: '/solutions/dashboard-builder', description: 'Data-rich dashboards with real-time collaboration.' },
+    { title: 'Chatbot / AI Agent Builder', href: '/solutions/chatbot-builder', description: 'Deploy conversational assistants across your organization.' },
+    { title: 'Internal AI Builder', href: '/solutions/internal-ai-builder', description: 'Bring private AI agents to every team safely and securely.' },
   ];
 
   const resourcesItems = [
-    { title: 'Documentation', href: '/docs', description: 'Learn how to use E-Code' },
-    { title: 'Blog', href: '/blog', description: 'News and updates' },
-    { title: 'Community', href: '/community', description: 'Connect with developers' },
-    { title: 'Templates', href: '/templates', description: 'Start from a template' },
-    { title: 'Languages', href: '/templates/languages', description: '40+ supported languages' },
-    { title: 'Status', href: '/status', description: 'Service uptime' },
-    { title: 'Forum', href: '/forum', description: 'Get help' },
+    { title: 'Documentation', href: '/docs', description: 'Get started quickly with step-by-step guides.' },
+    { title: 'AI Documentation', href: '/ai-documentation', description: 'Complete AI capabilities guide' },
+    { title: 'Blog', href: '/blog', description: 'Stories on shipping software at global scale.' },
+    { title: 'Community', href: '/community', description: 'Connect with builders and share best practices.' },
+    { title: 'Templates', href: '/templates', description: 'Launch with curated, industry-specific templates.' },
+    { title: 'Languages', href: '/templates/languages', description: 'Build in 40+ languages without local installs.' },
+    { title: 'Status', href: '/status', description: 'Transparency around platform availability.' },
+    { title: 'Forum', href: '/forum', description: 'Get support from E-Code experts and peers.' },
   ];
 
   const companyItems = [
-    { title: 'About', href: '/about', description: 'Our mission' },
-    { title: 'Careers', href: '/careers', description: 'Join our team' },
-    { title: 'Press', href: '/press', description: 'News coverage' },
-    { title: 'Partners', href: '/partners', description: 'Work with us' },
+    { title: 'About', href: '/about', description: 'Learn about our mission and leadership team.' },
+    { title: 'Careers', href: '/careers', description: 'Join a distributed team building the future of software.' },
+    { title: 'Press', href: '/press', description: 'Press releases, media kit, and recent coverage.' },
+    { title: 'Partners', href: '/partners', description: 'Strategic alliances and solution partners.' },
   ];
 
+  const desktopNav = (
+    <NavigationMenu>
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Product</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[480px] gap-3 p-4 md:w-[520px] md:grid-cols-2 lg:w-[640px]">
+              {productItems.map((item) => (
+                <li key={item.title}>
+                  <Link
+                    href={item.href}
+                    className="block rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-sky-500/10"
+                  >
+                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-sky-300" />
+                      {item.title}
+                    </div>
+                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
+                      {item.description}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Solutions</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[480px] gap-3 p-4 md:w-[520px] md:grid-cols-2 lg:w-[640px]">
+              {solutionsItems.map((item) => (
+                <li key={item.title}>
+                  <Link
+                    href={item.href}
+                    className="block rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-sky-500/10"
+                  >
+                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
+                      <ArrowUpRight className="h-4 w-4 text-indigo-300" />
+                      {item.title}
+                    </div>
+                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
+                      {item.description}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[480px] gap-3 p-4 md:w-[520px] md:grid-cols-2 lg:w-[640px]">
+              {resourcesItems.map((item) => (
+                <li key={item.title}>
+                  <Link
+                    href={item.href}
+                    className="block rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-sky-500/10"
+                  >
+                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
+                      <Search className="h-4 w-4 text-sky-300" />
+                      {item.title}
+                    </div>
+                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
+                      {item.description}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Company</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[360px] gap-3 p-4">
+              {companyItems.map((item) => (
+                <li key={item.title}>
+                  <Link
+                    href={item.href}
+                    className="block rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-sky-500/10"
+                  >
+                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
+                      <ChevronRight className="h-4 w-4 text-indigo-300" />
+                      {item.title}
+                    </div>
+                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
+                      {item.description}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuLink
+            href="/pricing"
+            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/15 px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+          >
+            Pricing
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuLink
+            href="/team"
+            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/15 px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+          >
+            Teams
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
+  );
+
+  const primaryCta = (
+    <Button
+      onClick={() => window.location.href = '/register'}
+      className="hidden sm:inline-flex bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-[var(--ecode-text)] dark:text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/25"
+    >
+      Get started
+    </Button>
+  );
+
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container-responsive">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-6">
-            <Link href="/">
-              <div className="cursor-pointer">
-                <ECodeLogo size="sm" />
-              </div>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <div className="hidden lg:block">
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger>Product</NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                        {productItems.map((item) => (
-                          <li key={item.title}>
-                            <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                              <div className="text-sm font-medium leading-none">{item.title}</div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                {item.description}
-                              </p>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger>Solutions</NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                        {solutionsItems.map((item) => (
-                          <li key={item.title}>
-                            <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                              <div className="text-sm font-medium leading-none">{item.title}</div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                {item.description}
-                              </p>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                        {resourcesItems.map((item) => (
-                          <li key={item.title}>
-                            <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                              <div className="text-sm font-medium leading-none">{item.title}</div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                {item.description}
-                              </p>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger>Company</NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="grid w-[400px] gap-3 p-4">
-                        {companyItems.map((item) => (
-                          <li key={item.title}>
-                            <Link href={item.href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                              <div className="text-sm font-medium leading-none">{item.title}</div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                {item.description}
-                              </p>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-
-                  <NavigationMenuItem>
-                    <NavigationMenuLink 
-                      href="/pricing"
-                      className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
-                    >
-                      Pricing
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-
-                  <NavigationMenuItem>
-                    <NavigationMenuLink 
-                      href="/team"
-                      className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
-                    >
-                      Teams
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
-            </div>
+    <header className="sticky top-0 z-50 w-full">
+      <div className="hidden md:block border-b border-[var(--ecode-border)] dark:border-white/10 bg-[var(--ecode-accent)]/5 dark:bg-gradient-to-r dark:from-sky-500/20 dark:via-indigo-500/20 dark:to-purple-500/20">
+        <div className="container-responsive flex h-10 items-center justify-between text-xs text-[var(--ecode-text)] dark:text-slate-100">
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)] dark:bg-white/15 dark:text-white border-[var(--ecode-accent)]/20 dark:border-white/25 uppercase tracking-[0.2em]">
+              NEW
+            </Badge>
+            <p className="font-medium">Introducing E-Code Enterprise Cloud with dedicated AI governance and auditability.</p>
           </div>
-
-          {/* Right side actions */}
-          <div className="flex items-center gap-4">
-            <ThemeSwitcher />
-            
-            <Button variant="ghost" onClick={() => window.location.href = '/login'}>
-              Log in
-            </Button>
-            
-            <Button onClick={() => window.location.href = '/register'} className="hidden sm:inline-flex">
-              Sign up
-            </Button>
-
-            {/* Mobile menu */}
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-full sm:w-[480px] p-0 overflow-hidden sheet-content">
-                <div className="flex flex-col h-full">
-                  {/* Header */}
-                  <div className="mobile-nav-header px-6 py-4 border-b bg-background/95 backdrop-blur">
-                    <div className="flex items-center justify-between">
-                      <ECodeLogo size="sm" />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {/* Search Bar */}
-                    <div className="mt-4 relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="search"
-                        placeholder="Search E-Code..."
-                        className="pl-10 h-9 bg-muted/50 focus:bg-background"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Scrollable Content */}
-                  <ScrollArea className="flex-1">
-                    <div className="mobile-nav-content px-6 py-4 space-y-6">
-                      {/* Featured Actions */}
-                      <div className="mobile-nav-grid grid grid-cols-2 gap-3">
-                        <Button
-                          className="mobile-nav-item h-auto py-4 px-4 flex-col gap-2 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                          onClick={() => {
-                            setMobileMenuOpen(false);
-                            navigate('/');
-                          }}
-                        >
-                          <Sparkles className="mobile-nav-icon h-5 w-5" />
-                          <span className="text-xs font-medium">Start Building</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="mobile-nav-item h-auto py-4 px-4 flex-col gap-2"
-                          onClick={() => {
-                            setMobileMenuOpen(false);
-                            navigate('/templates');
-                          }}
-                        >
-                          <FileText className="mobile-nav-icon h-5 w-5" />
-                          <span className="text-xs font-medium">Browse Templates</span>
-                        </Button>
-                      </div>
-
-                      {/* Product Section */}
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Product</h3>
-                          <Badge variant="secondary" className="text-[10px]">8 Features</Badge>
-                        </div>
-                        <div className="space-y-1">
-                          {productItems.map((item) => {
-                            const icons: Record<string, any> = {
-                              'AI Agent': Brain,
-                              'IDE': Terminal,
-                              'Multiplayer': Users,
-                              'Mobile App': Smartphone,
-                              'Desktop App': Monitor,
-                              'AI': Sparkles,
-                              'Deployments': Rocket,
-                              'Bounties': DollarSign
-                            };
-                            const Icon = icons[item.title] || Code;
-                            
-                            return (
-                              <Link key={item.title} href={item.href}>
-                                <Button
-                                  variant="ghost"
-                                  className="mobile-nav-item w-full justify-start h-auto py-3 px-3 hover:bg-muted/80"
-                                  onClick={() => setMobileMenuOpen(false)}
-                                >
-                                  <div className="flex items-start gap-3 w-full">
-                                    <div className="rounded-lg bg-primary/10 p-2 mt-0.5">
-                                      <Icon className="mobile-nav-icon h-4 w-4 text-primary" />
-                                    </div>
-                                    <div className="flex-1 text-left">
-                                      <div className="font-medium text-sm">{item.title}</div>
-                                      <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>
-                                    </div>
-                                    <ChevronRight className="h-4 w-4 text-muted-foreground mt-2" />
-                                  </div>
-                                </Button>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      {/* Solutions Section */}
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Solutions</h3>
-                          <Badge variant="secondary" className="text-[10px]">6 Solutions</Badge>
-                        </div>
-                        <div className="space-y-1">
-                          {solutionsItems.map((item) => {
-                            const icons: Record<string, any> = {
-                              'App Builder': Code,
-                              'Website Builder': Globe,
-                              'Game Builder': Rocket,
-                              'Dashboard Builder': Monitor,
-                              'Chatbot / AI Agent Builder': MessageSquare,
-                              'AI Agent Internal Builder': Brain
-                            };
-                            const Icon = icons[item.title] || Code;
-                            
-                            return (
-                              <Link key={item.title} href={item.href}>
-                                <Button
-                                  variant="ghost"
-                                  className="mobile-nav-item w-full justify-start h-auto py-3 px-3 hover:bg-muted/80"
-                                  onClick={() => setMobileMenuOpen(false)}
-                                >
-                                  <div className="flex items-start gap-3 w-full">
-                                    <div className="rounded-lg bg-primary/10 p-2 mt-0.5">
-                                      <Icon className="mobile-nav-icon h-4 w-4 text-primary" />
-                                    </div>
-                                    <div className="flex-1 text-left">
-                                      <div className="font-medium text-sm">{item.title}</div>
-                                      <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>
-                                    </div>
-                                    <ChevronRight className="h-4 w-4 text-muted-foreground mt-2" />
-                                  </div>
-                                </Button>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      {/* Resources Section */}
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Resources</h3>
-                          <Badge variant="secondary" className="text-[10px]">6 Items</Badge>
-                        </div>
-                        <div className="space-y-1">
-                          {resourcesItems.map((item) => {
-                            const icons: Record<string, any> = {
-                              'Documentation': BookOpen,
-                              'Blog': Newspaper,
-                              'Community': MessageSquare,
-                              'Templates': FileText,
-                              'Status': Globe,
-                              'Forum': Users
-                            };
-                            const Icon = icons[item.title] || FileText;
-                            
-                            return (
-                              <Link key={item.title} href={item.href}>
-                                <Button
-                                  variant="ghost"
-                                  className="w-full justify-start h-auto py-3 px-3 hover:bg-muted/80"
-                                  onClick={() => setMobileMenuOpen(false)}
-                                >
-                                  <div className="flex items-start gap-3 w-full">
-                                    <div className="rounded-lg bg-muted p-2 mt-0.5">
-                                      <Icon className="h-4 w-4 text-muted-foreground" />
-                                    </div>
-                                    <div className="flex-1 text-left">
-                                      <div className="font-medium text-sm">{item.title}</div>
-                                      <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>
-                                    </div>
-                                    <ChevronRight className="h-4 w-4 text-muted-foreground mt-2" />
-                                  </div>
-                                </Button>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      {/* Company Section */}
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Company</h3>
-                          <Badge variant="secondary" className="text-[10px]">4 Pages</Badge>
-                        </div>
-                        <div className="space-y-1">
-                          {companyItems.map((item) => {
-                            const icons: Record<string, any> = {
-                              'About': Building,
-                              'Careers': Briefcase,
-                              'Press': Newspaper,
-                              'Partners': Handshake
-                            };
-                            const Icon = icons[item.title] || Building;
-                            
-                            return (
-                              <Link key={item.title} href={item.href}>
-                                <Button
-                                  variant="ghost"
-                                  className="w-full justify-start h-auto py-3 px-3 hover:bg-muted/80"
-                                  onClick={() => setMobileMenuOpen(false)}
-                                >
-                                  <div className="flex items-start gap-3 w-full">
-                                    <div className="rounded-lg bg-muted p-2 mt-0.5">
-                                      <Icon className="h-4 w-4 text-muted-foreground" />
-                                    </div>
-                                    <div className="flex-1 text-left">
-                                      <div className="font-medium text-sm">{item.title}</div>
-                                      <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>
-                                    </div>
-                                    <ChevronRight className="h-4 w-4 text-muted-foreground mt-2" />
-                                  </div>
-                                </Button>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      {/* Quick Links */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <Link href="/pricing">
-                          <Button
-                            variant="outline"
-                            className="w-full h-auto py-3 flex flex-col gap-1"
-                            onClick={() => setMobileMenuOpen(false)}
-                          >
-                            <Star className="h-4 w-4" />
-                            <span className="text-xs">Pricing</span>
-                          </Button>
-                        </Link>
-                        <Link href="/team">
-                          <Button
-                            variant="outline"
-                            className="w-full h-auto py-3 flex flex-col gap-1"
-                            onClick={() => setMobileMenuOpen(false)}
-                          >
-                            <Users className="h-4 w-4" />
-                            <span className="text-xs">Teams</span>
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </ScrollArea>
-
-                  {/* Footer Actions */}
-                  <div className="border-t bg-background/95 backdrop-blur p-4 space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          setTimeout(() => navigate('/auth'), 150);
-                        }}
-                      >
-                        <LogIn className="h-4 w-4 mr-2" />
-                        Log in
-                      </Button>
-                      <Button 
-                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          setTimeout(() => navigate('/auth'), 150);
-                        }}
-                      >
-                        Sign up
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between px-2">
-                      <ThemeSwitcher />
-                      <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
-                        <Settings className="h-3 w-3 mr-1" />
-                        Settings
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+          <button
+            className="inline-flex items-center gap-1 text-[var(--ecode-accent)] hover:text-[var(--ecode-accent-hover)] dark:text-sky-200 dark:hover:text-white transition-colors"
+            onClick={() => navigate('/contact-sales')}
+          >
+            Talk to an expert
+            <ChevronRight className="h-3 w-3" />
+          </button>
         </div>
       </div>
-    </nav>
+
+      <nav className="relative border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]/95 dark:border-white/10 dark:bg-slate-950/75 backdrop-blur-xl">
+        <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-100" aria-hidden />
+        <div className="container-responsive relative">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Link href="/">
+                <div className="cursor-pointer">
+                  <ECodeLogo size="sm" />
+                </div>
+              </Link>
+
+              <div className="hidden lg:block text-[var(--ecode-text)] dark:text-slate-200">
+                {desktopNav}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <ThemeSwitcher />
+              <Button
+                variant="ghost"
+                className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+                onClick={() => window.location.href = '/login'}
+              >
+                <LogIn className="mr-2 h-4 w-4" />
+                Log in
+              </Button>
+              {primaryCta}
+
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-[var(--ecode-text)] dark:text-slate-100">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full sm:w-[420px] bg-[var(--ecode-surface)] text-[var(--ecode-text)] dark:bg-slate-950/95 dark:text-[var(--ecode-text)] dark:text-slate-100 border-l border-white/10">
+                  <SheetHeader className="mb-6">
+                    <div className="flex items-center justify-between">
+                      <ECodeLogo size="sm" />
+                    </div>
+                    <div className="mt-4 relative">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-text-muted)] dark:text-slate-400" />
+                      <Input
+                        placeholder="Search documentation, templates, or people"
+                        className="pl-9 bg-white/5 border-white/10 text-[var(--ecode-text)] dark:text-slate-100 placeholder:text-[var(--ecode-text-muted)] dark:text-slate-400"
+                      />
+                    </div>
+                  </SheetHeader>
+
+                  <div className="px-6">
+                    <Button
+                      className="w-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-[var(--ecode-text)] dark:text-white shadow-lg shadow-blue-500/20"
+                      onClick={() => window.location.href = '/register'}
+                    >
+                      Create your account
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="mt-3 w-full border border-white/10 text-[var(--ecode-text-secondary)] dark:text-slate-200 hover:text-white dark:hover:text-white"
+                      onClick={() => window.location.href = '/login'}
+                    >
+                      Sign in
+                    </Button>
+                  </div>
+
+                  <SheetTitle className="px-6 pt-8 pb-3 text-xs uppercase tracking-[0.3em] text-[var(--ecode-text-muted)] dark:text-slate-400">
+                    Navigation
+                  </SheetTitle>
+                  <ScrollArea className="h-[55vh] px-6">
+                    <div className="space-y-8 pb-8">
+                      {[{ title: 'Product', items: productItems }, { title: 'Solutions', items: solutionsItems }, { title: 'Resources', items: resourcesItems }, { title: 'Company', items: companyItems }].map((section) => (
+                        <div key={section.title}>
+                          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ecode-text-muted)] dark:text-slate-400 mb-3">
+                            {section.title}
+                          </p>
+                          <div className="space-y-3">
+                            {section.items.map((item) => (
+                              <button
+                                key={item.title}
+                                onClick={() => {
+                                  setMobileMenuOpen(false);
+                                  setTimeout(() => navigate(item.href), 120);
+                                }}
+                                className="w-full text-left rounded-xl border border-white/10 bg-white/[0.04] p-4 transition hover:bg-white/[0.08]"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white">{item.title}</span>
+                                  <ChevronRight className="h-4 w-4 text-[var(--ecode-text-muted)] dark:text-slate-400" />
+                                </div>
+                                <p className="mt-2 text-xs text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
+                                  {item.description}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
   );
 }

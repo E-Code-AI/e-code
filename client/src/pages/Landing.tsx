@@ -11,16 +11,17 @@ import {
   Rocket, Package, Database, Cpu, Cloud, Lock, Star,
   ChevronRight, ArrowRight, CheckCircle, PlayCircle,
   Sparkles, Check, Loader2, MessageSquare, Bot, ShoppingCart,
-  Play, Pause, Volume2, VolumeX, Maximize, Globe2
+  Play, Pause, Volume2, VolumeX, Maximize, Globe2,
+  BookOpen, Store, Briefcase, ListTodo, CloudSun, PenTool
 } from 'lucide-react';
 import { useState, useRef } from 'react';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
-import { PublicFooter } from '@/components/layout/PublicFooter';
+import { MarketingLayout } from '@/components/layout/MarketingLayout';
 import { MobileChatInterface } from '@/components/MobileChatInterface';
 import { AnimatedPlatformDemo } from '@/components/AnimatedPlatformDemo';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
+import { getProjectUrl } from '@/lib/utils';
 import { 
   SiPython, SiJavascript, SiHtml5, SiCss3,
   SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
@@ -74,10 +75,10 @@ export default function Landing() {
     'Rocket': <Rocket className="h-6 w-6" />
   };
 
-  const features = landingData ? landingData.features.map(feature => ({
+  const features = landingData?.features?.map(feature => ({
     ...feature,
-    icon: iconMap[feature.icon] || <Zap className="h-6 w-6" />
-  })) : [
+    icon: feature?.icon ? (iconMap[feature.icon] || <Zap className="h-6 w-6" />) : <Zap className="h-6 w-6" />
+  })) || [
     {
       icon: <Zap className="h-6 w-6" />,
       title: 'Start in Seconds',
@@ -161,11 +162,9 @@ export default function Landing() {
           // Store prompt in sessionStorage for the AI agent
           window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
           
-          // Ensure we have the owner username
-          const ownerUsername = project.owner?.username || user?.username || 'admin';
-          const projectUrl = `/@${ownerUsername}/${project.slug}`;
+          const projectUrl = getProjectUrl(project, user?.username);
           console.log(`Navigating to: ${projectUrl}`);
-          
+
           // Add a small delay to ensure project is fully created and indexed
           setTimeout(() => {
             // Use window.location for full page reload to ensure auth state is fresh
@@ -238,24 +237,22 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <PublicNavbar />
+    <MarketingLayout>
 
       {/* Hero Section */}
-      <section className="py-8 sm:py-12 md:py-16 lg:py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
-          <div className="text-center space-y-4 sm:space-y-6">
-            <Badge variant="secondary" className="mb-2 sm:mb-4 animate-pulse text-xs sm:text-sm">
-              <Sparkles className="h-3 w-3 mr-1" />
+      <section className="relative overflow-hidden py-12 sm:py-16 lg:py-24">
+        <div className="marketing-grid opacity-0 dark:opacity-100" aria-hidden />
+        <div className="container-responsive relative max-w-6xl text-center">
+          <div className="space-y-5 sm:space-y-7">
+            <Badge variant="secondary" className="mx-auto inline-flex items-center gap-2 rounded-full border-[var(--ecode-accent)]/20 bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)] dark:border-white/20 dark:bg-white/10 dark:text-white backdrop-blur">
+              <Sparkles className="h-4 w-4" />
               Build apps and sites with AI
             </Badge>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
-              Build <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">anything</span>
-              <br className="hidden sm:block" />
-              <span className="sm:ml-2">with AI</span>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-[var(--ecode-text)] dark:text-white">
+              Fortune 500 development velocity for every team
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0 font-medium">
-              Describe your idea and watch AI build it. From simple websites to complex applications.
+            <p className="mx-auto max-w-2xl text-base sm:text-lg text-[var(--ecode-text-secondary)] dark:text-slate-200">
+              Describe the product. Our AI agents design, code, test, and deploy secure applications in minutes across web, mobile, and cloud.
             </p>
             
             {/* Lovable.dev Exact Style Chat Input */}
@@ -280,7 +277,7 @@ export default function Landing() {
                     </div>
                     <Button 
                       size="sm"
-                      className="bg-violet-600 hover:bg-violet-700 text-white shadow-none border-0 rounded-lg px-4 py-2 text-sm font-medium h-auto"
+                      className="bg-violet-600 hover:bg-violet-700 text-[var(--ecode-text)] dark:text-white shadow-none border-0 rounded-lg px-4 py-2 text-sm font-medium h-auto"
                       onClick={() => {
                         if (appDescription.trim()) {
                           handleStartBuilding(appDescription);
@@ -297,6 +294,42 @@ export default function Landing() {
                 <p className="text-center mt-3 text-sm text-zinc-500 dark:text-zinc-400 font-normal">
                   Free to start • No setup required • Deploy instantly
                 </p>
+              </div>
+              
+              {/* Popular Examples Section */}
+              <div className="mt-8 text-center">
+                <p className="text-sm text-muted-foreground mb-3">Or try these popular examples:</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[
+                    { id: 1, icon: BookOpen, label: "Blog with Next.js", prompt: "Build a modern blog with Next.js featuring markdown support, categories, tags, search functionality, and a beautiful responsive design" },
+                    { id: 2, icon: Store, label: "E-commerce Store", prompt: "Create an e-commerce store with product catalog, shopping cart, checkout process, payment integration, and admin dashboard" },
+                    { id: 3, icon: Bot, label: "Discord Bot", prompt: "Build a Discord bot with commands, moderation features, welcome messages, role management, and fun interactive features" },
+                    { id: 4, icon: Briefcase, label: "Portfolio Website", prompt: "Create a professional portfolio website with hero section, about me, projects showcase, skills, contact form, and smooth animations" },
+                    { id: 5, icon: ListTodo, label: "Task Manager", prompt: "Build a task manager app with categories, due dates, priority levels, drag and drop, progress tracking, and team collaboration features" },
+                    { id: 6, icon: CloudSun, label: "Weather Dashboard", prompt: "Create a weather dashboard showing current conditions, 5-day forecast, multiple locations, weather maps, and beautiful visualizations" }
+                  ].map((example) => {
+                    const Icon = example.icon;
+                    return (
+                      <Button
+                        key={example.id}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs hover:bg-violet-50 dark:hover:bg-violet-950 hover:text-violet-700 dark:hover:text-violet-300 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-200 group"
+                        onClick={() => {
+                          setAppDescription(example.prompt);
+                          // Focus on the input to show the filled prompt
+                          const aiInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+                          if (aiInput) {
+                            aiInput.focus();
+                          }
+                        }}
+                      >
+                        <Icon className="h-3 w-3 mr-1 group-hover:scale-110 transition-transform" />
+                        {example.label}
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
@@ -444,7 +477,7 @@ export default function Landing() {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 blur-3xl" />
               <Card className="relative overflow-hidden shadow-2xl">
-                <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 p-4 text-white">
+                <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 p-4 text-[var(--ecode-text)] dark:text-white">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-lg">
                       <Sparkles className="h-6 w-6" />
@@ -468,7 +501,7 @@ export default function Landing() {
                     
                     <div className="flex gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="h-4 w-4 text-white" />
+                        <Sparkles className="h-4 w-4 text-[var(--ecode-text)] dark:text-white" />
                       </div>
                       <div className="space-y-2 flex-1">
                         <div className="bg-primary/10 rounded-lg p-3">
@@ -512,7 +545,7 @@ export default function Landing() {
           {/* Example Apps Built with AI */}
           <div className="mt-20">
             <div className="text-center mb-12">
-              <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0">
+              <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-[var(--ecode-text)] dark:text-white border-0">
                 No Coding Knowledge Required
               </Badge>
               <h3 className="text-3xl font-bold mb-3">
@@ -574,8 +607,8 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-4 left-4 right-4">
                         <div className="bg-black/80 backdrop-blur rounded-lg p-3">
-                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
-                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                          <p className="text-[var(--ecode-text)] dark:text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-[var(--ecode-text)] dark:text-white/80 text-xs font-mono">
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
                               <span>Complete dashboard UI</span>
@@ -641,7 +674,7 @@ export default function Landing() {
                       <div className="w-full max-w-sm">
                         {/* Chat Preview */}
                         <div className="bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-xl overflow-hidden backdrop-blur">
-                          <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-2 text-white">
+                          <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-2 text-[var(--ecode-text)] dark:text-white">
                             <p className="text-xs font-medium"># general</p>
                           </div>
                           <div className="p-3 space-y-2">
@@ -677,8 +710,8 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-4 left-4 right-4">
                         <div className="bg-black/80 backdrop-blur rounded-lg p-3">
-                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
-                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                          <p className="text-[var(--ecode-text)] dark:text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-[var(--ecode-text)] dark:text-white/80 text-xs font-mono">
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
                               <span>Real-time WebSocket chat</span>
@@ -766,7 +799,7 @@ export default function Landing() {
                             </div>
                           </div>
                           <div className="bg-gradient-to-r from-orange-500 to-red-500 p-2">
-                            <button className="w-full text-white text-xs font-medium">Checkout - $1,348</button>
+                            <button className="w-full text-[var(--ecode-text)] dark:text-white text-xs font-medium">Checkout - $1,348</button>
                           </div>
                         </div>
                       </div>
@@ -774,8 +807,8 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-4 left-4 right-4">
                         <div className="bg-black/80 backdrop-blur rounded-lg p-3">
-                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
-                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                          <p className="text-[var(--ecode-text)] dark:text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-[var(--ecode-text)] dark:text-white/80 text-xs font-mono">
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
                               <span>Full product catalog</span>
@@ -873,8 +906,8 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-4 left-4 right-4">
                         <div className="bg-black/80 backdrop-blur rounded-lg p-3">
-                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
-                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                          <p className="text-[var(--ecode-text)] dark:text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-[var(--ecode-text)] dark:text-white/80 text-xs font-mono">
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
                               <span>OpenAI integration</span>
@@ -989,8 +1022,8 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-4 left-4 right-4">
                         <div className="bg-black/80 backdrop-blur rounded-lg p-3">
-                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
-                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                          <p className="text-[var(--ecode-text)] dark:text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-[var(--ecode-text)] dark:text-white/80 text-xs font-mono">
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
                               <span>Drag & drop boards</span>
@@ -1076,8 +1109,8 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-4 left-4 right-4">
                         <div className="bg-black/80 backdrop-blur rounded-lg p-3">
-                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
-                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                          <p className="text-[var(--ecode-text)] dark:text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-[var(--ecode-text)] dark:text-white/80 text-xs font-mono">
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
                               <span>Weather API integration</span>
@@ -1148,8 +1181,8 @@ export default function Landing() {
                             <div className="absolute inset-0 bg-black/20" />
                             <div className="absolute bottom-3 left-3">
                               <div className="w-12 h-12 bg-white rounded-full shadow-lg mb-1" />
-                              <p className="text-white text-sm font-semibold">Alex Chen</p>
-                              <p className="text-white/80 text-xs">Full Stack Developer</p>
+                              <p className="text-[var(--ecode-text)] dark:text-white text-sm font-semibold">Alex Chen</p>
+                              <p className="text-[var(--ecode-text)] dark:text-white/80 text-xs">Full Stack Developer</p>
                             </div>
                           </div>
                           <div className="p-3 space-y-3">
@@ -1180,7 +1213,7 @@ export default function Landing() {
                               </div>
                             </div>
                             <div className="flex gap-2 text-xs">
-                              <button className="flex-1 bg-gradient-to-r from-indigo-500 to-violet-500 text-white py-1 rounded font-medium">View Work</button>
+                              <button className="flex-1 bg-gradient-to-r from-indigo-500 to-violet-500 text-[var(--ecode-text)] dark:text-white py-1 rounded font-medium">View Work</button>
                               <button className="flex-1 border border-gray-300 dark:border-gray-600 py-1 rounded">Contact</button>
                             </div>
                           </div>
@@ -1190,8 +1223,8 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-4 left-4 right-4">
                         <div className="bg-black/80 backdrop-blur rounded-lg p-3">
-                          <p className="text-white text-xs font-medium mb-2">AI Generated:</p>
-                          <div className="space-y-1 text-white/80 text-xs font-mono">
+                          <p className="text-[var(--ecode-text)] dark:text-white text-xs font-medium mb-2">AI Generated:</p>
+                          <div className="space-y-1 text-[var(--ecode-text)] dark:text-white/80 text-xs font-mono">
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">✓</div>
                               <span>Responsive design</span>
@@ -1472,20 +1505,20 @@ export default function Landing() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 pointer-events-auto">
                           <button className="bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full p-3 transition-all hover:scale-110 shadow-lg">
-                            <PlayCircle className="h-6 w-6 text-white" />
+                            <PlayCircle className="h-6 w-6 text-[var(--ecode-text)] dark:text-white" />
                           </button>
-                          <div className="text-white">
+                          <div className="text-[var(--ecode-text)] dark:text-white">
                             <p className="text-base font-semibold">Watch Full Demo</p>
                             <p className="text-sm opacity-80">See how AI builds apps in seconds</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3 pointer-events-auto">
-                          <Badge className="bg-white/20 backdrop-blur-md text-white border-white/20 hover:bg-white/30 transition-colors cursor-pointer">
+                          <Badge className="bg-white/20 backdrop-blur-md text-[var(--ecode-text)] dark:text-white border-white/20 hover:bg-white/30 transition-colors cursor-pointer">
                             <PlayCircle className="h-3 w-3 mr-1" />
                             3:45
                           </Badge>
                           <button className="bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg p-2 transition-all hover:scale-110">
-                            <Globe2 className="h-4 w-4 text-white" />
+                            <Globe2 className="h-4 w-4 text-[var(--ecode-text)] dark:text-white" />
                           </button>
                         </div>
                       </div>
@@ -1494,14 +1527,14 @@ export default function Landing() {
                   
                   {/* Floating annotations */}
                   <div className="absolute top-6 left-6 bg-black/80 backdrop-blur-md rounded-lg px-4 py-2 shadow-xl">
-                    <p className="text-sm font-medium flex items-center gap-2 text-white">
+                    <p className="text-sm font-medium flex items-center gap-2 text-[var(--ecode-text)] dark:text-white">
                       <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></span>
                       Live Coding Demo
                     </p>
                   </div>
                   
                   <div className="absolute top-6 right-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg px-4 py-2 shadow-xl">
-                    <p className="text-sm font-medium text-white flex items-center gap-2">
+                    <p className="text-sm font-medium text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <Sparkles className="h-4 w-4" />
                       AI-Powered
                     </p>
@@ -1510,13 +1543,13 @@ export default function Landing() {
                   {/* Feature Highlights */}
                   <div className="absolute bottom-24 right-6 space-y-2 pointer-events-none">
                     <div className="bg-black/80 backdrop-blur-md rounded-lg px-3 py-2 shadow-xl transform hover:scale-105 transition-transform pointer-events-auto">
-                      <p className="text-xs text-white flex items-center gap-2">
+                      <p className="text-xs text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                         <Zap className="h-3 w-3 text-yellow-400" />
                         Instant deployment
                       </p>
                     </div>
                     <div className="bg-black/80 backdrop-blur-md rounded-lg px-3 py-2 shadow-xl transform hover:scale-105 transition-transform pointer-events-auto">
-                      <p className="text-xs text-white flex items-center gap-2">
+                      <p className="text-xs text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                         <Code className="h-3 w-3 text-blue-400" />
                         No setup required
                       </p>
@@ -1541,7 +1574,7 @@ export default function Landing() {
 
       {/* Language Showcase */}
       <section className="py-20 bg-gradient-to-b from-muted/30 to-background">
-        <div className="container mx-auto max-w-6xl px-4">
+        <div className="container-responsive max-w-6xl px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Code in your favorite language
@@ -1558,13 +1591,13 @@ export default function Landing() {
                 <div className="relative h-48 bg-gradient-to-br from-blue-600 via-blue-700 to-yellow-600 overflow-hidden">
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                   <div className="relative h-full flex flex-col items-center justify-center p-6">
-                    <SiPython className="h-16 w-16 text-white mb-3 group-hover:scale-110 transition-transform" />
-                    <div className="font-mono text-xs text-white/90 text-center">
+                    <SiPython className="h-16 w-16 text-[var(--ecode-text)] dark:text-white mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-[var(--ecode-text)] dark:text-white/90 text-center">
                       <div className="animate-pulse">print("Hello!")</div>
                     </div>
                   </div>
                   <div className="absolute top-2 right-2">
-                    <Badge className="bg-white/20 backdrop-blur text-white border-white/20 text-xs">
+                    <Badge className="bg-white/20 backdrop-blur text-[var(--ecode-text)] dark:text-white border-white/20 text-xs">
                       Popular
                     </Badge>
                   </div>
@@ -1596,7 +1629,7 @@ export default function Landing() {
                     </div>
                   </div>
                   <div className="absolute top-2 right-2">
-                    <Badge className="bg-black/20 backdrop-blur text-white border-black/20 text-xs">
+                    <Badge className="bg-black/20 backdrop-blur text-[var(--ecode-text)] dark:text-white border-black/20 text-xs">
                       #1 Web
                     </Badge>
                   </div>
@@ -1622,13 +1655,13 @@ export default function Landing() {
                 <div className="relative h-48 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 overflow-hidden">
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                   <div className="relative h-full flex flex-col items-center justify-center p-6">
-                    <SiTypescript className="h-16 w-16 text-white mb-3 group-hover:scale-110 transition-transform" />
-                    <div className="font-mono text-xs text-white/90 text-center">
+                    <SiTypescript className="h-16 w-16 text-[var(--ecode-text)] dark:text-white mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-[var(--ecode-text)] dark:text-white/90 text-center">
                       <div className="animate-pulse">type Safe = true</div>
                     </div>
                   </div>
                   <div className="absolute top-2 right-2">
-                    <Badge className="bg-white/20 backdrop-blur text-white border-white/20 text-xs">
+                    <Badge className="bg-white/20 backdrop-blur text-[var(--ecode-text)] dark:text-white border-white/20 text-xs">
                       Trending
                     </Badge>
                   </div>
@@ -1654,13 +1687,13 @@ export default function Landing() {
                 <div className="relative h-48 bg-gradient-to-br from-cyan-500 via-cyan-600 to-blue-600 overflow-hidden">
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                   <div className="relative h-full flex flex-col items-center justify-center p-6">
-                    <SiGo className="h-16 w-16 text-white mb-3 group-hover:scale-110 transition-transform" />
-                    <div className="font-mono text-xs text-white/90 text-center">
+                    <SiGo className="h-16 w-16 text-[var(--ecode-text)] dark:text-white mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-[var(--ecode-text)] dark:text-white/90 text-center">
                       <div className="animate-pulse">go run main.go</div>
                     </div>
                   </div>
                   <div className="absolute top-2 right-2">
-                    <Badge className="bg-white/20 backdrop-blur text-white border-white/20 text-xs">
+                    <Badge className="bg-white/20 backdrop-blur text-[var(--ecode-text)] dark:text-white border-white/20 text-xs">
                       Fast
                     </Badge>
                   </div>
@@ -1686,13 +1719,13 @@ export default function Landing() {
                 <div className="relative h-48 bg-gradient-to-br from-red-600 via-orange-600 to-red-700 overflow-hidden">
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                   <div className="relative h-full flex flex-col items-center justify-center p-6">
-                    <SiOpenjdk className="h-16 w-16 text-white mb-3 group-hover:scale-110 transition-transform" />
-                    <div className="font-mono text-xs text-white/90 text-center">
+                    <SiOpenjdk className="h-16 w-16 text-[var(--ecode-text)] dark:text-white mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-[var(--ecode-text)] dark:text-white/90 text-center">
                       <div className="animate-pulse">public class Main</div>
                     </div>
                   </div>
                   <div className="absolute top-2 right-2">
-                    <Badge className="bg-white/20 backdrop-blur text-white border-white/20 text-xs">
+                    <Badge className="bg-white/20 backdrop-blur text-[var(--ecode-text)] dark:text-white border-white/20 text-xs">
                       Enterprise
                     </Badge>
                   </div>
@@ -1718,13 +1751,13 @@ export default function Landing() {
                 <div className="relative h-48 bg-gradient-to-br from-orange-700 via-orange-800 to-red-800 overflow-hidden">
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                   <div className="relative h-full flex flex-col items-center justify-center p-6">
-                    <SiRust className="h-16 w-16 text-white mb-3 group-hover:scale-110 transition-transform" />
-                    <div className="font-mono text-xs text-white/90 text-center">
+                    <SiRust className="h-16 w-16 text-[var(--ecode-text)] dark:text-white mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="font-mono text-xs text-[var(--ecode-text)] dark:text-white/90 text-center">
                       <div className="animate-pulse">fn main() {}</div>
                     </div>
                   </div>
                   <div className="absolute top-2 right-2">
-                    <Badge className="bg-white/20 backdrop-blur text-white border-white/20 text-xs">
+                    <Badge className="bg-white/20 backdrop-blur text-[var(--ecode-text)] dark:text-white border-white/20 text-xs">
                       Safe
                     </Badge>
                   </div>
@@ -1756,7 +1789,7 @@ export default function Landing() {
 
       {/* Features Section */}
       <section id="features" className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container-responsive max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Everything you need to succeed
@@ -1771,12 +1804,12 @@ export default function Landing() {
               <Card key={index} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="p-2 bg-primary/10 rounded-lg w-fit mb-2">
-                    {feature.icon}
+                    {feature?.icon || <Zap className="h-6 w-6" />}
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-xl">{feature?.title || 'Feature'}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <p className="text-muted-foreground">{feature?.description || 'Description not available'}</p>
                 </CardContent>
               </Card>
             ))}
@@ -1793,7 +1826,7 @@ export default function Landing() {
 
       {/* Use Cases */}
       <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container-responsive max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Made for everyone
@@ -1816,7 +1849,7 @@ export default function Landing() {
                   <div className="text-center space-y-4">
                     <div className="relative">
                       <div className="w-16 h-16 mx-auto bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center animate-pulse">
-                        <div className="text-white text-2xl animate-bounce">📚</div>
+                        <div className="text-[var(--ecode-text)] dark:text-white text-2xl animate-bounce">📚</div>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -1900,7 +1933,7 @@ export default function Landing() {
 
       {/* Testimonials */}
       <section id="testimonials" className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container-responsive max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Loved by developers
@@ -1938,7 +1971,7 @@ export default function Landing() {
 
       {/* CTA Section */}
       <section className="py-20 px-4">
-        <div className="container mx-auto max-w-4xl">
+        <div className="container-responsive max-w-4xl">
           <Card className="bg-primary text-primary-foreground">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -1953,7 +1986,7 @@ export default function Landing() {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 px-4 py-2 rounded-lg bg-white/10 border border-white/20 placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  className="flex-1 px-4 py-2 rounded-lg bg-white/10 border border-white/20 placeholder:text-[var(--ecode-text)] dark:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
                   required
                 />
                 <Button type="submit" size="lg" variant="secondary" disabled={isSubmitting}>
@@ -1968,7 +2001,6 @@ export default function Landing() {
         </div>
       </section>
 
-      <PublicFooter />
-    </div>
+    </MarketingLayout>
   );
 }

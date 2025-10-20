@@ -11,7 +11,7 @@ import {
   Sun, Moon, Copy, ChevronDown,
   RotateCcw, RotateCw, ZoomIn, ZoomOut
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/ThemeProvider';
 import {
   DropdownMenu,
   DropdownMenuContent,

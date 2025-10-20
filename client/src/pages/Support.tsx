@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { PageHeader, PageShell } from '@/components/layout/PageShell';
 import { 
   HelpCircle, MessageSquare, Book, Mail, 
   ChevronRight, Search, Clock, CheckCircle,
@@ -22,6 +23,9 @@ export default function Support() {
   const [ticketType, setTicketType] = useState('');
   const [ticketSubject, setTicketSubject] = useState('');
   const [ticketDescription, setTicketDescription] = useState('');
+  const [ticketName, setTicketName] = useState('');
+  const [ticketEmail, setTicketEmail] = useState('');
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
 
   const faqs = [
     {
@@ -110,33 +114,85 @@ export default function Support() {
     }
   ];
 
-  const handleSubmitTicket = (e: React.FormEvent) => {
+  const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Support ticket created",
-      description: "We'll get back to you within 24-48 hours."
-    });
-    // Reset form
-    setTicketType('');
-    setTicketSubject('');
-    setTicketDescription('');
+    setIsSubmittingTicket(true);
+
+    try {
+      const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/support';
+      const response = await fetch('/api/support/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: ticketName,
+          email: ticketEmail,
+          issueType: ticketType,
+          subject: ticketSubject,
+          description: ticketDescription,
+          pagePath,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: 'Support ticket created',
+          description: data.message || "We'll get back to you within 24-48 hours.",
+        });
+        setTicketType('');
+        setTicketSubject('');
+        setTicketDescription('');
+        setTicketName('');
+        setTicketEmail('');
+      } else {
+        toast({
+          title: 'Unable to submit support ticket',
+          description: data.error || 'Please try again in a few moments.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Network error',
+        description: 'Failed to submit support ticket. Please check your connection and try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmittingTicket(false);
+    }
   };
 
   const toggleFaq = (id: number) => {
     setExpandedFaq(expandedFaq === id ? null : id);
   };
 
+  const scrollToTicketForm = () => {
+    const form = document.getElementById('support-ticket-form');
+    form?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
-    <div className="container mx-auto max-w-6xl py-8 px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold flex items-center gap-3 text-[var(--ecode-text)]">
-          <HelpCircle className="h-8 w-8 text-blue-500" />
-          Support Center
-        </h1>
-        <p className="text-[var(--ecode-text-secondary)] mt-2 text-base">
-          Get help with your E-Code account and projects
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader
+        title="Support Center"
+        description="Get help with your E-Code account and projects."
+        icon={HelpCircle}
+        actions={(
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" className="gap-2" onClick={() => setExpandedFaq(null)}>
+              <Search className="h-4 w-4" />
+              Browse articles
+            </Button>
+            <Button className="gap-2" onClick={scrollToTicketForm}>
+              <Mail className="h-4 w-4" />
+              Submit ticket
+            </Button>
+          </div>
+        )}
+      />
+      <div className="space-y-8">
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -297,7 +353,7 @@ export default function Support() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmitTicket} className="space-y-4">
+              <form id="support-ticket-form" onSubmit={handleSubmitTicket} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="ticket-type">Issue Type</Label>
                   <select
@@ -314,6 +370,30 @@ export default function Support() {
                     <option value="feature">Feature Request</option>
                     <option value="other">Other</option>
                   </select>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="ticket-name">Your Name</Label>
+                    <Input
+                      id="ticket-name"
+                      value={ticketName}
+                      onChange={(e) => setTicketName(e.target.value)}
+                      placeholder="How should we address you?"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ticket-email">Work Email</Label>
+                    <Input
+                      id="ticket-email"
+                      type="email"
+                      value={ticketEmail}
+                      onChange={(e) => setTicketEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -348,8 +428,8 @@ export default function Support() {
                   </ul>
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Submit Support Ticket
+                <Button type="submit" className="w-full" disabled={isSubmittingTicket}>
+                  {isSubmittingTicket ? 'Submitting...' : 'Submit Support Ticket'}
                 </Button>
               </form>
             </CardContent>
@@ -459,6 +539,7 @@ export default function Support() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </PageShell>
   );
 }

@@ -115,7 +115,7 @@ export function ConsolePanel({ projectId, className }: ConsolePanelProps) {
   const { data: realLogs } = useQuery({
     queryKey: [`/api/logs/${projectId}`],
     refetchInterval: isPaused ? false : 2000, // Poll every 2 seconds when not paused
-    enabled: !isOptimizing,
+    enabled: !isOptimizing && !!projectId, // Prevent undefined polling
   });
 
   const clearLogs = () => {

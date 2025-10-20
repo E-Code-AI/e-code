@@ -6,15 +6,16 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Zap, Database, Globe, Users, Shield, Activity, TrendingUp, 
-  AlertTriangle, Check, X, Info, Clock, Cpu, HardDrive
+import {
+  Zap, Database, Globe, Users, Shield, Activity, TrendingUp,
+  AlertTriangle, Check, X, Info, Clock, Cpu, HardDrive, BarChart3
 } from "lucide-react";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { AIUsageDashboard } from "@/components/AIUsageDashboard";
+import { PageHeader, PageShell } from "@/components/layout/PageShell";
 
 export default function Usage() {
   const [, navigate] = useLocation();
@@ -47,7 +48,18 @@ export default function Usage() {
   });
 
   if (isLoading) {
-    return <ECodeLoading fullScreen text="Loading usage data..." />;
+    return (
+      <PageShell>
+        <PageHeader
+          title="Usage overview"
+          description="Collecting your latest consumption metrics."
+          icon={BarChart3}
+        />
+        <div className="flex justify-center py-24">
+          <ECodeLoading text="Loading usage data..." />
+        </div>
+      </PageShell>
+    );
   }
 
   // Use real data from API or fallback to default structure
@@ -148,7 +160,7 @@ export default function Usage() {
   };
   
   const handleManageStorage = () => {
-    navigate('/settings/storage');
+    navigate('/settings');
   };
   
   const handleComparePlans = () => {
@@ -165,14 +177,25 @@ export default function Usage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Usage</h1>
-        <p className="text-muted-foreground">
-          Monitor your resource usage and plan limits
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader
+        title="Usage analytics"
+        description="Monitor your resource consumption, plan limits, and billing insights."
+        icon={BarChart3}
+        actions={(
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="gap-2" onClick={handleUpgradePlan}>
+              <TrendingUp className="h-4 w-4" />
+              Upgrade plan
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={handleContactSales}>
+              <Info className="h-4 w-4" />
+              Talk to sales
+            </Button>
+          </div>
+        )}
+      />
+      <div className="space-y-6">
 
       {/* Action Required Alert */}
       <Alert className="border-orange-500 bg-orange-50 dark:bg-orange-950/20">
@@ -467,6 +490,7 @@ export default function Usage() {
           for custom enterprise limits.
         </AlertDescription>
       </Alert>
-    </div>
+      </div>
+    </PageShell>
   );
 }

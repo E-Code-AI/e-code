@@ -1,73 +1,90 @@
-/**
- * AI UX Feature Flag Tests
- */
-
-import { defaultFeatureFlags, getFeatureFlags } from '../server/config/feature-flags';
 import { testRunner } from './setup/test-runner';
 
-const originalEnv = { ...process.env };
-const overrideKeys = [
-  'FEATURE_AI_UX_IMPROVE_PROMPT',
-  'FEATURE_AI_UX_EXTENDED_THINKING',
-  'FEATURE_AI_UX_HIGH_POWER_MODE',
-  'FEATURE_AI_UX_PROGRESS_TAB',
-  'FEATURE_AI_UX_PAUSE_RESUME'
-];
+const ORIGINAL_ENV = { ...process.env } as Record<string, string | undefined>;
 
 const resetEnv = () => {
-  for (const key of overrideKeys) {
-    if (originalEnv[key] !== undefined) {
-      process.env[key] = originalEnv[key];
-    } else {
+  for (const key of Object.keys(process.env)) {
+    if (!(key in ORIGINAL_ENV)) {
       delete process.env[key];
     }
   }
+  Object.assign(process.env, ORIGINAL_ENV);
 };
 
 testRunner.registerSuite('AI UX Feature Flags', {
-  setup: async () => {
-    resetEnv();
-  },
-  teardown: async () => {
-    resetEnv();
-  },
+  afterAll: resetEnv,
   tests: [
     {
-      name: 'should have default feature flags disabled',
+      name: 'defaultFeatureFlags disable all AI UX toggles',
       fn: async () => {
+        const module = await import('../server/config/feature-flags.ts?base');
+        const { defaultFeatureFlags } = module;
+
         expect(defaultFeatureFlags.aiUx.improvePrompt).toBe(false);
         expect(defaultFeatureFlags.aiUx.extendedThinking).toBe(false);
         expect(defaultFeatureFlags.aiUx.highPowerMode).toBe(false);
         expect(defaultFeatureFlags.aiUx.progressTab).toBe(false);
         expect(defaultFeatureFlags.aiUx.pauseResume).toBe(false);
-      }
+      },
     },
     {
-      name: 'should respect environment variable overrides',
+      name: 'getFeatureFlags reads environment overrides',
       fn: async () => {
         process.env.FEATURE_AI_UX_IMPROVE_PROMPT = 'true';
         process.env.FEATURE_AI_UX_EXTENDED_THINKING = 'true';
         process.env.FEATURE_AI_UX_HIGH_POWER_MODE = 'true';
-        process.env.FEATURE_AI_UX_PROGRESS_TAB = 'true';
+        process.env.FEATURE_AI_UX_PROGRESS_TAB = 'false';
         process.env.FEATURE_AI_UX_PAUSE_RESUME = 'true';
 
-        const featureFlags = getFeatureFlags();
+        const module = await import(`../server/config/feature-flags.ts?env=${Date.now()}`);
+        const flags = module.getFeatureFlags();
 
-        expect(featureFlags.aiUx.improvePrompt).toBe(true);
-        expect(featureFlags.aiUx.extendedThinking).toBe(true);
-        expect(featureFlags.aiUx.highPowerMode).toBe(true);
-        expect(featureFlags.aiUx.progressTab).toBe(true);
-        expect(featureFlags.aiUx.pauseResume).toBe(true);
-      }
+        expect(flags.aiUx.improvePrompt).toBe(true);
+        expect(flags.aiUx.extendedThinking).toBe(true);
+        expect(flags.aiUx.highPowerMode).toBe(true);
+        expect(flags.aiUx.progressTab).toBe(false);
+        expect(flags.aiUx.pauseResume).toBe(true);
+      },
     },
     {
-      name: 'should not mutate default feature flags when overriding env variables',
+      name: 'featureFlags snapshot reflects current environment on import',
       fn: async () => {
         process.env.FEATURE_AI_UX_IMPROVE_PROMPT = 'true';
-        getFeatureFlags();
+        process.env.FEATURE_AI_UX_EXTENDED_THINKING = 'false';
+        process.env.FEATURE_AI_UX_HIGH_POWER_MODE = 'true';
+        process.env.FEATURE_AI_UX_PROGRESS_TAB = 'true';
+        process.env.FEATURE_AI_UX_PAUSE_RESUME = 'false';
 
-        expect(defaultFeatureFlags.aiUx.improvePrompt).toBe(false);
-      }
-    }
-  ]
+        const module = await import(`../server/config/feature-flags.ts?snapshot=${Date.now()}`);
+        const { featureFlags } = module;
+
+        expect(featureFlags.aiUx).toEqual({
+          improvePrompt: true,
+          extendedThinking: false,
+          highPowerMode: true,
+          progressTab: true,
+          pauseResume: false,
+        });
+      },
+    },
+    {
+      name: 'getFeatureFlags falls back to false when env not provided',
+      fn: async () => {
+        delete process.env.FEATURE_AI_UX_IMPROVE_PROMPT;
+        delete process.env.FEATURE_AI_UX_EXTENDED_THINKING;
+        delete process.env.FEATURE_AI_UX_HIGH_POWER_MODE;
+        delete process.env.FEATURE_AI_UX_PROGRESS_TAB;
+        delete process.env.FEATURE_AI_UX_PAUSE_RESUME;
+
+        const module = await import(`../server/config/feature-flags.ts?fallback=${Date.now()}`);
+        const flags = module.getFeatureFlags();
+
+        expect(flags.aiUx.improvePrompt).toBe(false);
+        expect(flags.aiUx.extendedThinking).toBe(false);
+        expect(flags.aiUx.highPowerMode).toBe(false);
+        expect(flags.aiUx.progressTab).toBe(false);
+        expect(flags.aiUx.pauseResume).toBe(false);
+      },
+    },
+  ],
 });

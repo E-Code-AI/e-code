@@ -20,6 +20,7 @@ interface Feature {
   description: string;
   details: string[];
   category: string;
+  id?: string;
 }
 
 export default function Features() {
@@ -40,7 +41,8 @@ export default function Features() {
         'Works like having an expert helper',
         'Updates code based on your feedback'
       ],
-      category: 'AI-Powered'
+      category: 'AI-Powered',
+      id: 'ai-agent'
     },
     // Development Environment
     {
@@ -113,7 +115,8 @@ export default function Features() {
         'Know who\'s online',
         'Share your screen easily'
       ],
-      category: 'Learning Together'
+      category: 'Learning Together',
+      id: 'multiplayer'
     },
     {
       icon: <GitBranch className="h-6 w-6" />,
@@ -157,7 +160,8 @@ export default function Features() {
         'Query performance insights',
         'Connection pooling'
       ],
-      category: 'Infrastructure'
+      category: 'Infrastructure',
+      id: 'database'
     },
     {
       icon: <Rocket className="h-6 w-6" />,
@@ -171,7 +175,8 @@ export default function Features() {
         'Deployment previews',
         'Rollback capabilities'
       ],
-      category: 'Infrastructure'
+      category: 'Infrastructure',
+      id: 'deployment'
     },
 
     // Security
@@ -187,7 +192,8 @@ export default function Features() {
         'SSO integration',
         'Audit logs'
       ],
-      category: 'Security'
+      category: 'Security',
+      id: 'security'
     },
     {
       icon: <Lock className="h-6 w-6" />,
@@ -273,7 +279,7 @@ export default function Features() {
                   {features
                     .filter(f => category === 'All' || f.category === category)
                     .map((feature, index) => (
-                      <Card key={index} className="hover:shadow-lg transition-shadow">
+                      <Card key={index} id={feature.id} className="hover:shadow-lg transition-shadow">
                         <CardHeader>
                           <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4">
                             {feature.icon}

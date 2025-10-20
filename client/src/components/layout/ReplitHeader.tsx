@@ -65,6 +65,12 @@ import { useToast } from "@/hooks/use-toast";
 
 import { ECodeLogo } from "@/components/ECodeLogo";
 import { MobileMenu } from "./MobileMenu";
+import {
+  isActiveNavigationItem,
+  primaryNavigation,
+  secondaryNavigation,
+  type NavigationItem,
+} from "@/constants/navigation";
 
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();
@@ -77,7 +83,7 @@ export function ReplitHeader() {
   const { toast } = useToast();
 
   // Get project info from URL - supports both formats: /projects/:id and /@:username/:project
-  const pathMatch = location.match(/^\/projects\/(\d+)/);
+  const pathMatch = location.match(/^\/project(?:s)?\/(\d+)/);
   const projectId = pathMatch ? pathMatch[1] : null;
   
   const replitStyleMatch = location.match(/^\/@([^/]+)\/([^/]+)/);
@@ -113,13 +119,14 @@ export function ReplitHeader() {
     logoutMutation.mutate();
   };
 
-  const isActive = (path: string) => location === path;
+  const navLinkClass = "replit-nav-link";
+  const headerNavigation: NavigationItem[] = [...primaryNavigation, ...secondaryNavigation];
 
   return (
     <>
-    <header className="h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition shadow-sm">
+    <header className="replit-header h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition">
       {/* Logo et navigation principale */}
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
         {/* Mobile menu button - only on mobile */}
         <div className="lg:hidden mr-2">
           <MobileMenu onOpenSpotlight={() => setSpotlightOpen(true)} />
@@ -155,7 +162,7 @@ export function ReplitHeader() {
                     if (projectInfo?.owner?.username && projectInfo?.slug) {
                       navigate(`/@${projectInfo.owner.username}/${projectInfo.slug}`);
                     } else {
-                      navigate(`/projects/${projectId}`);
+                      navigate(`/project/${projectId}`);
                     }
                   }}
                 >
@@ -202,7 +209,7 @@ export function ReplitHeader() {
                         title: "Project Forked",
                         description: `Successfully forked project as "${forkedProject.name}"`,
                       });
-                      navigate(`/projects/${forkedProject.id}`);
+                      navigate(`/project/${forkedProject.id}`);
                     } catch (error) {
                       toast({
                         title: "Fork Failed",
@@ -280,14 +287,14 @@ export function ReplitHeader() {
         )}
 
         {/* Navigation principale - hidden on mobile */}
-        <nav className="hidden lg:flex items-center space-x-1 ml-8">
+        <nav className="replit-nav">
           {/* Create Button - First like Replit */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] replit-transition"
+                className={cn(navLinkClass, "replit-nav-link--trigger replit-transition")}
               >
                 <Plus className="mr-1 h-4 w-4" />
                 Create
@@ -318,91 +325,40 @@ export function ReplitHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Home - Second like Replit */}
-          <Link href="/dashboard">
-            <Button
-              variant={isActive("/dashboard") ? "default" : "ghost"}
-              size="sm"
-              className={`replit-transition ${
-                isActive("/dashboard")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
-            >
-              Home
-            </Button>
-          </Link>
+          {headerNavigation.map((item) => {
+            const Icon = item.icon;
+            const active = isActiveNavigationItem(location, item);
 
-          {/* Apps - Third like Replit */}
-          <Link href="/projects">
-            <Button
-              variant={isActive("/projects") ? "default" : "ghost"}
-              size="sm"
-              className={`replit-transition ${
-                isActive("/projects")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
-            >
-              Apps
-            </Button>
-          </Link>
-
-          {/* Deployments - Fourth like Replit */}
-          <Link href="/deployments">
-            <Button
-              variant={isActive("/deployments") ? "default" : "ghost"}
-              size="sm"
-              className={`replit-transition ${
-                isActive("/deployments")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
-            >
-              Deployments
-            </Button>
-          </Link>
-
-          {/* Usage - Fifth like Replit */}
-          <Link href="/usage">
-            <Button
-              variant={isActive("/usage") ? "default" : "ghost"}
-              size="sm"
-              className={`replit-transition relative ${
-                isActive("/usage")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
-            >
-              Usage
-              <span className="absolute -top-1 -right-2 px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white rounded">
-                Action required
-              </span>
-            </Button>
-          </Link>
-
-          {/* Teams - Sixth like Replit */}
-          <Link href="/teams">
-            <Button
-              variant={isActive("/teams") ? "default" : "ghost"}
-              size="sm"
-              className={`replit-transition ${
-                isActive("/teams")
-                  ? "bg-[var(--ecode-accent)] text-white"
-                  : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
-              }`}
-            >
-              Teams
-            </Button>
-          </Link>
+            return (
+              <Link key={item.key} href={item.path} aria-label={item.ctaLabel || item.label}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    navLinkClass,
+                    "replit-transition relative",
+                    active ? "replit-nav-link--active" : "replit-nav-link--inactive"
+                  )}
+                >
+                  {Icon && <Icon className="mr-2 h-4 w-4" />}
+                  {item.label}
+                  {item.badge && (
+                    <span className="absolute -top-1 -right-2 rounded px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
       {/* Search bar - only on larger screens */}
       <div className="flex-1 max-w-md mx-4 sm:mx-6 hidden lg:block">
         <Button
-          variant="outline"
-          className="w-full justify-start text-left font-normal bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text-secondary)] hover:bg-[var(--ecode-sidebar-hover)]"
+          variant="ghost"
+          className="replit-header-search"
           onClick={() => setSpotlightOpen(true)}
         >
           <Search className="mr-2 h-4 w-4" />
@@ -415,7 +371,7 @@ export function ReplitHeader() {
       </div>
 
       {/* Actions utilisateur */}
-      <div className="flex items-center space-x-2 md:space-x-3">
+      <div className="replit-header-controls flex items-center gap-2 md:gap-3">
         {/* Bouton Plan Pro */}
         <Button
           variant="outline"

@@ -45,7 +45,7 @@ export class GitBackend {
     
     await this.execGit(repoPath, 'init');
     await this.execGit(repoPath, 'config user.name "E-Code Platform"');
-    await this.execGit(repoPath, 'config user.email "git@e-code.app"');
+    await this.execGit(repoPath, 'config user.email "git@e-code.ai"');
     
     // Create initial commit
     const readmePath = path.join(repoPath, 'README.md');
@@ -67,7 +67,7 @@ export class GitBackend {
     
     // Configure user
     await this.execGit(repoPath, 'config user.name "E-Code Platform"');
-    await this.execGit(repoPath, 'config user.email "git@e-code.app"');
+    await this.execGit(repoPath, 'config user.email "git@e-code.ai"');
   }
 
   async getCommitHistory(projectId: number, limit: number = 50): Promise<GitCommit[]> {

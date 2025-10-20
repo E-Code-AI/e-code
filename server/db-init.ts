@@ -1,8 +1,11 @@
 // @ts-nocheck
-import { db } from "./db";
+import { db, client } from "./db";
 import * as schema from "@shared/schema";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
+import { existsSync } from "fs";
+import { resolve } from "path";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 
 const scryptAsync = promisify(scrypt);
 
@@ -13,17 +16,91 @@ async function hashPassword(password: string) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
+let migrationsEnsured = false;
+
+async function ensureDatabaseMigrated(force = false) {
+  if (migrationsEnsured && !force) {
+    return;
+  }
+
+  const migrationsFolder = resolve(process.cwd(), "migrations");
+
+  if (!existsSync(migrationsFolder)) {
+    console.warn(
+      `Database migrations folder not found at ${migrationsFolder}. ` +
+      "Automatic migration skipped. Run `npm run db:push` to create the schema manually.",
+    );
+    migrationsEnsured = true;
+    return;
+  }
+
+  let isFreshDatabase = force;
+
+  if (!isFreshDatabase) {
+    try {
+      const [row] = await client`
+        select exists (
+          select 1
+          from information_schema.tables
+          where table_schema = 'public'
+            and table_name = 'users'
+        ) as "exists";
+      `;
+
+      isFreshDatabase = !row?.exists;
+    } catch (error) {
+      console.warn("Failed to inspect database schema, attempting automatic migration", error);
+      isFreshDatabase = true;
+    }
+  }
+
+  const statusMessage = isFreshDatabase
+    ? "Database schema is missing. Applying initial migrations..."
+    : "Ensuring database schema is up to date via migrations...";
+
+  console.log(statusMessage);
+
+  try {
+    await migrate(db, { migrationsFolder });
+    console.log("Database migrations applied successfully.");
+    migrationsEnsured = true;
+  } catch (migrationError: any) {
+    // Check if error is due to existing enum types (which is safe to ignore)
+    const errorMessage = migrationError?.message || '';
+    const causeMessage = migrationError?.cause?.message || '';
+    const fullErrorText = errorMessage + ' ' + causeMessage;
+    
+    const isEnumExistsError = fullErrorText.includes('already exists') && 
+                               (fullErrorText.includes('type') || fullErrorText.includes('enum') || fullErrorText.includes('CREATE TYPE'));
+    
+    if (isEnumExistsError) {
+      console.log("Database migration skipped: Enum types already exist (this is safe).");
+      migrationsEnsured = true;
+    } else {
+      console.error("Automatic database migration failed:", migrationError);
+      throw migrationError;
+    }
+  }
+}
+
 // Initialize the database with default data
 export async function initializeDatabase() {
-  try {
-    console.log("Initializing database...");
-    
-    // Check if tables are created by checking if we have any users
-    const users = await db.select().from(schema.users);
-    if (users && users.length > 0) {
-      console.log("Database already initialized. Skipping initialization.");
-      return;
-    }
+  // Add retry logic for database initialization
+  let retries = 3;
+  let lastError = null;
+  
+  while (retries > 0) {
+    try {
+      console.log(`Initializing database... (attempt ${4 - retries})`);
+
+      await ensureDatabaseMigrated();
+
+      // Check if tables are created by checking if we have any users
+      const users = await db.select().from(schema.users);
+      if (users && users.length > 0) {
+        console.log("Database already initialized. Skipping initialization.");
+        return;
+      }
     
     // Create admin user
     const adminPassword = await hashPassword("admin");
@@ -137,9 +214,35 @@ document.addEventListener('DOMContentLoaded', function() {
       projectId: project.id
     });
     
-    console.log("Database initialized successfully with default data.");
-  } catch (error) {
-    console.error("Error initializing database:", error);
-    throw error;
+      console.log("Database initialized successfully with default data.");
+      return; // Success - exit the function
+      
+    } catch (error) {
+      lastError = error;
+      console.error(`Database initialization attempt failed:`, error.message);
+
+      if (error?.code === '42P01' || /relation ".+" does not exist/.test(error?.message || "")) {
+        // Table is missing even after our initial migration attempt. Force rerun migrations.
+        try {
+          console.warn("Detected missing tables after initialization attempt. Retrying migrations...");
+          migrationsEnsured = false; // allow ensureDatabaseMigrated to run again
+          await ensureDatabaseMigrated(true);
+        } catch (migrationError) {
+          console.error("Forced migration retry failed:", migrationError.message);
+        }
+      }
+
+      retries--;
+
+      if (retries > 0) {
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, (4 - retries) * 1000));
+      }
+    }
   }
+  
+  // All retries failed
+  console.error("Failed to initialize database after all retries:", lastError);
+  // Don't throw - let the server continue running
+  // Database operations will fail gracefully when accessed
 }

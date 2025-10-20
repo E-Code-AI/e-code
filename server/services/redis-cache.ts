@@ -277,6 +277,11 @@ export class RedisCache {
 
     if (trimmed.includes('-----BEGIN')) {
       return trimmed.replace(/\r?\n/g, '\n');
+    }
+    
+    return trimmed;
+  }
+
   private async ensureClient(): Promise<Redis | null> {
     if (this.disabled) return null;
 
@@ -322,6 +327,8 @@ export class RedisCache {
         maxRetriesPerRequest: 3,
         enableReadyCheck: true,
         lazyConnect: false
+      });
+      
       await this.initializing;
     } finally {
       this.initializing = null;
@@ -588,6 +595,14 @@ export class RedisCache {
     } catch {
       return false;
     }
+  }
+
+  isEnabled(): boolean {
+    return !this.disabled;
+  }
+
+  isHealthy(): boolean {
+    return this.isConnected;
   }
 }
 

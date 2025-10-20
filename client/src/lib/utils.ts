@@ -64,12 +64,58 @@ export function getRandomColor(input?: string): string {
  */
 export function formatBytes(bytes: number, decimals: number = 2): string {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-  
+
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+/**
+ * Build the canonical workspace URL for a project.
+ * Falls back to ID-based routing when the slug or username is unavailable.
+ */
+interface ProjectOwnerLike {
+  username?: string | null;
+}
+
+interface ProjectLike {
+  slug?: string | null;
+  projectSlug?: string | null;
+  owner?: ProjectOwnerLike | null;
+  ownerUsername?: string | null;
+  owner_name?: string | null;
+  id?: number | string | null;
+  projectId?: number | string | null;
+}
+
+export function getProjectUrl(project: ProjectLike, fallbackUsername?: string | null): string {
+  if (!project) {
+    return '/projects';
+  }
+
+  const slug = project.slug ?? project.projectSlug ?? null;
+  const ownerUsername =
+    project.owner?.username ??
+    project.ownerUsername ??
+    project.owner_name ??
+    fallbackUsername ??
+    null;
+
+  if (slug && ownerUsername) {
+    return `/@${ownerUsername}/${slug}`;
+  }
+
+  // Prefer `id` over `projectId` if both are present
+  const projectNumericId = 
+    typeof project.id === 'number' ? project.id :
+    typeof project.projectId === 'number' ? project.projectId :
+    null;
+  if (projectNumericId !== null) {
+    return `/project/${projectNumericId}`;
+  }
+  return '/projects';
 }

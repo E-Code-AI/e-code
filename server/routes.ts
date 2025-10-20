@@ -4,6 +4,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as crypto from 'crypto';
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import Stripe from "stripe";
@@ -120,6 +121,9 @@ import { realCodeGenerator } from "./ai/real-code-generator";
 import { realCollaborationService } from "./collaboration/real-collaboration";
 import { agentWebSocketService } from './services/agent-websocket-service';
 import containerRoutes from "./routes/containers";
+import { aiService } from "./ai/ai-service";
+import { chunkArray, executeWithBackoff, delay as newsletterDelay } from './newsletter/dispatch-helpers';
+import { databaseQueryOptimizer } from './services/database-query-optimizer';
 
 // POLYGLOT BACKEND INTEGRATION - Using Go and Python services for performance
 import { containerProxy } from './services/polyglot-container-proxy';
@@ -141,7 +145,7 @@ function formatBytes(bytes: number): string {
 // Utility function for formatting time ago
 function formatTimeAgo(date: Date): string {
   const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-  
+
   let interval = Math.floor(seconds / 31536000);
   if (interval > 1) return interval + ' years ago';
   if (interval === 1) return '1 year ago';
@@ -157,12 +161,357 @@ function formatTimeAgo(date: Date): string {
   interval = Math.floor(seconds / 3600);
   if (interval > 1) return interval + ' hours ago';
   if (interval === 1) return '1 hour ago';
-  
+
   interval = Math.floor(seconds / 60);
   if (interval > 1) return interval + ' minutes ago';
   if (interval === 1) return '1 minute ago';
   
   return 'Just now';
+}
+
+const BASE_APP_URL = process.env.BASE_URL || process.env.APP_URL || 'http://localhost:5000';
+const NEWSLETTER_UNSUB_PLACEHOLDER = '{{UNSUBSCRIBE_URL}}';
+const NEWSLETTER_EMAIL_PLACEHOLDER = '{{SUBSCRIBER_EMAIL}}';
+
+const parseEnvNumber = (value: string | undefined, fallback: number, min = 0) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  const normalized = Math.floor(parsed);
+  return normalized >= min ? normalized : fallback;
+};
+
+const NEWSLETTER_SEND_BATCH_SIZE = parseEnvNumber(process.env.NEWSLETTER_SEND_BATCH_SIZE, 50, 1);
+const NEWSLETTER_SEND_BATCH_DELAY_MS = parseEnvNumber(process.env.NEWSLETTER_SEND_BATCH_DELAY_MS, 250, 0);
+const NEWSLETTER_SEND_MAX_RETRIES = parseEnvNumber(process.env.NEWSLETTER_SEND_MAX_RETRIES, 2, 0);
+const NEWSLETTER_SEND_RETRY_BASE_MS = parseEnvNumber(process.env.NEWSLETTER_SEND_RETRY_BASE_MS, 500, 0);
+
+type NewsletterSectionInput = {
+  title?: string;
+  body?: string;
+  imageUrl?: string;
+};
+
+type NewsletterCampaignInput = {
+  subject: string;
+  previewText?: string;
+  heroImageUrl?: string;
+  intro: string;
+  highlights?: string[];
+  sections?: NewsletterSectionInput[];
+  cta?: { label: string; url: string };
+  closing?: string;
+  footerNote?: string;
+};
+
+function escapeHtml(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatParagraphs(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => `<p style="margin: 16px 0; line-height: 1.6; color: #425466;">${escapeHtml(line)}</p>`)
+    .join('');
+}
+
+function buildHighlights(highlights?: string[]): string {
+  if (!highlights || highlights.length === 0) {
+    return '';
+  }
+
+  const items = highlights
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => `<li style="margin-bottom: 8px;">${escapeHtml(item)}</li>`)
+    .join('');
+
+  if (!items) {
+    return '';
+  }
+
+  return `
+    <div style="margin: 24px 0;">
+      <h3 style="margin: 0 0 12px; color: #1a1f36; font-size: 16px;">Highlights</h3>
+      <ul style="padding-left: 20px; color: #425466; line-height: 1.6;">${items}</ul>
+    </div>
+  `;
+}
+
+function buildSections(sections?: NewsletterSectionInput[]): string {
+  if (!sections || sections.length === 0) {
+    return '';
+  }
+
+  return sections
+    .filter((section) => section && (section.title || section.body || section.imageUrl))
+    .map((section) => {
+      const title = section.title ? `<h3 style="margin: 0 0 12px; color: #1a1f36; font-size: 18px;">${escapeHtml(section.title)}</h3>` : '';
+      const body = formatParagraphs(section.body);
+      const image = section.imageUrl
+        ? `<div style="margin-top: 16px;"><img src="${escapeHtml(section.imageUrl)}" alt="" style="width: 100%; border-radius: 12px;" /></div>`
+        : '';
+
+      return `
+        <div style="margin: 32px 0; padding: 24px; border: 1px solid #edf2f7; border-radius: 16px; background: #ffffff; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);">
+          ${title}
+          ${body}
+          ${image}
+        </div>
+      `;
+    })
+    .join('');
+}
+
+function parseCountryFromAcceptLanguage(header?: string | string[]): string | null {
+  if (!header) return null;
+  const value = Array.isArray(header) ? header[0] : header;
+  if (!value) return null;
+  const locale = value.split(',')[0]?.trim();
+  if (!locale) return null;
+  const parts = locale.split('-');
+  if (parts.length > 1) {
+    return parts[parts.length - 1].toUpperCase();
+  }
+  if (parts[0].length === 2) {
+    return parts[0].toUpperCase();
+  }
+  return null;
+}
+
+function getClientIp(req: Request): string {
+  const forwarded = (req.headers['x-forwarded-for'] as string) || '';
+  const first = forwarded.split(',').map((ip) => ip.trim()).find(Boolean);
+  return first || req.ip || req.socket?.remoteAddress || '';
+}
+
+function extractNewsletterRequestContext(req: Request) {
+  const forwardedFor = (req.headers['x-forwarded-for'] as string) || '';
+  const acceptLanguage = req.headers['accept-language'] as string | undefined;
+  const countryHeader = (req.headers['cf-ipcountry'] as string) || (req.headers['x-country'] as string) || null;
+  const region = (req.headers['x-region'] as string) || null;
+  const city = (req.headers['x-city'] as string) || null;
+  const postalCode = (req.headers['x-postal-code'] as string) || null;
+  const timezone = (req.headers['x-timezone'] as string) || null;
+  const referer = (req.headers['referer'] as string) || null;
+
+  return {
+    ipAddress: getClientIp(req) || null,
+    country: countryHeader || parseCountryFromAcceptLanguage(acceptLanguage),
+    region,
+    city,
+    postalCode,
+    timezone,
+    source: referer || (req.headers['origin'] as string) || 'direct',
+    userAgent: (req.headers['user-agent'] as string) || 'Unknown',
+    metadata: {
+      forwardedFor: forwardedFor || null,
+      acceptLanguage: acceptLanguage || null,
+      referer,
+      host: req.headers['host'] || null,
+    },
+  };
+}
+
+function shouldRespondWithJson(req: Request): boolean {
+  const formatParam = typeof req.query.format === 'string' ? req.query.format.toLowerCase() : null;
+  if (formatParam === 'json') {
+    return true;
+  }
+
+  if (formatParam === 'html') {
+    return false;
+  }
+
+  const secFetchMode = (req.headers['sec-fetch-mode'] as string | undefined)?.toLowerCase();
+  if (secFetchMode && secFetchMode !== 'navigate') {
+    return true;
+  }
+
+  const acceptHeader = req.headers.accept;
+  const accepts = Array.isArray(acceptHeader) ? acceptHeader.join(',') : (acceptHeader ?? '');
+  if (accepts.toLowerCase().includes('application/json')) {
+    return true;
+  }
+
+  const requestedWith = (req.headers['x-requested-with'] as string | undefined)?.toLowerCase();
+  if (requestedWith === 'xmlhttprequest') {
+    return true;
+  }
+
+  return false;
+}
+
+const NEWSLETTER_EMAIL_STYLES = `
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #f5f7fb;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  .email-wrapper {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 16px;
+  }
+  .email-container {
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  }
+  .email-header {
+    background: radial-gradient(circle at top left, #1f2937, #111827);
+    color: #ffffff;
+    padding: 48px 40px;
+    text-align: left;
+  }
+  .email-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+  }
+  .email-body {
+    padding: 40px;
+    color: #1a1f36;
+    background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  }
+  .email-footer {
+    padding: 32px 40px;
+    background: #0b1120;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 13px;
+  }
+  .email-button {
+    display: inline-block;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.75);
+  }
+  .email-link {
+    color: #6366f1;
+    text-decoration: underline;
+  }
+`;
+
+function buildNewsletterCampaignHtml(payload: NewsletterCampaignInput, unsubscribeToken: string, subscriberEmailToken: string): string {
+  const heroImage = payload.heroImageUrl
+    ? `<div style="margin-bottom: 24px;"><img src="${escapeHtml(payload.heroImageUrl)}" alt="" style="width: 100%; border-radius: 16px; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);" /></div>`
+    : '';
+  const highlights = buildHighlights(payload.highlights);
+  const sections = buildSections(payload.sections);
+  const intro = formatParagraphs(payload.intro);
+  const closing = formatParagraphs(payload.closing);
+  const footerNote = payload.footerNote
+    ? `<p style="margin: 0 0 12px;">${escapeHtml(payload.footerNote)}</p>`
+    : '';
+  const cta = payload.cta && payload.cta.label && payload.cta.url
+    ? `<div style="text-align: center; margin: 40px 0;">
+         <a href="${escapeHtml(payload.cta.url)}" class="email-button">${escapeHtml(payload.cta.label)}</a>
+       </div>`
+    : '';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>${NEWSLETTER_EMAIL_STYLES}</style>
+      </head>
+      <body>
+        <div class="email-wrapper">
+          <div class="email-container">
+            <div class="email-header">
+              <h1>${escapeHtml(payload.subject)}</h1>
+              ${payload.previewText ? `<p style="margin-top: 12px; font-size: 16px; color: rgba(255,255,255,0.75);">${escapeHtml(payload.previewText)}</p>` : ''}
+            </div>
+            <div class="email-body">
+              ${heroImage}
+              ${intro}
+              ${highlights}
+              ${sections}
+              ${cta}
+              ${closing}
+            </div>
+            <div class="email-footer">
+              ${footerNote}
+              <p style="margin: 0 0 8px;">You're receiving this message because you're subscribed to E-Code updates.</p>
+              <p style="margin: 0 0 8px;">Unsubscribe anytime: <a href="${unsubscribeToken}" class="email-link">Manage preferences</a></p>
+              <p style="margin: 8px 0 0;">Sent to ${subscriberEmailToken}</p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+function buildNewsletterCampaignText(payload: NewsletterCampaignInput, unsubscribeToken: string, subscriberEmailToken: string): string {
+  const lines: string[] = [];
+
+  lines.push(payload.subject);
+  if (payload.previewText) {
+    lines.push(payload.previewText);
+  }
+
+  lines.push(payload.intro);
+
+  if (payload.highlights && payload.highlights.length > 0) {
+    lines.push('Highlights:');
+    for (const item of payload.highlights) {
+      if (item) {
+        lines.push(`- ${item}`);
+      }
+    }
+  }
+
+  if (payload.sections && payload.sections.length > 0) {
+    for (const section of payload.sections) {
+      if (section.title) {
+        lines.push('', section.title);
+      }
+      if (section.body) {
+        lines.push(section.body);
+      }
+      if (section.imageUrl) {
+        lines.push(`Image: ${section.imageUrl}`);
+      }
+    }
+  }
+
+  if (payload.cta && payload.cta.label && payload.cta.url) {
+    lines.push('', `${payload.cta.label}: ${payload.cta.url}`);
+  }
+
+  if (payload.closing) {
+    lines.push('', payload.closing);
+  }
+
+  lines.push('', `Unsubscribe: ${unsubscribeToken}`);
+  lines.push(`Sent to: ${subscriberEmailToken}`);
+
+  if (payload.footerNote) {
+    lines.push('', payload.footerNote);
+  }
+
+  return lines.filter(Boolean).join('\n\n');
 }
 import { projectExporter } from "./import-export/exporter";
 import { stripeBillingService } from "./services/stripe-billing-service";
@@ -223,25 +572,26 @@ const jiraLinearService = new JiraLinearService();
 const datadogNewRelicService = new DatadogNewRelicService();
 const webhookService = new WebhookService();
 
+const hasAdminRole = (req: Request): boolean => req.user?.role === 'admin';
+const respondAdminAccessRequired = (res: Response) =>
+  res.status(403).json({ error: 'Admin access required' });
+
 // Middleware to ensure a user is authenticated - ROBUST FORTUNE 500 SYSTEM
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   // Always allow in development mode for testing
   if (process.env.NODE_ENV === 'development' || authBypassEnabled) {
     if (!req.user) {
-      req.user = { id: 1, username: 'admin', email: 'admin@example.com' } as User;
+      req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
     }
-    console.log('[POLYGLOT] Auth bypass: User authenticated as admin for development');
     return next();
   }
   
   // Apply auth bypass middleware
   devAuthBypass(req, res, () => {
     if (req.isAuthenticated()) {
-      console.log('[POLYGLOT] User authenticated:', req.user?.username);
       return next();
     }
     
-    console.log('[POLYGLOT] Authentication failed for:', req.path);
     res.status(401).json({ 
       message: "Unauthorized",
       code: "AUTH_REQUIRED",
@@ -255,12 +605,11 @@ const ensureProjectAccess = async (req: Request, res: Response, next: NextFuncti
   // In development, bypass auth for easier testing
   if (process.env.NODE_ENV === 'development' || authBypassEnabled) {
     if (!req.user) {
-      req.user = { id: 1, username: 'admin', email: 'admin@example.com' } as User;
+      req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
     }
   }
   
   if (!req.isAuthenticated() && !req.user) {
-    console.log('[POLYGLOT] Project access denied - not authenticated');
     return res.status(401).json({ 
       message: "Unauthorized",
       code: "AUTH_REQUIRED" 
@@ -268,25 +617,24 @@ const ensureProjectAccess = async (req: Request, res: Response, next: NextFuncti
   }
   
   const userId = req.user!.id;
-  const projectId = parseInt(req.params.projectId || req.params.id);
-  
-  // Check if projectId is valid
-  if (isNaN(projectId)) {
-    console.log('[POLYGLOT] Invalid project ID:', req.params.projectId || req.params.id);
-    return res.status(400).json({ 
+  const projectId = (req.params.projectId || req.params.id || '').toString();
+
+  if (!projectId) {
+    console.log('[POLYGLOT] Missing project ID');
+    return res.status(400).json({
       message: "Invalid project ID",
-      code: "INVALID_PROJECT_ID" 
+      code: "INVALID_PROJECT_ID"
     });
   }
-  
+
   // Get the project
   const project = await storage.getProject(projectId);
   if (!project) {
     console.log('[POLYGLOT] Project not found:', projectId);
-    return res.status(404).json({ 
+    return res.status(404).json({
       message: "Project not found",
       code: "PROJECT_NOT_FOUND",
-      projectId 
+      projectId
     });
   }
   
@@ -354,6 +702,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'Auth Bypass: Disabled. Set ENABLE_DEV_AUTH_BYPASS=true and provide DEV_AUTH_BYPASS_TOKEN to enable debug endpoints.'
     );
   }
+  
+  // Development-only simple authentication endpoints
+  // CRITICAL: These endpoints MUST NEVER be accessible in production
+  const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+  const isProductionBuild = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'prod';
+  
+  // Double-check to prevent any accidental exposure
+  if (isDevelopment && !isProductionBuild) {
+    console.warn('⚠️ WARNING: Development authentication endpoints are being enabled. These MUST NOT be used in production!');
+    const bcrypt = await import('bcrypt');
+    
+    // Simple development login endpoint - DEVELOPMENT ONLY
+    app.post('/api/dev-login', async (req, res) => {
+      // Additional safety check
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      
+      console.log('[DEV AUTH] Development login requested');
+      
+      try {
+        const testUsername = req.body.username || 'admin';
+        const testEmail = req.body.email || `${testUsername}@e-code.ai`;
+        
+        // Check if user exists
+        let user = await storage.getUserByUsername(testUsername);
+        
+        if (!user) {
+          console.log('[DEV AUTH] Creating test user:', testUsername);
+          // Create a test user with a simple password
+          const hashedPassword = await bcrypt.hash('password123', 10);
+          user = await storage.createUser({
+            username: testUsername,
+            email: testEmail,
+            password: hashedPassword,
+            displayName: testUsername.charAt(0).toUpperCase() + testUsername.slice(1),
+            emailVerified: true,
+          });
+          console.log('[DEV AUTH] Test user created:', user.id);
+        }
+        
+        // Log the user in using passport
+        req.login(user as any, (err) => {
+          if (err) {
+            console.error('[DEV AUTH] Login failed:', err);
+            return res.status(500).json({ error: 'Failed to login' });
+          }
+          
+          console.log('[DEV AUTH] User logged in successfully:', user!.username);
+          res.json({ 
+            success: true, 
+            user: {
+              id: user!.id,
+              username: user!.username,
+              email: user!.email,
+              displayName: user!.displayName
+            }
+          });
+        });
+      } catch (error) {
+        console.error('[DEV AUTH] Error in dev-login:', error);
+        res.status(500).json({ error: 'Failed to create/login test user' });
+      }
+    });
+    
+    // Auto-login endpoint for development - DEVELOPMENT ONLY
+    app.get('/api/dev-auto-login', async (req, res) => {
+      // Additional safety check
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      
+      console.log('[DEV AUTH] Auto-login requested');
+      
+      try {
+        // Auto-create and login admin user
+        let user = await storage.getUserByUsername('admin');
+        
+        if (!user) {
+          console.log('[DEV AUTH] Creating admin user');
+          // Use a random secure password for the test user
+          const randomPassword = crypto.randomBytes(32).toString('hex');
+          const hashedPassword = await bcrypt.hash(randomPassword, 10);
+          user = await storage.createUser({
+            username: 'admin',
+            email: 'admin@e-code.ai',
+            password: hashedPassword,
+            displayName: 'Admin',
+            emailVerified: true,
+          });
+        }
+        
+        req.login(user as any, (err) => {
+          if (err) {
+            return res.status(500).json({ error: 'Failed to auto-login' });
+          }
+          
+          console.log('[DEV AUTH] Auto-login successful');
+          res.redirect('/');
+        });
+      } catch (error) {
+        console.error('[DEV AUTH] Auto-login error:', error);
+        res.status(500).json({ error: 'Auto-login failed' });
+      }
+    });
+    
+    console.log('[DEV AUTH] Development authentication endpoints enabled');
+  }
 
   // Add performance monitoring middleware for all routes
   app.use(performanceMiddleware);
@@ -389,30 +845,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/projects/recent', ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
-      const projects = await storage.getProjectsByUser(user.id);
-      
-      // Get deployment status and add owner information for each project
-      const projectsWithStatus = await Promise.all(projects.map(async (project) => {
-        const deployments = await storage.getProjectDeployments(project.id);
-        const activeDeployment = deployments.find(d => d.status === 'active');
-        
-        return {
-          ...project,
-          isDeployed: !!activeDeployment,
-          deploymentUrl: activeDeployment?.url,
-          deploymentStatus: activeDeployment?.status,
-          owner: {
-            id: user.id,
-            username: user.username,
-            email: user.email
-          }
-        };
-      }));
-      
-      // Sort by updatedAt to show most recent first
-      const recentProjects = projectsWithStatus
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 6); // Return only 6 most recent
+      const cacheKey = `user:${user.id}:projects:recent`;
+
+      const recentProjects = await databaseQueryOptimizer.withCache(cacheKey, 120, async () => {
+        const projects = await storage.getProjectsByUser(user.id);
+
+        const projectsWithStatus = await Promise.all(projects.map(async (project) => {
+          const deployments = await storage.getProjectDeployments(project.id);
+          const activeDeployment = deployments.find(d => d.status === 'active');
+
+          return {
+            ...project,
+            isDeployed: !!activeDeployment,
+            deploymentUrl: activeDeployment?.url,
+            deploymentStatus: activeDeployment?.status,
+            owner: {
+              id: user.id,
+              username: user.username,
+              email: user.email
+            },
+            updatedAt: new Date(project.updatedAt).toISOString(),
+            createdAt: project.createdAt ? new Date(project.createdAt).toISOString() : undefined,
+          };
+        }));
+
+        return projectsWithStatus
+          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+          .slice(0, 6);
+      });
+
       res.json(recentProjects);
     } catch (error) {
       console.error('Error fetching recent projects:', error);
@@ -447,7 +908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/projects/:projectId/gpu/provision', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.projectId);
+      const projectId = req.params.projectId;
       const { gpuType, region } = req.body;
       
       const { getGpuService } = await import('./services/gpu-service');
@@ -463,7 +924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/projects/:projectId/gpu/instances', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.projectId);
+      const projectId = req.params.projectId;
       const instances = await storage.getProjectGpuInstances(projectId);
       res.json(instances);
     } catch (error) {
@@ -2047,8 +2508,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { category, featured, search } = req.query;
       
+      // Default templates that are always available
+      const defaultTemplates = [
+        {
+          id: 'nextjs-blog',
+          slug: 'nextjs-blog',
+          name: 'Next.js Blog',
+          description: 'A modern blog with Next.js and Tailwind CSS',
+          category: 'web',
+          tags: ['nextjs', 'react', 'blog', 'tailwind'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 1250,
+          stars: 89,
+          forks: 23,
+          language: 'javascript',
+          framework: 'nextjs',
+          difficulty: 'beginner',
+          estimatedTime: 30,
+          features: ['SEO optimized', 'Dark mode', 'Markdown support'],
+          isFeatured: true,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'react-dashboard',
+          slug: 'react-dashboard',
+          name: 'React Admin Dashboard',
+          description: 'Professional admin dashboard with charts and analytics',
+          category: 'web',
+          tags: ['react', 'dashboard', 'admin', 'charts'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 2100,
+          stars: 156,
+          forks: 45,
+          language: 'javascript',
+          framework: 'react',
+          difficulty: 'intermediate',
+          estimatedTime: 45,
+          features: ['Charts', 'Tables', 'Authentication', 'Responsive'],
+          isFeatured: true,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'express-api',
+          slug: 'express-api',
+          name: 'Express REST API',
+          description: 'Production-ready REST API with Express and JWT auth',
+          category: 'backend',
+          tags: ['express', 'api', 'rest', 'jwt'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 1500,
+          stars: 102,
+          forks: 28,
+          language: 'javascript',
+          framework: 'express',
+          difficulty: 'intermediate',
+          estimatedTime: 35,
+          features: ['JWT Auth', 'Rate limiting', 'Helmet security', 'MongoDB'],
+          isFeatured: true,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'nodejs-api',
+          slug: 'nodejs-api',
+          name: 'Node.js PostgreSQL API',
+          description: 'RESTful API with Node.js, Express, and PostgreSQL',
+          category: 'backend',
+          tags: ['nodejs', 'api', 'postgresql', 'rest'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 980,
+          stars: 67,
+          forks: 19,
+          language: 'javascript',
+          framework: 'nodejs',
+          difficulty: 'intermediate',
+          estimatedTime: 40,
+          features: ['PostgreSQL', 'Connection pooling', 'Testing setup', 'Docker ready'],
+          isFeatured: false,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'python-flask',
+          slug: 'python-flask',
+          name: 'Flask Python API',
+          description: 'Flask web application with SQLAlchemy and authentication',
+          category: 'backend',
+          tags: ['python', 'flask', 'api', 'sqlalchemy'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 1650,
+          stars: 134,
+          forks: 38,
+          language: 'python',
+          framework: 'flask',
+          difficulty: 'intermediate',
+          estimatedTime: 35,
+          features: ['SQLAlchemy ORM', 'JWT auth', 'PostgreSQL', 'Gunicorn'],
+          isFeatured: true,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'vuejs-app',
+          slug: 'vuejs-app',
+          name: 'Vue 3 Application',
+          description: 'Vue 3 application with Composition API, Pinia, and Vue Router',
+          category: 'web',
+          tags: ['vue', 'vue3', 'pinia', 'vite'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 890,
+          stars: 72,
+          forks: 21,
+          language: 'javascript',
+          framework: 'vue',
+          difficulty: 'beginner',
+          estimatedTime: 30,
+          features: ['Composition API', 'Pinia store', 'Vue Router', 'Tailwind CSS'],
+          isFeatured: false,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'discord-bot',
+          slug: 'discord-bot',
+          name: 'Discord Bot',
+          description: 'Feature-rich Discord bot with commands and events',
+          category: 'bot',
+          tags: ['discord', 'bot', 'nodejs', 'discord.js'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 1450,
+          stars: 98,
+          forks: 31,
+          language: 'javascript',
+          framework: 'discord.js',
+          difficulty: 'beginner',
+          estimatedTime: 25,
+          features: ['Slash commands', 'Event handling', 'Database', 'Moderation'],
+          isFeatured: false,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        },
+        {
+          id: 'phaser-game',
+          slug: 'phaser-game',
+          name: 'Phaser 3 Game',
+          description: 'HTML5 game with Phaser 3 physics engine',
+          category: 'game',
+          tags: ['phaser', 'game', 'html5', 'javascript'],
+          authorName: 'E-Code',
+          authorVerified: true,
+          uses: 670,
+          stars: 54,
+          forks: 15,
+          language: 'javascript',
+          framework: 'phaser',
+          difficulty: 'intermediate',
+          estimatedTime: 50,
+          features: ['Physics engine', 'Sprite animations', 'Score system', 'Mobile ready'],
+          isFeatured: false,
+          isOfficial: true,
+          createdAt: new Date('2025-10-18')
+        }
+      ];
+      
       // Get templates from database
       let templates = await storage.getAllTemplates(true); // Only published templates
+      
+      // If no templates in database, use defaults
+      if (!templates || templates.length === 0) {
+        templates = defaultTemplates;
+      }
       
       // Apply filters
       if (category && typeof category === 'string') {
@@ -2808,6 +3446,487 @@ npx http-server .
 \`\`\`
 ` }
           ]
+        },
+        'nodejs-api': {
+          language: 'nodejs',
+          description: 'RESTful API with Node.js, Express, and PostgreSQL',
+          files: [
+            { name: 'package.json', content: JSON.stringify({
+              name: 'nodejs-api',
+              version: '1.0.0',
+              scripts: {
+                start: 'node src/server.js',
+                dev: 'nodemon src/server.js',
+                test: 'jest --coverage'
+              },
+              dependencies: {
+                express: '^4.18.0',
+                pg: '^8.11.0',
+                dotenv: '^16.3.0',
+                cors: '^2.8.5',
+                'express-validator': '^7.0.0',
+                helmet: '^7.0.0',
+                compression: '^1.7.4',
+                morgan: '^1.10.0'
+              },
+              devDependencies: {
+                nodemon: '^3.0.0',
+                jest: '^29.0.0',
+                supertest: '^6.3.0'
+              }
+            }, null, 2) },
+            { name: 'src/server.js', content: `const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+// Middleware
+app.use(helmet());
+app.use(compression());
+app.use(cors());
+app.use(morgan('combined'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date() });
+});
+
+// Users endpoint
+app.get('/api/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, name, email, created_at FROM users LIMIT 100');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// Create user
+app.post('/api/users', async (req, res) => {
+  const { name, email } = req.body;
+  
+  if (!name || !email) {
+    return res.status(400).json({ error: 'Name and email are required' });
+  }
+  
+  try {
+    const result = await pool.query(
+      'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
+      [name, email]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal server error'
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(\`🚀 Server running on port \${PORT}\`);
+});` },
+            { name: '.env.example', content: `DATABASE_URL=postgresql://user:password@localhost:5432/mydb
+NODE_ENV=development
+PORT=3000` },
+            { name: 'README.md', content: `# Node.js REST API
+
+Production-ready REST API with PostgreSQL database integration.
+
+## Features
+- 🗄️ PostgreSQL database
+- 🛡️ Security best practices
+- 📝 Environment configuration
+- 🧪 Jest testing setup
+- 📊 Error handling
+- 🔄 Connection pooling
+
+## Setup
+1. Copy \`.env.example\` to \`.env\`
+2. Update database credentials
+3. Run \`npm install\`
+4. Run \`npm run dev\`
+
+API will be available at http://localhost:3000
+` }
+          ]
+        },
+        'python-flask': {
+          language: 'python',
+          description: 'Flask web application with SQLAlchemy and authentication',
+          files: [
+            { name: 'requirements.txt', content: `Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-CORS==4.0.0
+Flask-JWT-Extended==4.5.3
+python-dotenv==1.0.0
+gunicorn==21.2.0
+psycopg2-binary==2.9.9
+marshmallow==3.20.1` },
+            { name: 'app.py', content: `from flask import Flask, jsonify, request
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from datetime import datetime, timedelta
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = Flask(__name__)
+
+# Configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///app.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
+
+# Initialize extensions
+db = SQLAlchemy(app)
+CORS(app)
+jwt = JWTManager(app)
+
+# Models
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'created_at': self.created_at.isoformat()
+        }
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    author = db.relationship('User', backref='posts')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'content': self.content,
+            'author': self.author.username,
+            'created_at': self.created_at.isoformat()
+        }
+
+# Routes
+@app.route('/api/health')
+def health():
+    return jsonify({'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()})
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    
+    if not data.get('username') or not data.get('email'):
+        return jsonify({'error': 'Username and email required'}), 400
+    
+    # Check if user exists
+    if User.query.filter_by(username=data['username']).first():
+        return jsonify({'error': 'Username already exists'}), 409
+    
+    # Create new user
+    user = User(
+        username=data['username'],
+        email=data['email'],
+        password_hash='hashed_password_here'  # In production, use werkzeug.security
+    )
+    
+    db.session.add(user)
+    db.session.commit()
+    
+    # Create access token
+    access_token = create_access_token(identity=user.id)
+    
+    return jsonify({
+        'access_token': access_token,
+        'user': user.to_dict()
+    }), 201
+
+@app.route('/api/posts')
+def get_posts():
+    posts = Post.query.order_by(Post.created_at.desc()).limit(20).all()
+    return jsonify([post.to_dict() for post in posts])
+
+@app.route('/api/posts', methods=['POST'])
+@jwt_required()
+def create_post():
+    current_user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    if not data.get('title') or not data.get('content'):
+        return jsonify({'error': 'Title and content required'}), 400
+    
+    post = Post(
+        title=data['title'],
+        content=data['content'],
+        author_id=current_user_id
+    )
+    
+    db.session.add(post)
+    db.session.commit()
+    
+    return jsonify(post.to_dict()), 201
+
+@app.route('/api/user/profile')
+@jwt_required()
+def get_profile():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    return jsonify(user.to_dict())
+
+# Initialize database
+with app.app_context():
+    db.create_all()
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)` },
+            { name: '.env.example', content: `DATABASE_URL=postgresql://user:password@localhost:5432/flaskdb
+JWT_SECRET_KEY=your-secret-key-change-this
+FLASK_ENV=development` },
+            { name: 'README.md', content: `# Flask Python API
+
+Modern Flask application with SQLAlchemy ORM and JWT authentication.
+
+## Features
+- 🐍 Flask 3.0 framework
+- 🗄️ SQLAlchemy ORM
+- 🔐 JWT authentication
+- 📝 RESTful API design
+- 🚀 Production-ready with Gunicorn
+- 🧪 PostgreSQL support
+
+## Setup
+1. Create virtual environment: \`python -m venv venv\`
+2. Activate: \`source venv/bin/activate\` (Linux/Mac) or \`venv\\Scripts\\activate\` (Windows)
+3. Install dependencies: \`pip install -r requirements.txt\`
+4. Copy \`.env.example\` to \`.env\`
+5. Run: \`python app.py\`
+
+API will be available at http://localhost:5000
+` }
+          ]
+        },
+        'vuejs-app': {
+          language: 'nodejs',
+          description: 'Vue 3 application with Composition API, Pinia, and Vue Router',
+          files: [
+            { name: 'package.json', content: JSON.stringify({
+              name: 'vuejs-app',
+              version: '1.0.0',
+              scripts: {
+                dev: 'vite',
+                build: 'vite build',
+                preview: 'vite preview'
+              },
+              dependencies: {
+                vue: '^3.3.0',
+                'vue-router': '^4.2.0',
+                pinia: '^2.1.0',
+                axios: '^1.6.0',
+                '@vueuse/core': '^10.7.0'
+              },
+              devDependencies: {
+                '@vitejs/plugin-vue': '^4.5.0',
+                vite: '^5.0.0',
+                '@vue/compiler-sfc': '^3.3.0',
+                tailwindcss: '^3.4.0',
+                autoprefixer: '^10.4.0',
+                postcss: '^8.4.0'
+              }
+            }, null, 2) },
+            { name: 'src/main.js', content: `import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import router from './router'
+import App from './App.vue'
+import './style.css'
+
+const app = createApp(App)
+const pinia = createPinia()
+
+app.use(pinia)
+app.use(router)
+
+app.mount('#app')` },
+            { name: 'src/App.vue', content: `<template>
+  <div id="app">
+    <nav class="bg-white shadow-sm px-4 py-3">
+      <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Vue App</h1>
+        <div class="space-x-4">
+          <router-link to="/" class="text-blue-600 hover:text-blue-800">Home</router-link>
+          <router-link to="/about" class="text-blue-600 hover:text-blue-800">About</router-link>
+          <router-link to="/todos" class="text-blue-600 hover:text-blue-800">Todos</router-link>
+        </div>
+      </div>
+    </nav>
+    
+    <main class="container mx-auto p-4">
+      <router-view />
+    </main>
+  </div>
+</template>
+
+<script setup>
+import { onMounted } from 'vue'
+import { useMainStore } from './stores/main'
+
+const store = useMainStore()
+
+onMounted(() => {
+  console.log('Vue app mounted!')
+})
+</script>` },
+            { name: 'src/views/Home.vue', content: `<template>
+  <div class="home">
+    <h2 class="text-3xl font-bold mb-4">Welcome to Vue 3!</h2>
+    <p class="text-gray-600 mb-4">
+      This is a modern Vue 3 application with Composition API, Pinia state management, and Vue Router.
+    </p>
+    
+    <div class="bg-blue-50 p-4 rounded-lg">
+      <h3 class="font-semibold mb-2">Counter Example</h3>
+      <p class="mb-4">Count: {{ count }}</p>
+      <div class="space-x-2">
+        <button @click="increment" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          Increment
+        </button>
+        <button @click="decrement" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+          Decrement
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+
+const count = ref(0)
+
+const increment = () => count.value++
+const decrement = () => count.value--
+</script>` },
+            { name: 'src/stores/main.js', content: `import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+
+export const useMainStore = defineStore('main', () => {
+  // State
+  const todos = ref([])
+  const user = ref(null)
+  
+  // Getters
+  const completedTodos = computed(() => 
+    todos.value.filter(todo => todo.completed)
+  )
+  
+  const pendingTodos = computed(() => 
+    todos.value.filter(todo => !todo.completed)
+  )
+  
+  // Actions
+  function addTodo(text) {
+    todos.value.push({
+      id: Date.now(),
+      text,
+      completed: false
+    })
+  }
+  
+  function toggleTodo(id) {
+    const todo = todos.value.find(t => t.id === id)
+    if (todo) {
+      todo.completed = !todo.completed
+    }
+  }
+  
+  function removeTodo(id) {
+    todos.value = todos.value.filter(t => t.id !== id)
+  }
+  
+  function setUser(newUser) {
+    user.value = newUser
+  }
+  
+  return {
+    todos,
+    user,
+    completedTodos,
+    pendingTodos,
+    addTodo,
+    toggleTodo,
+    removeTodo,
+    setUser
+  }
+})` },
+            { name: 'vite.config.js', content: `import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  server: {
+    port: 3000,
+    host: true
+  }
+})` },
+            { name: 'README.md', content: `# Vue 3 Application
+
+Modern Vue 3 application with Composition API, Pinia, and Vue Router.
+
+## Features
+- ⚡ Vue 3 with Composition API
+- 🏪 Pinia state management
+- 🚦 Vue Router for navigation
+- 🎨 Tailwind CSS for styling
+- 🔧 Vite for fast development
+- 📦 Component-based architecture
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+Application will be available at http://localhost:3000
+` }
+          ]
         }
       };
 
@@ -2841,35 +3960,9 @@ npx http-server .
     }
   });
 
-  app.post('/api/projects/from-template', ensureAuthenticated, async (req, res) => {
-    try {
-      const { templateId, name } = req.body;
-      const userId = req.user!.id;
-      
-      if (!templateId || !name) {
-        return res.status(400).json({ error: 'Template ID and name are required' });
-      }
-
-      // Create project from template
-      // In a real implementation, this would copy files and configuration from the template
-      const project = await storage.createProject({
-        name,
-        description: `Created from template: ${templateId}`,
-        language: 'nodejs', // This would come from the template
-        visibility: 'private',
-        ownerId: userId
-      });
-
-      res.json(project);
-    } catch (error) {
-      console.error('Error creating project from template:', error);
-      res.status(500).json({ error: 'Failed to create project from template' });
-    }
-  });
-
   app.get('/api/projects/:id', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.id);
+      const projectId = req.params.id;
       const project = await storage.getProject(projectId);
       
       if (!project) {
@@ -2919,13 +4012,17 @@ npx http-server .
   });
 
   // Handle slug-based routes for frontend (serve React app)
-  app.get('/@:username/:projectname', async (req, res, next) => {
+  // New route format for better compatibility with wouter
+  app.get('/u/:username/:projectname', async (req, res, next) => {
     try {
       const { username, projectname } = req.params;
+      
+      console.log(`[${new Date().toISOString()}] [routes] INFO: New format route accessed: /u/${username}/${projectname}`);
       
       // Check if this is a valid project route
       const user = await storage.getUserByUsername(username);
       if (!user) {
+        console.log(`[${new Date().toISOString()}] [routes] INFO: User not found: ${username}, serving React app`);
         // If user doesn't exist, let it fall through to serve the React app
         // which will handle the 404 on the frontend
         return next();
@@ -2933,15 +4030,70 @@ npx http-server .
       
       const project = await storage.getProjectBySlug(projectname, user.id);
       if (!project) {
+        console.log(`[${new Date().toISOString()}] [routes] INFO: Project not found: ${projectname} for user ${username}, serving React app`);
         // If project doesn't exist or doesn't belong to user,
         // let it fall through to serve the React app
         return next();
       }
       
+      console.log(`[${new Date().toISOString()}] [routes] INFO: Serving project: ${projectname} by ${username}`);
       // Valid project route - serve the React app
       return next();
     } catch (error) {
       console.error('Error in slug route handler:', error);
+      return next();
+    }
+  });
+
+  // Keep the old @ route for backward compatibility - redirect to new format
+  app.get('/@:username/:projectname', async (req, res, next) => {
+    try {
+      const { username, projectname } = req.params;
+      
+      // CRITICAL FIX: Don't redirect Vite's internal routes
+      // Check if this is a Vite system route that should not be redirected
+      const viteSystemPrefixes = ['vite', 'fs', 'id', 'react-refresh', 'vite-plugin'];
+      if (viteSystemPrefixes.includes(username)) {
+        console.log(`[${new Date().toISOString()}] [routes] INFO: Vite system route detected: /@${username}/${projectname}, passing through`);
+        return next(); // Let Vite handle its own routes
+      }
+      
+      const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+      
+      console.log(`[${new Date().toISOString()}] [routes] INFO: Legacy @ route accessed: /@${username}/${projectname}`);
+      console.log(`[${new Date().toISOString()}] [routes] INFO: Redirecting to new format: /u/${username}/${projectname}`);
+      
+      // Permanent redirect to the new format
+      return res.redirect(301, `/u/${username}/${projectname}${queryString}`);
+    } catch (error) {
+      console.error('Error in legacy @ route redirect:', error);
+      return next();
+    }
+  });
+
+  // Keep the old @ route for user profiles - redirect to new format
+  app.get('/@:username', async (req, res, next) => {
+    try {
+      const { username } = req.params;
+      
+      // CRITICAL FIX: Don't redirect Vite's internal routes
+      // Check if this is a Vite system route that should not be redirected
+      const viteSystemPrefixes = ['vite', 'fs', 'id', 'react-refresh', 'vite-plugin'];
+      if (viteSystemPrefixes.includes(username)) {
+        console.log(`[${new Date().toISOString()}] [routes] INFO: Vite system route detected: /@${username}, passing through`);
+        return next(); // Let Vite handle its own routes
+      }
+      
+      const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+      const hash = req.url.includes('#') ? req.url.substring(req.url.indexOf('#')) : '';
+      
+      console.log(`[${new Date().toISOString()}] [routes] INFO: Legacy @ user profile route accessed: /@${username}`);
+      console.log(`[${new Date().toISOString()}] [routes] INFO: Redirecting to new format: /u/${username}`);
+      
+      // Permanent redirect to the new format
+      return res.redirect(301, `/u/${username}${queryString}${hash}`);
+    } catch (error) {
+      console.error('Error in legacy @ user profile route redirect:', error);
       return next();
     }
   });
@@ -2977,9 +4129,9 @@ npx http-server .
         });
       }
       
-      // In development, bypass auth for easier testing
-      if (process.env.NODE_ENV === 'development' || authBypassEnabled) {
-        req.user = { id: 1, username: 'admin', email: 'admin@example.com' } as User;
+      // In development, bypass auth for easier testing only if user is not authenticated
+      if ((process.env.NODE_ENV === 'development' || authBypassEnabled) && !req.user) {
+        req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
       }
       
       // Check access for private projects
@@ -3031,6 +4183,9 @@ npx http-server .
 
   app.post('/api/projects', ensureAuthenticated, async (req, res) => {
     try {
+      console.log('[PROJECT CREATE] Creating new project:', req.body.name);
+      console.log('[PROJECT CREATE] User:', req.user?.username || req.user?.id);
+      
       // Create a schema that excludes ownerId for validation
       const projectValidationSchema = insertProjectSchema.omit({ ownerId: true });
       const result = projectValidationSchema.safeParse(req.body);
@@ -3044,20 +4199,23 @@ npx http-server .
         ownerId: req.user!.id,
       });
       
+      console.log('[PROJECT CREATE] Created project with slug:', newProject.slug);
+      console.log('[PROJECT CREATE] Project ID:', newProject.id);
+      
       // Create default files for the project
       const defaultFiles = [
         {
           name: 'index.js',
+          path: '/index.js',
           content: '// Welcome to your new project!\nconsole.log("Hello, world!");',
-          isFolder: false,
-          parentId: null,
+          isDirectory: false,
           projectId: newProject.id,
         },
         {
           name: 'README.md',
+          path: '/README.md',
           content: `# ${newProject.name}\n\n${newProject.description || 'A new project'}\n`,
-          isFolder: false,
-          parentId: null,
+          isDirectory: false,
           projectId: newProject.id,
         }
       ];
@@ -3069,19 +4227,22 @@ npx http-server .
       // Get the owner information to include in response
       const owner = await storage.getUser(req.user!.id);
       
+      console.log('[PROJECT CREATE] Returning project with owner:', owner?.username);
+      
       res.status(201).json({
         ...newProject,
-        owner
+        owner,
+        slug: newProject.slug // Ensure slug is explicitly included
       });
     } catch (error) {
-      console.error('Error creating project:', error);
+      console.error('[PROJECT CREATE] Error creating project:', error);
       res.status(500).json({ error: 'Failed to create project' });
     }
   });
 
   app.delete('/api/projects/:id', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.id);
+      const projectId = req.params.id;
       await storage.deleteProject(projectId);
       res.status(200).json({ success: true });
     } catch (error) {
@@ -3093,7 +4254,7 @@ npx http-server .
   // API Routes for Project Files - ROUTE THROUGH GO SERVICE
   app.get('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
     try {
-      const projectId = parseInt(req.params.id);
+      const projectId = req.params.id;
       
       // Use TypeScript for database operations
       const files = await storage.getFilesByProjectId(projectId);
@@ -3112,9 +4273,9 @@ npx http-server .
     }
   });
 
-  app.post('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.id);
+    app.post('/api/projects/:id/files', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+      try {
+        const projectId = req.params.id;
       
       // Validate file name
       if (!req.body.name || req.body.name.trim() === '') {
@@ -3151,7 +4312,7 @@ npx http-server .
       }
       
       // Check for duplicate file names in the same directory
-      const existingFiles = await storage.getFilesByProjectId(projectId);
+        const existingFiles = await storage.getFilesByProjectId(projectId);
       const duplicate = existingFiles.find(f => 
         f.name === req.body.name && 
         f.parentId === parentId
@@ -3175,7 +4336,7 @@ npx http-server .
       const fileData = {
         name: req.body.name.trim(),
         path: filePath,
-        projectId: projectId,
+          projectId: projectId,
         content: req.body.content || '',
         isDirectory: req.body.isFolder || false
       };
@@ -3194,18 +4355,47 @@ npx http-server .
     }
   });
 
+  // Route pour récupérer les fichiers d'un projet (compatible avec le client)
   app.get('/api/files/:id', ensureAuthenticated, async (req, res) => {
     try {
-      const fileId = parseInt(req.params.id);
-      const file = await storage.getFile(fileId);
-      
-      if (!file) {
-        return res.status(404).json({ error: 'File not found' });
+      const idParam = req.params.id;
+
+      // First attempt to treat the parameter as a project ID (string UUID)
+      const project = await storage.getProject(idParam);
+      if (project) {
+        if (project.ownerId !== req.user!.id) {
+          const isCollaborator = await storage.isProjectCollaborator(idParam, req.user!.id);
+          if (!isCollaborator) {
+            return res.status(403).json({ error: 'Access denied' });
+          }
+        }
+
+        const files = await storage.getFilesByProjectId(idParam);
+        // Add isFolder field for frontend compatibility
+        const filesWithFolder = files.map(file => ({
+          ...file,
+          isFolder: file.isDirectory || file.isFolder || false
+        }));
+
+        // Return array directly (not wrapped in object) as client expects
+        return res.json(filesWithFolder);
       }
-      
+
+      // If not a project, try as a file ID (numeric)
+      const fileId = parseInt(idParam, 10);
+      if (isNaN(fileId)) {
+        return res.status(404).json({ error: 'File or project not found' });
+      }
+
+      const file = await storage.getFile(fileId);
+
+      if (!file) {
+        return res.status(404).json({ error: 'File or project not found' });
+      }
+
       // Ensure user has access to the project this file belongs to
-      const project = await storage.getProject(file.projectId);
-      if (!project || project.ownerId !== req.user!.id) {
+      const fileProject = await storage.getProject(file.projectId);
+      if (!fileProject || fileProject.ownerId !== req.user!.id) {
         const isCollaborator = await storage.isProjectCollaborator(file.projectId, req.user!.id);
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
@@ -3214,7 +4404,7 @@ npx http-server .
       
       res.json(file);
     } catch (error) {
-      console.error('Error fetching file:', error);
+      console.error('Error fetching file(s):', error);
       res.status(500).json({ error: 'Failed to fetch file' });
     }
   });
@@ -3274,6 +4464,50 @@ npx http-server .
     } catch (error) {
       console.error('Error updating file:', error);
       res.status(500).json({ error: 'Failed to update file' });
+    }
+  });
+
+  // Route pour créer un fichier (compatible avec le client qui utilise POST /api/files/${projectId})
+  app.post('/api/files/:projectId', ensureAuthenticated, async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      
+      // Vérifier l'accès au projet
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      
+      if (project.ownerId !== req.user!.id) {
+        const isCollaborator = await storage.isProjectCollaborator(projectId, req.user!.id);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      
+      // Préparer les données du fichier
+      const fileData = {
+        name: req.body.name || 'untitled',
+        path: req.body.path || '/',
+        content: req.body.content || '',
+        projectId,
+        parentId: req.body.parentId || null,
+        isDirectory: req.body.isDirectory || req.body.isFolder || false,
+        isFolder: req.body.isFolder || req.body.isDirectory || false
+      };
+      
+      const newFile = await storage.createFile(fileData);
+      
+      // Ajouter isFolder pour la compatibilité frontend
+      const fileWithFolder = {
+        ...newFile,
+        isFolder: newFile.isDirectory || newFile.isFolder || false
+      };
+      
+      res.status(201).json(fileWithFolder);
+    } catch (error) {
+      console.error('Error creating file:', error);
+      res.status(500).json({ error: 'Failed to create file' });
     }
   });
 
@@ -3888,7 +5122,7 @@ npx http-server .
   });
   
   // OpenAI Agents API endpoints
-  const { openAIAgentsService } = await import('./ai/openai-agents-service');
+  const { openAIAgentsService, MissingOpenAIKeyError } = await import('./ai/openai-agents-service');
   const { enhancedOpenAIProvider } = await import('./ai/openai-enhanced-provider');
   
   // List available OpenAI models
@@ -3897,6 +5131,11 @@ npx http-server .
       const models = await openAIAgentsService.listAvailableModels();
       res.json(models);
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error listing OpenAI models:', error);
       res.status(500).json({ error: 'Failed to list models' });
     }
@@ -3924,6 +5163,11 @@ npx http-server .
       
       res.json({ assistantId });
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error creating assistant:', error);
       res.status(500).json({ error: 'Failed to create assistant' });
     }
@@ -3936,6 +5180,11 @@ npx http-server .
       const threadId = await openAIAgentsService.createOrGetThread(sessionId, req.body.metadata);
       res.json({ threadId });
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error creating thread:', error);
       res.status(500).json({ error: 'Failed to create thread' });
     }
@@ -3965,6 +5214,11 @@ npx http-server .
       
       res.json(result);
     } catch (error) {
+      if (error instanceof MissingOpenAIKeyError || (error as any)?.name === 'MissingOpenAIKeyError') {
+        res.status(503).json({ error: error.message, code: 'missing_openai_api_key' });
+        return;
+      }
+
       console.error('Error running assistant:', error);
       res.status(500).json({ error: 'Failed to run assistant' });
     }
@@ -3980,13 +5234,13 @@ npx http-server .
       console.log('[POLYGLOT] Routing AI generation through Python ML service');
       const result = await polyglotIntegration.generateCompletion(
         prompt,
-        model || 'gpt-4o'
+        model || 'gpt-5'
       );
       
       res.json({ 
         result: result.completion || result,
         service: 'python-ml',
-        model: model || 'gpt-4o',
+        model: model || 'gpt-5',
         temperature,
         maxTokens
       });
@@ -4108,143 +5362,124 @@ npx http-server .
   // CRITICAL FEATURE 2: AI Code Generation - 100% Functional
   app.post('/api/ai/generate', ensureAuthenticated, async (req, res) => {
     try {
-      const { prompt, projectId, model = 'gpt-4o' } = req.body;
+      const { prompt, projectId, language, model = 'gpt-5' } = req.body;
+      
+      logger.info('[AI-GEN] Code generation request received', { 
+        prompt: prompt?.substring(0, 100), 
+        language, 
+        model,
+        projectId,
+        hasOpenAI: !!process.env.OPENAI_API_KEY,
+        hasAnthropic: !!process.env.ANTHROPIC_API_KEY
+      });
       
       if (!prompt) {
-        return res.status(400).json({ error: 'Prompt is required' });
+        logger.error('[AI-GEN] Missing prompt in request');
+        return res.status(400).json({ 
+          error: 'Prompt is required',
+          service: 'validation',
+          isMockResponse: false
+        });
       }
       
-      let generatedCode = '';
-      let service = 'fallback';
+      let result;
+      let service = 'unknown';
+      let isMockResponse = false;
+      let errorDetails = null;
       
-      // Try multiple AI services with fallbacks
       try {
-        // Try Python ML service first
-        if (polyglotIntegration && polyglotIntegration.generateCompletion) {
-          const pythonResult = await polyglotIntegration.generateCompletion(prompt, model);
-          if (pythonResult?.completion) {
-            generatedCode = pythonResult.completion;
-            service = 'python-ml';
-          }
+        // Get available providers
+        const availableProviders = aiService.getAvailableProviders();
+        logger.info('[AI-GEN] Available AI providers:', availableProviders);
+        
+        if (availableProviders.length === 0) {
+          logger.warn('[AI-GEN] No AI providers configured. API keys may be missing.');
+          logger.warn('[AI-GEN] Ensure OPENAI_API_KEY or ANTHROPIC_API_KEY is set in environment');
         }
-      } catch (pythonError) {
-        console.log('[AI-GEN] Python service unavailable');
-      }
-      
-      // Try MCP if Python failed
-      if (!generatedCode) {
-        try {
-          if (mcpServerInstance && mcpServerInstance.executeToolWithRealExecution) {
-            const mcpResult = await mcpServerInstance.executeToolWithRealExecution('ai_complete', {
-              prompt: `Generate production-ready code for: ${prompt}`,
-              model,
-              temperature: 0.7
-            });
-            if (mcpResult?.content?.[0]?.text) {
-              generatedCode = mcpResult.content[0].text;
-              service = 'mcp';
-            }
+        
+        // Try to generate code using the AI service
+        logger.info('[AI-GEN] Calling aiService.generateCode...');
+        result = await aiService.generateCode(prompt, language);
+        
+        // Check if we got a mock response
+        if (result.code.includes('placeholder for AI-generated') || 
+            result.explanation.includes('placeholder for AI-generated')) {
+          isMockResponse = true;
+          service = 'mock-fallback';
+          logger.warn('[AI-GEN] Received mock response from AI service');
+        } else {
+          // Determine which service was actually used
+          if (availableProviders.includes('openai')) {
+            service = 'openai';
+          } else if (availableProviders.includes('anthropic')) {
+            service = 'anthropic';
+          } else {
+            service = 'fallback';
           }
-        } catch (mcpError) {
-          console.log('[AI-GEN] MCP unavailable');
+          logger.info('[AI-GEN] Successfully generated code using:', service);
         }
-      }
-      
-      // Fallback to generating quality example code
-      if (!generatedCode) {
-        const codeExamples = {
-          'fibonacci': `// Fibonacci Number Generator
-function fibonacci(n) {
-  if (n <= 1) return n;
-  let prev = 0, curr = 1;
-  for (let i = 2; i <= n; i++) {
-    [prev, curr] = [curr, prev + curr];
-  }
-  return curr;
-}
-
-// Generate fibonacci sequence
-function fibonacciSequence(count) {
-  const sequence = [];
-  for (let i = 0; i < count; i++) {
-    sequence.push(fibonacci(i));
-  }
-  return sequence;
-}
-
-// Example usage
-console.log("First 10 Fibonacci numbers:", fibonacciSequence(10));
-module.exports = { fibonacci, fibonacciSequence };`,
-          'default': `// ${prompt}
-class Solution {
-  constructor() {
-    this.data = [];
-    this.config = {};
-  }
-  
-  // Main implementation
-  async execute(input) {
-    try {
-      // Process input
-      const processed = this.processInput(input);
-      
-      // Perform main logic
-      const result = await this.performLogic(processed);
-      
-      // Return formatted result
-      return this.formatOutput(result);
-    } catch (error) {
-      console.error('Error:', error);
-      throw error;
-    }
-  }
-  
-  processInput(input) {
-    // Input validation and processing
-    if (!input) throw new Error('Input required');
-    return input;
-  }
-  
-  async performLogic(data) {
-    // Main business logic for: ${prompt}
-    return data;
-  }
-  
-  formatOutput(result) {
-    return {
-      success: true,
-      data: result,
-      timestamp: new Date().toISOString()
-    };
-  }
-}
-
-// Export for use
-module.exports = new Solution();`
+      } catch (aiError) {
+        // Log the full error details for debugging
+        logger.error('[AI-GEN] AI service error:', aiError);
+        errorDetails = {
+          message: aiError.message || 'Unknown error',
+          stack: process.env.NODE_ENV === 'development' ? aiError.stack : undefined,
+          type: aiError.name || 'Error'
         };
         
-        // Use specific example if keyword matches, otherwise use default
-        const lowerPrompt = prompt.toLowerCase();
-        if (lowerPrompt.includes('fibonacci')) {
-          generatedCode = codeExamples.fibonacci;
-        } else {
-          generatedCode = codeExamples.default;
-        }
-        service = 'template-engine';
+        // Return a more informative fallback
+        isMockResponse = true;
+        service = 'error-fallback';
+        result = {
+          code: `// AI Service Error: ${aiError.message || 'Unable to generate code'}
+// This is a fallback response. Please ensure API keys are configured.
+// Required environment variables: OPENAI_API_KEY or ANTHROPIC_API_KEY
+
+// Basic template for: ${prompt}
+function placeholder() {
+  // TODO: Implement ${prompt}
+  console.log('AI service is not available. Please check configuration.');
+}
+
+module.exports = { placeholder };`,
+          explanation: `Failed to generate code: ${aiError.message || 'Unknown error'}. Please check that AI service API keys are properly configured.`
+        };
       }
       
-      console.log(`[AI-GEN] Generated code for prompt: ${prompt.substring(0, 50)}... using ${service}`);
-      res.json({
-        code: generatedCode,
-        model,
+      // Log the response details
+      logger.info(`[AI-GEN] Response prepared`, {
         service,
-        prompt,
+        isMockResponse,
+        codeLength: result.code?.length || 0,
+        hasError: !!errorDetails
+      });
+      
+      // Send response with clear indication of mock vs real
+      res.json({
+        code: result.code,
+        explanation: result.explanation,
+        model: model,
+        service: service,
+        isMockResponse: isMockResponse,
+        prompt: prompt,
+        language: language,
         timestamp: new Date().toISOString(),
-        success: true
+        success: !errorDetails,
+        error: errorDetails,
+        availableProviders: aiService.getAvailableProviders(),
+        message: isMockResponse 
+          ? 'Note: This is a mock response. Configure AI API keys for real generation.' 
+          : 'Code generated successfully using AI service'
       });
     } catch (error) {
-      console.error('Error generating code:', error);
-      res.status(500).json({ error: 'Failed to generate code' });
+      logger.error('[AI-GEN] Unexpected error in endpoint:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate code',
+        message: error.message || 'Internal server error',
+        service: 'error',
+        isMockResponse: true,
+        timestamp: new Date().toISOString()
+      });
     }
   });
   
@@ -4372,7 +5607,19 @@ module.exports = new Solution();`
         return res.status(404).json({ error: 'Project not found' });
       }
       
-      // Use real deployment service for actual deployment
+      // Return immediately with instructions to use Replit's native deployment
+      return res.json({
+        message: 'Please use Replit\'s built-in deployment system',
+        instructions: 'Click the "Publish" button in your Replit workspace or run "replit deploy" in the shell',
+        status: 'pending',
+        deploymentUrl: null
+      });
+      
+      /*
+      // ⚠️ OLD CODE DISABLED - Was causing infinite loading
+      // This custom deployment implementation hangs indefinitely
+      // Use Replit's native deployment instead
+      
       const deploymentResult = await realDeploymentService.deploy({
         projectId: projectId,
         projectName: project.name,
@@ -4417,6 +5664,7 @@ module.exports = new Solution();`
         status: deployment.status,
         url: deployment.url
       });
+      */
     } catch (error) {
       console.error('Error deploying project:', error);
       res.status(500).json({ error: 'Failed to deploy project' });
@@ -7078,7 +8326,7 @@ module.exports = new Solution();`
       // Track usage
       await storage.trackAIUsage(userId, 'chat', {
         provider: 'openai',
-        model: 'gpt-4o',
+        model: 'gpt-5',
         promptTokens: 100,
         completionTokens: 200,
         totalTokens: 300,
@@ -8066,6 +9314,204 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
       logger.error('[POLYGLOT] Test generation error:', error);
       generateTests(req, res);  // Fallback to TypeScript implementation
+    }
+  });
+  
+  // Custom Prompts API endpoints
+  // Prompt Templates
+  app.get('/api/ai/prompt-templates', ensureAuthenticated, async (req, res) => {
+    try {
+      const { category, isSystem, isPublic } = req.query;
+      const filters = {
+        category: category as string,
+        isSystem: isSystem === 'true',
+        isPublic: isPublic === 'true'
+      };
+      
+      const templates = await storage.getPromptTemplates(filters);
+      res.json(templates);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error fetching templates:', error);
+      res.status(500).json({ error: 'Failed to fetch prompt templates' });
+    }
+  });
+
+  app.post('/api/ai/prompt-templates', ensureAuthenticated, async (req, res) => {
+    try {
+      const template = await storage.createPromptTemplate({
+        ...req.body,
+        createdBy: req.user.id,
+        isSystem: false
+      });
+      res.json(template);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error creating template:', error);
+      res.status(500).json({ error: 'Failed to create prompt template' });
+    }
+  });
+
+  app.put('/api/ai/prompt-templates/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const template = await storage.updatePromptTemplate(parseInt(id), req.body);
+      res.json(template);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error updating template:', error);
+      res.status(500).json({ error: 'Failed to update prompt template' });
+    }
+  });
+
+  app.delete('/api/ai/prompt-templates/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await storage.deletePromptTemplate(parseInt(id));
+      res.json({ success: result });
+    } catch (error) {
+      logger.error('[Custom Prompts] Error deleting template:', error);
+      res.status(500).json({ error: 'Failed to delete prompt template' });
+    }
+  });
+
+  // Custom Prompts
+  app.get('/api/ai/custom-prompts', ensureAuthenticated, async (req, res) => {
+    try {
+      const prompts = await storage.getUserCustomPrompts(req.user.id);
+      res.json(prompts);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error fetching custom prompts:', error);
+      res.status(500).json({ error: 'Failed to fetch custom prompts' });
+    }
+  });
+
+  app.post('/api/ai/custom-prompts', ensureAuthenticated, async (req, res) => {
+    try {
+      const prompt = await storage.createCustomPrompt({
+        ...req.body,
+        userId: req.user.id
+      });
+      res.json(prompt);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error creating custom prompt:', error);
+      res.status(500).json({ error: 'Failed to create custom prompt' });
+    }
+  });
+
+  app.put('/api/ai/custom-prompts/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const prompt = await storage.updateCustomPrompt(parseInt(id), req.body);
+      res.json(prompt);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error updating custom prompt:', error);
+      res.status(500).json({ error: 'Failed to update custom prompt' });
+    }
+  });
+
+  app.delete('/api/ai/custom-prompts/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await storage.deleteCustomPrompt(parseInt(id));
+      res.json({ success: result });
+    } catch (error) {
+      logger.error('[Custom Prompts] Error deleting custom prompt:', error);
+      res.status(500).json({ error: 'Failed to delete custom prompt' });
+    }
+  });
+
+  // Project AI Rules
+  app.get('/api/projects/:projectId/ai-rules', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { activeOnly } = req.query;
+      const rules = await storage.getProjectAiRules(projectId, activeOnly === 'true');
+      res.json(rules);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error fetching project AI rules:', error);
+      res.status(500).json({ error: 'Failed to fetch project AI rules' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/ai-rules', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const rule = await storage.createProjectAiRule({
+        ...req.body,
+        projectId
+      });
+      res.json(rule);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error creating project AI rule:', error);
+      res.status(500).json({ error: 'Failed to create project AI rule' });
+    }
+  });
+
+  app.put('/api/ai-rules/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const rule = await storage.updateProjectAiRule(parseInt(id), req.body);
+      res.json(rule);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error updating project AI rule:', error);
+      res.status(500).json({ error: 'Failed to update project AI rule' });
+    }
+  });
+
+  app.delete('/api/ai-rules/:id', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await storage.deleteProjectAiRule(parseInt(id));
+      res.json({ success: result });
+    } catch (error) {
+      logger.error('[Custom Prompts] Error deleting project AI rule:', error);
+      res.status(500).json({ error: 'Failed to delete project AI rule' });
+    }
+  });
+
+  // Prompt Usage History
+  app.get('/api/ai/prompt-history', ensureAuthenticated, async (req, res) => {
+    try {
+      const { projectId, limit } = req.query;
+      const history = await storage.getPromptUsageHistory({
+        userId: req.user.id,
+        projectId: projectId as string,
+        limit: limit ? parseInt(limit as string) : 50
+      });
+      res.json(history);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error fetching prompt history:', error);
+      res.status(500).json({ error: 'Failed to fetch prompt history' });
+    }
+  });
+
+  app.post('/api/ai/prompt-history', ensureAuthenticated, async (req, res) => {
+    try {
+      const history = await storage.createPromptUsageHistory({
+        ...req.body,
+        userId: req.user.id
+      });
+      res.json(history);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error creating prompt history:', error);
+      res.status(500).json({ error: 'Failed to create prompt history' });
+    }
+  });
+
+  // Template Ratings
+  app.post('/api/ai/prompt-templates/:id/rate', ensureAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { rating, comment } = req.body;
+      
+      const ratingRecord = await storage.createPromptTemplateRating({
+        templateId: parseInt(id),
+        userId: req.user.id,
+        rating,
+        comment
+      });
+      res.json(ratingRecord);
+    } catch (error) {
+      logger.error('[Custom Prompts] Error rating template:', error);
+      res.status(500).json({ error: 'Failed to rate template' });
     }
   });
   
@@ -12723,30 +14169,7 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   // Get community categories
   app.get('/api/community/categories', async (req, res) => {
-    try {
-      const categories = [
-        { id: 'all', name: 'All Posts', icon: 'TrendingUp', postCount: 0 },
-        { id: 'showcase', name: 'Showcase', icon: 'Star', postCount: 0 },
-        { id: 'help', name: 'Help', icon: 'MessageSquare', postCount: 0 },
-        { id: 'tutorials', name: 'Tutorials', icon: 'Code', postCount: 0 },
-        { id: 'challenges', name: 'Challenges', icon: 'Trophy', postCount: 0 },
-        { id: 'discussions', name: 'Discussions', icon: 'Users', postCount: 0 },
-      ];
-      
-      // For now, return categories with placeholder counts
-      // In a full implementation, this would query actual post counts from the database
-      categories[0].postCount = 42; // All posts
-      categories[1].postCount = 15; // Showcase
-      categories[2].postCount = 8;  // Help
-      categories[3].postCount = 12; // Tutorials
-      categories[4].postCount = 5;  // Challenges
-      categories[5].postCount = 2;  // Discussions
-      
-      res.json(categories);
-    } catch (error) {
-      console.error('Error fetching community categories:', error);
-      res.status(500).json({ error: 'Failed to fetch categories' });
-    }
+    await communityService.getCategories(req, res);
   });
   
   // Community features routes
@@ -12764,6 +14187,10 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   app.post('/api/community/posts/:id/like', ensureAuthenticated, async (req, res) => {
     await communityService.likeCommunityPost(req, res);
+  });
+
+  app.post('/api/community/posts/:id/bookmark', ensureAuthenticated, async (req, res) => {
+    await communityService.bookmarkCommunityPost(req, res);
   });
 
   app.post('/api/community/posts/:postId/replies', ensureAuthenticated, async (req, res) => {
@@ -12792,6 +14219,14 @@ Generate a comprehensive application based on the user's request. Include all ne
 
   app.post('/api/community/follow/:targetUserId', ensureAuthenticated, async (req, res) => {
     await communityService.followUser(req, res);
+  });
+
+  app.get('/api/community/challenges', async (req, res) => {
+    await communityService.getChallenges(req, res);
+  });
+
+  app.get('/api/community/leaderboard', async (req, res) => {
+    await communityService.getLeaderboard(req, res);
   });
 
   // Simple preview route for HTML/CSS/JS projects (no auth required for preview)
@@ -13274,20 +14709,25 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Get user's recent deployments for dashboard
   app.get('/api/user/deployments/recent', ensureAuthenticated, async (req, res) => {
     try {
-      const deployments = await storage.getDeploymentsByUser(req.user!.id);
-      
-      // Format deployments for dashboard display
-      const recentDeployments = deployments
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-        .slice(0, 5)
-        .map(deployment => ({
-          id: deployment.id,
-          project: deployment.projectName,
-          status: deployment.status,
-          url: deployment.url,
-          time: getRelativeTime(deployment.createdAt),
-        }));
-      
+      const userId = req.user!.id;
+      const cacheKey = `user:${userId}:deployments:recent`;
+
+      const recentDeployments = await databaseQueryOptimizer.withCache(cacheKey, 60, async () => {
+        const deployments = await storage.getDeploymentsByUser(userId);
+
+        return deployments
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .slice(0, 5)
+          .map(deployment => ({
+            id: deployment.id,
+            project: deployment.projectName,
+            status: deployment.status,
+            url: deployment.url,
+            time: getRelativeTime(deployment.createdAt),
+            createdAt: deployment.createdAt.toISOString(),
+          }));
+      });
+
       res.json(recentDeployments);
     } catch (error) {
       console.error('Error fetching recent deployments:', error);
@@ -13298,21 +14738,26 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Get user's storage usage
   app.get('/api/user/storage', ensureAuthenticated, async (req, res) => {
     try {
-      const projects = await storage.getProjectsByUser(req.user!.id);
-      
-      // Calculate total storage used (simplified - count files)
-      let totalSize = 0;
-      for (const project of projects) {
-        const files = await storage.getProjectFiles(project.id);
-        // Estimate file sizes (in real app, track actual sizes)
-        totalSize += files.length * 0.001; // 1KB per file estimate
-      }
-      
-      res.json({
-        used: Math.round(totalSize * 100) / 100, // GB
-        limit: 5, // GB - free tier limit
-        unit: 'GB'
+      const userId = req.user!.id;
+      const cacheKey = `user:${userId}:storage-summary`;
+
+      const storageSummary = await databaseQueryOptimizer.withCache(cacheKey, 300, async () => {
+        const projects = await storage.getProjectsByUser(userId);
+
+        let totalSize = 0;
+        for (const project of projects) {
+          const files = await storage.getProjectFiles(project.id);
+          totalSize += files.length * 0.001;
+        }
+
+        return {
+          used: Math.round(totalSize * 100) / 100,
+          limit: 5,
+          unit: 'GB',
+        };
       });
+
+      res.json(storageSummary);
     } catch (error) {
       console.error('Error calculating storage:', error);
       res.status(500).json({ message: 'Failed to calculate storage' });
@@ -14263,35 +15708,61 @@ Generate a comprehensive application based on the user's request. Include all ne
   app.post('/api/newsletter/subscribe', async (req, res) => {
     try {
       const { email } = req.body;
-      
+
       // Import validation utilities
       const { validateEmail, sanitizeEmail } = await import('./utils/email-validator');
-      const { sendNewsletterWelcomeEmail } = await import('./utils/gandi-email');
-      
+      const { sendNewsletterWelcomeEmail, sendAdminAlertEmail } = await import('./utils/gandi-email');
+
       // Validate email with E-Code design standards
       const validation = validateEmail(email);
       if (!validation.valid) {
         return res.status(400).json({ message: validation.error });
       }
-      
+
       // Sanitize email
       const sanitizedEmail = sanitizeEmail(email);
-      
+
+      const context = extractNewsletterRequestContext(req);
+
       // Generate confirmation token
       const confirmationToken = `${Date.now().toString(36)}-${process.hrtime.bigint().toString(36)}`;
-      
+
       // Subscribe to newsletter
       const subscriber = await storage.subscribeToNewsletter({
         email: sanitizedEmail,
         isActive: true,
-        confirmationToken
+        confirmationToken,
+        ipAddress: context.ipAddress,
+        country: context.country,
+        region: context.region,
+        city: context.city,
+        postalCode: context.postalCode,
+        timezone: context.timezone,
+        source: context.source,
+        userAgent: context.userAgent,
+        metadata: {
+          ...context.metadata,
+          route: 'subscribe',
+        },
       });
-      
+
       // Send welcome email with confirmation link
       await sendNewsletterWelcomeEmail(sanitizedEmail, confirmationToken);
-      
-      res.json({ 
-        success: true, 
+
+      await sendAdminAlertEmail({
+        subject: `New newsletter subscriber: ${sanitizedEmail}`,
+        title: 'Newsletter subscription',
+        description: `${sanitizedEmail} just joined the newsletter audience.`,
+        metadata: {
+          email: sanitizedEmail,
+          ipAddress: context.ipAddress,
+          country: context.country,
+          userAgent: context.userAgent,
+        },
+      });
+
+      res.json({
+        success: true,
         message: 'Successfully subscribed! Please check your email to confirm your subscription.',
         data: {
           email: subscriber.email,
@@ -14318,11 +15789,52 @@ Generate a comprehensive application based on the user's request. Include all ne
         return res.status(400).json({ message: 'Email is required' });
       }
       
-      await storage.unsubscribeFromNewsletter(email);
-      
-      res.json({ 
-        success: true, 
-        message: 'Successfully unsubscribed from newsletter' 
+      const context = extractNewsletterRequestContext(req);
+
+      const unsubscribed = await storage.unsubscribeFromNewsletter(email, {
+        reason: 'user_initiated',
+        ipAddress: context.ipAddress,
+        country: context.country,
+        userAgent: context.userAgent,
+        source: context.source,
+        metadata: {
+          ...context.metadata,
+          route: 'unsubscribe',
+        },
+      });
+
+      const { sendAdminAlertEmail } = await import('./utils/gandi-email');
+
+      if (unsubscribed) {
+        await sendAdminAlertEmail({
+          subject: `Newsletter unsubscribe: ${email}`,
+          title: 'Newsletter opt-out',
+          description: `${email} opted out of newsletter communications.`,
+          metadata: {
+            email,
+            ipAddress: context.ipAddress,
+            country: context.country,
+            source: context.source,
+          },
+        });
+      } else {
+        await sendAdminAlertEmail({
+          subject: `Newsletter unsubscribe attempt (no record): ${email}`,
+          title: 'Newsletter unsubscribe attempt',
+          description: `${email} attempted to unsubscribe but no active subscription was found.`,
+          metadata: {
+            email,
+            ipAddress: context.ipAddress,
+            country: context.country,
+            source: context.source,
+            note: 'No subscriber record located',
+          },
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Successfully unsubscribed from newsletter',
       });
     } catch (error) {
       console.error('Newsletter unsubscribe error:', error);
@@ -14331,31 +15843,57 @@ Generate a comprehensive application based on the user's request. Include all ne
   });
   
   app.get('/api/newsletter/confirm', async (req, res) => {
+    const expectsJson = shouldRespondWithJson(req);
+
     try {
       const { email, token } = req.query;
-      
+
       if (!email || !token) {
-        return res.status(400).json({ message: 'Email and token are required' });
+        const message = 'Email and token are required';
+        if (expectsJson) {
+          return res.status(400).json({ success: false, message });
+        }
+
+        return res.redirect(`/newsletter-confirmed?success=false&error=${encodeURIComponent(message)}`);
       }
-      
+
+      const sanitizedEmail = email as string;
+      const sanitizedToken = token as string;
+
       const confirmed = await storage.confirmNewsletterSubscription(
-        email as string,
-        token as string
+        sanitizedEmail,
+        sanitizedToken
       );
-      
+
       if (confirmed) {
-        // Send confirmation success email
         const { sendNewsletterConfirmedEmail } = await import('./utils/gandi-email');
-        await sendNewsletterConfirmedEmail(email as string);
-        
-        // Redirect to success page
-        res.redirect('/newsletter-confirmed?success=true');
-      } else {
-        res.status(400).json({ message: 'Invalid confirmation link' });
+        const delivered = await sendNewsletterConfirmedEmail(sanitizedEmail);
+        if (!delivered) {
+          console.warn('Newsletter confirmation email delivery skipped or failed for', sanitizedEmail);
+        }
+
+        const message = 'Your newsletter subscription has been confirmed!';
+        if (expectsJson) {
+          return res.json({ success: true, message });
+        }
+
+        return res.redirect('/newsletter-confirmed?success=true');
       }
+
+      const message = 'Invalid confirmation link';
+      if (expectsJson) {
+        return res.status(400).json({ success: false, message });
+      }
+
+      return res.redirect(`/newsletter-confirmed?success=false&error=${encodeURIComponent(message)}`);
     } catch (error) {
       console.error('Newsletter confirmation error:', error);
-      res.status(500).json({ message: 'Failed to confirm email' });
+      const message = 'Failed to confirm email';
+      if (expectsJson) {
+        return res.status(500).json({ success: false, message });
+      }
+
+      return res.redirect(`/newsletter-confirmed?success=false&error=${encodeURIComponent(message)}`);
     }
   });
   
@@ -14368,7 +15906,8 @@ Generate a comprehensive application based on the user's request. Include all ne
       }
       
       const subscribers = await storage.getNewsletterSubscribers();
-      res.json(subscribers);
+      const stats = await storage.getNewsletterStatistics();
+      res.json({ subscribers, stats });
     } catch (error) {
       console.error('Error fetching subscribers:', error);
       res.status(500).json({ message: 'Failed to fetch subscribers' });
@@ -14402,276 +15941,266 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
 
-  // Community API endpoints
-  app.get('/api/community/posts', async (req, res) => {
+  app.post('/api/newsletter/test-send', ensureAuthenticated, async (req, res) => {
     try {
-      const { category, search } = req.query;
-      
-      // Get posts from database
-      let posts = await storage.getAllCommunityPosts(
-        category && category !== 'all' ? category as string : undefined,
-        search as string | undefined
-      );
-      
-      // Get author details for each post
-      const postsWithAuthors = await Promise.all(posts.map(async (post) => {
-        const author = await storage.getUser(post.authorId);
-        
-        // Get author's reputation (based on their posts and activity)
-        const authorPosts = await storage.getCommunityPostsByUser(post.authorId);
-        const reputation = authorPosts.reduce((sum, p) => sum + p.likes + p.comments * 2, 0);
-        
-        // Check if current user liked this post (if authenticated)
-        const isLiked = req.user ? await storage.isProjectLiked(post.projectId || 0, req.user.id) : false;
-        
-        return {
-          id: post.id.toString(),
-          title: post.title,
-          content: post.content,
-          author: {
-            id: author?.id.toString() || '',
-            username: author?.username || 'unknown',
-            displayName: author?.displayName || author?.username || 'Unknown User',
-            avatarUrl: author?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author?.username}`,
-            reputation: reputation,
+      if (req.user?.username !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: 'Test email address is required' });
+      }
+
+      const sampleCampaign: NewsletterCampaignInput = {
+        subject: 'E-Code Newsletter Test Dispatch',
+        previewText: 'Previewing the latest improvements to your developer workspace.',
+        intro: 'Thanks for verifying your newsletter configuration. This sample message showcases the formatting used for production sends.',
+        highlights: [
+          'Enterprise-ready developer workspaces',
+          'Real-time admin and analytics dashboards',
+          'Managed infrastructure with audit-grade observability',
+        ],
+        sections: [
+          {
+            title: 'What’s included in the newsletter?',
+            body: 'Platform updates, AI workflow enhancements, customer spotlights, and shipping notes from the engineering team.',
           },
-          category: post.category,
-          tags: post.tags,
-          likes: post.likes,
-          comments: post.comments,
-          views: post.views,
-          isLiked: isLiked,
-          isBookmarked: false,
-          createdAt: getRelativeTime(post.createdAt),
-          projectUrl: post.projectId ? `/project/${post.projectId}` : undefined,
-          imageUrl: post.imageUrl || undefined,
-        };
-      }));
-      
-      res.json(postsWithAuthors);
-    } catch (error) {
-      console.error('Error fetching community posts:', error);
-      res.status(500).json({ message: 'Failed to fetch community posts' });
-    }
-  });
-
-  app.get('/api/community/challenges', async (req, res) => {
-    try {
-      const { status, difficulty, category } = req.query;
-      
-      // Get challenges from database
-      const challenges = await storage.getAllChallenges();
-      
-      // Filter challenges based on query parameters
-      let filteredChallenges = challenges;
-      
-      if (status) {
-        filteredChallenges = filteredChallenges.filter(c => c.status === status);
-      }
-      
-      if (difficulty) {
-        filteredChallenges = filteredChallenges.filter(c => c.difficulty === difficulty);
-      }
-      
-      if (category) {
-        filteredChallenges = filteredChallenges.filter(c => c.category === category);
-      }
-      
-      // Transform to API format
-      const formattedChallenges = filteredChallenges.map(challenge => ({
-        id: challenge.id.toString(),
-        title: challenge.title,
-        description: challenge.description,
-        difficulty: challenge.difficulty,
-        category: challenge.category,
-        participants: challenge.participants,
-        submissions: challenge.submissions,
-        prize: challenge.prize,
-        deadline: challenge.deadline.toISOString().split('T')[0],
-        status: challenge.status,
-      }));
-      
-      res.json(formattedChallenges);
-    } catch (error) {
-      console.error('Error fetching challenges:', error);
-      res.status(500).json({ message: 'Failed to fetch challenges' });
-    }
-  });
-
-  app.get('/api/community/leaderboard', async (req, res) => {
-    try {
-      const { period = 'all' } = req.query; // 'all', 'monthly', 'weekly'
-      
-      // Get all users
-      const users = await storage.getAllUsers();
-      
-      // Calculate scores for each user based on their activity
-      const leaderboardData = await Promise.all(users.map(async (user) => {
-        // Get user's posts
-        const posts = await storage.getCommunityPostsByUser(user.id);
-        
-        // Get user's projects
-        const projects = await storage.getProjectsByUser(user.id);
-        
-        // Calculate score based on activity
-        let score = 0;
-        score += posts.reduce((sum, post) => sum + post.likes * 10 + post.comments * 5 + post.views, 0);
-        score += projects.length * 100; // Points for creating projects
-        
-        // Calculate streak days (simplified - based on last activity)
-        const lastActivity = posts.length > 0 ? posts[0].createdAt : user.createdAt;
-        const daysSinceLastActivity = Math.floor((new Date().getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
-        // Calculate real streak based on consecutive days of activity
-        const streakDays = daysSinceLastActivity < 2 ? 1 : 0; // Real streak calculation based on last activity
-        
-        // Determine badges based on activity
-        const badges = [];
-        if (score > 10000) badges.push('top-contributor');
-        if (posts.some(p => p.likes > 100)) badges.push('popular-creator');
-        if (posts.filter(p => p.category === 'help').length > 10) badges.push('helpful');
-        if (projects.length > 5) badges.push('prolific-builder');
-        
-        return {
-          id: user.id.toString(),
-          username: user.username,
-          displayName: user.displayName || user.username,
-          avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
-          score,
-          badges,
-          streakDays,
-        };
-      }));
-      
-      // Sort by score and add rank
-      const sortedLeaderboard = leaderboardData
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 100) // Top 100 users
-        .map((user, index) => ({
-          ...user,
-          rank: index + 1,
-        }));
-      
-      res.json(sortedLeaderboard);
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-      res.status(500).json({ message: 'Failed to fetch leaderboard' });
-    }
-  });
-
-  // Get single community post
-  app.get('/api/community/posts/:id', async (req, res) => {
-    try {
-      const postId = parseInt(req.params.id);
-      if (isNaN(postId)) {
-        return res.status(400).json({ message: 'Invalid post ID' });
-      }
-      
-      // Get post from database
-      const post = await storage.getCommunityPost(postId);
-      
-      if (!post) {
-        return res.status(404).json({ message: 'Post not found' });
-      }
-      
-      // Increment view count
-      await storage.updateCommunityPost(postId, { views: post.views + 1 });
-      
-      // Get author details
-      const author = await storage.getUser(post.authorId);
-      const authorPosts = await storage.getCommunityPostsByUser(post.authorId);
-      const reputation = authorPosts.reduce((sum, p) => sum + p.likes + p.comments * 2, 0);
-      
-      // Check if current user liked this post (if authenticated)
-      const isLiked = req.user ? await storage.isProjectLiked(post.projectId || 0, req.user.id) : false;
-      
-      // Comments and bookmarks would be implemented in a full database schema
-      const commentsData: any[] = [];
-      
-      const formattedPost = {
-        id: post.id.toString(),
-        title: post.title,
-        content: post.content,
-        author: {
-          id: author?.id.toString() || '',
-          username: author?.username || 'unknown',
-          displayName: author?.displayName || author?.username || 'Unknown User',
-          avatarUrl: author?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author?.username}`,
-          reputation: reputation,
+        ],
+        cta: {
+          label: 'Open the admin console',
+          url: `${BASE_APP_URL}/admin`,
         },
-        category: post.category,
-        tags: post.tags,
-        likes: post.likes,
-        comments: post.comments,
-        views: post.views + 1,
-        isLiked: isLiked,
-        isBookmarked: false,
-        createdAt: getRelativeTime(post.createdAt),
-        projectUrl: post.projectId ? `/project/${post.projectId}` : undefined,
-        imageUrl: post.imageUrl || undefined,
-        commentsData: commentsData,
+        closing: 'This was only a test message. Real newsletters will use the same layout and will respect unsubscribe preferences automatically.',
+        footerNote: 'If you did not request this message, you can safely ignore it.',
       };
 
-      res.json(formattedPost);
-    } catch (error) {
-      console.error('Error fetching post:', error);
-      res.status(500).json({ message: 'Failed to fetch post' });
-    }
-  });
+      const htmlTemplate = buildNewsletterCampaignHtml(sampleCampaign, NEWSLETTER_UNSUB_PLACEHOLDER, NEWSLETTER_EMAIL_PLACEHOLDER);
+      const textTemplate = buildNewsletterCampaignText(sampleCampaign, NEWSLETTER_UNSUB_PLACEHOLDER, NEWSLETTER_EMAIL_PLACEHOLDER);
 
-  app.post('/api/community/posts/:id/like', ensureAuthenticated, async (req, res) => {
-    try {
-      const { id } = req.params;
-      // In a real app, toggle like status in database
-      res.json({ success: true, message: 'Post liked' });
-    } catch (error) {
-      console.error('Error liking post:', error);
-      res.status(500).json({ message: 'Failed to like post' });
-    }
-  });
+      const unsubscribeUrl = `${BASE_APP_URL}/newsletter/unsubscribe?email=${encodeURIComponent(email)}`;
+      const personalizedHtml = htmlTemplate
+        .split(NEWSLETTER_UNSUB_PLACEHOLDER).join(unsubscribeUrl)
+        .split(NEWSLETTER_EMAIL_PLACEHOLDER).join(email);
+      const personalizedText = textTemplate
+        .split(NEWSLETTER_UNSUB_PLACEHOLDER).join(unsubscribeUrl)
+        .split(NEWSLETTER_EMAIL_PLACEHOLDER).join(email);
 
-  app.post('/api/community/posts/:id/bookmark', ensureAuthenticated, async (req, res) => {
-    try {
-      const { id } = req.params;
-      // In a real app, toggle bookmark status in database
-      res.json({ success: true, message: 'Post bookmarked' });
-    } catch (error) {
-      console.error('Error bookmarking post:', error);
-      res.status(500).json({ message: 'Failed to bookmark post' });
-    }
-  });
+      const { sendNewsletterCampaignEmail } = await import('./utils/gandi-email');
 
-  // Add comment to community post
-  app.post('/api/community/posts/:id/comments', ensureAuthenticated, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { content } = req.body;
-      const userId = req.user?.id;
-      
-      if (!content) {
-        return res.status(400).json({ message: 'Comment content is required' });
+      const sendResult = await sendNewsletterCampaignEmail({
+        to: email,
+        subject: sampleCampaign.subject,
+        html: personalizedHtml,
+        text: personalizedText,
+        unsubscribeUrl,
+        previewText: sampleCampaign.previewText,
+      });
+
+      if (!sendResult.success) {
+        console.error('Failed to send newsletter test email:', sendResult.error);
+        return res.status(502).json({
+          success: false,
+          message: 'Failed to send test newsletter email',
+          error: sendResult.error,
+        });
       }
 
-      // In a real app, save comment to database
-      const newComment = {
-        id: `c${Date.now()}`,
-        postId: id,
-        author: {
-          id: userId,
-          username: 'current_user',
-          displayName: 'Current User',
-          avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
-          reputation: 100,
-        },
-        content,
-        likes: 0,
-        isLiked: false,
-        createdAt: 'just now',
+      res.json({ success: true, message: 'Test newsletter email sent successfully.' });
+    } catch (error) {
+      console.error('Error sending newsletter test email:', error);
+      res.status(500).json({ message: 'Failed to send test newsletter email' });
+    }
+  });
+
+  app.post('/api/newsletter/campaigns/send', ensureAuthenticated, async (req, res) => {
+    try {
+      if (req.user?.username !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const payload: NewsletterCampaignInput = {
+        subject: req.body.subject,
+        previewText: req.body.previewText,
+        heroImageUrl: req.body.heroImageUrl,
+        intro: req.body.intro,
+        highlights: Array.isArray(req.body.highlights) ? req.body.highlights : undefined,
+        sections: Array.isArray(req.body.sections) ? req.body.sections : undefined,
+        cta: req.body.cta,
+        closing: req.body.closing,
+        footerNote: req.body.footerNote,
       };
 
-      res.json(newComment);
+      if (!payload.subject || !payload.intro) {
+        return res.status(400).json({ message: 'Subject and introduction are required.' });
+      }
+
+      const htmlTemplate = buildNewsletterCampaignHtml(payload, NEWSLETTER_UNSUB_PLACEHOLDER, NEWSLETTER_EMAIL_PLACEHOLDER);
+      const textTemplate = buildNewsletterCampaignText(payload, NEWSLETTER_UNSUB_PLACEHOLDER, NEWSLETTER_EMAIL_PLACEHOLDER);
+
+      const campaignRecord = await storage.createNewsletterCampaign({
+        subject: payload.subject,
+        previewText: payload.previewText,
+        htmlContent: htmlTemplate,
+        textContent: textTemplate,
+        heroImageUrl: payload.heroImageUrl,
+        status: 'sending',
+        createdBy: req.user!.id,
+        metrics: {
+          sections: payload.sections?.length || 0,
+          highlights: payload.highlights?.length || 0,
+          hasCta: Boolean(payload.cta?.label && payload.cta?.url),
+        },
+      });
+
+      const subscribers = await storage.getActiveNewsletterSubscribers();
+      if (subscribers.length === 0) {
+        await storage.markNewsletterCampaignSent(campaignRecord.id, {
+          status: 'draft',
+          metrics: { ...(campaignRecord.metrics || {}), skipped: true },
+        });
+        return res.status(400).json({ message: 'No active subscribers available for this campaign.' });
+      }
+
+      const { sendNewsletterCampaignEmail, sendAdminAlertEmail } = await import('./utils/gandi-email');
+
+      let sentCount = 0;
+      let failedCount = 0;
+      let totalAttempts = 0;
+      const failedDeliveries: { email: string; error?: string | null }[] = [];
+      const startedAt = Date.now();
+      const batches = chunkArray(subscribers, NEWSLETTER_SEND_BATCH_SIZE);
+
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+
+        const batchResults = await Promise.all(
+          batch.map(async (subscriber) => {
+            const unsubscribeUrl = `${BASE_APP_URL}/newsletter/unsubscribe?email=${encodeURIComponent(subscriber.email)}`;
+            const htmlContent = htmlTemplate
+              .split(NEWSLETTER_UNSUB_PLACEHOLDER).join(unsubscribeUrl)
+              .split(NEWSLETTER_EMAIL_PLACEHOLDER).join(subscriber.email);
+            const textContent = (textTemplate || '')
+              .split(NEWSLETTER_UNSUB_PLACEHOLDER).join(unsubscribeUrl)
+              .split(NEWSLETTER_EMAIL_PLACEHOLDER).join(subscriber.email);
+
+            const deliveryResult = await executeWithBackoff(
+              async () => sendNewsletterCampaignEmail({
+                to: subscriber.email,
+                subject: payload.subject,
+                html: htmlContent,
+                text: textContent,
+                unsubscribeUrl,
+                previewText: payload.previewText,
+              }),
+              {
+                maxRetries: NEWSLETTER_SEND_MAX_RETRIES,
+                baseDelayMs: NEWSLETTER_SEND_RETRY_BASE_MS,
+              }
+            );
+
+            const status = deliveryResult.success ? 'sent' : 'failed';
+            const errorMessage = deliveryResult.success ? null : deliveryResult.error ?? 'Delivery failed';
+
+            if (!deliveryResult.success && failedDeliveries.length < 10) {
+              failedDeliveries.push({ email: subscriber.email, error: errorMessage });
+            }
+
+            await storage.logNewsletterDelivery({
+              campaignId: campaignRecord.id,
+              subscriberId: subscriber.id,
+              email: subscriber.email,
+              status,
+              error: errorMessage,
+              metadata: {
+                country: subscriber.country,
+                ipAddress: subscriber.ipAddress,
+                attempts: deliveryResult.attempts,
+                batch: batchIndex + 1,
+              },
+            });
+
+            return deliveryResult;
+          })
+        );
+
+        for (const result of batchResults) {
+          totalAttempts += result.attempts;
+          if (result.success) {
+            sentCount += 1;
+          } else {
+            failedCount += 1;
+          }
+        }
+
+        if (NEWSLETTER_SEND_BATCH_DELAY_MS > 0 && batchIndex < batches.length - 1) {
+          await newsletterDelay(NEWSLETTER_SEND_BATCH_DELAY_MS);
+        }
+      }
+
+      const durationMs = Date.now() - startedAt;
+      const finalStatus = failedCount > 0 ? 'partial' : 'sent';
+      await storage.markNewsletterCampaignSent(campaignRecord.id, {
+        status: finalStatus,
+        sentAt: new Date(),
+        metrics: {
+          ...(campaignRecord.metrics || {}),
+          total: subscribers.length,
+          sent: sentCount,
+          failed: failedCount,
+          batchSize: NEWSLETTER_SEND_BATCH_SIZE,
+          batches: batches.length,
+          retries: NEWSLETTER_SEND_MAX_RETRIES,
+          totalAttempts,
+          durationMs,
+        },
+      });
+
+      await sendAdminAlertEmail({
+        subject: `Newsletter campaign dispatched: ${payload.subject}`,
+        title: 'Newsletter campaign sent',
+        description: `Campaign ${campaignRecord.id} delivered to ${sentCount} subscribers${failedCount ? ` with ${failedCount} failures` : ''}.`,
+        metadata: {
+          campaignId: campaignRecord.id,
+          sent: sentCount,
+          failed: failedCount,
+          previewText: payload.previewText,
+          batchSize: NEWSLETTER_SEND_BATCH_SIZE,
+          batches: batches.length,
+          retries: NEWSLETTER_SEND_MAX_RETRIES,
+          durationMs,
+          averageAttemptsPerRecipient: subscribers.length ? Number((totalAttempts / subscribers.length).toFixed(2)) : 0,
+          sampleFailures: failedDeliveries,
+        },
+      });
+
+      res.json({
+        success: true,
+        message: `Newsletter sent to ${sentCount} subscribers${failedCount ? ` with ${failedCount} failures` : ''}.`,
+        campaignId: campaignRecord.id,
+        sent: sentCount,
+        failed: failedCount,
+        batchSize: NEWSLETTER_SEND_BATCH_SIZE,
+        batches: batches.length,
+        failures: failedDeliveries,
+      });
     } catch (error) {
-      console.error('Error adding comment:', error);
-      res.status(500).json({ message: 'Failed to add comment' });
+      console.error('Newsletter campaign send error:', error);
+      res.status(500).json({ message: 'Failed to send newsletter campaign' });
+    }
+  });
+
+  app.get('/api/newsletter/campaigns', ensureAuthenticated, async (req, res) => {
+    try {
+      if (req.user?.username !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const campaigns = await storage.getNewsletterCampaigns(20);
+      res.json(campaigns);
+    } catch (error) {
+      console.error('Error fetching newsletter campaigns:', error);
+      res.status(500).json({ message: 'Failed to fetch newsletter campaigns' });
     }
   });
 
@@ -19650,7 +21179,7 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Initialize Real Backend Services
   
   // 1. AI Service API Endpoints
-  const { aiService } = await import('./ai/ai-service');
+  const { aiService: aiService2 } = await import('./ai/ai-service');
   
   // AI Chat endpoint - using real AI providers
   app.post('/api/ai/chat/:projectId', ensureAuthenticated, async (req, res) => {
@@ -19666,14 +21195,14 @@ Generate a comprehensive application based on the user's request. Include all ne
       
       // Map provider names to models
       const modelMap: Record<string, string> = {
-        openai: 'gpt-4o',
+        openai: 'gpt-5',
         anthropic: 'claude-3-5-sonnet-20241022',
         gemini: 'gemini-pro',
         xai: 'grok-beta',
         perplexity: 'llama-3.1-sonar-small-128k-online'
       };
       
-      const model = modelMap[provider] || 'gpt-4o';
+      const model = modelMap[provider] || 'gpt-5';
       
       // Get project context
       const project = await storage.getProject(parseInt(projectId));
@@ -19686,7 +21215,7 @@ Generate a comprehensive application based on the user's request. Include all ne
         files: files.map(f => ({ path: f.path, content: f.content }))
       };
       
-      const response = await aiService.generateResponse(messages, {
+      const response = await aiService2.generateResponse(messages, {
         model,
         projectContext,
         temperature: 0.7,
@@ -19726,7 +21255,7 @@ Generate a comprehensive application based on the user's request. Include all ne
     try {
       const { actions, projectId } = req.body;
       
-      const response = await aiService.executeActions(actions, projectId);
+      const response = await aiService2.executeActions(actions, projectId);
       
       res.json(response);
     } catch (error) {
@@ -20022,7 +21551,7 @@ Generate a comprehensive application based on the user's request. Include all ne
   // Contact Sales endpoint
   app.post('/api/contact/sales', async (req, res) => {
     try {
-      const { name, email, company, phone, message, companySize, useCase } = req.body;
+      const { name, email, company, phone, message, companySize, useCase, pagePath } = req.body;
       
       // Validate required fields
       if (!name || !email || !message) {
@@ -20039,7 +21568,7 @@ Generate a comprehensive application based on the user's request. Include all ne
         companySize: companySize || 'unknown',
         useCase: useCase || 'general',
         status: 'new',
-        createdAt: new Date()
+        pagePath: pagePath || '/contact-sales'
       });
       
       // Log the inquiry for sales team
@@ -20048,24 +21577,157 @@ Generate a comprehensive application based on the user's request. Include all ne
         name,
         email,
         company,
-        companySize
+        companySize,
+        pagePath: inquiry.pagePath
       });
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         message: 'Thank you for your interest! Our sales team will contact you within 24 hours.',
-        inquiryId: inquiry.id
+        inquiryId: inquiry.id,
+        pagePath: inquiry.pagePath
       });
     } catch (error) {
       logger.error('Contact sales error:', error);
       res.status(500).json({ error: 'Failed to submit sales inquiry. Please try again.' });
     }
   });
-  
+
+  // Support ticket endpoint
+  app.post('/api/support/tickets', async (req, res) => {
+    try {
+      const { name, email, issueType, subject, description, pagePath } = req.body;
+
+      if (!email || !issueType || !subject || !description) {
+        return res.status(400).json({ error: 'Email, issue type, subject, and description are required' });
+      }
+
+      const request = await storage.createCustomerRequest({
+        formType: 'support_ticket',
+        pagePath: pagePath || '/support',
+        senderName: name || null,
+        senderEmail: email,
+        subject: `[${issueType}] ${subject}`,
+        message: description,
+        metadata: {
+          issueType,
+        },
+      });
+
+      logger.info('Support ticket submitted', {
+        id: request.id,
+        email,
+        issueType,
+        pagePath: request.pagePath,
+      });
+
+      res.json({
+        success: true,
+        message: 'Support ticket submitted successfully. Our team will follow up shortly.',
+        ticketId: request.id,
+        pagePath: request.pagePath,
+      });
+    } catch (error) {
+      logger.error('Support ticket submission error:', error);
+      res.status(500).json({ error: 'Failed to submit support ticket. Please try again.' });
+    }
+  });
+
+  // Admin - view customer form requests
+  app.get('/api/admin/form-requests', ensureAuthenticated, async (req, res) => {
+    if (!hasAdminRole(req)) {
+      return respondAdminAccessRequired(res);
+    }
+
+    try {
+      const formTypeParam = typeof req.query.formType === 'string' ? req.query.formType : undefined;
+      const statusParam = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const searchParam = typeof req.query.search === 'string' ? req.query.search.trim() : undefined;
+
+      const rawPage = typeof req.query.page === 'string' ? Number(req.query.page) : undefined;
+      const rawPageSize = typeof req.query.pageSize === 'string' ? Number(req.query.pageSize) : undefined;
+
+      const pageParam = Number.isFinite(rawPage) && (rawPage as number) > 0 ? Math.floor(rawPage as number) : undefined;
+      const pageSizeParam = Number.isFinite(rawPageSize) && (rawPageSize as number) > 0 ? Math.floor(rawPageSize as number) : undefined;
+
+      const listResult = await storage.listCustomerRequests({
+        formType: formTypeParam && formTypeParam !== 'all' ? formTypeParam : undefined,
+        status: statusParam && statusParam !== 'all' ? statusParam : undefined,
+        search: searchParam,
+        page: pageParam,
+        pageSize: pageSizeParam,
+      });
+
+      const currentTabSummary = await storage.getCustomerRequestAggregates({
+        formType: formTypeParam && formTypeParam !== 'all' ? formTypeParam : undefined,
+        search: searchParam,
+      });
+
+      const formTypeSummary = await storage.getCustomerRequestAggregates({
+        status: statusParam && statusParam !== 'all' ? statusParam : undefined,
+        search: searchParam,
+      });
+
+      res.json({
+        requests: listResult.requests,
+        pagination: {
+          page: listResult.page,
+          pageSize: listResult.pageSize,
+          total: listResult.total,
+          totalPages: listResult.totalPages,
+        },
+        summary: {
+          currentTab: {
+            total: currentTabSummary.total,
+            byStatus: currentTabSummary.byStatus,
+          },
+          byFormType: formTypeSummary.byFormType,
+          matchedTotal: formTypeSummary.total,
+        },
+      });
+    } catch (error) {
+      logger.error('Failed to fetch customer requests:', error);
+      res.status(500).json({ error: 'Failed to fetch customer requests' });
+    }
+  });
+
+  app.patch('/api/admin/form-requests/:id', ensureAuthenticated, async (req, res) => {
+    if (!hasAdminRole(req)) {
+      return respondAdminAccessRequired(res);
+    }
+
+    try {
+      const id = Number(req.params.id);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid request id' });
+      }
+
+      const updatePayload: any = {
+        status: req.body.status,
+        resolvedAt: req.body.status === 'resolved' ? new Date() : undefined,
+      };
+
+      if (req.body.metadata) {
+        updatePayload.metadata = req.body.metadata;
+      }
+
+      const updated = await storage.updateCustomerRequest(id, updatePayload);
+
+      if (!updated) {
+        return res.status(404).json({ error: 'Request not found' });
+      }
+
+      res.json({ request: updated });
+    } catch (error) {
+      logger.error('Failed to update customer request:', error);
+      res.status(500).json({ error: 'Failed to update customer request' });
+    }
+  });
+
   // Report Abuse endpoint
   app.post('/api/report/abuse', async (req, res) => {
     try {
-      const { reportType, targetUrl, description, reporterEmail } = req.body;
+      const { reportType, targetUrl, description, reporterEmail, username, pagePath } = req.body;
       const userId = req.user?.id || null;
       
       // Validate required fields
@@ -20078,10 +21740,14 @@ Generate a comprehensive application based on the user's request. Include all ne
         reportType,
         targetUrl,
         description,
-        reporterEmail: reporterEmail || '',
-        reporterId: userId,
-        status: 'pending',
-        createdAt: new Date()
+        reporterEmail,
+        username,
+        status: 'new',
+        userId,
+        pagePath: pagePath || '/report-abuse',
+        metadata: {
+          reporterUserId: userId,
+        }
       });
       
       // Log the report for moderation team
@@ -20089,13 +21755,15 @@ Generate a comprehensive application based on the user's request. Include all ne
         id: report.id,
         type: reportType,
         target: targetUrl,
-        reporter: userId || 'anonymous'
+        reporter: userId || 'anonymous',
+        pagePath: report.pagePath
       });
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         message: 'Thank you for helping keep E-Code safe. We\'ll review your report and take appropriate action.',
-        reportId: report.id
+        reportId: report.id,
+        pagePath: report.pagePath
       });
     } catch (error) {
       logger.error('Report abuse error:', error);
@@ -20219,81 +21887,12 @@ Generate a comprehensive application based on the user's request. Include all ne
     }
   });
 
-  // REPLIT-STYLE SLUG ROUTING HANDLER
-  // Handle /@username/projectname pattern for project access
-  // This MUST be registered before Vite's catch-all route
-  app.get('/@:username/:slug', async (req, res, next) => {
-    try {
-      const { username, slug } = req.params;
-      
-      // Skip Vite internal routes
-      if (username === 'vite' || username === 'fs' || username === 'react-refresh' || username === 'id') {
-        return next();
-      }
-      
-      logger.info(`Slug route accessed: /@${username}/${slug}`);
-      
-      // Get user by username
-      const user = await storage.getUserByUsername(username);
-      if (!user) {
-        logger.warn(`User not found for slug route: ${username}`);
-        // Fall through to React app which will show 404
-        return next();
-      }
-      
-      // Get project by slug and owner
-      const project = await storage.getProjectBySlug(slug);
-      if (!project || project.ownerId !== user.id) {
-        logger.warn(`Project not found for slug route: ${slug} by user ${username}`);
-        // Fall through to React app which will show 404
-        return next();
-      }
-      
-      // For private projects, check authentication
-      if (project.visibility === 'private') {
-        // Check if user is authenticated
-        if (!req.user) {
-          // Redirect to login
-          return res.redirect(`/login?redirect=${encodeURIComponent(req.originalUrl)}`);
-        }
-        
-        // Check if user has access
-        const hasAccess = req.user.id === project.ownerId || 
-          await storage.isProjectCollaborator(project.id, req.user.id);
-        
-        if (!hasAccess) {
-          logger.warn(`Access denied for private project: ${slug} to user ${req.user.id}`);
-          // Show 403 forbidden
-          return res.status(403).send('Access denied to private project');
-        }
-      }
-      
-      // Project exists and user has access - serve the React app
-      // The React app will handle displaying the project based on the URL
-      logger.info(`Serving project: ${slug} by ${username}`);
-      
-      // Let the React app handle this route
-      next();
-    } catch (error) {
-      logger.error('Error in slug routing handler:', error);
-      next();
-    }
-  });
+  // REPLIT-STYLE SLUG ROUTING HANDLER  
+  // Handle /@username/projectname pattern for project access - removed duplicate
+  // This route is already handled earlier in the file with proper authentication
   
-  // Alternative slug patterns for robustness
-  app.get('/@:username/:slug/*', async (req, res, next) => {
-    // Handle sub-routes within a project
-    const { username, slug } = req.params;
-    
-    // Skip Vite internal routes
-    if (username === 'vite' || username === 'fs' || username === 'react-refresh' || username === 'id') {
-      return next();
-    }
-    
-    logger.info(`Project sub-route accessed: /@${username}/${slug}/${req.params[0]}`);
-    // Let React handle the routing
-    next();
-  });
+  // Alternative slug patterns for robustness - removed duplicate
+  // Sub-routes are handled by the React app once the main route is served
   
   // Legacy compatibility routes
   app.get('/~:username/:slug', async (req, res) => {
