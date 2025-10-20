@@ -7,9 +7,10 @@ const GANDI_SMTP_HOST = process.env.GANDI_SMTP_HOST || 'mail.gandi.net';
 const GANDI_SMTP_PORT = parseInt(process.env.GANDI_SMTP_PORT || '587');
 const GANDI_SMTP_USER = process.env.GANDI_SMTP_USER || process.env.GANDI_EMAIL;
 const GANDI_SMTP_PASS = process.env.GANDI_SMTP_PASS || process.env.GANDI_PASSWORD;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@e-code.dev';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@e-code.ai';
 const FROM_NAME = process.env.FROM_NAME || 'E-Code';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
+const APP_BASE_URL = BASE_URL.replace(/\/$/, '');
 
 // Create reusable transporter
 let transporter: Transporter | null = null;
@@ -155,7 +156,7 @@ export async function sendGandiEmail(options: {
 
 // Newsletter welcome email
 export async function sendNewsletterWelcomeEmail(email: string, confirmationToken: string): Promise<boolean> {
-  const confirmUrl = `${BASE_URL}/api/newsletter/confirm?email=${encodeURIComponent(email)}&token=${confirmationToken}`;
+  const confirmUrl = `${APP_BASE_URL}/newsletter/confirm?email=${encodeURIComponent(email)}&token=${confirmationToken}`;
   
   const html = getEmailTemplate(`
     <div class="email-header">
@@ -227,7 +228,7 @@ export async function sendNewsletterConfirmedEmail(email: string): Promise<boole
       </ul>
       <p>In the meantime, why not:</p>
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${BASE_URL}/projects" class="email-button">Start Creating</a>
+        <a href="${APP_BASE_URL}/projects" class="email-button">Start Creating</a>
       </div>
     </div>
     <div class="email-footer">
@@ -245,7 +246,7 @@ Here's what you can expect:
 - Monthly Digest: Best projects and creator spotlights
 - Special Announcements: New features and events
 
-Start creating at: ${BASE_URL}/projects
+Start creating at: ${APP_BASE_URL}/projects
 
 Best regards,
 The E-Code Team`;

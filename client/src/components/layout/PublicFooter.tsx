@@ -71,20 +71,20 @@ export function PublicFooter() {
   ];
 
   return (
-    <footer className="relative border-t border-white/10 bg-slate-950/90 text-slate-200">
-      <div className="absolute inset-0 marketing-gradient" aria-hidden />
-      <div className="absolute inset-0 marketing-grid opacity-60" aria-hidden />
+    <footer className="relative border-t border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] dark:border-white/10 dark:bg-slate-950/90 dark:text-slate-200">
+      <div className="absolute inset-0 marketing-gradient opacity-0 dark:opacity-100" aria-hidden />
+      <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-60" aria-hidden />
       <div className="relative container-responsive py-16">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_2fr]">
           <div className="space-y-6">
-            <Badge className="bg-white/10 text-white border-white/20">
+            <Badge className="bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)] border-[var(--ecode-accent)]/20 dark:bg-white/10 dark:text-white dark:border-white/20">
               <Sparkles className="mr-2 h-3 w-3" />
               Built for Fortune 500
             </Badge>
-            <h3 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
+            <h3 className="text-3xl sm:text-4xl font-semibold text-[var(--ecode-text)] dark:text-white tracking-tight">
               The future of enterprise software development
             </h3>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-lg">
+            <p className="text-sm sm:text-base text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed max-w-lg">
               E-Code combines secure cloud workspaces, intelligent automation, and enterprise controls so your teams can ship faster across every device.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -97,31 +97,31 @@ export function PublicFooter() {
               </Button>
               <Button
                 variant="outline"
-                className="border-white/20 text-slate-100 hover:text-white"
+                className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] dark:border-white/20 dark:text-slate-100 dark:hover:text-white"
                 onClick={() => (window.location.href = '/register')}
               >
                 Start building
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-4 pt-4 text-sm text-slate-300">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-widest text-slate-400">Global uptime</p>
-                <p className="mt-2 text-2xl font-semibold text-white">99.99%</p>
+            <div className="grid grid-cols-2 gap-4 pt-4 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300">
+              <div className="rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface-secondary)] dark:border-white/10 dark:bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-widest text-[var(--ecode-text-muted)] dark:text-slate-400">Global uptime</p>
+                <p className="mt-2 text-2xl font-semibold text-[var(--ecode-text)] dark:text-white">99.99%</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-widest text-slate-400">Enterprise teams</p>
-                <p className="mt-2 text-2xl font-semibold text-white">4,500+</p>
+              <div className="rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface-secondary)] dark:border-white/10 dark:bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-widest text-[var(--ecode-text-muted)] dark:text-slate-400">Enterprise teams</p>
+                <p className="mt-2 text-2xl font-semibold text-[var(--ecode-text)] dark:text-white">4,500+</p>
               </div>
             </div>
           </div>
 
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">Product</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--ecode-text-muted)] dark:text-slate-400">Product</h4>
               <ul className="mt-4 space-y-2 text-sm">
                 {footerLinks.product.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="text-slate-300 transition hover:text-white">
+                    <Link href={link.href} className="text-[var(--ecode-text-secondary)] dark:text-slate-300 transition hover:text-[var(--ecode-accent)] dark:hover:text-white">
                       {link.label}
                     </Link>
                   </li>
@@ -129,11 +129,11 @@ export function PublicFooter() {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">Resources</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--ecode-text-muted)] dark:text-slate-400">Resources</h4>
               <ul className="mt-4 space-y-2 text-sm">
                 {footerLinks.resources.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="text-slate-300 transition hover:text-white">
+                    <Link href={link.href} className="text-[var(--ecode-text-secondary)] dark:text-slate-300 transition hover:text-[var(--ecode-accent)] dark:hover:text-white">
                       {link.label}
                     </Link>
                   </li>
@@ -141,11 +141,11 @@ export function PublicFooter() {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">Company</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--ecode-text-muted)] dark:text-slate-400">Company</h4>
               <ul className="mt-4 space-y-2 text-sm">
                 {footerLinks.company.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="text-slate-300 transition hover:text-white">
+                    <Link href={link.href} className="text-[var(--ecode-text-secondary)] dark:text-slate-300 transition hover:text-[var(--ecode-accent)] dark:hover:text-white">
                       {link.label}
                     </Link>
                   </li>
@@ -153,11 +153,11 @@ export function PublicFooter() {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">Legal</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--ecode-text-muted)] dark:text-slate-400">Legal</h4>
               <ul className="mt-4 space-y-2 text-sm">
                 {footerLinks.legal.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="text-slate-300 transition hover:text-white">
+                    <Link href={link.href} className="text-[var(--ecode-text-secondary)] dark:text-slate-300 transition hover:text-[var(--ecode-accent)] dark:hover:text-white">
                       {link.label}
                     </Link>
                   </li>
@@ -165,18 +165,18 @@ export function PublicFooter() {
               </ul>
             </div>
             <div className="sm:col-span-2 lg:col-span-4">
-              <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
+              <div className="mt-6 rounded-2xl border border-[var(--ecode-border)] bg-[var(--ecode-surface-secondary)] dark:border-white/10 dark:bg-white/5 p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-white">Compare platforms</p>
-                    <p className="text-xs text-slate-300">See how E-Code stacks up against other development clouds.</p>
+                    <p className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white">Compare platforms</p>
+                    <p className="text-xs text-[var(--ecode-text-secondary)] dark:text-slate-300">See how E-Code stacks up against other development clouds.</p>
                   </div>
                   <div className="flex flex-wrap gap-3">
                     {footerLinks.compare.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
-                        className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:border-white/50 hover:text-white"
+                        className="rounded-full border border-[var(--ecode-border)] dark:border-white/15 px-3 py-1.5 text-xs text-[var(--ecode-text-secondary)] dark:text-slate-200 transition hover:border-[var(--ecode-accent)] dark:hover:border-white/50 hover:text-[var(--ecode-accent)] dark:hover:text-white"
                       >
                         {link.label}
                       </Link>
@@ -188,17 +188,17 @@ export function PublicFooter() {
           </div>
         </div>
 
-        <div className="mt-16 grid gap-8 border-t border-white/10 pt-10 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="flex items-center gap-3 text-sm text-slate-300">
-            <ShieldCheck className="h-5 w-5 text-emerald-300" />
+        <div className="mt-16 grid gap-8 border-t border-[var(--ecode-border)] dark:border-white/10 pt-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex items-center gap-3 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300">
+            <ShieldCheck className="h-5 w-5 text-emerald-500 dark:text-emerald-300" />
             SOC2 Type II, ISO 27001, GDPR & HIPAA ready.
           </div>
-          <div className="flex items-center gap-3 text-sm text-slate-300">
-            <Globe2 className="h-5 w-5 text-sky-300" />
+          <div className="flex items-center gap-3 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300">
+            <Globe2 className="h-5 w-5 text-sky-500 dark:text-sky-300" />
             18 global regions with enterprise data residency.
           </div>
-          <div className="flex items-center gap-3 text-sm text-slate-300">
-            <Sparkles className="h-5 w-5 text-indigo-300" />
+          <div className="flex items-center gap-3 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300">
+            <Sparkles className="h-5 w-5 text-indigo-500 dark:text-indigo-300" />
             AI governance, policy controls, and audit logging.
           </div>
           <div className="flex flex-wrap items-center gap-4">
@@ -208,7 +208,7 @@ export function PublicFooter() {
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-white/40 hover:text-white"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-white/10 bg-[var(--ecode-surface-secondary)] dark:bg-white/5 text-[var(--ecode-text-secondary)] dark:text-slate-200 transition hover:border-[var(--ecode-accent)] dark:hover:border-white/40 hover:text-[var(--ecode-accent)] dark:hover:text-white"
               >
                 <social.icon className="h-5 w-5" />
               </a>
@@ -216,7 +216,7 @@ export function PublicFooter() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs text-slate-400">
+        <div className="mt-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs text-[var(--ecode-text-muted)] dark:text-slate-400">
           <div className="flex items-center gap-3">
             <Link href="/">
               <div className="cursor-pointer">
@@ -226,10 +226,10 @@ export function PublicFooter() {
             <span>© {new Date().getFullYear()} E-Code Inc. All rights reserved.</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/newsletter/unsubscribe" className="hover:text-white">
+            <Link href="/newsletter/unsubscribe" className="hover:text-[var(--ecode-accent)] dark:hover:text-white">
               Email preferences
             </Link>
-            <Link href="/newsletter-confirmed" className="hover:text-white">
+            <Link href="/newsletter-confirmed" className="hover:text-[var(--ecode-accent)] dark:hover:text-white">
               Newsletter
             </Link>
           </div>

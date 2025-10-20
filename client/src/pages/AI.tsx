@@ -24,10 +24,12 @@ import {
   Eye,
   Search,
   Activity,
-  FileSearch
+  FileSearch,
+  Play,
+  Pause
 } from 'lucide-react';
 import { Link } from 'wouter';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { LucideIcon } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
@@ -72,6 +74,37 @@ const fetchAIFeatures = async (): Promise<AIData> => {
 export default function AI() {
   const [selectedFeature, setSelectedFeature] = useState<FeatureKey>('autonomous');
 
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const handleVideoToggle = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.paused) {
+      void video.play();
+      setIsVideoPlaying(true);
+    } else {
+      video.pause();
+      setIsVideoPlaying(false);
+    }
+  };
+
+  const handleVideoPause = () => setIsVideoPlaying(false);
+  const handleVideoPlay = () => setIsVideoPlaying(true);
+  const handleSeekTo = (seconds: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.scrollIntoView) {
+      video.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    video.currentTime = seconds;
+    void video.play();
+    setIsVideoPlaying(true);
+  };
+  
   // Fetch AI features data from backend
   const {
     data: aiData,
@@ -271,6 +304,30 @@ export default function AI() {
     { value: '99.9%', label: 'Success Rate' }
   ];
 
+  const demoHighlights = [
+    {
+      title: 'E-commerce in 5 Minutes',
+      description: 'Watch AI build a complete online store with payments, inventory, and admin dashboard',
+      icon: Rocket,
+      duration: '5:23',
+      cue: 0
+    },
+    {
+      title: 'SaaS Dashboard Demo',
+      description: 'AI creates a full analytics dashboard with real-time data visualization',
+      icon: Users,
+      duration: '3:45',
+      cue: 65
+    },
+    {
+      title: 'Multilingual App Creation',
+      description: 'Building apps in Japanese, Spanish, and Arabic - AI understands any language',
+      icon: Globe,
+      duration: '4:15',
+      cue: 132
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <PublicNavbar />
@@ -322,9 +379,9 @@ export default function AI() {
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild className="text-lg px-8 h-14">
-                  <Link href="#demo-video">
+                  <a href="#demo-video" className="scroll-smooth">
                     Watch Demo
-                  </Link>
+                  </a>
                 </Button>
               </div>
 
@@ -350,15 +407,23 @@ export default function AI() {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative hidden lg:block"
+              className="relative hidden md:block"
             >
-              <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border">
+              <div className="relative aspect-[4/3] md:aspect-video rounded-3xl overflow-hidden shadow-2xl border bg-background">
+                <video
+                  className="h-full w-full object-cover"
+                  muted
+                  loop
+                  autoPlay
+                  playsInline
+                  poster="/assets/hero-image.svg"
+                >
+                  <source src="/assets/platform-demo.mp4" type="video/mp4" />
+                </video>
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 via-transparent to-transparent" />
-                <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
-                  <div className="text-center">
-                    <Brain className="h-24 w-24 text-primary/30 mb-4 mx-auto" />
-                    <p className="text-lg text-muted-foreground">AI Development Preview</p>
-                  </div>
+                <div className="absolute inset-0 flex flex-col justify-end bg-black/20 p-6 text-white">
+                  <p className="text-sm font-medium uppercase tracking-widest text-white/70">Live preview</p>
+                  <p className="text-xl font-semibold">AI agent assembling a production-ready dashboard</p>
                 </div>
               </div>
               <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
@@ -385,69 +450,111 @@ export default function AI() {
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border bg-muted"
+              className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border bg-muted"
             >
-              <iframe
-                className="absolute inset-0 w-full h-full"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                title="AI Agent Demo Video"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              <video
+                ref={videoRef}
+                className="h-full w-full object-cover"
+                controls
+                playsInline
+                poster="/assets/hero-image.svg"
+                onPlay={handleVideoPlay}
+                onPause={handleVideoPause}
+                onEnded={handleVideoPause}
+              >
+                <source src="/assets/platform-demo.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/60 pointer-events-none" />
+              <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 lg:p-10 pointer-events-none text-white">
+                <div className="space-y-3 max-w-xl">
+                  <Badge variant="secondary" className="w-fit bg-white/20 text-white backdrop-blur border border-white/30">
+                    Live Platform Demo
+                  </Badge>
+                  <h3 className="text-2xl sm:text-3xl font-semibold leading-snug">
+                    From prompt to production in under two minutes
+                  </h3>
+                  <p className="text-sm sm:text-base text-white/80">
+                    Follow along as the AI agent scaffolds a SaaS dashboard, configures infrastructure, and ships to the cloud.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm font-medium">
+                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur rounded-lg px-3 py-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-300 flex-shrink-0" />
+                    <span>Multi-step planning</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur rounded-lg px-3 py-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-300 flex-shrink-0" />
+                    <span>Automated code reviews</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur rounded-lg px-3 py-2 sm:col-span-2 lg:col-span-1">
+                    <CheckCircle className="h-4 w-4 text-emerald-300 flex-shrink-0" />
+                    <span>1-click deployment</span>
+                  </div>
+                </div>
+              </div>
+              <div
+                className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
+                  isVideoPlaying ? 'pointer-events-none opacity-0' : 'opacity-100'
+                }`}
+              >
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className={`pointer-events-auto gap-2 px-6 py-3 font-semibold shadow-xl transition hover:shadow-2xl ${
+                    isVideoPlaying ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-white text-primary hover:bg-white/90'
+                  }`}
+                  onClick={handleVideoToggle}
+                  aria-label={isVideoPlaying ? 'Pause demo video' : 'Play demo video'}
+                >
+                  {isVideoPlaying ? (
+                    <>
+                      <Pause className="h-5 w-5" />
+                      Pause Demo
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-5 w-5" />
+                      Play Demo
+                    </>
+                  )}
+                </Button>
+              </div>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-6 mt-12">
-              <Card className="group hover:shadow-lg transition-all cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                      <Rocket className="h-5 w-5 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg">E-commerce in 5 Minutes</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-sm">
-                    Watch AI build a complete online store with payments, inventory, and admin dashboard
-                  </p>
-                  <div className="mt-3 text-xs text-muted-foreground">Duration: 5:23</div>
-                </CardContent>
-              </Card>
-
-              <Card className="group hover:shadow-lg transition-all cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                      <Users className="h-5 w-5 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg">SaaS Dashboard Demo</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-sm">
-                    AI creates a full analytics dashboard with real-time data visualization
-                  </p>
-                  <div className="mt-3 text-xs text-muted-foreground">Duration: 3:45</div>
-                </CardContent>
-              </Card>
-
-              <Card className="group hover:shadow-lg transition-all cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                      <Globe className="h-5 w-5 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg">Multilingual App Creation</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-sm">
-                    Building apps in Japanese, Spanish, and Arabic - AI understands any language
-                  </p>
-                  <div className="mt-3 text-xs text-muted-foreground">Duration: 4:15</div>
-                </CardContent>
-              </Card>
+            <div className="grid gap-4 mt-12 sm:grid-cols-2 xl:grid-cols-3">
+              {demoHighlights.map((highlight) => {
+                const Icon = highlight.icon;
+                return (
+                  <Card
+                    key={highlight.title}
+                    className="group hover:shadow-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary"
+                    onClick={() => handleSeekTo(highlight.cue)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Jump to ${highlight.title} in the demo`}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleSeekTo(highlight.cue);
+                      }
+                    }}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                          <Icon className="h-5 w-5 text-primary" />
+                        </div>
+                        <CardTitle className="text-lg">{highlight.title}</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground text-sm">{highlight.description}</p>
+                      <div className="mt-3 text-xs text-muted-foreground">Duration: {highlight.duration}</div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         </div>

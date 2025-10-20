@@ -55,19 +55,49 @@ export interface AgentRunResult {
   error?: string;
 }
 
+export class MissingOpenAIKeyError extends Error {
+  constructor(message = 'OpenAI API key is not configured. Please add OPENAI_API_KEY to enable OpenAI agents.') {
+    super(message);
+    this.name = 'MissingOpenAIKeyError';
+  }
+}
+
 export class OpenAIAgentsService {
-  private client: OpenAI;
+  private client: OpenAI | null;
   private assistants: Map<string, string> = new Map(); // name -> assistant ID
   private threads: Map<string, string> = new Map(); // session ID -> thread ID
-  
+  private configured: boolean;
+
   constructor(apiKey?: string) {
+    const resolvedApiKey = apiKey || process.env.OPENAI_API_KEY;
+    this.configured = false;
+
+    if (!resolvedApiKey) {
+      this.client = null;
+      logger.warn('OpenAI API key not configured. OpenAI Agents functionality is disabled.');
+      return;
+    }
+
     this.client = new OpenAI({
-      apiKey: apiKey || process.env.OPENAI_API_KEY,
+      apiKey: resolvedApiKey,
       maxRetries: 3,
       timeout: 120000, // 2 minute timeout for long-running operations
     });
-    
+
+    this.configured = true;
     logger.info('OpenAI Agents Service initialized');
+  }
+
+  private ensureClient(): OpenAI {
+    if (!this.client) {
+      throw new MissingOpenAIKeyError();
+    }
+
+    return this.client;
+  }
+
+  isConfigured(): boolean {
+    return this.configured;
   }
   
   /**
@@ -80,8 +110,10 @@ export class OpenAIAgentsService {
     }
     
     try {
+      const client = this.ensureClient();
+
       // Create new assistant
-      const assistant = await this.client.beta.assistants.create({
+      const assistant = await client.beta.assistants.create({
         name: config.name,
         instructions: config.instructions,
         model: config.model,
@@ -183,7 +215,9 @@ export class OpenAIAgentsService {
       return this.threads.get(sessionId)!;
     }
     
-    const thread = await this.client.beta.threads.create({
+    const client = this.ensureClient();
+
+    const thread = await client.beta.threads.create({
       metadata: {
         sessionId,
         ...metadata
@@ -203,7 +237,9 @@ export class OpenAIAgentsService {
     threadId: string,
     message: AgentMessage
   ): Promise<void> {
-    await this.client.beta.threads.messages.create(threadId, {
+    const client = this.ensureClient();
+
+    await client.beta.threads.messages.create(threadId, {
       role: message.role,
       content: message.content,
       file_ids: message.fileIds,
@@ -222,13 +258,15 @@ export class OpenAIAgentsService {
   ): Promise<AgentRunResult> {
     try {
       // Create a run
-      const run = await this.client.beta.threads.runs.create(threadId, {
+      const client = this.ensureClient();
+
+      const run = await client.beta.threads.runs.create(threadId, {
         assistant_id: assistantId,
         instructions,
       });
       
       // Poll for completion
-      let runStatus = await this.client.beta.threads.runs.retrieve(threadId, run.id);
+      let runStatus = await client.beta.threads.runs.retrieve(threadId, run.id);
       let attempts = 0;
       const maxAttempts = 120; // 2 minutes with 1 second intervals
       
@@ -237,7 +275,7 @@ export class OpenAIAgentsService {
         attempts < maxAttempts
       ) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        runStatus = await this.client.beta.threads.runs.retrieve(threadId, run.id);
+        runStatus = await client.beta.threads.runs.retrieve(threadId, run.id);
         attempts++;
       }
       
@@ -257,7 +295,7 @@ export class OpenAIAgentsService {
       }
       
       // Get messages after run completion
-      const messages = await this.client.beta.threads.messages.list(threadId);
+      const messages = await client.beta.threads.messages.list(threadId);
       const agentMessages: AgentMessage[] = messages.data.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -304,7 +342,9 @@ export class OpenAIAgentsService {
     runId: string,
     outputs: Array<{ toolCallId: string; output: string }>
   ): Promise<void> {
-    await this.client.beta.threads.runs.submitToolOutputs(threadId, runId, {
+    const client = this.ensureClient();
+
+    await client.beta.threads.runs.submitToolOutputs(threadId, runId, {
       tool_outputs: outputs.map(o => ({
         tool_call_id: o.toolCallId,
         output: o.output,
@@ -320,7 +360,9 @@ export class OpenAIAgentsService {
     filename: string,
     purpose: 'assistants' | 'vision' | 'batch' | 'fine-tune' = 'assistants'
   ): Promise<string> {
-    const uploadedFile = await this.client.files.create({
+    const client = this.ensureClient();
+
+    const uploadedFile = await client.files.create({
       file: new File([file], filename),
       purpose,
     });
@@ -337,7 +379,9 @@ export class OpenAIAgentsService {
     fileIds: string[],
     metadata?: Record<string, string>
   ): Promise<string> {
-    const vectorStore = await this.client.beta.vectorStores.create({
+    const client = this.ensureClient();
+
+    const vectorStore = await client.beta.vectorStores.create({
       name,
       file_ids: fileIds,
       metadata,
@@ -351,7 +395,9 @@ export class OpenAIAgentsService {
    * Update assistant with vector store for file search
    */
   async attachVectorStore(assistantId: string, vectorStoreId: string): Promise<void> {
-    await this.client.beta.assistants.update(assistantId, {
+    const client = this.ensureClient();
+
+    await client.beta.assistants.update(assistantId, {
       tool_resources: {
         file_search: {
           vector_store_ids: [vectorStoreId]

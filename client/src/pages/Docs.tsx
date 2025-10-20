@@ -380,7 +380,7 @@ const docCategories: DocCategory[] = [
           {
             title: 'Feedback & governance',
             description:
-              'Reference the style guide, change control expectations, and the docs@e-code.dev contact for revisions.'
+              'Reference the style guide, change control expectations, and the docs@e-code.ai contact for revisions.'
           }
         ],
         tags: ['governance', 'meta'],
@@ -695,7 +695,7 @@ export default function Docs() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => handleOpenDocument('mailto:docs@e-code.dev')}
+                    onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
                   >
                     Request an update
                   </Button>
@@ -713,9 +713,9 @@ export default function Docs() {
                         <Button
                           variant="secondary"
                           className="w-full"
-                          onClick={() => handleOpenDocument('mailto:docs@e-code.dev')}
+                          onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
                         >
-                          Email docs@e-code.dev
+                          Email docs@e-code.ai
                         </Button>
                       </CardContent>
                     </Card>
@@ -758,7 +758,7 @@ export default function Docs() {
                     <Button
                       size="lg"
                       variant="outline"
-                      onClick={() => handleOpenDocument('mailto:docs@e-code.dev')}
+                      onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
                     >
                       Book a documentation review
                     </Button>
@@ -972,9 +972,9 @@ export default function Docs() {
                     <Button
                       size="lg"
                       variant="outline"
-                      onClick={() => handleOpenDocument('mailto:docs@e-code.dev')}
+                      onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
                     >
-                      Email docs@e-code.dev
+                      Email docs@e-code.ai
                     </Button>
                   </div>
                 </div>

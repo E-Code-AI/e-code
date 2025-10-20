@@ -14,12 +14,12 @@ import {
 } from '@/components/ui/popover';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
-  Globe, RefreshCw, Shield, AlertTriangle, Sparkles, ChevronDown,
+  Globe, RefreshCw, Shield, AlertTriangle, Sparkles, ChevronDown, Rocket,
   Terminal, Laptop, Database, Activity, Package, MoreVertical,
   ExternalLink, Lock, Clock, Server, History, Eye, EyeOff,
   X, Edit2, Search, Play, Pause, Calendar, Filter, Bot, Settings,
   AlertCircle, ChevronRight, WrapText, Monitor, ArrowUpDown,
-  SlidersHorizontal, MoreHorizontal, Link, Download
+  SlidersHorizontal, MoreHorizontal, Link, Download, Plus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
@@ -27,6 +27,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { Deployment } from '@shared/schema';
+import { PageHeader, PageShell } from '@/components/layout/PageShell';
 
 export default function Deployments() {
   const { toast } = useToast();
@@ -143,153 +144,181 @@ export default function Deployments() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading deployments...</p>
+      <PageShell>
+        <PageHeader
+          title="Loading deployments"
+          description="We’re fetching your latest release details."
+          icon={Rocket}
+        />
+        <div className="flex justify-center py-24">
+          <div className="text-center">
+            <RefreshCw className="mx-auto mb-4 h-8 w-8 animate-spin" />
+            <p className="text-muted-foreground">Preparing your deployment overview...</p>
+          </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   // Show empty state if no deployments
   if (!currentDeployment) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl py-6">
-          <Card className="p-8 text-center">
-            <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-xl font-semibold mb-2">No deployments yet</h2>
-            <p className="text-muted-foreground mb-4">Deploy your first project to see it here</p>
-            <Button onClick={() => navigate('/projects')}>
-              Go to Projects
+      <PageShell>
+        <PageHeader
+          title="Deploy your first project"
+          description="Ship an application to start monitoring build history, logs, and resource usage."
+          icon={Rocket}
+          actions={(
+            <Button className="gap-2" onClick={() => navigate('/projects')}>
+              <Plus className="h-4 w-4" />
+              Browse projects
             </Button>
-          </Card>
-        </div>
-      </div>
+          )}
+        />
+        <Card className="p-8 text-center">
+          <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <h2 className="mb-2 text-xl font-semibold">No deployments yet</h2>
+          <p className="mb-4 text-muted-foreground">Deploy your first project to see it here.</p>
+          <Button onClick={() => navigate('/projects')}>
+            Go to projects
+          </Button>
+        </Card>
+      </PageShell>
     );
   }
 
   const deploymentStatus = currentDeployment.status || 'deployed';
   const hasErrors = deploymentStatus === 'failed' || deploymentStatus === 'error';
+  const statusLabel =
+    deploymentStatus === 'deployed'
+      ? 'Running'
+      : deploymentStatus === 'pending'
+        ? 'Pending'
+        : deploymentStatus === 'building'
+          ? 'Building'
+          : 'Failed';
+  const description = `${currentDeployment.visibility === 'public' ? 'Public deployment' : 'Private deployment'} • Autoscale • Updated ${currentDeployment.time || 'just now'}`;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl space-y-6 py-6 pb-20">
-        {/* Deployment Header */}
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-2xl font-bold">{currentDeployment.project || 'E-Code'}</h1>
-                <Badge 
-                  variant="default" 
-                  className={
-                    deploymentStatus === 'deployed' ? 'bg-green-600 text-white' :
-                    deploymentStatus === 'pending' ? 'bg-yellow-600 text-white' :
-                    deploymentStatus === 'building' ? 'bg-blue-600 text-white' :
-                    'bg-red-600 text-white'
-                  }
-                >
-                  {deploymentStatus === 'deployed' ? 'Running' :
-                   deploymentStatus === 'pending' ? 'Pending' :
-                   deploymentStatus === 'building' ? 'Building' :
-                   'Failed'}
-                </Badge>
-              </div>
-              <div className="flex flex-col gap-2">
-                {currentDeployment.url && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Globe className="h-4 w-4" />
-                    <a 
-                      href={currentDeployment.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      {currentDeployment.url.replace('https://', '')}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {currentDeployment.time || 'Just now'}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Server className="h-4 w-4" />
-                    Autoscale
-                  </span>
-                  <span className="flex items-center gap-1">
-                    {currentDeployment.visibility === 'public' ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                    {currentDeployment.visibility === 'public' ? 'Public' : 'Private'}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRedeploy}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Redeploy
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </div>
+    <PageShell>
+      <PageHeader
+        title={currentDeployment.project || 'E-Code'}
+        description={description}
+        icon={Rocket}
+        actions={(
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="gap-2" onClick={handleRedeploy}>
+              <RefreshCw className="h-4 w-4" />
+              Redeploy
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                if (currentDeployment?.projectId) {
+                  navigate(`/projects/${currentDeployment.projectId}/settings`);
+                }
+              }}
+            >
+              <Settings className="h-4 w-4" />
+              Project settings
+            </Button>
           </div>
-          
-          {/* Deployment Error Alert */}
+        )}
+      >
+        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+          <Badge
+            variant="default"
+            className={
+              deploymentStatus === 'deployed'
+                ? 'bg-green-600 text-white'
+                : deploymentStatus === 'pending'
+                  ? 'bg-yellow-600 text-white'
+                  : deploymentStatus === 'building'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-red-600 text-white'
+            }
+          >
+            {statusLabel}
+          </Badge>
+          <span className="flex items-center gap-1">
+            <Server className="h-4 w-4" />
+            Autoscale
+          </span>
+          <span className="flex items-center gap-1">
+            {currentDeployment.visibility === 'public' ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            {currentDeployment.visibility === 'public' ? 'Public' : 'Private'}
+          </span>
+          {currentDeployment.url && (
+            <a
+              href={currentDeployment.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-primary hover:underline"
+            >
+              {currentDeployment.url.replace('https://', '')}
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+      </PageHeader>
+
+      <div className="space-y-6 pb-20">
+        {hasErrors && (
           <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle className="flex items-center justify-between">
               <span>1 build failed</span>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="text-red-600 hover:text-red-700"
                 onClick={() => setActiveTab('logs')}
               >
                 View logs
-                <Badge variant="secondary" className="ml-2">999+</Badge>
+                <Badge variant="secondary" className="ml-2">
+                  999+
+                </Badge>
               </Button>
             </AlertTitle>
             <AlertDescription className="mt-4 space-y-4">
               <div>
-                <p className="font-semibold mb-2">Your deployment attempt had the following errors:</p>
-                <div className="bg-gray-900 text-gray-100 p-4 rounded-md font-mono text-sm">
-                  <p className="text-red-400 mb-2">Monaco Editor worker module resolution failed during Vite build in client/src/lib/monaco-config.ts</p>
-                  <p className="text-gray-300">Vite cannot resolve the entry module for monaco-editor/esm/vs/editor/editor.worker</p>
-                  <p className="text-gray-300">Vite cannot resolve the entry module for monaco-editor/esm/vs/language/json/json.worker</p>
-                  <p className="text-gray-300">Build process failed preventing deployment due to missing worker dependencies</p>
+                <p className="font-semibold">Your deployment attempt had the following errors:</p>
+                <div className="mt-3 rounded-md bg-gray-900 p-4 font-mono text-sm text-gray-100">
+                  <p className="mb-2 text-red-400">
+                    Monaco Editor worker module resolution failed during Vite build in client/src/lib/monaco-config.ts
+                  </p>
+                  <p className="text-gray-300">
+                    Vite cannot resolve the entry module for monaco-editor/esm/vs/editor/editor.worker
+                  </p>
+                  <p className="text-gray-300">
+                    Vite cannot resolve the entry module for monaco-editor/esm/vs/language/json/json.worker
+                  </p>
+                  <p className="text-gray-300">
+                    Build process failed preventing deployment due to missing worker dependencies
+                  </p>
                 </div>
               </div>
-              
-              {/* Agent Suggestions */}
+
               <div className="border-t pt-4">
-                <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <h3 className="mb-2 flex items-center gap-2 font-semibold">
                   <Bot className="h-4 w-4" />
                   Agent suggestions
                 </h3>
-                <ol className="list-decimal list-inside space-y-2 text-sm">
+                <ol className="list-inside list-decimal space-y-2 text-sm">
                   <li>Install the monaco-editor package as a dependency to resolve the missing worker modules</li>
                   <li>Update the monaco-config.ts to use a more compatible worker import</li>
                   <li>Add the configuration to properly handle Monaco Editor workers in production builds</li>
                   <li>Consider using the vite-plugin-monaco-editor plugin that's already in dependencies to properly configure the worker files</li>
                 </ol>
-                <div className="flex items-center gap-2 mt-4">
-                  <Button 
-                    variant="default" 
+                <div className="mt-4 flex items-center gap-2">
+                  <Button
+                    variant="default"
                     size="sm"
                     onClick={handleDebugWithAgent}
                     className="bg-[#0074d9] hover:bg-[#0058b3]"
                   >
-                    <Bot className="h-4 w-4 mr-2" />
+                    <Bot className="mr-2 h-4 w-4" />
                     Debug with Agent
                   </Button>
                   <span className="text-xs text-muted-foreground">8 days ago</span>
@@ -297,9 +326,8 @@ export default function Deployments() {
               </div>
             </AlertDescription>
           </Alert>
-        </div>
-        
-        {/* Tabs */}
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -837,6 +865,6 @@ export default function Deployments() {
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   );
 }

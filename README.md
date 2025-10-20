@@ -17,6 +17,9 @@ The E‑Code platform delivers a secure, enterprise-ready developer workspace th
 | **Project Operations** | Template catalog, git import/export, environment variable management, one-click redeployments.
 | **Team Management** | RBAC roles, invitation flows, usage analytics, billing hooks, and enterprise SSO readiness.
 | **Observability** | Structured logging, real-time activity feeds, health checks, and CDN optimization middleware.
+| **Data Tooling** | Live PostgreSQL explorer surfaces real tables, schema metadata, query execution results, and backup artefacts through the MCP endpoints.
+| **Source Control** | GitHub MCP routes now call the live Octokit client with per-user tokens for repository, issue, and pull request management.
+| **Knowledge Management** | Memory MCP APIs persist knowledge graph nodes, edges, and conversations in PostgreSQL for searchable workspace context.
 
 ### Workspace Tooling Parity
 
@@ -28,7 +31,7 @@ E‑Code now mirrors the full Replit workspace layout so onboarding teams can fo
 
 Each surface is wired to the underlying React panels introduced in this release (`ThreadsPanel`, `CoverageInsightsPanel`, `SpotlightSettingsPanel`, and related workspace components), ensuring the documentation tour aligns with what users see in-product.
 
-👉 **Request a guided demo:** Reach the product team at [hello@e-code.dev](mailto:hello@e-code.dev) to schedule a platform walkthrough tailored to your use case.
+👉 **Request a guided demo:** Reach the product team at [hello@e-code.ai](mailto:hello@e-code.ai) to schedule a platform walkthrough tailored to your use case.
 
 ## Architecture at a Glance
 
@@ -64,6 +67,15 @@ cp .env.production.example .env
 #   OPENAI_API_KEY=your-openai-key
 #   ANTHROPIC_API_KEY=your-anthropic-key
 #   GOOGLE_GENAI_API_KEY=optional-google-models
+
+# ⚠️ If none of the AI provider keys are supplied on the server process, prompts sent from
+# the workspace UI will fail silently. The frontend suppresses provider errors to avoid
+# leaking implementation details, so always double-check that at least one of
+# `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GOOGLE_GENAI_API_KEY` is configured before
+# testing agent actions.
+# ❗️The application requires a reachable PostgreSQL instance available at `DATABASE_URL`.
+# It is used both by Drizzle for core data and by the `connect-pg-simple` session store.
+# If the database is missing or unreachable, authentication and project creation flows will fail.
 
 # Provision the database schema
 npm run db:push
@@ -103,4 +115,4 @@ CI pipelines can be configured to require all commands above prior to merging ch
 - [`docs/architecture/overview.md`](docs/architecture/overview.md) – System diagrams, runtime topology, and module ownership.
 - [`docs/operations/deployment-playbook.md`](docs/operations/deployment-playbook.md) – Deployment patterns, observability, and rollback procedures.
 
-We update documentation alongside each release; please open an issue or contact [docs@e-code.dev](mailto:docs@e-code.dev) for questions or requests.
+We update documentation alongside each release; please open an issue or contact [docs@e-code.ai](mailto:docs@e-code.ai) for questions or requests.

@@ -113,7 +113,7 @@ export default function Plans() {
       return;
     }
     if (planId === 'enterprise') {
-      window.open('mailto:sales@e-code.io?subject=Enterprise%20Plan%20Inquiry', '_blank');
+      window.open('mailto:sales@e-code.ai?subject=Enterprise%20Plan%20Inquiry', '_blank');
       return;
     }
     // Navigate to subscribe page with selected tier and billing interval
@@ -256,7 +256,7 @@ export default function Plans() {
         <div className="mt-8 text-center text-sm text-muted-foreground">
           <p>All prices exclude VAT where applicable.</p>
           <p className="mt-2">
-            Need more? <Button variant="link" className="px-1" onClick={() => window.open('mailto:sales@e-code.io', '_blank')}>Contact us</Button> for volume discounts.
+            Need more? <Button variant="link" className="px-1" onClick={() => window.open('mailto:sales@e-code.ai', '_blank')}>Contact us</Button> for volume discounts.
           </p>
         </div>
       </div>
