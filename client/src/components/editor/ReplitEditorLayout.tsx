@@ -210,23 +210,28 @@ export function ReplitEditorLayout({
   }
 
   return (
-    <div className="h-[calc(100vh-48px)] flex">
+    <div className="h-[calc(100vh-48px)] flex bg-[var(--ecode-editor-bg)]">
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* Left Panel - File Explorer */}
         {leftPanelOpen && (
           <>
+            <ResizablePanel defaultSize={22} minSize={14} maxSize={32}>
             <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
               <div className="h-full bg-[var(--ecode-background)] border-r border-[var(--ecode-border)]">
                 {leftPanel}
               </div>
             </ResizablePanel>
 
+            <ResizableHandle
+              withHandle
+              className="bg-transparent data-[panel-group-direction=horizontal]:w-3 data-[panel-group-direction=horizontal]:cursor-col-resize hover:after:bg-[var(--ecode-accent)] after:bg-[var(--ecode-border)]"
+            />
             <ResizableHandle className="w-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
           </>
         )}
 
         {/* Center Panel - Code Editor */}
-        <ResizablePanel defaultSize={rightPanelOpen ? 50 : 80}>
+        <ResizablePanel defaultSize={rightPanelOpen ? 54 : 78} minSize={38}>
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={bottomPanelOpen ? 70 : 100}>
               <div className="h-full bg-[var(--ecode-background)]">
@@ -236,24 +241,22 @@ export function ReplitEditorLayout({
 
             {bottomPanel && bottomPanelOpen && (
               <>
-                <ResizableHandle className="h-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
-                <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+                <ResizableHandle
+                  withHandle
+                  className="bg-transparent data-[panel-group-direction=vertical]:h-3 data-[panel-group-direction=vertical]:cursor-row-resize hover:after:bg-[var(--ecode-accent)] after:bg-[var(--ecode-border)]"
+                />
+                <ResizablePanel defaultSize={30} minSize={18} maxSize={45}>
                   <div className="h-full bg-[var(--ecode-background)] border-t border-[var(--ecode-border)]">
                     {/* Console/Terminal Header */}
-                    <div className="h-9 flex items-center justify-between px-2 border-b border-[var(--ecode-border)]">
-                      <div className="flex items-center gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-7 px-2 text-xs hover:bg-[var(--ecode-sidebar-hover)]"
-                        >
-                          <TerminalIcon className="h-3 w-3 mr-1" />
-                          Console
-                        </Button>
+                    <div className="h-9 flex items-center justify-between px-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                      <div className="flex items-center gap-2 text-xs font-medium text-[var(--ecode-text)]">
+                        <TerminalIcon className="h-3.5 w-3.5" />
+                        Console
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="h-6 w-6 rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
                         className="h-6 w-6"
                         onClick={() => updateBottomPanelOpen(false)}
                       >
@@ -269,33 +272,46 @@ export function ReplitEditorLayout({
             )}
           </ResizablePanelGroup>
         </ResizablePanel>
-        
+
         {rightPanelOpen && rightPanels.length > 0 && (
           <>
+            <ResizableHandle
+              withHandle
+              className="bg-transparent data-[panel-group-direction=horizontal]:w-3 data-[panel-group-direction=horizontal]:cursor-col-resize hover:after:bg-[var(--ecode-accent)] after:bg-[var(--ecode-border)]"
+            />
             <ResizableHandle className="w-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
 
             {/* Right Panel - Output/Preview */}
-            <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-              <div className="h-full bg-[var(--ecode-background)] border-l border-[var(--ecode-border)]">
+            <ResizablePanel defaultSize={28} minSize={20} maxSize={46}>
+              <div className="h-full bg-[var(--ecode-background)] border-l border-[var(--ecode-border)] flex flex-col">
                 {/* Right Panel Tabs */}
-                <div className="h-9 flex items-center justify-between px-2 border-b border-[var(--ecode-border)]">
+                <div className="h-9 flex items-center justify-between px-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
                   <div className="flex items-center gap-1">
-                    {rightPanels.map((panel) => (
-                      <Button
-                        key={panel.id}
-                        variant={activeRightPanel === panel.id ? "secondary" : "ghost"}
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => handleRightPanelChange(panel.id)}
-                      >
-                        {panel.icon}
-                        <span className="ml-1">{panel.title}</span>
-                      </Button>
-                    ))}
+                    {rightPanels.map((panel) => {
+                      const isActive = activeRightPanel === panel.id;
+                      return (
+                        <Button
+                          key={panel.id}
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "h-7 px-2 text-xs rounded-md",
+                            isActive
+                              ? "bg-[var(--ecode-accent)]/12 text-[var(--ecode-accent)] border border-[var(--ecode-accent)]/40"
+                              : "border border-transparent hover:bg-[var(--ecode-sidebar-hover)]"
+                          )}
+                          onClick={() => handleRightPanelChange(panel.id)}
+                        >
+                          {panel.icon}
+                          <span className="ml-1">{panel.title}</span>
+                        </Button>
+                      );
+                    })}
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-6 w-6 rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
                     className="h-6 w-6"
                     onClick={() => updateRightPanelOpen(false)}
                   >
@@ -304,7 +320,7 @@ export function ReplitEditorLayout({
                 </div>
 
                 {/* Right Panel Content */}
-                <div className="h-[calc(100%-36px)]">
+                <div className="flex-1 overflow-hidden">
                   {rightPanels.map((panel) => (
                     <div
                       key={panel.id}
