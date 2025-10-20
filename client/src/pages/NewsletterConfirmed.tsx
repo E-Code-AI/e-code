@@ -10,6 +10,7 @@ export default function NewsletterConfirmed() {
   const [, setLocation] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const success = searchParams.get('success') === 'true';
+  const errorMessage = searchParams.get('error');
 
   useEffect(() => {
     // Show confetti animation on success
@@ -28,12 +29,12 @@ export default function NewsletterConfirmed() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Invalid Confirmation Link</CardTitle>
             <CardDescription>
-              This confirmation link is invalid or has expired.
+              {errorMessage || 'This confirmation link is invalid or has expired.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground text-center">
-              If you're having trouble, please try subscribing again or contact our support team.
+              {errorMessage || "If you're having trouble, please try subscribing again or contact our support team."}
             </p>
             <div className="flex flex-col gap-2">
               <Button onClick={() => setLocation('/')} className="w-full">
