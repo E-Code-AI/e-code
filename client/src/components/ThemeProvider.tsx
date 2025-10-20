@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -14,55 +14,104 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(() => {
+// Simple theme manager using plain DOM API to avoid React hooks duplicate instance issue
+class ThemeManager {
+  private static instance: ThemeManager;
+  private currentTheme: Theme;
+  private resolvedTheme: 'light' | 'dark';
+  private listeners: Set<() => void> = new Set();
+
+  private constructor() {
+    this.currentTheme = this.getStoredTheme();
+    this.resolvedTheme = this.calculateResolvedTheme(this.currentTheme);
+    this.applyTheme();
+    this.setupMediaQueryListener();
+  }
+
+  static getInstance(): ThemeManager {
+    if (!ThemeManager.instance) {
+      ThemeManager.instance = new ThemeManager();
+    }
+    return ThemeManager.instance;
+  }
+
+  private getStoredTheme(): Theme {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('theme') as Theme;
       return stored || 'system';
     }
     return 'system';
-  });
+  }
 
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  private getSystemTheme(): 'light' | 'dark' {
+    if (typeof window === 'undefined') return 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
 
-  useEffect(() => {
-    const root = window.document.documentElement;
+  private calculateResolvedTheme(theme: Theme): 'light' | 'dark' {
+    return theme === 'system' ? this.getSystemTheme() : theme;
+  }
+
+  private applyTheme() {
+    if (typeof window === 'undefined') return;
     
-    const getSystemTheme = (): 'light' | 'dark' => {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    };
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(this.resolvedTheme);
+  }
 
-    const updateTheme = (currentTheme: Theme) => {
-      const effectiveTheme = currentTheme === 'system' ? getSystemTheme() : currentTheme;
-      
-      root.classList.remove('light', 'dark');
-      root.classList.add(effectiveTheme);
-      setResolvedTheme(effectiveTheme);
-    };
+  private setupMediaQueryListener() {
+    if (typeof window === 'undefined') return;
 
-    updateTheme(theme);
-
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
-      if (theme === 'system') {
-        updateTheme('system');
+      if (this.currentTheme === 'system') {
+        this.resolvedTheme = this.getSystemTheme();
+        this.applyTheme();
+        this.notifyListeners();
       }
     };
 
     mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+  }
 
-  const setTheme = (newTheme: Theme) => {
-    localStorage.setItem('theme', newTheme);
-    setThemeState(newTheme);
-  };
+  getTheme(): Theme {
+    return this.currentTheme;
+  }
+
+  getResolvedTheme(): 'light' | 'dark' {
+    return this.resolvedTheme;
+  }
+
+  setTheme(newTheme: Theme) {
+    this.currentTheme = newTheme;
+    this.resolvedTheme = this.calculateResolvedTheme(newTheme);
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', newTheme);
+    }
+    
+    this.applyTheme();
+    this.notifyListeners();
+  }
+
+  subscribe(listener: () => void) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private notifyListeners() {
+    this.listeners.forEach(listener => listener());
+  }
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const manager = ThemeManager.getInstance();
 
   const value: ThemeContextValue = {
-    theme,
-    setTheme,
-    resolvedTheme,
+    theme: manager.getTheme(),
+    setTheme: (theme: Theme) => manager.setTheme(theme),
+    resolvedTheme: manager.getResolvedTheme(),
   };
 
   return (

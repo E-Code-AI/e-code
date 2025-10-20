@@ -101,7 +101,7 @@ export function MobileHeader() {
   };
   
   return (
-    <header className="fixed top-0 left-0 right-0 h-14 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] z-50 md:hidden">
+    <header className="fixed top-0 left-0 right-0 h-14 bg-[#ffffff] dark:bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] z-50 md:hidden">
       <div className="px-3 h-full flex items-center">
         {getHeaderContent()}
       </div>
