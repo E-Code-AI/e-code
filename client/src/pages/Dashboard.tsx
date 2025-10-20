@@ -1,16 +1,13 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Project } from '@shared/schema';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   BookOpen,
-  FileText,
-  BarChart3,
   MoreHorizontal,
   Send,
   Paperclip,
@@ -21,9 +18,7 @@ import {
   Edit,
   Copy,
   Trash,
-  Zap,
   Search,
-  Filter,
   Clock,
   Eye,
   Users,
@@ -35,7 +30,12 @@ import {
   Grid3x3,
   List,
   Sparkles,
-  Rocket
+  Rocket,
+  Store,
+  Bot,
+  Briefcase,
+  ListTodo,
+  CloudSun
 } from 'lucide-react';
 import { CreditBalance } from '@/components/CreditBalance';
 import { useAuth } from '@/hooks/use-auth';
@@ -50,16 +50,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { getProjectUrl } from '@/lib/utils';
 import { PageHeader, PageShell } from '@/components/layout/PageShell';
-
-
-// Icon mapping for quick actions
-const iconMap: Record<string, any> = {
-  BookOpen,
-  FileText,
-  BarChart3,
-  Zap
-};
-
 // Get project icon based on project details
 function getProjectIcon(project: Project) {
   const colors = [
@@ -95,6 +85,50 @@ function getTimeAgo(date: Date | string) {
   return 'Just now';
 }
 
+const popularExamples = [
+  {
+    id: 'nextjs-blog',
+    icon: BookOpen,
+    label: 'Blog with Next.js',
+    prompt:
+      'Build a modern blog with Next.js featuring markdown support, categories, tags, search functionality, and a beautiful responsive design'
+  },
+  {
+    id: 'ecommerce-store',
+    icon: Store,
+    label: 'E-commerce Store',
+    prompt:
+      'Create an e-commerce store with product catalog, shopping cart, checkout process, payment integration, and admin dashboard'
+  },
+  {
+    id: 'discord-bot',
+    icon: Bot,
+    label: 'Discord Bot',
+    prompt:
+      'Build a Discord bot with commands, moderation features, welcome messages, role management, and fun interactive features'
+  },
+  {
+    id: 'portfolio-site',
+    icon: Briefcase,
+    label: 'Portfolio Website',
+    prompt:
+      'Create a professional portfolio website with hero section, about me, projects showcase, skills, contact form, and smooth animations'
+  },
+  {
+    id: 'task-manager',
+    icon: ListTodo,
+    label: 'Task Manager',
+    prompt:
+      'Build a task manager app with categories, due dates, priority levels, drag and drop, progress tracking, and team collaboration features'
+  },
+  {
+    id: 'weather-dashboard',
+    icon: CloudSun,
+    label: 'Weather Dashboard',
+    prompt:
+      'Create a weather dashboard showing current conditions, 5-day forecast, multiple locations, weather maps, and beautiful visualizations'
+  }
+];
 
 
 interface ProjectWithDeployment extends Project {
@@ -106,14 +140,6 @@ interface ProjectWithDeployment extends Project {
     username: string;
     email: string;
   };
-}
-
-interface QuickAction {
-  id: string;
-  icon: string;
-  label: string;
-  description: string;
-  template: string;
 }
 
 interface DashboardSummary {
@@ -134,17 +160,12 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTag, setFilterTag] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const inputRef = useRef<HTMLInputElement | null>(null);
   
 
   // Fetch recent projects with deployment status
   const { data: recentProjects = [], isLoading } = useQuery<ProjectWithDeployment[]>({
     queryKey: ['/api/projects/recent'],
-    enabled: !!user,
-  });
-
-  // Fetch quick actions
-  const { data: quickActions = [] } = useQuery<QuickAction[]>({
-    queryKey: ['/api/dashboard/quick-actions'],
     enabled: !!user,
   });
 
@@ -187,53 +208,6 @@ export default function Dashboard() {
         setTimeout(() => {
           // Use window.location for full page reload to ensure auth state is fresh
           window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(aiPrompt)}`;
-        }, 500);
-      } else {
-        const errorText = await response.text();
-        console.error('Failed to create project:', response.status, errorText);
-        toast({
-          title: "Error",
-          description: "Failed to create project. Please try again.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Failed to create project:', error);
-    }
-  };
-
-  const handleQuickAction = async (action: QuickAction) => {
-    // Use the description from the API or fallback to action label
-    const prompt = action.description || action.label;
-    
-    try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: action.label,
-          description: prompt,
-          template: action.template, // Use the template ID from the API
-          language: 'javascript',
-          visibility: 'private'
-        }),
-      });
-
-      if (response.ok) {
-        const project = await response.json();
-        console.log('Quick action project created:', project);
-        
-        // Store prompt in sessionStorage for the AI agent
-        window.sessionStorage.setItem(`agent-prompt-${project.id}`, prompt);
-        
-        const projectUrl = getProjectUrl(project, user?.username);
-        console.log(`Navigating to: ${projectUrl}`);
-
-        // Add a small delay to ensure project is fully created and indexed
-        setTimeout(() => {
-          // Use window.location for full page reload to ensure auth state is fresh
-          window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(prompt)}`;
         }, 500);
       } else {
         const errorText = await response.text();
@@ -344,6 +318,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
                     <input
+                      ref={inputRef}
                       type="text"
                       value={aiPrompt}
                       onChange={(e) => setAiPrompt(e.target.value)}
@@ -387,19 +362,25 @@ export default function Dashboard() {
             <p className="mb-4 text-sm font-medium text-[var(--ecode-text-secondary)]">
               Or try these popular examples:
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {quickActions.map((action) => {
-                const IconComponent = iconMap[action.icon] || FileText;
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {popularExamples.map((example) => {
+                const Icon = example.icon;
                 return (
                   <Button
-                    key={action.id}
+                    key={example.id}
                     variant="outline"
                     size="sm"
-                    onClick={() => handleQuickAction(action)}
-                    className="h-10 gap-2 rounded-xl border-[var(--ecode-border)] px-5 text-sm font-medium text-[var(--ecode-text-secondary)] shadow-sm transition-all hover:border-[var(--ecode-accent)]/50 hover:bg-[var(--ecode-surface)] hover:shadow-md"
+                    onClick={() => {
+                      setAiPrompt(example.prompt);
+                      if (inputRef.current) {
+                        inputRef.current.focus();
+                        inputRef.current.setSelectionRange(example.prompt.length, example.prompt.length);
+                      }
+                    }}
+                    className="h-10 gap-2 rounded-xl border-[var(--ecode-border)] px-5 text-sm font-medium text-[var(--ecode-text-secondary)] shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50/70 focus-visible:ring-2 focus-visible:ring-violet-500/40"
                   >
-                    <IconComponent className="h-4 w-4" />
-                    {action.label}
+                    <Icon className="h-4 w-4" />
+                    {example.label}
                   </Button>
                 );
               })}

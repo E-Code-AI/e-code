@@ -216,6 +216,7 @@ export function ReplitEditorLayout({
         {leftPanelOpen && (
           <>
             <ResizablePanel defaultSize={22} minSize={14} maxSize={32}>
+            <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
               <div className="h-full bg-[var(--ecode-background)] border-r border-[var(--ecode-border)]">
                 {leftPanel}
               </div>
@@ -225,6 +226,7 @@ export function ReplitEditorLayout({
               withHandle
               className="bg-transparent data-[panel-group-direction=horizontal]:w-3 data-[panel-group-direction=horizontal]:cursor-col-resize hover:after:bg-[var(--ecode-accent)] after:bg-[var(--ecode-border)]"
             />
+            <ResizableHandle className="w-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
           </>
         )}
 
@@ -255,6 +257,7 @@ export function ReplitEditorLayout({
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
+                        className="h-6 w-6"
                         onClick={() => updateBottomPanelOpen(false)}
                       >
                         <X className="h-3 w-3" />
@@ -276,6 +279,7 @@ export function ReplitEditorLayout({
               withHandle
               className="bg-transparent data-[panel-group-direction=horizontal]:w-3 data-[panel-group-direction=horizontal]:cursor-col-resize hover:after:bg-[var(--ecode-accent)] after:bg-[var(--ecode-border)]"
             />
+            <ResizableHandle className="w-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
 
             {/* Right Panel - Output/Preview */}
             <ResizablePanel defaultSize={28} minSize={20} maxSize={46}>
@@ -308,6 +312,7 @@ export function ReplitEditorLayout({
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
+                    className="h-6 w-6"
                     onClick={() => updateRightPanelOpen(false)}
                   >
                     <PanelRightClose className="h-3 w-3" />
