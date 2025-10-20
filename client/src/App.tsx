@@ -206,7 +206,7 @@ function PageLoader() {
 // Wrapper components for Replit-style routes
 function ProjectPageWrapper() {
   return (
-    <ReplitLayout showSidebar={true}>
+    <ReplitLayout showSidebar={false}>
       <ProjectPage />
     </ReplitLayout>
   );
@@ -516,13 +516,13 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/projects/:id" component={() => (
-            <ReplitLayout showSidebar={true}>
+            <ReplitLayout showSidebar={false}>
               <ProjectPage />
             </ReplitLayout>
           )} />
           {/* Project Routes - Consolidated and properly ordered */}
           <ProtectedRoute path="/project/:id" component={() => (
-            <ReplitLayout showSidebar={true}>
+            <ReplitLayout showSidebar={false}>
               <ProjectPage />
             </ReplitLayout>
           )} />
