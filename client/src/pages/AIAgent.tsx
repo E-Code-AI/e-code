@@ -15,11 +15,83 @@ import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { BRAND } from '@/constants/brand';
 
 export default function AIAgent() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const trailerSegments = [
+    {
+      id: 'idea-to-app',
+      title: 'Idea to App in 60 Seconds',
+      description: 'Follow the E-Code Agent 2.0 as it transforms a plain-text idea into a production-ready interface.',
+      timestamp: '00:00',
+      videoSrc: '/assets/platform-demo.mp4',
+      poster: BRAND.assets.heroImage,
+    },
+    {
+      id: 'api-integrations',
+      title: 'Instant API Integrations',
+      description: 'See how the agent wires databases and APIs without manual setup or configuration.',
+      timestamp: '00:28',
+      videoSrc: '/assets/platform-demo.mp4#t=28',
+      poster: BRAND.assets.heroImage,
+    },
+    {
+      id: 'responsive-design',
+      title: 'Responsive UI Autodesign',
+      description: 'Watch responsive breakpoints, theming, and accessibility come together automatically.',
+      timestamp: '00:46',
+      videoSrc: '/assets/platform-demo.mp4#t=46',
+      poster: BRAND.assets.heroImage,
+    },
+  ];
+  const [selectedSegment, setSelectedSegment] = useState(trailerSegments[0]);
+
+  const heroMedia = {
+    videoSrc: '/assets/platform-demo.mp4',
+    poster: BRAND.assets.heroImage,
+  };
+
+  const quickReels = [
+    {
+      id: 'multilingual',
+      title: 'Multilingual Demo',
+      description: 'Prompting and building entirely in Japanese.',
+      icon: Globe,
+      timestamp: '00:12',
+      videoSrc: '/assets/platform-demo.mp4#t=12',
+      poster: heroMedia.poster,
+    },
+    {
+      id: 'database',
+      title: 'Database Integration',
+      description: 'Automatic PostgreSQL schema and seed data.',
+      icon: Database,
+      timestamp: '00:32',
+      videoSrc: '/assets/platform-demo.mp4#t=32',
+      poster: heroMedia.poster,
+    },
+    {
+      id: 'security',
+      title: 'Auth & Security',
+      description: 'Passwordless login and audit logging in seconds.',
+      icon: Shield,
+      timestamp: '00:44',
+      videoSrc: '/assets/platform-demo.mp4#t=44',
+      poster: heroMedia.poster,
+    },
+    {
+      id: 'deployment',
+      title: 'Instant Deploy',
+      description: 'Pushes live to the cloud with monitoring.',
+      icon: Rocket,
+      timestamp: '00:58',
+      videoSrc: '/assets/platform-demo.mp4#t=58',
+      poster: heroMedia.poster,
+    },
+  ];
 
   const handleGetStarted = () => {
     if (user) {
@@ -127,7 +199,7 @@ export default function AIAgent() {
             <div className="text-center lg:text-left">
               <Badge variant="default" className="mb-6 text-sm px-5 py-2 bg-gradient-to-r from-primary to-primary/80 text-white">
                 <Sparkles className="h-4 w-4 mr-1.5" />
-                CLAUDE 4.0 SONNET POWERED
+                E-CODE AGENT 2.0 POWERED
               </Badge>
               
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
@@ -173,15 +245,35 @@ export default function AIAgent() {
             
             <div className="relative">
               <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border bg-slate-900">
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <Brain className="h-20 w-20 text-primary/30 mb-4 mx-auto animate-pulse" />
-                    <p className="text-white/70 text-lg">AI Agent Building Demo</p>
-                    <Button size="sm" variant="secondary" className="mt-4">
-                      <PlayCircle className="h-4 w-4 mr-2" />
-                      Watch Demo
-                    </Button>
+                <video
+                  key={heroMedia.videoSrc}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  src={heroMedia.videoSrc}
+                  poster={heroMedia.poster}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  aria-label="E-Code Agent 2.0 building an application from an idea"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/40 to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-3 text-left">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1 text-xs font-semibold text-white backdrop-blur">
+                    <PlayCircle className="h-4 w-4" />
+                    Trailer: E-Code Agent 2.0 builds a marketplace in minutes
+                  </div>
+                  <p className="text-lg font-semibold text-white drop-shadow">
+                    Witness idea-to-deployment in a single take—captured directly from the live platform.
+                  </p>
+                  <div className="flex flex-wrap gap-3 text-sm text-white/80">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-3 py-1">
+                      <Timer className="h-4 w-4" />
+                      1:12 total runtime
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-3 py-1">
+                      <Sparkles className="h-4 w-4" />
+                      Full-stack build with UI + API
+                    </span>
                   </div>
                 </div>
               </div>
@@ -239,32 +331,43 @@ export default function AIAgent() {
           {/* Live Demo */}
           <Card className="overflow-hidden max-w-4xl mx-auto">
             <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="h-6 w-6" />
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-start gap-3 text-left">
+                  <Sparkles className="mt-1 h-6 w-6" />
                   <div>
-                    <CardTitle>Live AI Building Demo</CardTitle>
+                    <CardTitle>E-Code Agent 2.0: Idea-to-App Trailer</CardTitle>
                     <CardDescription className="text-white/80">
-                      Watch the AI build a weather app in real-time
+                      Experience the full build of a customer feedback portal from prompt to deployment.
                     </CardDescription>
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-white/20 text-white">
+                <Badge variant="secondary" className="self-start bg-white/20 text-white md:self-center">
                   <Timer className="h-3 w-3 mr-1" />
-                  0:42
+                  1:12
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-black">
-              <div className="space-y-3 font-mono text-sm">
-                <div className="text-green-400">$ AI: Starting to build your weather app...</div>
-                <div className="text-blue-400">✓ Created project structure</div>
-                <div className="text-blue-400">✓ Set up weather API integration</div>
-                <div className="text-blue-400">✓ Built location search feature</div>
-                <div className="text-blue-400">✓ Added 5-day forecast display</div>
-                <div className="text-blue-400">✓ Implemented responsive design</div>
-                <div className="text-yellow-400">→ Installing dependencies...</div>
-                <div className="text-green-400 animate-pulse">✓ App is ready and running!</div>
+            <CardContent className="p-0 bg-black">
+              <div className="relative aspect-video w-full">
+                <video
+                  key="primary-trailer"
+                  className="h-full w-full object-cover"
+                  src="/assets/platform-demo.mp4"
+                  poster={BRAND.assets.heroImage}
+                  controls
+                  preload="metadata"
+                  playsInline
+                  aria-label="E-Code Agent 2.0 builds a customer feedback portal"
+                />
+              </div>
+              <div className="space-y-2 px-6 py-6 text-sm text-muted-foreground md:flex md:items-center md:justify-between md:gap-6">
+                <p className="md:max-w-2xl">
+                  The trailer showcases the agent drafting requirements, generating UI layouts, provisioning backend services,
+                  and publishing the finished app—all without a single manual command.
+                </p>
+                <Button size="sm" variant="secondary" className="mt-4 md:mt-0" asChild>
+                  <a href="#agent-demo">Watch detailed breakdown</a>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -291,14 +394,28 @@ export default function AIAgent() {
               className="lg:col-span-2"
             >
               <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border bg-slate-900">
-                <iframe
-                  className="absolute inset-0 w-full h-full"
-                  src="https://www.youtube.com/embed/9bZkp7q19f0"
-                  title="AI Agent v2 Complete Demo"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
+                <video
+                  key={selectedSegment.id}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  src={selectedSegment.videoSrc}
+                  poster={selectedSegment.poster}
+                  controls
+                  preload="metadata"
+                  playsInline
+                  aria-label={`${selectedSegment.title} — ${selectedSegment.description}`}
                 />
+                <div className="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/70 via-black/20 to-transparent px-6 py-4 text-xs text-white">
+                  <span className="inline-flex items-center gap-2 font-semibold uppercase tracking-wide">
+                    <PlayCircle className="h-4 w-4" /> Segment {selectedSegment.timestamp}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1">
+                    <Sparkles className="h-3 w-3" /> Recorded in the live studio
+                  </span>
+                </div>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 text-white">
+                  <h3 className="text-lg font-semibold">{selectedSegment.title}</h3>
+                  <p className="text-sm text-white/80">{selectedSegment.description}</p>
+                </div>
               </div>
             </motion.div>
 
@@ -313,33 +430,41 @@ export default function AIAgent() {
                   <CardTitle className="text-lg">Featured Demos</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <button className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <div className="flex items-center gap-3">
-                      <PlayCircle className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                      <div>
-                        <p className="font-medium">Building a SaaS Dashboard</p>
-                        <p className="text-sm text-muted-foreground">Real-time analytics with AI</p>
+                  {trailerSegments.map((segment) => (
+                    <button
+                      key={segment.id}
+                      type="button"
+                      onClick={() => setSelectedSegment(segment)}
+                      className={`w-full text-left p-3 rounded-lg transition-colors group ${
+                        selectedSegment.id === segment.id ? 'bg-muted border border-primary/40 shadow-sm' : 'hover:bg-muted'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={BRAND.assets.aiAvatar}
+                          alt="E-Code Agent avatar"
+                          className="h-10 w-10 rounded-lg border object-cover"
+                          loading="lazy"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1">
+                              <Timer className="h-3 w-3 text-primary" />
+                              {segment.timestamp}
+                            </span>
+                            {selectedSegment.id === segment.id && (
+                              <span className="inline-flex items-center gap-1 text-primary">
+                                <PlayCircle className="h-3 w-3" />
+                                Now playing
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-medium">{segment.title}</p>
+                          <p className="text-sm text-muted-foreground">{segment.description}</p>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                  <button className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <div className="flex items-center gap-3">
-                      <PlayCircle className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                      <div>
-                        <p className="font-medium">E-commerce Store Demo</p>
-                        <p className="text-sm text-muted-foreground">Complete with payments</p>
-                      </div>
-                    </div>
-                  </button>
-                  <button className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors group">
-                    <div className="flex items-center gap-3">
-                      <PlayCircle className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                      <div>
-                        <p className="font-medium">Mobile App Creation</p>
-                        <p className="text-sm text-muted-foreground">Responsive design included</p>
-                      </div>
-                    </div>
-                  </button>
+                    </button>
+                  ))}
                 </CardContent>
               </Card>
 
@@ -374,74 +499,43 @@ export default function AIAgent() {
             </motion.div>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-6">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Card className="group hover:shadow-lg transition-all cursor-pointer">
-                <CardHeader className="pb-3">
-                  <Globe className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-base">Multilingual Demo</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">Building in Japanese</p>
-                  <p className="text-xs text-primary mt-2">Watch Now →</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Card className="group hover:shadow-lg transition-all cursor-pointer">
-                <CardHeader className="pb-3">
-                  <Database className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-base">Database Integration</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">Auto-setup PostgreSQL</p>
-                  <p className="text-xs text-primary mt-2">Watch Now →</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Card className="group hover:shadow-lg transition-all cursor-pointer">
-                <CardHeader className="pb-3">
-                  <Shield className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-base">Auth & Security</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">User auth in seconds</p>
-                  <p className="text-xs text-primary mt-2">Watch Now →</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Card className="group hover:shadow-lg transition-all cursor-pointer">
-                <CardHeader className="pb-3">
-                  <Rocket className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-base">Instant Deploy</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">One-click deployment</p>
-                  <p className="text-xs text-primary mt-2">Watch Now →</p>
-                </CardContent>
-              </Card>
-            </motion.div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {quickReels.map((reel, index) => {
+              const Icon = reel.icon;
+              return (
+                <motion.div
+                  key={reel.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 * (index + 1) }}
+                >
+                  <Card className="group hover:shadow-lg transition-all cursor-pointer">
+                    <CardHeader className="pb-3">
+                      <Icon className="h-8 w-8 text-primary mb-2" />
+                      <CardTitle className="text-base">{reel.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="relative overflow-hidden rounded-lg border">
+                        <video
+                          className="h-28 w-full object-cover"
+                          src={reel.videoSrc}
+                          poster={reel.poster}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        />
+                        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+                          <Timer className="h-3 w-3" /> {reel.timestamp}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{reel.description}</p>
+                      <p className="text-xs font-semibold text-primary">Watch Now →</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -459,7 +553,7 @@ export default function AIAgent() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsList className="grid w-full grid-cols-2 gap-2 mb-8 sm:grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
               <TabsTrigger value="examples">Examples</TabsTrigger>
