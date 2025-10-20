@@ -1,3 +1,27 @@
+[deployment]
+deploymentTarget = "reserved_vm"  ← ✅ RESERVED VM (as you requested)
+build = ["npm", "install"]        ← ✅ Just install deps (no build hang)
+run = ["npm", "run", "dev"]       ← ✅ Use working dev server
+
+# 4 PORTS - CORRECTLY MAPPED
+[[ports]]
+localPort = 5000
+externalPort = 80                 ← ✅ Main app on port 80 (public)
+
+[[ports]]
+localPort = 3200
+externalPort = 3200               ← ✅ MCP Server on 3200 (for AI)
+
+[[ports]]
+localPort = 8080
+externalPort = 8080               ← ✅ Go Runtime
+
+[[ports]]
+localPort = 8081
+externalPort = 8081               ← ✅ Python ML
+
+
+
 modules = ["nodejs-20", "web", "postgresql-16", "python-3.11"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
