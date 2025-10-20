@@ -235,13 +235,11 @@ export function PublicNavbar() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="hidden sm:block">
-                <ThemeSwitcher />
-              </div>
+            <div className="flex items-center gap-4">
+              <ThemeSwitcher />
               <Button
                 variant="ghost"
-                className="hidden sm:flex text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white"
+                className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white"
                 onClick={() => window.location.href = '/login'}
               >
                 <LogIn className="mr-2 h-4 w-4" />
@@ -251,35 +249,24 @@ export function PublicNavbar() {
 
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="lg:hidden relative z-50 text-[var(--ecode-text)] dark:text-slate-100"
-                    aria-label="Open menu"
-                  >
+                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-[var(--ecode-text)] dark:text-slate-100">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
                 <div className="public-mobile-nav">
-                  <SheetContent side="right" className="sheet-content w-full sm:w-[420px] p-0 border-l border-[var(--ecode-border)]/50 bg-gradient-to-b from-[#ffffff] to-[#f8f9fa] dark:from-[var(--ecode-surface)] dark:to-[var(--ecode-surface)]/95 backdrop-blur-xl flex flex-col h-full overflow-hidden">
+                  <SheetContent side="right" className="sheet-content w-full sm:w-[420px] p-0 border-l border-[var(--ecode-border)]/50 bg-gradient-to-b from-[#ffffff] to-[#f8f9fa] dark:from-[var(--ecode-surface)] dark:to-[var(--ecode-surface)]/95 backdrop-blur-xl">
                   {/* Mobile Header with improved design */}
-                  <div className="mobile-nav-header flex-shrink-0 border-b border-[var(--ecode-border)]/20 bg-white/80 dark:bg-[var(--ecode-surface)]/80 px-6 py-5 backdrop-blur-lg">
+                  <div className="mobile-nav-header sticky top-0 z-10 border-b border-[var(--ecode-border)]/20 bg-white/80 dark:bg-[var(--ecode-surface)]/80 px-6 py-5 backdrop-blur-lg">
                     <div className="flex items-center justify-between mb-4">
                       <ECodeLogo size="sm" />
-                      <div className="flex items-center gap-2">
-                        <div className="sm:hidden">
-                          <ThemeSwitcher />
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="rounded-full hover:bg-[var(--ecode-sidebar-hover)] hover:bg-opacity-20 transition-all duration-200"
-                          aria-label="Close menu"
-                        >
-                          <X className="h-5 w-5 text-gray-600 dark:text-gray-200" />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="rounded-full hover:bg-[var(--ecode-sidebar-hover)] transition-all duration-200"
+                      >
+                        <X className="h-5 w-5" />
+                      </Button>
                     </div>
                     <div className="relative group">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-text-muted)] transition-colors group-focus-within:text-[var(--ecode-accent)]" />
@@ -290,29 +277,28 @@ export function PublicNavbar() {
                     </div>
                   </div>
 
-                  {/* Scrollable Content Area */}
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden mobile-nav-content">
-                    <div className="px-6 py-4">
-                      {/* CTA Buttons with enhanced styling */}
-                      <div className="pb-6 border-b border-[var(--ecode-border)]/20">
-                        <Button
-                          className="w-full h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/25 rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-                          onClick={() => window.location.href = '/register'}
-                        >
-                          <Sparkles className="mr-2 h-4 w-4" />
-                          Get Started Free
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="mt-3 w-full h-11 border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] hover:bg-[var(--ecode-accent)]/5 rounded-xl transition-all duration-200"
-                          onClick={() => window.location.href = '/login'}
-                        >
-                          <LogIn className="mr-2 h-4 w-4" />
-                          Sign In
-                        </Button>
-                      </div>
+                  {/* CTA Buttons with enhanced styling */}
+                  <div className="p-6 border-b border-[var(--ecode-border)]/20">
+                    <Button
+                      className="w-full h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/25 rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                      onClick={() => window.location.href = '/register'}
+                    >
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Get Started Free
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="mt-3 w-full h-11 border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] hover:bg-[var(--ecode-accent)]/5 rounded-xl transition-all duration-200"
+                      onClick={() => window.location.href = '/login'}
+                    >
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Sign In
+                    </Button>
+                  </div>
 
-                      {/* Navigation Sections with improved design */}
+                  {/* Navigation Sections with improved design */}
+                  <ScrollArea className="h-[calc(100vh-280px)] mobile-nav-content">
+                    <div className="px-6 py-4">
                       {[
                         { 
                           title: 'Product', 
@@ -408,7 +394,7 @@ export function PublicNavbar() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </ScrollArea>
                 </SheetContent>
                 </div>
               </Sheet>
