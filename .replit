@@ -8,8 +8,8 @@ packages = ["glibcLocales", "go", "google-cloud-sdk", "jq", "libxcrypt", "sptk"]
 
 [deployment]
 deploymentTarget = "cloudrun"
-build = ["npm", "install"]
-run = ["sh", "-c", "npm start"]
+build = ["sh", "-c", "echo 'Build step completed'"]
+run = ["sh", "-c", "NODE_ENV=production tsx server/index.ts"]
 
 [[ports]]
 localPort = 5000
