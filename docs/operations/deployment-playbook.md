@@ -16,16 +16,16 @@ This playbook standardizes how we promote the E‑Code platform across environme
    - Merge changes into `main` and tag with semantic version (e.g., `v1.4.0-rc1`).
    - Trigger CI pipeline to run `npm test`, `npm run typecheck`, and `npm run build`.
 2. **Staging Deploy**
-   - Provision infrastructure with `deploy-to-gke.sh` or equivalent Terraform module.
+   - Provision infrastructure with `Replit Reserved VM deployment` or equivalent Terraform module.
    - Apply database migrations using `npm run db:push` against the staging connection string.
    - Smoke test core flows: login, project creation, AI assistant prompt, deployment preview.
 3. **Operational Review**
-   - Validate dashboards in the monitoring tool (Datadog, Cloud Monitoring) for error spikes.
+   - Validate dashboards in the monitoring tool for error spikes.
    - Confirm audit logs are ingested and access policies remain intact.
    - Capture release notes for customer enablement.
 4. **Production Launch**
    - Execute `./deploy-production.sh` with updated image tags and secrets.
-   - Perform gradual traffic cutover using load balancer weights or Cloud Run revisions.
+   - Perform gradual traffic cutover using load balancer weights or Replit deployment revisions.
    - Announce availability via the in-app banner and status page update.
 5. **Post-Deployment**
    - Monitor key metrics for 1–2 hours (error rate, latency, AI request success).
@@ -63,11 +63,7 @@ This playbook standardizes how we promote the E‑Code platform across environme
 
 - **Reference Scripts:**
   - `deploy-production.sh` – Default single-port deployment workflow.
-  - `deploy-to-gke.sh` – Google Kubernetes Engine bootstrap.
   - `deploy-real-app.sh` – Example application deployment with monitoring hooks.
 - **Further Reading:**
-  - `GOOGLE_CLOUD_DEPLOYMENT.md`
-  - `GKE_DEPLOYMENT_GUIDE.md`
-  - `PLATFORM_COMPLETION_ROADMAP.md`
 
 Keep this playbook synchronized with infrastructure-as-code repositories and quarterly business continuity drills.

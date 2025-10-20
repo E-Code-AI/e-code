@@ -30,7 +30,6 @@ import { githubMCP } from './servers/github-mcp';
 import { postgresMCP } from './servers/postgres-mcp';
 import { memoryMCP } from './servers/memory-mcp';
 import { slackMCP } from './servers/slack-mcp';
-import { googleDriveMCP } from './servers/google-drive-mcp';
 import { figmaMCP } from './servers/figma-mcp';
 import { openSourceModelsProvider, OPENSOURCE_MODELS } from '../ai/opensource-models-provider';
 
@@ -615,8 +614,6 @@ export default class MCPServer {
         // Slack MCP Tools
         ...slackMCP.getTools(),
         
-        // Google Drive MCP Tools  
-        ...googleDriveMCP.getTools(),
         
         // Figma MCP Tools
         ...figmaMCP.getTools()
@@ -822,245 +819,25 @@ export default class MCPServer {
           case "slack_upload_file":
             return await this.handleSlackUploadFile(args);
             
-          // Google Drive MCP Tools
-          case "gdrive_list_files":
-            return await this.handleGDriveListFiles(args);
-          case "gdrive_get_file":
-            return await this.handleGDriveGetFile(args);
-          case "gdrive_create_file":
-            return await this.handleGDriveCreateFile(args);
-          case "gdrive_update_file":
-            return await this.handleGDriveUpdateFile(args);
-          case "gdrive_delete_file":
-            return await this.handleGDriveDeleteFile(args);
-          case "gdrive_search_files":
-            return await this.handleGDriveSearchFiles(args);
-            
           // Figma MCP Tools
           case "figma_get_file":
             return await this.handleFigmaGetFile(args);
-          case "figma_get_nodes":
-            return await this.handleFigmaGetNodes(args);
-          case "figma_get_images":
-            return await this.handleFigmaGetImages(args);
-          case "figma_get_team_projects":
-            return await this.handleFigmaGetTeamProjects(args);
-          case "figma_get_project_files":
-            return await this.handleFigmaGetProjectFiles(args);
-          case "figma_get_comments":
-            return await this.handleFigmaGetComments(args);
-          case "figma_post_comment":
-            return await this.handleFigmaPostComment(args);
+          case "figma_get_components":
+            return await this.handleFigmaGetComponents(args);
             
           default:
-            throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+            throw new McpError(
+              ErrorCode.MethodNotFound,
+              `Unknown tool: ${name}`
+            );
         }
-      } catch (error: any) {
-        console.error(`Tool execution error for ${name}:`, error);
+      } catch (error) {
         throw new McpError(
           ErrorCode.InternalError,
-          `Tool execution failed: ${error.message}`
+          error instanceof Error ? error.message : String(error)
         );
       }
     });
-  }
-  
-  // Filesystem handlers
-  private async handleFileRead(args: any) {
-    const validated = FileOperationSchema.parse(args);
-    const content = await fs.readFile(validated.path, validated.encoding as any);
-    return {
-      content: [{ type: "text", text: content.toString() }],
-    };
-  }
-  
-  private async handleFileWrite(args: any) {
-    const validated = FileOperationSchema.parse(args);
-    await fs.writeFile(validated.path, validated.content || "", validated.encoding as any);
-    return {
-      content: [{ type: "text", text: `File written: ${validated.path}` }],
-    };
-  }
-  
-  private async handleFileDelete(args: any) {
-    const { path: filePath, recursive } = args;
-    if (recursive) {
-      await fs.rm(filePath, { recursive: true, force: true });
-    } else {
-      await fs.unlink(filePath);
-    }
-    return {
-      content: [{ type: "text", text: `Deleted: ${filePath}` }],
-    };
-  }
-  
-  private async handleFileList(args: any) {
-    const { path: dirPath, pattern, recursive } = args;
-    
-    if (pattern) {
-      const files = await glob(pattern, { cwd: dirPath });
-      return {
-        content: [{ type: "text", text: JSON.stringify(files, null, 2) }],
-      };
-    }
-    
-    const files = await fs.readdir(dirPath, { withFileTypes: true });
-    const result = files.map(file => ({
-      name: file.name,
-      type: file.isDirectory() ? "directory" : "file",
-    }));
-    
-    return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-    };
-  }
-  
-  private async handleMkdir(args: any) {
-    const { path: dirPath, recursive } = args;
-    await fs.mkdir(dirPath, { recursive });
-    return {
-      content: [{ type: "text", text: `Directory created: ${dirPath}` }],
-    };
-  }
-  
-  private async handleFileMove(args: any) {
-    const { source, destination } = args;
-    await fs.rename(source, destination);
-    return {
-      content: [{ type: "text", text: `Moved: ${source} -> ${destination}` }],
-    };
-  }
-  
-  private async handleFileCopy(args: any) {
-    const { source, destination, recursive } = args;
-    if (recursive) {
-      await fs.cp(source, destination, { recursive: true });
-    } else {
-      await fs.copyFile(source, destination);
-    }
-    return {
-      content: [{ type: "text", text: `Copied: ${source} -> ${destination}` }],
-    };
-  }
-  
-  private async handleFileWatch(args: any) {
-    const { path: watchPath, events } = args;
-    const watcherId = crypto.randomUUID();
-    
-    const watcher = chokidar.watch(watchPath, {
-      persistent: true,
-      ignoreInitial: true,
-    });
-    
-    this.fileWatchers.set(watcherId, watcher);
-    
-    events.forEach((event: string) => {
-      watcher.on(event, (path: string) => {
-        this.server.notification({
-          method: "file.changed",
-          params: { event, path, watcherId },
-        });
-      });
-    });
-    
-    return {
-      content: [{ type: "text", text: `Watching: ${watchPath} (ID: ${watcherId})` }],
-    };
-  }
-  
-  // Command execution handlers
-  private async handleExecCommand(args: any) {
-    const validated = CommandExecutionSchema.parse(args);
-    const { stdout, stderr } = await execAsync(validated.command, {
-      cwd: validated.cwd,
-      timeout: validated.timeout,
-      env: { ...process.env, ...validated.env },
-    });
-    
-    return {
-      content: [{ 
-        type: "text", 
-        text: JSON.stringify({ stdout, stderr }, null, 2) 
-      }],
-    };
-  }
-  
-  private async handleExecSpawn(args: any) {
-    const { command, args: cmdArgs = [], cwd, env } = args;
-    const processId = crypto.randomUUID();
-    
-    const child = spawn(command, cmdArgs, {
-      cwd,
-      env: { ...process.env, ...env },
-    });
-    
-    this.activeProcesses.set(processId, child);
-    
-    child.stdout.on("data", (data) => {
-      this.server.notification({
-        method: "process.stdout",
-        params: { processId, data: data.toString() },
-      });
-    });
-    
-    child.stderr.on("data", (data) => {
-      this.server.notification({
-        method: "process.stderr",
-        params: { processId, data: data.toString() },
-      });
-    });
-    
-    child.on("exit", (code) => {
-      this.server.notification({
-        method: "process.exit",
-        params: { processId, code },
-      });
-      this.activeProcesses.delete(processId);
-    });
-    
-    return {
-      content: [{ type: "text", text: `Process spawned: ${processId}` }],
-    };
-  }
-  
-  private async handleExecKill(args: any) {
-    const { processId, signal = "SIGTERM" } = args;
-    const process = this.activeProcesses.get(processId);
-    
-    if (!process) {
-      throw new Error(`Process not found: ${processId}`);
-    }
-    
-    process.kill(signal);
-    this.activeProcesses.delete(processId);
-    
-    return {
-      content: [{ type: "text", text: `Process killed: ${processId}` }],
-    };
-  }
-  
-  // Database handlers
-  private async handleDatabaseQuery(args: any) {
-    const validated = DatabaseQuerySchema.parse(args);
-    
-    let result;
-    switch (validated.operation) {
-      case "select":
-        result = await client.query(validated.query, validated.params);
-        break;
-      case "insert":
-      case "update":
-      case "delete":
-        result = await client.query(validated.query, validated.params);
-        break;
-      case "raw":
-        result = await client.query(validated.query, validated.params);
-        break;
-    }
-    
-    return {
-      content: [{ type: "text", text: JSON.stringify(result.rows, null, 2) }],
-    };
   }
   
   private async handleDatabaseMigrate(args: any) {
@@ -1528,48 +1305,11 @@ export default class MCPServer {
     };
   }
 
-  // Google Drive MCP handlers
-  private async handleGDriveListFiles(args: any) {
-    const result = await googleDriveMCP.listFiles(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-    };
-  }
 
-  private async handleGDriveGetFile(args: any) {
-    const result = await googleDriveMCP.getFile(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-    };
-  }
 
-  private async handleGDriveCreateFile(args: any) {
-    const result = await googleDriveMCP.createFile(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-    };
-  }
 
-  private async handleGDriveUpdateFile(args: any) {
-    const result = await googleDriveMCP.updateFile(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-    };
-  }
 
-  private async handleGDriveDeleteFile(args: any) {
-    const result = await googleDriveMCP.deleteFile(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-    };
-  }
 
-  private async handleGDriveSearchFiles(args: any) {
-    const result = await googleDriveMCP.searchFiles(args);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-    };
-  }
 
   // Figma MCP handlers
   private async handleFigmaGetFile(args: any) {

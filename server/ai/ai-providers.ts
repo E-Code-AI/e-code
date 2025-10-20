@@ -1,7 +1,6 @@
 // @ts-nocheck
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
-import { GoogleGenAI } from "@google/genai";
 
 export interface AIProvider {
   name: string;
@@ -95,39 +94,6 @@ export class AnthropicProvider implements AIProvider {
     }
     
     return this.generateChat(messages, options);
-  }
-}
-
-export class GeminiProvider implements AIProvider {
-  name = 'gemini';
-  private client: GoogleGenAI;
-  
-  constructor(apiKey: string) {
-    this.client = new GoogleGenAI({ apiKey });
-  }
-  
-  async generateChat(messages: any[], options?: any): Promise<string> {
-    // Convert to Gemini format
-    const prompt = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
-    
-    const response = await this.client.models.generateContent({
-      model: options?.model || 'gemini-2.5-flash',
-      contents: prompt,
-    });
-    
-    return response.text || '';
-  }
-  
-  async generateCodeWithUnderstanding(messages: any[], codeAnalysis: any, options?: any): Promise<string> {
-    const enhancedMessages = [...messages];
-    if (codeAnalysis) {
-      enhancedMessages.push({
-        role: 'system',
-        content: `Code Analysis: ${JSON.stringify(codeAnalysis, null, 2)}`
-      });
-    }
-    
-    return this.generateChat(enhancedMessages, options);
   }
 }
 

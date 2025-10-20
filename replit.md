@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code Platform is a production-ready, AI-powered development platform designed to streamline software creation through automated deployment and collaboration tools. It provides enterprise-grade infrastructure, advanced AI capabilities including custom prompts and a template library, and comprehensive tools for the entire software development lifecycle. The platform emphasizes performance, security, and scalability, making it suitable for high-demand deployments on Replit Reserved VM.
+E-Code Platform is a production-ready, AI-powered development platform designed to streamline software creation through automated deployment and collaboration tools. It provides enterprise-grade infrastructure, advanced AI capabilities including custom prompts and a template library, and comprehensive tools for the entire software development lifecycle. The platform emphasizes performance, security, and scalability, optimized for Replit Reserved VM deployment.
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing

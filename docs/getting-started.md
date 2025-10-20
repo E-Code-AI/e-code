@@ -42,12 +42,11 @@ Minimum variables to review:
 | `SESSION_SECRET` | Random 32+ character string used to sign session cookies. |
 | `OPENAI_API_KEY` | Optional API key enabling GPT-based code assistance. |
 | `ANTHROPIC_API_KEY` | Optional API key enabling Claude workflows. |
-| `GOOGLE_GENAI_API_KEY` | Optional API key enabling Gemini tooling. |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated allowlist of origins if using non-default ports. |
 
-> **Security Note:** Avoid committing the `.env` file. Store production secrets in the organization’s secret manager (e.g., GCP Secret Manager or HashiCorp Vault).
+> **Security Note:** Avoid committing the `.env` file. Store production secrets in the organization’s secret manager (e.g., Replit's Secret Manager or HashiCorp Vault).
 
-> **AI Agent Reminder:** Without at least one of the AI provider keys set on the server (OpenAI, Anthropic, or Google GenAI),
+> **AI Agent Reminder:** Without at least one of the AI provider keys set on the server (OpenAI or Anthropic),
 > requests made from the AI sidebar will appear to do nothing. The UI intentionally suppresses raw provider errors, so double-check
 > the environment variables when agent interactions seem unresponsive.
 
