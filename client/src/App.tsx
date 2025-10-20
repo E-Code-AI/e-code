@@ -585,12 +585,12 @@ function AppContent() {
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/templates" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <TemplatesPage />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/community" component={() => (
-            <ReplitLayout>
+            <ReplitLayout showSidebar={false}>
               <Community />
             </ReplitLayout>
           )} />
