@@ -344,7 +344,7 @@ const TOOL_DEFINITIONS: Record<string, {
       properties: {
         prompt: { type: 'string', description: 'Prompt for the model' },
         messages: { type: 'array', description: 'Chat messages' },
-        model: { type: 'string', description: 'Model to use', default: 'gpt-4o-mini' },
+        model: { type: 'string', description: 'Model to use', default: 'gpt-5' },
         temperature: { type: 'number', description: 'Sampling temperature', default: 0.7 }
       }
     },
@@ -363,7 +363,7 @@ const TOOL_DEFINITIONS: Record<string, {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: args.model || 'gpt-4o-mini',
+          model: args.model || 'gpt-5',
           messages: args.messages || [{ role: 'user', content: args.prompt }],
           temperature: args.temperature ?? 0.7,
         }),
@@ -448,8 +448,27 @@ function removeSession(sessionId: string) {
   }
 }
 
+function getSessionIdFromQuery(query: any): string | undefined {
+  if (!query) return undefined;
+
+  const raw = query.sessionId ?? query.session_id;
+  if (Array.isArray(raw)) {
+    return raw[0];
+  }
+
+  if (raw === undefined || raw === null) {
+    return undefined;
+  }
+
+  return String(raw);
+}
+
 function getSessionFromRequest(req: any) {
-  const sessionId = req.headers['x-session-id'] as string || req.body?.sessionId;
+  const headerSessionId = req.headers['x-session-id'];
+  const sessionId =
+    (Array.isArray(headerSessionId) ? headerSessionId[0] : (headerSessionId as string)) ||
+    req.body?.sessionId ||
+    getSessionIdFromQuery(req.query);
   if (!sessionId || !sessions.has(sessionId)) {
     return null;
   }

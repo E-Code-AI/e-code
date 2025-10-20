@@ -7,6 +7,7 @@ const logger = createLogger('database-management');
 
 export interface TableInfo {
   tableName: string;
+  schema: string;
   rowCount: number;
   sizeInBytes: number;
   columns: ColumnInfo[];
@@ -58,16 +59,16 @@ export class DatabaseManagementService {
       for (const table of tablesQuery.rows) {
         // Get column information
         const columnsQuery = await pool.query(`
-          SELECT 
-            column_name,
-            data_type,
-            is_nullable,
-            column_default,
-            CASE 
-              WHEN pk.column_name IS NOT NULL THEN true 
-              ELSE false 
+          SELECT
+            columns.column_name,
+            columns.data_type,
+            columns.is_nullable,
+            columns.column_default,
+            CASE
+              WHEN pk.column_name IS NOT NULL THEN true
+              ELSE false
             END as is_primary_key
-          FROM information_schema.columns
+          FROM information_schema.columns columns
           LEFT JOIN (
             SELECT ku.column_name
             FROM information_schema.table_constraints tc
@@ -99,6 +100,7 @@ export class DatabaseManagementService {
 
         tables.push({
           tableName: table.tablename,
+          schema: table.schemaname,
           rowCount: parseInt(table.row_count) || 0,
           sizeInBytes: parseInt(table.size_bytes) || 0,
           columns: columnsQuery.rows.map((col: any) => ({
@@ -121,6 +123,53 @@ export class DatabaseManagementService {
       return tables;
     } catch (error) {
       logger.error('Error getting tables:', error);
+      throw error;
+    }
+  }
+
+  async getTableSchema(tableName: string, schema: string = 'public'): Promise<ColumnInfo[]> {
+    try {
+      const tableNameRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+      if (!tableNameRegex.test(tableName)) {
+        throw new Error('Invalid table name');
+      }
+
+      const columnsQuery = await pool.query(
+        `
+          SELECT
+            columns.column_name,
+            columns.data_type,
+            columns.is_nullable,
+            columns.column_default,
+            CASE
+              WHEN pk.column_name IS NOT NULL THEN true
+              ELSE false
+            END as is_primary_key
+          FROM information_schema.columns columns
+          LEFT JOIN (
+            SELECT ku.column_name
+            FROM information_schema.table_constraints tc
+            JOIN information_schema.key_column_usage ku
+              ON tc.constraint_name = ku.constraint_name
+            WHERE tc.constraint_type = 'PRIMARY KEY'
+              AND tc.table_name = $1
+              AND tc.table_schema = $2
+          ) pk ON columns.column_name = pk.column_name
+          WHERE columns.table_schema = $2 AND columns.table_name = $1
+          ORDER BY columns.ordinal_position;
+        `,
+        [tableName, schema]
+      );
+
+      return columnsQuery.rows.map((col: any) => ({
+        name: col.column_name,
+        type: col.data_type,
+        nullable: col.is_nullable === 'YES',
+        defaultValue: col.column_default,
+        isPrimaryKey: col.is_primary_key,
+      }));
+    } catch (error) {
+      logger.error('Error getting table schema:', error);
       throw error;
     }
   }

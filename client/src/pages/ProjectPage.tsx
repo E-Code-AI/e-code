@@ -17,6 +17,7 @@ import { ExecutionConsole } from '@/components/ExecutionConsole';
 import { DeploymentPanel } from '@/components/DeploymentPanel';
 import Collaboration from '@/components/Collaboration';
 import GitPanel from '@/components/GitPanel';
+import { HistoryTimeline } from '@/components/HistoryTimeline';
 import AIPanel from '@/components/AIPanel';
 import { ReplitAgentChat } from '@/components/ReplitAgentChat';
 import { ReplitAgentV2 } from '@/components/ReplitAgentV2';
@@ -37,6 +38,16 @@ import { GitHubMCPPanel } from '@/components/mcp/GitHubMCPPanel';
 import { PostgreSQLMCPPanel } from '@/components/mcp/PostgreSQLMCPPanel';
 import { MemoryMCPPanel } from '@/components/mcp/MemoryMCPPanel';
 import { GPUManagement } from '@/components/GPUManagement';
+import { WorkspaceSettings } from '@/components/WorkspaceSettings';
+import { ReplitWorkflows } from '@/components/ReplitWorkflows';
+import { DebuggerPanel } from '@/components/DebuggerPanel';
+import { TestRunner } from '@/components/TestRunner';
+import { ReplitSecrets } from '@/components/ReplitSecrets';
+import { ThreadsPanel } from '@/components/ThreadsPanel';
+import { CoverageInsightsPanel } from '@/components/CoverageInsightsPanel';
+import { SpotlightSettingsPanel } from '@/components/SpotlightSettingsPanel';
+import { ReplitObjectStorage } from '@/components/ReplitObjectStorage';
+import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ECodeLoading } from '@/components/ECodeLoading';
@@ -63,46 +74,73 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Play, 
-  Square, 
-  RefreshCw, 
-  Settings, 
-  Save, 
-  ChevronLeft, 
-  Download, 
-  Upload, 
-  Share2, 
+import {
+  Play,
+  Square,
+  RefreshCw,
+  Settings,
+  Save,
+  ChevronLeft,
+  Download,
+  Upload,
+  Share2,
   GitBranch,
   Layers,
   Users,
   MessageSquare,
   Sparkles,
   KeyRound,
-  X
+  X,
+  Bug,
+  Beaker,
+  History
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
 const ProjectPage = () => {
   const [matchId, paramsId] = useRoute('/project/:id');
+  const [matchLegacyId, paramsLegacyId] = useRoute('/projects/:id');
   const [matchSlug, paramsSlug] = useRoute('/@:username/:projectname');
+  const [matchLegacySlug, paramsLegacySlug] = useRoute('/u/:username/:projectname');
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user, isLoading: authLoading } = useAuth();
+
+  // Debug logging for route detection
+  useEffect(() => {
+    console.log('[ProjectPage] Route matching:', {
+      matchId,
+      paramsId,
+      matchSlug,
+      paramsSlug,
+      matchLegacySlug,
+      paramsLegacySlug,
+      user: user?.username,
+      authLoading
+    });
+  }, [matchId, paramsId, matchSlug, paramsSlug, matchLegacySlug, paramsLegacySlug, user, authLoading]);
+
+  const slugMatch = matchSlug || matchLegacySlug;
+  const slugParams = paramsSlug ?? paramsLegacySlug ?? null;
+  const slugUsername = slugParams?.username ?? null;
+  const slugProjectName = slugParams?.projectname ?? null;
 
   // Determine if we're using ID or slug route
-  const isSlugRoute = !!matchSlug && paramsSlug?.username && paramsSlug?.projectname;
-  const projectId = matchId && paramsId?.id ? parseInt(paramsId.id) : null;
-  const projectSlug = isSlugRoute ? `@${paramsSlug.username}/${paramsSlug.projectname}` : null;
+  const isSlugRoute = !!slugMatch && !!slugUsername && !!slugProjectName;
+  const projectIdParam = paramsId?.id || paramsLegacyId?.id || null;
+  // The projectSlug should just be the slug itself, not the full path
+  const projectSlug = isSlugRoute ? slugProjectName : null;
+  const projectUsername = isSlugRoute ? slugUsername : null;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, string>>({});
   const [terminalVisible, setTerminalVisible] = useState(true);
   const [terminalHeight, setTerminalHeight] = useState(300);
   const [projectRunning, setProjectRunning] = useState(false);
   const [executionId, setExecutionId] = useState<string | undefined>();
-  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'console' | 'deployment' | 'git' | 'env'>('terminal');
+  const [bottomPanelTab, setBottomPanelTab] = useState<'terminal' | 'console' | 'deployment' | 'git' | 'history' | 'env' | 'secrets' | 'debugger' | 'tests' | 'settings'>('terminal');
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [aiPanelVisible, setAiPanelVisible] = useState(false);
-  const [rightPanelTab, setRightPanelTab] = useState<'preview' | 'assistant' | 'collaborate' | 'resources' | 'presence' | 'search' | 'stats' | 'packages' | 'share' | 'github' | 'postgres' | 'memory'>('preview');
+  const [rightPanelTab, setRightPanelTab] = useState<'preview' | 'assistant' | 'collaborate' | 'resources' | 'presence' | 'search' | 'stats' | 'packages' | 'share' | 'github' | 'postgres' | 'memory' | 'gpu' | 'workflows' | 'threads' | 'extensions' | 'history' | 'coverage' | 'spotlight' | 'storage'>('preview');
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'offline'>('idle');
@@ -120,33 +158,6 @@ const ProjectPage = () => {
     go: { status: 'inactive', port: 8080 },
     python: { status: 'inactive', port: 8081 }
   });
-  
-  // Get current user for collaboration
-  const { user } = useAuth();
-  
-  // Handle agent mode from URL parameters
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const isAgentMode = searchParams.get('agent') === 'true';
-    const prompt = searchParams.get('prompt');
-    
-    // Use the project ID from the loaded project data
-    const effectiveProjectId = project?.id || projectId;
-    
-    if (isAgentMode && prompt && effectiveProjectId) {
-      // Show the main agent interface with the prompt
-      setAgentPrompt(prompt);
-      setShowMainAgent(true);
-      
-      // Also open the assistant panel for additional help
-      setAiPanelVisible(true);
-      setRightPanelTab('assistant');
-      
-      // Clean up URL without reloading the page
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    }
-  }, [projectId, project]);
   
   // CHECK POLYGLOT SERVICE STATUS - Like Replit's architecture monitoring
   useEffect(() => {
@@ -179,8 +190,32 @@ const ProjectPage = () => {
     // Check immediately and then every 15 seconds for real-time status
     checkPolyglotStatus();
     const interval = setInterval(checkPolyglotStatus, 15000);
-    
+
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleOpenBottomPanel = (event: CustomEvent) => {
+      if (event.detail?.tab) {
+        setTerminalVisible(true);
+        setBottomPanelTab(event.detail.tab);
+      }
+    };
+
+    const handleOpenRightPanel = (event: CustomEvent) => {
+      if (event.detail?.tab) {
+        setAiPanelVisible(true);
+        setRightPanelTab(event.detail.tab);
+      }
+    };
+
+    window.addEventListener('openBottomPanelTab', handleOpenBottomPanel as EventListener);
+    window.addEventListener('openRightPanelTab', handleOpenRightPanel as EventListener);
+
+    return () => {
+      window.removeEventListener('openBottomPanelTab', handleOpenBottomPanel as EventListener);
+      window.removeEventListener('openRightPanelTab', handleOpenRightPanel as EventListener);
+    };
   }, []);
 
   // Query for fetching project details
@@ -189,14 +224,14 @@ const ProjectPage = () => {
     isLoading: projectLoading, 
     error: projectError 
   } = useQuery<Project>({
-    queryKey: projectSlug ? ['project-by-slug', projectSlug] : ['project-by-id', projectId],
+    queryKey: projectSlug ? ['project-by-slug', projectUsername, projectSlug] : ['project-by-id', projectIdParam],
     queryFn: async () => {
-      if (!projectId && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
-      
+      if (!projectIdParam && !projectSlug) return Promise.reject(new Error('No project identifier provided'));
+
       // Note: projectname in the route is actually the project slug
-      const url = projectSlug 
-        ? `/api/users/${paramsSlug?.username}/projects/${paramsSlug?.projectname}`
-        : `/api/projects/${projectId}`;
+      const url = projectSlug && projectUsername
+        ? `/api/users/${projectUsername}/projects/${projectSlug}`
+        : `/api/projects/${projectIdParam}`;
       
       console.log('Fetching project from:', url);
       
@@ -216,7 +251,7 @@ const ProjectPage = () => {
       console.log('Project loaded:', projectData);
       return projectData;
     },
-    enabled: !!projectId || !!projectSlug,
+    enabled: !!projectIdParam || !!projectSlug,
     retry: (failureCount, error) => {
       // Don't retry on authentication errors or not found errors
       if (error.message.includes('log in') || error.message.includes('not found')) {
@@ -226,17 +261,19 @@ const ProjectPage = () => {
     }
   });
 
+  const projectId = project?.id ?? projectIdParam ?? null;
+
   // Query for fetching project files
-  const { 
-    data: files, 
-    isLoading: filesLoading, 
-    error: filesError 
+  const {
+    data: files,
+    isLoading: filesLoading,
+    error: filesError
   } = useQuery<File[]>({
-    queryKey: ['/api/projects', project?.id, 'files'],
+    queryKey: ['/api/projects', projectId, 'files'],
     queryFn: async () => {
-      const actualProjectId = project?.id || projectId;
+      const actualProjectId = projectId;
       if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
-      
+
       const res = await apiRequest('GET', `/api/projects/${actualProjectId}/files`);
       if (!res.ok) {
         const error = await res.text();
@@ -247,7 +284,7 @@ const ProjectPage = () => {
       }
       return res.json();
     },
-    enabled: !!(project?.id || projectId),
+    enabled: !!projectId,
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error.message.includes('log in')) {
@@ -256,6 +293,31 @@ const ProjectPage = () => {
       return failureCount < 3;
     }
   });
+
+  // Handle agent mode from URL parameters
+  // Note: This effect is now placed after the project query to avoid accessing 'project' before initialization
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const isAgentMode = searchParams.get('agent') === 'true';
+    const prompt = searchParams.get('prompt');
+    
+    // Use the project ID from the loaded project data
+    const effectiveProjectId = project?.id ?? projectId;
+    
+    if (isAgentMode && prompt && effectiveProjectId) {
+      // Show the main agent interface with the prompt
+      setAgentPrompt(prompt);
+      setShowMainAgent(true);
+      
+      // Also open the assistant panel for additional help
+      setAiPanelVisible(true);
+      setRightPanelTab('assistant');
+      
+      // Clean up URL without reloading the page
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [projectId, project]);
 
   // Mutation for saving file changes
   const saveFileMutation = useMutation({
@@ -284,7 +346,8 @@ const ProjectPage = () => {
       });
       
       // Refresh file list to get updated timestamps
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      const actualProjectId = project?.id ?? projectId;
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
     },
     onError: (error: Error) => {
       setAutoSaveStatus('error');
@@ -299,24 +362,26 @@ const ProjectPage = () => {
   // Mutation for creating a new file
   const createFileMutation = useMutation({
     mutationFn: async ({ parentId, name, isFolder }: { parentId: number | null, name: string, isFolder: boolean }) => {
-      if (!projectId) return Promise.reject(new Error('No project ID provided'));
+      const actualProjectId = project?.id ?? projectId;
+      if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
       
       const newFile = {
         name,
         isDirectory: isFolder,
         path: parentId ? `${parentId}/${name}` : name,
-        projectId,
+        projectId: actualProjectId,
         content: isFolder ? null : '',
       };
       
-      const res = await apiRequest('POST', `/api/files/${projectId}`, newFile);
+      const res = await apiRequest('POST', `/api/files/${actualProjectId}`, newFile);
       if (!res.ok) {
         throw new Error('Failed to create file');
       }
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      const actualProjectId = project?.id ?? projectId;
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
       toast({
         title: "File created",
         description: "New file has been created successfully.",
@@ -346,7 +411,8 @@ const ProjectPage = () => {
         setSelectedFile(null);
       }
       
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      const actualProjectId = project?.id ?? projectId;
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
       toast({
         title: "File deleted",
         description: "File has been deleted successfully.",
@@ -371,7 +437,8 @@ const ProjectPage = () => {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      const actualProjectId = project?.id ?? projectId;
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
       toast({
         title: "File renamed",
         description: "File has been renamed successfully.",
@@ -389,9 +456,10 @@ const ProjectPage = () => {
   // Mutation for starting the project
   const startProjectMutation = useMutation({
     mutationFn: async () => {
-      if (!projectId) return Promise.reject(new Error('No project ID provided'));
+      const actualProjectId = project?.id ?? projectId;
+      if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('POST', `/api/runtime/${projectId}/start`);
+      const res = await apiRequest('POST', `/api/runtime/${actualProjectId}/start`);
       if (!res.ok) {
         throw new Error('Failed to start project');
       }
@@ -416,9 +484,10 @@ const ProjectPage = () => {
   // Mutation for stopping the project
   const stopProjectMutation = useMutation({
     mutationFn: async () => {
-      if (!projectId) return Promise.reject(new Error('No project ID provided'));
+      const actualProjectId = project?.id ?? projectId;
+      if (!actualProjectId) return Promise.reject(new Error('No project ID provided'));
       
-      const res = await apiRequest('POST', `/api/runtime/${projectId}/stop`);
+      const res = await apiRequest('POST', `/api/runtime/${actualProjectId}/stop`);
       if (!res.ok) {
         throw new Error('Failed to stop project');
       }
@@ -545,11 +614,12 @@ const ProjectPage = () => {
 
   // Check project status on load
   useEffect(() => {
-    if (!projectId) return;
+    const actualProjectId = project?.id ?? projectId;
+    if (!actualProjectId) return;
     
     const checkStatus = async () => {
       try {
-        const res = await apiRequest('GET', `/api/runtime/${projectId}/status`);
+        const res = await apiRequest('GET', `/api/runtime/${actualProjectId}/status`);
         if (res.ok) {
           const data = await res.json();
           setProjectRunning(data.status === 'running');
@@ -560,7 +630,7 @@ const ProjectPage = () => {
     };
     
     checkStatus();
-  }, [projectId]);
+  }, [projectId, project]);
 
   // Select the first file when files are loaded
   useEffect(() => {
@@ -607,8 +677,9 @@ const ProjectPage = () => {
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
-                  queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+                  const actualProjectId = project?.id ?? projectId;
+                  queryClient.invalidateQueries({ queryKey: projectSlug ? ['project-by-slug', projectUsername, projectSlug] : ['project-by-id', actualProjectId] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
                 }}
               >
                 Try Again
@@ -890,12 +961,12 @@ const ProjectPage = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Show Main Agent Interface as Principal when active (like Replit) */}
-        {showMainAgent && projectId ? (
+        {showMainAgent && (project?.id ?? projectId) ? (
           <div className="flex-1 flex">
             {/* Agent Interface takes center stage */}
             <div className="flex-1 flex flex-col">
-              <MainAgentInterface 
-                projectId={projectId}
+              <MainAgentInterface
+                projectId={project?.id ?? projectId}
                 initialPrompt={agentPrompt}
                 onMinimize={() => setShowMainAgent(false)}
                 className="h-full"
@@ -904,7 +975,7 @@ const ProjectPage = () => {
             
             {/* Files sidebar on the right when agent is active */}
             <div className="w-64 border-l overflow-auto">
-              <ReplitSidebar projectId={projectId} />
+              <ReplitSidebar projectId={(project?.id ?? projectId) || undefined} />
             </div>
           </div>
         ) : (
@@ -912,7 +983,7 @@ const ProjectPage = () => {
             {/* Traditional layout when agent is not active */}
             {/* Left Sidebar with Files, Agent, Tools, etc. */}
             <div className="w-64 overflow-auto border-r">
-              <ReplitSidebar projectId={projectId || 0} />
+              <ReplitSidebar projectId={(project?.id ?? projectId) || undefined} />
             </div>
             
             {/* Middle Section: Editor and Terminal */}
@@ -936,43 +1007,78 @@ const ProjectPage = () => {
             <div className="border-t border-border h-[300px] flex flex-col">
               <div className="h-8 bg-muted/30 border-b border-border flex items-center px-4 justify-between">
                 <div className="flex items-center space-x-4">
-                  <Tabs 
-                    value={bottomPanelTab} 
-                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'console' | 'deployment' | 'git' | 'env')}
-                    className="w-[600px]"
+                  <Tabs
+                    value={bottomPanelTab}
+                    onValueChange={(value) => setBottomPanelTab(value as 'terminal' | 'console' | 'deployment' | 'git' | 'history' | 'env' | 'secrets' | 'debugger' | 'tests' | 'settings')}
+                    className="w-full max-w-[900px]"
                   >
-                    <TabsList className="h-7 bg-transparent">
-                      <TabsTrigger 
-                        value="terminal" 
+                    <TabsList className="h-7 bg-transparent flex flex-wrap gap-1">
+                      <TabsTrigger
+                        value="terminal"
                         className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'terminal' ? 'border-b-2 border-primary rounded-none' : ''}`}
                       >
                         Terminal
                       </TabsTrigger>
-                      <TabsTrigger 
-                        value="console" 
+                      <TabsTrigger
+                        value="console"
                         className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'console' ? 'border-b-2 border-primary rounded-none' : ''}`}
                       >
                         Console
                       </TabsTrigger>
-                      <TabsTrigger 
-                        value="deployment" 
+                      <TabsTrigger
+                        value="debugger"
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'debugger' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        <Bug className="h-4 w-4 mr-1" />
+                        Debugger
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="tests"
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'tests' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        <Beaker className="h-4 w-4 mr-1" />
+                        Tests
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="deployment"
                         className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'deployment' ? 'border-b-2 border-primary rounded-none' : ''}`}
                       >
                         Deployment
                       </TabsTrigger>
-                      <TabsTrigger 
-                        value="git" 
+                      <TabsTrigger
+                        value="git"
                         className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'git' ? 'border-b-2 border-primary rounded-none' : ''}`}
                       >
                         <GitBranch className="h-4 w-4 mr-1" />
                         Git
                       </TabsTrigger>
-                      <TabsTrigger 
-                        value="env" 
+                      <TabsTrigger
+                        value="history"
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'history' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        <History className="h-4 w-4 mr-1" />
+                        History
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="env"
                         className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'env' ? 'border-b-2 border-primary rounded-none' : ''}`}
                       >
                         <KeyRound className="h-4 w-4 mr-1" />
                         Environment
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="secrets"
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'secrets' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        <KeyRound className="h-4 w-4 mr-1" />
+                        Secrets
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="settings"
+                        className={`h-7 data-[state=active]:bg-background ${bottomPanelTab === 'settings' ? 'border-b-2 border-primary rounded-none' : ''}`}
+                      >
+                        <Settings className="h-4 w-4 mr-1" />
+                        Settings
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
@@ -995,13 +1101,18 @@ const ProjectPage = () => {
                     isRunning={projectRunning}
                   />
                 )}
+                {bottomPanelTab === 'debugger' && projectId && <DebuggerPanel projectId={projectId.toString()} />}
+                {bottomPanelTab === 'tests' && projectId && <TestRunner projectId={projectId.toString()} />}
                 {bottomPanelTab === 'deployment' && projectId && <DeploymentPanel projectId={projectId} />}
                 {bottomPanelTab === 'git' && projectId && <GitPanel projectId={projectId} />}
+                {bottomPanelTab === 'history' && projectId && <HistoryTimeline projectId={projectId} className="h-full" />}
                 {bottomPanelTab === 'env' && projectId && (
                   <EnvironmentProvider projectId={projectId}>
                     <EnvironmentPanel projectId={projectId} />
                   </EnvironmentProvider>
                 )}
+                {bottomPanelTab === 'secrets' && projectId && <ReplitSecrets projectId={projectId} />}
+                {bottomPanelTab === 'settings' && <WorkspaceSettings projectId={projectId} />}
               </div>
                 </div>
               )}
@@ -1019,15 +1130,23 @@ const ProjectPage = () => {
                     <TabsTrigger value="preview" className="h-8">Preview</TabsTrigger>
                     <TabsTrigger value="assistant" className="h-8">Assistant</TabsTrigger>
                     <TabsTrigger value="collaborate" className="h-8">Collaborate</TabsTrigger>
+                    <TabsTrigger value="threads" className="h-8">Threads</TabsTrigger>
                     <TabsTrigger value="resources" className="h-8">Resources</TabsTrigger>
+                    <TabsTrigger value="presence" className="h-8">Presence</TabsTrigger>
                     <TabsTrigger value="search" className="h-8">Search</TabsTrigger>
                     <TabsTrigger value="stats" className="h-8">Stats</TabsTrigger>
                     <TabsTrigger value="packages" className="h-8">Packages</TabsTrigger>
+                    <TabsTrigger value="extensions" className="h-8">Extensions</TabsTrigger>
                     <TabsTrigger value="share" className="h-8">Share</TabsTrigger>
                     <TabsTrigger value="github" className="h-8">GitHub</TabsTrigger>
                     <TabsTrigger value="postgres" className="h-8">Database</TabsTrigger>
+                    <TabsTrigger value="storage" className="h-8">Object Storage</TabsTrigger>
                     <TabsTrigger value="memory" className="h-8">Memory</TabsTrigger>
                     <TabsTrigger value="gpu" className="h-8">GPU</TabsTrigger>
+                    <TabsTrigger value="workflows" className="h-8">Workflows</TabsTrigger>
+                    <TabsTrigger value="history" className="h-8">History</TabsTrigger>
+                    <TabsTrigger value="coverage" className="h-8">Coverage</TabsTrigger>
+                    <TabsTrigger value="spotlight" className="h-8">Spotlight</TabsTrigger>
                   </TabsList>
                 </ScrollArea>
                 <Button 
@@ -1052,18 +1171,21 @@ const ProjectPage = () => {
                 />
               </TabsContent>
               <TabsContent value="collaborate" className="flex-1 overflow-hidden">
-                {user && <Collaboration 
-                  projectId={projectId} 
-                  fileId={selectedFile?.id || null} 
+                {user && <Collaboration
+                  projectId={projectId}
+                  fileId={selectedFile?.id || null}
                   currentUser={user}
                   onToggle={() => {}}
                 />}
+              </TabsContent>
+              <TabsContent value="threads" className="flex-1 overflow-hidden p-4">
+                <ThreadsPanel projectId={projectId} />
               </TabsContent>
               <TabsContent value="resources" className="flex-1 overflow-hidden p-4">
                 <ResourceMonitor projectId={projectId} />
               </TabsContent>
               <TabsContent value="presence" className="flex-1 overflow-hidden p-4">
-                {user && <CollaborativePresence 
+                {user && <CollaborativePresence
                   projectId={projectId} 
                   currentUser={{
                     id: user.id.toString(),
@@ -1084,26 +1206,44 @@ const ProjectPage = () => {
               <TabsContent value="stats" className="flex-1 overflow-hidden p-4">
                 <ProjectStats projectId={projectId} />
               </TabsContent>
+              <TabsContent value="coverage" className="flex-1 overflow-hidden p-4">
+                <CoverageInsightsPanel projectId={projectId} />
+              </TabsContent>
               <TabsContent value="packages" className="flex-1 overflow-hidden p-4">
                 <PackageManager projectId={projectId} language="javascript" />
               </TabsContent>
+              <TabsContent value="extensions" className="flex-1 overflow-hidden p-4">
+                <ExtensionsMarketplace projectId={projectId} />
+              </TabsContent>
               <TabsContent value="share" className="flex-1 overflow-hidden p-4">
-                <ProjectSharing 
-                  projectId={projectId} 
-                  projectName={project?.name || 'Untitled'} 
+                <ProjectSharing
+                  projectId={projectId}
+                  projectName={project?.name || 'Untitled'}
                 />
+              </TabsContent>
+              <TabsContent value="spotlight" className="flex-1 overflow-hidden p-4">
+                <SpotlightSettingsPanel projectId={projectId} />
               </TabsContent>
               <TabsContent value="github" className="flex-1 overflow-hidden">
                 <GitHubMCPPanel projectId={projectId} />
               </TabsContent>
+              <TabsContent value="history" className="flex-1 overflow-hidden p-4">
+                <HistoryTimeline projectId={projectId} className="h-full" />
+              </TabsContent>
               <TabsContent value="postgres" className="flex-1 overflow-hidden">
                 <PostgreSQLMCPPanel projectId={projectId} />
+              </TabsContent>
+              <TabsContent value="storage" className="flex-1 overflow-hidden p-4">
+                <ReplitObjectStorage projectId={projectId} className="h-full" />
               </TabsContent>
               <TabsContent value="memory" className="flex-1 overflow-hidden">
                 <MemoryMCPPanel projectId={projectId} />
               </TabsContent>
               <TabsContent value="gpu" className="flex-1 overflow-hidden p-4">
                 <GPUManagement projectId={projectId} />
+              </TabsContent>
+              <TabsContent value="workflows" className="flex-1 overflow-hidden p-4">
+                <ReplitWorkflows projectId={projectId} />
               </TabsContent>
             </Tabs>
           </div>
@@ -1126,7 +1266,8 @@ const ProjectPage = () => {
               <FileUploadDropzone 
                 projectId={projectId} 
                 onUploadComplete={() => {
-                  queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+                  const actualProjectId = project?.id ?? projectId;
+                  queryClient.invalidateQueries({ queryKey: ['/api/projects', actualProjectId, 'files'] });
                 }}
               />
             </div>

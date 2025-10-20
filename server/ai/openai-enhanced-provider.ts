@@ -25,69 +25,37 @@ export interface OpenAIModelConfig {
 
 // Complete list of OpenAI models with configurations
 export const OPENAI_MODELS: Record<string, OpenAIModelConfig> = {
+  'gpt-4-turbo-preview': {
+    id: 'gpt-4-turbo-preview',
+    name: 'GPT-4 Turbo Preview (Latest)',
+    contextWindow: 128000,
+    maxOutput: 4096,
+    capabilities: ['chat', 'vision', 'function_calling', 'json_mode', 'structured_outputs'],
+    pricing: { input: 0.01, output: 0.03 }
+  },
   'gpt-4o': {
     id: 'gpt-4o',
-    name: 'GPT-4 Omni (Latest)',
+    name: 'GPT-4 Optimized',
     contextWindow: 128000,
     maxOutput: 4096,
-    capabilities: ['chat', 'vision', 'function_calling', 'json_mode'],
-    pricing: { input: 0.0025, output: 0.01 }
+    capabilities: ['chat', 'vision', 'function_calling', 'json_mode', 'structured_outputs'],
+    pricing: { input: 0.005, output: 0.015 }
   },
-  'gpt-4o-2024-08-06': {
-    id: 'gpt-4o-2024-08-06',
-    name: 'GPT-4 Omni (Structured Outputs)',
-    contextWindow: 128000,
-    maxOutput: 16384,
-    capabilities: ['chat', 'vision', 'function_calling', 'structured_outputs'],
-    pricing: { input: 0.0025, output: 0.01 }
-  },
-  'gpt-4o-mini': {
-    id: 'gpt-4o-mini',
-    name: 'GPT-4 Omni Mini',
-    contextWindow: 128000,
-    maxOutput: 16384,
-    capabilities: ['chat', 'vision', 'function_calling'],
-    pricing: { input: 0.00015, output: 0.0006 }
-  },
-  'o1-preview': {
-    id: 'o1-preview',
-    name: 'O1 Preview (Advanced Reasoning)',
-    contextWindow: 128000,
-    maxOutput: 32768,
-    capabilities: ['chat', 'reasoning', 'complex_analysis'],
-    pricing: { input: 0.015, output: 0.06 }
-  },
-  'o1-mini': {
-    id: 'o1-mini',
-    name: 'O1 Mini (Fast Reasoning)',
-    contextWindow: 128000,
-    maxOutput: 65536,
-    capabilities: ['chat', 'reasoning'],
-    pricing: { input: 0.003, output: 0.012 }
-  },
-  'gpt-4-turbo': {
-    id: 'gpt-4-turbo',
-    name: 'GPT-4 Turbo',
-    contextWindow: 128000,
+  'gpt-4': {
+    id: 'gpt-4',
+    name: 'GPT-4',
+    contextWindow: 8192,
     maxOutput: 4096,
-    capabilities: ['chat', 'vision', 'function_calling'],
-    pricing: { input: 0.01, output: 0.03 }
+    capabilities: ['chat', 'function_calling', 'json_mode'],
+    pricing: { input: 0.03, output: 0.06 }
   },
   'gpt-3.5-turbo': {
     id: 'gpt-3.5-turbo',
     name: 'GPT-3.5 Turbo',
-    contextWindow: 16385,
-    maxOutput: 4096,
-    capabilities: ['chat', 'function_calling'],
-    pricing: { input: 0.0005, output: 0.002 }
-  },
-  'gpt-3.5-turbo-1106': {
-    id: 'gpt-3.5-turbo-1106',
-    name: 'GPT-3.5 Turbo (Updated)',
-    contextWindow: 16385,
+    contextWindow: 16384,
     maxOutput: 4096,
     capabilities: ['chat', 'function_calling', 'json_mode'],
-    pricing: { input: 0.0005, output: 0.002 }
+    pricing: { input: 0.0005, output: 0.0015 }
   }
 };
 
@@ -116,7 +84,7 @@ export interface OpenAIOptions {
 export class EnhancedOpenAIProvider implements AIProvider {
   name = 'OpenAI Enhanced';
   private client: OpenAI;
-  private defaultModel = 'gpt-4o';
+  private defaultModel = 'gpt-4-turbo-preview';
   
   constructor(apiKey?: string) {
     this.client = new OpenAI({
@@ -261,7 +229,7 @@ export class EnhancedOpenAIProvider implements AIProvider {
     userId?: number,
     options?: OpenAIOptions
   ): Promise<string> {
-    const model = options?.model || 'gpt-4o';
+    const model = options?.model || 'gpt-5';
     const modelConfig = OPENAI_MODELS[model];
     
     if (!modelConfig.capabilities.includes('vision')) {

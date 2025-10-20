@@ -8,8 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
-import { 
-  Code, Building2, Users, Mail, Phone, Globe, MessageSquare,
+import {
+  Code, Building2, Users, Mail, Globe, MessageSquare,
   ChevronRight, Check, Calendar, Clock, Shield, Sparkles, ArrowRight
 } from 'lucide-react';
 import { useState } from 'react';
@@ -37,8 +37,13 @@ export default function ContactSales() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
+      const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/contact-sales';
+      const subject = formData.interest
+        ? `Enterprise inquiry - ${formData.interest}`
+        : 'Enterprise inquiry';
+
       const response = await fetch('/api/contact/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,7 +55,9 @@ export default function ContactSales() {
           phone: formData.phone,
           message: formData.message,
           companySize: formData.companySize,
-          useCase: formData.interest
+          useCase: formData.interest,
+          subject,
+          pagePath,
         }),
       });
 
@@ -350,11 +357,7 @@ export default function ContactSales() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm">enterprise@ecode.com</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm">1-888-ECODE-01</span>
+                    <span className="text-sm">enterprise@e-code.ai</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Clock className="h-5 w-5 text-muted-foreground" />

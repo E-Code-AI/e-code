@@ -696,7 +696,7 @@ export default function Careers() {
                     className="flex-1 gap-2"
                     onClick={() => {
                       // In a real app, this would open an application form
-                      window.open(`mailto:careers@ecode.com?subject=Application for ${selectedJob.title}`, '_blank');
+                      window.open(`mailto:careers@e-code.ai?subject=Application for ${selectedJob.title}`, '_blank');
                     }}
                   >
                     <ExternalLink className="h-4 w-4" />

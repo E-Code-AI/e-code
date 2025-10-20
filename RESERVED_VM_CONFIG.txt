@@ -1,0 +1,89 @@
+[deployment]
+deploymentTarget = "reserved_vm"  ← ✅ RESERVED VM (as you requested)
+build = ["npm", "install"]        ← ✅ Just install deps (no build hang)
+run = ["npm", "run", "dev"]       ← ✅ Use working dev server
+
+# 4 PORTS - CORRECTLY MAPPED
+[[ports]]
+localPort = 5000
+externalPort = 80                 ← ✅ Main app on port 80 (public)
+
+[[ports]]
+localPort = 3200
+externalPort = 3200               ← ✅ MCP Server on 3200 (for AI)
+
+[[ports]]
+localPort = 8080
+externalPort = 8080               ← ✅ Go Runtime
+
+[[ports]]
+localPort = 8081
+externalPort = 8081               ← ✅ Python ML
+
+
+
+modules = ["nodejs-20", "web", "postgresql-16", "python-3.11"]
+run = "npm run dev"
+hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+
+[nix]
+channel = "stable-24_05"
+packages = ["glibcLocales", "go", "google-cloud-sdk", "jq", "libxcrypt", "sptk"]
+
+[deployment]
+deploymentTarget = "reserved_vm"
+build = ["npm", "install"]
+run = ["npm", "run", "dev"]
+
+# Port 5000 - Main Express Server (TypeScript Core)
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+# Port 3200 - MCP Standalone Server (AI Agent Operations)
+[[ports]]
+localPort = 3200
+externalPort = 3200
+
+# Port 8080 - Go Runtime Service (Containers, Files, WebSocket)
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+# Port 8081 - Python ML Service (AI/ML Workloads)
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[agent]
+integrations = ["javascript_slack==1.0.0", "javascript_openai==1.0.0", "javascript_anthropic==1.0.0", "javascript_xai==1.0.0", "javascript_gemini==1.0.0", "perplexity_v0==1.0.0", "javascript_sendgrid==1.0.0", "javascript_stripe==1.0.0", "javascript_websocket==1.0.0"]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-2566672f-a4a2-4a4f-94f0-4e6c88fa4e9b"

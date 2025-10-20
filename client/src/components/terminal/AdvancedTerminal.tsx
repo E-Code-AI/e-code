@@ -41,7 +41,7 @@ import {
   Download, Upload, Settings, Palette,
   Save, Trash2, Split
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/ThemeProvider';
 import { useToast } from '@/hooks/use-toast';
 
 interface TerminalSession {

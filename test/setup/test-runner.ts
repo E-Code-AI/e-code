@@ -1,209 +1,254 @@
-/**
- * Test Runner
- * Orchestrates test execution
- */
+import path from 'node:path';
+import { performance } from 'node:perf_hooks';
+import { fileURLToPath } from 'node:url';
 
-import { testDb } from './test-database';
-import { testConfig } from './test-config';
-import { createLogger } from '../../server/utils/logger';
+const STACK_PATH_PATTERN =
+  /((?:file:\/\/\/|file:\/\/)?(?:[A-Za-z]:)?[\\/]?[^()\r\n:]+?(?:[\\/][^()\r\n:]+)*\.(?:test|spec)\.[tj]sx?)/i;
 
-const logger = createLogger('test-runner');
+export interface TestCase {
+  name: string;
+  fn: () => void | Promise<void>;
+  timeoutMs?: number;
+  skip?: boolean;
+  only?: boolean;
+}
 
-export class TestRunner {
-  private suites: Map<string, TestSuite> = new Map();
+export interface SuiteLifecycle {
+  beforeAll?: () => void | Promise<void>;
+  afterAll?: () => void | Promise<void>;
+  beforeEach?: () => void | Promise<void>;
+  afterEach?: () => void | Promise<void>;
+}
 
-  registerSuite(name: string, suite: TestSuite) {
-    this.suites.set(name, suite);
+export interface TestSuite extends SuiteLifecycle {
+  tests: TestCase[];
+}
+
+interface RegisteredSuite {
+  name: string;
+  suite: TestSuite;
+  filePath?: string;
+};
+  file?: string;
+}
+
+export interface TestResults {
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+}
+
+const escapeRegex = (value: string) => value.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+class TestRunner {
+  private suites: RegisteredSuite[] = [];
+
+  private inferSuiteFile(): string | undefined {
+    const stackLines = new Error().stack?.split('\n') ?? [];
+
+const extractFilePathFromStack = (): string | undefined => {
+  const stack = new Error().stack;
+  if (!stack) {
+    return undefined;
   }
 
-  async run(pattern?: string) {
-    logger.info('Starting test run...');
-    
-    // Setup
-    await this.globalSetup();
-    
-    const results: TestResults = {
-      total: 0,
-      passed: 0,
-      failed: 0,
-      skipped: 0,
-      duration: 0,
-      suites: []
+  const frames = stack.split('\n').slice(1);
+  for (const rawFrame of frames) {
+    const frame = rawFrame.trim();
+    const match =
+      frame.match(/\((.*?):\d+:\d+\)$/) ?? frame.match(/at (.*?):\d+:\d+$/);
+    if (!match) {
+      continue;
+    }
+
+    let candidate = match[1];
+    if (candidate.startsWith('file://')) {
+      try {
+        candidate = fileURLToPath(candidate);
+      } catch {
+        // ignore parsing errors and fall back to the raw value
+      }
+    }
+
+    if (candidate.includes('test/setup/test-runner')) {
+      continue;
+    }
+
+    return candidate;
+  }
+
+  return undefined;
+};
+
+const hasFocusedTests = (): boolean =>
+  registeredSuites.some((entry) => entry.suite.tests.some((test) => test.only));
+    for (const line of stackLines) {
+      const match = line.match(STACK_PATH_PATTERN);
+      if (!match) {
+        continue;
+      }
+
+      let rawPath = match[1];
+      if (/^file:\/\//i.test(rawPath)) {
+        try {
+          rawPath = fileURLToPath(rawPath);
+        } catch (error) {
+          console.error('Failed to normalize file URL from stack trace:', error);
+          continue;
+        }
+      }
+
+      const absolute = path.isAbsolute(rawPath)
+        ? rawPath
+        : path.resolve(process.cwd(), rawPath);
+      const normalized = path.normalize(absolute);
+      const relative = path.relative(process.cwd(), normalized);
+
+      return relative || normalized;
+    }
+
+    return undefined;
+  }
+
+  registerSuite(name: string, suite: TestSuite): void {
+    const filePath = extractFilePathFromStack();
+    registeredSuites.push({ name, suite, filePath });
+  },
+    const file = this.inferSuiteFile();
+    this.suites.push({ name, suite, file });
+  }
+
+  async run(pattern?: string): Promise<TestResults> {
+    const matcher = pattern ? new RegExp(escapeRegex(pattern), 'i') : null;
+    const matchesPattern = (value?: string) => {
+      if (!matcher || !value) {
+        return false;
+      }
+
+      return new RegExp(matcher.source, matcher.flags).test(value);
     };
-    
-    const startTime = Date.now();
-    
-    // Run test suites
-    for (const [name, suite] of this.suites) {
-      if (pattern && !name.includes(pattern)) continue;
-      
-      const suiteResult = await this.runSuite(name, suite);
-      results.suites.push(suiteResult);
-      results.total += suiteResult.total;
-      results.passed += suiteResult.passed;
-      results.failed += suiteResult.failed;
-      results.skipped += suiteResult.skipped;
-    }
-    
-    results.duration = Date.now() - startTime;
-    
-    // Teardown
-    await this.globalTeardown();
-    
-    // Report results
-    this.reportResults(results);
-    
-    return results;
-  }
+    const hasFocusedTests = this.suites.some((entry) =>
+      entry.suite.tests.some((test) => test.only),
+    );
 
-  private async globalSetup() {
-    await testDb.setup();
-  }
+    let total = 0;
+    let passed = 0;
+    let failed = 0;
+    let skipped = 0;
 
-  private async globalTeardown() {
-    await testDb.teardown();
-  }
+    for (const { name: suiteName, suite, filePath } of registeredSuites) {
+      const tests = suite.tests.filter((test) => {
+        if (focused && !test.only) {
+          return false;
+        }
+    for (const entry of this.suites) {
+      const { name, suite, file } = entry;
+      const suiteMatches = matcher ? matchesPattern(name) || matchesPattern(file) : true;
 
-  private async runSuite(name: string, suite: TestSuite): Promise<SuiteResult> {
-    logger.info(`Running suite: ${name}`);
-    
-    const result: SuiteResult = {
-      name,
-      total: 0,
-      passed: 0,
-      failed: 0,
-      skipped: 0,
-      duration: 0,
-      tests: []
-    };
-    
-    const startTime = Date.now();
-    
-    // Run suite setup
-    if (suite.setup) {
-      await suite.setup();
-    }
-    
-    // Run tests
-    for (const test of suite.tests) {
-      const testResult = await this.runTest(test);
-      result.tests.push(testResult);
-      result.total++;
-      
-      if (testResult.status === 'passed') result.passed++;
-      else if (testResult.status === 'failed') result.failed++;
-      else if (testResult.status === 'skipped') result.skipped++;
-    }
-    
-    // Run suite teardown
-    if (suite.teardown) {
-      await suite.teardown();
-    }
-    
-    result.duration = Date.now() - startTime;
-    
-    return result;
-  }
+      const runnableTests: TestCase[] = [];
 
-  private async runTest(test: Test): Promise<TestResult> {
-    const result: TestResult = {
-      name: test.name,
-      status: 'pending',
-      duration: 0,
-      error: undefined
-    };
-    
-    if (test.skip) {
-      result.status = 'skipped';
-      return result;
-    }
-    
-    const startTime = Date.now();
-    
-    try {
-      const timeout = test.timeout || testConfig.timeouts.unit;
-      await this.runWithTimeout(test.fn(), timeout);
-      result.status = 'passed';
-    } catch (error) {
-      result.status = 'failed';
-      result.error = error as Error;
-      logger.error(`Test failed: ${test.name}`, error);
-    }
-    
-    result.duration = Date.now() - startTime;
-    
-    return result;
-  }
+      for (const test of suite.tests) {
+        if (test.skip) {
+          skipped += 1;
+          continue;
+        }
 
-  private async runWithTimeout(promise: Promise<any>, timeout: number) {
-    return Promise.race([
-      promise,
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Test timeout')), timeout)
-      )
-    ]);
-  }
+        if (hasFocusedTests && !test.only) {
+          skipped += 1;
+          continue;
+        }
 
-  private reportResults(results: TestResults) {
-    logger.info('Test Results:');
-    logger.info(`Total: ${results.total}`);
-    logger.info(`Passed: ${results.passed}`);
-    logger.info(`Failed: ${results.failed}`);
-    logger.info(`Skipped: ${results.skipped}`);
-    logger.info(`Duration: ${results.duration}ms`);
-    
-    if (results.failed > 0) {
-      logger.error('Failed tests:');
-      for (const suite of results.suites) {
-        for (const test of suite.tests) {
-          if (test.status === 'failed') {
-            logger.error(`  ${suite.name} > ${test.name}: ${test.error?.message}`);
+        if (matchesPattern(`${suiteName} ${test.name}`, pattern)) {
+          return true;
+        }
+
+        if (filePath) {
+          return matchesPattern(filePath, pattern);
+        }
+
+        return false;
+      });
+        const shouldRun = !matcher || matchesPattern(test.name) || suiteMatches;
+
+        if (!shouldRun) {
+          skipped += 1;
+          continue;
+        }
+
+        runnableTests.push(test);
+      }
+
+      if (runnableTests.length === 0) {
+        continue;
+      }
+
+      console.log(`\nSuite: ${name}`);
+
+      if (suite.beforeAll) {
+        await suite.beforeAll();
+      }
+
+      for (const test of runnableTests) {
+        total += 1;
+        const start = performance.now();
+        const timeout = test.timeoutMs ?? 5000;
+        let timer: NodeJS.Timeout | undefined;
+
+        try {
+          await Promise.race([
+            (async () => {
+              if (suite.beforeEach) {
+                await suite.beforeEach();
+              }
+
+              await test.fn();
+
+              if (suite.afterEach) {
+                await suite.afterEach();
+              }
+            })(),
+            new Promise<never>((_, reject) => {
+              timer = setTimeout(() => {
+                reject(new Error(`Test timed out after ${timeout}ms`));
+              }, timeout);
+            }),
+          ]);
+
+          passed += 1;
+          const duration = performance.now() - start;
+          console.log(`  ✓ ${test.name} (${duration.toFixed(2)}ms)`);
+        } catch (error) {
+          failed += 1;
+          const duration = performance.now() - start;
+          console.error(`  ✗ ${test.name} (${duration.toFixed(2)}ms)`);
+          if (error instanceof Error) {
+            console.error(`    ${error.stack ?? error.message}`);
+          } else {
+            console.error(`    ${String(error)}`);
+          }
+        } finally {
+          if (timer) {
+            clearTimeout(timer);
           }
         }
       }
+
+      if (suite.afterAll) {
+        try {
+          await suite.afterAll();
+        } catch (error) {
+          failed += 1;
+          console.error('  ✗ afterAll failed:');
+          logError(error);
+        }
+      }
     }
+
+    console.log(`\nTest Results: ${passed} passed, ${failed} failed, ${skipped} skipped`);
+
+    return { total, passed, failed, skipped };
   }
 }
 
-// Test interfaces
-interface TestSuite {
-  tests: Test[];
-  setup?: () => Promise<void>;
-  teardown?: () => Promise<void>;
-}
-
-interface Test {
-  name: string;
-  fn: () => Promise<void>;
-  timeout?: number;
-  skip?: boolean;
-}
-
-interface TestResult {
-  name: string;
-  status: 'passed' | 'failed' | 'skipped' | 'pending';
-  duration: number;
-  error?: Error;
-}
-
-interface SuiteResult {
-  name: string;
-  total: number;
-  passed: number;
-  failed: number;
-  skipped: number;
-  duration: number;
-  tests: TestResult[];
-}
-
-interface TestResults {
-  total: number;
-  passed: number;
-  failed: number;
-  skipped: number;
-  duration: number;
-  suites: SuiteResult[];
-}
-
-// Global test runner instance
 export const testRunner = new TestRunner();
