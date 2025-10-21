@@ -4,14 +4,18 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   ArrowRight,
   Book,
+  Bot,
   ChevronDown,
   ChevronRight,
   ExternalLink,
   HelpCircle,
+  Layers,
   LifeBuoy,
   MessageSquare,
   Rocket,
   Search,
+  Server,
+  Shield,
   ShieldCheck,
   Sparkles,
   Users
@@ -56,6 +60,8 @@ type DocKey =
   | 'api';
 
 interface DocSection {
+  id: string;
+  name: string;
   title: string;
   icon: ReactNode;
   items: Array<{ key: DocKey; label: string; description?: string }>;
@@ -584,6 +590,8 @@ const documentationArticles: Record<DocKey, DocArticle> = {
 
 const docSections: DocSection[] = [
   {
+    id: 'start-here',
+    name: 'Start here',
     title: 'Start here',
     icon: <Rocket className="h-4 w-4" />, 
     items: [
@@ -593,6 +601,8 @@ const docSections: DocSection[] = [
     ]
   },
   {
+    id: 'build-together',
+    name: 'Build together',
     title: 'Build together',
     icon: <Users className="h-4 w-4" />,
     items: [
@@ -601,6 +611,8 @@ const docSections: DocSection[] = [
     ]
   },
   {
+    id: 'ship-to-production',
+    name: 'Ship to production',
     title: 'Ship to production',
     icon: <Rocket className="h-4 w-4" />,
     items: [
@@ -609,6 +621,8 @@ const docSections: DocSection[] = [
     ]
   },
   {
+    id: 'operate-securely',
+    name: 'Operate securely',
     title: 'Operate securely',
     icon: <ShieldCheck className="h-4 w-4" />,
     items: [
@@ -617,6 +631,8 @@ const docSections: DocSection[] = [
     ]
   },
   {
+    id: 'get-help',
+    name: 'Get help',
     title: 'Get help',
     icon: <LifeBuoy className="h-4 w-4" />,
     items: [
@@ -624,24 +640,6 @@ const docSections: DocSection[] = [
     ]
   }
 ];
-import { useAuth } from '@/hooks/use-auth';
-import { cn } from '@/lib/utils';
-
-import {
-  ArrowRight,
-  BookOpen,
-  Bot,
-  CheckCircle2,
-  ChevronDown,
-  ChevronLeft,
-  ExternalLink,
-  HelpCircle,
-  Layers,
-  Rocket,
-  Search,
-  Server,
-  Shield
-} from 'lucide-react';
 
 const docsRepositoryBase = 'https://github.com/E-Code-AI/e-code/blob/main';
 
