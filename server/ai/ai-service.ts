@@ -1,19 +1,19 @@
 // @ts-nocheck
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { apiRequest } from '../utils/api-utils';
+import { createLogger } from '../utils/logger';
 
 // Initialize AI clients
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const logger = createLogger('ai-service');
+
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
-
-const gemini = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
 
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system';
@@ -52,8 +52,6 @@ export class AIService {
       return this.generateOpenAIResponse(messages, { model, tools, temperature, maxTokens, projectContext });
     } else if (model.startsWith('claude')) {
       return this.generateAnthropicResponse(messages, { model, tools, temperature, maxTokens, projectContext });
-    } else if (model.startsWith('gemini') && gemini) {
-      return this.generateGeminiResponse(messages, { model, temperature, maxTokens, projectContext });
     } else {
       throw new Error(`Unsupported model: ${model}`);
     }
@@ -97,6 +95,15 @@ export class AIService {
           data: args,
         });
       }
+    }
+
+    const cachedTokens = completion.usage?.prompt_tokens_details?.cached_tokens;
+    if (typeof cachedTokens === 'number') {
+      logger.info('OpenAI chat completion cache metrics', {
+        model,
+        cachedTokens,
+        promptTokens: completion.usage?.prompt_tokens,
+      });
     }
 
     return {
@@ -151,42 +158,6 @@ export class AIService {
     };
   }
 
-  private async generateGeminiResponse(
-    messages: AIMessage[],
-    options: any
-  ): Promise<AIResponse> {
-    const { model, temperature, maxTokens, projectContext } = options;
-
-    const geminiModel = gemini!.getGenerativeModel({ 
-      model: model === 'gemini-2.5' ? 'gemini-2.5-pro' : 'gemini-pro' 
-    });
-
-    // Build conversation history
-    const history = messages.slice(0, -1).map(m => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }],
-    }));
-
-    const chat = geminiModel.startChat({
-      history,
-      generationConfig: {
-        temperature,
-        maxOutputTokens: maxTokens,
-      },
-    });
-
-    const result = await chat.sendMessage(messages[messages.length - 1].content);
-    const response = result.response;
-
-    // Parse actions from response
-    const actions = this.parseActionsFromContent(response.text());
-
-    return {
-      content: response.text(),
-      actions,
-    };
-  }
-
   private buildSystemMessage(projectContext?: any): string {
     const reasoningEffort = projectContext?.reasoningEffort || 'balanced';
     const structuredContext = projectContext?.structuredContext !== false;
@@ -197,6 +168,13 @@ export class AIService {
 You help users build applications by generating code, managing files, and executing commands.
 You have access to the project file system and can create, modify, and delete files.
 Operate with reasoning_effort=${reasoningEffort}.`;
+    let message = `You are an AI coding assistant integrated into E-Code, a web-based IDE.
+You help users build applications by generating code, managing files, and executing commands.
+You have access to the project file system and can create, modify, and delete files.
+
+When suggesting code changes, format them as actions that can be executed.
+For file operations, include the full file path and content.
+For commands, specify the exact command to run.`;
 
     if (projectContext) {
       message += `\n\nProject Context:

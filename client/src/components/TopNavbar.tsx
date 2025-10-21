@@ -19,6 +19,8 @@ import {
   Globe,
   Loader2,
   Sparkles,
+  BookMarked,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -66,6 +68,7 @@ const TopNavbar = ({
   filesOpen = true,
   previewOpen = true,
   consoleOpen = true,
+  consoleOpen = true
 }: TopNavbarProps) => {
   const { user, logoutMutation } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
@@ -103,6 +106,7 @@ const TopNavbar = ({
       )}
 
       <div className="h-14 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]/95 backdrop-blur-sm flex items-center justify-between px-4 shadow-[0_1px_0_rgba(12,18,32,0.05)]">
+      <div className="h-14 border-b border-[var(--ecode-border)] bg-[#ffffff] dark:bg-[var(--ecode-surface)]/95 backdrop-blur-sm flex items-center justify-between px-4 shadow-[0_1px_0_rgba(12,18,32,0.05)]">
         <div className="flex items-center gap-4">
           <TooltipProvider>
             <Tooltip>

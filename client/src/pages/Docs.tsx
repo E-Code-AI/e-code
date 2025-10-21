@@ -1,6 +1,24 @@
 // @ts-nocheck
 import { type ReactNode, useState } from 'react';
 import { useLocation } from 'wouter';
+import { useMemo, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { useLocation } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  ArrowRight,
+  Book,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  HelpCircle,
+  LifeBuoy,
+  MessageSquare,
+  Rocket,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Users
+} from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -479,6 +497,62 @@ export default function Docs() {
     );
   };
 
+  const filteredSections = useMemo(() => {
+    if (!normalizedQuery) {
+      return docSections;
+    }
+
+    return docSections
+      .map((section) => {
+        const filteredItems = section.items.filter((item) => {
+          const article = documentationArticles[item.key];
+          const haystack = [
+            item.label,
+            item.description ?? '',
+            article.title,
+            article.summary,
+            ...(article.keywords ?? [])
+          ]
+            .join(' ')
+            .toLowerCase();
+
+          return haystack.includes(normalizedQuery);
+        });
+
+        if (!filteredItems.length) {
+          return null;
+        }
+
+        return { ...section, items: filteredItems };
+      })
+      .filter((section): section is DocSection => Boolean(section));
+  }, [normalizedQuery]);
+
+  const activeArticleData = documentationArticles[activeArticle];
+
+  const handleAction = (action: DocAction) => {
+    if (action.articleKey) {
+      setActiveArticle(action.articleKey);
+    }
+
+    if (action.href) {
+      if (action.external) {
+        window.open(action.href, '_blank', 'noopener,noreferrer');
+      } else {
+        setLocation(action.href);
+      }
+    }
+  };
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      const firstResult = filteredSections[0]?.items[0];
+      if (firstResult) {
+        setActiveArticle(firstResult.key);
+      }
+    }
+  };
+
   const handleDocSelect = (item: DocItem) => {
     setSelectedDocId(item.id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -603,387 +677,136 @@ export default function Docs() {
               {!hasResults && (
                 <p className="text-sm text-muted-foreground px-3 py-2">
                   No documents match “{searchQuery}”. Try a different keyword or clear the search.
-                </p>
-              )}
+  const navigate = (href: string) => {
+    setLocation(href);
+  };
+
+  const heroActions: DocAction[] = user
+    ? [
+        { label: 'View latest updates', href: '/blog', variant: 'secondary' },
+        { label: 'Open a workspace', href: '/projects', variant: 'default' }
+      ]
+    : [
+        { label: 'Create an account', href: '/register', variant: 'default' },
+        { label: 'Take a product tour', href: '/', variant: 'secondary' }
+      ];
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <div className="border-b bg-background">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-3">
+              <Badge variant="secondary" className="inline-flex items-center gap-2">
+                <Book className="h-3.5 w-3.5" />
+                Updated documentation hub
+              </Badge>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">E-Code product documentation</h1>
+              <p className="max-w-2xl text-muted-foreground">
+                Explore how our Replit-grade cloud development platform works under the hood. These guides stay in lockstep with the
+                private E-Code codebase so your team can build, ship, and operate reliably.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {heroActions.map((action) => (
+                  <Button
+                    key={action.label}
+                    variant={action.variant ?? 'default'}
+                    onClick={() => handleAction(action)}
+                  >
+                    {action.label}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ))}
+              </div>
             </div>
-          </ScrollArea>
-        </aside>
-
-        <main className="flex-1">
-          {selectedDoc ? (
-            <article className="px-6 py-12 max-w-4xl mx-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedDocId(null)}
-                className="mb-8 -ml-2"
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Back to overview
-              </Button>
-
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="text-3xl font-bold tracking-tight">{selectedDoc.title}</h1>
-                    {selectedDoc.readiness && (
-                      <Badge className="uppercase tracking-wide">{readinessLabels[selectedDoc.readiness]}</Badge>
-                    )}
-                    {selectedDoc.lastReviewed && (
-                      <Badge variant="secondary">Last reviewed {selectedDoc.lastReviewed}</Badge>
-                    )}
+            <div className="w-full max-w-md">
+              <Card className="border-muted">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium">Search documentation</CardTitle>
+                  <CardDescription>Find topics across architecture, AI, security, and operations.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Search articles, features, or services"
+                      className="pl-9"
+                    />
                   </div>
-                  <p className="text-lg text-muted-foreground max-w-3xl">{selectedDoc.summary}</p>
-                  {selectedDoc.tags && (
-                    <div className="flex flex-wrap gap-2">
-                      {selectedDoc.tags.map(tag => (
-                        <Badge key={tag} variant="outline" className="lowercase">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                <section>
-                  <h2 className="text-xl font-semibold">What this covers</h2>
-                  <ul className="mt-4 space-y-3">
-                    {selectedDoc.highlights.map(highlight => (
-                      <li key={highlight.title} className="flex gap-3">
-                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                        <div>
-                          <p className="font-medium leading-none">{highlight.title}</p>
-                          <p className="text-sm text-muted-foreground mt-1">{highlight.description}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-
-                {selectedDoc.resources && selectedDoc.resources.length > 0 && (
-                  <section>
-                    <h2 className="text-xl font-semibold">Related assets</h2>
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      {selectedDoc.resources.map(resource => (
-                        <Card key={resource.href}>
+      {/* Main content section starts here */}
+      <div className="mx-auto flex w-full max-w-6xl gap-8 px-6 py-8">
+        <div className="flex-1">
+          {query.trim() ? (
+            filteredSections.length > 0 ? (
+              <div className="space-y-6">
+                {filteredSections.map((section) => (
+                  <div key={section.id} className="space-y-4">
+                    <h2 className="text-xl font-semibold">{section.name}</h2>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {section.items.map((item) => (
+                        <Card
+                          key={item.key}
+                          className="cursor-pointer transition-all hover:shadow-md"
+                          onClick={() => setActiveArticle(item.key)}
+                        >
                           <CardHeader>
-                            <CardTitle className="text-base">{resource.label}</CardTitle>
-                            {resource.description && (
-                              <CardDescription>{resource.description}</CardDescription>
+                            <CardTitle className="text-base">{item.label}</CardTitle>
+                            {item.description && (
+                              <CardDescription>{item.description}</CardDescription>
                             )}
                           </CardHeader>
-                          <CardContent>
-                            <Button
-                              variant="outline"
-                              className="w-full"
-                              onClick={() => handleOpenDocument(resource.href)}
-                            >
-                              Open resource
-                              <ExternalLink className="ml-2 h-4 w-4" />
-                            </Button>
-                          </CardContent>
                         </Card>
                       ))}
                     </div>
-                  </section>
-                )}
-
-                <div className="flex flex-wrap gap-3">
-                  <Button onClick={() => handleOpenDocument(selectedDoc.href)}>
-                    View full document
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
-                  >
-                    Request an update
-                  </Button>
-                </div>
-
-                <section className="mt-12 pt-8 border-t">
-                  <h3 className="text-lg font-semibold">Need a hand?</h3>
-                  <div className="grid gap-4 sm:grid-cols-2 mt-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Contact documentation</CardTitle>
-                        <CardDescription>Escalate clarifications or propose edits.</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Button
-                          variant="secondary"
-                          className="w-full"
-                          onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
-                        >
-                          Email docs@e-code.ai
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Talk to support</CardTitle>
-                        <CardDescription>Open a ticket with the platform team.</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Button className="w-full" onClick={() => navigate('/support')}>
-                          <HelpCircle className="h-4 w-4 mr-2" />
-                          Contact support
-                        </Button>
-                      </CardContent>
-                    </Card>
                   </div>
-                </section>
+                ))}
               </div>
-            </article>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Search className="mb-4 h-12 w-12 text-muted-foreground" />
+                <h3 className="text-lg font-semibold">No results found</h3>
+                <p className="text-sm text-muted-foreground">
+                  Try adjusting your search or browse the categories below
+                </p>
+              </div>
+            )
           ) : (
-            <>
-              <section className="px-6 py-12 bg-gradient-to-b from-primary/5 to-transparent">
-                <div className="max-w-4xl mx-auto text-center space-y-6">
-                  <Badge variant="secondary" className="mb-4 uppercase tracking-wide">
-                    <BookOpen className="h-3 w-3 mr-1" />
-                    Documentation hub
-                  </Badge>
-                  <h1 className="text-4xl md:text-5xl font-bold">
-                    Enterprise-ready documentation for every E-Code workflow
-                  </h1>
-                  <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                    Explore verified guides that mirror the current platform release—from environment setup and executive demos to
-                    runtime architecture, deployment controls, and AI operations.
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-3">
-                    <Button size="lg" onClick={() => handleDocSelect(docCategories[0].items[0])}>
-                      Start with onboarding
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
-                    >
-                      Book a documentation review
-                    </Button>
-                  </div>
-                </div>
-              </section>
-
-              <section className="px-6 py-12">
-                <div className="max-w-3xl mx-auto relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Search the documentation (e.g. deployment, preview, AI)"
-                    value={searchQuery}
-                    onChange={event => setSearchQuery(event.target.value)}
-                    className="pl-12 pr-4 py-6 text-base"
-                  />
-                </div>
-              </section>
-
-              <section className="px-6 pb-12">
-                <div className="max-w-6xl mx-auto">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold">Featured guides</h2>
-                    <Button
-                      variant="ghost"
-                      className="text-primary"
-                      onClick={() => handleDocSelect(docCategories[2].items[0])}
-                    >
-                      Review the deployment playbook
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {[
-                      docCategories[0].items[0],
-                      docCategories[1].items[0],
-                      docCategories[2].items[0]
-                    ].map(item => (
+            <div className="space-y-8">
+              {docSections.map((section) => (
+                <div key={section.id} className="space-y-4">
+                  <h2 className="text-xl font-semibold">{section.name}</h2>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {section.items.map((item) => (
                       <Card
-                        key={item.id}
-                        className="hover:shadow-lg transition-all cursor-pointer"
-                        onClick={() => handleDocSelect(item)}
+                        key={item.key}
+                        className="cursor-pointer transition-all hover:shadow-md"
+                        onClick={() => setActiveArticle(item.key)}
                       >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className="p-2 bg-primary/10 rounded-lg">
-                              <BookOpen className="h-5 w-5 text-primary" />
-                            </div>
-                            {item.readiness && (
-                              <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                                {readinessLabels[item.readiness]}
-                              </Badge>
-                            )}
-                          </div>
+                        <CardHeader>
+                          <CardTitle className="text-base">{item.label}</CardTitle>
+                          {item.description && (
+                            <CardDescription>{item.description}</CardDescription>
+                          )}
                         </CardHeader>
-                        <CardContent>
-                          <h3 className="font-semibold mb-2">{item.title}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-3">{item.summary}</p>
-                        </CardContent>
                       </Card>
                     ))}
                   </div>
                 </div>
-              </section>
-
-              <section className="px-6 pb-12 lg:hidden">
-                <div className="max-w-3xl mx-auto space-y-4">
-                  <div className="space-y-1">
-                    <h2 className="text-xl font-semibold">Browse the documentation</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {searchQuery
-                        ? `Showing results for “${searchQuery}”. Tap a guide to view the full details.`
-                        : 'Explore the full catalog of guides, operational scripts, and governance references.'}
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {visibleCategories.map((category: DocCategory) => (
-                      <Collapsible
-                        key={category.id}
-                        open={expandedCategories.includes(category.id)}
-                        onOpenChange={() => toggleCategory(category.id)}
-                      >
-                        <CollapsibleTrigger className="flex items-center justify-between w-full rounded-lg border px-4 py-3 text-left text-sm font-semibold">
-                          <div className="flex items-center gap-3">
-                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                              {category.icon}
-                            </span>
-                            <div className="text-left">
-                              <div>{category.title}</div>
-                              <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
-                            </div>
-                          </div>
-                          <ChevronDown
-                            className={cn(
-                              'h-4 w-4 transition-transform',
-                              expandedCategories.includes(category.id) && 'rotate-180'
-                            )}
-                          />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-2 space-y-2 rounded-lg border bg-muted/40 p-3">
-                          {category.items.map((item) => {
-                            const docItem = item as DocItem;
-                            return (
-                              <button
-                                key={docItem.id}
-                                type="button"
-                                onClick={() => handleDocSelect(docItem)}
-                                className={cn(
-                                  'w-full rounded-md px-3 py-2 text-left text-sm transition-colors',
-                                  selectedDoc?.id === docItem.id
-                                    ? 'bg-accent text-foreground font-medium'
-                                    : 'bg-background text-muted-foreground hover:bg-accent hover:text-foreground'
-                                )}
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <p>{docItem.title}</p>
-                                    <p className="mt-1 text-xs text-muted-foreground">{docItem.summary}</p>
-                                  </div>
-                                  {docItem.readiness && (
-                                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                                      {readinessLabels[docItem.readiness]}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </CollapsibleContent>
-                      </Collapsible>
-                    ))}
-                  </div>
-
-                  {!hasResults && (
-                    <p className="text-sm text-muted-foreground">
-                      No documents match “{searchQuery}”. Try a different keyword or clear the search.
-                    </p>
-                  )}
-                </div>
-              </section>
-
-              <section className="px-6 py-12 bg-muted/30">
-                <div className="max-w-6xl mx-auto">
-                  <h2 className="text-2xl font-bold mb-4">Operational quick links</h2>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Release checklist</CardTitle>
-                        <CardDescription>
-                          Follow the production checklist backed by automated scripts and observability gates.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-3">
-                        <Button
-                          variant="outline"
-                          onClick={() => handleOpenDocument(`${docsRepositoryBase}/PRODUCTION_CHECKLIST.md`)}
-                        >
-                          Open PRODUCTION_CHECKLIST.md
-                          <ExternalLink className="ml-2 h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleOpenDocument(`${docsRepositoryBase}/deploy-production.sh`)}
-                        >
-                          Review deploy-production.sh
-                          <ExternalLink className="ml-2 h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Documentation governance</CardTitle>
-                        <CardDescription>
-                          Ensure every update is tracked with the docs hub guide and accuracy status report.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-3">
-                        <Button
-                          variant="outline"
-                          onClick={() => handleDocSelect(docCategories[4].items[0])}
-                        >
-                          View documentation hub
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleOpenDocument(`${docsRepositoryBase}/ACCURATE_STATUS_REPORT.md`)}
-                        >
-                          Accuracy status report
-                          <ExternalLink className="ml-2 h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              </section>
-
-              <section className="px-6 py-16">
-                <div className="max-w-4xl mx-auto text-center space-y-6">
-                  <h2 className="text-3xl font-bold">Need help aligning the docs with your release?</h2>
-                  <p className="text-lg text-muted-foreground">
-                    Partner with the documentation team to schedule reviews, capture new screenshots, or author bespoke runbooks
-                    for enterprise rollouts.
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-3">
-                    <Button size="lg" onClick={() => navigate('/support')}>
-                      <HelpCircle className="mr-2 h-5 w-5" />
-                      Open a support ticket
-                    </Button>
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      onClick={() => handleOpenDocument('mailto:docs@e-code.ai')}
-                    >
-                      Email docs@e-code.ai
-                    </Button>
-                  </div>
-                </div>
-              </section>
-            </>
+              ))}
+            </div>
           )}
-        </main>
+        </div>
       </div>
     </div>
   );
 }
-

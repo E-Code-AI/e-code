@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code Platform is a production-ready, AI-powered development platform designed to streamline software creation through automated deployment and collaboration tools. It provides enterprise-grade infrastructure, advanced AI capabilities including custom prompts and a template library, and comprehensive tools for the entire software development lifecycle. The platform emphasizes performance, security, and scalability, making it suitable for high-demand deployments on Replit Reserved VM.
+E-Code Platform is a production-ready, AI-powered development platform designed to streamline software creation through automated deployment and collaboration tools. It provides enterprise-grade infrastructure, advanced AI capabilities including custom prompts and a template library, and comprehensive tools for the entire software development lifecycle. The platform emphasizes performance, security, and scalability, optimized for Replit Reserved VM deployment.
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
@@ -49,6 +49,16 @@ Features a streamlined interface with a 4-tab layout (Files, Preview, Features, 
 
 ### Deployment Configuration
 The `.replit` file is configured for Replit Reserved VM deployment with `deploymentTarget = "cloudrun"`. It specifies `npm install` for building and `npm run dev` for running. A 4-port configuration is used, mapping local ports 5000, 3200, 8080, and 8081 to their respective external ports for the main Express server, MCP server, Go Runtime, and Python ML service.
+
+## Recent Changes (October 20, 2025)
+- **Google Cloud Platform Removal**: All Google Cloud dependencies and deployment references removed. Platform now exclusively uses Replit Reserved VM deployment.
+  - Removed packages: @google-cloud/storage, @google/genai, @google/generative-ai, googleapis, google-auth-library
+  - Replaced Google Cloud Storage with Replit's built-in Object Storage (server/services/real-object-storage.ts)
+  - Removed Gemini AI provider from ai-providers.ts, ai-service.ts, ai-provider-factory.ts
+  - Commented out Google OAuth in auth-complete.ts
+  - Removed Google Drive MCP integration from server/mcp/server.ts
+  - Updated all documentation (replit.md, README.md, docs/) to focus on Replit Reserved VM deployment only
+  - AI providers now limited to: Anthropic Claude, OpenAI, Together AI, Replicate, Hugging Face, Groq, Anyscale
 
 ## External Dependencies
 - **AI Integration**: Anthropic Claude API, OpenAI API, Together AI, Replicate, Hugging Face, Groq, Anyscale.

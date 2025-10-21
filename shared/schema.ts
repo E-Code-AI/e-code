@@ -23,7 +23,7 @@ import { z } from "zod";
 // Enums
 export const visibilityEnum = pgEnum('visibility', ['public', 'private', 'unlisted']);
 export const languageEnum = pgEnum('language', [
-  'javascript', 'typescript', 'python', 'java', 'cpp', 'c', 'csharp', 'go', 
+  'javascript', 'typescript', 'python', 'java', 'cpp', 'c', 'csharp', 'go',
   'rust', 'php', 'ruby', 'swift', 'kotlin', 'html', 'css', 'sql', 'bash', 'other'
 ]);
 export const roleEnum = pgEnum('role', ['owner', 'admin', 'member', 'viewer']);
@@ -749,7 +749,7 @@ export const dynamicIntelligence = pgTable('dynamic_intelligence', {
   autoWebSearch: boolean('auto_web_search').default(true),
   preferredModel: varchar('preferred_model').default('claude-3-sonnet'),
   customInstructions: text('custom_instructions'),
-  // AI UX Feature preferences  
+  // AI UX Feature preferences
   improvePromptEnabled: boolean('improve_prompt_enabled').default(false),
   progressTabEnabled: boolean('progress_tab_enabled').default(false),
   pauseResumeEnabled: boolean('pause_resume_enabled').default(false),
@@ -861,7 +861,7 @@ export const aiUsageRecords = pgTable('ai_usage_records', {
 
 // Custom Prompts System Tables
 export const promptCategories = pgEnum('prompt_category', [
-  'code_generation', 'debugging', 'documentation', 'refactoring', 
+  'code_generation', 'debugging', 'documentation', 'refactoring',
   'testing', 'performance', 'security', 'architecture', 'other'
 ]);
 
@@ -917,7 +917,7 @@ export const projectAiRules = pgTable('project_ai_rules', {
   templateId: integer('template_id').references(() => promptTemplates.id),
   name: varchar('name').notNull(),
   description: text('description'),
-  isActive: boolean('is_active').notNull().default(true),
+  isActive: boolean('is_active').notNull().default(false),
   priority: integer('priority').notNull().default(0), // Higher priority rules are applied first
   conditions: jsonb('conditions').default({}).$type<{
     fileTypes?: string[];
@@ -1162,6 +1162,10 @@ export type InsertPromptUsageHistory = z.infer<typeof insertPromptUsageHistorySc
 
 export type PromptTemplateRating = typeof promptTemplateRatings.$inferSelect;
 export type InsertPromptTemplateRating = z.infer<typeof insertPromptTemplateRatingSchema>;
+
+// Import tables from separate schema files
+export { projectImports, importTemplates } from './schema/imports';
+export type { ProjectImport, InsertProjectImport, ImportTemplate, InsertImportTemplate } from './schema/imports';
 
 // Voice/Video Sessions
 export const voiceVideoSessions = pgTable("voice_video_sessions", {

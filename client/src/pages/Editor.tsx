@@ -44,6 +44,20 @@ export default function Editor() {
   const { data: files = [], isLoading: isFilesLoading } = useQuery<File[]>({
     queryKey: [`/api/files/${projectId}`],
     enabled: !!projectId && !!user,
+  const { data: project, isLoading: isProjectLoading } = useQuery<Project>({
+    queryKey: [`/api/projects/${resolvedProjectId}`],
+    enabled: !!resolvedProjectId && !!user,
+    initialData:
+      initialProject &&
+      resolvedProjectId &&
+      initialProject.id === resolvedProjectId
+        ? initialProject
+        : undefined,
+  });
+
+  const { data: files = [], isLoading: isFilesLoading } = useQuery<File[]>({
+    queryKey: [`/api/files/${resolvedProjectId}`],
+    enabled: !!resolvedProjectId && !!user,
   });
 
   useEffect(() => {
@@ -78,6 +92,8 @@ export default function Editor() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData<File[]>([`/api/files/${projectId}`], (old) => {
+      if (!resolvedProjectId) return;
+      queryClient.setQueryData<File[]>([`/api/files/${resolvedProjectId}`], (old) => {
         if (!old) return old;
         return old.map(file => file.id === data.id ? { ...file, content: data.content } : file);
       });
@@ -98,6 +114,10 @@ export default function Editor() {
   const createFileMutation = useMutation({
     mutationFn: async ({ name, isFolder, parentId }: { name: string, isFolder: boolean, parentId?: number | null }) => {
       const res = await apiRequest("POST", `/api/files/${projectId}`, {
+      if (!resolvedProjectId) {
+        throw new Error("Project is not available for file creation");
+      }
+      const res = await apiRequest("POST", `/api/files/${resolvedProjectId}`, {
         name,
         isFolder,
         parentId: parentId ?? null,
@@ -107,6 +127,8 @@ export default function Editor() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      if (!resolvedProjectId) return;
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${resolvedProjectId}`] });
       toast({
         title: data.isFolder ? "Folder created" : "File created",
         description: `${data.name} has been created.`,
@@ -128,6 +150,8 @@ export default function Editor() {
     },
     onSuccess: (fileId) => {
       queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      if (!resolvedProjectId) return;
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${resolvedProjectId}`] });
       if (activeFileId === fileId) {
         setActiveFileId(null);
       }
@@ -152,6 +176,8 @@ export default function Editor() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData<File[]>([`/api/files/${projectId}`], (old) => {
+      if (!resolvedProjectId) return;
+      queryClient.setQueryData<File[]>([`/api/files/${resolvedProjectId}`], (old) => {
         if (!old) return old;
         return old.map(file => file.id === data.id ? { ...file, name: data.name } : file);
       });
@@ -292,6 +318,7 @@ export default function Editor() {
     setActiveRightPanel("agent");
     setRightPanelOpen(true);
   };
+  const activeProjectId = project?.id ?? resolvedProjectId;
 
   const rightPanels = useMemo(() => {
     const panels: any[] = [
@@ -302,6 +329,9 @@ export default function Editor() {
         content: project ? (
           <WebPreview
             projectId={project.id as any}
+        content: activeProjectId ? (
+          <WebPreview
+            projectId={activeProjectId as any}
             isRunning={isProjectRunning}
             className="h-full"
           />
@@ -314,6 +344,7 @@ export default function Editor() {
     ];
 
     if (project) {
+    if (activeProjectId) {
       panels.push({
         id: "agent",
         title: "Agent",
@@ -322,6 +353,7 @@ export default function Editor() {
           <div className="h-full overflow-hidden">
             <ReplitAgent
               projectId={project.id as any}
+              projectId={activeProjectId as any}
               selectedFile={activeFile?.name}
               selectedCode={selectedCode}
               className="h-full"
@@ -337,6 +369,7 @@ export default function Editor() {
         content: (
           <div className="h-full overflow-hidden">
             <ReplitDB projectId={project.id as any} className="h-full" />
+            <ReplitDB projectId={activeProjectId as any} className="h-full" />
           </div>
         )
       });
@@ -348,6 +381,7 @@ export default function Editor() {
         content: (
           <div className="h-full overflow-auto p-4">
             <NixConfig projectId={project.id as any} />
+            <NixConfig projectId={activeProjectId as any} />
           </div>
         )
       });
@@ -359,6 +393,11 @@ export default function Editor() {
   const bottomPanel = project ? (
     <ReplitConsole
       projectId={project.id as any}
+  }, [project, activeProjectId, activeFile, selectedCode, isProjectRunning]);
+
+  const bottomPanel = activeProjectId ? (
+    <ReplitConsole
+      projectId={activeProjectId as any}
       isRunning={isProjectRunning}
       executionId={executionId}
       className="h-full"
@@ -397,7 +436,6 @@ export default function Editor() {
         filesOpen={leftPanelOpen}
         previewOpen={rightPanelOpen && activeRightPanel === "preview"}
         consoleOpen={bottomPanelOpen}
-        filesOpen={leftPanelOpen}
       />
 
       <ReplitEditorLayout
@@ -411,6 +449,7 @@ export default function Editor() {
             onFileRename={handleFileRename}
             projectName={project?.name}
             projectId={project?.id as any}
+            projectId={(project?.id ?? resolvedProjectId) as any}
             onClose={() => setLeftPanelOpen(false)}
           />
         }

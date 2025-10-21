@@ -66,12 +66,11 @@ cp .env.production.example .env
 #   SESSION_SECRET=replace-with-random-string
 #   OPENAI_API_KEY=your-openai-key
 #   ANTHROPIC_API_KEY=your-anthropic-key
-#   GOOGLE_GENAI_API_KEY=optional-google-models
 
 # ⚠️ If none of the AI provider keys are supplied on the server process, prompts sent from
 # the workspace UI will fail silently. The frontend suppresses provider errors to avoid
 # leaking implementation details, so always double-check that at least one of
-# `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GOOGLE_GENAI_API_KEY` is configured before
+# `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` is configured before
 # testing agent actions.
 # ❗️The application requires a reachable PostgreSQL instance available at `DATABASE_URL`.
 # It is used both by Drizzle for core data and by the `connect-pg-simple` session store.
@@ -86,16 +85,16 @@ npm run dev
 
 During development, the server listens on `http://localhost:5000` and proxies frontend assets through Vite for hot module reloading. A seeded account (`testuser` / `testpass123`) is created automatically when running in development mode.
 
-### Production Deployment Snapshot
+### Production Deployment on Replit Reserved VM
 
-The repository includes automation scripts for container-based deployments:
+The platform is optimized for Replit Reserved VM deployment:
 
-1. Export production secrets (`DATABASE_URL`, `SESSION_SECRET`, provider keys, storage credentials).
+1. Configure environment secrets in Replit (`DATABASE_URL`, `SESSION_SECRET`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
 2. Build distributable bundles: `npm run build`.
-3. Execute `./deploy-production.sh` to provision infrastructure, apply migrations, and start the Express server.
-4. Configure HTTPS termination and desired port mappings (Cloud Run, Kubernetes, or VM-based targets).
+3. The `.replit` file is configured with `deploymentTarget = "cloudrun"` for Reserved VM deployment.
+4. Deployment automatically handles HTTPS and exposes port 5000 (mapped to port 80 externally).
 
-For Google Cloud reference architectures and scaling strategies, see [`docs/operations/deployment-playbook.md`](docs/operations/deployment-playbook.md).
+For detailed deployment configuration, see [`docs/operations/deployment-playbook.md`](docs/operations/deployment-playbook.md).
 
 ## Testing & Quality Gates
 

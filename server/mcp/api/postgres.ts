@@ -112,7 +112,7 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
     const columns = result.rows.length ? Object.keys(result.rows[0]) : [];
     const rows = result.rows.map((row: any) => columns.map((column) => row[column]));
 
-    res.json({
+    return res.json({
       columns,
       rows,
       rowCount: result.rowCount,
@@ -120,7 +120,7 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
     });
   } catch (error: any) {
     console.error('PostgreSQL MCP query error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Query execution failed',
       message: error.message,
       columns: [],

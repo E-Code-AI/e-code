@@ -56,6 +56,7 @@ export function ReplitEditorLayout({
   const [internalBottomPanelOpen, setInternalBottomPanelOpen] = useState(bottomPanelOpenProp ?? true);
   const [internalActiveRightPanel, setInternalActiveRightPanel] = useState<string | null>(
     activeRightPanelProp ?? defaultRightPanel || rightPanels[0]?.id || null,
+    activeRightPanelProp ?? (defaultRightPanel || rightPanels[0]?.id || null)
   );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
@@ -205,6 +206,10 @@ export function ReplitEditorLayout({
           <>
             <ResizablePanel defaultSize={22} minSize={14} maxSize={32}>
               <div className="h-full bg-[var(--ecode-background)] border-r border-[var(--ecode-border)]">{leftPanel}</div>
+            <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+              <div className="h-full bg-[var(--ecode-background)] border-r border-[var(--ecode-border)]">
+                {leftPanel}
+              </div>
             </ResizablePanel>
             <ResizableHandle
               withHandle
