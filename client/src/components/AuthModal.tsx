@@ -4,12 +4,11 @@ import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import {
-  Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -81,22 +80,32 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogTitle className="text-2xl font-bold text-center">
-          {mode === 'login' ? 'Sign In' : 'Create Account'}
-        </DialogTitle>
-        <DialogDescription className="sr-only">
-          Login or create an account to access E-Code
-        </DialogDescription>
-        <Tabs defaultValue="login" value={mode} onValueChange={(value) => setMode(value as 'login' | 'register')} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Sign Up</TabsTrigger>
-          </TabsList>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-lg shadow-xl">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          <X className="h-5 w-5" />
+        </button>
 
-          <TabsContent value="login" className="space-y-4 mt-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle className="sr-only">Authentication</DialogTitle>
+          <DialogDescription className="sr-only">
+            Login or create an account to access E-Code
+          </DialogDescription>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Sign Up</TabsTrigger>
+            </TabsList>
+
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-center mb-6">
+                {mode === 'login' ? 'Sign In' : 'Create Account'}
+              </h2>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Username</label>
                   <input
@@ -150,68 +159,24 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   disabled={isLoading}
                   className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? 'Loading...' : 'Sign In'}
+                  {isLoading ? 'Loading...' : mode === 'login' ? 'Sign In' : 'Create Account'}
                 </button>
               </form>
-            </TabsContent>
 
-            <TabsContent value="register" className="space-y-4 mt-4">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Username</label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Confirm Password</label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                    required
-                  />
-                </div>
-
+              <div className="mt-4 text-center">
                 <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                  className="text-sm text-blue-600 hover:underline"
                 >
-                  {isLoading ? 'Loading...' : 'Create Account'}
+                  {mode === 'login'
+                    ? "Don't have an account? Sign up"
+                    : 'Already have an account? Sign in'}
                 </button>
-              </form>
-            </TabsContent>
+              </div>
+            </div>
           </Tabs>
         </DialogContent>
-      </Dialog>
+      </div>
+    </div>
   );
 }
