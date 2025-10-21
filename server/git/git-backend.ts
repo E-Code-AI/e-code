@@ -306,8 +306,28 @@ export class GitBackend {
     try {
       const result = await execAsync(`git ${command}`, { cwd: repoPath });
       return result;
-    } catch (error) {
-      throw new Error(`Git command failed: ${error.message}`);
+    } catch (error: any) {
+      // Check for common Git errors
+      const errorMessage = error.message || '';
+      
+      if (errorMessage.includes('index.lock')) {
+        throw new Error('Git repository is locked. Please try again in a moment or remove the .git/index.lock file.');
+      }
+      
+      if (errorMessage.includes('not a git repository')) {
+        throw new Error('This directory is not a Git repository. Please initialize Git first.');
+      }
+      
+      if (errorMessage.includes('merge conflict')) {
+        throw new Error('There are merge conflicts that need to be resolved.');
+      }
+      
+      if (errorMessage.includes('Permission denied')) {
+        throw new Error('Permission denied. Check your Git credentials and repository access.');
+      }
+      
+      // Generic error with more context
+      throw new Error(`Git command failed (${command}): ${errorMessage}`);
     }
   }
 }

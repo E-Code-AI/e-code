@@ -33,15 +33,27 @@ export class SimpleGitManager {
     const projectDir = await this.getProjectDir(projectId);
     
     try {
+      // Check if already a Git repository
+      try {
+        await execAsync(`cd ${projectDir} && git rev-parse --git-dir`);
+        logger.info('Git repository already exists, skipping init');
+        return;
+      } catch {
+        // Not a Git repo, continue with init
+      }
+      
       await execAsync(`cd ${projectDir} && git init`);
       await execAsync(`cd ${projectDir} && git config user.name "E-Code User"`);
       await execAsync(`cd ${projectDir} && git config user.email "user@e-code.ai"`);
       
       // Create initial commit
-      await execAsync(`cd ${projectDir} && git add .`);
+      await execAsync(`cd ${projectDir} && git add . || true`);
       await execAsync(`cd ${projectDir} && git commit -m "Initial commit" || true`);
-    } catch (error) {
-      logger.warn('Git init error (may already exist):', error);
+      
+      logger.info(`Git repository initialized for project ${projectId}`);
+    } catch (error: any) {
+      logger.error('Git init error:', error);
+      throw new Error(`Failed to initialize Git repository: ${error.message}`);
     }
   }
   
