@@ -39,6 +39,7 @@ import {
   Package,
   HardDrive,
   Key,
+  Rocket, // Import Rocket icon
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -167,7 +168,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                         </TooltipTrigger>
                         <TooltipContent>New File</TooltipContent>
                       </Tooltip>
-                      
+
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -180,7 +181,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                         </TooltipTrigger>
                         <TooltipContent>Search Files</TooltipContent>
                       </Tooltip>
-                      
+
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -195,7 +196,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                       </Tooltip>
                     </div>
                   </div>
-                  
+
                   {filesLoading ? (
                     <div className="text-center py-4">
                       <RefreshCw className="h-4 w-4 animate-spin mx-auto text-[var(--ecode-text-secondary)]" />
@@ -432,6 +433,39 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 </CollapsibleContent>
               </Collapsible>
             )}
+
+            {/* Section Deploy */}
+            {projectId && (
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] p-2 h-auto"
+                  >
+                    <div className="flex items-center">
+                      <Rocket className="h-4 w-4 mr-2" />
+                      <span className="text-sm font-medium">Deploy</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-1 mt-2">
+                  <div className="px-2 py-2 text-xs text-[var(--ecode-text-secondary)]">
+                    Deploy your project to the web.
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] h-8"
+                    onClick={() => window.dispatchEvent(new CustomEvent('openDeploy'))}
+                  >
+                    <Rocket className="h-3 w-3 mr-2" />
+                    Open Deploy
+                  </Button>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+
           </div>
         </ScrollArea>
 
@@ -445,7 +479,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
             >
               <Settings className="h-4 w-4" />
             </Button>
-            
+
             {projectId && (
               <div className="flex items-center space-x-1">
                 <Button
