@@ -288,7 +288,7 @@ export default function Dashboard() {
                 type="text"
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="Describe what you want to build with AI..."
+                placeholder="Décrivez votre idée d'application en langage naturel..."
                 className="flex-1 px-4 py-3 rounded-lg bg-white/20 backdrop-blur-sm text-white placeholder:text-white/70 border border-white/30 focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/20"
                 data-testid="input-ai-prompt"
               />
@@ -296,10 +296,10 @@ export default function Dashboard() {
                 type="submit"
                 size="lg"
                 disabled={!aiPrompt.trim()}
-                className="bg-white text-purple-600 hover:bg-white/90"
+                className="bg-white text-purple-600 hover:bg-white/90 font-semibold"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
-                Build with AI
+                Build
               </Button>
             </div>
           </form>

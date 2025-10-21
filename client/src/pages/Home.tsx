@@ -35,7 +35,8 @@ import {
   Edit, 
   Copy, 
   Lock, 
-  Globe
+  Globe,
+  Sparkles
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -76,21 +77,38 @@ export default function Home() {
       const res = await apiRequest('POST', '/api/projects', { name });
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setIsCreateModalOpen(false);
+      
+      // Si c'est un prompt AI (description longue), ouvrir avec l'agent activé
+      const isAIPrompt = variables.length > 20 || searchQuery.trim().length > 20;
+      const promptToUse = searchQuery.trim() || variables;
+      
+      // Stocker le prompt pour l'agent
+      if (isAIPrompt) {
+        window.sessionStorage.setItem(`agent-prompt-${data.id}`, promptToUse);
+      }
       
       // Add a small delay to ensure project is fully created and indexed
       setTimeout(() => {
         const projectUrl = getProjectUrl(data, user?.username);
-        console.log(`Navigating to: ${projectUrl}`);
-        window.location.href = projectUrl;
+        const urlWithAgent = isAIPrompt 
+          ? `${projectUrl}?agent=true&prompt=${encodeURIComponent(promptToUse)}`
+          : projectUrl;
+        console.log(`Navigating to: ${urlWithAgent}`);
+        window.location.href = urlWithAgent;
       }, 500);
       
       toast({
-        title: "Project created!",
-        description: `${data.name} has been created successfully.`,
+        title: isAIPrompt ? "Building your app with AI..." : "Project created!",
+        description: isAIPrompt 
+          ? "L'agent AI va générer votre application automatiquement."
+          : `${data.name} has been created successfully.`,
       });
+      
+      // Réinitialiser le champ de recherche
+      setSearchQuery('');
     },
     onError: (error) => {
       toast({
@@ -130,50 +148,56 @@ export default function Home() {
             <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg border border-white/20 shadow-xl">
               <div className="flex items-center gap-2 bg-white dark:bg-black rounded-md p-1">
                 <Input 
-                  placeholder="Describe your project idea..."
+                  placeholder="Décrivez votre idée d'application en langage naturel..."
                   className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-foreground"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      handleCreateProject(searchQuery);
+                    }
+                  }}
                 />
                 <Button 
-                  className="shrink-0 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
-                  onClick={() => setIsCreateModalOpen(true)}
+                  className="shrink-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-semibold"
+                  onClick={() => searchQuery.trim() ? handleCreateProject(searchQuery) : setIsCreateModalOpen(true)}
+                  disabled={createProjectMutation.isPending}
                 >
-                  <span className="hidden sm:inline">Create Project</span>
-                  <Plus className="h-4 w-4 sm:ml-2" />
+                  <span className="hidden sm:inline">{searchQuery.trim() ? 'Build' : 'Create Project'}</span>
+                  {searchQuery.trim() ? <Sparkles className="h-4 w-4 sm:ml-2" /> : <Plus className="h-4 w-4 sm:ml-2" />}
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 px-2 pt-3 text-sm text-white/80">
-                <span>Try:</span>
+                <span>Exemples:</span>
                 <Button 
                   variant="link" 
                   className="p-0 h-auto text-blue-100 hover:text-white"
                   onClick={() => {
-                    setSearchQuery("Basic web app with HTML, CSS, and JavaScript");
-                    setIsCreateModalOpen(true);
+                    setSearchQuery("Application web de todo list avec design moderne");
+                    handleCreateProject("Application web de todo list avec design moderne");
                   }}
                 >
-                  Basic web app
+                  Todo app
                 </Button>
                 <Button 
                   variant="link" 
                   className="p-0 h-auto text-blue-100 hover:text-white"
                   onClick={() => {
-                    setSearchQuery("Flask API with Python backend");
-                    setIsCreateModalOpen(true);
+                    setSearchQuery("Portfolio professionnel avec animations");
+                    handleCreateProject("Portfolio professionnel avec animations");
                   }}
                 >
-                  Flask API
+                  Portfolio
                 </Button>
                 <Button 
                   variant="link" 
                   className="p-0 h-auto text-blue-100 hover:text-white"
                   onClick={() => {
-                    setSearchQuery("React dashboard with UI components");
-                    setIsCreateModalOpen(true);
+                    setSearchQuery("Dashboard analytique avec graphiques");
+                    handleCreateProject("Dashboard analytique avec graphiques");
                   }}
                 >
-                  React dashboard
+                  Dashboard
                 </Button>
               </div>
             </div>

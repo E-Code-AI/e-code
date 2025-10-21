@@ -13,14 +13,40 @@ import {
 } from 'lucide-react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BRAND } from '@/constants/brand';
 
 export default function AIAgent() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [appDescription, setAppDescription] = useState('');
+
+  // Rediriger les utilisateurs connectés vers le dashboard
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  const handleStartBuilding = async (description: string) => {
+    if (!user) {
+      navigate('/login?redirect=/dashboard');
+      return;
+    }
+
+    // Rediriger vers le dashboard où l'utilisateur peut créer son projet
+    navigate('/dashboard');
+  };
+
+  const handleGetStarted = () => {
+    if (!user) {
+      navigate('/login?redirect=/dashboard');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
   const trailerSegments = [
     {
       id: 'idea-to-app',
@@ -92,14 +118,6 @@ export default function AIAgent() {
       poster: heroMedia.poster,
     },
   ];
-
-  const handleGetStarted = () => {
-    if (user) {
-      navigate('/ai-agent/studio');
-    } else {
-      window.location.href = '/login';
-    }
-  };
 
   const capabilities = [
     {
@@ -183,6 +201,8 @@ export default function AIAgent() {
     }
   ];
 
+  const [activeTab, setActiveTab] = useState('overview');
+
   return (
     <div className="min-h-screen flex flex-col">
       <PublicNavbar />
@@ -193,7 +213,7 @@ export default function AIAgent() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
           <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
         </div>
-        
+
         <div className="container-responsive max-w-7xl relative">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="text-center lg:text-left">
@@ -201,19 +221,19 @@ export default function AIAgent() {
                 <Sparkles className="h-4 w-4 mr-1.5" />
                 E-CODE AGENT 2.0 POWERED
               </Badge>
-              
+
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
                 AI Agent v2
                 <span className="block text-4xl md:text-5xl lg:text-6xl mt-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
                   Build Apps with Natural Language
                 </span>
               </h1>
-              
+
               <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0">
                 Describe your idea. Watch it build. Deploy instantly. 
                 No coding required—our AI handles everything.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
                 <Button size="lg" onClick={handleGetStarted} className="text-lg px-8 h-14 shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-primary/90">
                   Launch Agent Studio
@@ -226,7 +246,7 @@ export default function AIAgent() {
                   </a>
                 </Button>
               </div>
-              
+
               <div className="flex flex-wrap gap-6 justify-center lg:justify-start text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
@@ -242,7 +262,7 @@ export default function AIAgent() {
                 </div>
               </div>
             </div>
-            
+
             <div className="relative">
               <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border bg-slate-900">
                 <video
@@ -740,7 +760,7 @@ export default function AIAgent() {
                   </ul>
                 </div>
               </div>
-              
+
               <div className="mt-12 text-center">
                 <Card className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white max-w-2xl mx-auto">
                   <CardContent className="p-8">
