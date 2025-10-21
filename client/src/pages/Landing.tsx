@@ -15,7 +15,7 @@ import {
   BookOpen, Store, Briefcase, ListTodo, CloudSun, PenTool,
   Layers, BarChart3, Settings, Palette, Workflow, Brain,
   TrendingUp, Users2, Building2, Award, Timer, Gauge,
-  FileCode2, Server, Shield, Smartphone, Monitor, Laptop
+  FileCode2, Server, Smartphone, Monitor, Laptop
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { MarketingLayout } from '@/components/layout/MarketingLayout';
@@ -29,7 +29,7 @@ import {
   SiPython, SiJavascript, SiHtml5, SiCss3,
   SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
   SiRust, SiPhp, SiOpenjdk, SiDocker, SiKubernetes,
-  SiAmazon, SiMicrosoft, SiGoogle
+  SiAmazon, SiGoogle
 } from 'react-icons/si';
 
 // Import stock images
@@ -820,7 +820,7 @@ export default function Landing() {
             </p>
             <div className="flex flex-wrap justify-center items-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
               <SiGoogle className="h-8 w-auto" />
-              <SiMicrosoft className="h-8 w-auto" />
+              <span className="text-2xl font-bold">Microsoft</span>
               <SiAmazon className="h-8 w-auto" />
               <span className="text-2xl font-bold">IBM</span>
               <span className="text-2xl font-bold">Oracle</span>
