@@ -11,7 +11,6 @@ import { realCodeGenerator } from '../ai/real-code-generator';
 import { realWebSearchService } from './real-web-search';
 import { realPackageManager } from './real-package-manager';
 import { realCollaborationService } from '../collaboration/real-collaboration';
-import { realKubernetesDeployment } from '../deployment/real-kubernetes-deployment';
 import { realEmailService } from './real-email-service';
 import { real2FAService } from './real-2fa-service';
 import { realObjectStorageService } from './real-object-storage';
@@ -26,7 +25,6 @@ export interface IntegratedServices {
   webSearch: typeof realWebSearchService;
   packageManager: typeof realPackageManager;
   collaboration: typeof realCollaborationService;
-  kubernetes: typeof realKubernetesDeployment;
   email: typeof realEmailService;
   twoFactor: typeof real2FAService;
   objectStorage: typeof realObjectStorageService;
@@ -51,7 +49,6 @@ export async function initializeRealServices(): Promise<IntegratedServices> {
       webSearch: realWebSearchService,
       packageManager: realPackageManager,
       collaboration: realCollaborationService,
-      kubernetes: realKubernetesDeployment,
       email: realEmailService,
       twoFactor: real2FAService,
       objectStorage: realObjectStorageService,
@@ -75,7 +72,6 @@ export {
   realWebSearchService,
   realPackageManager,
   realCollaborationService,
-  realKubernetesDeployment,
   realEmailService,
   real2FAService,
   realObjectStorageService,
