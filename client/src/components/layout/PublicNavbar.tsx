@@ -251,24 +251,24 @@ export function PublicNavbar() {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-full sm:w-[380px] p-0 border-l border-[var(--ecode-border)] bg-white dark:bg-[var(--ecode-surface)]">
+                <SheetContent side="right" className="w-full sm:w-[380px] p-0 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
                   {/* Simple Mobile Header */}
-                  <div className="sticky top-0 z-10 border-b border-[var(--ecode-border)] bg-white dark:bg-[var(--ecode-surface)] px-4 py-3">
+                  <div className="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3">
                     <div className="flex items-center justify-between">
                       <ECodeLogo size="sm" />
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="hover:bg-[var(--ecode-sidebar-hover)]"
+                        className="hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                       </Button>
                     </div>
                   </div>
 
                   {/* Simple CTA Buttons */}
-                  <div className="p-4 border-b border-[var(--ecode-border)]">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                     <Button
                       className="w-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400"
                       onClick={() => window.location.href = '/register'}
@@ -277,7 +277,7 @@ export function PublicNavbar() {
                     </Button>
                     <Button
                       variant="outline"
-                      className="mt-2 w-full border-[var(--ecode-border)] text-[var(--ecode-text)]"
+                      className="mt-2 w-full border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
                       onClick={() => window.location.href = '/login'}
                     >
                       Sign In
@@ -289,7 +289,7 @@ export function PublicNavbar() {
                     <div className="p-4 space-y-6">
                       {/* Product Section */}
                       <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--ecode-text-muted)] mb-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Product
                         </h3>
                         <div className="space-y-1">
@@ -300,12 +300,12 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--ecode-sidebar-hover)] transition-colors"
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
-                              <div className="text-sm font-medium text-[var(--ecode-text)]">
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {item.title}
                               </div>
-                              <div className="text-xs text-[var(--ecode-text-secondary)] mt-0.5">
+                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -315,7 +315,7 @@ export function PublicNavbar() {
 
                       {/* Solutions Section */}
                       <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--ecode-text-muted)] mb-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Solutions
                         </h3>
                         <div className="space-y-1">
@@ -326,12 +326,12 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--ecode-sidebar-hover)] transition-colors"
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
-                              <div className="text-sm font-medium text-[var(--ecode-text)]">
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {item.title}
                               </div>
-                              <div className="text-xs text-[var(--ecode-text-secondary)] mt-0.5">
+                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -341,7 +341,7 @@ export function PublicNavbar() {
 
                       {/* Resources Section */}
                       <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--ecode-text-muted)] mb-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Resources
                         </h3>
                         <div className="space-y-1">
@@ -352,12 +352,12 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--ecode-sidebar-hover)] transition-colors"
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
-                              <div className="text-sm font-medium text-[var(--ecode-text)]">
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {item.title}
                               </div>
-                              <div className="text-xs text-[var(--ecode-text-secondary)] mt-0.5">
+                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -367,7 +367,7 @@ export function PublicNavbar() {
 
                       {/* Company Section */}
                       <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--ecode-text-muted)] mb-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Company
                         </h3>
                         <div className="space-y-1">
@@ -378,12 +378,12 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--ecode-sidebar-hover)] transition-colors"
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
-                              <div className="text-sm font-medium text-[var(--ecode-text)]">
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {item.title}
                               </div>
-                              <div className="text-xs text-[var(--ecode-text-secondary)] mt-0.5">
+                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -392,14 +392,14 @@ export function PublicNavbar() {
                       </div>
 
                       {/* Footer Links */}
-                      <div className="pt-4 border-t border-[var(--ecode-border)]">
+                      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => {
                               setMobileMenuOpen(false);
                               navigate('/pricing');
                             }}
-                            className="px-3 py-2 rounded-lg border border-[var(--ecode-border)] hover:bg-[var(--ecode-sidebar-hover)] text-sm font-medium text-[var(--ecode-text)] transition-colors"
+                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors"
                           >
                             Pricing
                           </button>
@@ -408,7 +408,7 @@ export function PublicNavbar() {
                               setMobileMenuOpen(false);
                               navigate('/team');
                             }}
-                            className="px-3 py-2 rounded-lg border border-[var(--ecode-border)] hover:bg-[var(--ecode-sidebar-hover)] text-sm font-medium text-[var(--ecode-text)] transition-colors"
+                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors"
                           >
                             Teams
                           </button>
