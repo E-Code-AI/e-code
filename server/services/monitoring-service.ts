@@ -48,7 +48,7 @@ export class MonitoringService {
   private errorThresholds = {
     criticalErrorRate: 0.05, // 5% error rate
     responseTimeThreshold: 3000, // 3 seconds
-    memoryUsageThreshold: 0.95 // 95% memory usage
+    memoryUsageThreshold: 0.85 // 85% memory usage - more headroom for deployment
   };
 
   constructor() {

@@ -286,17 +286,20 @@ app.use((req, res, next) => {
       // Removed Nix package manager initialization that was causing ENOENT errors
       
       // Initialize Polyglot Services - Replit's multi-language backend architecture
-      setTimeout(async () => {
-        try {
-          const { initializePolyglotServices, setupPolyglotProxyRoutes } = await import("./polyglot-services");
-          // Start the actual services on their internal ports
-          initializePolyglotServices();
-          // Setup proxy routes so they can be accessed through main port
-          setupPolyglotProxyRoutes(app);
-        } catch (polyglotError) {
-          console.warn("Warning: Polyglot services failed to start:", polyglotError);
-        }
-      }, 500); // Start polyglot services quickly
+      // Only run mock services in development to save memory
+      if (process.env.NODE_ENV === 'development') {
+        setTimeout(async () => {
+          try {
+            const { initializePolyglotServices, setupPolyglotProxyRoutes } = await import("./polyglot-services");
+            // Start the actual services on their internal ports
+            initializePolyglotServices();
+            // Setup proxy routes so they can be accessed through main port
+            setupPolyglotProxyRoutes(app);
+          } catch (polyglotError) {
+            console.warn("Warning: Polyglot services failed to start:", polyglotError);
+          }
+        }, 500); // Start polyglot services quickly
+      }
       
       // Setup preview routes on main server (instead of separate server)
       setTimeout(async () => {
