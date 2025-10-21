@@ -323,6 +323,42 @@ export default function Landing() {
                 </div>
               </div>
 
+              {/* Popular Examples Below Input */}
+              <motion.div 
+                className="mt-8 space-y-4"
+                variants={fadeInUp}
+              >
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                  Try these popular examples:
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {[
+                    { icon: <ShoppingCart className="h-4 w-4" />, text: "E-commerce store with Stripe payments", color: "from-purple-600 to-pink-600" },
+                    { icon: <MessageSquare className="h-4 w-4" />, text: "Real-time chat app with websockets", color: "from-blue-600 to-cyan-600" },
+                    { icon: <Bot className="h-4 w-4" />, text: "AI chatbot with OpenAI GPT-4", color: "from-green-600 to-emerald-600" },
+                    { icon: <Globe className="h-4 w-4" />, text: "Social media dashboard with analytics", color: "from-orange-600 to-red-600" },
+                    { icon: <Briefcase className="h-4 w-4" />, text: "SaaS landing page with auth", color: "from-indigo-600 to-purple-600" },
+                    { icon: <ListTodo className="h-4 w-4" />, text: "Project management tool like Jira", color: "from-teal-600 to-cyan-600" }
+                  ].map((example, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setAppDescription(example.text);
+                        handleStartBuilding(example.text);
+                      }}
+                      className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-violet-600 dark:hover:border-violet-400 transition-all duration-200 hover:scale-105"
+                    >
+                      <div className={`bg-gradient-to-r ${example.color} bg-clip-text text-transparent`}>
+                        {example.icon}
+                      </div>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {example.text}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+
               {/* Features below input */}
               <motion.div 
                 className="flex flex-wrap justify-center gap-4 mt-6"
@@ -428,13 +464,13 @@ export default function Landing() {
               className="text-4xl sm:text-5xl font-bold mb-4"
               variants={fadeInUp}
             >
-              See E-Code in Action
+              See E-Code Platform in Action
             </motion.h2>
             <motion.p 
               className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
               variants={fadeInUp}
             >
-              Watch how Fortune 500 companies are building production applications 10x faster
+              Watch a real demo: Build and deploy a full-stack application in under 2 minutes using AI agents
             </motion.p>
           </motion.div>
 
@@ -522,16 +558,168 @@ export default function Landing() {
 
             {/* Video Description */}
             <div className="mt-8 text-center">
+              <h3 className="text-lg font-semibold mb-2">Live Platform Demo</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                2-minute demo showing a complete e-commerce platform built from scratch
+                Watch how E-Code Platform's AI agent builds a complete full-stack application with database, authentication, 
+                and deployment - all from a single prompt
               </p>
+              <div className="flex flex-wrap justify-center gap-4 mt-4">
+                <Badge variant="secondary">AI Code Generation</Badge>
+                <Badge variant="secondary">Real-time Preview</Badge>
+                <Badge variant="secondary">Instant Deployment</Badge>
+                <Badge variant="secondary">Database Setup</Badge>
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Features Grid with Images */}
+      {/* Projects Showcase - Examples Built with E-Code */}
       <section className="py-20 bg-background">
+        <div className="container-responsive max-w-7xl">
+          <motion.div 
+            className="text-center mb-12"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+          >
+            <motion.h2 
+              className="text-4xl sm:text-5xl font-bold mb-4"
+              variants={fadeInUp}
+            >
+              Built with E-Code Platform
+            </motion.h2>
+            <motion.p 
+              className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
+              variants={fadeInUp}
+            >
+              Real production applications built by our community in hours, not months
+            </motion.p>
+          </motion.div>
+
+          <motion.div 
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+          >
+            {[
+              {
+                title: "TechStore Pro",
+                description: "Full-featured e-commerce platform with 50K+ daily transactions",
+                image: cloudComputingImg,
+                tags: ["React", "Node.js", "PostgreSQL", "Stripe"],
+                metrics: { users: "100K+", revenue: "$2M/mo", time: "Built in 3 days" },
+                creator: "Built by StartupX"
+              },
+              {
+                title: "CollabSpace",
+                description: "Real-time collaboration tool used by 500+ remote teams",
+                image: modernSoftwareImg,
+                tags: ["Next.js", "WebSockets", "Redis", "AI"],
+                metrics: { users: "50K+", messages: "10M+", time: "Built in 1 week" },
+                creator: "Built by TeamFlow Inc"
+              },
+              {
+                title: "DataViz Pro",
+                description: "Analytics dashboard processing 1B+ events daily",
+                image: codingWorkspaceImg,
+                tags: ["Vue.js", "Python", "MongoDB", "D3.js"],
+                metrics: { users: "10K+", events: "1B/day", time: "Built in 5 days" },
+                creator: "Built by AnalyticsCo"
+              },
+              {
+                title: "EduLearn Platform",
+                description: "Online learning platform with 200K active students",
+                image: cloudComputingImg,
+                tags: ["React", "Django", "PostgreSQL", "Zoom API"],
+                metrics: { students: "200K", courses: "5000+", time: "Built in 2 weeks" },
+                creator: "Built by EduTech Global"
+              },
+              {
+                title: "HealthTrack AI",
+                description: "AI-powered health monitoring app with FDA approval",
+                image: modernSoftwareImg,
+                tags: ["React Native", "FastAPI", "TensorFlow", "FHIR"],
+                metrics: { patients: "1M+", accuracy: "99.2%", time: "Built in 1 month" },
+                creator: "Built by MedTech Solutions"
+              },
+              {
+                title: "CryptoTrade Hub",
+                description: "Cryptocurrency trading platform with $100M daily volume",
+                image: codingWorkspaceImg,
+                tags: ["Angular", "Go", "Redis", "WebSockets"],
+                metrics: { volume: "$100M/day", trades: "1M+", time: "Built in 2 weeks" },
+                creator: "Built by FinTech Innovations"
+              }
+            ].map((project, index) => (
+              <motion.div
+                key={index}
+                variants={scaleIn}
+                whileHover={{ scale: 1.03 }}
+                className="group cursor-pointer"
+              >
+                <Card className="h-full overflow-hidden hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-violet-600/20">
+                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-violet-600/10 to-fuchsia-600/10">
+                    <img 
+                      src={project.image}
+                      alt={project.title}
+                      className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-4 left-4">
+                      <h3 className="text-xl font-bold text-white">{project.title}</h3>
+                      <p className="text-sm text-gray-200">{project.creator}</p>
+                    </div>
+                  </div>
+                  <CardContent className="p-6">
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      {project.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {project.tags.map(tag => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      {Object.entries(project.metrics).map(([key, value]) => (
+                        <div key={key} className="text-center">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {value}
+                          </div>
+                          <div className="text-xs text-gray-500 capitalize">
+                            {key === "time" ? "" : key}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div 
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+          >
+            <Button size="lg" variant="outline" className="gap-2" onClick={() => navigate('/explore')}>
+              Explore More Projects
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-900/50">
         <div className="container-responsive max-w-7xl">
           <motion.div 
             className="text-center mb-16"
