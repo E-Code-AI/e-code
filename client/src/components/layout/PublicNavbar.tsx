@@ -10,10 +10,9 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from '@/components/ui/navigation-menu';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import {
   Menu,
   X,
@@ -25,7 +24,6 @@ import {
 } from 'lucide-react';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { ECodeLogo } from '@/components/ECodeLogo';
-import './MobileNavigation.css';
 
 export function PublicNavbar() {
   const [, navigate] = useLocation();
@@ -193,7 +191,7 @@ export function PublicNavbar() {
   const primaryCta = (
     <Button
       onClick={() => window.location.href = '/register'}
-      className="hidden sm:inline-flex bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-[var(--ecode-text)] dark:text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/25"
+      className="hidden sm:inline-flex bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/25"
     >
       Get started
     </Button>
@@ -249,154 +247,176 @@ export function PublicNavbar() {
 
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-[var(--ecode-text)] dark:text-slate-100">
+                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-slate-100">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <div className="public-mobile-nav">
-                  <SheetContent side="right" className="sheet-content w-full sm:w-[420px] p-0 border-l border-[var(--ecode-border)]/50 bg-gradient-to-b from-[#ffffff] to-[#f8f9fa] dark:from-[var(--ecode-surface)] dark:to-[var(--ecode-surface)]/95 backdrop-blur-xl">
-                  {/* Mobile Header with improved design */}
-                  <div className="mobile-nav-header sticky top-0 z-10 border-b border-[var(--ecode-border)]/20 bg-white/80 dark:bg-[var(--ecode-surface)]/80 px-6 py-5 backdrop-blur-lg">
-                    <div className="flex items-center justify-between mb-4">
+                <SheetContent side="right" className="w-full sm:w-[380px] p-0 border-l border-[var(--ecode-border)] bg-white dark:bg-[var(--ecode-surface)]">
+                  {/* Simple Mobile Header */}
+                  <div className="sticky top-0 z-10 border-b border-[var(--ecode-border)] bg-white dark:bg-[var(--ecode-surface)] px-4 py-3">
+                    <div className="flex items-center justify-between">
                       <ECodeLogo size="sm" />
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="rounded-full hover:bg-[var(--ecode-sidebar-hover)] transition-all duration-200"
+                        className="hover:bg-[var(--ecode-sidebar-hover)]"
                       >
-                        <X className="h-5 w-5" />
+                        <X className="h-4 w-4" />
                       </Button>
-                    </div>
-                    <div className="relative group">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-text-muted)] transition-colors group-focus-within:text-[var(--ecode-accent)]" />
-                      <Input
-                        placeholder="Search products, docs, or people"
-                        className="pl-10 h-11 bg-white dark:bg-white/5 border-[var(--ecode-border)]/30 hover:border-[var(--ecode-accent)]/50 focus:border-[var(--ecode-accent)] transition-all duration-200 rounded-xl text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-muted)]"
-                      />
                     </div>
                   </div>
 
-                  {/* CTA Buttons with enhanced styling */}
-                  <div className="p-6 border-b border-[var(--ecode-border)]/20">
+                  {/* Simple CTA Buttons */}
+                  <div className="p-4 border-b border-[var(--ecode-border)]">
                     <Button
-                      className="w-full h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/25 rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                      className="w-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400"
                       onClick={() => window.location.href = '/register'}
                     >
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Get Started Free
+                      Get Started
                     </Button>
                     <Button
                       variant="outline"
-                      className="mt-3 w-full h-11 border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] hover:bg-[var(--ecode-accent)]/5 rounded-xl transition-all duration-200"
+                      className="mt-2 w-full border-[var(--ecode-border)] text-[var(--ecode-text)]"
                       onClick={() => window.location.href = '/login'}
                     >
-                      <LogIn className="mr-2 h-4 w-4" />
                       Sign In
                     </Button>
                   </div>
 
-                  {/* Navigation Sections with improved design */}
-                  <ScrollArea className="h-[calc(100vh-280px)] mobile-nav-content">
-                    <div className="px-6 py-4">
-                      {[
-                        { 
-                          title: 'Product', 
-                          items: productItems,
-                          icon: '🚀',
-                          color: 'from-sky-500/10 to-blue-500/10 dark:from-sky-500/20 dark:to-blue-500/20'
-                        }, 
-                        { 
-                          title: 'Solutions', 
-                          items: solutionsItems,
-                          icon: '💡',
-                          color: 'from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20'
-                        }, 
-                        { 
-                          title: 'Resources', 
-                          items: resourcesItems,
-                          icon: '📚',
-                          color: 'from-emerald-500/10 to-green-500/10 dark:from-emerald-500/20 dark:to-green-500/20'
-                        }, 
-                        { 
-                          title: 'Company', 
-                          items: companyItems,
-                          icon: '🏢',
-                          color: 'from-orange-500/10 to-red-500/10 dark:from-orange-500/20 dark:to-red-500/20'
-                        }
-                      ].map((section, sectionIndex) => (
-                        <div key={section.title} className={sectionIndex > 0 ? 'mt-8' : ''}>
-                          {/* Section Header with icon */}
-                          <div className="flex items-center gap-2 mb-4">
-                            <span className="text-2xl">{section.icon}</span>
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--ecode-text)]">
-                              {section.title}
-                            </h3>
-                          </div>
-                          
-                          {/* Items Grid */}
-                          <div className="grid gap-2">
-                            {section.items.map((item, itemIndex) => (
-                              <button
-                                key={item.title}
-                                onClick={() => {
-                                  setMobileMenuOpen(false);
-                                  setTimeout(() => navigate(item.href), 150);
-                                }}
-                                className={`mobile-nav-item group relative overflow-hidden rounded-xl bg-gradient-to-br ${section.color} border border-[var(--ecode-border)]/20 p-4 text-left transition-all duration-300 hover:border-[var(--ecode-accent)]/40 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]`}
-                                style={{
-                                  animation: `fadeInUp 0.3s ease-out ${itemIndex * 0.05}s both`
-                                }}
-                              >
-                                {/* Background gradient effect on hover */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-[var(--ecode-accent)]/0 to-[var(--ecode-accent)]/0 group-hover:from-[var(--ecode-accent)]/10 group-hover:to-transparent transition-all duration-500" />
-                                
-                                <div className="relative">
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                      <span className="text-sm font-semibold text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">
-                                        {item.title}
-                                      </span>
-                                      <p className="mt-1 text-xs text-[var(--ecode-text-secondary)] line-clamp-2">
-                                        {item.description}
-                                      </p>
-                                    </div>
-                                    <ChevronRight className="mobile-nav-icon ml-2 h-4 w-4 text-[var(--ecode-text-muted)] group-hover:text-[var(--ecode-accent)] group-hover:translate-x-1 transition-all duration-300" />
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {/* Footer Links */}
-                      <div className="mt-8 pt-8 border-t border-[var(--ecode-border)]/20">
-                        <div className="grid grid-cols-2 gap-3">
-                          {[
-                            { label: 'Pricing', href: '/pricing', icon: '💎' },
-                            { label: 'Teams', href: '/team', icon: '👥' },
-                            { label: 'Support', href: '/support', icon: '🛟' },
-                            { label: 'Contact', href: '/contact-sales', icon: '📞' }
-                          ].map((link) => (
+                  {/* Clean Navigation Sections */}
+                  <ScrollArea className="h-[calc(100vh-180px)]">
+                    <div className="p-4 space-y-6">
+                      {/* Product Section */}
+                      <div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--ecode-text-muted)] mb-3">
+                          Product
+                        </h3>
+                        <div className="space-y-1">
+                          {productItems.map((item) => (
                             <button
-                              key={link.label}
+                              key={item.title}
                               onClick={() => {
                                 setMobileMenuOpen(false);
-                                setTimeout(() => navigate(link.href), 150);
+                                navigate(item.href);
                               }}
-                              className="flex items-center justify-center gap-2 h-11 rounded-xl border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] bg-white dark:bg-white/5 hover:bg-[var(--ecode-accent)]/5 text-sm font-medium text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] transition-all duration-200"
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--ecode-sidebar-hover)] transition-colors"
                             >
-                              <span>{link.icon}</span>
-                              {link.label}
+                              <div className="text-sm font-medium text-[var(--ecode-text)]">
+                                {item.title}
+                              </div>
+                              <div className="text-xs text-[var(--ecode-text-secondary)] mt-0.5">
+                                {item.description}
+                              </div>
                             </button>
                           ))}
+                        </div>
+                      </div>
+
+                      {/* Solutions Section */}
+                      <div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--ecode-text-muted)] mb-3">
+                          Solutions
+                        </h3>
+                        <div className="space-y-1">
+                          {solutionsItems.map((item) => (
+                            <button
+                              key={item.title}
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                navigate(item.href);
+                              }}
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--ecode-sidebar-hover)] transition-colors"
+                            >
+                              <div className="text-sm font-medium text-[var(--ecode-text)]">
+                                {item.title}
+                              </div>
+                              <div className="text-xs text-[var(--ecode-text-secondary)] mt-0.5">
+                                {item.description}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Resources Section */}
+                      <div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--ecode-text-muted)] mb-3">
+                          Resources
+                        </h3>
+                        <div className="space-y-1">
+                          {resourcesItems.map((item) => (
+                            <button
+                              key={item.title}
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                navigate(item.href);
+                              }}
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--ecode-sidebar-hover)] transition-colors"
+                            >
+                              <div className="text-sm font-medium text-[var(--ecode-text)]">
+                                {item.title}
+                              </div>
+                              <div className="text-xs text-[var(--ecode-text-secondary)] mt-0.5">
+                                {item.description}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Company Section */}
+                      <div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--ecode-text-muted)] mb-3">
+                          Company
+                        </h3>
+                        <div className="space-y-1">
+                          {companyItems.map((item) => (
+                            <button
+                              key={item.title}
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                navigate(item.href);
+                              }}
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--ecode-sidebar-hover)] transition-colors"
+                            >
+                              <div className="text-sm font-medium text-[var(--ecode-text)]">
+                                {item.title}
+                              </div>
+                              <div className="text-xs text-[var(--ecode-text-secondary)] mt-0.5">
+                                {item.description}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Footer Links */}
+                      <div className="pt-4 border-t border-[var(--ecode-border)]">
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              navigate('/pricing');
+                            }}
+                            className="px-3 py-2 rounded-lg border border-[var(--ecode-border)] hover:bg-[var(--ecode-sidebar-hover)] text-sm font-medium text-[var(--ecode-text)] transition-colors"
+                          >
+                            Pricing
+                          </button>
+                          <button
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              navigate('/team');
+                            }}
+                            className="px-3 py-2 rounded-lg border border-[var(--ecode-border)] hover:bg-[var(--ecode-sidebar-hover)] text-sm font-medium text-[var(--ecode-text)] transition-colors"
+                          >
+                            Teams
+                          </button>
                         </div>
                       </div>
                     </div>
                   </ScrollArea>
                 </SheetContent>
-                </div>
               </Sheet>
             </div>
           </div>
