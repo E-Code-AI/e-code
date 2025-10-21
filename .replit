@@ -33,7 +33,7 @@ externalPort = 3002
 
 [[ports]]
 localPort = 35733
-externalPort = 4200
+externalPort = 5000
 
 [[ports]]
 localPort = 37033
@@ -42,6 +42,10 @@ externalPort = 3003
 [[ports]]
 localPort = 38711
 externalPort = 3001
+
+[[ports]]
+localPort = 42235
+externalPort = 4200
 
 # DELETE ALL WORKFLOW SECTIONS BELOW - KEEP ONLY THE ESSENTIALS
 
