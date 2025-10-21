@@ -15,9 +15,10 @@ export class DatabasePoolManager {
   private pools: Map<string, Pool> = new Map();
   private activeConnections: Map<string, number> = new Map();
   private config: PoolConfig = {
-    // Connection pool configuration
-    max: parseInt(process.env.DB_POOL_MAX || '20'), // Maximum pool size
-    min: parseInt(process.env.DB_POOL_MIN || '5'), // Minimum pool size
+    // Connection pool configuration - Optimized for memory
+    // Use smaller pool in development to save memory
+    max: parseInt(process.env.DB_POOL_MAX || (process.env.NODE_ENV === 'production' ? '20' : '5')), // Maximum pool size
+    min: parseInt(process.env.DB_POOL_MIN || (process.env.NODE_ENV === 'production' ? '5' : '2')), // Minimum pool size
     idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
     connectionTimeoutMillis: 10000, // Return error after 10 seconds if no connection available
     maxUses: 7500, // Close and replace connection after 7500 uses
