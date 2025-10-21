@@ -21,9 +21,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AgentPricingDisplay } from './AgentPricingDisplay';
 import {
   Tooltip,
-  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  TooltipContent,
 } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
@@ -35,7 +35,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useLocation } from 'wouter';
 
@@ -233,7 +233,7 @@ button:hover {
 function renderTodos() {
     const todoList = document.getElementById('todoList');
     todoList.innerHTML = '';
-    
+
     todos.forEach((todo, index) => {
         const li = document.createElement('li');
         li.className = 'todo-item' + (todo.completed ? ' completed' : '');
@@ -250,7 +250,7 @@ function renderTodos() {
 function addTodo() {
     const input = document.getElementById('todoInput');
     const text = input.value.trim();
-    
+
     if (text) {
         todos.push({ text, completed: false });
         input.value = '';
@@ -369,7 +369,7 @@ app.post('/api/items', (req, res) => {
 app.put('/api/items/:id', (req, res) => {
   const item = items.find(i => i.id === parseInt(req.params.id));
   if (!item) return res.status(404).json({ message: 'Item not found' });
-  
+
   item.name = req.body.name || item.name;
   item.description = req.body.description || item.description;
   res.json(item);
@@ -379,7 +379,7 @@ app.put('/api/items/:id', (req, res) => {
 app.delete('/api/items/:id', (req, res) => {
   const index = items.findIndex(i => i.id === parseInt(req.params.id));
   if (index === -1) return res.status(404).json({ message: 'Item not found' });
-  
+
   items.splice(index, 1);
   res.status(204).send();
 });
@@ -676,7 +676,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 window.addEventListener('scroll', () => {
     let current = '';
     const sections = document.querySelectorAll('section');
-    
+
     sections.forEach(section => {
         const sectionTop = section.offsetTop;
         const sectionHeight = section.clientHeight;
@@ -786,7 +786,7 @@ What would you like me to build for you today?`,
         if (prefsResponse.ok) {
           const prefs = await prefsResponse.json();
           setUserPreferences(prefs);
-          
+
           // Set toggle states from preferences
           setExtendedThinking(prefs.extendedThinking || false);
           setHighPowerMode(prefs.highPowerMode || false);
@@ -990,7 +990,7 @@ What would you like me to build for you today?`,
                 parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
               })
             });
-            
+
             if (!response.ok) {
               throw new Error(`Failed to create file: ${response.statusText}`);
             }
@@ -1009,7 +1009,7 @@ What would you like me to build for you today?`,
                 credentials: 'include',
                 body: JSON.stringify({ content: action.content })
               });
-              
+
               if (!response.ok) {
                 throw new Error(`Failed to edit file: ${response.statusText}`);
               }
@@ -1027,7 +1027,7 @@ What would you like me to build for you today?`,
               credentials: 'include',
               body: JSON.stringify({ packages: [action.package] })
             });
-            
+
             if (!response.ok) {
               throw new Error(`Failed to install package: ${response.statusText}`);
             }
@@ -1047,7 +1047,7 @@ What would you like me to build for you today?`,
                 parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
               })
             });
-            
+
             if (!response.ok) {
               throw new Error(`Failed to create folder: ${response.statusText}`);
             }
@@ -1086,14 +1086,14 @@ What would you like me to build for you today?`,
 
   const detectBuildType = (description: string): BuildTemplate | null => {
     const lowerDesc = description.toLowerCase();
-    
+
     for (const template of BUILD_TEMPLATES) {
       const hasKeyword = template.keywords.some(keyword => lowerDesc.includes(keyword));
       if (hasKeyword) {
         return template;
       }
     }
-    
+
     // Default detection based on common patterns
     if (lowerDesc.includes('api') || lowerDesc.includes('backend')) {
       return BUILD_TEMPLATES.find(t => t.id === 'rest-api') || null;
@@ -1104,16 +1104,16 @@ What would you like me to build for you today?`,
     if (lowerDesc.includes('todo') || lowerDesc.includes('task')) {
       return BUILD_TEMPLATES.find(t => t.id === 'todo-app') || null;
     }
-    
+
     return null;
   };
 
   const buildApplication = async (description: string) => {
     setIsBuilding(true);
     setBuildProgress(0);
-    
+
     const template = detectBuildType(description);
-    
+
     // Announce build start
     const startMessage: Message = {
       id: Date.now().toString(),
@@ -1140,7 +1140,7 @@ What would you like me to build for you today?`,
       for (const folder of template.structure.folders) {
         currentStep++;
         const progress = Math.floor((currentStep / totalSteps) * 100);
-        
+
         try {
           await updateProgress(`Creating folder: ${folder}`, progress);
           await executeAction({ type: 'create_folder', path: folder });
@@ -1149,7 +1149,7 @@ What would you like me to build for you today?`,
           console.error(`Failed to create folder ${folder}:`, error);
           setIsBuilding(false);
           setBuildProgress(0);
-          
+
           const errorMessage: Message = {
             id: Date.now().toString(),
             role: 'assistant',
@@ -1166,7 +1166,7 @@ What would you like me to build for you today?`,
       for (const file of template.structure.files) {
         currentStep++;
         const progress = Math.floor((currentStep / totalSteps) * 100);
-        
+
         try {
           await updateProgress(`Creating file: ${file.path}`, progress);
           await executeAction({ type: 'create_file', path: file.path, content: file.content });
@@ -1175,7 +1175,7 @@ What would you like me to build for you today?`,
           console.error(`Failed to create file ${file.path}:`, error);
           setIsBuilding(false);
           setBuildProgress(0);
-          
+
           const errorMessage: Message = {
             id: Date.now().toString(),
             role: 'assistant',
@@ -1192,7 +1192,7 @@ What would you like me to build for you today?`,
       if (template.structure.packages.length > 0) {
         currentStep++;
         const progress = Math.floor((currentStep / totalSteps) * 100);
-        
+
         try {
           await updateProgress(`Installing packages: ${template.structure.packages.join(', ')}`, progress);
           for (const pkg of template.structure.packages) {
@@ -1208,7 +1208,7 @@ What would you like me to build for you today?`,
       // Final step
       currentStep++;
       await updateProgress('Finalizing project setup...', 100);
-      
+
     } else {
       // Custom build using AI
       await buildCustomApplication(description);
@@ -1216,7 +1216,7 @@ What would you like me to build for you today?`,
 
     setIsBuilding(false);
     setBuildProgress(100);
-    
+
     const completeMessage: Message = {
       id: Date.now().toString(),
       role: 'assistant',
@@ -1232,16 +1232,16 @@ What would you like me to build for you today?`,
     // For custom applications, use AI to determine structure
     await updateProgress('Analyzing requirements...', 10);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     await updateProgress('Designing application architecture...', 30);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     await updateProgress('Creating project structure...', 50);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     await updateProgress('Generating code...', 70);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     await updateProgress('Setting up configuration...', 90);
     await new Promise(resolve => setTimeout(resolve, 1000));
   };
@@ -1249,7 +1249,7 @@ What would you like me to build for you today?`,
   const updateProgress = async (task: string, progress: number) => {
     setBuildProgress(progress);
     setCurrentTask(task);
-    
+
     const progressMessage: Message = {
       id: Date.now().toString(),
       role: 'system',
@@ -1279,7 +1279,7 @@ What would you like me to build for you today?`,
     // Enhanced build detection with more patterns
     const buildKeywords = ['build', 'create', 'make', 'develop', 'generate', 'code', 'implement', 'design'];
     const projectTypes = ['app', 'application', 'website', 'site', 'api', 'project', 'tool', 'system', 'platform'];
-    
+
     const lowerContent = content.toLowerCase();
     const wantsToBuild = buildKeywords.some(keyword => lowerContent.includes(keyword)) && 
                         projectTypes.some(type => lowerContent.includes(type));
@@ -1313,29 +1313,29 @@ What would you like me to build for you today?`,
       if (!response.ok) throw new Error('Failed to get AI response');
 
       const data = await response.json();
-      
+
       // Check if response contains actions to execute
       if (data.actions && Array.isArray(data.actions)) {
         // Start building if actions are present
         setIsBuilding(true);
         setBuildProgress(0);
-        
+
         const totalActions = data.actions.length;
         let completedActions = 0;
-        
+
         for (const action of data.actions) {
           completedActions++;
           const progress = Math.floor((completedActions / totalActions) * 100);
-          
+
           await updateProgress(
             `${action.type === 'create_file' ? '📄' : action.type === 'create_folder' ? '📁' : '📦'} ${action.description || action.path || action.package}`,
             progress
           );
-          
+
           await executeAction(action);
           await new Promise(resolve => setTimeout(resolve, 300));
         }
-        
+
         setIsBuilding(false);
         setBuildProgress(100);
       }
@@ -1353,7 +1353,7 @@ What would you like me to build for you today?`,
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('AI chat error:', error);
-      
+
       // Fallback response for demo
       const demoMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -1375,7 +1375,7 @@ Just tell me what you want to build, like:
 What would you like me to build?`,
         timestamp: new Date(),
       };
-      
+
       setMessages(prev => [...prev, demoMessage]);
     } finally {
       setIsLoading(false);
@@ -1393,7 +1393,7 @@ What would you like me to build?`,
   const renderMessage = (message: Message) => {
     const isUser = message.role === 'user';
     const isSystem = message.role === 'system';
-    
+
     if (isSystem) {
       return (
         <div key={message.id} className="px-4 py-2">
@@ -1416,7 +1416,7 @@ What would you like me to build?`,
         </div>
       );
     }
-    
+
     return (
       <div key={message.id} className={cn(
         "flex gap-3 px-4 py-4",
@@ -1427,7 +1427,7 @@ What would you like me to build?`,
             <Bot className="h-4 w-4 text-white" />
           </div>
         )}
-        
+
         <div className={cn("flex-1", isUser && "ml-10")}>
           <div className="text-sm text-[var(--ecode-text)] leading-relaxed">
             {message.content.split('```').map((part, index) => {
@@ -1505,7 +1505,7 @@ What would you like me to build?`,
             <Bot className="h-4 w-4 text-white" />
           </div>
           <span className="text-sm font-medium text-[var(--ecode-text)]">AI Agent</span>
-          
+
           {/* Session Management */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -1531,7 +1531,7 @@ What would you like me to build?`,
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           {isBuilding && (
             <div className="flex items-center gap-2 text-xs text-[var(--ecode-text-secondary)]">
               {isPaused ? (
@@ -1593,7 +1593,7 @@ What would you like me to build?`,
               </Label>
             </div>
           </div>
-          
+
           {/* Pause/Resume Button */}
           {isBuilding && featureFlags?.aiUx?.pauseResume !== false && (
             <Button
@@ -1605,13 +1605,13 @@ What would you like me to build?`,
               {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
             </Button>
           )}
-          
+
           {isBuilding && (
             <div className="text-xs text-[var(--ecode-text-secondary)]">
               {buildProgress}%
             </div>
           )}
-          
+
           {/* Usage Tracking Icon */}
           <TooltipProvider>
             <Tooltip>
@@ -1641,7 +1641,7 @@ What would you like me to build?`,
             <TabsTrigger value="progress" className="flex-1">Progress</TabsTrigger>
           )}
         </TabsList>
-        
+
         <TabsContent value="chat" className="flex-1 m-0">
           <ScrollArea className="h-full">
             <div className="py-4">
@@ -1655,7 +1655,7 @@ What would you like me to build?`,
                   Hi! I'm your AI coding assistant. I can help you:
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-2 ml-10">
                 {QUICK_ACTIONS.map(action => (
                   <button
@@ -1690,7 +1690,7 @@ What would you like me to build?`,
           </div>
         </ScrollArea>
       </TabsContent>
-      
+
       {/* Progress Tab */}
       {featureFlags?.aiUx?.progressTab !== false && (
         <TabsContent value="progress" className="flex-1 m-0">
@@ -1795,7 +1795,7 @@ What would you like me to build?`,
             <TooltipContent>Import content from a URL</TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        
+
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -1812,7 +1812,7 @@ What would you like me to build?`,
             <TooltipContent>Capture screenshot of a webpage</TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        
+
         {featureFlags?.aiUx?.improvePrompt !== false && (
           <TooltipProvider>
             <Tooltip>
@@ -1832,7 +1832,7 @@ What would you like me to build?`,
           </TooltipProvider>
         )}
       </div>
-      
+
       <div className="relative">
         <Textarea
           ref={inputRef}

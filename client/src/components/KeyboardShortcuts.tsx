@@ -39,7 +39,7 @@ const DEFAULT_SHORTCUTS: Omit<Shortcut, 'action'>[] = [
   { key: 'Cmd/Ctrl + N', description: 'New file', category: 'File' },
   { key: 'Cmd/Ctrl + O', description: 'Open file', category: 'File' },
   { key: 'Cmd/Ctrl + W', description: 'Close current tab', category: 'File' },
-  
+
   // Editor
   { key: 'Cmd/Ctrl + F', description: 'Find in file', category: 'Editor' },
   { key: 'Cmd/Ctrl + H', description: 'Find and replace', category: 'Editor' },
@@ -47,18 +47,18 @@ const DEFAULT_SHORTCUTS: Omit<Shortcut, 'action'>[] = [
   { key: 'Cmd/Ctrl + /', description: 'Toggle comment', category: 'Editor' },
   { key: 'Alt + Up/Down', description: 'Move line up/down', category: 'Editor' },
   { key: 'Cmd/Ctrl + D', description: 'Duplicate line', category: 'Editor' },
-  
+
   // Navigation
   { key: 'Cmd/Ctrl + P', description: 'Quick open file', category: 'Navigation' },
   { key: 'Cmd/Ctrl + Shift + P', description: 'Command palette', category: 'Navigation' },
   { key: 'Cmd/Ctrl + B', description: 'Toggle sidebar', category: 'Navigation' },
   { key: 'Cmd/Ctrl + J', description: 'Toggle terminal', category: 'Navigation' },
-  
+
   // Execution
   { key: 'Cmd/Ctrl + Enter', description: 'Run project', category: 'Execution' },
   { key: 'Cmd/Ctrl + Shift + Enter', description: 'Stop project', category: 'Execution' },
   { key: 'Cmd/Ctrl + R', description: 'Restart project', category: 'Execution' },
-  
+
   // AI & Tools
   { key: 'Cmd/Ctrl + K', description: 'Open AI assistant', category: 'AI & Tools' },
   { key: 'Cmd/Ctrl + Shift + K', description: 'Generate code', category: 'AI & Tools' },
@@ -144,40 +144,38 @@ export function KeyboardShortcuts({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Keyboard className="h-5 w-5" />
-            Keyboard Shortcuts
-          </DialogTitle>
-          <DialogDescription>
-            Use these shortcuts to navigate and control the editor more efficiently
-          </DialogDescription>
-        </DialogHeader>
-        
-        <ScrollArea className="h-[500px] pr-4">
-          <div className="space-y-6">
-            {Object.entries(groupedShortcuts).map(([category, shortcuts]) => (
-              <div key={category}>
-                <h3 className="font-semibold text-sm mb-3">{category}</h3>
-                <div className="space-y-2">
-                  {shortcuts.map((shortcut, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50"
-                    >
-                      <span className="text-sm">{shortcut.description}</span>
-                      <Badge variant="secondary" className="font-mono text-xs">
-                        {shortcut.key}
-                      </Badge>
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
+        <DialogTitle className="text-2xl font-bold">Keyboard Shortcuts</DialogTitle>
+        <DialogDescription className="sr-only">
+          View all available keyboard shortcuts
+        </DialogDescription>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <ScrollArea className="h-[500px] pr-4">
+              <div className="space-y-6">
+                {Object.entries(groupedShortcuts).map(([category, shortcuts]) => (
+                  <div key={category}>
+                    <h3 className="font-semibold text-sm mb-3">{category}</h3>
+                    <div className="space-y-2">
+                      {shortcuts.map((shortcut, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50"
+                        >
+                          <span className="text-sm">{shortcut.description}</span>
+                          <Badge variant="secondary" className="font-mono text-xs">
+                            {shortcut.key}
+                          </Badge>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <Separator className="mt-4" />
+                    <Separator className="mt-4" />
+                  </div>
+                ))}
               </div>
-            ))}
+            </ScrollArea>
           </div>
-        </ScrollArea>
+        </div>
 
         <div className="pt-4 border-t">
           <p className="text-xs text-muted-foreground text-center">
