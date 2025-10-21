@@ -13,7 +13,7 @@ import {
   Code, Terminal, Globe, Database, Lock, Package,
   ChevronRight, Sparkles, Building2, Crown, TrendingUp,
   ArrowRight, Server, Cloud, Cpu, HardDrive, Gauge,
-  Shield2, Phone, MessageSquare, Mail, Headphones,
+  Shield, Phone, MessageSquare, Mail, Headphones,
   CreditCard, Award, BarChart3, Users2, Briefcase,
   Brain, Layers, GitBranch, Timer, Infinity, CheckCircle2
 } from 'lucide-react';
@@ -546,7 +546,7 @@ export default function Pricing() {
               
               <div className="grid sm:grid-cols-2 gap-4 pt-4">
                 <div className="flex items-center gap-3">
-                  <Shield2 className="h-5 w-5 text-green-400" />
+                  <Shield className="h-5 w-5 text-green-400" />
                   <span>SOC 2 Type II Certified</span>
                 </div>
                 <div className="flex items-center gap-3">

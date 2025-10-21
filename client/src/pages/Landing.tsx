@@ -15,7 +15,7 @@ import {
   BookOpen, Store, Briefcase, ListTodo, CloudSun, PenTool,
   Layers, BarChart3, Settings, Palette, Workflow, Brain,
   TrendingUp, Users2, Building2, Award, Timer, Gauge,
-  FileCode2, Server, Shield2, Smartphone, Monitor, Laptop
+  FileCode2, Server, Shield, Smartphone, Monitor, Laptop
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { MarketingLayout } from '@/components/layout/MarketingLayout';
@@ -91,7 +91,7 @@ export default function Landing() {
       description: 'Advanced AI agents that understand context, write production code, and deploy automatically'
     },
     {
-      icon: <Shield2 className="h-6 w-6" />,
+      icon: <Shield className="h-6 w-6" />,
       title: 'Bank-Level Security',
       description: 'SOC 2 Type II certified with end-to-end encryption, RBAC, and continuous security monitoring'
     },
