@@ -1,11 +1,11 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Search, X, File, FolderOpen, Code, FileText, Image,
+import { 
+  Search, X, File, FolderOpen, Code, FileText, Image, 
   Archive, GitBranch, Clock, Filter, ChevronRight,
   SortAsc, FileCode
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -79,7 +79,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
     useRegex: false
   });
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-
+  
   const searchInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -124,7 +124,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
 
       const data = await response.json();
       setResults(data.results || []);
-
+      
       // Add to recent searches
       if (!recentSearches.includes(debouncedQuery)) {
         const updated = [debouncedQuery, ...recentSearches.slice(0, 9)];
@@ -165,7 +165,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
       const response = await fetch(`/api/files/${result.id}`, {
         credentials: 'include'
       });
-
+      
       if (response.ok) {
         const file = await response.json();
         onFileSelect(file);
@@ -216,7 +216,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
                 <span className="font-medium text-sm">{result.name}</span>
                 <span className="text-xs text-muted-foreground">{result.path}</span>
               </div>
-
+              
               {result.matches.length > 0 && (
                 <div className="mt-1">
                   <Button
@@ -254,7 +254,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
               )}
             </div>
           </div>
-
+          
           {result.language && (
             <Badge variant="secondary" className="text-xs">
               {result.language}
@@ -267,14 +267,10 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] p-0">
-        <DialogTitle className="sr-only">Global Search</DialogTitle>
-        <DialogDescription className="sr-only">
-          Search across files, projects, and documentation
-        </DialogDescription>
+      <DialogContent className="max-w-4xl max-h-[80vh] p-0">
         <div className="flex flex-col h-full">
           {/* Search Header */}
-          <div className="p-4 border-b space-y-3">
+          <div className="p-4 border-b">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -314,7 +310,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
                 <Checkbox
                   id="case-sensitive"
                   checked={filters.caseSensitive}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked) => 
                     setFilters({ ...filters, caseSensitive: !!checked })
                   }
                 />
@@ -322,12 +318,12 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
                   Case sensitive
                 </Label>
               </div>
-
+              
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="whole-word"
                   checked={filters.wholeWord}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked) => 
                     setFilters({ ...filters, wholeWord: !!checked })
                   }
                 />
@@ -340,7 +336,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
                 <Checkbox
                   id="use-regex"
                   checked={filters.useRegex}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked) => 
                     setFilters({ ...filters, useRegex: !!checked })
                   }
                 />
