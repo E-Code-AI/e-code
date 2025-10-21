@@ -13,7 +13,7 @@ import {
   Code, Terminal, Globe, Database, Lock, Package,
   ChevronRight, Sparkles, Building2, Crown, TrendingUp,
   ArrowRight, Server, Cloud, Cpu, HardDrive, Gauge,
-  Shield, Phone, MessageSquare, Mail, Headphones,
+  Phone, MessageSquare, Mail, Headphones,
   CreditCard, Award, BarChart3, Users2, Briefcase,
   Brain, Layers, GitBranch, Timer, Infinity, CheckCircle2
 } from 'lucide-react';
