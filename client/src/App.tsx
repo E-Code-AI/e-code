@@ -1,8 +1,8 @@
 // @ts-nocheck
-import { Switch, Route, useLocation, useRoute } from "wouter";
 import { useEffect, useState, lazy, Suspense } from "react";
-import { queryClient } from "./lib/queryClient";
+import { Switch, Route, useLocation, useRoute } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ECodeLoading } from "@/components/ECodeLoading";

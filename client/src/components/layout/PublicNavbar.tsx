@@ -10,10 +10,9 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from '@/components/ui/navigation-menu';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import {
   Menu,
   X,
@@ -25,7 +24,6 @@ import {
 } from 'lucide-react';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { ECodeLogo } from '@/components/ECodeLogo';
-import './MobileNavigation.css';
 
 export function PublicNavbar() {
   const [, navigate] = useLocation();
@@ -193,7 +191,7 @@ export function PublicNavbar() {
   const primaryCta = (
     <Button
       onClick={() => window.location.href = '/register'}
-      className="hidden sm:inline-flex bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-[var(--ecode-text)] dark:text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/25"
+      className="hidden sm:inline-flex bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/25"
     >
       Get started
     </Button>
@@ -249,72 +247,173 @@ export function PublicNavbar() {
 
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-[var(--ecode-text)] dark:text-slate-100">
+                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-slate-100">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-full sm:w-[420px] bg-[var(--ecode-surface)] text-[var(--ecode-text)] dark:bg-slate-950/95 dark:text-[var(--ecode-text)] dark:text-slate-100 border-l border-white/10">
-                  <SheetHeader className="mb-6">
+                <SheetContent side="right" className="w-full sm:w-[380px] p-0 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+                  {/* Simple Mobile Header */}
+                  <div className="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3">
                     <div className="flex items-center justify-between">
                       <ECodeLogo size="sm" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                      </Button>
                     </div>
-                    <div className="mt-4 relative">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ecode-text-muted)] dark:text-slate-400" />
-                      <Input
-                        placeholder="Search documentation, templates, or people"
-                        className="pl-9 bg-white/5 border-white/10 text-[var(--ecode-text)] dark:text-slate-100 placeholder:text-[var(--ecode-text-muted)] dark:text-slate-400"
-                      />
-                    </div>
-                  </SheetHeader>
+                  </div>
 
-                  <div className="px-6">
+                  {/* Simple CTA Buttons */}
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                     <Button
-                      className="w-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-[var(--ecode-text)] dark:text-white shadow-lg shadow-blue-500/20"
+                      className="w-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400"
                       onClick={() => window.location.href = '/register'}
                     >
-                      Create your account
+                      Get Started
                     </Button>
                     <Button
-                      variant="ghost"
-                      className="mt-3 w-full border border-white/10 text-[var(--ecode-text-secondary)] dark:text-slate-200 hover:text-white dark:hover:text-white"
+                      variant="outline"
+                      className="mt-2 w-full border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
                       onClick={() => window.location.href = '/login'}
                     >
-                      Sign in
+                      Sign In
                     </Button>
                   </div>
 
-                  <SheetTitle className="px-6 pt-8 pb-3 text-xs uppercase tracking-[0.3em] text-[var(--ecode-text-muted)] dark:text-slate-400">
-                    Navigation
-                  </SheetTitle>
-                  <ScrollArea className="h-[55vh] px-6">
-                    <div className="space-y-8 pb-8">
-                      {[{ title: 'Product', items: productItems }, { title: 'Solutions', items: solutionsItems }, { title: 'Resources', items: resourcesItems }, { title: 'Company', items: companyItems }].map((section) => (
-                        <div key={section.title}>
-                          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ecode-text-muted)] dark:text-slate-400 mb-3">
-                            {section.title}
-                          </p>
-                          <div className="space-y-3">
-                            {section.items.map((item) => (
-                              <button
-                                key={item.title}
-                                onClick={() => {
-                                  setMobileMenuOpen(false);
-                                  setTimeout(() => navigate(item.href), 120);
-                                }}
-                                className="w-full text-left rounded-xl border border-white/10 bg-white/[0.04] p-4 transition hover:bg-white/[0.08]"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white">{item.title}</span>
-                                  <ChevronRight className="h-4 w-4 text-[var(--ecode-text-muted)] dark:text-slate-400" />
-                                </div>
-                                <p className="mt-2 text-xs text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
-                                  {item.description}
-                                </p>
-                              </button>
-                            ))}
-                          </div>
+                  {/* Clean Navigation Sections */}
+                  <ScrollArea className="h-[calc(100vh-180px)]">
+                    <div className="p-4 space-y-6">
+                      {/* Product Section */}
+                      <div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                          Product
+                        </h3>
+                        <div className="space-y-1">
+                          {productItems.map((item) => (
+                            <button
+                              key={item.title}
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                navigate(item.href);
+                              }}
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {item.title}
+                              </div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                {item.description}
+                              </div>
+                            </button>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+
+                      {/* Solutions Section */}
+                      <div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                          Solutions
+                        </h3>
+                        <div className="space-y-1">
+                          {solutionsItems.map((item) => (
+                            <button
+                              key={item.title}
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                navigate(item.href);
+                              }}
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {item.title}
+                              </div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                {item.description}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Resources Section */}
+                      <div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                          Resources
+                        </h3>
+                        <div className="space-y-1">
+                          {resourcesItems.map((item) => (
+                            <button
+                              key={item.title}
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                navigate(item.href);
+                              }}
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {item.title}
+                              </div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                {item.description}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Company Section */}
+                      <div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                          Company
+                        </h3>
+                        <div className="space-y-1">
+                          {companyItems.map((item) => (
+                            <button
+                              key={item.title}
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                navigate(item.href);
+                              }}
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {item.title}
+                              </div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                {item.description}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Footer Links */}
+                      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              navigate('/pricing');
+                            }}
+                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors"
+                          >
+                            Pricing
+                          </button>
+                          <button
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              navigate('/team');
+                            }}
+                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors"
+                          >
+                            Teams
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </ScrollArea>
                 </SheetContent>

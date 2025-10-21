@@ -312,7 +312,7 @@ export default function Dashboard() {
       >
         <div className="flex flex-col items-center gap-8">
           <CreditBalance />
-          <form onSubmit={handleCreateProject} className="w-full max-w-3xl">
+          <form onSubmit={handleCreateProject} className="w-full max-w-3xl px-4 sm:px-0">
             <div className="relative">
               <div className="rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface)] p-1 shadow-sm transition-shadow duration-200 hover:shadow-md">
                 <div className="flex items-center gap-2">
@@ -330,6 +330,7 @@ export default function Dashboard() {
                         }
                       }}
                       aria-label="Describe your project idea"
+                      data-testid="input-project-prompt"
                     />
                   </div>
                   <div className="flex items-center gap-1">
@@ -362,7 +363,7 @@ export default function Dashboard() {
             <p className="mb-4 text-sm font-medium text-[var(--ecode-text-secondary)]">
               Or try these popular examples:
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2 px-4 sm:px-0">
               {popularExamples.map((example) => {
                 const Icon = example.icon;
                 return (
@@ -377,10 +378,12 @@ export default function Dashboard() {
                         inputRef.current.setSelectionRange(example.prompt.length, example.prompt.length);
                       }
                     }}
-                    className="h-10 gap-2 rounded-xl border-[var(--ecode-border)] px-5 text-sm font-medium text-[var(--ecode-text-secondary)] shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50/70 focus-visible:ring-2 focus-visible:ring-violet-500/40"
+                    className="h-10 gap-2 rounded-xl border-[var(--ecode-border)] px-4 sm:px-5 text-sm font-medium text-[var(--ecode-text-secondary)] shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50/70 dark:hover:bg-violet-950/20 focus-visible:ring-2 focus-visible:ring-violet-500/40"
+                    data-testid={`button-example-${example.id}`}
                   >
                     <Icon className="h-4 w-4" />
-                    {example.label}
+                    <span className="hidden sm:inline">{example.label}</span>
+                    <span className="sm:hidden text-xs">{example.label.split(' ')[0]}</span>
                   </Button>
                 );
               })}
@@ -406,53 +409,62 @@ export default function Dashboard() {
             </Button>
           </div>
           
-          {/* Search and Filter Bar */}
-          <div className="flex items-center gap-3 mb-6">
-            {/* Search input */}
-            <div className="flex-1 relative">
+          {/* Search and Filter Bar - Mobile Responsive */}
+          <div className="flex flex-col gap-3 mb-6 sm:gap-4">
+            {/* Search input - Full width on mobile */}
+            <div className="w-full relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ecode-text-secondary)]" />
               <input
                 type="text"
                 placeholder="Search projects..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-lg text-sm text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                className="w-full pl-9 pr-3 py-2.5 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-lg text-sm text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                data-testid="input-search-projects"
               />
             </div>
             
-            {/* Filter buttons */}
-            <div className="flex items-center gap-2 border-l pl-3">
-              {projectTags.map(tag => (
+            {/* Filter buttons and View mode - Responsive row */}
+            <div className="flex items-center justify-between gap-3">
+              {/* Filter buttons - Scrollable on mobile */}
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1">
+                {projectTags.map(tag => (
+                  <Button
+                    key={tag}
+                    variant={filterTag === tag ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-8 px-3 text-xs capitalize whitespace-nowrap"
+                    onClick={() => setFilterTag(tag)}
+                    data-testid={`button-filter-${tag}`}
+                  >
+                    {tag === 'all' ? 'All' : tag}
+                  </Button>
+                ))}
+              </div>
+              
+              {/* View mode toggle - Always visible */}
+              <div className="flex items-center gap-1 border-l border-[var(--ecode-border)] pl-3">
                 <Button
-                  key={tag}
-                  variant={filterTag === tag ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-8 px-3 text-xs capitalize"
-                  onClick={() => setFilterTag(tag)}
+                  variant={viewMode === 'grid' ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setViewMode('grid')}
+                  aria-label="Grid view"
+                  data-testid="button-view-grid"
                 >
-                  {tag === 'all' ? 'All' : tag}
+                  <Grid3x3 className="h-3.5 w-3.5" />
                 </Button>
-              ))}
-            </div>
-            
-            {/* View mode toggle */}
-            <div className="flex items-center gap-1 border-l pl-3">
-              <Button
-                variant={viewMode === 'grid' ? "secondary" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid3x3 className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? "secondary" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="h-3.5 w-3.5" />
-              </Button>
+                <Button
+                  variant={viewMode === 'list' ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setViewMode('list')}
+                  aria-label="List view"
+                  data-testid="button-view-list"
+                >
+                  <List className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -465,8 +477,8 @@ export default function Dashboard() {
               </p>
             </Card>
           ) : viewMode === 'grid' ? (
-            // Grid view with enhanced cards
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            // Grid view with enhanced cards - Responsive
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredProjects.map((project) => (
                 <Card 
                   key={project.id}
@@ -476,6 +488,7 @@ export default function Dashboard() {
                     const projectUrl = project.slug ? `/u/${ownerUsername}/${project.slug}` : `/project/${project.id}`;
                     navigate(projectUrl);
                   }}
+                  data-testid={`card-project-${project.id}`}
                 >
                   {/* Thumbnail/Preview area */}
                   <div className="aspect-video bg-gradient-to-br from-violet-500/10 to-blue-500/10 border-b border-[var(--ecode-border)] relative">
@@ -491,10 +504,10 @@ export default function Dashboard() {
                   </div>
                   
                   {/* Card content */}
-                  <div className="p-4">
+                  <div className="p-4 sm:p-5">
                     <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base text-[var(--ecode-text)] truncate">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <h3 className="font-semibold text-base text-[var(--ecode-text)] truncate" data-testid={`text-project-name-${project.id}`}>
                           {project.name}
                         </h3>
                         <p className="text-xs text-[var(--ecode-text-secondary)] mt-1 line-clamp-2">
@@ -576,7 +589,7 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            // List view (existing style but enhanced)
+            // List view - Mobile Responsive
             <div className="space-y-3">
               {filteredProjects.map((project) => (
                 <div
@@ -586,23 +599,25 @@ export default function Dashboard() {
                     const projectUrl = getProjectUrl(project, user?.username);
                     navigate(projectUrl);
                   }}
+                  data-testid={`row-project-${project.id}`}
                 >
-                  <div className="flex items-center gap-3">
-                    {getProjectIcon(project)}
+                  <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                    <div className="hidden sm:block">{getProjectIcon(project)}</div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-base text-[var(--ecode-text)]">
+                      <h3 className="font-medium text-base text-[var(--ecode-text)]" data-testid={`text-project-name-${project.id}`}>
                         {project.name}
                       </h3>
-                      <p className="text-sm text-[var(--ecode-text-secondary)]">
+                      <p className="text-sm text-[var(--ecode-text-secondary)] mt-0.5">
                         {getTimeAgo(project.updatedAt)}
                       </p>
                     </div>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                       {project.isDeployed && (
                         <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
                           <CheckCircle2 className="h-4 w-4" />
-                          <span className="text-sm">Deployed</span>
+                          <span className="text-sm hidden sm:inline">Deployed</span>
+                          <span className="text-xs sm:hidden">Live</span>
                         </div>
                       )}
                       

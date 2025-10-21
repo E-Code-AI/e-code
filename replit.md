@@ -51,6 +51,22 @@ Features a streamlined interface with a 4-tab layout (Files, Preview, Features, 
 The `.replit` file is configured for Replit Reserved VM deployment with `deploymentTarget = "cloudrun"`. It specifies `npm install` for building and `npm run dev` for running. A 4-port configuration is used, mapping local ports 5000, 3200, 8080, and 8081 to their respective external ports for the main Express server, MCP server, Go Runtime, and Python ML service.
 
 ## Recent Changes (October 20, 2025)
+
+### Critical Bug Fixes
+- **Deployment Button Hanging Fix**: Resolved critical issue where publish/deploy button would get stuck in loading state.
+  - Refactored DeploymentManager to use truly non-blocking container creation via `setTimeout(() => fetch(), 0)` pattern
+  - Implemented manual AbortController with 30-second timeout for better browser compatibility
+  - Container creation now runs fire-and-forget, cannot block deployment flow
+  - Proper cleanup with clearTimeout prevents memory leaks
+  - Clear error messages distinguish timeouts from other failures
+  - Files modified: client/src/components/DeploymentManager.tsx
+
+- **Workspace Loading Error Fix**: Fixed "useQuery is not defined" error preventing workspace from rendering.
+  - Added missing `import { useQuery } from '@tanstack/react-query'` to NixConfig.tsx
+  - Workspace editor now loads correctly, showing file tree, editor toolbar, and deploy button
+  - Files modified: client/src/components/NixConfig.tsx
+
+### Platform Updates
 - **Google Cloud Platform Removal**: All Google Cloud dependencies and deployment references removed. Platform now exclusively uses Replit Reserved VM deployment.
   - Removed packages: @google-cloud/storage, @google/genai, @google/generative-ai, googleapis, google-auth-library
   - Replaced Google Cloud Storage with Replit's built-in Object Storage (server/services/real-object-storage.ts)
@@ -59,6 +75,14 @@ The `.replit` file is configured for Replit Reserved VM deployment with `deploym
   - Removed Google Drive MCP integration from server/mcp/server.ts
   - Updated all documentation (replit.md, README.md, docs/) to focus on Replit Reserved VM deployment only
   - AI providers now limited to: Anthropic Claude, OpenAI, Together AI, Replicate, Hugging Face, Groq, Anyscale
+
+- **Dashboard Responsiveness Enhancements**: Upgraded dashboard to Fortune 500-grade responsive design.
+  - Search/filter bar: Stacks vertically on mobile, horizontal scrolling for filter pills with hidden scrollbar
+  - Project grid: 1 column (mobile), 2 columns (tablet), 3 columns (desktop), 4 columns (large desktop)
+  - List view: Optimized for mobile with hidden icons and condensed deployment badges
+  - Popular examples: Shortened labels on mobile for better UX
+  - Added comprehensive data-testid attributes for automated testing
+  - Enhanced dark mode support for all interactive elements
 
 ## External Dependencies
 - **AI Integration**: Anthropic Claude API, OpenAI API, Together AI, Replicate, Hugging Face, Groq, Anyscale.
@@ -74,3 +98,33 @@ The `.replit` file is configured for Replit Reserved VM deployment with `deploym
 - **Containerization**: Docker.
 - **Caching**: Redis/ioredis.
 - **CDN**: Replit's built-in CDN.
+
+## Common Development Commands
+
+### Database Operations
+- `npm run db:push` - Push schema changes to database
+- `npm run db:seed` - Seed database with initial data
+- Database automatically initializes on first run
+
+### Development
+- `npm run dev` - Start development server (runs automatically)
+- Server runs on port 5000 (mapped to port 80 in production)
+- Hot reload enabled for both frontend and backend
+
+### File Operations
+- Files are auto-saved via the IDE
+- Use the File Explorer in the left panel to manage files
+- Support for drag-and-drop file uploads
+
+### AI Agent Usage
+- Use the AI Agent panel (right sidebar) for code generation
+- Select code in editor and use Ctrl/Cmd + I to invoke AI assistance
+- AI has full context of project structure and recent changes
+
+## Project Structure
+- `/client` - React frontend application
+- `/server` - Express.js backend services
+- `/shared` - Shared TypeScript types and schemas
+- `/services` - Polyglot backend services (Go runtime, Python ML)
+- `/docs` - Platform documentation
+- `/migrations` - Database migration files

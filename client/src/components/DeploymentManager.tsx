@@ -266,59 +266,80 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     
     setIsDeploying(true);
     try {
-      // First create the container environment
-      const containerResponse = await fetch(`/api/projects/${actualProjectId}/container`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-
-      if (!containerResponse.ok) {
-        throw new Error('Failed to create container environment');
-      }
-
-      // Then trigger deployment
-      const response = await fetch(`/api/projects/${actualProjectId}/deploy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          type: 'autoscale',
-          regions: ['us-east-1'],
-          environment: 'production',
-          sslEnabled: true,
-          customDomain: customDomain || undefined,
-          scaling: {
-            minInstances: 1,
-            maxInstances: 3,
-            targetCPU: 70,
-            targetMemory: 70
-          }
+      // Start container creation in background (truly fire-and-forget)
+      // This runs async and doesn't block deployment
+      setTimeout(() => {
+        fetch(`/api/projects/${actualProjectId}/container`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
         })
-      });
+          .then(response => {
+            if (response.ok) {
+              console.log('Container environment created successfully');
+            }
+          })
+          .catch(err => {
+            // Silently log errors - deployment handles container creation if needed
+            console.log('Background container creation:', err.message);
+          });
+      }, 0);
 
-      if (response.ok) {
-        const result = await response.json();
-        await loadDeployments();
-        setShowDeployDialog(false);
-        setDeploymentName('');
-        setCustomDomain('');
-        toast({
-          title: "Deployment Started",
-          description: `Your application is being deployed. Deployment ID: ${result.deploymentId}`,
+      // Trigger deployment directly with manual timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      try {
+        const response = await fetch(`/api/projects/${actualProjectId}/deploy`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          signal: controller.signal,
+          body: JSON.stringify({
+            type: 'autoscale',
+            regions: ['us-east-1'],
+            environment: 'production',
+            sslEnabled: true,
+            customDomain: customDomain || undefined,
+            scaling: {
+              minInstances: 1,
+              maxInstances: 3,
+              targetCPU: 70,
+              targetMemory: 70
+            }
+          })
         });
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Deployment Failed",
-          description: error.message || "Failed to start deployment",
-          variant: "destructive"
-        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const result = await response.json();
+          await loadDeployments();
+          setShowDeployDialog(false);
+          setDeploymentName('');
+          setCustomDomain('');
+          toast({
+            title: "Deployment Started",
+            description: `Your application is being deployed. Deployment ID: ${result.deploymentId}`,
+          });
+        } else {
+          const error = await response.json();
+          toast({
+            title: "Deployment Failed",
+            description: error.message || "Failed to start deployment",
+            variant: "destructive"
+          });
+        }
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        throw fetchError;
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Deployment error:', error);
+      const isTimeout = error.name === 'AbortError' || error.name === 'TimeoutError';
       toast({
         title: "Deployment Failed",
-        description: "Failed to start deployment",
+        description: isTimeout ? "Deployment request timed out. Please try again." : "Failed to start deployment. Please try again.",
         variant: "destructive"
       });
     } finally {
