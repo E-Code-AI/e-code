@@ -19,7 +19,13 @@ import { databaseQueryOptimizer } from "./services/database-query-optimizer";
 
 const app = express();
 
-if (config.monitoring.sentryDsn) {
+// Memory optimization: Only initialize Sentry in production
+const isProduction = process.env.NODE_ENV === 'production';
+const disableMonitoring = process.env.DISABLE_MONITORING === '1';
+const disablePolyglot = process.env.DISABLE_POLYGLOT === '1';
+const disablePreview = process.env.DISABLE_PREVIEW === '1';
+
+if (config.monitoring.sentryDsn && isProduction && !disableMonitoring) {
   Sentry.init({
     dsn: config.monitoring.sentryDsn,
     environment: config.environment,

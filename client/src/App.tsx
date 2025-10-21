@@ -249,18 +249,35 @@ function AtSymbolRedirectHandler({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const [location] = useLocation();
   const { isLoading: authLoading } = useAuth();
+  const [showContent, setShowContent] = useState(false);
 
+  useEffect(() => {
+    // Set a timeout to show content after 2 seconds if auth is still loading
+    // This prevents indefinite loading states
+    const timer = setTimeout(() => {
+      if (authLoading) {
+        console.log('Auth loading timeout reached, showing content');
+        setShowContent(true);
+      }
+    }, 2000);
 
-  // Temporarily disabled to debug blank page issue
-  // Show loading state while authentication is being checked
-  // This prevents premature route matching and 404s
-  // if (authLoading) {
-  //   return (
-  //     <div className="flex items-center justify-center min-h-screen bg-background">
-  //       <ECodeLoading fullScreen size="lg" text="Initializing authentication..." />
-  //     </div>
-  //   );
-  // }
+    // If auth loading finishes, show content immediately
+    if (!authLoading) {
+      setShowContent(true);
+    }
+
+    return () => clearTimeout(timer);
+  }, [authLoading]);
+
+  // Show loading state only for the first 2 seconds
+  // After that, show the content even if auth is still loading
+  if (authLoading && !showContent) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <ECodeLoading fullScreen size="lg" text="Initializing..." />
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>

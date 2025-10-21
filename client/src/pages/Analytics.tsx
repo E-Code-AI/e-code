@@ -138,13 +138,15 @@ export default function Analytics() {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                      <Badge 
-                        variant={stat.trend === 'up' ? 'default' : 'secondary'}
-                        className={stat.trend === 'up' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                      >
-                        {stat.change}
-                      </Badge>
+                      <p className="text-2xl font-bold">{stat.value || '0'}</p>
+                      {stat.change && (
+                        <Badge 
+                          variant={stat.trend === 'up' ? 'default' : 'secondary'}
+                          className={stat.trend === 'up' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                        >
+                          {stat.change}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <div className="p-3 bg-primary/10 rounded-full">
@@ -294,8 +296,8 @@ export default function Analytics() {
                           <p className="text-sm text-muted-foreground">{page.views} views</p>
                         </div>
                       </div>
-                      <Badge variant={page.change.startsWith('+') ? 'default' : 'secondary'}>
-                        {page.change}
+                      <Badge variant={page.change && page.change.startsWith('+') ? 'default' : 'secondary'}>
+                        {page.change || '0%'}
                       </Badge>
                     </div>
                   ))}
