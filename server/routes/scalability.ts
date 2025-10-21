@@ -6,7 +6,6 @@
 
 import { Request, Response, Router } from 'express';
 import { scalabilityOrchestrator } from '../services/scalability-orchestrator';
-import { loadBalancer } from '../services/load-balancer';
 import { redisCache } from '../services/redis-cache';
 import { DatabasePoolManager } from '../services/database-pool';
 import { cdnOptimization } from '../services/cdn-optimization';
@@ -25,12 +24,10 @@ const cdnService = cdnOptimization;
 router.get('/cluster/status', async (req: Request, res: Response) => {
   try {
     const clusterStatus = scalabilityOrchestrator.getClusterStatus();
-    const loadBalancerStats = loadBalancer.getStatistics();
     
     res.json({
       status: 'operational',
       cluster: clusterStatus,
-      loadBalancer: loadBalancerStats,
       services: {
         redis: 'active',
         database: 'pooled',
