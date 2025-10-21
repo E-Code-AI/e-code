@@ -115,7 +115,6 @@ import { realTerminalService } from "./terminal/real-terminal";
 import { realPackageManager } from "./services/real-package-manager";
 import { realWebSearchService } from "./services/real-web-search";
 import { realEmailService } from "./services/real-email-service";
-import { dockerExecutor } from "./execution/docker-executor";
 import { realCodeGenerator } from "./ai/real-code-generator";
 import { realCollaborationService } from "./collaboration/real-collaboration";
 import { agentWebSocketService } from './services/agent-websocket-service';
