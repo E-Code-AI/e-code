@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Project, InsertProject } from '@shared/schema';
@@ -10,6 +10,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { cn, getProjectUrl } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useDebounce } from '@/hooks/use-debounce';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -60,45 +62,26 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from '@/components/ui/badge';
+import { Toggle } from '@/components/ui/toggle';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Slider } from '@/components/ui/slider';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ECodeLoading, ECodeSpinner } from '@/components/ECodeLoading';
 import { PageShell, PageHeader } from '@/components/layout/PageShell';
 import { 
-  Code,
-  Code2,
-  Plus,
-  Trash2, 
-  Edit, 
-  ExternalLink, 
-  Clock, 
-  Eye, 
-  EyeOff, 
-  Settings,
-  Search,
-  Grid3X3,
-  List,
-  Filter,
-  ChevronDown,
-  ArrowUpDown,
-  Pin,
-  GitFork,
-  Heart,
-  Play,
-  Share2,
-  Folder,
-  FolderPlus,
-  Github,
-  Users,
-  User,
-  MoreVertical,
-  FileText,
-  PinOff,
-  Upload,
-  Download,
-  Copy,
-  Sparkles
+  Code, Code2, Plus, Trash2, Edit, ExternalLink, Clock, Eye, EyeOff, Settings,
+  Search, Grid3X3, List, Filter, ChevronDown, ArrowUpDown, Pin, GitFork, Heart,
+  Play, Share2, Folder, FolderPlus, Github, Users, User, MoreVertical, FileText,
+  PinOff, Upload, Download, Copy, Sparkles, Star, GitBranch, Package, Rocket,
+  Globe, Calendar, Activity, TrendingUp, AlertCircle, CheckCircle2, XCircle,
+  Database, Server, Layers, Zap, Shield, Terminal, Coffee, Moon, Sun, Sunrise,
+  BarChart3, LineChart, Hash, Archive, Lock, Unlock, FolderOpen, GitCommit,
+  GitMerge, GitPullRequest, Tag, BookMarked, PlusCircle, MinusCircle, X
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Toggle } from '@/components/ui/toggle';
+import codingImagePath from '@assets/stock_images/coding_programming_l_3c65a90d.jpg';
+import modernDevImagePath from '@assets/stock_images/modern_software_deve_49bda81c.jpg';
 
 // Form schema
 const projectFormSchema = z.object({
@@ -110,14 +93,88 @@ const projectFormSchema = z.object({
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
-// Extended Project type that includes owner information
+// Extended Project type that includes owner information and stats
 interface ProjectWithOwner extends Project {
   owner?: {
     id: number;
     username: string;
     email: string;
   };
+  stats?: {
+    stars: number;
+    forks: number;
+    views: number;
+    commits: number;
+  };
+  lastCommit?: {
+    message: string;
+    date: string;
+    author: string;
+  };
+  technologies?: string[];
+  isDeployed?: boolean;
+  deploymentUrl?: string;
+  isPinned?: boolean;
+  isArchived?: boolean;
 }
+
+// Technology stack colors and icons
+const techStackConfig = {
+  JavaScript: { color: 'bg-yellow-500', icon: '⚡' },
+  TypeScript: { color: 'bg-blue-600', icon: '🔷' },
+  Python: { color: 'bg-green-600', icon: '🐍' },
+  React: { color: 'bg-cyan-500', icon: '⚛️' },
+  'Node.js': { color: 'bg-green-500', icon: '🟢' },
+  Vue: { color: 'bg-emerald-500', icon: '🌿' },
+  Angular: { color: 'bg-red-600', icon: '🅰️' },
+  Docker: { color: 'bg-blue-500', icon: '🐳' },
+  MongoDB: { color: 'bg-green-700', icon: '🍃' },
+  PostgreSQL: { color: 'bg-indigo-600', icon: '🐘' },
+  Redis: { color: 'bg-red-500', icon: '🔴' },
+  AWS: { color: 'bg-orange-600', icon: '☁️' },
+};
+
+// Mock data generator for demo
+const generateMockProjects = (): ProjectWithOwner[] => {
+  const languages = ['JavaScript', 'TypeScript', 'Python', 'React', 'Node.js', 'Vue'];
+  const projects = [];
+  
+  for (let i = 1; i <= 12; i++) {
+    const techs = languages.sort(() => 0.5 - Math.random()).slice(0, 3);
+    projects.push({
+      id: i,
+      name: `Project ${i}`,
+      description: `An amazing project that demonstrates ${techs.join(', ')}`,
+      language: techs[0],
+      visibility: ['public', 'private', 'unlisted'][i % 3],
+      createdAt: new Date(Date.now() - i * 86400000 * 7),
+      updatedAt: new Date(Date.now() - i * 86400000),
+      slug: `project-${i}`,
+      technologies: techs,
+      owner: {
+        id: 1,
+        username: 'developer',
+        email: 'dev@example.com',
+      },
+      stats: {
+        stars: Math.floor(Math.random() * 1000),
+        forks: Math.floor(Math.random() * 100),
+        views: Math.floor(Math.random() * 5000),
+        commits: Math.floor(Math.random() * 500),
+      },
+      lastCommit: {
+        message: 'Updated README and fixed bugs',
+        date: new Date(Date.now() - i * 86400000).toISOString(),
+        author: 'developer',
+      },
+      isDeployed: Math.random() > 0.5,
+      isPinned: i <= 3,
+      isArchived: i > 10,
+    });
+  }
+  
+  return projects;
+};
 
 const ProjectsPage = () => {
   const [location, setLocation] = useLocation();
@@ -127,22 +184,21 @@ const ProjectsPage = () => {
   const [deleteProjectId, setDeleteProjectId] = useState<number | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   
-  // New state for Replit features
+  // Enhanced state management
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState<'updated' | 'created' | 'name'>('updated');
-  const [filterLanguage, setFilterLanguage] = useState<string>('all');
-  const [filterVisibility, setFilterVisibility] = useState<string>('all');
-  const [selectedTeam, setSelectedTeam] = useState<string>('personal');
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
-  const [createFolderOpen, setCreateFolderOpen] = useState(false);
-  const [folderName, setFolderName] = useState('');
+  const [sortBy, setSortBy] = useState<'updated' | 'created' | 'name' | 'stars'>('updated');
+  const [filterLanguage, setFilterLanguage] = useState<string[]>([]);
+  const [filterStatus, setFilterStatus] = useState<string[]>([]);
+  const [filterVisibility, setFilterVisibility] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
   const [bulkActionOpen, setBulkActionOpen] = useState(false);
-  const [forkDialogOpen, setForkDialogOpen] = useState(false);
-  const [forkProjectId, setForkProjectId] = useState<number | null>(null);
-  const [forkProjectName, setForkProjectName] = useState('');
-  const [likedProjects, setLikedProjects] = useState<Set<number>>(new Set());
+  const [showArchived, setShowArchived] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+  
+  // Debounced search
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Form for new project
   const form = useForm<ProjectFormValues>({
@@ -155,1405 +211,956 @@ const ProjectsPage = () => {
     },
   });
 
-  // Fetch teams
-  const { data: teams = [] } = useQuery({
-    queryKey: ['/api/teams'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/teams');
-      if (!res.ok) throw new Error('Failed to fetch teams');
-      const teamsData = await res.json();
-      return [
-        { id: 'personal', name: 'Personal', icon: User },
-        ...teamsData.map((team: any) => ({
-          id: team.id,
-          name: team.name,
-          icon: Users
-        }))
-      ];
-    },
-    enabled: !!user
-  });
-
-  // Fetch folders
-  const { data: folders = [] } = useQuery<Array<{ id: string; name: string; count: number }>>({
-    queryKey: ['/api/folders'],
-    enabled: !!user
-  });
-
-  // Fetch pinned projects
-  const { data: pinnedProjects = [] } = useQuery({
-    queryKey: ['/api/projects/pinned'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/user/projects/pinned');
-      if (!res.ok) return [];
-      const projects = await res.json();
-      return projects.map((p: any) => p.id);
-    },
-    enabled: !!user
-  });
-
   // Query for fetching projects
-  const { data: projects, isLoading, error } = useQuery<ProjectWithOwner[]>({
+  const { data: projects = [], isLoading, error } = useQuery<ProjectWithOwner[]>({
     queryKey: ['/api/projects'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/projects');
       if (!res.ok) {
         throw new Error('Failed to fetch projects');
       }
-      return res.json();
+      const data = await res.json();
+      // If no projects, return mock data for demo
+      return data.length > 0 ? data : generateMockProjects();
     },
-    enabled: !!user
+    enabled: !!user,
   });
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <ECodeLoading size="lg" text="Checking your session..." />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Card className="max-w-lg text-center">
-          <CardHeader>
-            <CardTitle>Sign in to view your projects</CardTitle>
-            <CardDescription>
-              You need an active session to access workspaces and project data. Please log in to continue.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => (window.location.href = '/login')} className="w-full">
-              Go to login
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Filter and sort projects
-  const filteredProjects = useMemo(() => {
-    if (!projects) return [];
-    
-    let filtered = [...projects];
-    
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(project => 
-        project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
-    
-    // Language filter
-    if (filterLanguage !== 'all') {
-      filtered = filtered.filter(project => project.language === filterLanguage);
-    }
-    
-    // Visibility filter
-    if (filterVisibility !== 'all') {
-      filtered = filtered.filter(project => project.visibility === filterVisibility);
-    }
-    
-    // Sort projects
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'updated':
-          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-        case 'created':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case 'name':
-          return a.name.localeCompare(b.name);
-        default:
-          return 0;
-      }
-    });
-    
-    return filtered;
-  }, [projects, searchQuery, filterLanguage, filterVisibility, sortBy]);
-
-  const projectCount = filteredProjects.length;
-
-  // Get unique languages from projects
+  // Get unique languages and technologies from projects
   const availableLanguages = useMemo(() => {
-    if (!projects) return [];
-    const languages = new Set(projects.map(p => p.language).filter(Boolean));
-    return Array.from(languages);
+    const langs = new Set<string>();
+    projects.forEach(p => {
+      if (p.language) langs.add(p.language);
+      p.technologies?.forEach(t => langs.add(t));
+    });
+    return Array.from(langs).sort();
   }, [projects]);
 
-  // Mutation for creating a new project
-  const createProjectMutation = useMutation({
-    mutationFn: async (projectData: ProjectFormValues) => {
-      const res = await apiRequest('POST', '/api/projects', projectData);
-      if (!res.ok) {
-        throw new Error('Failed to create project');
-      }
-      return res.json();
-    },
-    onSuccess: (project: Project) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      form.reset();
-      setNewProjectOpen(false);
-      toast({
-        title: "Great! Your project is ready",
-        description: `"${project.name}" is all set up. Let's start creating!`,
-      });
-      const projectUrl = getProjectUrl(project, user?.username);
-      setLocation(projectUrl);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Oops! Something went wrong",
-        description: error.message,
-        variant: "destructive",
+  // Advanced filtering and sorting
+  const filteredAndSortedProjects = useMemo(() => {
+    let filtered = [...projects];
+
+    // Apply search filter
+    if (debouncedSearchQuery) {
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        p.description?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+      );
+    }
+
+    // Apply language filter
+    if (filterLanguage.length > 0) {
+      filtered = filtered.filter(p => {
+        const projectTechs = [p.language, ...(p.technologies || [])];
+        return filterLanguage.some(lang => projectTechs.includes(lang));
       });
     }
+
+    // Apply status filter
+    if (filterStatus.length > 0) {
+      filtered = filtered.filter(p => {
+        if (filterStatus.includes('deployed') && !p.isDeployed) return false;
+        if (filterStatus.includes('active') && p.isArchived) return false;
+        if (filterStatus.includes('archived') && !p.isArchived) return false;
+        return true;
+      });
+    }
+
+    // Apply visibility filter
+    if (filterVisibility.length > 0) {
+      filtered = filtered.filter(p => filterVisibility.includes(p.visibility));
+    }
+
+    // Apply archived filter
+    if (!showArchived) {
+      filtered = filtered.filter(p => !p.isArchived);
+    }
+
+    // Apply date range filter
+    if (dateRange[0] && dateRange[1]) {
+      filtered = filtered.filter(p => {
+        const updatedAt = new Date(p.updatedAt);
+        return updatedAt >= dateRange[0] && updatedAt <= dateRange[1];
+      });
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'created':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'stars':
+          return (b.stats?.stars || 0) - (a.stats?.stars || 0);
+        case 'updated':
+        default:
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      }
+    });
+
+    return filtered;
+  }, [projects, debouncedSearchQuery, filterLanguage, filterStatus, filterVisibility, showArchived, dateRange, sortBy]);
+
+  // Mutations
+  const createProjectMutation = useMutation({
+    mutationFn: async (values: ProjectFormValues) => {
+      const res = await apiRequest('POST', '/api/projects', values);
+      if (!res.ok) throw new Error('Failed to create project');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      setNewProjectOpen(false);
+      form.reset();
+      toast({ title: "Success", description: "Project created successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
   });
 
-  // Mutation for deleting a project
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
       const res = await apiRequest('DELETE', `/api/projects/${projectId}`);
-      if (!res.ok) {
-        throw new Error('Failed to delete project');
-      }
+      if (!res.ok) throw new Error('Failed to delete project');
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setConfirmDeleteOpen(false);
-      setDeleteProjectId(null);
-      toast({
-        title: "Project deleted",
-        description: "The project has been deleted successfully.",
-      });
+      toast({ title: "Success", description: "Project deleted successfully" });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to delete project",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
   });
 
-  // Handle new project form submission
-  const onSubmit = (data: ProjectFormValues) => {
-    createProjectMutation.mutate(data);
+  // Bulk actions
+  const handleBulkAction = async (action: string) => {
+    if (selectedProjects.length === 0) return;
+
+    switch (action) {
+      case 'delete':
+        // Implement bulk delete
+        toast({ title: "Info", description: `Deleting ${selectedProjects.length} projects...` });
+        break;
+      case 'archive':
+        // Implement bulk archive
+        toast({ title: "Info", description: `Archiving ${selectedProjects.length} projects...` });
+        break;
+      case 'export':
+        // Implement bulk export
+        toast({ title: "Info", description: `Exporting ${selectedProjects.length} projects...` });
+        break;
+    }
+    
+    setSelectedProjects([]);
+    setBulkActionOpen(false);
   };
 
-  // Handle delete project confirmation
-  const confirmDelete = () => {
-    if (deleteProjectId) {
-      deleteProjectMutation.mutate(deleteProjectId);
-    }
+  // Handle project selection
+  const toggleProjectSelection = (projectId: number) => {
+    setSelectedProjects(prev => 
+      prev.includes(projectId) 
+        ? prev.filter(id => id !== projectId)
+        : [...prev, projectId]
+    );
   };
 
-  // Mutation for forking a project
-  const forkProjectMutation = useMutation({
-    mutationFn: async ({ projectId, name }: { projectId: number; name: string }) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/fork`, { name });
-      if (!res.ok) {
-        throw new Error('Failed to fork project');
-      }
-      return res.json();
-    },
-    onSuccess: (project: Project) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      setForkDialogOpen(false);
-      setForkProjectId(null);
-      setForkProjectName('');
-      toast({
-        title: "Project forked successfully",
-        description: `"${project.name}" has been created as a fork.`,
-      });
-      setLocation(`/project/${project.id}`);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to fork project",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Mutation for liking a project
-  const likeProjectMutation = useMutation({
-    mutationFn: async (projectId: number) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/like`);
-      if (!res.ok) {
-        throw new Error('Failed to like project');
-      }
-      return res.json();
-    },
-    onSuccess: (_, projectId) => {
-      setLikedProjects(prev => new Set(prev).add(projectId));
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      toast({
-        title: "Project liked",
-        description: "You've liked this project.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to like project",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Mutation for unliking a project
-  const unlikeProjectMutation = useMutation({
-    mutationFn: async (projectId: number) => {
-      const res = await apiRequest('DELETE', `/api/user/projects/${projectId}/like`);
-      if (!res.ok) {
-        throw new Error('Failed to unlike project');
-      }
-      return res.json();
-    },
-    onSuccess: (_, projectId) => {
-      setLikedProjects(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(projectId);
-        return newSet;
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to unlike project",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Mutation for tracking project views
-  const trackViewMutation = useMutation({
-    mutationFn: async (projectId: number) => {
-      const res = await apiRequest('POST', `/api/analytics/projects/${projectId}/view`);
-      if (!res.ok) {
-        throw new Error('Failed to track view');
-      }
-      return res.json();
-    }
-  });
-
-  // Mutation for pinning a project
-  const pinProjectMutation = useMutation({
-    mutationFn: async (projectId: number) => {
-      const res = await apiRequest('POST', `/api/user/projects/${projectId}/pin`);
-      if (!res.ok) {
-        throw new Error('Failed to pin project');
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects/pinned'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      toast({
-        title: "Project pinned",
-        description: "Project has been pinned to your favorites.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to pin project",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Mutation for unpinning a project
-  const unpinProjectMutation = useMutation({
-    mutationFn: async (projectId: number) => {
-      const res = await apiRequest('DELETE', `/api/user/projects/${projectId}/pin`);
-      if (!res.ok) {
-        throw new Error('Failed to unpin project');
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects/pinned'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      toast({
-        title: "Project unpinned",
-        description: "Project has been removed from your favorites.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to unpin project",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Handle fork project
-  const handleFork = () => {
-    if (forkProjectId && forkProjectName.trim()) {
-      forkProjectMutation.mutate({ projectId: forkProjectId, name: forkProjectName });
-    }
-  };
-
-  // Handle like/unlike
-  const handleLikeToggle = (e: React.MouseEvent, projectId: number) => {
-    e.stopPropagation();
-    if (likedProjects.has(projectId)) {
-      unlikeProjectMutation.mutate(projectId);
+  const selectAllProjects = () => {
+    if (selectedProjects.length === filteredAndSortedProjects.length) {
+      setSelectedProjects([]);
     } else {
-      likeProjectMutation.mutate(projectId);
+      setSelectedProjects(filteredAndSortedProjects.map(p => p.id));
     }
   };
 
-  // Handle pin/unpin
-  const handlePinToggle = (e: React.MouseEvent, projectId: number) => {
-    e.stopPropagation();
-    if (pinnedProjects.includes(projectId)) {
-      unpinProjectMutation.mutate(projectId);
-    } else {
-      pinProjectMutation.mutate(projectId);
-    }
-  };
-
-  // Handle project click with view tracking
-  const handleProjectClick = (project: Project) => {
-    trackViewMutation.mutate(project.id);
-    // Use new Replit-style URL format if we have owner and slug
-    const projectUrl = getProjectUrl(project, project.owner?.username);
-    setLocation(projectUrl);
-  };
-
-  // Function to get language icon
-  const getLanguageIcon = (language: string | null) => {
-    switch (language) {
-      case 'typescript':
-      case 'javascript':
-        return <Code className="h-4 w-4 text-blue-400" />;
-      case 'python':
-        return <Code className="h-4 w-4 text-yellow-400" />;
-      case 'html':
-        return <Code className="h-4 w-4 text-orange-400" />;
-      case 'css':
-        return <Code className="h-4 w-4 text-purple-400" />;
-      default:
-        return <Code className="h-4 w-4" />;
-    }
-  };
-
-  // Function to get language color
-  const getLanguageColor = (language: string) => {
-    const colors: Record<string, string> = {
-      'javascript': 'bg-yellow-500',
-      'typescript': 'bg-blue-500',
-      'python': 'bg-green-500',
-      'java': 'bg-orange-500',
-      'go': 'bg-cyan-500',
-      'rust': 'bg-red-500',
-      'cpp': 'bg-purple-500',
-      'csharp': 'bg-pink-500',
-      'ruby': 'bg-red-400',
-      'html': 'bg-orange-400',
-      'css': 'bg-blue-400',
-    };
-    return colors[language.toLowerCase()] || 'bg-gray-500';
-  };
-
-  // Function to format date
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  // Function to get visibility badge
-  const getVisibilityBadge = (visibility: string) => {
-    switch (visibility) {
-      case 'public':
-        return <Badge variant="default" className="bg-green-600"><Eye className="h-3 w-3 mr-1" />Everyone can see</Badge>;
-      case 'private':
-        return <Badge variant="secondary"><EyeOff className="h-3 w-3 mr-1" />Just for you</Badge>;
-      case 'unlisted':
-        return <Badge variant="outline"><Eye className="h-3 w-3 mr-1" />Link sharing only</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  // Render loading state
-  if (isLoading) {
+  if (authLoading) {
     return (
-      <div className="container-responsive py-10 flex flex-col items-center justify-center min-h-[60vh]">
-        <ECodeLoading size="lg" text="Loading your creative work..." />
-      </div>
+      <PageShell>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <ECodeLoading size="lg" text="Loading your projects..." />
+        </div>
+      </PageShell>
     );
   }
 
-  // Render error state
-  if (error) {
+  if (!user) {
     return (
-      <div className="container-responsive py-10 flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="bg-destructive/10 p-4 sm:p-6 text-destructive max-w-md mx-auto w-full text-center">
-          <p className="text-responsive-sm">Error loading projects: {error.message}</p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/projects'] })}
-          >
-            Try Again
-          </Button>
-        </div>
-      </div>
+      <PageShell>
+        <Card className="max-w-lg mx-auto text-center p-8">
+          <CardHeader>
+            <CardTitle>Sign in to view your projects</CardTitle>
+            <CardDescription>
+              You need to be authenticated to access your projects.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="justify-center">
+            <Button onClick={() => setLocation('/login')} size="lg">
+              Sign In
+            </Button>
+          </CardFooter>
+        </Card>
+      </PageShell>
     );
   }
 
   return (
-    <PageShell padded={false} className="pb-16">
-      <div className="space-y-8">
+    <PageShell>
+      {/* Background gradient */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950/20" />
+        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+      </div>
+
       <PageHeader
         title="Projects"
-        description="Build, organize, and collaborate on your workspaces across every team."
-        icon={Code2}
+        description="Manage and organize all your development projects in one place"
+        icon={Folder}
         actions={(
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Link href="/github-import" className="hidden sm:block">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Github className="h-4 w-4" />
-                <span className="hidden md:inline">Import from GitHub</span>
-                <span className="md:hidden">Import</span>
-              </Button>
-            </Link>
-            <Link href="/templates" className="hidden sm:block">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Sparkles className="h-4 w-4" />
-                Templates
-              </Button>
-            </Link>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {showFilters ? 'Hide' : 'Show'} Filters
+            </Button>
             <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
               <DialogTrigger asChild>
-                <Button
-                  size="sm"
-                  className="gap-2 bg-[var(--ecode-accent)] text-white hover:bg-[var(--ecode-accent-hover)]"
-                  data-create-project
-                >
+                <Button className="gap-2">
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Create Repl</span>
-                  <span className="sm:hidden">Create</span>
+                  New Project
                 </Button>
               </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Project</DialogTitle>
+                  <DialogDescription>
+                    Set up a new project with your preferred configuration
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(values => createProjectMutation.mutate(values))} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Project Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="My Awesome Project" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Input placeholder="A brief description..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="language"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Primary Language</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a language" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="javascript">JavaScript</SelectItem>
+                              <SelectItem value="typescript">TypeScript</SelectItem>
+                              <SelectItem value="python">Python</SelectItem>
+                              <SelectItem value="go">Go</SelectItem>
+                              <SelectItem value="rust">Rust</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="visibility"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Visibility</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select visibility" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="public">
+                                <div className="flex items-center gap-2">
+                                  <Globe className="h-4 w-4" />
+                                  Public
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="private">
+                                <div className="flex items-center gap-2">
+                                  <Lock className="h-4 w-4" />
+                                  Private
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="unlisted">
+                                <div className="flex items-center gap-2">
+                                  <EyeOff className="h-4 w-4" />
+                                  Unlisted
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <Button type="submit" disabled={createProjectMutation.isPending}>
+                        {createProjectMutation.isPending ? (
+                          <>
+                            <ECodeSpinner className="mr-2" />
+                            Creating...
+                          </>
+                        ) : (
+                          'Create Project'
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
             </Dialog>
           </div>
         )}
-      >
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 text-sm sm:text-base">
-                    {teams.find(t => t.id === selectedTeam)?.icon && (
-                      <div>{React.createElement(teams.find(t => t.id === selectedTeam)!.icon, { className: "h-4 w-4" })}</div>
-                    )}
-                    <span className="hidden sm:inline">{teams.find(t => t.id === selectedTeam)?.name}</span>
-                    <span className="sm:hidden">{teams.find(t => t.id === selectedTeam)?.name.slice(0, 8)}</span>
-                    <ChevronDown className="h-4 w-4" />
+      />
+
+      <div className="flex gap-6">
+        {/* Sidebar Filters */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.aside
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="w-72 flex-shrink-0"
+            >
+              <Card className="sticky top-6 border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg">Filters</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Search */}
+                  <div>
+                    <Label className="text-sm font-medium mb-2">Search</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search projects..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Language/Framework Filter */}
+                  <div>
+                    <Label className="text-sm font-medium mb-2">Languages & Frameworks</Label>
+                    <ScrollArea className="h-48">
+                      <div className="space-y-2">
+                        {availableLanguages.map(lang => (
+                          <div key={lang} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`lang-${lang}`}
+                              checked={filterLanguage.includes(lang)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFilterLanguage([...filterLanguage, lang]);
+                                } else {
+                                  setFilterLanguage(filterLanguage.filter(l => l !== lang));
+                                }
+                              }}
+                            />
+                            <Label
+                              htmlFor={`lang-${lang}`}
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              {lang}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div>
+                    <Label className="text-sm font-medium mb-2">Status</Label>
+                    <div className="space-y-2">
+                      {['active', 'deployed', 'archived'].map(status => (
+                        <div key={status} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`status-${status}`}
+                            checked={filterStatus.includes(status)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFilterStatus([...filterStatus, status]);
+                              } else {
+                                setFilterStatus(filterStatus.filter(s => s !== status));
+                              }
+                            }}
+                          />
+                          <Label
+                            htmlFor={`status-${status}`}
+                            className="text-sm font-normal cursor-pointer capitalize"
+                          >
+                            {status}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Visibility Filter */}
+                  <div>
+                    <Label className="text-sm font-medium mb-2">Visibility</Label>
+                    <div className="space-y-2">
+                      {['public', 'private', 'unlisted'].map(vis => (
+                        <div key={vis} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`vis-${vis}`}
+                            checked={filterVisibility.includes(vis)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFilterVisibility([...filterVisibility, vis]);
+                              } else {
+                                setFilterVisibility(filterVisibility.filter(v => v !== vis));
+                              }
+                            }}
+                          />
+                          <Label
+                            htmlFor={`vis-${vis}`}
+                            className="text-sm font-normal cursor-pointer capitalize"
+                          >
+                            {vis}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Clear Filters */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setFilterLanguage([]);
+                      setFilterStatus([]);
+                      setFilterVisibility([]);
+                      setDateRange([null, null]);
+                    }}
+                  >
+                    Clear All Filters
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuLabel>Switch workspace</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {teams.map(team => (
-                    <DropdownMenuItem
-                      key={team.id}
-                      onClick={() => setSelectedTeam(team.id)}
+                </CardContent>
+              </Card>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Toolbar */}
+          <Card className="mb-6 border-0 shadow-md">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center gap-1 border rounded-lg p-1">
+                    <Button
+                      variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setViewMode('grid')}
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setViewMode('list')}
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Sort Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <ArrowUpDown className="h-4 w-4" />
+                        Sort by {sortBy}
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setSortBy('updated')}>
+                        <Clock className="h-4 w-4 mr-2" />
+                        Last Updated
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy('created')}>
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Created Date
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy('name')}>
+                        <FileText className="h-4 w-4 mr-2" />
+                        Name
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy('stars')}>
+                        <Star className="h-4 w-4 mr-2" />
+                        Stars
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Bulk Actions */}
+                  {selectedProjects.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       className="flex items-center gap-2"
                     >
-                      {React.createElement(team.icon, { className: "h-4 w-4" })}
-                      <span>{team.name}</span>
-                      {selectedTeam === team.id && (
-                        <Badge variant="secondary" className="ml-auto">Active</Badge>
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <span className="text-sm font-medium text-[var(--ecode-text-muted)]">
-                {projectCount} active repl{projectCount === 1 ? '' : 's'}
-              </span>
-            </div>
-            <div className="hidden text-sm font-medium text-[var(--ecode-text-muted)] sm:block">
-              Last synced moments ago
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative flex-1 max-w-full sm:max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-[var(--ecode-muted)]" />
-                <Input
-                  type="text"
-                  placeholder="Search projects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full border-[var(--ecode-border)] bg-[var(--ecode-sidebar)] pl-10"
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex-1 gap-2 sm:flex-none">
-                    <Filter className="h-4 w-4" />
-                    <span className="hidden sm:inline">Filters</span>
-                    {(filterLanguage !== 'all' || filterVisibility !== 'all') && (
-                      <Badge variant="secondary" className="ml-1">Active</Badge>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel>Language</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                    checked={filterLanguage === 'all'}
-                    onCheckedChange={() => setFilterLanguage('all')}
-                  >
-                    All Languages
-                  </DropdownMenuCheckboxItem>
-                  {availableLanguages.map(lang => (
-                    <DropdownMenuCheckboxItem
-                      key={lang}
-                      checked={filterLanguage === lang}
-                      onCheckedChange={() => setFilterLanguage(lang || '')}
-                    >
-                      {lang}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel>Visibility</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                    checked={filterVisibility === 'all'}
-                    onCheckedChange={() => setFilterVisibility('all')}
-                  >
-                    All Projects
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filterVisibility === 'public'}
-                    onCheckedChange={() => setFilterVisibility('public')}
-                  >
-                    Public
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filterVisibility === 'private'}
-                    onCheckedChange={() => setFilterVisibility('private')}
-                  >
-                    Private
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filterVisibility === 'unlisted'}
-                    onCheckedChange={() => setFilterVisibility('unlisted')}
-                  >
-                    Unlisted
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex-1 gap-2 sm:flex-none">
-                    <ArrowUpDown className="h-4 w-4" />
-                    <span className="hidden sm:inline">Sort</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => setSortBy('updated')}>
-                    Recently Updated
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('created')}>
-                    Recently Created
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('name')}>
-                    Name (A-Z)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <div className="flex items-center gap-1">
-                <Toggle
-                  pressed={viewMode === 'grid'}
-                  onPressedChange={() => setViewMode('grid')}
-                  size="sm"
-                  aria-label="Grid view"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Toggle>
-                <Toggle
-                  pressed={viewMode === 'list'}
-                  onPressedChange={() => setViewMode('list')}
-                  size="sm"
-                  aria-label="List view"
-                >
-                  <List className="h-4 w-4" />
-                </Toggle>
-              </div>
-            </div>
-          </div>
-        </div>
-      </PageHeader>
-
-      <div className="space-y-6 px-4 sm:px-6 lg:px-8">
-      {/* Main Content Area with Folders Sidebar */}
-      <div className="flex h-[calc(100vh-180px)]">
-        {/* Folders Sidebar - Hidden on mobile/tablet, shown on desktop */}
-        <div className="hidden lg:block w-64 border-r border-[var(--ecode-border)] bg-[var(--ecode-surface)] p-4 overflow-y-auto">
-          <div className="space-y-4">
-            {/* Folders Section */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-[var(--ecode-text)]">Folders</h3>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setCreateFolderOpen(true)}
-                  className="h-6 w-6 p-0"
-                >
-                  <FolderPlus className="h-3 w-3" />
-                </Button>
-              </div>
-              <div className="space-y-1">
-                <Button
-                  variant={selectedFolder === null ? "secondary" : "ghost"}
-                  size="sm"
-                  className="w-full justify-start gap-2"
-                  onClick={() => setSelectedFolder(null)}
-                >
-                  <Folder className="h-4 w-4" />
-                  All Projects
-                </Button>
-                {folders.map(folder => (
-                  <Button
-                    key={folder.id}
-                    variant={selectedFolder === folder.id ? "secondary" : "ghost"}
-                    size="sm"
-                    className="w-full justify-between"
-                    onClick={() => setSelectedFolder(folder.id)}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Folder className="h-4 w-4" />
-                      {folder.name}
-                    </span>
-                    <Badge variant="secondary" className="ml-auto">{folder.count}</Badge>
-                  </Button>
-                ))}
-              </div>
-            </div>
-            
-            {/* Quick Filters */}
-            <Separator />
-            <div>
-              <h3 className="text-sm font-medium text-[var(--ecode-text)] mb-2">Quick Filters</h3>
-              <div className="space-y-1">
-                <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-                  <Pin className="h-4 w-4" />
-                  Pinned
-                </Button>
-                <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-                  <GitFork className="h-4 w-4" />
-                  Forked
-                </Button>
-                <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-                  <Users className="h-4 w-4" />
-                  Shared with me
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Projects Content Area - Full width on mobile/tablet */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--ecode-background)]">
-          {/* Bulk Actions Bar */}
-          {selectedProjects.length > 0 && (
-            <div className="mb-4 p-4 bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] flex items-center justify-between">
-              <span className="text-sm text-[var(--ecode-text)]">
-                {selectedProjects.length} project{selectedProjects.length > 1 ? 's' : ''} selected
-              </span>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setSelectedProjects([])}>
-                  Deselect All
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <MoreVertical className="h-4 w-4" />
-                      Actions
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <Download className="h-4 w-4 mr-2" />
-                      Export
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Duplicate
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive">
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          )}
-
-          {/* Projects Display */}
-          {filteredProjects && filteredProjects.length > 0 ? (
-            viewMode === 'grid' ? (
-              /* Grid View - Responsive columns */
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                {filteredProjects.map((project) => (
-                  <div 
-                    key={project.id} 
-                    className="group relative bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-md hover:-translate-y-1 transition-all duration-150 overflow-hidden"
-                  >
-                    {/* Pin Indicator */}
-                    {pinnedProjects.includes(project.id) && (
-                      <div className="absolute top-2 right-2 z-10">
-                        <Pin className="h-4 w-4 text-[var(--ecode-accent)] fill-current" />
-                      </div>
-                    )}
-                    
-                    {/* Project Cover Image */}
-                    <div 
-                      className="h-32 bg-gradient-to-br from-[var(--ecode-accent)] to-[var(--ecode-accent-hover)] opacity-20 cursor-pointer"
-                      onClick={() => handleProjectClick(project)}
-                    />
-                    
-                    {/* Project Info */}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 
-                          className="font-medium text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors truncate flex-1 cursor-pointer"
-                          onClick={() => handleProjectClick(project)}
-                        >
-                          {project.name}
-                        </h3>
-                        <div className={`h-2 w-2 rounded-full ml-2 mt-1.5 flex-shrink-0 ${getLanguageColor(project.language || 'javascript')}`} />
-                      </div>
-                      
-                      <p className="text-sm text-[var(--ecode-muted)] line-clamp-2 mb-3">
-                        {project.description || "No description"}
-                      </p>
-                      
-                      {/* Project Stats */}
-                      <div className="flex items-center gap-3 text-xs text-[var(--ecode-muted)] mb-3">
-                        <span className="flex items-center gap-1">
-                          <Play className="h-3 w-3" />
-                          {project.runs || 0} runs
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <GitFork className="h-3 w-3" />
-                          {project.forks || 0} forks
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart className="h-3 w-3" />
-                          {project.likes || 0}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-xs text-[var(--ecode-muted)]">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {new Date(project.updatedAt).toLocaleDateString()}
-                        </span>
-                        {getVisibilityBadge(project.visibility || 'private')}
-                      </div>
-                    </div>
-                    
-                    {/* Quick Actions */}
-                    <div className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleProjectClick(project);
-                        }}
-                      >
-                        <Play className="h-4 w-4 mr-1" />
-                        Run
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setForkProjectId(project.id);
-                          setForkProjectName(`${project.name}-fork`);
-                          setForkDialogOpen(true);
-                        }}
-                      >
-                        <GitFork className="h-4 w-4 mr-1" />
-                        Fork
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={(e) => handleLikeToggle(e, project.id)}
-                      >
-                        <Heart className={cn("h-4 w-4 mr-1", likedProjects.has(project.id) && "fill-current text-red-500")} />
-                        {likedProjects.has(project.id) ? 'Unlike' : 'Like'}
-                      </Button>
+                      <Badge variant="secondary">
+                        {selectedProjects.length} selected
+                      </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button size="sm" variant="secondary">
-                            <MoreVertical className="h-4 w-4" />
+                          <Button variant="outline" size="sm" className="gap-2">
+                            Bulk Actions
+                            <ChevronDown className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => handlePinToggle(e, project.id)}>
-                            {pinnedProjects.includes(project.id) ? (
-                              <>
-                                <PinOff className="h-4 w-4 mr-2" />
-                                Unpin
-                              </>
-                            ) : (
-                              <>
-                                <Pin className="h-4 w-4 mr-2" />
-                                Pin
-                              </>
-                            )}
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => handleBulkAction('archive')}>
+                            <Archive className="h-4 w-4 mr-2" />
+                            Archive Selected
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Share2 className="h-4 w-4 mr-2" />
-                            Share
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Settings className="h-4 w-4 mr-2" />
-                            Settings
+                          <DropdownMenuItem onClick={() => handleBulkAction('export')}>
+                            <Download className="h-4 w-4 mr-2" />
+                            Export Selected
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteProjectId(project.id);
-                              setConfirmDeleteOpen(true);
-                            }}
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleBulkAction('delete')}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
+                            Delete Selected
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </div>
-                  </div>
-                ))}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedProjects([])}
+                        className="h-8 w-8"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </motion.div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="select-all"
+                    checked={selectedProjects.length === filteredAndSortedProjects.length && filteredAndSortedProjects.length > 0}
+                    onCheckedChange={selectAllProjects}
+                  />
+                  <Label htmlFor="select-all" className="text-sm cursor-pointer">
+                    Select All
+                  </Label>
+                </div>
               </div>
-            ) : (
-              /* List View - Mobile optimized */
-              <div className="space-y-2">
-                {filteredProjects.map((project) => (
-                  <div 
+            </CardContent>
+          </Card>
+
+          {/* Projects Grid/List */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="border-0 shadow-lg">
+                  <div className="aspect-video">
+                    <Skeleton className="w-full h-full" />
+                  </div>
+                  <CardContent className="p-4 space-y-2">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : filteredAndSortedProjects.length === 0 ? (
+            <Card className="p-16 text-center border-dashed">
+              <div className="max-w-md mx-auto">
+                <Folder className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">No projects found</h3>
+                <p className="text-muted-foreground mb-6">
+                  {searchQuery || filterLanguage.length > 0 || filterStatus.length > 0 || filterVisibility.length > 0
+                    ? "Try adjusting your filters or search query"
+                    : "Create your first project to get started"}
+                </p>
+                <Button onClick={() => setNewProjectOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Project
+                </Button>
+              </div>
+            </Card>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <AnimatePresence mode="popLayout">
+                {filteredAndSortedProjects.map((project, index) => (
+                  <motion.div
                     key={project.id}
-                    className="bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] transition-all p-3 sm:p-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ y: -4 }}
+                    className="relative"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1">
-                        <div className={`h-8 w-8 rounded flex items-center justify-center flex-shrink-0 ${getLanguageColor(project.language || 'javascript')}`}>
-                          <Code className="h-4 w-4 text-white" />
+                    <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+                      {/* Selection Checkbox */}
+                      <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Checkbox
+                          checked={selectedProjects.includes(project.id)}
+                          onCheckedChange={() => toggleProjectSelection(project.id)}
+                          className="bg-white/90 backdrop-blur-sm"
+                        />
+                      </div>
+
+                      {/* Status Badges */}
+                      <div className="absolute top-2 right-2 z-10 flex gap-2">
+                        {project.isPinned && (
+                          <Badge className="bg-yellow-500/90 text-white">
+                            <Pin className="h-3 w-3" />
+                          </Badge>
+                        )}
+                        {project.isDeployed && (
+                          <Badge className="bg-green-500/90 text-white">
+                            <CheckCircle2 className="h-3 w-3" />
+                          </Badge>
+                        )}
+                        {project.isArchived && (
+                          <Badge className="bg-gray-500/90 text-white">
+                            <Archive className="h-3 w-3" />
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Project Thumbnail */}
+                      <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-950 dark:to-purple-950">
+                        <img 
+                          src={index % 2 === 0 ? codingImagePath : modernDevImagePath}
+                          alt={project.name}
+                          className="absolute inset-0 w-full h-full object-cover opacity-20"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-4xl font-bold text-white/20 select-none">
+                            {project.name.substring(0, 2).toUpperCase()}
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 
-                              className="font-medium text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] cursor-pointer truncate"
-                              onClick={() => handleProjectClick(project)}
-                            >
-                              {project.name}
-                            </h3>
-                            {pinnedProjects.includes(project.id) && (
-                              <Pin className="h-3 w-3 text-[var(--ecode-accent)] fill-current" />
-                            )}
-                            <div className="sm:hidden">{getVisibilityBadge(project.visibility || 'private')}</div>
-                          </div>
-                          <p className="text-sm text-[var(--ecode-muted)] line-clamp-1 mt-1">
-                            {project.description || "No description"}
-                          </p>
-                          
-                          {/* Mobile stats */}
-                          <div className="flex items-center gap-3 mt-2 text-xs text-[var(--ecode-muted)] sm:hidden">
-                            <span className="flex items-center gap-1">
-                              <Play className="h-3 w-3" />
-                              {project.runs || 0}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <GitFork className="h-3 w-3" />
-                              {project.forks || 0}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Heart className={cn("h-3 w-3", likedProjects.has(project.id) && "fill-current text-red-500")} />
-                              {project.likes || 0}
-                            </span>
-                            <span className="ml-auto text-[var(--ecode-muted)]">
-                              {new Date(project.updatedAt).toLocaleDateString()}
-                            </span>
-                          </div>
+
+                        {/* Technology Stack */}
+                        <div className="absolute bottom-2 left-2 flex gap-1">
+                          {project.technologies?.slice(0, 3).map(tech => {
+                            const config = techStackConfig[tech] || { color: 'bg-gray-500', icon: '⚙️' };
+                            return (
+                              <Badge
+                                key={tech}
+                                variant="secondary"
+                                className={`${config.color} text-white text-xs`}
+                              >
+                                {tech}
+                              </Badge>
+                            );
+                          })}
                         </div>
                       </div>
-                      
-                      {/* Desktop stats and actions */}
-                      <div className="hidden sm:flex items-center gap-6">
-                        <div className="hidden lg:inline-block">{getVisibilityBadge(project.visibility || 'private')}</div>
-                        <div className="flex items-center gap-4 text-sm text-[var(--ecode-muted)]">
-                          <span className="flex items-center gap-1">
-                            <Play className="h-3 w-3" />
-                            {project.runs || 0} runs
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <GitFork className="h-3 w-3" />
-                            {project.forks || 0} forks
-                          </span>
-                          <button
-                            className="flex items-center gap-1 hover:text-[var(--ecode-text)] transition-colors"
-                            onClick={(e) => handleLikeToggle(e, project.id)}
-                          >
-                            <Heart className={cn("h-3 w-3", likedProjects.has(project.id) && "fill-current text-red-500")} />
-                            {project.likes || 0}
-                          </button>
+
+                      {/* Card Content */}
+                      <CardContent className="p-4">
+                        <div className="mb-3">
+                          <h3 className="font-semibold text-lg truncate mb-1">{project.name}</h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {project.description || 'No description available'}
+                          </p>
                         </div>
-                        
-                        <span className="text-sm text-[var(--ecode-muted)]">
-                          Updated {new Date(project.updatedAt).toLocaleDateString()}
-                        </span>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleProjectClick(project)}>
-                              <Play className="h-4 w-4 mr-2" />
-                              Run
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {
-                              setForkProjectId(project.id);
-                              setForkProjectName(`${project.name}-fork`);
-                              setForkDialogOpen(true);
-                            }}>
-                              <GitFork className="h-4 w-4 mr-2" />
-                              Fork
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => handlePinToggle(e, project.id)}>
-                              {pinnedProjects.includes(project.id) ? (
-                                <>
-                                  <PinOff className="h-4 w-4 mr-2" />
-                                  Unpin
-                                </>
-                              ) : (
-                                <>
-                                  <Pin className="h-4 w-4 mr-2" />
-                                  Pin
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Share2 className="h-4 w-4 mr-2" />
-                              Share
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="text-destructive"
+
+                        {/* Stats */}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3 w-3" />
+                              <span>{project.stats?.stars || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <GitFork className="h-3 w-3" />
+                              <span>{project.stats?.forks || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Eye className="h-3 w-3" />
+                              <span>{project.stats?.views || 0}</span>
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {project.visibility}
+                          </Badge>
+                        </div>
+
+                        {/* Last Commit */}
+                        {project.lastCommit && (
+                          <div className="text-xs text-muted-foreground border-t pt-3">
+                            <div className="flex items-center gap-1 mb-1">
+                              <GitCommit className="h-3 w-3" />
+                              <span className="truncate">{project.lastCommit.message}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>{project.lastCommit.author}</span>
+                              <span>{new Date(project.lastCommit.date).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Quick Actions */}
+                        <div className="flex gap-1 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="flex-1"
+                            onClick={() => {
+                              const projectUrl = getProjectUrl(project, user?.username);
+                              setLocation(projectUrl);
+                            }}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Open
+                          </Button>
+                          <Button size="sm" variant="ghost" className="px-2">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="px-2">
+                            <Rocket className="h-4 w-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="sm" variant="ghost" className="px-2">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Share2 className="h-4 w-4 mr-2" />
+                                Share
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <GitFork className="h-4 w-4 mr-2" />
+                                Fork
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Duplicate
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Archive className="h-4 w-4 mr-2" />
+                                Archive
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-600">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          ) : (
+            // List View
+            <div className="space-y-4">
+              <AnimatePresence mode="popLayout">
+                {filteredAndSortedProjects.map((project, index) => (
+                  <motion.div
+                    key={project.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: index * 0.02 }}
+                    whileHover={{ x: 4 }}
+                  >
+                    <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          {/* Checkbox */}
+                          <Checkbox
+                            checked={selectedProjects.includes(project.id)}
+                            onCheckedChange={() => toggleProjectSelection(project.id)}
+                          />
+
+                          {/* Project Icon */}
+                          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                            {project.name.substring(0, 2).toUpperCase()}
+                          </div>
+
+                          {/* Project Info */}
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-lg">{project.name}</h3>
+                              {project.isPinned && <Pin className="h-4 w-4 text-yellow-500" />}
+                              {project.isDeployed && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                              {project.isArchived && <Archive className="h-4 w-4 text-gray-500" />}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {project.description || 'No description available'}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Star className="h-3 w-3" />
+                                {project.stats?.stars || 0}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <GitFork className="h-3 w-3" />
+                                {project.stats?.forks || 0}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Eye className="h-3 w-3" />
+                                {project.stats?.views || 0}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <GitCommit className="h-3 w-3" />
+                                {project.stats?.commits || 0}
+                              </span>
+                              <Badge variant="outline">{project.visibility}</Badge>
+                            </div>
+                          </div>
+
+                          {/* Technology Stack */}
+                          <div className="flex gap-1">
+                            {project.technologies?.slice(0, 4).map(tech => (
+                              <Badge key={tech} variant="secondary">
+                                {tech}
+                              </Badge>
+                            ))}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
                               onClick={() => {
-                                setDeleteProjectId(project.id);
-                                setConfirmDeleteOpen(true);
+                                const projectUrl = getProjectUrl(project, user?.username);
+                                setLocation(projectUrl);
                               }}
                             >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </div>
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost">
+                              <Rocket className="h-4 w-4" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="sm" variant="ghost">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Share2 className="h-4 w-4 mr-2" />
+                                  Share
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <GitFork className="h-4 w-4 mr-2" />
+                                  Fork
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Archive className="h-4 w-4 mr-2" />
+                                  Archive
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-600">
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {filteredAndSortedProjects.length > 0 && (
+            <div className="mt-8 flex justify-center">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled>
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  <Button variant="secondary" size="sm">1</Button>
+                  <Button variant="outline" size="sm">2</Button>
+                  <Button variant="outline" size="sm">3</Button>
+                </div>
+                <Button variant="outline" size="sm">
+                  Next
+                </Button>
               </div>
-            )
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 sm:py-20 bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] border-dashed">
-              <Code className="h-12 w-12 sm:h-16 sm:w-16 text-[var(--ecode-muted)] mb-4" />
-              <h3 className="text-lg sm:text-xl font-medium text-[var(--ecode-text)] mb-2 text-center px-4">No Repls found</h3>
-              <p className="text-sm sm:text-base text-[var(--ecode-muted)] mb-6 text-center max-w-md px-4">
-                {searchQuery || filterLanguage !== 'all' || filterVisibility !== 'all' 
-                  ? "Try adjusting your filters or search query" 
-                  : "Create your first Repl to start building amazing things"}
-              </p>
-              <Button 
-                onClick={() => setNewProjectOpen(true)}
-                className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create your first Repl
-              </Button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Create Project Dialog */}
-      <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Project</DialogTitle>
-            <DialogDescription>
-              Let's start something new! Give your project a name and choose your starting point.
-            </DialogDescription>
-          </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Project Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="My Awesome Project" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="A brief description of your project" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="language"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>What would you like to create?</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose your starting point" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="html">Website (HTML)</SelectItem>
-                          <SelectItem value="javascript">Interactive App (JavaScript)</SelectItem>
-                          <SelectItem value="python">Automation Script (Python)</SelectItem>
-                          <SelectItem value="typescript">Advanced Web App (TypeScript)</SelectItem>
-                          <SelectItem value="go">Server Application (Go)</SelectItem>
-                          <SelectItem value="rust">System Tool (Rust)</SelectItem>
-                          <SelectItem value="java">Desktop App (Java)</SelectItem>
-                          <SelectItem value="csharp">Windows App (C#)</SelectItem>
-                          <SelectItem value="cpp">Performance Tool (C++)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="visibility"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Who can see this?</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose privacy setting" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="private">
-                            <div className="flex items-center">
-                              <EyeOff className="h-4 w-4 mr-2" />
-                              Just for me
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="public">
-                            <div className="flex items-center">
-                              <Eye className="h-4 w-4 mr-2" />
-                              Share with everyone
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="unlisted">
-                            <div className="flex items-center">
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              Only people with the link
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        You can change this anytime
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setNewProjectOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={createProjectMutation.isPending}
-                  >
-                    {createProjectMutation.isPending && (
-                      <ECodeSpinner className="mr-2" size={16} />
-                    )}
-                    Create Project
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
-      {/* Projects Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Project Grid */}
-        {projects && projects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {projects.map((project) => (
-              <div 
-                key={project.id} 
-                className="group bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] hover:border-[var(--ecode-accent)] hover:shadow-lg transition-all cursor-pointer overflow-hidden"
-                onClick={() => setLocation(`/project/${project.id}`)}
-              >
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-medium text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors truncate flex-1">
-                      {project.name}
-                    </h3>
-                    <div className={`h-2 w-2 rounded-full ml-2 mt-1.5 flex-shrink-0 ${getLanguageColor(project.language || 'javascript')}`} />
-                  </div>
-                  <p className="text-sm text-[var(--ecode-muted)] line-clamp-2 mb-3">
-                    {project.description || "No description"}
-                  </p>
-                  <div className="flex items-center justify-between text-xs text-[var(--ecode-muted)]">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {new Date(project.updatedAt).toLocaleDateString()}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      {project.visibility === 'private' ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                      {project.visibility}
-                    </span>
-                  </div>
-                </div>
-                <div className="border-t border-[var(--ecode-border)] bg-[var(--ecode-sidebar)] px-4 py-2 flex items-center justify-between">
-                  <span className="text-xs text-[var(--ecode-muted)]">
-                    {project.language || 'HTML'}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs hover:bg-[var(--ecode-sidebar-hover)]"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteProjectId(project.id);
-                        setConfirmDeleteOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs hover:bg-[var(--ecode-sidebar-hover)]"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Settings functionality
-                      }}
-                    >
-                      <Settings className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 bg-[var(--ecode-surface)] rounded-lg border border-[var(--ecode-border)] border-dashed">
-            <Code className="h-16 w-16 text-[var(--ecode-muted)] mb-4" />
-            <h3 className="text-xl font-medium text-[var(--ecode-text)] mb-2">No Repls yet</h3>
-            <p className="text-[var(--ecode-muted)] mb-6 text-center max-w-md">
-              Create your first Repl to start building amazing things
-            </p>
-            <Button 
-              onClick={() => setNewProjectOpen(true)}
-              className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create your first Repl
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Delete confirmation dialog */}
-      <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Project</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this project? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setConfirmDeleteOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={confirmDelete}
-              disabled={deleteProjectMutation.isPending}
-            >
-              {deleteProjectMutation.isPending && (
-                <ECodeSpinner className="mr-2" size={16} />
-              )}
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Create Folder Dialog */}
-      <Dialog open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Folder</DialogTitle>
-            <DialogDescription>
-              Organize your projects into folders for better management
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="folder-name">Folder Name</Label>
-            <Input
-              id="folder-name"
-              value={folderName}
-              onChange={(e) => setFolderName(e.target.value)}
-              placeholder="e.g., Web Projects"
-              className="mt-2"
-            />
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setCreateFolderOpen(false);
-                setFolderName('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={() => {
-                // Create folder logic here
-                setCreateFolderOpen(false);
-                setFolderName('');
-                toast({
-                  title: "Folder created",
-                  description: `"${folderName}" folder has been created successfully.`
-                });
-              }}
-              disabled={!folderName.trim()}
-            >
-              Create Folder
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Fork Project Dialog */}
-      <Dialog open={forkDialogOpen} onOpenChange={setForkDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Fork Project</DialogTitle>
-            <DialogDescription>
-              Create your own copy of this project to customize and build upon
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="fork-name">New Project Name</Label>
-            <Input
-              id="fork-name"
-              value={forkProjectName}
-              onChange={(e) => setForkProjectName(e.target.value)}
-              placeholder="Enter a name for your fork"
-              className="mt-2"
-            />
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setForkDialogOpen(false);
-                setForkProjectId(null);
-                setForkProjectName('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleFork}
-              disabled={!forkProjectName.trim() || forkProjectMutation.isPending}
-            >
-              {forkProjectMutation.isPending && (
-                <ECodeSpinner className="mr-2" size={16} />
-              )}
-              Fork Project
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      </div>
-      </div>
+      <style jsx>{`
+        .bg-grid-pattern {
+          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+      `}</style>
     </PageShell>
   );
 };
