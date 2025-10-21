@@ -1,41 +1,27 @@
 // @ts-nocheck
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Project } from '@shared/schema';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  BookOpen,
-  MoreHorizontal,
-  Send,
-  Paperclip,
-  X,
-  ChevronRight,
-  ExternalLink,
-  CheckCircle2,
-  Edit,
-  Copy,
-  Trash,
-  Search,
-  Clock,
-  Eye,
-  Users,
-  Share2,
-  Code2,
-  Folder,
-  GitBranch,
-  Star,
-  Grid3x3,
-  List,
-  Sparkles,
-  Rocket,
-  Store,
-  Bot,
-  Briefcase,
-  ListTodo,
-  CloudSun
+  LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
+import {
+  BookOpen, MoreHorizontal, Send, Paperclip, X, ChevronRight, ExternalLink,
+  CheckCircle2, Edit, Copy, Trash, Search, Clock, Eye, Users, Share2, Code2,
+  Folder, GitBranch, Star, Grid3x3, List, Sparkles, Rocket, Store, Bot,
+  Briefcase, ListTodo, CloudSun, TrendingUp, TrendingDown, Activity, HardDrive,
+  Zap, Plus, Github, FileText, BookMarked, Settings, ArrowUpRight, Download,
+  Upload, Database, Cpu, Timer, AlertCircle, Sun, Moon, Sunrise, Coffee, Play,
+  Pause, StopCircle, GitCommit, GitPullRequest, Package, Terminal, Shield,
+  BarChart3, PieChartIcon, Layers, Server
 } from 'lucide-react';
 import { CreditBalance } from '@/components/CreditBalance';
 import { useAuth } from '@/hooks/use-auth';
@@ -48,24 +34,38 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { getProjectUrl } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
+import { getProjectUrl, cn } from '@/lib/utils';
 import { PageHeader, PageShell } from '@/components/layout/PageShell';
+import analyticsImagePath from '@assets/stock_images/data_analytics_dashb_76f0a2c7.jpg';
+
+// Get personalized greeting based on time of day
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 6) return { text: 'Good night', icon: Moon };
+  if (hour < 12) return { text: 'Good morning', icon: Sunrise };
+  if (hour < 15) return { text: 'Good afternoon', icon: Sun };
+  if (hour < 18) return { text: 'Good afternoon', icon: Coffee };
+  if (hour < 22) return { text: 'Good evening', icon: Sun };
+  return { text: 'Good night', icon: Moon };
+}
+
 // Get project icon based on project details
 function getProjectIcon(project: Project) {
   const colors = [
-    'bg-[#4A5BF6]', // Replit blue
-    'bg-[#E54B4B]', // Red
-    'bg-[#00A67E]', // Green
-    'bg-[#F26522]', // Orange
-    'bg-[#9B51E0]', // Purple
-    'bg-[#F2C94C]', // Yellow
+    'bg-gradient-to-br from-blue-500 to-cyan-600',
+    'bg-gradient-to-br from-purple-500 to-pink-600',
+    'bg-gradient-to-br from-green-500 to-emerald-600',
+    'bg-gradient-to-br from-orange-500 to-red-600',
+    'bg-gradient-to-br from-indigo-500 to-purple-600',
+    'bg-gradient-to-br from-yellow-500 to-orange-600',
   ];
   
   const bgColor = colors[project.id % colors.length];
   const firstLetter = project.name.charAt(0).toUpperCase();
   
   return (
-    <div className={`${bgColor} w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-lg`}>
+    <div className={`${bgColor} w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-lg`}>
       {firstLetter}
     </div>
   );
@@ -85,51 +85,49 @@ function getTimeAgo(date: Date | string) {
   return 'Just now';
 }
 
-const popularExamples = [
-  {
-    id: 'nextjs-blog',
-    icon: BookOpen,
-    label: 'Blog with Next.js',
-    prompt:
-      'Build a modern blog with Next.js featuring markdown support, categories, tags, search functionality, and a beautiful responsive design'
-  },
-  {
-    id: 'ecommerce-store',
-    icon: Store,
-    label: 'E-commerce Store',
-    prompt:
-      'Create an e-commerce store with product catalog, shopping cart, checkout process, payment integration, and admin dashboard'
-  },
-  {
-    id: 'discord-bot',
-    icon: Bot,
-    label: 'Discord Bot',
-    prompt:
-      'Build a Discord bot with commands, moderation features, welcome messages, role management, and fun interactive features'
-  },
-  {
-    id: 'portfolio-site',
-    icon: Briefcase,
-    label: 'Portfolio Website',
-    prompt:
-      'Create a professional portfolio website with hero section, about me, projects showcase, skills, contact form, and smooth animations'
-  },
-  {
-    id: 'task-manager',
-    icon: ListTodo,
-    label: 'Task Manager',
-    prompt:
-      'Build a task manager app with categories, due dates, priority levels, drag and drop, progress tracking, and team collaboration features'
-  },
-  {
-    id: 'weather-dashboard',
-    icon: CloudSun,
-    label: 'Weather Dashboard',
-    prompt:
-      'Create a weather dashboard showing current conditions, 5-day forecast, multiple locations, weather maps, and beautiful visualizations'
-  }
+// Mock data for charts
+const weeklyActivityData = [
+  { day: 'Mon', commits: 12, deploys: 3, builds: 8 },
+  { day: 'Tue', commits: 19, deploys: 5, builds: 12 },
+  { day: 'Wed', commits: 15, deploys: 2, builds: 10 },
+  { day: 'Thu', commits: 25, deploys: 7, builds: 15 },
+  { day: 'Fri', commits: 22, deploys: 6, builds: 18 },
+  { day: 'Sat', commits: 8, deploys: 1, builds: 5 },
+  { day: 'Sun', commits: 5, deploys: 0, builds: 3 },
 ];
 
+const storageData = [
+  { name: 'Code', value: 35, color: '#3b82f6' },
+  { name: 'Assets', value: 25, color: '#10b981' },
+  { name: 'Databases', value: 20, color: '#f59e0b' },
+  { name: 'Logs', value: 10, color: '#ef4444' },
+  { name: 'Free', value: 10, color: '#9ca3af' },
+];
+
+const apiCallsData = [
+  { name: 'Jan', calls: 1200 },
+  { name: 'Feb', calls: 1900 },
+  { name: 'Mar', calls: 2400 },
+  { name: 'Apr', calls: 2800 },
+  { name: 'May', calls: 3200 },
+  { name: 'Jun', calls: 3800 },
+];
+
+const performanceMetrics = [
+  { name: 'Response Time', value: 125, unit: 'ms', trend: -12, color: 'text-green-600' },
+  { name: 'Uptime', value: 99.9, unit: '%', trend: 0.2, color: 'text-green-600' },
+  { name: 'Error Rate', value: 0.02, unit: '%', trend: -0.01, color: 'text-green-600' },
+  { name: 'Active Users', value: 1234, unit: '', trend: 89, color: 'text-blue-600' },
+];
+
+// Activity feed mock data
+const activityFeed = [
+  { id: 1, type: 'deploy', user: 'John Doe', avatar: '👤', project: 'E-Commerce Store', time: '2 minutes ago', status: 'success' },
+  { id: 2, type: 'commit', user: 'Jane Smith', avatar: '👩', project: 'Blog Platform', time: '15 minutes ago', message: 'Fixed responsive layout issues' },
+  { id: 3, type: 'collab', user: 'Mike Johnson', avatar: '🧑', project: 'Weather App', time: '1 hour ago', action: 'joined as collaborator' },
+  { id: 4, type: 'build', user: 'Sarah Williams', avatar: '👱‍♀️', project: 'Task Manager', time: '2 hours ago', status: 'success' },
+  { id: 5, type: 'fork', user: 'Alex Chen', avatar: '👨‍💻', project: 'Discord Bot', time: '3 hours ago', action: 'forked your project' },
+];
 
 interface ProjectWithDeployment extends Project {
   isDeployed?: boolean;
@@ -156,12 +154,10 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [aiPrompt, setAiPrompt] = useState('');
-  const [showBanner, setShowBanner] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTag, setFilterTag] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const inputRef = useRef<HTMLInputElement | null>(null);
-  
+  const greeting = getGreeting();
 
   // Fetch recent projects with deployment status
   const { data: recentProjects = [], isLoading } = useQuery<ProjectWithDeployment[]>({
@@ -180,7 +176,6 @@ export default function Dashboard() {
     if (!aiPrompt.trim()) return;
 
     try {
-      // Create a new project immediately
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -195,23 +190,12 @@ export default function Dashboard() {
 
       if (response.ok) {
         const project = await response.json();
-        console.log('Project created:', project);
-        
-        // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, aiPrompt);
-        
         const projectUrl = getProjectUrl(project, user?.username);
-        console.log(`Navigating to: ${projectUrl}`);
-        console.log('Project has slug:', project.slug);
-
-        // Add a small delay to ensure project is fully created and indexed
         setTimeout(() => {
-          // Use window.location for full page reload to ensure auth state is fresh
           window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(aiPrompt)}`;
         }, 500);
       } else {
-        const errorText = await response.text();
-        console.error('Failed to create project:', response.status, errorText);
         toast({
           title: "Error",
           description: "Failed to create project. Please try again.",
@@ -223,36 +207,49 @@ export default function Dashboard() {
     }
   };
 
-  // Filter projects based on search and filter
-  const filteredProjects = recentProjects.filter(project => {
-    // Search filter
-    if (searchQuery && !project.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    
-    // Tag filter
-    if (filterTag !== 'all') {
-      if (filterTag === 'deployed' && !project.isDeployed) return false;
-      if (filterTag === 'private' && project.visibility !== 'private') return false;
-      if (filterTag === 'public' && project.visibility !== 'public') return false;
-    }
-    
-    return true;
-  });
+  const quickActions = [
+    { 
+      icon: Plus, 
+      title: 'Create New Project', 
+      description: 'Start from scratch',
+      color: 'from-blue-500 to-cyan-600',
+      action: () => inputRef.current?.focus()
+    },
+    {
+      icon: Github,
+      title: 'Import from GitHub',
+      description: 'Clone repository',
+      color: 'from-purple-500 to-pink-600',
+      action: () => navigate('/github-import')
+    },
+    {
+      icon: BookMarked,
+      title: 'Browse Templates',
+      description: 'Start with template',
+      color: 'from-green-500 to-emerald-600',
+      action: () => navigate('/templates')
+    },
+    {
+      icon: FileText,
+      title: 'View Documentation',
+      description: 'Learn the platform',
+      color: 'from-orange-500 to-red-600',
+      action: () => navigate('/docs')
+    },
+  ];
 
-  // Get unique languages/tags from projects
-  const projectTags = ['all', 'deployed', 'private', 'public'];
+  const filteredProjects = useMemo(() => {
+    if (!searchQuery) return recentProjects.slice(0, 6);
+    return recentProjects.filter(project => 
+      project.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 6);
+  }, [recentProjects, searchQuery]);
 
   if (isLoading) {
     return (
       <PageShell>
-        <PageHeader
-          title="Loading your workspace"
-          description="Hang tight while we prepare your personalized dashboard."
-          icon={Sparkles}
-        />
         <div className="flex justify-center py-24">
-          <ECodeLoading size="lg" />
+          <ECodeLoading size="lg" text="Loading your dashboard..." />
         </div>
       </PageShell>
     );
@@ -260,410 +257,419 @@ export default function Dashboard() {
 
   return (
     <PageShell>
-      {showBanner && (
-        <Card className="border-[var(--ecode-border)] bg-gradient-to-r from-blue-50 to-purple-50 p-4 shadow-sm dark:from-blue-950/20 dark:to-purple-950/20">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <span className="rounded bg-gradient-to-r from-blue-500 to-purple-500 px-2 py-0.5 text-xs font-semibold text-white">
-                Beta
-              </span>
-              <div>
-                <h3 className="mb-0.5 text-sm font-medium text-[var(--ecode-text)]">
-                  Purchase domains on E-Code
-                </h3>
-                <p className="text-xs text-[var(--ecode-text-secondary)]">
-                  Get your dream domain name in just a few clicks.
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowBanner(false)}
-              className="h-7 w-7 rounded hover:bg-white/50 dark:hover:bg-black/20"
-              aria-label="Dismiss domain purchase announcement"
-            >
-              <X className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)]" />
-            </Button>
-          </div>
-        </Card>
-      )}
+      {/* Background Pattern */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-purple-950/20" />
+        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+      </div>
 
-      <PageHeader
-        title={`Hi ${user?.displayName || user?.username}, what do you want to build?`}
-        description="Describe your idea and watch AI build it instantly."
-        icon={Sparkles}
-        actions={(
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button className="gap-2" onClick={() => navigate('/projects')}>
-              <Code2 className="h-4 w-4" />
-              Browse projects
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => navigate('/deployments')}
-            >
-              <Rocket className="h-4 w-4" />
-              Manage deployments
-            </Button>
+      {/* Hero Welcome Section */}
+      <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 text-white shadow-2xl">
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <greeting.icon className="h-8 w-8" />
+            <h1 className="text-3xl font-bold">
+              {greeting.text}, {user?.displayName || user?.username || 'Developer'}!
+            </h1>
           </div>
-        )}
-      >
-        <div className="flex flex-col items-center gap-8">
-          <CreditBalance />
-          <form onSubmit={handleCreateProject} className="w-full max-w-3xl px-4 sm:px-0">
-            <div className="relative">
-              <div className="rounded-xl border border-[var(--ecode-border)] bg-[var(--ecode-surface)] p-1 shadow-sm transition-shadow duration-200 hover:shadow-md">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder="What would you like to build?"
-                      className="w-full border-none bg-transparent px-3 py-3 text-base font-normal text-[var(--ecode-text)] outline-none placeholder:text-[var(--ecode-text-secondary)]/70 focus:ring-0"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && aiPrompt.trim()) {
-                          handleCreateProject(e);
-                        }
-                      }}
-                      aria-label="Describe your project idea"
-                      data-testid="input-project-prompt"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 rounded-md opacity-60 transition-opacity hover:bg-[var(--ecode-surface-secondary)] hover:opacity-100"
-                      aria-label="Attach context"
-                    >
-                      <Paperclip className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
-                    </Button>
-                    <Button
-                      type="submit"
-                      size="sm"
-                      disabled={!aiPrompt.trim()}
-                      className="h-auto rounded-lg border-0 bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-none hover:bg-violet-700"
-                    >
-                      Build
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-3 text-center text-sm font-normal text-[var(--ecode-text-secondary)]">
-                Free to use • No setup required • Deploy instantly
-              </p>
+          <p className="text-lg opacity-90 mb-6">
+            Ready to build something amazing today? Your workspace is all set up.
+          </p>
+          
+          {/* AI Prompt Input */}
+          <form onSubmit={handleCreateProject} className="max-w-2xl">
+            <div className="flex gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="Describe what you want to build with AI..."
+                className="flex-1 px-4 py-3 rounded-lg bg-white/20 backdrop-blur-sm text-white placeholder:text-white/70 border border-white/30 focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/20"
+                data-testid="input-ai-prompt"
+              />
+              <Button
+                type="submit"
+                size="lg"
+                disabled={!aiPrompt.trim()}
+                className="bg-white text-purple-600 hover:bg-white/90"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Build with AI
+              </Button>
             </div>
           </form>
-          <div className="w-full text-center">
-            <p className="mb-4 text-sm font-medium text-[var(--ecode-text-secondary)]">
-              Or try these popular examples:
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-2 px-4 sm:px-0">
-              {popularExamples.map((example) => {
-                const Icon = example.icon;
-                return (
-                  <Button
-                    key={example.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setAiPrompt(example.prompt);
-                      if (inputRef.current) {
-                        inputRef.current.focus();
-                        inputRef.current.setSelectionRange(example.prompt.length, example.prompt.length);
-                      }
-                    }}
-                    className="h-10 gap-2 rounded-xl border-[var(--ecode-border)] px-4 sm:px-5 text-sm font-medium text-[var(--ecode-text-secondary)] shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50/70 dark:hover:bg-violet-950/20 focus-visible:ring-2 focus-visible:ring-violet-500/40"
-                    data-testid={`button-example-${example.id}`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{example.label}</span>
-                    <span className="sm:hidden text-xs">{example.label.split(' ')[0]}</span>
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
         </div>
-      </PageHeader>
-      <div className="space-y-12">
-        {/* Your recent Apps - Enhanced Section */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-medium text-[var(--ecode-text)]">
-              Your recent Apps
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/projects')}
-              className="text-sm text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] -mr-2 flex items-center gap-1"
-            >
-              View All
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+        
+        <CreditBalance className="absolute top-8 right-8" />
+      </div>
+
+      {/* Main Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Left Column - Charts and Metrics */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Data Visualization Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Project Analytics Chart */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold">Weekly Activity</CardTitle>
+                  <Activity className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={weeklyActivityData}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="commits" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="builds" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="deploys" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Storage Usage Donut Chart */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold">Storage Usage</CardTitle>
+                  <HardDrive className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={storageData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {storageData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="mt-2 space-y-1">
+                  {storageData.slice(0, 4).map((item) => (
+                    <div key={item.name} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }} />
+                        <span className="text-muted-foreground">{item.name}</span>
+                      </div>
+                      <span className="font-medium">{item.value}%</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* API Calls Bar Chart */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold">API Calls</CardTitle>
+                  <Zap className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={apiCallsData}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Bar dataKey="calls" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Performance Metrics */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-semibold">Performance Metrics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {performanceMetrics.map((metric) => (
+                    <div key={metric.name} className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">{metric.name}</p>
+                        <p className="text-2xl font-bold">
+                          {metric.value}{metric.unit}
+                        </p>
+                      </div>
+                      <div className={cn("flex items-center gap-1", metric.color)}>
+                        {metric.trend > 0 ? (
+                          <TrendingUp className="h-4 w-4" />
+                        ) : (
+                          <TrendingDown className="h-4 w-4" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {Math.abs(metric.trend)}{metric.unit === '%' ? '%' : ''}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          
-          {/* Search and Filter Bar - Mobile Responsive */}
-          <div className="flex flex-col gap-3 mb-6 sm:gap-4">
-            {/* Search input - Full width on mobile */}
-            <div className="w-full relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ecode-text-secondary)]" />
-              <input
-                type="text"
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-lg text-sm text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-secondary)]/70 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
-                data-testid="input-search-projects"
-              />
-            </div>
-            
-            {/* Filter buttons and View mode - Responsive row */}
-            <div className="flex items-center justify-between gap-3">
-              {/* Filter buttons - Scrollable on mobile */}
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1">
-                {projectTags.map(tag => (
-                  <Button
-                    key={tag}
-                    variant={filterTag === tag ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-8 px-3 text-xs capitalize whitespace-nowrap"
-                    onClick={() => setFilterTag(tag)}
-                    data-testid={`button-filter-${tag}`}
+
+          {/* Quick Actions */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {quickActions.map((action, index) => (
+                <motion.div
+                  key={action.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card
+                    className="cursor-pointer border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group"
+                    onClick={action.action}
                   >
-                    {tag === 'all' ? 'All' : tag}
-                  </Button>
-                ))}
-              </div>
-              
-              {/* View mode toggle - Always visible */}
-              <div className="flex items-center gap-1 border-l border-[var(--ecode-border)] pl-3">
-                <Button
-                  variant={viewMode === 'grid' ? "secondary" : "ghost"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setViewMode('grid')}
-                  aria-label="Grid view"
-                  data-testid="button-view-grid"
-                >
-                  <Grid3x3 className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? "secondary" : "ghost"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setViewMode('list')}
-                  aria-label="List view"
-                  data-testid="button-view-list"
-                >
-                  <List className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-10 group-hover:opacity-20 transition-opacity`} />
+                    <CardContent className="p-6 relative">
+                      <action.icon className="h-8 w-8 mb-3 text-primary" />
+                      <h3 className="font-semibold text-sm mb-1">{action.title}</h3>
+                      <p className="text-xs text-muted-foreground">{action.description}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
           </div>
 
-          {filteredProjects.length === 0 ? (
-            <Card className="p-16 text-center bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-lg">
-              <p className="text-[var(--ecode-text-secondary)] text-base">
-                {searchQuery || filterTag !== 'all' 
-                  ? 'No apps match your search criteria' 
-                  : 'No apps yet. Create your first one above!'}
-              </p>
-            </Card>
-          ) : viewMode === 'grid' ? (
-            // Grid view with enhanced cards - Responsive
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredProjects.map((project) => (
-                <Card 
-                  key={project.id}
-                  className="group relative overflow-hidden bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-violet-500/50 transition-all duration-300 cursor-pointer hover:shadow-lg"
-                  onClick={() => {
-                    const ownerUsername = project.owner?.username || user?.username || 'admin';
-                    const projectUrl = project.slug ? `/u/${ownerUsername}/${project.slug}` : `/project/${project.id}`;
-                    navigate(projectUrl);
-                  }}
-                  data-testid={`card-project-${project.id}`}
+          {/* Recent Projects Grid */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Recent Projects</h2>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 pr-3 py-1.5 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/projects')}
                 >
-                  {/* Thumbnail/Preview area */}
-                  <div className="aspect-video bg-gradient-to-br from-violet-500/10 to-blue-500/10 border-b border-[var(--ecode-border)] relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Code2 className="h-12 w-12 text-[var(--ecode-text-secondary)]/20" />
-                    </div>
-                    {project.isDeployed && (
-                      <Badge className="absolute top-2 right-2 bg-green-500/90 text-white border-0">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Live
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {/* Card content */}
-                  <div className="p-4 sm:p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1 min-w-0 pr-2">
-                        <h3 className="font-semibold text-base text-[var(--ecode-text)] truncate" data-testid={`text-project-name-${project.id}`}>
-                          {project.name}
-                        </h3>
-                        <p className="text-xs text-[var(--ecode-text-secondary)] mt-1 line-clamp-2">
-                          {project.description || 'No description'}
+                  View All
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+
+            {filteredProjects.length === 0 ? (
+              <Card className="p-12 text-center border-dashed">
+                <Code2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">No projects found. Create your first one!</p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <AnimatePresence mode="popLayout">
+                  {filteredProjects.map((project, index) => (
+                    <motion.div
+                      key={project.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="group"
+                    >
+                      <Card 
+                        className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                        onClick={() => {
+                          const projectUrl = getProjectUrl(project, user?.username);
+                          navigate(projectUrl);
+                        }}
+                      >
+                        {/* Preview Image */}
+                        <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950">
+                          <img 
+                            src={analyticsImagePath} 
+                            alt="Project preview"
+                            className="absolute inset-0 w-full h-full object-cover opacity-20"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            {getProjectIcon(project)}
+                          </div>
+                          {project.isDeployed && (
+                            <Badge className="absolute top-2 right-2 bg-green-500 text-white">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Live
+                            </Badge>
+                          )}
+                          <div className="absolute bottom-2 left-2 flex gap-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {project.language || 'JavaScript'}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold truncate mb-1">{project.name}</h3>
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                            {project.description || 'No description available'}
+                          </p>
+                          
+                          {/* Quick Actions */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {getTimeAgo(project.updatedAt)}
+                            </span>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                                <Play className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                                <Rocket className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column - Activity Feed */}
+        <div className="space-y-6">
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Activity Feed
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[600px]">
+                <div className="space-y-4 p-6 pt-0">
+                  {activityFeed.map((activity, index) => (
+                    <motion.div
+                      key={activity.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-lg">
+                        {activity.avatar}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <p className="text-sm">
+                              <span className="font-semibold">{activity.user}</span>
+                              {activity.type === 'deploy' && ' deployed '}
+                              {activity.type === 'commit' && ' pushed to '}
+                              {activity.type === 'collab' && ' '}
+                              {activity.type === 'build' && ' built '}
+                              {activity.type === 'fork' && ' '}
+                              <span className="font-semibold">{activity.project}</span>
+                              {activity.action && ` ${activity.action}`}
+                              {activity.message && (
+                                <span className="block text-xs text-muted-foreground mt-1">
+                                  "{activity.message}"
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          {activity.status === 'success' && (
+                            <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {activity.time}
                         </p>
                       </div>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            const ownerUsername = project.owner?.username || user?.username || 'admin';
-                            const projectUrl = project.slug ? `/u/${ownerUsername}/${project.slug}` : `/project/${project.id}`;
-                            navigate(projectUrl);
-                          }}>
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Open
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                            <Share2 className="h-4 w-4 mr-2" />
-                            Share
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                            <GitBranch className="h-4 w-4 mr-2" />
-                            Fork
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-red-600"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    
-                    {/* Stats row */}
-                    <div className="flex items-center justify-between text-xs text-[var(--ecode-text-secondary)]">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          <span>{getTimeAgo(project.updatedAt)}</span>
-                        </div>
-                        {project.stats?.views && (
-                          <div className="flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            <span>{project.stats.views}</span>
-                          </div>
-                        )}
-                        {project.collaborators?.length > 0 && (
-                          <div className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            <span>{project.collaborators.length}</span>
-                          </div>
-                        )}
-                      </div>
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                        {project.language || 'JavaScript'}
-                      </Badge>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            // List view - Mobile Responsive
-            <div className="space-y-3">
-              {filteredProjects.map((project) => (
-                <div
-                  key={project.id}
-                  className="group bg-[var(--ecode-surface)] border border-[var(--ecode-border)] hover:border-[var(--ecode-border-hover)] transition-colors cursor-pointer rounded-lg p-4"
-                  onClick={() => {
-                    const projectUrl = getProjectUrl(project, user?.username);
-                    navigate(projectUrl);
-                  }}
-                  data-testid={`row-project-${project.id}`}
-                >
-                  <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                    <div className="hidden sm:block">{getProjectIcon(project)}</div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-base text-[var(--ecode-text)]" data-testid={`text-project-name-${project.id}`}>
-                        {project.name}
-                      </h3>
-                      <p className="text-sm text-[var(--ecode-text-secondary)] mt-0.5">
-                        {getTimeAgo(project.updatedAt)}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                      {project.isDeployed && (
-                        <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span className="text-sm hidden sm:inline">Deployed</span>
-                          <span className="text-xs sm:hidden">Live</span>
-                        </div>
-                      )}
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => {
-                            const ownerUsername = project.owner?.username || user?.username;
-                            const projectUrl = getProjectUrl(project, ownerUsername);
-                            navigate(projectUrl);
-                          }}>
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Open
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
+                    </motion.div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* System Status */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                System Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">API</span>
+                <Badge variant="outline" className="text-green-600">
+                  <div className="w-2 h-2 rounded-full bg-green-600 mr-1.5" />
+                  Operational
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Deployments</span>
+                <Badge variant="outline" className="text-green-600">
+                  <div className="w-2 h-2 rounded-full bg-green-600 mr-1.5" />
+                  Operational
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Database</span>
+                <Badge variant="outline" className="text-green-600">
+                  <div className="w-2 h-2 rounded-full bg-green-600 mr-1.5" />
+                  Operational
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">CDN</span>
+                <Badge variant="outline" className="text-yellow-600">
+                  <div className="w-2 h-2 rounded-full bg-yellow-600 mr-1.5" />
+                  Degraded
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
+
+      <style jsx>{`
+        .bg-grid-pattern {
+          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+      `}</style>
     </PageShell>
   );
 }
