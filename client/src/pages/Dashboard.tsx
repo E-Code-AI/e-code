@@ -60,10 +60,10 @@ function getProjectIcon(project: Project) {
     'bg-gradient-to-br from-indigo-500 to-purple-600',
     'bg-gradient-to-br from-yellow-500 to-orange-600',
   ];
-  
+
   const bgColor = colors[project.id % colors.length];
   const firstLetter = project.name.charAt(0).toUpperCase();
-  
+
   return (
     <div className={`${bgColor} w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-lg`}>
       {firstLetter}
@@ -78,7 +78,7 @@ function getTimeAgo(date: Date | string) {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  
+
   if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
   if (diffMinutes > 0) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
@@ -208,9 +208,9 @@ export default function Dashboard() {
   };
 
   const quickActions = [
-    { 
-      icon: Plus, 
-      title: 'Create New Project', 
+    {
+      icon: Plus,
+      title: 'Create New Project',
       description: 'Start from scratch',
       color: 'from-blue-500 to-cyan-600',
       action: () => inputRef.current?.focus()
@@ -240,7 +240,7 @@ export default function Dashboard() {
 
   const filteredProjects = useMemo(() => {
     if (!searchQuery) return recentProjects.slice(0, 6);
-    return recentProjects.filter(project => 
+    return recentProjects.filter(project =>
       project.name.toLowerCase().includes(searchQuery.toLowerCase())
     ).slice(0, 6);
   }, [recentProjects, searchQuery]);
@@ -268,7 +268,7 @@ export default function Dashboard() {
         <div className="absolute inset-0 bg-black/20" />
         <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-        
+
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
             <greeting.icon className="h-8 w-8" />
@@ -279,7 +279,7 @@ export default function Dashboard() {
           <p className="text-lg opacity-90 mb-6">
             Ready to build something amazing today? Your workspace is all set up.
           </p>
-          
+
           {/* AI Prompt Input */}
           <form onSubmit={handleCreateProject} className="max-w-2xl">
             <div className="flex gap-2">
@@ -304,7 +304,7 @@ export default function Dashboard() {
             </div>
           </form>
         </div>
-        
+
         <CreditBalance className="absolute top-8 right-8" />
       </div>
 
@@ -502,7 +502,7 @@ export default function Dashboard() {
                       whileHover={{ scale: 1.02 }}
                       className="group"
                     >
-                      <Card 
+                      <Card
                         className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
                         onClick={() => {
                           const projectUrl = getProjectUrl(project, user?.username);
@@ -511,8 +511,8 @@ export default function Dashboard() {
                       >
                         {/* Preview Image */}
                         <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950">
-                          <img 
-                            src={analyticsImagePath} 
+                          <img
+                            src={analyticsImagePath}
                             alt="Project preview"
                             className="absolute inset-0 w-full h-full object-cover opacity-20"
                           />
@@ -531,13 +531,13 @@ export default function Dashboard() {
                             </Badge>
                           </div>
                         </div>
-                        
+
                         <CardContent className="p-4">
                           <h3 className="font-semibold truncate mb-1">{project.name}</h3>
                           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                             {project.description || 'No description available'}
                           </p>
-                          
+
                           {/* Quick Actions */}
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -665,7 +665,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .bg-grid-pattern {
           background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         }

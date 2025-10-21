@@ -416,7 +416,7 @@ export interface IStorage {
   // Team operations
   getUserTeams(userId: string): Promise<any[]>;
 
-  // Theme operations  
+  // Theme operations
   getUserThemeSettings(userId: string): Promise<any>;
   updateUserThemeSettings(userId: string, settings: any): Promise<any>;
   getInstalledThemes(userId: string): Promise<any[]>;
@@ -840,8 +840,6 @@ export class DatabaseStorage implements IStorage {
     byCountry: { country: string; count: number }[];
     campaignsSent: number;
     lastSentAt: Date | null;
-    campaignsByStatus: Record<string, number>;
-    recentFailures: { campaignId: number; email: string; error: string | null; sentAt: Date | null }[];
   }> {
     const subscribers = await this.db.select().from(newsletterSubscribers);
 
@@ -4052,6 +4050,46 @@ Constraints: {{constraints}}`,
       }
     } catch (error) {
       console.error('Failed to initialize default prompt templates (table may not exist yet):', error.message);
+    }
+  }
+
+  // Added getDBStats method with error handling
+  async getDBStats(): Promise<{ totalProjects: number; totalUsers: number; totalFiles: number }> {
+    try {
+      const [projectsResult] = await this.db.select({ count: sql<number>`COUNT(*)` }).from(projects);
+      const [usersResult] = await this.db.select({ count: sql<number>`COUNT(*)` }).from(users);
+      const [filesResult] = await this.db.select({ count: sql<number>`COUNT(*)` }).from(files);
+
+      return {
+        totalProjects: projectsResult?.count || 0,
+        totalUsers: usersResult?.count || 0,
+        totalFiles: filesResult?.count || 0
+      };
+    } catch (error) {
+      console.error('Error getting DB stats:', error);
+      return {
+        totalProjects: 0,
+        totalUsers: 0,
+        totalFiles: 0
+      };
+    }
+  }
+
+  // Added getDBEntries method with error handling
+  async getDBEntries(): Promise<any[]> {
+    try {
+      const allProjects = await this.db.select().from(projects).limit(10);
+      const allUsers = await this.db.select().from(users).limit(10);
+      const allFiles = await this.db.select().from(files).limit(10);
+
+      return [
+        ...allProjects.map(p => ({ type: 'project', ...p })),
+        ...allUsers.map(u => ({ type: 'user', ...u })),
+        ...allFiles.map(f => ({ type: 'file', ...f }))
+      ];
+    } catch (error) {
+      console.error('Error getting DB entries:', error);
+      return [];
     }
   }
 }

@@ -3,6 +3,12 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import {
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -83,80 +89,93 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
           <X className="h-5 w-5" />
         </button>
 
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-center mb-6">
-            {mode === 'login' ? 'Sign In' : 'Create Account'}
-          </h2>
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle className="sr-only">Authentication</DialogTitle>
+          <DialogDescription className="sr-only">
+            Login or create an account to access E-Code
+          </DialogDescription>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Sign Up</TabsTrigger>
+            </TabsList>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                required
-              />
-            </div>
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-center mb-6">
+                {mode === 'login' ? 'Sign In' : 'Create Account'}
+              </h2>
 
-            {mode === 'register' && (
-              <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                  required
-                />
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Username</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                    required
+                  />
+                </div>
+
+                {mode === 'register' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Email</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                      required
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                    required
+                  />
+                </div>
+
+                {mode === 'register' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Confirm Password</label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                      required
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? 'Loading...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                </button>
+              </form>
+
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  {mode === 'login'
+                    ? "Don't have an account? Sign up"
+                    : 'Already have an account? Sign in'}
+                </button>
               </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                required
-              />
             </div>
-
-            {mode === 'register' && (
-              <div>
-                <label className="block text-sm font-medium mb-2">Confirm Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                  required
-                />
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Loading...' : mode === 'login' ? 'Sign In' : 'Create Account'}
-            </button>
-          </form>
-
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              {mode === 'login'
-                ? "Don't have an account? Sign up"
-                : 'Already have an account? Sign in'}
-            </button>
-          </div>
-        </div>
+          </Tabs>
+        </DialogContent>
       </div>
     </div>
   );
