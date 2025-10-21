@@ -5,16 +5,34 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, Code } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { 
+  Loader2, Code, ArrowRight, Eye, EyeOff, 
+  Sparkles, Mail, Lock, Github, Chrome,
+  Twitter, Shield, CheckCircle, ChevronLeft
+} from 'lucide-react';
 import { Link } from 'wouter';
 import { getProjectUrl } from '@/lib/utils';
+
+// Import stock images
+import modernSoftwareImg from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+};
 
 export default function Login() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user, loginMutation } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -37,7 +55,6 @@ export default function Login() {
 
       if (response.ok) {
         const project = await response.json();
-        // Store prompt in sessionStorage for the AI agent
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
         const projectUrl = getProjectUrl(project, project.owner?.username);
         navigate(`${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`);
@@ -51,15 +68,12 @@ export default function Login() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      // Check if there's a pending app description
       const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
       const urlParams = new URLSearchParams(window.location.search);
       const shouldRedirectToAgent = urlParams.get('build') === 'true';
       
       if (shouldRedirectToAgent && pendingAppDescription) {
-        // Clear the stored description
         sessionStorage.removeItem('pendingAppDescription');
-        // Create project and navigate
         createProjectAndNavigate(pendingAppDescription);
       } else {
         navigate('/dashboard');
@@ -81,9 +95,7 @@ export default function Login() {
 
     try {
       await loginMutation.mutateAsync(formData);
-      // Navigation will happen automatically via the useEffect when user is set
     } catch (error) {
-      // Error handling is done by the mutation in use-auth hook
       console.error('Login error:', error);
     }
   };
@@ -95,88 +107,198 @@ export default function Login() {
     });
   };
 
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-center mb-8">
-          <div 
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => navigate('/')}
-          >
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">E</span>
-            </div>
-            <span className="font-bold text-2xl">E-Code</span>
-          </div>
-        </div>
+  const handleSocialLogin = (provider: string) => {
+    toast({
+      title: "Coming Soon",
+      description: `${provider} login will be available soon!`,
+    });
+  };
 
-        <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
-            <CardDescription className="text-center">
-              Enter your credentials to access your account
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleLogin}>
-            <CardContent className="space-y-4">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-gray-50/50 to-background dark:from-background dark:via-gray-900/50 dark:to-background flex">
+      {/* Left Side - Form */}
+      <motion.div 
+        className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16"
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="w-full max-w-md space-y-8">
+          {/* Back to Home */}
+          <button
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="text-sm">Back to home</span>
+          </button>
+
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-xl">E</span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">E-Code</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Enterprise Development Platform</p>
+            </div>
+          </div>
+
+          {/* Welcome Message */}
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold tracking-tight">Welcome back</h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Sign in to continue building amazing applications
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  name="username"
-                  type="text"
-                  placeholder="Enter your username"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  disabled={loginMutation.isPending}
-                  required
-                />
+                <Label htmlFor="username" className="text-sm font-medium">
+                  Username or Email
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    placeholder="Enter your username or email"
+                    className="pl-10 h-12"
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    disabled={loginMutation.isPending}
+                    required
+                  />
+                </div>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  disabled={loginMutation.isPending}
-                  required
-                />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Password
+                  </Label>
+                  <Link href="/forgot-password" className="text-sm text-violet-600 dark:text-violet-400 hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    className="pl-10 pr-10 h-12"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    disabled={loginMutation.isPending}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <Link href="/forgot-password" className="text-primary hover:underline">
-                  Forgot password?
-                </Link>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="remember" 
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  />
+                  <label 
+                    htmlFor="remember" 
+                    className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer"
+                  >
+                    Remember me for 30 days
+                  </label>
+                </div>
               </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-3">
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+              disabled={loginMutation.isPending}
+            >
+              {loginMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign in
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </Button>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            {/* Social Login */}
+            <div className="grid grid-cols-3 gap-3">
               <Button 
-                type="submit" 
-                className="w-full"
-                disabled={loginMutation.isPending}
+                type="button"
+                variant="outline" 
+                className="h-12 hover:bg-gray-50 dark:hover:bg-gray-800"
+                onClick={() => handleSocialLogin('GitHub')}
               >
-                {loginMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign in'
-                )}
+                <Github className="h-5 w-5" />
               </Button>
-              
-              {/* Only show Quick Login in development mode */}
-              {import.meta.env.DEV && (
+              <Button 
+                type="button"
+                variant="outline" 
+                className="h-12 hover:bg-gray-50 dark:hover:bg-gray-800"
+                onClick={() => handleSocialLogin('Google')}
+              >
+                <Chrome className="h-5 w-5" />
+              </Button>
+              <Button 
+                type="button"
+                variant="outline" 
+                className="h-12 hover:bg-gray-50 dark:hover:bg-gray-800"
+                onClick={() => handleSocialLogin('Twitter')}
+              >
+                <Twitter className="h-5 w-5" />
+              </Button>
+            </div>
+          </form>
+
+          {/* Sign Up Link */}
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+            Don't have an account?{' '}
+            <Link href="/register" className="font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+              Sign up for free
+            </Link>
+          </p>
+
+          {/* Development Quick Login */}
+          {import.meta.env.DEV && (
+            <Card className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+              <CardContent className="p-4">
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full"
                   onClick={() => {
-                    // Use test credentials only in development
                     setFormData({ username: 'testuser', password: 'testpass' });
-                    // Trigger form submit after setting values
                     setTimeout(() => {
                       const form = document.querySelector('form') as HTMLFormElement;
                       if (form) form.requestSubmit();
@@ -184,31 +306,98 @@ export default function Login() {
                   }}
                 >
                   <Code className="mr-2 h-4 w-4" />
-                  Quick Login (Development Only)
+                  Quick Login (Dev Mode)
                 </Button>
-              )}
-              
-              <div className="text-center text-sm text-muted-foreground">
-                Don't have an account?{' '}
-                <Link href="/register" className="text-primary hover:underline">
-                  Sign up
-                </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Terms */}
+          <p className="text-center text-xs text-gray-500">
+            By signing in, you agree to our{' '}
+            <Link href="/terms" className="underline hover:text-gray-700 dark:hover:text-gray-300">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy" className="underline hover:text-gray-700 dark:hover:text-gray-300">
+              Privacy Policy
+            </Link>
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Right Side - Image & Features */}
+      <motion.div 
+        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-violet-600 to-fuchsia-600 relative overflow-hidden"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={modernSoftwareImg} 
+            alt="Modern Software Development"
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-600/90 to-fuchsia-600/90" />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex items-center justify-center p-12">
+          <div className="max-w-md text-white space-y-8">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                <Sparkles className="h-4 w-4" />
+                <span className="text-sm font-medium">AI-Powered Development</span>
               </div>
-            </CardFooter>
-          </form>
-        </Card>
-        
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          By signing in, you agree to our{' '}
-          <Link href="/terms" className="underline hover:text-primary">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="underline hover:text-primary">
-            Privacy Policy
-          </Link>
-        </p>
-      </div>
+              
+              <h2 className="text-4xl font-bold leading-tight">
+                Build faster with enterprise-grade tools
+              </h2>
+              
+              <p className="text-lg opacity-90">
+                Join millions of developers using E-Code to ship production-ready applications 10x faster.
+              </p>
+            </div>
+
+            {/* Feature List */}
+            <div className="space-y-4">
+              {[
+                { icon: Shield, text: "SOC 2 Type II Certified" },
+                { icon: Sparkles, text: "AI Agent builds complete apps" },
+                { icon: Code, text: "Support for 50+ languages" },
+                { icon: CheckCircle, text: "99.99% uptime guaranteed" }
+              ].map((feature, idx) => (
+                <motion.div 
+                  key={idx}
+                  className="flex items-center gap-3"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 + idx * 0.1 }}
+                >
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                    <feature.icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-white/90">{feature.text}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-4 pt-8 border-t border-white/20">
+              <div>
+                <div className="text-3xl font-bold">2M+</div>
+                <div className="text-sm opacity-75">Active developers</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold">10M+</div>
+                <div className="text-sm opacity-75">Apps deployed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
