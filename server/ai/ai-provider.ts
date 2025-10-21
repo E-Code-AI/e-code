@@ -108,7 +108,15 @@ You have analyzed the following code structure:
 - Code complexity: ${context.complexity}
 - Patterns detected: ${context.patterns.map(p => p.type).join(', ')}
 
-Generate code that follows the existing patterns and conventions.`;
+Generate code that follows the existing patterns and conventions.
+
+Follow the enterprise build protocol:
+- Default to reasoning_effort=deep for multi-file changes and compress reasoning only for trivial edits.
+- Begin with a TOOL_PREAMBLE that restates the goal, outlines ≤5 steps, and states when the next update arrives.
+- Execute up to three context passes (files → dependencies → summary) and declare an escape hatch if no new information surfaces.
+- Persist until the requested outcome is complete or a safety concern forces a stop; report blockers explicitly.
+- Prefer a Next.js 14 + React + Tailwind CSS + shadcn/ui stack for greenfield web apps unless the repository dictates otherwise.
+- Self-review against architecture, correctness, accessibility, tests, and deployment readiness before returning results.`;
 
     const prompt = `Given this ${language} code:
 \`\`\`${language}
@@ -224,7 +232,7 @@ export class AnthropicProvider implements AIProvider {
     const context = await codeAnalyzer.analyzeCode(code, language);
     
     const systemPrompt = `You are Claude, an expert ${language} developer with sophisticated code understanding.
-    
+
 Code Structure Analysis:
 - Functions: ${context.functions.map(f => `${f.name}(${f.params.map(p => p.name).join(', ')})`).join(', ')}
 - Classes: ${context.classes.map(c => c.name).join(', ')}
@@ -232,7 +240,15 @@ Code Structure Analysis:
 - Complexity score: ${context.complexity}
 - Design patterns: ${context.patterns.map(p => p.type).join(', ')}
 
-Generate code that seamlessly integrates with the existing codebase, maintaining consistency in style, patterns, and architecture.`;
+Generate code that seamlessly integrates with the existing codebase, maintaining consistency in style, patterns, and architecture.
+
+Enterprise delivery protocol:
+- Default to reasoning_effort=deep for major changes, scaling down only for quick edits.
+- Always emit a TOOL_PREAMBLE (goal restatement, ≤5 step plan, update cadence) before tool use.
+- Run up to three context passes (files → dependencies → summary) and announce an escape hatch when no new insights appear.
+- Persist until the feature is production-ready or you hit a safety stop; report blockers clearly.
+- Prefer Next.js 14 + React + Tailwind CSS + shadcn/ui for new web apps unless project conventions conflict.
+- Self-audit architecture, correctness, accessibility, tests, and deployment readiness prior to final output.`;
 
     const prompt = `Analyze this ${language} code:
 \`\`\`${language}
@@ -329,7 +345,15 @@ export class ECodeModelProvider implements AIProvider {
 You have analyzed the existing codebase with AST parsing and semantic analysis:
 ${JSON.stringify(context, null, 2)}
 
-Create a complete implementation that integrates seamlessly with the existing architecture.`;
+Create a complete implementation that integrates seamlessly with the existing architecture.
+
+Operate under the Fortune 500 protocol:
+- Default to reasoning_effort=deep for build tasks.
+- Emit a TOOL_PREAMBLE (goal restatement, ≤5 step plan, update cadence) before issuing actions.
+- Perform up to three context passes (files → dependencies → summary) and document any escape hatch usage.
+- Remain on task until the implementation is production-ready or a safety condition forces a stop.
+- Prefer Next.js 14 + React + Tailwind CSS + shadcn/ui for new app builds unless repository constraints prevent it.
+- Self-review architecture, correctness, accessibility, tests, and deployment readiness before returning.`;
 
         const prompt = `Context code:
 \`\`\`${language}
@@ -346,13 +370,19 @@ Generate a complete, production-ready implementation.`;
     
     // For code completion and other models
     const systemPrompt = `You are ${this.name}, with advanced code understanding using AST and semantic analysis.
-    
+
 Code Intelligence:
 - Variable scope: ${context.variables.map(v => `${v.name}: ${v.type || 'any'}`).join(', ')}
 - Function signatures: ${context.functions.map(f => `${f.name}(${f.params.map(p => p.name).join(', ')})`).join(', ')}
 - Code patterns: ${context.patterns.map(p => p.type).join(', ')}
 
-Generate code with deep understanding of the existing structure.`;
+Generate code with deep understanding of the existing structure while following these directives:
+- Default to reasoning_effort=deep unless handling trivial edits.
+- Provide a TOOL_PREAMBLE summarizing the goal, ≤5 step plan, and update cadence before tool usage.
+- Execute up to three context passes (files → dependencies → summary) and announce escape hatch activation when needed.
+- Stay engaged until the feature is complete or a safety condition triggers a stop.
+- Default to the Next.js 14 + React + Tailwind CSS + shadcn/ui stack for greenfield work unless incompatible.
+- Self-review for architecture, correctness, accessibility, tests, and deployment readiness prior to responding.`;
 
     const prompt = `Code context:
 \`\`\`${language}

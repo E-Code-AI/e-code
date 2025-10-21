@@ -353,7 +353,11 @@ router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
         projectContext: {
           id: projectId,
           language: context?.language,
-          files: context?.files || []
+          files: context?.files || [],
+          reasoningEffort: context?.reasoningEffort,
+          structuredContext: context?.structuredContext,
+          persistenceMode: context?.persistenceMode,
+          preferredStack: context?.preferredStack
         }
       }
     );

@@ -18,15 +18,7 @@ import {
   Terminal,
   Globe,
   Loader2,
-  Sparkles
-  BookMarked,
-  Rocket,
-  Package,
-  Command,
-  Users,
-  Keyboard,
-  PanelLeftClose,
-  PanelLeftOpen
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -57,7 +49,6 @@ interface TopNavbarProps {
   filesOpen?: boolean;
   previewOpen?: boolean;
   consoleOpen?: boolean;
-  filesOpen?: boolean;
 }
 
 const TopNavbar = ({
@@ -74,8 +65,7 @@ const TopNavbar = ({
   onToggleConsole,
   filesOpen = true,
   previewOpen = true,
-  consoleOpen = true
-  filesOpen = true
+  consoleOpen = true,
 }: TopNavbarProps) => {
   const { user, logoutMutation } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
@@ -109,15 +99,10 @@ const TopNavbar = ({
   return (
     <>
       {project && (
-        <DeploymentManager
-          project={project}
-          isOpen={isDeploymentOpen}
-          onClose={handleCloseDeployment}
-        />
+        <DeploymentManager project={project} isOpen={isDeploymentOpen} onClose={handleCloseDeployment} />
       )}
 
       <div className="h-14 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]/95 backdrop-blur-sm flex items-center justify-between px-4 shadow-[0_1px_0_rgba(12,18,32,0.05)]">
-      <div className="h-14 border-b border-[var(--ecode-border)] bg-[#ffffff] dark:bg-[var(--ecode-surface)]/95 backdrop-blur-sm flex items-center justify-between px-4 shadow-[0_1px_0_rgba(12,18,32,0.05)]">
         <div className="flex items-center gap-4">
           <TooltipProvider>
             <Tooltip>
@@ -129,11 +114,7 @@ const TopNavbar = ({
                   disabled={!onToggleFiles}
                   className="rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
                 >
-                  {filesOpen ? (
-                    <PanelLeftClose className="h-4 w-4" />
-                  ) : (
-                    <PanelLeftOpen className="h-4 w-4" />
-                  )}
+                  {filesOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -145,13 +126,6 @@ const TopNavbar = ({
           <div className="flex flex-col leading-tight">
             <h1 className="font-semibold text-sm text-[var(--ecode-text)]">{projectTitle}</h1>
             <span className="text-xs text-[var(--ecode-text-muted)]">{activeFileTitle}</span>
-          <div className="flex flex-col">
-            <h1 className="font-semibold text-sm">
-              {isLoading ? "Loading..." : project?.name || "Untitled Project"}
-            </h1>
-            <span className="text-xs text-muted-foreground">
-              {activeFile?.name || "No file selected"}
-            </span>
           </div>
 
           <Button
@@ -192,12 +166,7 @@ const TopNavbar = ({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleSave}
-                  className="rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
-                >
+                <Button variant="ghost" size="icon" onClick={handleSave} className="rounded-md hover:bg-[var(--ecode-sidebar-hover)]">
                   <Save className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -381,7 +350,9 @@ const TopNavbar = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => window.location.href = '/support'}
+                  onClick={() => {
+                    window.location.href = "/support";
+                  }}
                   className="rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
                 >
                   <Bell className="h-4 w-4" />
@@ -396,11 +367,7 @@ const TopNavbar = ({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
-                >
+                <Button variant="ghost" size="icon" className="rounded-md hover:bg-[var(--ecode-sidebar-hover)]">
                   <Settings className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -415,9 +382,7 @@ const TopNavbar = ({
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.avatarUrl || ""} alt={user?.username || ""} />
-                  <AvatarFallback>
-                    {user?.username?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarFallback>{user?.username?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -425,19 +390,14 @@ const TopNavbar = ({
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">{user?.username}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
-                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => logoutMutation.mutate()}
-                className="text-red-500"
-              >
+              <DropdownMenuItem onClick={() => logoutMutation.mutate()} className="text-red-500">
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>

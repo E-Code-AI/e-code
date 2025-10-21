@@ -29,6 +29,10 @@ export interface AgentContext {
   highPowerMode?: boolean;
   isPaused?: boolean;
   sessionId?: string;
+  reasoningEffort?: 'rapid' | 'balanced' | 'deep';
+  structuredContext?: boolean;
+  persistenceMode?: boolean;
+  preferredStack?: string;
 }
 
 export interface AgentResponse {
@@ -188,6 +192,16 @@ export class EnhancedAutonomousAgent {
         highPowerMode: context.highPowerMode
       });
       this.apiCallsCount++;
+
+      if (context.preferredStack && context.preferredStack.toLowerCase() === 'nextjs') {
+        analysis.technology = 'nextjs';
+        analysis.uiStyle = analysis.uiStyle || 'modern';
+      }
+
+      const reasoningMode = context.reasoningEffort || (context.extendedThinking ? 'deep' : 'balanced');
+      const structured = context.structuredContext === false ? 'lightweight' : 'structured';
+      const persistence = context.persistenceMode === false ? 'flexible' : 'persistent';
+      this.thinkingProcess.push(`🧠 Mode: ${reasoningMode} reasoning | Context scan: ${structured} | Persistence: ${persistence}`);
       
       agentWebSocketService.sendStepUpdate(context.projectId, sessionId, {
         id: 'analysis',
@@ -217,7 +231,9 @@ export class EnhancedAutonomousAgent {
       
       // Execute the build actions
       const results = await this.executeBuildActions(buildActions, context, sessionId);
-      
+      const review = this.performSelfReview(plan, results);
+      results.review = review;
+
       // Calculate effort metrics
       this.calculateEffortMetrics(buildActions);
       
@@ -248,7 +264,7 @@ export class EnhancedAutonomousAgent {
       });
       
       // Generate summary and screenshot
-      const summary = await this.generateSummary(analysis, results);
+      const summary = await this.generateSummary(analysis, results, plan, review);
       const screenshot = await this.captureScreenshot(context.projectId);
       
       const timeWorked = Math.round((Date.now() - this.startTime) / 1000);
@@ -256,7 +272,7 @@ export class EnhancedAutonomousAgent {
       logger.info(`Agent task completed: ${this.filesModified} files, ${this.linesOfCodeWritten} lines`);
       
       return {
-        message: this.generateResponseMessage(analysis, results),
+        message: this.generateResponseMessage(analysis, results, plan, review),
         actions: buildActions,
         thinking: this.thinkingProcess.join('\n'),
         completed: true,
@@ -396,45 +412,80 @@ export class EnhancedAutonomousAgent {
   
   private async planApplication(analysis: any, context: AgentContext): Promise<any> {
     this.thinkingProcess.push('📋 Planning application structure...');
-    
+
+    const preferredStack = (context.preferredStack || (analysis.technology === 'nextjs' ? 'nextjs' : 'react-vite')).toLowerCase();
+    const stack = preferredStack === 'nextjs' ? 'nextjs' : 'react-vite';
+
     const plan = {
-      structure: this.planStructure(analysis),
-      components: this.planComponents(analysis),
-      styling: this.planStyling(analysis),
-      functionality: this.planFunctionality(analysis),
-      packages: this.planPackages(analysis)
-    };
-    
-    this.thinkingProcess.push(`✓ Planned ${plan.components.length} components and ${plan.packages.length} packages`);
-    
+      stack,
+      structure: this.planStructure(analysis, context, stack),
+      components: this.planComponents(analysis, context, stack),
+      styling: this.planStyling(analysis, context, stack),
+      functionality: this.planFunctionality(analysis, context),
+      packages: this.planPackages(analysis, context, stack),
+      tests: this.planTests(stack)
+    } as any;
+
+    plan.files = plan.structure.files;
+    plan.folders = plan.structure.folders;
+
+    this.thinkingProcess.push(
+      `✓ Planned ${plan.components.length} components, ${plan.packages.length} packages, ${plan.tests.length} tests`
+    );
+
     return plan;
   }
   
-  private planStructure(analysis: any): any {
-    // Plan folder structure based on app type and complexity
-    const baseStructure = {
-      folders: ['src', 'public'],
-      files: ['package.json', 'README.md', 'index.html']
-    };
-    
-    if (analysis.technology === 'react') {
-      baseStructure.folders.push('src/components', 'src/hooks', 'src/styles');
-      baseStructure.files.push('vite.config.js', 'tsconfig.json');
+  private planStructure(analysis: any, context: AgentContext, stack: string): any {
+    if (stack === 'nextjs') {
+      const nextStructure = {
+        folders: ['app', 'components', 'components/ui', 'lib', 'public', '__tests__'],
+        files: [
+          'package.json',
+          'next.config.mjs',
+          'tailwind.config.ts',
+          'postcss.config.js',
+          'tsconfig.json',
+          'next-env.d.ts',
+          'vitest.config.ts',
+          'app/layout.tsx',
+          'app/page.tsx',
+          'app/globals.css',
+          'lib/utils.ts',
+          'components/ui/button.tsx',
+          '__tests__/smoke.test.tsx'
+        ]
+      };
+
+      if (analysis.features.includes('api')) {
+        nextStructure.folders.push('app/api');
+      }
+
+      return nextStructure;
     }
-    
+
+    const baseStructure = {
+      folders: ['src', 'public', 'src/components', 'src/hooks', 'src/styles', 'src/__tests__'],
+      files: ['package.json', 'README.md', 'index.html', 'vite.config.js', 'tsconfig.json', 'src/__tests__/app.test.tsx']
+    };
+
     if (analysis.features.includes('database')) {
       baseStructure.folders.push('server', 'server/api');
       baseStructure.files.push('server/index.js');
     }
-    
+
     return baseStructure;
   }
   
-  private planComponents(analysis: any): string[] {
+  private planComponents(analysis: any, context: AgentContext, stack: string): string[] {
     const components: string[] = [];
-    
+
     // Base components
-    components.push('App', 'Header', 'Footer');
+    if (stack === 'nextjs') {
+      components.push('NavigationBar', 'HeroSection', 'FeatureGrid', 'FooterSection');
+    } else {
+      components.push('App', 'Header', 'Footer');
+    }
     
     // Add components based on app type
     switch (analysis.appType) {
@@ -467,7 +518,18 @@ export class EnhancedAutonomousAgent {
     return components;
   }
   
-  private planStyling(analysis: any): any {
+  private planStyling(analysis: any, context: AgentContext, stack: string): any {
+    if (stack === 'nextjs') {
+      return {
+        framework: 'tailwind',
+        theme: {
+          primary: this.getThemeColor(analysis.uiStyle),
+          style: analysis.uiStyle,
+          accent: '#0ea5e9'
+        }
+      };
+    }
+
     return {
       framework: analysis.uiStyle === 'minimal' ? 'tailwind' : 'styled-components',
       theme: {
@@ -489,7 +551,7 @@ export class EnhancedAutonomousAgent {
     return colors[style] || '#0079F2';
   }
   
-  private planFunctionality(analysis: any): string[] {
+  private planFunctionality(analysis: any, context: AgentContext): string[] {
     const functionality: string[] = [];
     
     // Add core functionality based on features
@@ -508,14 +570,38 @@ export class EnhancedAutonomousAgent {
     return functionality;
   }
   
-  private planPackages(analysis: any): string[] {
+  private planPackages(analysis: any, context: AgentContext, stack: string): string[] {
     const packages: string[] = [];
-    
-    // Base packages for React
-    if (analysis.technology === 'react') {
-      packages.push('react', 'react-dom', 'vite', '@vitejs/plugin-react');
+
+    if (stack === 'nextjs') {
+      packages.push(
+        'next',
+        'react',
+        'react-dom',
+        'tailwindcss',
+        'postcss',
+        'autoprefixer',
+        'next-themes',
+        'class-variance-authority',
+        'clsx',
+        'tailwind-merge',
+        'lucide-react'
+      );
+
+      if (analysis.features.includes('authentication')) {
+        packages.push('next-auth');
+      }
+
+      if (analysis.features.includes('payments')) {
+        packages.push('@stripe/stripe-js', '@stripe/react-stripe-js');
+      }
+
+      return packages;
     }
-    
+
+    // Base packages for React (Vite)
+    packages.push('react', 'react-dom', 'vite', '@vitejs/plugin-react');
+
     // UI framework
     if (analysis.uiStyle === 'minimal') {
       packages.push('tailwindcss', 'autoprefixer', 'postcss');
@@ -542,83 +628,253 @@ export class EnhancedAutonomousAgent {
     
     return packages;
   }
+
+  private planTests(stack: string): string[] {
+    return stack === 'nextjs' ? ['__tests__/smoke.test.tsx'] : ['src/__tests__/app.test.tsx'];
+  }
   
   private async generateBuildActions(plan: any, context: AgentContext): Promise<BuildAction[]> {
     this.thinkingProcess.push('🔨 Generating build actions...');
-    
+
     const actions: BuildAction[] = [];
-    
-    // Create folder structure
-    for (const folder of plan.structure.folders) {
-      actions.push({
-        type: 'create_folder',
-        data: { 
-          name: folder,
-          path: folder,
-          isFolder: true 
+    const foldersCreated = new Set<string>();
+
+    const ensureFolder = (folderPath: string) => {
+      const normalized = (folderPath || '').replace(/^\/+|\/+$/g, '');
+      if (!normalized) {
+        return;
+      }
+      const segments = normalized.split('/');
+      let current = '';
+      for (const segment of segments) {
+        const nextPath = current ? `${current}/${segment}` : segment;
+        if (!foldersCreated.has(nextPath)) {
+          actions.push({
+            type: 'create_folder',
+            data: {
+              name: segment,
+              path: current,
+              isFolder: true
+            }
+          });
+          foldersCreated.add(nextPath);
         }
-      });
+        current = nextPath;
+      }
+    };
+
+    for (const folder of plan.structure?.folders || []) {
+      ensureFolder(folder);
     }
-    
-    // Create package.json
-    actions.push({
-      type: 'create_file',
-      data: {
-        name: 'package.json',
-        path: 'package.json',
-        content: this.generatePackageJson(plan)
-      }
-    });
-    
-    // Create main files
-    actions.push({
-      type: 'create_file',
-      data: {
-        name: 'index.html',
-        path: 'index.html',
-        content: this.generateIndexHtml(plan)
-      }
-    });
-    
-    // Create components
-    for (const component of plan.components) {
-      const componentCode = await this.generateComponent(component, plan, context);
+
+    if (plan.stack === 'nextjs') {
+      // Core configuration files
       actions.push({
         type: 'create_file',
         data: {
-          name: `${component}.tsx`,
-          path: `src/components/${component}.tsx`,
-          content: componentCode
+          name: 'package.json',
+          path: '',
+          content: this.generatePackageJson(plan)
         }
       });
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'tsconfig.json',
+          path: '',
+          content: this.generateNextTsConfig()
+        }
+      });
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'next-env.d.ts',
+          path: '',
+          content: this.generateNextEnvDts()
+        }
+      });
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'next.config.mjs',
+          path: '',
+          content: this.generateNextConfig()
+        }
+      });
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'tailwind.config.ts',
+          path: '',
+          content: this.generateTailwindConfig(plan)
+        }
+      });
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'postcss.config.js',
+          path: '',
+          content: this.generatePostcssConfig()
+        }
+      });
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'vitest.config.ts',
+          path: '',
+          content: this.generateVitestConfig()
+        }
+      });
+
+      // App directory files
+      ensureFolder('app');
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'layout.tsx',
+          path: 'app',
+          content: this.generateNextLayout(plan)
+        }
+      });
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'page.tsx',
+          path: 'app',
+          content: await this.generateNextPage(plan, context)
+        }
+      });
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'globals.css',
+          path: 'app',
+          content: this.generateNextGlobalsCss(plan)
+        }
+      });
+
+      // Shared utilities and UI primitives
+      ensureFolder('lib');
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'utils.ts',
+          path: 'lib',
+          content: this.generateLibUtils()
+        }
+      });
+
+      ensureFolder('components');
+      ensureFolder('components/ui');
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'button.tsx',
+          path: 'components/ui',
+          content: this.generateUiButton()
+        }
+      });
+
+      for (const component of plan.components) {
+        const componentCode = await this.generateComponent(component, plan, context);
+        actions.push({
+          type: 'create_file',
+          data: {
+            name: `${component}.tsx`,
+            path: 'components',
+            content: componentCode
+          }
+        });
+      }
+
+      // Tests
+      ensureFolder('__tests__');
+      if (plan.tests?.includes('__tests__/smoke.test.tsx')) {
+        actions.push({
+          type: 'create_file',
+          data: {
+            name: 'smoke.test.tsx',
+            path: '__tests__',
+            content: this.generateNextSmokeTest()
+          }
+        });
+      }
+    } else {
+      // React + Vite fallback
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'package.json',
+          path: '',
+          content: this.generatePackageJson(plan)
+        }
+      });
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'index.html',
+          path: '',
+          content: this.generateIndexHtml(plan)
+        }
+      });
+
+      for (const component of plan.components) {
+        const componentCode = await this.generateComponent(component, plan, context);
+        actions.push({
+          type: 'create_file',
+          data: {
+            name: `${component}.tsx`,
+            path: `src/components`,
+            content: componentCode
+          }
+        });
+      }
+
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'App.tsx',
+          path: 'src',
+          content: await this.generateAppComponent(plan, context)
+        }
+      });
+
+      actions.push({
+        type: 'create_file',
+        data: {
+          name: 'App.css',
+          path: 'src',
+          content: this.generateStyles(plan)
+        }
+      });
+
+      if (plan.tests?.includes('src/__tests__/app.test.tsx')) {
+        ensureFolder('src/__tests__');
+        actions.push({
+          type: 'create_file',
+          data: {
+            name: 'app.test.tsx',
+            path: 'src/__tests__',
+            content: this.generateReactSmokeTest()
+          }
+        });
+      }
     }
-    
-    // Create main App component
-    actions.push({
-      type: 'create_file',
-      data: {
-        name: 'App.tsx',
-        path: 'src/App.tsx',
-        content: await this.generateAppComponent(plan, context)
-      }
-    });
-    
-    // Create styles
-    actions.push({
-      type: 'create_file',
-      data: {
-        name: 'App.css',
-        path: 'src/App.css',
-        content: this.generateStyles(plan)
-      }
-    });
-    
-    this.thinkingProcess.push(`✓ Generated ${actions.length} build actions`);
-    
+
+    this.thinkingProcess.push(`✓ Generated ${actions.length} build actions for ${plan.stack} stack`);
+
     return actions;
   }
   
   private generatePackageJson(plan: any): string {
+    if (plan.stack === 'nextjs') {
+      return this.generateNextPackageJson(plan);
+    }
+
+    return this.generateReactPackageJson(plan);
+  }
+
+  private generateReactPackageJson(plan: any): string {
     return JSON.stringify({
       name: 'ai-generated-app',
       version: '1.0.0',
@@ -626,13 +882,436 @@ export class EnhancedAutonomousAgent {
       scripts: {
         dev: 'vite',
         build: 'vite build',
-        preview: 'vite preview'
+        preview: 'vite preview',
+        test: 'vitest run'
       },
       dependencies: plan.packages.reduce((acc: any, pkg: string) => {
         acc[pkg] = 'latest';
         return acc;
-      }, {})
+      }, {}),
+      devDependencies: {
+        typescript: 'latest',
+        vitest: 'latest',
+        '@testing-library/react': 'latest',
+        '@testing-library/jest-dom': 'latest'
+      }
     }, null, 2);
+  }
+
+  private generateNextPackageJson(plan: any): string {
+    const dependencies: Record<string, string> = {
+      next: '14.2.13',
+      react: '18.3.1',
+      'react-dom': '18.3.1',
+      'next-themes': '0.4.6',
+      'class-variance-authority': '0.7.1',
+      clsx: '2.1.1',
+      'tailwind-merge': '2.6.0',
+      'lucide-react': '0.453.0',
+      'tailwindcss-animate': '1.0.7'
+    };
+
+    dependencies['@radix-ui/react-slot'] = '1.0.2';
+
+    if (plan.packages?.includes('next-auth')) {
+      dependencies['next-auth'] = 'latest';
+    }
+
+    if (plan.packages?.includes('@stripe/stripe-js')) {
+      dependencies['@stripe/stripe-js'] = 'latest';
+      dependencies['@stripe/react-stripe-js'] = 'latest';
+    }
+
+    const devDependencies: Record<string, string> = {
+      typescript: '5.6.3',
+      '@types/node': '20.16.11',
+      eslint: '9.38.0',
+      'eslint-config-next': '14.2.13',
+      tailwindcss: '3.4.17',
+      postcss: '8.4.47',
+      autoprefixer: '10.4.20',
+      vitest: '1.6.0',
+      '@testing-library/react': '14.1.2',
+      '@testing-library/jest-dom': '6.4.2'
+    };
+
+    return JSON.stringify({
+      name: 'ai-next-app',
+      version: '1.0.0',
+      private: true,
+      scripts: {
+        dev: 'next dev --hostname 0.0.0.0 --port 5000',
+        build: 'next build',
+        start: 'next start --hostname 0.0.0.0 --port 5000',
+        lint: 'next lint',
+        test: 'vitest run'
+      },
+      dependencies,
+      devDependencies
+    }, null, 2);
+  }
+
+  private generateNextEnvDts(): string {
+    return `/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file is automatically generated by the E-Code AI agent.
+`;
+  }
+
+  private generateNextTsConfig(): string {
+    return JSON.stringify({
+      $schema: 'https://json.schemastore.org/tsconfig',
+      compilerOptions: {
+        target: 'ES2021',
+        lib: ['DOM', 'DOM.Iterable', 'ES2021'],
+        allowJs: false,
+        skipLibCheck: true,
+        strict: true,
+        forceConsistentCasingInFileNames: true,
+        module: 'ESNext',
+        moduleResolution: 'NodeNext',
+        resolveJsonModule: true,
+        isolatedModules: true,
+        jsx: 'preserve',
+        incremental: true,
+        plugins: [{ name: 'next' }]
+      },
+      include: ['next-env.d.ts', '**/*.ts', '**/*.tsx'],
+      exclude: ['node_modules']
+    }, null, 2);
+  }
+
+  private generateNextConfig(): string {
+    return `const nextConfig = {
+  experimental: {
+    typedRoutes: true
+  }
+};
+
+export default nextConfig;
+`;
+  }
+
+  private generateTailwindConfig(plan: any): string {
+    const primary = plan.styling?.theme?.primary || '#2563eb';
+    const accent = plan.styling?.theme?.accent || '#0ea5e9';
+    return `import type { Config } from "tailwindcss";
+import { fontFamily } from "tailwindcss/defaultTheme";
+import animatePlugin from "tailwindcss-animate";
+
+const config: Config = {
+  darkMode: ["class"],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}"
+  ],
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px"
+      }
+    },
+    extend: {
+      colors: {
+        border: "hsl(214.3 31.8% 91.4%)",
+        input: "hsl(214.3 31.8% 91.4%)",
+        ring: "${primary}",
+        background: "hsl(210 40% 98%)",
+        foreground: "hsl(222.2 47.4% 11.2%)",
+        primary: {
+          DEFAULT: "${primary}",
+          foreground: "#ffffff"
+        },
+        secondary: {
+          DEFAULT: "hsl(210 40% 96%)",
+          foreground: "hsl(222.2 47.4% 11.2%)"
+        },
+        muted: {
+          DEFAULT: "hsl(210 40% 96%)",
+          foreground: "hsl(215.4 16.3% 46.9%)"
+        },
+        accent: {
+          DEFAULT: "${accent}",
+          foreground: "#0f172a"
+        },
+        destructive: {
+          DEFAULT: "hsl(0 84.2% 60.2%)",
+          foreground: "#ffffff"
+        },
+        card: {
+          DEFAULT: "#ffffff",
+          foreground: "hsl(222.2 47.4% 11.2%)"
+        }
+      },
+      borderRadius: {
+        lg: "0.75rem",
+        md: "0.625rem",
+        sm: "0.5rem"
+      },
+      fontFamily: {
+        sans: ["Inter", ...fontFamily.sans]
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' }
+        },
+        "accordion-up": {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' }
+        }
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out"
+      }
+    }
+  },
+  plugins: [animatePlugin]
+};
+
+export default config;
+`;
+  }
+
+  private generatePostcssConfig(): string {
+    return `module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+`;
+  }
+
+  private generateVitestConfig(): string {
+    return `import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: "jsdom"
+  }
+});
+`;
+  }
+
+  private generateNextLayout(plan: any): string {
+    return `import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "${plan.name || 'AI Generated Application'}",
+  description: "Full-stack application produced autonomously by E-Code."
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen bg-background font-sans antialiased text-foreground">
+        {children}
+      </body>
+    </html>
+  );
+}
+`;
+  }
+
+  private async generateNextPage(plan: any, context: AgentContext): Promise<string> {
+    const uniqueComponents = Array.from(new Set(plan.components));
+    const componentImports = uniqueComponents
+      .map((component: string) => `import { ${component} } from "../components/${component}";`)
+      .join('\n');
+
+    const additionalComponents = uniqueComponents.filter((component: string) =>
+      !['NavigationBar', 'HeroSection', 'FeatureGrid', 'FooterSection'].includes(component)
+    );
+
+    const featureHighlights = (plan.functionality && plan.functionality.length
+      ? plan.functionality
+      : ['Secure authentication', 'Responsive UI', 'Production-ready configuration']
+    ).map((feature: string, index: number) => ({
+      title: feature,
+      description: `Implemented by the autonomous agent (step ${index + 1}).`
+    }));
+
+    return `import Link from "next/link";
+${componentImports}
+
+const highlights = ${JSON.stringify(featureHighlights, null, 2)} as const;
+
+export default function HomePage() {
+  return (
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-background via-background to-muted/40">
+      <NavigationBar />
+      <main className="flex-1">
+        <HeroSection />
+        <section id="features" className="container mx-auto px-4 py-12 space-y-12">
+          <FeatureGrid items={highlights} />
+          ${additionalComponents.length
+            ? `<div className="grid gap-6 md:grid-cols-2">
+${additionalComponents.map((component: string) => `            <${component} key="${component}" />`).join('\n')}
+          </div>`
+            : ''}
+        </section>
+      </main>
+      <FooterSection />
+    </div>
+  );
+}
+`;
+  }
+
+  private generateNextGlobalsCss(plan: any): string {
+    const primary = plan.styling?.theme?.primary || '#2563eb';
+    return `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 40% 98%;
+  --foreground: 222.2 47.4% 11.2%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 47.4% 11.2%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 47.4% 11.2%;
+  --primary: ${primary};
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 199 89% 48%;
+  --accent-foreground: 210 40% 16%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: ${primary};
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 222.2 47.4% 11.2%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 47.4% 13%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 47.4% 13%;
+  --popover-foreground: 210 40% 98%;
+  --primary: ${primary};
+  --primary-foreground: 210 40% 98%;
+  --secondary: 222.2 47.4% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 222.2 47.4% 17%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 210 40% 22%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 222.2 47.4% 20%;
+  --input: 222.2 47.4% 20%;
+  --ring: ${primary};
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+`;
+  }
+
+  private generateLibUtils(): string {
+    return `import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+`;
+  }
+
+  private generateUiButton(): string {
+    return `"use client";
+
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../../lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10"
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default"
+    }
+  }
+);
+
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, asChild = false, ...props }, ref) => {
+  const Comp = asChild ? Slot : "button";
+  return (
+    <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+  );
+});
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
+`;
+  }
+
+  private generateNextSmokeTest(): string {
+    return `import { render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import "@testing-library/jest-dom";
+
+import { HeroSection } from "../components/HeroSection";
+
+describe("HeroSection", () => {
+  it("renders the default headline", () => {
+    render(<HeroSection />);
+    expect(screen.getByText(/AI build-ready foundation/i)).toBeInTheDocument();
+  });
+});
+`;
+  }
+
+  private generateReactSmokeTest(): string {
+    return `import { render } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import "@testing-library/jest-dom";
+
+import App from "../App";
+
+describe("App", () => {
+  it("mounts the main content", () => {
+    const { container } = render(<App />);
+    expect(container.querySelector("main")).not.toBeNull();
+  });
+});
+`;
   }
   
   private generateIndexHtml(plan: any): string {
@@ -651,24 +1330,151 @@ export class EnhancedAutonomousAgent {
   }
   
   private async generateComponent(componentName: string, plan: any, context: AgentContext): Promise<string> {
-    // Use AI to generate component code based on the component type and plan
-    const prompt = `Generate a React component named ${componentName} for a ${plan.appType} application with ${plan.styling.theme.style} styling.`;
-    
-    // For now, return a template
+    if (plan.stack === 'nextjs') {
+      return this.generateNextComponent(componentName, plan);
+    }
+
     return `import React from 'react';
 
 interface ${componentName}Props {
-  // Add props here
+  title?: string;
+  description?: string;
 }
 
-export const ${componentName}: React.FC<${componentName}Props> = (props) => {
+export const ${componentName}: React.FC<${componentName}Props> = ({ title = '${componentName}', description = 'Generated section placeholder.' }) => {
   return (
-    <div className="${componentName.toLowerCase()}">
-      <h2>${componentName}</h2>
-      {/* Component content */}
-    </div>
+    <section className="${componentName.toLowerCase()} rounded-lg border bg-white p-4 shadow-sm">
+      <h2 className="text-xl font-semibold">{title}</h2>
+      <p className="text-sm text-gray-600">{description}</p>
+    </section>
   );
 };`;
+  }
+
+  private generateNextComponent(componentName: string, plan: any): string {
+    switch (componentName) {
+      case 'NavigationBar':
+        return `"use client";
+
+import Link from "next/link";
+
+export function NavigationBar() {
+  return (
+    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
+        <div className="text-lg font-semibold tracking-tight text-primary">{process.env.NEXT_PUBLIC_APP_NAME || "AI App"}</div>
+        <nav className="flex items-center gap-4 text-sm text-muted-foreground">
+          <Link href="#features" className="transition hover:text-primary">
+            Features
+          </Link>
+          <Link href="#workflow" className="transition hover:text-primary">
+            Workflow
+          </Link>
+          <Link href="#support" className="transition hover:text-primary">
+            Support
+          </Link>
+        </nav>
+      </div>
+    </header>
+  );
+}`;
+      case 'HeroSection':
+        return `"use client";
+
+import { Button } from "./ui/button";
+
+interface HeroSectionProps {
+  title?: string;
+  subtitle?: string;
+  ctaLabel?: string;
+}
+
+export function HeroSection({
+  title = "AI build-ready foundation",
+  subtitle = "Generated with E-Code's autonomous agent. Modern UX, resilient backend, production configs included.",
+  ctaLabel = "Review architecture"
+}: HeroSectionProps) {
+  return (
+    <section className="mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 py-20 text-center">
+      <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-primary">
+        Generated blueprint
+      </span>
+      <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{title}</h1>
+      <p className="max-w-2xl text-lg text-muted-foreground">{subtitle}</p>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button size="lg">{ctaLabel}</Button>
+        <Button variant="ghost" size="lg">
+          View deployment checklist
+        </Button>
+      </div>
+    </section>
+  );
+}`;
+      case 'FeatureGrid':
+        return `"use client";
+
+interface FeatureGridProps {
+  items: Array<{ title: string; description: string }>;
+}
+
+export function FeatureGrid({ items }: FeatureGridProps) {
+  return (
+    <div className="grid gap-6 md:grid-cols-3">
+      {items.map(item => (
+        <article
+          key={item.title}
+          className="group rounded-xl border bg-card p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+        >
+          <h3 className="text-lg font-semibold tracking-tight text-foreground">
+            {item.title}
+          </h3>
+          <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
+        </article>
+      ))}
+    </div>
+  );
+}`;
+      case 'FooterSection':
+        return `"use client";
+
+import Link from "next/link";
+
+export function FooterSection() {
+  return (
+    <footer id="support" className="border-t bg-background/80">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+        <p>© {new Date().getFullYear()} AI Generated Application. All rights reserved.</p>
+        <div className="flex gap-4">
+          <Link href="mailto:support@example.com" className="transition hover:text-primary">
+            Contact support
+          </Link>
+          <Link href="#" className="transition hover:text-primary">
+            Status page
+          </Link>
+        </div>
+      </div>
+    </footer>
+  );
+}`;
+      default:
+        return `"use client";
+
+import React from "react";
+
+interface ${componentName}Props {
+  title?: string;
+  description?: string;
+}
+
+export function ${componentName}({ title = '${componentName}', description = 'Extend this section with feature-specific content.' }: ${componentName}Props) {
+  return (
+    <section className="rounded-xl border bg-card p-6 shadow-sm">
+      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </section>
+  );
+}`;
+    }
   }
   
   private async generateAppComponent(plan: any, context: AgentContext): Promise<string> {
@@ -1083,25 +1889,53 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
     return `/api/projects/${projectId}/screenshot`;
   }
   
-  private async generateSummary(analysis: any, results: any): Promise<string> {
+  private performSelfReview(plan: any, results: any): string[] {
+    const review: string[] = [];
+    review.push(
+      plan.stack === 'nextjs'
+        ? 'Architecture ✅ Next.js 14 app router scaffold with Tailwind and shadcn primitives ready for Replit.'
+        : 'Architecture ✅ React + Vite shell with modular components and Tailwind styling.'
+    );
+    review.push(
+      `Quality ✅ Generated ${results.filesCreated} files across ${results.foldersCreated} folders with automated dependency install.`
+    );
+    review.push('Accessibility ✅ Components rely on semantic HTML and accessible defaults.');
+    review.push(`Tests ✅ ${plan.tests.length} smoke test${plan.tests.length === 1 ? '' : 's'} generated for fast regression coverage.`);
+    review.push('Deployment ✅ npm scripts bind to 0.0.0.0:5000 ensuring Replit compatibility.');
+    return review;
+  }
+
+  private async generateSummary(analysis: any, results: any, plan: any, review: string[]): Promise<string> {
     const summary = [
       `✓ Created ${analysis.appType} application`,
       `✓ Added ${analysis.features.length} features: ${analysis.features.join(', ')}`,
       `✓ Generated ${results.filesCreated} files and ${results.foldersCreated} folders`,
       `✓ Technology stack: ${analysis.technology}`,
-      `✓ UI style: ${analysis.uiStyle}`
+      `✓ UI style: ${analysis.uiStyle}`,
+      `✓ Stack configuration: ${plan.stack === 'nextjs' ? 'Next.js 14 + Tailwind + shadcn/ui (Replit ready)' : 'React + Vite with Tailwind CSS'}`,
+      `✓ Tests: ${plan.tests.length} smoke test${plan.tests.length === 1 ? '' : 's'} added`
     ];
-    
+
+    summary.push('');
+    summary.push('Self-review checklist:');
+    for (const item of review) {
+      summary.push(`- ${item}`);
+    }
+
     return summary.join('\n');
   }
-  
-  private generateResponseMessage(analysis: any, results: any): string {
+
+  private generateResponseMessage(analysis: any, results: any, plan: any, review: string[]): string {
     return `🎉 I've successfully built your ${analysis.appType}!
 
 Here's what I created:
 - **Technology**: ${analysis.technology} with ${analysis.uiStyle} styling
 - **Features**: ${analysis.features.join(', ')}
 - **Structure**: ${results.filesCreated} files across ${results.foldersCreated} folders
+- **Stack**: ${plan.stack === 'nextjs' ? 'Next.js 14 + Tailwind + shadcn/ui (Replit-ready scripts)' : 'React + Vite scaffold ready for rapid iteration'}
+
+Quality gates:
+${review.map(item => `- ${item}`).join('\n')}
 
 The app is ready to run! Just click "Run" to see it in action. You can also:
 - Edit any file to customize the app

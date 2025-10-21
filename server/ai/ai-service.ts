@@ -188,9 +188,15 @@ export class AIService {
   }
 
   private buildSystemMessage(projectContext?: any): string {
-    let message = `You are an AI coding assistant integrated into E-Code, a web-based IDE. 
+    const reasoningEffort = projectContext?.reasoningEffort || 'balanced';
+    const structuredContext = projectContext?.structuredContext !== false;
+    const persistenceMode = projectContext?.persistenceMode !== false;
+    const preferredStack = (projectContext?.preferredStack || 'nextjs').toLowerCase();
+
+    let message = `You are an AI coding assistant integrated into E-Code, a web-based IDE.
 You help users build applications by generating code, managing files, and executing commands.
-You have access to the project file system and can create, modify, and delete files.`;
+You have access to the project file system and can create, modify, and delete files.
+Operate with reasoning_effort=${reasoningEffort}.`;
 
     if (projectContext) {
       message += `\n\nProject Context:
@@ -200,7 +206,14 @@ You have access to the project file system and can create, modify, and delete fi
 - Description: ${projectContext.description}`;
     }
 
-    message += `\n\nWhen suggesting code changes, format them as actions that can be executed.
+    message += `\n\nOperating protocol:
+- ${structuredContext ? 'Perform up to three context-gathering passes (files → dependencies → summary) before writing code. If no new insights are uncovered, declare "escape_hatch" and continue execution.' : 'You may skip extended context gathering but must announce when you do so.'}
+- Before invoking any tool or proposing actions, emit a TOOL_PREAMBLE that restates the goal, outlines a plan of no more than five steps, and states when you will provide the next update.
+- ${persistenceMode ? 'Remain engaged until the requested feature is complete or a defined safety condition prevents further progress.' : 'If you exit early, document partial results and next steps.'}
+- ${preferredStack === 'nextjs' ? 'Default to a production-ready Next.js 14 + React + Tailwind CSS + shadcn/ui stack for greenfield builds unless the user specifies otherwise, and ensure configurations run on Replit.' : 'Match the project stack and follow its conventions.'}
+- Run an internal rubric self-review (architecture, correctness, accessibility, tests, deployment readiness) before presenting final answers.
+
+When suggesting code changes, format them as actions that can be executed.
 For file operations, include the full file path and content.
 For commands, specify the exact command to run.`;
 

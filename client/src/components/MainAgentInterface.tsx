@@ -99,6 +99,13 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
     totalFiles: number;
   } | null>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
+
+  const [reasoningEffort, setReasoningEffort] = useState<'rapid' | 'balanced' | 'deep'>(
+    'deep'
+  );
+  const [structuredContext, setStructuredContext] = useState(true);
+  const [persistenceMode, setPersistenceMode] = useState(true);
+  const [preferredStack, setPreferredStack] = useState<'nextjs' | 'custom'>('nextjs');
   
   // Agent Modes (like Replit)
   const [modes, setModes] = useState<AgentMode[]>([
@@ -284,7 +291,11 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
             highPowerMode: modes.find(m => m.id === 'high_power')?.enabled,
             webSearch: modes.find(m => m.id === 'web_search')?.enabled,
             imageGeneration: modes.find(m => m.id === 'image_generation')?.enabled,
-            isPaused
+            isPaused,
+            reasoningEffort,
+            structuredContext,
+            persistenceMode,
+            preferredStack
           }
         })
       });
@@ -513,6 +524,70 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
                       />
                     </div>
                   ))}
+                  <div className="pt-2 border-t border-border space-y-3">
+                    <div>
+                      <div className="font-medium text-sm mb-2">Reasoning Effort</div>
+                      <div className="flex gap-2">
+                        {[
+                          { id: 'rapid', label: 'Rapid' },
+                          { id: 'balanced', label: 'Balanced' },
+                          { id: 'deep', label: 'Deep' }
+                        ].map(option => (
+                          <Button
+                            key={option.id}
+                            size="sm"
+                            variant={reasoningEffort === option.id ? 'default' : 'outline'}
+                            onClick={() => setReasoningEffort(option.id as typeof reasoningEffort)}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Deep effort mirrors GPT-5 high reasoning mode for greenfield builds, while Rapid favors speed for
+                        lightweight edits.
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium">Structured context scan</div>
+                        <p className="text-xs text-muted-foreground">
+                          Run up to three context-gathering passes with an escape hatch when no new insights appear.
+                        </p>
+                      </div>
+                      <Switch
+                        id="structured-context"
+                        checked={structuredContext}
+                        onCheckedChange={setStructuredContext}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium">Persistence mode</div>
+                        <p className="text-xs text-muted-foreground">
+                          Stay on task until the feature ships or a safety condition halts progress.
+                        </p>
+                      </div>
+                      <Switch
+                        id="persistence-mode"
+                        checked={persistenceMode}
+                        onCheckedChange={setPersistenceMode}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium">Preferred stack</div>
+                        <p className="text-xs text-muted-foreground">
+                          Default to Next.js 14 + Tailwind + shadcn/ui for new apps.
+                        </p>
+                      </div>
+                      <Switch
+                        id="preferred-stack"
+                        checked={preferredStack === 'nextjs'}
+                        onCheckedChange={value => setPreferredStack(value ? 'nextjs' : 'custom')}
+                      />
+                    </div>
+                  </div>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -555,6 +630,10 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
                 <h3 className="font-semibold text-lg">Hi! I'm your AI Agent</h3>
                 <p className="text-muted-foreground text-sm mt-1">
                   I can help you build, debug, and improve your code. Just describe what you need!
+                </p>
+                <p className="text-muted-foreground text-xs mt-2">
+                  Greenfield builds default to an enterprise Next.js 14 + React + Tailwind + shadcn/ui stack with self-review
+                  before delivery. Adjust the settings menu to change reasoning depth or persistence.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 justify-center mt-4">

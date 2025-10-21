@@ -7084,6 +7084,11 @@ module.exports = { placeholder };`,
       const userId = req.user!.id;
 
       // Prepare agent context with conversation history and advanced capabilities
+      const reasoningEffort = context?.reasoningEffort || (context?.extendedThinking ? 'deep' : 'balanced');
+      const structuredContext = context?.structuredContext !== undefined ? context.structuredContext : true;
+      const persistenceMode = context?.persistenceMode !== undefined ? context.persistenceMode : true;
+      const preferredStack = context?.preferredStack || 'nextjs';
+
       const agentContext = {
         projectId,
         userId,
@@ -7096,6 +7101,13 @@ module.exports = { placeholder };`,
         highPowerMode: context?.highPowerMode || false,
         isPaused: context?.isPaused || false
       };
+
+      Object.assign(agentContext, {
+        reasoningEffort,
+        structuredContext,
+        persistenceMode,
+        preferredStack
+      });
 
       // Process request with enhanced autonomous agent powered by MCP
       console.log('[MCP Integration] Processing AI request through MCP-enabled agent');
@@ -7155,6 +7167,11 @@ module.exports = { placeholder };`,
       }
 
       // Prepare agent context for autonomous generation
+      const reasoningEffortGenerate = context?.reasoningEffort || 'deep';
+      const structuredContextGenerate = context?.structuredContext !== undefined ? context.structuredContext : true;
+      const persistenceModeGenerate = context?.persistenceMode !== undefined ? context.persistenceMode : true;
+      const preferredStackGenerate = context?.preferredStack || 'nextjs';
+
       const agentContext = {
         projectId,
         userId,
@@ -7167,7 +7184,11 @@ module.exports = { placeholder };`,
         highPowerMode: true, // Use high power mode for initial generation
         isPaused: false,
         isInitialBuild: context?.isInitialBuild || false,
-        mcpEnabled: context?.mcpEnabled || true
+        mcpEnabled: context?.mcpEnabled || true,
+        reasoningEffort: reasoningEffortGenerate,
+        structuredContext: structuredContextGenerate,
+        persistenceMode: persistenceModeGenerate,
+        preferredStack: preferredStackGenerate
       };
 
       // Send progress updates via WebSocket
@@ -9621,10 +9642,15 @@ document.addEventListener('DOMContentLoaded', function() {
       const conversationContext = contextAwareness.getConversationContext(parseInt(projectId));
       
       // Build enhanced system message with context awareness
+      const chatReasoningEffort = context?.reasoningEffort || (context?.mode === 'agent' ? 'deep' : 'balanced');
+      const chatStructuredContext = context?.structuredContext !== false;
+      const chatPersistence = context?.persistenceMode !== false;
+      const chatPreferredStack = (context?.preferredStack || 'nextjs').toLowerCase();
+
       const systemMessage = {
         role: 'system' as const,
         content: `You are E-Code AI Assistant powered by ${provider.name}, an expert coding assistant similar to Replit's Ghostwriter. You help users with their ${project.name} project.
-        
+
 Current project context:
 - Language: ${project.language || 'Not specified'}
 - Project: ${project.name}
@@ -9638,7 +9664,15 @@ Enhanced Context Awareness:
 ${conversationContext ? `- Current Intent: ${conversationContext.currentIntent}` : ''}
 ${conversationContext?.suggestedActions.length ? `- Suggested Actions: ${conversationContext.suggestedActions.slice(0, 3).join(', ')}` : ''}
 
-Provide helpful, concise responses. When suggesting code, use proper markdown formatting with language hints. Be friendly and encouraging. Use the context awareness to provide more relevant and intelligent suggestions.`
+Operating directives:
+- reasoning_effort=${chatReasoningEffort}. Allocate more deliberate reasoning for architecting new features; shorten deliberation for minor edits.
+- ${chatStructuredContext ? 'Follow the triage loop (files → dependencies → summary) for up to three passes before writing code. If a pass yields nothing new, announce the escape hatch and proceed.' : 'Announce when you intentionally skip the structured context loop to move quickly.'}
+- Before using tools, output a TOOL_PREAMBLE containing: (1) goal restatement, (2) ≤5 step plan, (3) next progress update timing.
+- ${chatPersistence ? 'Remain engaged until the feature is production-ready or you hit an explicit safety condition. Document blockers before pausing.' : 'If you must stop early, report partial progress and next steps.'}
+- ${chatPreferredStack === 'nextjs' ? 'Default to Next.js 14 + React + Tailwind CSS + shadcn/ui when the user requests a new app unless they specify otherwise. Ensure configs run on Replit.' : 'Mirror the repository stack and coding conventions.'}
+- Perform a self-review checklist (architecture, quality, accessibility, tests, deployment) before presenting final changes.
+
+Provide helpful, concise responses. When suggesting code, use proper markdown formatting with language hints. Be friendly and encouraging. Use the context awareness to provide more relevant and intelligent suggestions while honoring local AGENTS.md rules if present.`
       };
       
       // Check if this is an agent mode request that wants to build something
@@ -9737,16 +9771,29 @@ Provide helpful, concise responses. When suggesting code, use proper markdown fo
               completed: agentResponse.completed
             };
           } else {
+            const autopReasoning = context?.reasoningEffort || (context?.extendedThinking ? 'deep' : 'balanced');
+            const autopStructured = context?.structuredContext !== false;
+            const autopPersistence = context?.persistenceMode !== false;
+            const autopStack = (context?.preferredStack || 'nextjs').toLowerCase();
+
             const systemMessageAgent = {
               role: 'system' as const,
-              content: `You are E-Code AI Agent, an autonomous coding assistant that can build entire applications. You can create files, install packages, and set up complete projects. When a user asks you to build something, respond with specific actions and code. 
-              
+              content: `You are E-Code AI Agent, an autonomous coding assistant that can build entire applications. Operate like a Fortune 500 delivery team that ships production-ready code.
+
+Operational guardrails:
+- Set reasoning_effort=${autopReasoning}. Use deliberate chain-of-thought when reasoning_effort is deep and compress when it is rapid.
+- Before any tool call, emit a TOOL_PREAMBLE that restates the user's goal, lists a plan of ≤5 numbered steps, and states when the next status update will be reported.
+- ${autopStructured ? 'Run a structured context-gathering loop (max three passes): (1) inspect relevant files, (2) review dependencies/configuration, (3) summarize new insights. If a pass yields nothing new, announce "escape_hatch: proceeding with best-effort build" and continue.' : 'Use a lightweight context scan and announce when you intentionally skip deeper gathering.'}
+- ${autopPersistence ? 'Do not hand back control until the requested feature is complete or you hit a red-line safety condition. If blocked, describe the risk, checkpoint work, and request guidance.' : 'You may stop early only after describing partial progress and next actions.'}
+- Preferred stack: ${autopStack === 'nextjs' ? 'Default to Next.js 14 with React, TypeScript, Tailwind CSS, and shadcn/ui components. Include app router structure, Tailwind config, shadcn/ui setup, and runnable scripts compatible with Replit.' : 'Follow the project stack while matching local conventions.'}
+- Enforce an internal quality rubric before final output: architecture alignment, type-safety, responsive UI, accessibility, test coverage, and deployment readiness.
+
 Available action types:
 - create_folder: { type: 'create_folder', data: { path: 'folder/path' }}
 - create_file: { type: 'create_file', data: { path: 'file.ext', content: 'file content' }}
 - install_package: { type: 'install_package', package: 'package-name' }
 
-Generate a comprehensive application based on the user's request. Include all necessary files, folders, and packages.`
+After executing actions, return a status summary that references the rubric results and highlights any escape hatch usage.`
             };
             
             agentMessages = [
@@ -21212,7 +21259,11 @@ Generate a comprehensive application based on the user's request. Include all ne
         projectId: parseInt(projectId),
         projectName: project?.name,
         language: project?.language,
-        files: files.map(f => ({ path: f.path, content: f.content }))
+        files: files.map(f => ({ path: f.path, content: f.content })),
+        reasoningEffort: context?.reasoningEffort,
+        structuredContext: context?.structuredContext,
+        persistenceMode: context?.persistenceMode,
+        preferredStack: context?.preferredStack
       };
       
       const response = await aiService2.generateResponse(messages, {
