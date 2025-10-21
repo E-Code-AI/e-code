@@ -72,6 +72,11 @@ import {
   type NavigationItem,
 } from "@/constants/navigation";
 
+import {
+  DialogContent,
+  DialogTitle
+} from "@/components/ui/dialog";
+
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();
   const [location, navigate] = useLocation();
@@ -85,7 +90,7 @@ export function ReplitHeader() {
   // Get project info from URL - supports both formats: /projects/:id and /@:username/:project
   const pathMatch = location.match(/^\/project(?:s)?\/(\d+)/);
   const projectId = pathMatch ? pathMatch[1] : null;
-  
+
   const replitStyleMatch = location.match(/^\/@([^/]+)\/([^/]+)/);
   const username = replitStyleMatch ? replitStyleMatch[1] : null;
   const projectSlug = replitStyleMatch ? replitStyleMatch[2] : null;
@@ -111,7 +116,7 @@ export function ReplitHeader() {
         setProjectInfo(null);
       }
     };
-    
+
     fetchProjectInfo();
   }, [projectId, username, projectSlug]);
 
@@ -131,7 +136,7 @@ export function ReplitHeader() {
         <div className="lg:hidden mr-2">
           <MobileMenu onOpenSpotlight={() => setSpotlightOpen(true)} />
         </div>
-        
+
         {/* E-Code Logo */}
         <Link href="/">
           <div className="group cursor-pointer flex items-center">
@@ -410,129 +415,129 @@ export function ReplitHeader() {
               </div>
             </div>
             <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-            
+
             <DropdownMenuItem 
               onClick={() => navigate(`/@${user?.username}`)}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <User className="mr-2 h-4 w-4" />
               View Profile
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/account')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Settings className="mr-2 h-4 w-4" />
               Account
             </DropdownMenuItem>
-            
+
             <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/analytics')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <BarChart3 className="mr-2 h-4 w-4" />
               Analytics
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/badges')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Trophy className="mr-2 h-4 w-4" />
               Badges & Achievements
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/education')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <GraduationCap className="mr-2 h-4 w-4" />
               Education Center
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/marketplace')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Store className="mr-2 h-4 w-4" />
               Marketplace
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/powerups')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Rocket className="mr-2 h-4 w-4" />
               Power Ups
             </DropdownMenuItem>
-            
+
             <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/cycles')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Zap className="mr-2 h-4 w-4" />
               Cycles
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/plans')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <CreditCard className="mr-2 h-4 w-4" />
               Plans & Pricing
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/deployments')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Globe className="mr-2 h-4 w-4" />
               Deployments
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/bounties')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <DollarSign className="mr-2 h-4 w-4" />
               Bounties
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/teams')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Users className="mr-2 h-4 w-4" />
               Teams & Orgs
             </DropdownMenuItem>
-            
+
             <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/learn')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <GraduationCap className="mr-2 h-4 w-4" />
               Learn
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/docs')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Book className="mr-2 h-4 w-4" />
               Documentation
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/support')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <HelpCircle className="mr-2 h-4 w-4" />
               Support
             </DropdownMenuItem>
-            
+
             <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-            
+
             <DropdownMenuItem 
               onClick={() => navigate('/referrals')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Gift className="mr-2 h-4 w-4" />
               Refer a Friend
             </DropdownMenuItem>
-            
+
             <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
-            
+
             <DropdownMenuItem
               onClick={handleLogout}
               className="text-[var(--ecode-danger)] hover:bg-[var(--ecode-danger)]/10"
