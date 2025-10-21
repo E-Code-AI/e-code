@@ -12,16 +12,28 @@ build = ["npm", "install"]
 run = ["npm", "run", "dev"]
 
 [[ports]]
+localPort = 3200
+externalPort = 3001
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 36069
-externalPort = 3001
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
 
 [[ports]]
 localPort = 40773
 externalPort = 3000
+
+[[ports]]
+localPort = 44861
+externalPort = 3002
 
 [workflows]
 runButton = "Project"
