@@ -98,3 +98,33 @@ The `.replit` file is configured for Replit Reserved VM deployment with `deploym
 - **Containerization**: Docker.
 - **Caching**: Redis/ioredis.
 - **CDN**: Replit's built-in CDN.
+
+## Common Development Commands
+
+### Database Operations
+- `npm run db:push` - Push schema changes to database
+- `npm run db:seed` - Seed database with initial data
+- Database automatically initializes on first run
+
+### Development
+- `npm run dev` - Start development server (runs automatically)
+- Server runs on port 5000 (mapped to port 80 in production)
+- Hot reload enabled for both frontend and backend
+
+### File Operations
+- Files are auto-saved via the IDE
+- Use the File Explorer in the left panel to manage files
+- Support for drag-and-drop file uploads
+
+### AI Agent Usage
+- Use the AI Agent panel (right sidebar) for code generation
+- Select code in editor and use Ctrl/Cmd + I to invoke AI assistance
+- AI has full context of project structure and recent changes
+
+## Project Structure
+- `/client` - React frontend application
+- `/server` - Express.js backend services
+- `/shared` - Shared TypeScript types and schemas
+- `/services` - Polyglot backend services (Go runtime, Python ML)
+- `/docs` - Platform documentation
+- `/migrations` - Database migration files
