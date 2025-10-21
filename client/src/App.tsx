@@ -251,15 +251,16 @@ function AppContent() {
   const { isLoading: authLoading } = useAuth();
 
 
+  // Temporarily disabled to debug blank page issue
   // Show loading state while authentication is being checked
   // This prevents premature route matching and 404s
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <ECodeLoading fullScreen size="lg" text="Initializing authentication..." />
-      </div>
-    );
-  }
+  // if (authLoading) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen bg-background">
+  //       <ECodeLoading fullScreen size="lg" text="Initializing authentication..." />
+  //     </div>
+  //   );
+  // }
 
   return (
     <ErrorBoundary>
