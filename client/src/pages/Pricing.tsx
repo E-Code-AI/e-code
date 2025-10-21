@@ -15,9 +15,9 @@ import {
   ArrowRight, Server, Cloud, Cpu, HardDrive, Gauge,
   Phone, MessageSquare, Mail, Headphones,
   CreditCard, Award, BarChart3, Users2, Briefcase,
-  Brain, Layers, GitBranch, Timer, Infinity, CheckCircle2
+  Brain, Layers, GitBranch, Timer, Infinity, CheckCircle2, PlayCircle
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode, Fragment } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 
@@ -31,7 +31,7 @@ interface PricingTier {
   yearlyPrice: number;
   popular?: boolean;
   enterprise?: boolean;
-  icon: React.ReactNode;
+  icon: ReactNode;
   gradient: string;
   features: {
     text: string;
@@ -494,7 +494,7 @@ export default function Pricing() {
                   </thead>
                   <tbody>
                     {comparisonFeatures.map((category, categoryIdx) => (
-                      <React.Fragment key={categoryIdx}>
+                      <Fragment key={categoryIdx}>
                         <tr className="bg-gray-50 dark:bg-gray-800/30">
                           <td colSpan={5} className="px-6 py-3">
                             <div className="font-semibold text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wider">
@@ -511,7 +511,7 @@ export default function Pricing() {
                             <td className="text-center p-6 text-gray-900 dark:text-white font-medium">{feature.enterprise}</td>
                           </tr>
                         ))}
-                      </React.Fragment>
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>
