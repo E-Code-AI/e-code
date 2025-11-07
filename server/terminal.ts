@@ -85,38 +85,58 @@ export function setupTerminalWebsocket(server: Server) {
           if (data.type === 'input') {
             const input = data.data;
             
-            // Echo the input back to the terminal
-            broadcast(projectId, JSON.stringify({
-              type: 'output',
-              data: input
-            }));
-            
-            // Handle Enter key presses
-            if (input.includes('\r')) {
-              const command = terminalSession.outputBuffer.trim();
-              terminalSession.outputBuffer = '';
-              
-              if (command) {
-                // Add to history
-                if (terminalSession.commandHistory[terminalSession.commandHistory.length - 1] !== command) {
-                  terminalSession.commandHistory.push(command);
-                  if (terminalSession.commandHistory.length > 100) {
-                    terminalSession.commandHistory.shift();
-                  }
+            // Process each character in the input
+            for (const char of input) {
+              // Handle backspace/delete (0x7F)
+              if (char === '\x7F' || char === '\b') {
+                if (terminalSession.outputBuffer.length > 0) {
+                  terminalSession.outputBuffer = terminalSession.outputBuffer.slice(0, -1);
+                  // Echo backspace sequence to terminal (move back, space, move back)
+                  broadcast(projectId, JSON.stringify({
+                    type: 'output',
+                    data: '\b \b'
+                  }));
                 }
+              }
+              // Handle Enter key
+              else if (char === '\r' || char === '\n') {
+                const command = terminalSession.outputBuffer.trim();
+                terminalSession.outputBuffer = '';
                 
-                // Execute the command
-                await executeCommand(projectId, command);
-              } else {
-                // Empty command, just show prompt
+                // Echo newline
                 broadcast(projectId, JSON.stringify({
                   type: 'output',
-                  data: '$ '
+                  data: '\r\n'
+                }));
+                
+                if (command) {
+                  // Add to history (avoid duplicates)
+                  if (terminalSession.commandHistory[terminalSession.commandHistory.length - 1] !== command) {
+                    terminalSession.commandHistory.push(command);
+                    if (terminalSession.commandHistory.length > 100) {
+                      terminalSession.commandHistory.shift();
+                    }
+                  }
+                  
+                  // Execute the command
+                  await executeCommand(projectId, command);
+                } else {
+                  // Empty command, just show prompt
+                  broadcast(projectId, JSON.stringify({
+                    type: 'output',
+                    data: '$ '
+                  }));
+                }
+              }
+              // Handle regular printable characters
+              else if (char >= ' ' && char <= '~') {
+                terminalSession.outputBuffer += char;
+                // Echo the character back to terminal
+                broadcast(projectId, JSON.stringify({
+                  type: 'output',
+                  data: char
                 }));
               }
-            } else {
-              // Add to output buffer
-              terminalSession.outputBuffer += input;
             }
           } else if (data.type === 'resize') {
             // Store the terminal dimensions for future reference
