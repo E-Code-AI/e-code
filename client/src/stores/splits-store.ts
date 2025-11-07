@@ -41,6 +41,7 @@ interface SplitsStore {
   restorePane: () => void;
   resizeSplit: (splitId: string, sizes: number[]) => void;
   setActivePane: (paneId: string) => void;
+  setActiveTab: (paneId: string, tabIndexOrId: number | string) => void;
   updateFloatingPosition: (paneId: string, position: { x: number; y: number; width?: number; height?: number }) => void;
   bringFloatingToFront: (paneId: string) => void;
   
@@ -377,6 +378,27 @@ const useSplitsStore = create<SplitsStore>()(
     setActivePane: (paneId) => {
       set((state) => {
         state.activePane = paneId;
+      });
+    },
+
+    // Set active tab in a pane
+    setActiveTab: (paneId, tabIndexOrId) => {
+      set((state) => {
+        const pane = findNodeRecursive(paneId, state.root) as PaneGroup;
+        if (!pane || !isPaneGroup(pane)) return;
+        
+        if (typeof tabIndexOrId === 'number') {
+          // Set by index
+          if (tabIndexOrId >= 0 && tabIndexOrId < pane.tabs.length) {
+            pane.activeTabIndex = tabIndexOrId;
+          }
+        } else {
+          // Set by tab ID
+          const tabIndex = pane.tabs.findIndex(t => t.id === tabIndexOrId);
+          if (tabIndex >= 0) {
+            pane.activeTabIndex = tabIndex;
+          }
+        }
       });
     },
 

@@ -27,8 +27,9 @@ import { ReplitThemesPanel } from './ReplitThemesPanel';
 import { ReplitDebuggerPanel } from './ReplitDebuggerPanel';
 import { ReplitHistoryPanel } from './ReplitHistoryPanel';
 // Lazy load Splits to avoid bundling with non-editor pages
+// Using V2 with SplitsLayout + Floating Panes support
 const SplitsEditorLayout = React.lazy(() => 
-  import('../splits').then(module => ({ default: module.SplitsEditorLayout }))
+  import('../splits').then(module => ({ default: module.SplitsEditorLayoutV2 }))
 );
 
 interface ReplitEditorLayoutProps {
