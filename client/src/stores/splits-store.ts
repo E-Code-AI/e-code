@@ -75,6 +75,36 @@ interface SplitsStore {
 }
 
 // Utility functions
+
+// Hydrate parent metadata for all panes in the tree
+// Ensures parentSplitId and collapsible flags are set correctly after layout load/init
+const hydrateParentMetadata = (node: LayoutNode | null, parentId: string | null = null): void => {
+  if (!node) return;
+  
+  if (isSplit(node)) {
+    // Recursively hydrate children with this split as parent
+    for (const child of node.children) {
+      if (isPaneGroup(child)) {
+        // Attach parent reference
+        child.parentSplitId = node.id;
+        
+        // Preserve collapsible flag if already set, otherwise default to false
+        if (child.collapsible === undefined) {
+          child.collapsible = false;
+        }
+        
+        // Preserve collapsed flag if already set, otherwise default to false
+        if (child.collapsed === undefined) {
+          child.collapsed = false;
+        }
+      }
+      
+      // Recursively hydrate nested splits
+      hydrateParentMetadata(child, node.id);
+    }
+  }
+};
+
 const findNodeRecursive = (nodeId: string, node: LayoutNode | null): LayoutNode | null => {
   if (!node) return null;
   if (node.id === nodeId) return node;
@@ -162,6 +192,10 @@ const useSplitsStore = create<SplitsStore>()(
     initializeLayout: (layout) => {
       set((state) => {
         state.root = layout || DEFAULT_LAYOUT;
+        
+        // Hydrate parent metadata to ensure parentSplitId and collapsible flags are set
+        hydrateParentMetadata(state.root);
+        
         state.floatingPanes = new Map();
         state.activePane = null;
         state.maximizedPane = null;
@@ -666,6 +700,10 @@ const useSplitsStore = create<SplitsStore>()(
         
         set((state) => {
           state.root = layoutData.root || DEFAULT_LAYOUT;
+          
+          // Hydrate parent metadata after loading from storage
+          hydrateParentMetadata(state.root);
+          
           state.floatingPanes = new Map(layoutData.floatingPanes || []);
           state.activePane = layoutData.activePane || null;
           state.maximizedPane = layoutData.maximizedPane || null;
