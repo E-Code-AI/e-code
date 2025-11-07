@@ -23,6 +23,10 @@ export interface PaneGroup {
   percent: number;
   minSize?: number;
   maxSize?: number;
+  collapsible?: boolean; // If true, shows collapse/expand button in header
+  collapsed?: boolean; // Current collapsed state (driven from percent, not set manually)
+  previousPercent?: number; // Saved size before collapse (for restore)
+  parentSplitId?: string; // ID of parent split (for toggleCollapse calls)
   isFloating?: boolean;
   floatingPosition?: {
     x: number;

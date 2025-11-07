@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useSpring, useMotionValue } from 'framer-motio
 import { cn } from '@/lib/utils';
 import { PaneGroup, TabInfo, DragItem, DropZone } from '@/types/splits';
 import useSplitsStore from '@/stores/splits-store';
-import { X, Maximize2, Minimize2, MoreVertical, GripVertical } from 'lucide-react';
+import { X, Maximize2, Minimize2, MoreVertical, GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -53,6 +53,7 @@ export function SplitsPane({
     floatPane,
     maximizePane,
     restorePane,
+    toggleCollapse,
     startDrag,
     updateDrag,
     endDrag,
@@ -151,6 +152,20 @@ export function SplitsPane({
   const handleFloat = () => floatPane(paneGroup.id);
   const handleMaximize = () => maximizePane(paneGroup.id);
   const handleRestore = () => restorePane();
+  
+  // Collapse/expand bottom panel using store action
+  const handleToggleCollapse = useCallback(() => {
+    if (!paneGroup.parentSplitId || !paneGroup.collapsible) return;
+    
+    // Find child index in parent split (usually 1 for bottom panel)
+    // Assumes center-bottom is the second child (index 1) of center-stack
+    const childIndex = 1; // TODO: Make this dynamic if needed
+    
+    toggleCollapse(paneGroup.parentSplitId, childIndex);
+  }, [paneGroup.parentSplitId, paneGroup.collapsible, toggleCollapse]);
+  
+  // Derive collapsed state from actual percent (driven from store!)
+  const isCollapsed = paneGroup.collapsed || (paneGroup.percent || 0) <= 1;
 
   return (
     <ContextMenuTrigger>
@@ -214,6 +229,24 @@ export function SplitsPane({
           
           {/* Pane Controls */}
           <div className="flex items-center gap-1 px-2">
+            {/* Collapse/Expand button for collapsible panes */}
+            {paneGroup.collapsible && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
+                onClick={handleToggleCollapse}
+                title={isCollapsed ? "Expand" : "Collapse"}
+                data-testid={`button-collapse-${paneGroup.id}`}
+              >
+                {isCollapsed ? (
+                  <ChevronUp className="h-3 w-3" />
+                ) : (
+                  <ChevronDown className="h-3 w-3" />
+                )}
+              </Button>
+            )}
+            
             {isMaximized ? (
               <Button
                 variant="ghost"
