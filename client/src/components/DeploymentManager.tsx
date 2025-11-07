@@ -1,11 +1,10 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { 
   Rocket, Globe, Server, Activity, Clock, AlertCircle,
   CheckCircle, XCircle, RefreshCw, Settings, ExternalLink,
   Shield, Zap, Cpu, HardDrive, Network, BarChart,
   GitBranch, Copy, Terminal, Play, Pause, RotateCcw,
-  ArrowUpRight, Info, Loader2, Plus, Key
+  ArrowUpRight, Info, Loader2, Plus, Key, History, TrendingUp
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DeploymentMetrics } from './deployment/DeploymentMetrics';
+import { AutoScalingConfig } from './deployment/AutoScalingConfig';
+import { RollbackManager } from './deployment/RollbackManager';
 
 interface DeploymentManagerProps {
   projectId?: number;
@@ -441,7 +446,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'running': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'deploying': return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+      case 'deploying': return <Loader2 className="h-4 w-4 animate-spin text-orange-500" />;
       case 'stopped': return <Pause className="h-4 w-4 text-gray-500" />;
       case 'failed': return <XCircle className="h-4 w-4 text-red-500" />;
       default: return <AlertCircle className="h-4 w-4 text-yellow-500" />;
@@ -451,7 +456,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'running': return 'bg-green-500';
-      case 'deploying': return 'bg-blue-500';
+      case 'deploying': return 'bg-orange-500';
       case 'stopped': return 'bg-gray-500';
       case 'failed': return 'bg-red-500';
       default: return 'bg-yellow-500';
@@ -459,75 +464,189 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
   };
 
   return (
-    <>
-      <Card className={className}>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center">
-              <Rocket className="h-4 w-4 mr-2" />
-              Deployments
-            </CardTitle>
-            <Button
-              size="sm"
-              onClick={() => setShowDeployDialog(true)}
-            >
-              <Rocket className="h-3.5 w-3.5 mr-1" />
-              Deploy
-            </Button>
-          </div>
-        </CardHeader>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className={cn("flex flex-col h-full", className)}
+    >
+      <Tabs defaultValue="overview" className="w-full flex-1 flex flex-col">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 h-12 sm:h-10 rounded-none border-b glassmorphism overflow-x-auto">
+          <TabsTrigger 
+            value="overview" 
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+          >
+            Overview
+          </TabsTrigger>
+          <TabsTrigger 
+            value="metrics" 
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+          >
+            <Activity className="h-3 w-3 mr-1" />
+            Metrics
+          </TabsTrigger>
+          <TabsTrigger 
+            value="autoscaling" 
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+          >
+            <TrendingUp className="h-3 w-3 mr-1" />
+            Auto-Scaling
+          </TabsTrigger>
+          <TabsTrigger 
+            value="rollback" 
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+          >
+            <History className="h-3 w-3 mr-1" />
+            Rollback
+          </TabsTrigger>
+          <TabsTrigger 
+            value="logs" 
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+          >
+            Logs
+          </TabsTrigger>
+          <TabsTrigger 
+            value="settings" 
+            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-[#F26207]/10 data-[state=active]:text-[#F26207] px-3 sm:px-4"
+          >
+            Settings
+          </TabsTrigger>
+        </TabsList>
 
-        <CardContent className="p-0">
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 h-8">
-              <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
-              <TabsTrigger value="logs" className="text-xs">Logs</TabsTrigger>
-              <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
-              <TabsTrigger value="metrics" className="text-xs">Metrics</TabsTrigger>
-            </TabsList>
+        <TabsContent value="overview" className="mt-0 flex-1 overflow-auto animate-fadeIn">
+          {/* Enhanced Deploy Button Section with Glassmorphism */}
+          <motion.div 
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="p-4 sm:p-5 border-b glassmorphism"
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+              <div>
+                <h4 className="text-sm font-semibold bg-gradient-to-r from-[#F26207] to-[#F99D25] bg-clip-text text-transparent">
+                  Deploy Application
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">Deploy your application to production environment</p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => setShowDeployDialog(true)}
+                className="min-h-[48px] sm:min-h-[40px] px-4 sm:px-6 bg-gradient-to-r from-[#F26207] to-[#F99D25] hover:from-[#D04E00] hover:to-[#E88510] text-white shadow-lg hover:shadow-xl transition-all duration-300 btn-premium focus:ring-2 focus:ring-[#F26207]/50 focus:ring-offset-2"
+                disabled={isDeploying}
+              >
+                {isDeploying ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                    <span>Deploying...</span>
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="h-3.5 w-3.5 mr-1" />
+                    <span>Deploy</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </motion.div>
 
-            <TabsContent value="overview" className="mt-0">
-              {/* Container Status */}
-              {containerStatus && (
-                <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Container Status</Label>
-                    <Badge variant={containerStatus?.deployment?.ready ? "default" : "secondary"}>
-                      {containerStatus?.deployment?.ready ? "Running" : "Stopped"}
-                    </Badge>
-                  </div>
-                  {containerStatus?.deployment?.availableReplicas !== undefined && (
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      {containerStatus.deployment.availableReplicas}/{containerStatus.deployment.replicas} replicas active
-                    </div>
-                  )}
+          {/* Container Status */}
+          {containerStatus && (
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Container Status</Label>
+                <Badge variant={containerStatus?.deployment?.ready ? "default" : "secondary"}>
+                  {containerStatus?.deployment?.ready ? "Running" : "Stopped"}
+                </Badge>
+              </div>
+              {containerStatus?.deployment?.availableReplicas !== undefined && (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {containerStatus.deployment.availableReplicas}/{containerStatus.deployment.replicas} replicas active
                 </div>
               )}
-              
-              {/* Deployment List */}
-              <div className="p-4 border-b">
-                <Label className="text-xs mb-2">Active Deployments</Label>
-                <div className="space-y-2">
-                  {deployments.map((deployment) => (
-                    <div
+            </div>
+          )}
+          
+          {/* Enhanced Deployment List with Skeleton Loaders */}
+          <motion.div 
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="p-4 border-b"
+          >
+            <Label className="text-sm font-semibold mb-3 text-[#F26207]">Active Deployments</Label>
+            <div className="space-y-3">
+              {deployments.length === 0 && !stats ? (
+                // Skeleton Loaders for Deployments
+                <AnimatePresence>
+                  {[1, 2, 3].map((n) => (
+                    <motion.div
+                      key={n}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: n * 0.1 }}
+                      className="p-4 rounded-xl glassmorphism animate-pulse"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Skeleton className="h-4 w-4 rounded-full" />
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-5 w-12 rounded-full" />
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <Skeleton className="h-3 w-20" />
+                            <Skeleton className="h-3 w-28" />
+                          </div>
+                        </div>
+                        <div className="flex space-x-1">
+                          <Skeleton className="h-7 w-7 rounded" />
+                          <Skeleton className="h-7 w-7 rounded" />
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              ) : deployments.length === 0 ? (
+                <Card className="p-8 text-center border-dashed glassmorphism">
+                  <Rocket className="h-12 w-12 mx-auto mb-3 text-[#F26207]" />
+                  <p className="text-sm text-muted-foreground">No deployments yet. Click deploy to get started!</p>
+                </Card>
+              ) : (
+                <AnimatePresence>
+                  {deployments.map((deployment, idx) => (
+                    <motion.div
                       key={deployment.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: idx * 0.05 }}
+                      whileHover={{ scale: 1.01 }}
+                      className={cn(
+                        "p-4 rounded-xl cursor-pointer transition-all duration-300 glassmorphism shadow-lg hover:shadow-xl",
                         selectedDeployment?.id === deployment.id 
-                          ? 'bg-accent border-accent' 
+                          ? 'bg-gradient-to-r from-[#F26207]/10 to-[#F99D25]/10 border-[#F26207]' 
                           : 'hover:bg-accent/50'
-                      }`}
+                      )}
                       onClick={() => setSelectedDeployment(deployment)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
-                            {getStatusIcon(deployment.status)}
-                            <span className="font-medium text-sm">Deployment #{deployment.id}</span>
-                            <Badge variant="outline" className="text-xs">
+                            <motion.div
+                              animate={deployment.status === 'deploying' ? { rotate: 360 } : {}}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            >
+                              {getStatusIcon(deployment.status)}
+                            </motion.div>
+                            <span className="font-semibold text-sm">Deployment #{deployment.id}</span>
+                            <Badge 
+                              variant="outline" 
+                              className="text-xs bg-gradient-to-r from-[#F26207]/10 to-[#F99D25]/10"
+                            >
                               v{deployment.version}
                             </Badge>
                           </div>
-                          <div className="flex items-center space-x-4 mt-1 text-xs text-muted-foreground">
+                          <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
                             <span className="flex items-center">
                               <Server className="h-3 w-3 mr-1" />
                               {deployment.status}
@@ -549,7 +668,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                                   window.open(deployment.url, '_blank');
                                 }
                               }}
-                              className="h-7 w-7"
+                              className="h-8 w-8 hover:bg-[#F26207]/10 hover:text-[#F26207] transition-colors"
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
                             </Button>
@@ -561,16 +680,18 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                               e.stopPropagation();
                               handleRedeploy(deployment);
                             }}
-                            className="h-7 w-7"
+                            className="h-8 w-8 hover:bg-[#F26207]/10 hover:text-[#F26207] transition-colors"
                           >
                             <RotateCcw className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
-                </div>
-              </div>
+                </AnimatePresence>
+              )}
+            </div>
+          </motion.div>
 
               {/* Deployment Details */}
               {selectedDeployment && (
@@ -721,48 +842,67 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
               </div>
             </TabsContent>
 
+            {/* Enhanced Metrics Tab with Advanced Features */}
             <TabsContent value="metrics" className="mt-0">
-              <div className="p-4 space-y-4">
-                {stats && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Total Requests</p>
-                            <p className="text-2xl font-bold">{stats.totalRequests.toLocaleString()}</p>
-                          </div>
-                          <BarChart className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Bandwidth Used</p>
-                            <p className="text-2xl font-bold">{stats.bandwidth}</p>
-                          </div>
-                          <Network className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-                
-                <Alert>
-                  <Activity className="h-4 w-4" />
-                  <AlertTitle>Performance Insights</AlertTitle>
-                  <AlertDescription>
-                    Your application is performing well. Average response time is below 200ms.
-                  </AlertDescription>
-                </Alert>
-              </div>
+              {selectedDeployment ? (
+                <DeploymentMetrics 
+                  deploymentId={selectedDeployment.id.toString()} 
+                  className="h-full"
+                />
+              ) : (
+                <div className="p-4">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>No Deployment Selected</AlertTitle>
+                    <AlertDescription>
+                      Please select a deployment from the Overview tab to view metrics.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Auto-Scaling Configuration Tab */}
+            <TabsContent value="autoscaling" className="mt-0">
+              {selectedDeployment ? (
+                <AutoScalingConfig 
+                  deploymentId={selectedDeployment.id.toString()} 
+                  className="h-full"
+                />
+              ) : (
+                <div className="p-4">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>No Deployment Selected</AlertTitle>
+                    <AlertDescription>
+                      Please select a deployment from the Overview tab to configure auto-scaling.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Rollback Management Tab */}
+            <TabsContent value="rollback" className="mt-0">
+              {selectedDeployment ? (
+                <RollbackManager 
+                  deploymentId={selectedDeployment.id.toString()} 
+                  className="h-full"
+                />
+              ) : (
+                <div className="p-4">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>No Deployment Selected</AlertTitle>
+                    <AlertDescription>
+                      Please select a deployment from the Overview tab to manage versions and rollbacks.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
-
+      
       {/* Deploy Dialog */}
       <Dialog open={showDeployDialog} onOpenChange={setShowDeployDialog}>
         <DialogContent>
@@ -882,6 +1022,6 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </motion.div>
   );
 }

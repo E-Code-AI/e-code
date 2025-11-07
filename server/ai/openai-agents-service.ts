@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * OpenAI Agents Service
  * Implements OpenAI's Assistants API for advanced agentic capabilities

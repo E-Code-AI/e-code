@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Database Connection Pooling Service
  * Fortune 500-grade database optimization

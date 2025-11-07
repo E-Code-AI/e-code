@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Real Two-Factor Authentication Service
  * Provides actual 2FA implementation with TOTP

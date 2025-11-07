@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useState, lazy, Suspense } from "react";
 import { Switch, Route, useLocation, useRoute } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -8,11 +7,20 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Performance optimizations imports
+import performanceMonitor from "./utils/performance";
+import { registerServiceWorker } from "./utils/service-worker";
+import budgetMonitor from "./utils/performance-budget";
+import { prefetchResources } from "./utils/network-optimization";
+import { addImagePreloadLinks } from "./utils/image-optimization";
 
 // Lazy load all pages for better performance
 const NotFound = lazy(() => import("@/pages/not-found"));
 const Home = lazy(() => import("@/pages/Home"));
 const Editor = lazy(() => import("@/pages/Editor"));
+const ResponsiveEditorRoute = lazy(() => import("@/pages/ResponsiveEditorRoute"));
 const AuthPage = lazy(() => import("@/pages/auth-page"));
 const ProjectsPage = lazy(() => import("@/pages/ProjectsPage"));
 
@@ -31,6 +39,7 @@ const Analytics = lazy(() => import("@/pages/Analytics"));
 
 const Education = lazy(() => import("@/pages/Education"));
 const Marketplace = lazy(() => import("@/pages/Marketplace"));
+const TemplateMarketplace = lazy(() => import("@/pages/TemplateMarketplace"));
 
 const TeamPage = lazy(() => import("@/pages/TeamPage"));
 const TeamSettings = lazy(() => import("@/pages/TeamSettings"));
@@ -48,6 +57,7 @@ const AdminBilling = lazy(() => import("@/pages/AdminBilling"));
 const AdminAIModels = lazy(() => import("@/pages/admin/AIModels"));
 const AdminFormRequests = lazy(() => import("@/pages/admin/FormRequests"));
 const PitchDeck = lazy(() => import("@/pages/admin/PitchDeck"));
+const ChatGPTAdmin = lazy(() => import("@/pages/ChatGPTAdmin"));
 // Public pages
 const Landing = lazy(() => import("@/pages/Landing"));
 const Pricing = lazy(() => import("@/pages/Pricing"));
@@ -65,6 +75,7 @@ const Forum = lazy(() => import("@/pages/Forum"));
 const ComparePage = lazy(() => import("@/pages/compare/ComparePage"));
 
 const MobileAdmin = lazy(() => import("@/pages/mobile"));
+const MobileWorkspace = lazy(() => import("@/pages/MobileWorkspace"));
 const AI = lazy(() => import("@/pages/AI"));
 const Press = lazy(() => import("@/pages/Press"));
 const Partners = lazy(() => import("@/pages/Partners"));
@@ -94,6 +105,7 @@ const AuthenticationDemo = lazy(() =>
 );
 // User area pages
 const Account = lazy(() => import("@/pages/Account"));
+const ThemeValidation = lazy(() => import("@/pages/ThemeValidation"));
 
 const Deployments = lazy(() => import("@/pages/Deployments"));
 const Learn = lazy(() => import("@/pages/Learn"));
@@ -147,6 +159,9 @@ const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
 const FigmaImport = lazy(() => import("@/pages/FigmaImport"));
 const BoltImport = lazy(() => import("@/pages/BoltImport"));
 const LovableImport = lazy(() => import("@/pages/LovableImport"));
+
+// Performance Monitoring
+const PerformanceDashboard = lazy(() => import("@/pages/PerformanceDashboard"));
 
 // Solutions pages
 const AppBuilder = lazy(() => import("@/pages/solutions/AppBuilder"));
@@ -251,6 +266,45 @@ function AppContent() {
   const { isLoading: authLoading } = useAuth();
   const [showContent, setShowContent] = useState(false);
 
+  // Initialize performance optimizations on mount
+  useEffect(() => {
+    // Register service worker for offline support and caching (PRODUCTION ONLY)
+    if (import.meta.env.PROD) {
+      registerServiceWorker().catch(console.error);
+    }
+    
+    // Start performance budget monitoring
+    if (process.env.NODE_ENV === 'production') {
+      budgetMonitor.startMonitoring();
+    }
+    
+    // Preload critical images (only in production to avoid 404s in dev)
+    if (import.meta.env.PROD) {
+      const criticalImages = [
+        '/assets/logo.svg',
+        '/assets/hero-image.svg',
+      ];
+      addImagePreloadLinks(criticalImages);
+    }
+    
+    // Prefetch common API endpoints
+    const commonEndpoints = [
+      '/api/user',
+      '/api/projects',
+      '/api/monitoring/health',
+    ];
+    prefetchResources(commonEndpoints).catch(console.error);
+    
+    // Mark performance milestones
+    performanceMonitor.mark('app-init');
+    
+    // Cleanup on unmount
+    return () => {
+      budgetMonitor.stopMonitoring();
+      performanceMonitor.destroy();
+    };
+  }, []);
+
   useEffect(() => {
     // Set a timeout to show content after 2 seconds if auth is still loading
     // This prevents indefinite loading states
@@ -264,6 +318,9 @@ function AppContent() {
     // If auth loading finishes, show content immediately
     if (!authLoading) {
       setShowContent(true);
+      // Mark when auth is ready
+      performanceMonitor.mark('auth-ready');
+      performanceMonitor.measure('auth-init-time', 'app-init', 'auth-ready');
     }
 
     return () => clearTimeout(timer);
@@ -288,13 +345,20 @@ function AppContent() {
             <Toaster />
             <SpotlightSearch />
             <CommandPalette />
-            <KeyboardShortcuts />
 
-            <Suspense fallback={<PageLoader />}>
-              <Switch>
-          <Route path="/auth" component={AuthPage} />
-          <Route path="/login" component={Login} />
-          <Route path="/register" component={Register} />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <Suspense fallback={<PageLoader />}>
+                  <Switch>
+                <Route path="/auth" component={AuthPage} />
+                <Route path="/login" component={Login} />
+                <Route path="/register" component={Register} />
 
           <Route path="/runtime-test" component={RuntimePublicPage} />
 
@@ -338,6 +402,7 @@ function AppContent() {
           <Route path="/solutions/internal-ai-builder" component={InternalAIBuilder} />
 
           <Route path="/mobile" component={MobileAdmin} />
+          <Route path="/mobile-workspace" component={MobileWorkspace} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-documentation" component={AIDocumentation} />
           <Route path="/ai-agent" component={AIAgent} />
@@ -350,6 +415,7 @@ function AppContent() {
           <Route path="/mcp" component={MCPInterface} />
           <Route path="/polyglot" component={PolyglotBackendPage} />
           <Route path="/demo" component={AuthenticationDemo} />
+          <Route path="/theme-validation" component={ThemeValidation} />
           <Route path="/press" component={Press} />
           <Route path="/partners" component={Partners} />
           <Route path="/security" component={Security} />
@@ -578,9 +644,7 @@ function AppContent() {
           {/* User profile routes */}
           <Route path="/u/:username" component={UserProfileWrapper} />
           <ProtectedRoute path="/editor/:id" component={() => (
-            <ReplitLayout showSidebar={false}>
-              <Editor />
-            </ReplitLayout>
+            <ResponsiveEditorRoute />
           )} />
           <ProtectedRoute path="/runtimes" component={() => (
             <ReplitLayout showSidebar={false}>
@@ -605,6 +669,11 @@ function AppContent() {
           <ProtectedRoute path="/templates" component={() => (
             <ReplitLayout showSidebar={false}>
               <TemplatesPage />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/marketplace/templates" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <TemplateMarketplace />
             </ReplitLayout>
           )} />
           <ProtectedRoute path="/community" component={() => (
@@ -708,6 +777,11 @@ function AppContent() {
               <AdminDashboard />
             </ReplitLayout>
           )} />
+          <ProtectedRoute path="/admin/dashboard" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <AdminDashboard />
+            </ReplitLayout>
+          )} />
           <ProtectedRoute path="/admin/usage" component={() => (
             <ReplitLayout showSidebar={false}>
               <AdminUsage />
@@ -732,6 +806,9 @@ function AppContent() {
             <ReplitLayout showSidebar={false}>
               <PitchDeck />
             </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/admin/chatgpt" component={() => (
+            <ChatGPTAdmin />
           )} />
           <ProtectedRoute path="/account" component={() => (
             <ReplitLayout showSidebar={false}>
@@ -800,6 +877,12 @@ function AppContent() {
               <HealthDashboard />
             </ReplitLayout>
           )} />
+          
+          <ProtectedRoute path="/performance" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <PerformanceDashboard />
+            </ReplitLayout>
+          )} />
 
           <ProtectedRoute path="/sso-configuration" component={() => (
             <ReplitLayout showSidebar={false}>
@@ -819,6 +902,8 @@ function AppContent() {
           <Route component={NotFound} />
           </Switch>
         </Suspense>
+      </motion.div>
+    </AnimatePresence>
       </div>
         </AtSymbolRedirectHandler>
     </TooltipProvider>

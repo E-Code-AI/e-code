@@ -128,7 +128,9 @@ export class RealtimeCollaboration {
         private client: ECodeClient,
         private wsUrl?: string
     ) {
-        this.wsUrl = wsUrl || 'wss://e-code.app';
+        // wsUrl is now passed from index.ts which uses getWebSocketURL()
+        // No hardcoded default needed
+        this.wsUrl = wsUrl;
     }
 
     /**

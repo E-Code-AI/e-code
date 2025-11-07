@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { useParams } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';

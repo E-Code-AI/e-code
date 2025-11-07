@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -20,8 +19,8 @@ interface Collaborator {
 }
 
 interface CollaborationPresenceProps {
-  projectId: number;
-  currentUserId: number;
+  projectId: string | number; // Support both UUID strings and numeric IDs
+  currentUserId: string | number; // Support both UUID strings and numeric IDs
   className?: string;
   compact?: boolean;
 }
@@ -47,7 +46,8 @@ export function CollaborationPresence({
 
   // WebSocket connection for real-time presence
   useEffect(() => {
-    const ws = new WebSocket(`ws://${window.location.host}/api/collaboration/ws?projectId=${projectId}`);
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/api/collaboration/ws?projectId=${projectId}`);
     
     ws.onopen = () => {
       // Send initial presence

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import dotenv from 'dotenv';
 
 // Ensure .env is loaded when running locally

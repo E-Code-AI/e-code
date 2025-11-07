@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import os from 'os';
@@ -35,7 +34,7 @@ const terminalSessions = new Map<string, {
 export function setupTerminalWebsocket(server: Server) {
   const wss = new WebSocketServer({
     server,
-    path: '/terminal'
+    path: '/api/terminal/ws'
   });
   
   logger.info('Setting up terminal WebSocket server');
@@ -125,32 +124,19 @@ export function setupTerminalWebsocket(server: Server) {
             if (cols && rows) {
               logger.info(`Terminal resize: ${cols}x${rows} for project ${projectId}`);
               
-              // Store dimensions in terminal info for potential reconnects
-              terminalInfo.columns = cols;
-              terminalInfo.rows = rows;
-              
-              // We can't directly resize a child_process terminal 
-              // (only possible with proper PTY implementation),
-              // but we can send terminal dimensions via STTY command
-              if (terminalInfo.process && terminalInfo.process.stdin) {
-                // Send STTY command to update the terminal size
-                try {
-                  const sttyCommand = `stty cols ${cols} rows ${rows}\n`;
-                  terminalInfo.process.stdin.write(sttyCommand);
-                } catch (err) {
-                  logger.error(`Failed to resize terminal: ${err}`);
-                }
-              }
+              // Store dimensions in terminal session for potential reconnects
+              terminalSession.columns = cols;
+              terminalSession.rows = rows;
             }
           } else if (data.type === 'history_up' || data.type === 'history_down') {
             // Send command history to the client
             const index = data.index || 0;
             let historyCommand = '';
             
-            if (data.type === 'history_up' && index < terminalInfo.commandHistory.length) {
-              historyCommand = terminalInfo.commandHistory[terminalInfo.commandHistory.length - 1 - index];
+            if (data.type === 'history_up' && index < terminalSession.commandHistory.length) {
+              historyCommand = terminalSession.commandHistory[terminalSession.commandHistory.length - 1 - index];
             } else if (data.type === 'history_down' && index > 0) {
-              historyCommand = terminalInfo.commandHistory[terminalInfo.commandHistory.length - index];
+              historyCommand = terminalSession.commandHistory[terminalSession.commandHistory.length - index];
             }
             
             if (historyCommand) {
@@ -163,7 +149,7 @@ export function setupTerminalWebsocket(server: Server) {
           } else if (data.type === 'autocomplete') {
             // Handle tab completion
             const currentInput = data.text || '';
-            const suggestions = terminalInfo.autocompleteSuggestions
+            const suggestions = terminalSession.autocompleteSuggestions
               .filter(suggestion => suggestion.startsWith(currentInput))
               .slice(0, 10); // Limit to 10 suggestions
             
@@ -183,12 +169,14 @@ export function setupTerminalWebsocket(server: Server) {
       ws.on('close', () => {
         logger.info(`Terminal client disconnected for project ${projectId}`);
         
-        if (terminalInfo.clients) {
-          terminalInfo.clients.delete(ws);
+        const session = terminalSessions.get(projectId);
+        if (session) {
+          session.clients.delete(ws);
           
-          // If no clients left, terminate the process
-          if (terminalInfo.clients.size === 0) {
-            stopProcess(projectId, terminalInfo);
+          // Clean up session if no clients left
+          if (session.clients.size === 0) {
+            logger.info(`No clients left for project ${projectId}, cleaning up session`);
+            terminalSessions.delete(projectId);
           }
         }
       });

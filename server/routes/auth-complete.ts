@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router } from 'express';
 import { z } from 'zod';
 import { randomBytes } from 'crypto';
@@ -61,7 +60,10 @@ router.post('/register', async (req, res) => {
     
     // Generate verification token
     const verificationToken = generateEmailVerificationToken();
-    await storage.saveEmailVerificationToken(email, verificationToken);
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiry
+    
+    await storage.saveEmailVerificationToken(user.id, email, verificationToken, expiresAt);
     
     // Send verification email (skip in development)
     if (process.env.NODE_ENV !== 'development') {
@@ -128,10 +130,15 @@ router.post('/forgot-password', async (req, res) => {
     
     // Generate reset token
     const resetToken = generatePasswordResetToken();
-    await storage.savePasswordResetToken(user.id, resetToken);
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 2); // 2 hour expiry
     
-    // Send reset email
-    await sendPasswordResetEmail(email, resetToken);
+    await storage.savePasswordResetToken(user.id, resetToken, expiresAt);
+    
+    // Send reset email (skip in development)
+    if (process.env.NODE_ENV !== 'development') {
+      await sendPasswordResetEmail(email, resetToken);
+    }
     
     res.json({ message: 'If an account exists, a password reset link has been sent.' });
   } catch (error) {
@@ -150,9 +157,17 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Invalid or expired reset token' });
     }
     
+    // Check if token was already used
+    if (reset.usedAt) {
+      return res.status(400).json({ error: 'Reset token has already been used' });
+    }
+    
     // Hash new password and update
     const hashedPassword = await hashPassword(newPassword);
-    await storage.updateUser(reset.userId, { password: hashedPassword });
+    await storage.updateUser(reset.userId, { passwordHash: hashedPassword });
+    
+    // Mark token as used and delete it
+    await storage.markPasswordResetTokenUsed(token);
     await storage.deletePasswordResetToken(token);
     
     res.json({ message: 'Password reset successfully. You can now log in with your new password.' });

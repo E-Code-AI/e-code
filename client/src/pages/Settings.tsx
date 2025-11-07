@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
@@ -52,6 +51,7 @@ import {
   Settings2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
 
 export default function Settings() {
   const [, navigate] = useLocation();
@@ -117,9 +117,9 @@ export default function Settings() {
         )}
       />
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+      <div className={`grid ${TABLET_GRID_CLASSES.settingsTabletOptimized}`}>
         {/* Sidebar Navigation */}
-        <div className="md:col-span-1">
+        <div className="md:col-span-1 lg:col-span-1">
           <nav className="space-y-1">
             {[
               { id: 'account', label: 'Account', icon: User },
@@ -148,7 +148,7 @@ export default function Settings() {
         </div>
 
         {/* Settings Content */}
-        <div className="md:col-span-3">
+        <div className={TABLET_GRID_CLASSES.settingsContentTabletOptimized}>
           {/* Account Settings */}
           {activeTab === 'account' && (
             <Card>

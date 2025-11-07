@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
@@ -10,7 +9,7 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import 'xterm/css/xterm.css';
 
 interface ResponsiveTerminalProps {
-  projectId: number;
+  projectId: string | number; // Support both UUID strings and numeric IDs
   className?: string;
   onClose?: () => void;
   isFullscreen?: boolean;

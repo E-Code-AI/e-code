@@ -6,15 +6,31 @@ import globals from 'globals';
 export default [
   {
     ignores: [
+      // Type definitions and generated files
       '**/*.d.ts',
+      '**/*.js.map',
+      
+      // Dependencies
       'node_modules/',
+      '**/node_modules/',
+      
+      // Build outputs
+      '**/dist/',
+      '**/dist/**',
       'dist/',
       'build/',
+      '**/build/',
+      
+      // Test coverage
       'coverage/',
+      
+      // Reports
       'reports/',
-      'sdk/',
-      'mobile/',
+      
+      // Static assets
       'client/public/',
+      
+      // Known problematic file (TODO: fix this file)
       'client/src/pages/admin/FormRequests.tsx',
     ],
   },
@@ -52,12 +68,36 @@ export default [
       'no-dupe-keys': 'off',
       'no-dupe-class-members': 'off',
       'no-import-assign': 'off',
+      // CRITICAL: Block TypeScript safety bypasses to enforce type safety
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': true, // Block @ts-ignore completely
+          'ts-nocheck': true, // Block @ts-nocheck completely
+          'ts-check': false,
+          'minimumDescriptionLength': 10,
+        },
+      ],
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_|^e$|^error$',
+          varsIgnorePattern: '^_|^error$',
+          caughtErrorsIgnorePattern: '^_|^e$|^error$',
+          destructuredArrayIgnorePattern: '^_',
         },
+      ],
+      // Prevent use of @ts-nocheck in critical files
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': true,
+          'ts-nocheck': true,
+          'ts-check': false,
+          minimumDescriptionLength: 10
+        }
       ],
     },
   },

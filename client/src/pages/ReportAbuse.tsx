@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";

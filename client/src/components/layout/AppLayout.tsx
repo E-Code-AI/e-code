@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { ECodeLoading } from "@/components/ECodeLoading";

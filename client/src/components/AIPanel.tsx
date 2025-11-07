@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { useAI } from '@/hooks/useAI';
 import { useToast } from '@/hooks/use-toast';

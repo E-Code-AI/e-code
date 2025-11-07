@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as os from 'os';
 import { createLogger } from '../utils/logger';
 

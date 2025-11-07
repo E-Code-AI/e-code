@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
@@ -168,7 +167,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-gray-50/50 to-background dark:from-background dark:via-gray-900/50 dark:to-background flex">
-      {/* Left Side - Image & Features */}
+      {/* Left Side - Image & Features - Hidden on Mobile */}
       <motion.div 
         className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-violet-600 to-fuchsia-600 relative overflow-hidden"
         initial={{ opacity: 0, x: -50 }}
@@ -246,14 +245,14 @@ export default function Register() {
         </div>
       </motion.div>
 
-      {/* Right Side - Form */}
+      {/* Right Side - Form - Mobile Optimized */}
       <motion.div 
-        className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 overflow-y-auto"
+        className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-16 overflow-y-auto"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="w-full max-w-md space-y-6">
+        <div className="w-full max-w-md space-y-4 sm:space-y-6">
           {/* Back to Home */}
           <button
             onClick={() => navigate('/')}
@@ -274,10 +273,10 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Welcome Message */}
+          {/* Welcome Message - Responsive Typography */}
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">Create your account</h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Create your account</h2>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Get started with a free account. No credit card required.
             </p>
           </div>
@@ -304,9 +303,9 @@ export default function Register() {
             )}
           </AnimatePresence>
 
-          {/* Form */}
-          <form onSubmit={handleRegister} className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
+          {/* Form - Mobile Responsive */}
+          <form onSubmit={handleRegister} className="space-y-4 sm:space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-sm font-medium">
                   Username *
@@ -318,7 +317,7 @@ export default function Register() {
                     name="username"
                     type="text"
                     placeholder="johndoe"
-                    className="pl-10 h-11"
+                    className="pl-10 h-12 sm:h-11 text-base sm:text-sm"
                     value={formData.username}
                     onChange={handleInputChange}
                     disabled={isLoading}
@@ -336,7 +335,7 @@ export default function Register() {
                   name="displayName"
                   type="text"
                   placeholder="John Doe"
-                  className="h-11"
+                  className="h-12 sm:h-11 text-base sm:text-sm"
                   value={formData.displayName}
                   onChange={handleInputChange}
                   disabled={isLoading}
@@ -355,7 +354,7 @@ export default function Register() {
                   name="email"
                   type="email"
                   placeholder="john@example.com"
-                  className="pl-10 h-11"
+                  className="pl-10 h-12 sm:h-11 text-base sm:text-sm"
                   value={formData.email}
                   onChange={handleInputChange}
                   disabled={isLoading}
@@ -375,7 +374,7 @@ export default function Register() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a strong password"
-                  className="pl-10 pr-10 h-11"
+                  className="pl-10 pr-12 h-12 sm:h-11 text-base sm:text-sm"
                   value={formData.password}
                   onChange={handleInputChange}
                   disabled={isLoading}
@@ -384,9 +383,9 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 -mr-2 sm:mr-0 flex items-center justify-center"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-5 w-5 sm:h-4 sm:w-4" /> : <Eye className="h-5 w-5 sm:h-4 sm:w-4" />}
                 </button>
               </div>
               

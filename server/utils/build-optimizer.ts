@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Build optimization utilities for Cloud Run deployment
 import { execSync } from 'child_process';
 import * as fs from 'fs';

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Real Terminal WebSocket Service
  * Provides real-time terminal access to Docker containers
@@ -32,7 +31,7 @@ export class RealTerminalService {
   setupWebSocket(server: Server) {
     this.wss = new WebSocketServer({ 
       server, 
-      path: '/terminal',
+      path: '/api/terminal/ws',
       perMessageDeflate: {
         zlibDeflateOptions: {
           chunkSize: 1024,

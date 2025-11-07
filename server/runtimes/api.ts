@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Runtime API handlers
  * This module provides API handlers for runtime functionality

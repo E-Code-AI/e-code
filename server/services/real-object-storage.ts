@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Real Object Storage Service
  * Provides cloud storage capabilities using Replit's built-in Object Storage

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X } from 'lucide-react';
@@ -9,7 +8,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface FileUploadProps {
-  projectId: number;
+  projectId: string;
   parentId?: number;
   onClose?: () => void;
   className?: string;

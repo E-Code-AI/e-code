@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +51,7 @@ import {
   History,
   Star,
   MoreHorizontal,
+  Bot,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
@@ -84,6 +84,8 @@ export function ReplitHeader() {
   const [spotlightOpen, setSpotlightOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [projectInfo, setProjectInfo] = useState<any>(null);
+  const [projectInfoLoading, setProjectInfoLoading] = useState(false);
+  const [projectInfoError, setProjectInfoError] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
@@ -99,21 +101,43 @@ export function ReplitHeader() {
   useEffect(() => {
     const fetchProjectInfo = async () => {
       if (projectId) {
+        setProjectInfoLoading(true);
+        setProjectInfoError(null);
         try {
-          const data = await apiRequest('GET', `/api/projects/${projectId}`);
+          const response = await apiRequest('GET', `/api/projects/${projectId}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch project: ${response.statusText}`);
+          }
+          const data = await response.json();
           setProjectInfo(data);
         } catch (error) {
           console.error('Failed to fetch project info:', error);
+          setProjectInfoError('Failed to load project');
+          setProjectInfo(null);
+        } finally {
+          setProjectInfoLoading(false);
         }
       } else if (username && projectSlug) {
+        setProjectInfoLoading(true);
+        setProjectInfoError(null);
         try {
-          const data = await apiRequest('GET', `/api/users/${username}/projects/${projectSlug}`);
+          const response = await apiRequest('GET', `/api/users/${username}/projects/${projectSlug}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch project: ${response.statusText}`);
+          }
+          const data = await response.json();
           setProjectInfo(data);
         } catch (error) {
           console.error('Failed to fetch project info:', error);
+          setProjectInfoError('Failed to load project');
+          setProjectInfo(null);
+        } finally {
+          setProjectInfoLoading(false);
         }
       } else {
         setProjectInfo(null);
+        setProjectInfoLoading(false);
+        setProjectInfoError(null);
       }
     };
 
@@ -145,7 +169,36 @@ export function ReplitHeader() {
         </Link>
 
         {/* Project Name Display - shown when in project view */}
-        {projectInfo && (
+        {projectInfoLoading && (
+          <>
+            <span className="text-[var(--ecode-text-muted)] mx-2">/</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled
+              className="text-[var(--ecode-text-muted)] font-medium flex items-center gap-1"
+            >
+              <FolderOpen className="h-4 w-4 animate-pulse" />
+              <span className="animate-pulse">Loading...</span>
+            </Button>
+          </>
+        )}
+        {projectInfoError && (
+          <>
+            <span className="text-[var(--ecode-text-muted)] mx-2">/</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled
+              className="text-[var(--ecode-danger)] font-medium flex items-center gap-1"
+              title={projectInfoError}
+            >
+              <FolderOpen className="h-4 w-4" />
+              <span>Error</span>
+            </Button>
+          </>
+        )}
+        {projectInfo && !projectInfoLoading && !projectInfoError && (
           <>
             <span className="text-[var(--ecode-text-muted)] mx-2">/</span>
             <DropdownMenu>
@@ -535,6 +588,27 @@ export function ReplitHeader() {
               <Gift className="mr-2 h-4 w-4" />
               Refer a Friend
             </DropdownMenuItem>
+
+            {/* Admin-Only Menu Items */}
+            {user?.isAdmin && (
+              <>
+                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+                
+                <DropdownMenuItem 
+                  onClick={() => navigate('/admin/chatgpt')}
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
+                  <Bot className="mr-2 h-4 w-4" />
+                  AI Assistant (Admin)
+                </DropdownMenuItem>
+
+                <DropdownMenuItem 
+                  onClick={() => navigate('/admin/dashboard')}
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
+                  <Shield className="mr-2 h-4 w-4" />
+                  Admin Dashboard
+                </DropdownMenuItem>
+              </>
+            )}
 
             <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
 

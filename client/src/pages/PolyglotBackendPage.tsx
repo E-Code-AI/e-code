@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Polyglot Backend Management Page
  */

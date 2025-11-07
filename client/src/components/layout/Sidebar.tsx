@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Fragment, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";

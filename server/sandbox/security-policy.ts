@@ -1,4 +1,3 @@
-// @ts-nocheck
 export interface SecurityPolicy {
   name: string;
   description: string;

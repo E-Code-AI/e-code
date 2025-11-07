@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * AI-powered inline code completion service
  * Provides real-time code suggestions as users type, similar to GitHub Copilot

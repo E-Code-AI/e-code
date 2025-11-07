@@ -1,19 +1,35 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import {
   Terminal as TerminalIcon,
   X,
-  PanelLeftOpen,
-  PanelRightClose,
-  PanelRightOpen,
-  Menu
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { ReplitMultiplayers } from './ReplitMultiplayers';
+import { ReplitToolDock } from './ReplitToolDock';
+import { ReplitAgent } from '../ReplitAgent';
+import { ReplitFileSidebar } from './ReplitFileSidebar';
+import { ReplitSearchPanel } from './ReplitSearchPanel';
+import { ReplitGitPanel } from './ReplitGitPanel';
+import { ReplitDatabasePanel } from './ReplitDatabasePanel';
+import { ReplitPackagesPanel } from './ReplitPackagesPanel';
+import { ReplitSettingsPanel } from './ReplitSettingsPanel';
+import { ReplitTerminalPanel } from './ReplitTerminalPanel';
+import { ReplitSecretsPanel } from './ReplitSecretsPanel';
+import { ReplitThemesPanel } from './ReplitThemesPanel';
+import { ReplitDebuggerPanel } from './ReplitDebuggerPanel';
+import { ReplitHistoryPanel } from './ReplitHistoryPanel';
+// Lazy load Splits to avoid bundling with non-editor pages
+const SplitsEditorLayout = React.lazy(() => 
+  import('../splits').then(module => ({ default: module.SplitsEditorLayout }))
+);
 
 interface ReplitEditorLayoutProps {
   leftPanel: React.ReactNode;
@@ -25,6 +41,14 @@ interface ReplitEditorLayoutProps {
     icon: React.ReactNode;
     content: React.ReactNode;
   }[];
+  files?: any[];
+  activeFileId?: number;
+  onFileSelect?: (file: any) => void;
+  onFileCreate?: (name: string, isFolder: boolean, parentId?: number) => void;
+  onFileDelete?: (fileId: number) => void;
+  onFileRename?: (fileId: number, newName: string) => void;
+  projectName?: string;
+  projectId?: string;
   defaultRightPanel?: string;
   onRightPanelChange?: (panelId: string | null) => void;
   leftPanelOpen?: boolean;
@@ -41,6 +65,14 @@ export function ReplitEditorLayout({
   centerPanel,
   bottomPanel,
   rightPanels = [],
+  files = [],
+  activeFileId,
+  onFileSelect,
+  onFileCreate,
+  onFileDelete,
+  onFileRename,
+  projectName,
+  projectId,
   defaultRightPanel,
   onRightPanelChange,
   leftPanelOpen: leftPanelOpenProp,
@@ -51,21 +83,130 @@ export function ReplitEditorLayout({
   bottomPanelOpen: bottomPanelOpenProp,
   onBottomPanelOpenChange,
 }: ReplitEditorLayoutProps) {
+  // Use the new Splits layout system if enabled
+  // TODO: Update SplitsEditorLayout to support tool dock before re-enabling
+  const useSplitsLayout = false; // Feature flag - disabled to use tool dock with AI Agent
+
+  if (useSplitsLayout) {
+    return (
+      <React.Suspense fallback={
+        <div className="flex items-center justify-center h-screen bg-[#f6f6f6]">
+          <div className="flex flex-col items-center gap-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="text-sm text-muted-foreground">Loading editor layout...</p>
+          </div>
+        </div>
+      }>
+        <SplitsEditorLayout
+          files={files}
+          activeFileId={activeFileId}
+          onFileSelect={onFileSelect}
+          onFileCreate={onFileCreate}
+          onFileDelete={onFileDelete}
+          onFileRename={onFileRename}
+          projectName={projectName}
+          projectId={projectId}
+          editorContent={centerPanel}
+          terminalContent={bottomPanel}
+          previewContent={rightPanels.find(p => p.id === 'preview')?.content}
+          consoleContent={rightPanels.find(p => p.id === 'console')?.content}
+        />
+      </React.Suspense>
+    );
+  }
+
+  // Original layout code continues below...
   const [internalLeftPanelOpen, setInternalLeftPanelOpen] = useState(leftPanelOpenProp ?? true);
   const [internalRightPanelOpen, setInternalRightPanelOpen] = useState(rightPanelOpenProp ?? true);
-  const [internalBottomPanelOpen, setInternalBottomPanelOpen] = useState(bottomPanelOpenProp ?? true);
+  const [internalBottomPanelOpen, setInternalBottomPanelOpen] = useState(bottomPanelOpenProp ?? false);
   const [internalActiveRightPanel, setInternalActiveRightPanel] = useState<string | null>(
     activeRightPanelProp ?? (defaultRightPanel || rightPanels[0]?.id || null)
   );
+  const [activeTool, setActiveTool] = useState('files');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 1024px)');
-  const isTablet = useMediaQuery('(max-width: 1280px)');
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const rightPanelOpen = rightPanelOpenProp ?? internalRightPanelOpen;
   const bottomPanelOpen = bottomPanelOpenProp ?? internalBottomPanelOpen;
   const activeRightPanel = activeRightPanelProp ?? internalActiveRightPanel;
   const leftPanelOpen = leftPanelOpenProp ?? internalLeftPanelOpen;
+
+  // Add the multiplayers panel to rightPanels if it doesn't exist
+  const enhancedRightPanels = React.useMemo(() => {
+    const panels = [...rightPanels];
+    
+    // Add multiplayers panel if it doesn't exist
+    if (!panels.find(p => p.id === 'multiplayers')) {
+      panels.unshift({
+        id: 'multiplayers',
+        title: 'Multiplayers',
+        icon: null,
+        content: <ReplitMultiplayers projectId={projectId} />
+      });
+    }
+    
+    return panels;
+  }, [rightPanels, projectId]);
+
+  // Get the content for the active tool
+  const getToolContent = () => {
+    switch(activeTool) {
+      case 'files':
+        return leftPanel || (
+          <ReplitFileSidebar
+            files={files}
+            activeFileId={activeFileId}
+            onFileSelect={onFileSelect || (() => {})}
+            onFileCreate={onFileCreate || (() => {})}
+            onFileDelete={onFileDelete || (() => {})}
+            onFileRename={onFileRename}
+            projectName={projectName}
+            projectId={projectId}
+          />
+        );
+      case 'agent':
+        return <ReplitAgent projectId={projectId || '1'} className="h-full" />;
+      case 'search':
+        return <ReplitSearchPanel projectId={projectId} />;
+      case 'git':
+        return <ReplitGitPanel projectId={projectId} />;
+      case 'debug':
+        return <ReplitDebuggerPanel projectId={projectId} />;
+      case 'debugger':
+        return <ReplitDebuggerPanel projectId={projectId} />;
+      case 'database':
+        return <ReplitDatabasePanel projectId={projectId} />;
+      case 'packages':
+        return <ReplitPackagesPanel projectId={projectId} />;
+      case 'settings':
+        return <ReplitSettingsPanel projectId={projectId} />;
+      case 'terminal':
+        return <ReplitTerminalPanel projectId={projectId} />;
+      case 'preview':
+        return (
+          <div className="p-4 text-center text-gray-500">
+            <p className="text-sm">Webview preview coming soon...</p>
+          </div>
+        );
+      case 'secrets':
+        return <ReplitSecretsPanel projectId={projectId} />;
+      case 'themes':
+        return <ReplitThemesPanel projectId={projectId} />;
+      case 'debugger':
+        return <ReplitDebuggerPanel projectId={projectId} />;
+      case 'history':
+        return <ReplitHistoryPanel projectId={projectId} />;
+      case 'multiplayers':
+        return <ReplitMultiplayers projectId={projectId} />;
+      default:
+        return (
+          <div className="p-4 text-center text-gray-500">
+            <p className="text-sm">{activeTool} coming soon...</p>
+          </div>
+        );
+    }
+  };
 
   useEffect(() => {
     if (leftPanelOpenProp !== undefined) {
@@ -98,17 +239,6 @@ export function ReplitEditorLayout({
       updateBottomPanelOpen(false);
     }
   }, [isMobile]);
-
-  useEffect(() => {
-    if (rightPanels.length === 0) {
-      setActiveRightPanelState(null);
-      return;
-    }
-
-    if (!activeRightPanel && rightPanels.length > 0) {
-      setActiveRightPanelState(defaultRightPanel || rightPanels[0].id);
-    }
-  }, [rightPanels, defaultRightPanel]);
 
   const handleRightPanelChange = (panelId: string | null) => {
     setActiveRightPanelState(panelId || null);
@@ -145,179 +275,168 @@ export function ReplitEditorLayout({
   // Mobile layout
   if (isMobile) {
     return (
-      <div className="h-[calc(100vh-48px)] flex flex-col relative">
-        {/* Mobile Menu Button */}
-        <div className="absolute top-2 left-2 z-50">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileSidebarOpen(true)}
-            className="bg-[var(--ecode-surface)] border border-[var(--ecode-border)]"
-          >
-            <Menu className="h-4 w-4" />
-          </Button>
+      <div className="h-full flex flex-col bg-white">
+        {/* Mobile Tool Dock */}
+        <div className="flex border-b border-gray-200 bg-white overflow-x-auto">
+          <ReplitToolDock
+            activeTool={activeTool}
+            onToolChange={setActiveTool}
+            isCollapsed={false}
+          />
         </div>
 
-        {/* Mobile Sidebar Sheet */}
-        <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-          <SheetContent side="left" className="w-[80vw] p-0 bg-[var(--ecode-background)]">
-            {leftPanel}
-          </SheetContent>
-        </Sheet>
-
         {/* Main Content */}
-        <div className="flex-1 bg-[var(--ecode-background)]">
+        <div className="flex-1 bg-white overflow-hidden">
           {centerPanel}
         </div>
 
         {/* Mobile Bottom Panel */}
         {bottomPanel && (
           <>
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => setMobileBottomPanelOpen(!mobileBottomPanelOpen)}
-              className="h-8 w-full rounded-none border-t border-[var(--ecode-border)] justify-between px-4"
+              className="p-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between"
             >
-              <span>Terminal</span>
-              <TerminalIcon className="h-3 w-3" />
-            </Button>
+              <span className="text-sm text-gray-700">Console</span>
+              {mobileBottomPanelOpen ? (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronUp className="h-4 w-4 text-gray-500" />
+              )}
+            </button>
             {mobileBottomPanelOpen && (
-              <div className="h-[40vh] border-t border-[var(--ecode-border)]">
+              <div className="h-[40vh] border-t border-gray-200 bg-white">
                 {bottomPanel}
               </div>
             )}
           </>
-        )}
-
-        {/* Mobile Right Panel Tabs */}
-        {rightPanels.length > 0 && (
-          <div className="border-t border-[var(--ecode-border)]">
-            <Tabs value={activeRightPanel || rightPanels[0].id} onValueChange={handleRightPanelChange}>
-              <TabsList className="w-full rounded-none h-9">
-                {rightPanels.map((panel) => (
-                  <TabsTrigger key={panel.id} value={panel.id} className="flex-1">
-                    {panel.icon}
-                    <span className="ml-1 text-xs">{panel.title}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
         )}
       </div>
     );
   }
 
   return (
-    <div className="h-[calc(100vh-48px)] flex bg-[var(--ecode-editor-bg)]">
-      <ResizablePanelGroup direction="horizontal" className="h-full">
-        {/* Left Panel - File Explorer */}
+    <div className="h-full flex bg-white">
+      {/* Left Tool Dock - Fixed 40px width */}
+      <ReplitToolDock
+        activeTool={activeTool}
+        onToolChange={setActiveTool}
+      />
+
+      <ResizablePanelGroup direction="horizontal" className="h-full flex-1">
+        {/* Left Panel - Tool Content (Files/Agent/etc) */}
         {leftPanelOpen && (
           <>
-            <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-              <div className="h-full bg-[var(--ecode-background)] border-r border-[var(--ecode-border)]">
-                {leftPanel}
+            <ResizablePanel 
+              defaultSize={20} 
+              minSize={15} 
+              maxSize={30}
+              className="bg-white"
+            >
+              <div className="h-full bg-white border-r border-[#e1e4e8]">
+                {getToolContent()}
               </div>
             </ResizablePanel>
 
             <ResizableHandle
-              withHandle
-              className="bg-transparent data-[panel-group-direction=horizontal]:w-3 data-[panel-group-direction=horizontal]:cursor-col-resize hover:after:bg-[var(--ecode-accent)] after:bg-[var(--ecode-border)]"
+              className="w-[1px] bg-[#e1e4e8] hover:cursor-col-resize"
             />
           </>
         )}
 
         {/* Center Panel - Code Editor */}
-        <ResizablePanel defaultSize={rightPanelOpen ? 54 : 78} minSize={38}>
-          <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={bottomPanelOpen ? 70 : 100}>
-              <div className="h-full bg-[var(--ecode-background)]">
-                {centerPanel}
-              </div>
-            </ResizablePanel>
+        <ResizablePanel 
+          defaultSize={rightPanelOpen ? 50 : 70} 
+          minSize={30}
+          className="bg-white"
+        >
+          {bottomPanelOpen ? (
+            <ResizablePanelGroup direction="vertical">
+              <ResizablePanel defaultSize={70}>
+                <div className="h-full bg-white">
+                  {centerPanel}
+                </div>
+              </ResizablePanel>
 
-            {bottomPanel && bottomPanelOpen && (
-              <>
-                <ResizableHandle
-                  withHandle
-                  className="bg-transparent data-[panel-group-direction=vertical]:h-3 data-[panel-group-direction=vertical]:cursor-row-resize hover:after:bg-[var(--ecode-accent)] after:bg-[var(--ecode-border)]"
-                />
-                <ResizablePanel defaultSize={30} minSize={18} maxSize={45}>
-                  <div className="h-full bg-[var(--ecode-background)] border-t border-[var(--ecode-border)]">
-                    {/* Console/Terminal Header */}
-                    <div className="h-9 flex items-center justify-between px-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
-                      <div className="flex items-center gap-2 text-xs font-medium text-[var(--ecode-text)]">
-                        <TerminalIcon className="h-3.5 w-3.5" />
-                        Console
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
-                        onClick={() => updateBottomPanelOpen(false)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
+              <ResizableHandle
+                className="h-[1px] bg-[#e1e4e8] hover:cursor-row-resize"
+              />
+              
+              <ResizablePanel defaultSize={25} minSize={10} maxSize={50}>
+                <div className="h-full bg-[#0e1525] border-t border-[#e1e4e8]">
+                  {/* Console/Terminal Header */}
+                  <div className="h-8 flex items-center justify-between px-3 bg-[#0e1525] border-b border-[#1a1f2e]">
+                    <div className="flex items-center gap-2 text-xs font-medium text-[#4ade80]">
+                      <TerminalIcon className="h-3.5 w-3.5" />
+                      Console
                     </div>
-                    <div className="h-[calc(100%-36px)]">
-                      {bottomPanel}
-                    </div>
+                    <button
+                      onClick={() => updateBottomPanelOpen(false)}
+                      className="p-1 hover:bg-[#1a1f2e] rounded"
+                    >
+                      <X className="h-3 w-3 text-[#4ade80]" />
+                    </button>
                   </div>
-                </ResizablePanel>
-              </>
-            )}
-          </ResizablePanelGroup>
+                  <div className="h-[calc(100%-32px)] bg-[#0e1525]">
+                    {bottomPanel}
+                  </div>
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          ) : (
+            <div className="h-full bg-white">
+              {centerPanel}
+            </div>
+          )}
         </ResizablePanel>
 
-        {rightPanelOpen && rightPanels.length > 0 && (
+        {rightPanelOpen && enhancedRightPanels.length > 0 && (
           <>
             <ResizableHandle
-              withHandle
-              className="bg-transparent data-[panel-group-direction=horizontal]:w-3 data-[panel-group-direction=horizontal]:cursor-col-resize hover:after:bg-[var(--ecode-accent)] after:bg-[var(--ecode-border)]"
+              className="w-[1px] bg-[#e1e4e8] hover:cursor-col-resize"
             />
-            <ResizableHandle className="w-1 bg-[var(--ecode-border)] hover:bg-[var(--ecode-accent-subtle)]" />
 
-            {/* Right Panel - Output/Preview */}
-            <ResizablePanel defaultSize={28} minSize={20} maxSize={46}>
-              <div className="h-full bg-[var(--ecode-background)] border-l border-[var(--ecode-border)] flex flex-col">
-                {/* Right Panel Tabs */}
-                <div className="h-9 flex items-center justify-between px-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
-                  <div className="flex items-center gap-1">
-                    {rightPanels.map((panel) => {
-                      const isActive = activeRightPanel === panel.id;
-                      return (
-                        <Button
-                          key={panel.id}
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            "h-7 px-2 text-xs rounded-md",
-                            isActive
-                              ? "bg-[var(--ecode-accent)]/12 text-[var(--ecode-accent)] border border-[var(--ecode-accent)]/40"
-                              : "border border-transparent hover:bg-[var(--ecode-sidebar-hover)]"
-                          )}
-                          onClick={() => handleRightPanelChange(panel.id)}
-                        >
-                          {panel.icon}
-                          <span className="ml-1">{panel.title}</span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
+            {/* Right Panel - Multiplayers/Preview/etc */}
+            <ResizablePanel 
+              defaultSize={25} 
+              minSize={20} 
+              maxSize={40}
+              className="bg-white"
+            >
+              <div className="h-full bg-white border-l border-[#e0e0e0] flex flex-col">
+                {/* Right Panel Tab Headers - Replit Style */}
+                <div className="h-10 flex items-center border-b border-[#e0e0e0] bg-white px-2">
+                  {enhancedRightPanels.map((panel, index) => {
+                    const isActive = activeRightPanel === panel.id;
+                    return (
+                      <button
+                        key={panel.id}
+                        onClick={() => handleRightPanelChange(panel.id)}
+                        className={cn(
+                          "px-3 py-1 text-sm font-medium transition-colors rounded-md mr-1",
+                          isActive
+                            ? "bg-gray-100 text-gray-900"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        )}
+                      >
+                        {panel.title}
+                      </button>
+                    );
+                  })}
+                  
+                  <div className="flex-1" />
+                  
+                  <button
                     onClick={() => updateRightPanelOpen(false)}
+                    className="p-1 hover:bg-gray-100 rounded"
                   >
-                    <PanelRightClose className="h-3 w-3" />
-                  </Button>
+                    <X className="h-3.5 w-3.5 text-gray-500" />
+                  </button>
                 </div>
 
                 {/* Right Panel Content */}
-                <div className="flex-1 overflow-hidden">
-                  {rightPanels.map((panel) => (
+                <div className="flex-1 overflow-hidden bg-white">
+                  {enhancedRightPanels.map((panel) => (
                     <div
                       key={panel.id}
                       className={cn(
@@ -335,38 +454,33 @@ export function ReplitEditorLayout({
         )}
       </ResizablePanelGroup>
       
-      {/* Floating buttons to reopen panels */}
+      {/* Floating buttons to reopen panels - Replit Style */}
       {!leftPanelOpen && (
-        <Button
-          variant="outline"
-          size="icon"
-          className="fixed left-2 top-16 h-8 w-8 shadow-md"
+        <button
           onClick={() => updateLeftPanelOpen(true)}
+          className="fixed left-14 top-20 p-1.5 bg-white border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow"
         >
-          <PanelLeftOpen className="h-4 w-4" />
-        </Button>
+          <ChevronRight className="h-4 w-4 text-gray-600" />
+        </button>
       )}
 
       {!rightPanelOpen && (
-        <Button
-          variant="outline"
-          size="icon"
-          className="fixed right-2 top-16 h-8 w-8 shadow-md"
+        <button
           onClick={() => updateRightPanelOpen(true)}
+          className="fixed right-2 top-20 p-1.5 bg-white border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow"
         >
-          <PanelRightOpen className="h-4 w-4" />
-        </Button>
+          <ChevronLeft className="h-4 w-4 text-gray-600" />
+        </button>
       )}
 
       {!bottomPanelOpen && bottomPanel && (
-        <Button
-          variant="outline"
-          size="icon"
-          className="fixed bottom-2 left-1/2 -translate-x-1/2 h-8 w-8 shadow-md"
+        <button
           onClick={() => updateBottomPanelOpen(true)}
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow flex items-center gap-2"
         >
-          <TerminalIcon className="h-4 w-4" />
-        </Button>
+          <TerminalIcon className="h-3.5 w-3.5 text-gray-600" />
+          <span className="text-sm text-gray-600">Console</span>
+        </button>
       )}
     </div>
   );

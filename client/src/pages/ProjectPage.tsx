@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { useEffect } from "react";
 import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
-import Editor from "@/pages/Editor";
+import EditorPage from "@/pages/EditorPage";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,20 +22,30 @@ export default function ProjectPage() {
 
   const slugParams = paramsSlug ?? paramsUserSlug ?? null;
   const slug = slugParams?.projectname ?? null;
+  const username = slugParams?.username ?? null;
   const directProjectId = paramsProject?.id ?? paramsLegacyProject?.id ?? null;
 
-  const shouldFetchSlug = !!slug && !directProjectId;
+  const shouldFetchSlug = !!slug && !!username && !directProjectId;
 
   const {
     data: slugProject,
     isLoading: slugLoading,
     error: slugError,
   } = useQuery<Project>({
-    queryKey: ["project-by-slug", slug ?? ""],
+    queryKey: ["project-by-slug", username, slug],
     enabled: shouldFetchSlug && !authLoading,
     retry: false,
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/projects/by-slug/${slug}`);
+      const response = await apiRequest("GET", `/api/u/${username}/${slug}`);
+      
+      // Check if the response is JSON before parsing
+      const contentType = response.headers.get("content-type");
+      const isJson = contentType?.includes("application/json");
+      
+      if (!isJson) {
+        throw new Error("Project not found");
+      }
+      
       const payload = await response.json();
 
       if (!response.ok) {
@@ -96,7 +105,7 @@ export default function ProjectPage() {
   }
 
   return (
-    <Editor
+    <EditorPage
       projectId={resolvedProjectId}
       initialProject={slugProject ?? null}
     />

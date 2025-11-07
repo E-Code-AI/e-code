@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
@@ -17,13 +18,19 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { ProjectFile, RunResult } from '../types';
 import { getProjectFiles, runProject, updateProjectFile } from '../services/api';
+import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
+import { useAgentSession } from '../../../shared/agent';
+import { setMobileAgentToken } from '../lib/agentApiClient';
 
 type ProjectScreenProps = NativeStackScreenProps<RootStackParamList, 'Project'> & {
   token: string;
 };
 
+type TabType = 'agent' | 'files' | 'editor';
+
 const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
-  const { projectId } = route.params;
+  const { projectId, projectName } = route.params;
+  const [activeTab, setActiveTab] = useState<TabType>('agent');
   const [files, setFiles] = useState<ProjectFile[]>([]);
   const [selectedFileId, setSelectedFileId] = useState<number | null>(null);
   const [editorContent, setEditorContent] = useState('');
@@ -32,9 +39,30 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Agent input state (separate from shared hook)
+  const [agentInput, setAgentInput] = useState('');
+  const scrollViewRef = useRef<FlatList>(null);
 
   const { width } = useWindowDimensions();
-  const isCompactLayout = width < 768;
+
+  // Configure mobile API client with auth token BEFORE using the hook
+  // This prevents race conditions where the hook tries to send messages before token is set
+  setMobileAgentToken(token);
+
+  // Use shared Agent session hook
+  const { state, actions } = useAgentSession({
+    projectId,
+    onBuildComplete: () => {
+      console.log('[ProjectScreen] Build completed successfully');
+    },
+    onError: (error) => {
+      console.error('[ProjectScreen] Error:', error.message);
+    }
+  });
+
+  const { messages, isLoading: isAgentLoading, isBuilding } = state;
+  const { sendMessage: sendAgentMessage } = actions;
 
   const loadFiles = useCallback(async () => {
     setError(null);
@@ -73,6 +101,8 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
     setSelectedFileId(file.id);
     setEditorContent(file.content ?? '');
     setRunResult(null);
+    // Auto-switch to editor tab when file selected
+    setActiveTab('editor');
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -116,6 +146,77 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
     }
   }, [editorContent, projectId, selectedFile, token]);
 
+  // Agent functions
+  const scrollToBottom = useCallback(() => {
+    if (scrollViewRef.current && messages.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages.length]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  const sendMessage = useCallback(async () => {
+    const messageText = agentInput.trim();
+    if (!messageText) return;
+
+    await sendAgentMessage(messageText);
+    setAgentInput('');
+  }, [agentInput, sendAgentMessage]);
+
+  const renderMessage = useCallback(({ item }: { item: any }) => {
+    const isUser = item.role === 'user';
+    
+    return (
+      <View style={[styles.messageContainer, isUser ? styles.userMessageContainer : styles.assistantMessageContainer]}>
+        <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.assistantBubble]}>
+          <Text style={[styles.messageText, isUser ? styles.userText : styles.assistantText]}>
+            {item.content}
+          </Text>
+          <Text style={styles.timestamp}>
+            {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+        </View>
+      </View>
+    );
+  }, []);
+
+  const agentEmptyState = useCallback(() => (
+    <View style={styles.emptyState}>
+      <View style={styles.botIconContainer}>
+        <Text style={styles.botIcon}>🤖</Text>
+      </View>
+      <Text style={styles.emptyTitle}>E-Code Agent</Text>
+      <Text style={styles.emptyText}>
+        I'm your AI coding assistant for {projectName}. Tell me what you'd like to build and I'll help you create it.
+      </Text>
+      <View style={styles.suggestionContainer}>
+        <Text style={styles.suggestionTitle}>Try asking me to:</Text>
+        <TouchableOpacity
+          style={styles.suggestionChip}
+          onPress={() => setAgentInput('Add error handling to my functions')}
+        >
+          <Text style={styles.suggestionText}>Add error handling</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.suggestionChip}
+          onPress={() => setAgentInput('Refactor this code to be more efficient')}
+        >
+          <Text style={styles.suggestionText}>Refactor my code</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.suggestionChip}
+          onPress={() => setAgentInput('Create unit tests for my project')}
+        >
+          <Text style={styles.suggestionText}>Create unit tests</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  ), [projectName]);
+
   const renderFile = ({ item }: { item: ProjectFile }) => {
     const isSelected = item.id === selectedFileId;
     return (
@@ -129,26 +230,70 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
     );
   };
 
-  return (
-    <View style={styles.container}>
-      {loading ? (
-        <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#38bdf8" />
-        </View>
-      ) : null}
+  const renderTabContent = () => {
+    if (activeTab === 'agent') {
+      return (
+        <KeyboardAvoidingView
+          style={styles.tabContent}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 150 : 0}
+        >
+          <FlatList
+            ref={scrollViewRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.messagesContainer}
+            ListEmptyComponent={agentEmptyState}
+            onContentSizeChange={scrollToBottom}
+            onLayout={scrollToBottom}
+          />
 
-      {error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={refreshFiles}>
-            <Text style={styles.retryText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
+          <View style={styles.agentInputContainer}>
+            <TextInput
+              style={styles.agentInput}
+              placeholder="Ask the AI agent for help..."
+              placeholderTextColor={mobileColors.textMuted}
+              value={agentInput}
+              onChangeText={setAgentInput}
+              multiline
+              maxLength={500}
+              editable={!isAgentLoading}
+            />
+            <TouchableOpacity
+              style={[styles.sendButton, (!agentInput.trim() || isAgentLoading) && styles.sendButtonDisabled]}
+              onPress={sendMessage}
+              disabled={!agentInput.trim() || isAgentLoading}
+            >
+              {isAgentLoading ? (
+                <ActivityIndicator color={mobileColors.text} size="small" />
+              ) : (
+                <Text style={styles.sendButtonText}>➤</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      );
+    }
 
-      <View style={[styles.content, isCompactLayout && styles.contentStack]}>
-        <View style={[styles.fileList, isCompactLayout && styles.fileListStack]}>
-          <Text style={styles.sectionTitle}>Files</Text>
+    if (activeTab === 'files') {
+      return (
+        <View style={styles.tabContent}>
+          {loading ? (
+            <View style={styles.loader}>
+              <ActivityIndicator size="large" color={mobileColors.primary} />
+            </View>
+          ) : null}
+
+          {error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={refreshFiles}>
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
           <FlatList
             data={files}
             renderItem={renderFile}
@@ -159,64 +304,102 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
             }
           />
         </View>
+      );
+    }
 
-        <View style={[styles.editorContainer, isCompactLayout && styles.editorContainerStack]}>
-          <Text style={styles.sectionTitle}>{selectedFile?.path ?? 'Select a file to edit'}</Text>
-          <ScrollView style={styles.editorScroll} keyboardShouldPersistTaps="handled">
-            <TextInput
-              style={styles.editor}
-              multiline
-              editable={Boolean(selectedFile)}
-              value={editorContent}
-              onChangeText={setEditorContent}
-              placeholder={selectedFile ? undefined : 'Select a file to see its contents'}
-              placeholderTextColor="#475569"
-            />
-          </ScrollView>
+    // Editor tab
+    return (
+      <View style={styles.tabContent}>
+        <Text style={styles.sectionTitle}>{selectedFile?.path ?? 'Select a file to edit'}</Text>
+        <ScrollView style={styles.editorScroll} keyboardShouldPersistTaps="handled">
+          <TextInput
+            style={styles.editor}
+            multiline
+            editable={Boolean(selectedFile)}
+            value={editorContent}
+            onChangeText={setEditorContent}
+            placeholder={selectedFile ? undefined : 'Select a file from Files tab'}
+            placeholderTextColor={mobileColors.textMuted}
+          />
+        </ScrollView>
 
-          <View style={[styles.actions, isCompactLayout && styles.actionsStack]}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.saveButton, (!selectedFile || saving) && styles.disabledButton]}
-              onPress={handleSave}
-              disabled={!selectedFile || saving}
-            >
-              {saving ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.actionText}>Save</Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.runButton, (!selectedFile || running) && styles.disabledButton]}
-              onPress={handleRun}
-              disabled={!selectedFile || running}
-            >
-              {running ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.actionText}>Run</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {runResult ? (
-            <View style={styles.outputContainer}>
-              <Text style={styles.outputTitle}>Terminal output</Text>
-              <ScrollView style={styles.outputScroll}>
-                {runResult.output ? (
-                  <Text style={styles.outputText}>{runResult.output.trim()}</Text>
-                ) : null}
-                {runResult.error ? (
-                  <Text style={styles.errorOutput}>{runResult.error.trim()}</Text>
-                ) : null}
-                <Text style={styles.outputMeta}>
-                  Exit code {runResult.exitCode} · {runResult.executionTime}ms
-                </Text>
-              </ScrollView>
-            </View>
-          ) : null}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.saveButton, (!selectedFile || saving) && styles.disabledButton]}
+            onPress={handleSave}
+            disabled={!selectedFile || saving}
+          >
+            {saving ? (
+              <ActivityIndicator color={mobileColors.text} />
+            ) : (
+              <Text style={styles.actionText}>Save</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.runButton, (!selectedFile || running) && styles.disabledButton]}
+            onPress={handleRun}
+            disabled={!selectedFile || running}
+          >
+            {running ? (
+              <ActivityIndicator color={mobileColors.text} />
+            ) : (
+              <Text style={styles.actionText}>Run</Text>
+            )}
+          </TouchableOpacity>
         </View>
+
+        {runResult ? (
+          <View style={styles.outputContainer}>
+            <Text style={styles.outputTitle}>Terminal output</Text>
+            <ScrollView style={styles.outputScroll}>
+              {runResult.output ? (
+                <Text style={styles.outputText}>{runResult.output.trim()}</Text>
+              ) : null}
+              {runResult.error ? (
+                <Text style={styles.errorOutput}>{runResult.error.trim()}</Text>
+              ) : null}
+              <Text style={styles.outputMeta}>
+                Exit code {runResult.exitCode} · {runResult.executionTime}ms
+              </Text>
+            </ScrollView>
+          </View>
+        ) : null}
       </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Tab Bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'agent' && styles.tabActive]}
+          onPress={() => setActiveTab('agent')}
+        >
+          <Text style={[styles.tabText, activeTab === 'agent' && styles.tabTextActive]}>
+            ✨ Agent
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'files' && styles.tabActive]}
+          onPress={() => setActiveTab('files')}
+        >
+          <Text style={[styles.tabText, activeTab === 'files' && styles.tabTextActive]}>
+            📁 Files
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'editor' && styles.tabActive]}
+          onPress={() => setActiveTab('editor')}
+        >
+          <Text style={[styles.tabText, activeTab === 'editor' && styles.tabTextActive]}>
+            📝 Editor
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Tab Content */}
+      {renderTabContent()}
     </View>
   );
 };
@@ -224,164 +407,301 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#020617'
+    backgroundColor: mobileColors.background,
   },
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: mobileColors.border,
+    backgroundColor: mobileColors.surface,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: mobileSpacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: mobileColors.primary,
+    backgroundColor: mobileColors.surfaceHover,
+  },
+  tabText: {
+    fontSize: mobileTypography.fontSize.sm,
+    fontWeight: mobileTypography.fontWeight.medium as any,
+    color: mobileColors.textSecondary,
+  },
+  tabTextActive: {
+    color: mobileColors.primary,
+    fontWeight: mobileTypography.fontWeight.semibold as any,
+  },
+  tabContent: {
+    flex: 1,
+  },
+
+  // Agent tab styles
+  messagesContainer: {
+    padding: mobileSpacing.lg,
+    gap: mobileSpacing.md,
+    flexGrow: 1,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: mobileSpacing['3xl'],
+    paddingVertical: mobileSpacing['4xl'],
+  },
+  botIconContainer: {
+    width: mobileSpacing['4xl'] * 2,
+    height: mobileSpacing['4xl'] * 2,
+    borderRadius: mobileBorderRadius.full,
+    backgroundColor: mobileColors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: mobileSpacing.lg,
+  },
+  botIcon: {
+    fontSize: mobileTypography.fontSize['4xl'],
+  },
+  emptyTitle: {
+    fontSize: mobileTypography.fontSize['2xl'],
+    fontWeight: mobileTypography.fontWeight.bold as any,
+    color: mobileColors.text,
+    marginBottom: mobileSpacing.sm,
+  },
+  emptyText: {
+    fontSize: mobileTypography.fontSize.base,
+    color: mobileColors.textMuted,
+    textAlign: 'center',
+    lineHeight: mobileTypography.fontSize.base * mobileTypography.lineHeight.relaxed,
+    marginBottom: mobileSpacing['2xl'],
+  },
+  suggestionContainer: {
+    width: '100%',
+    gap: mobileSpacing.md,
+  },
+  suggestionTitle: {
+    fontSize: mobileTypography.fontSize.sm,
+    fontWeight: mobileTypography.fontWeight.semibold as any,
+    color: mobileColors.textSecondary,
+    marginBottom: mobileSpacing.xs,
+  },
+  suggestionChip: {
+    backgroundColor: mobileColors.surface,
+    paddingHorizontal: mobileSpacing.lg,
+    paddingVertical: mobileSpacing.md,
+    borderRadius: mobileBorderRadius.md,
+    borderWidth: 1,
+    borderColor: mobileColors.border,
+  },
+  suggestionText: {
+    color: mobileColors.primary,
+    fontSize: mobileTypography.fontSize.sm,
+    fontWeight: mobileTypography.fontWeight.medium as any,
+  },
+  messageContainer: {
+    marginVertical: mobileSpacing.xs,
+  },
+  userMessageContainer: {
+    alignItems: 'flex-end',
+  },
+  assistantMessageContainer: {
+    alignItems: 'flex-start',
+  },
+  messageBubble: {
+    maxWidth: '85%',
+    borderRadius: mobileBorderRadius.lg,
+    padding: mobileSpacing.md,
+  },
+  userBubble: {
+    backgroundColor: mobileColors.buttonPrimary,
+    borderBottomRightRadius: mobileSpacing.xs,
+  },
+  assistantBubble: {
+    backgroundColor: mobileColors.surface,
+    borderBottomLeftRadius: mobileSpacing.xs,
+  },
+  messageText: {
+    fontSize: mobileTypography.fontSize.base,
+    lineHeight: mobileTypography.fontSize.base * mobileTypography.lineHeight.normal,
+    marginBottom: mobileSpacing.xs,
+  },
+  userText: {
+    color: mobileColors.text,
+  },
+  assistantText: {
+    color: mobileColors.text,
+  },
+  timestamp: {
+    fontSize: mobileTypography.fontSize.xs,
+    color: mobileColors.textMuted,
+    alignSelf: 'flex-end',
+  },
+  agentInputContainer: {
+    flexDirection: 'row',
+    padding: mobileSpacing.lg,
+    gap: mobileSpacing.md,
+    borderTopWidth: 1,
+    borderTopColor: mobileColors.border,
+    backgroundColor: mobileColors.surfaceSecondary,
+  },
+  agentInput: {
+    flex: 1,
+    backgroundColor: mobileColors.surface,
+    borderRadius: mobileBorderRadius.lg * 2,
+    paddingHorizontal: mobileSpacing.lg,
+    paddingVertical: mobileSpacing.md,
+    color: mobileColors.text,
+    fontSize: mobileTypography.fontSize.base,
+    maxHeight: mobileSpacing['3xl'] * 3.75,
+    borderWidth: 1,
+    borderColor: mobileColors.border,
+  },
+  sendButton: {
+    width: mobileSpacing['3xl'] + mobileSpacing.lg,
+    height: mobileSpacing['3xl'] + mobileSpacing.lg,
+    borderRadius: mobileBorderRadius.full,
+    backgroundColor: mobileColors.buttonPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  sendButtonText: {
+    color: mobileColors.text,
+    fontSize: mobileTypography.fontSize.xl,
+    fontWeight: mobileTypography.fontWeight.semibold as any,
+  },
+
+  // Files tab styles
   loader: {
-    paddingVertical: 16
+    paddingVertical: mobileSpacing.lg,
   },
   errorContainer: {
-    backgroundColor: '#450a0a',
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: mobileColors.danger + '20',
+    margin: mobileSpacing.lg,
+    padding: mobileSpacing.lg,
+    borderRadius: mobileBorderRadius.md,
     borderWidth: 1,
-    borderColor: '#b91c1c'
+    borderColor: mobileColors.danger,
   },
   errorText: {
-    color: '#fecaca',
-    marginBottom: 8
+    color: mobileColors.danger,
+    marginBottom: mobileSpacing.sm,
   },
   retryButton: {
     alignSelf: 'flex-start',
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8
+    backgroundColor: mobileColors.danger,
+    paddingHorizontal: mobileSpacing.lg,
+    paddingVertical: mobileSpacing.sm,
+    borderRadius: mobileBorderRadius.sm,
   },
   retryText: {
-    color: '#fff',
-    fontWeight: '600'
-  },
-  content: {
-    flex: 1,
-    flexDirection: 'row'
-  },
-  contentStack: {
-    flexDirection: 'column'
-  },
-  fileList: {
-    width: 140,
-    borderRightWidth: 1,
-    borderRightColor: '#1e293b',
-    padding: 12,
-    gap: 12,
-    flexShrink: 0
-  },
-  fileListStack: {
-    width: '100%',
-    borderRightWidth: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
-    marginBottom: 12,
-    maxHeight: 260
+    color: mobileColors.text,
+    fontWeight: mobileTypography.fontWeight.semibold as any,
   },
   fileListContent: {
-    gap: 8
-  },
-  sectionTitle: {
-    color: '#e2e8f0',
-    fontWeight: '600',
-    fontSize: 16
+    padding: mobileSpacing.lg,
+    gap: mobileSpacing.sm,
   },
   fileItem: {
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: '#0f172a'
+    padding: mobileSpacing.md,
+    borderRadius: mobileBorderRadius.md,
+    backgroundColor: mobileColors.surface,
   },
   fileItemActive: {
-    backgroundColor: '#1d4ed8'
+    backgroundColor: mobileColors.primary,
   },
   fileName: {
-    color: '#e2e8f0',
-    fontWeight: '600'
+    color: mobileColors.text,
+    fontWeight: mobileTypography.fontWeight.semibold as any,
   },
   fileLanguage: {
-    color: '#cbd5f5',
-    fontSize: 12
+    color: mobileColors.textSecondary,
+    fontSize: mobileTypography.fontSize.sm,
   },
-  editorContainer: {
-    flex: 1,
-    padding: 16,
-    gap: 12
-  },
-  editorContainerStack: {
-    width: '100%',
-    paddingHorizontal: 12,
-    paddingTop: 0
+
+  // Editor tab styles
+  sectionTitle: {
+    color: mobileColors.text,
+    fontWeight: mobileTypography.fontWeight.semibold as any,
+    fontSize: mobileTypography.fontSize.lg,
+    padding: mobileSpacing.lg,
   },
   editorScroll: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: 12,
-    backgroundColor: '#0f172a'
+    borderColor: mobileColors.border,
+    borderRadius: mobileBorderRadius.md,
+    backgroundColor: mobileColors.editorBg,
+    marginHorizontal: mobileSpacing.lg,
   },
   editor: {
-    minHeight: 240,
-    color: '#e2e8f0',
-    fontSize: 14,
-    padding: 16
+    minHeight: mobileSpacing['3xl'] * 7.5,
+    color: mobileColors.text,
+    fontSize: mobileTypography.fontSize.sm,
+    fontFamily: mobileTypography.fontFamily.mono,
+    padding: mobileSpacing.lg,
   },
   actions: {
     flexDirection: 'row',
-    gap: 12
-  },
-  actionsStack: {
-    flexDirection: 'column'
+    gap: mobileSpacing.md,
+    padding: mobileSpacing.lg,
   },
   actionButton: {
     flex: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center'
+    borderRadius: mobileBorderRadius.md,
+    paddingVertical: mobileSpacing.md,
+    alignItems: 'center',
   },
   saveButton: {
-    backgroundColor: '#2563eb'
+    backgroundColor: mobileColors.buttonPrimary,
   },
   runButton: {
-    backgroundColor: '#16a34a'
+    backgroundColor: mobileColors.success,
   },
   disabledButton: {
-    opacity: 0.6
+    opacity: 0.6,
   },
   actionText: {
-    color: '#fff',
-    fontWeight: '600'
+    color: mobileColors.text,
+    fontWeight: mobileTypography.fontWeight.semibold as any,
   },
   outputContainer: {
     borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: 12,
-    backgroundColor: '#0f172a'
+    borderColor: mobileColors.border,
+    borderRadius: mobileBorderRadius.md,
+    backgroundColor: mobileColors.terminalBg,
+    marginHorizontal: mobileSpacing.lg,
+    marginBottom: mobileSpacing.lg,
   },
   outputTitle: {
-    padding: 12,
-    color: '#38bdf8',
-    fontWeight: '600'
+    padding: mobileSpacing.md,
+    color: mobileColors.info,
+    fontWeight: mobileTypography.fontWeight.semibold as any,
   },
   outputScroll: {
-    maxHeight: 160,
-    paddingHorizontal: 12,
-    paddingBottom: 12
+    maxHeight: mobileSpacing['3xl'] * 5,
+    paddingHorizontal: mobileSpacing.md,
+    paddingBottom: mobileSpacing.md,
   },
   outputText: {
-    color: '#d1fae5',
+    color: mobileColors.success,
     fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }),
-    marginBottom: 8
+    marginBottom: mobileSpacing.sm,
   },
   errorOutput: {
-    color: '#fecaca',
+    color: mobileColors.danger,
     fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }),
-    marginBottom: 8
+    marginBottom: mobileSpacing.sm,
   },
   outputMeta: {
-    color: '#94a3b8',
-    fontSize: 12
+    color: mobileColors.textMuted,
+    fontSize: mobileTypography.fontSize.xs,
   },
-  emptyText: {
-    color: '#94a3b8',
-    fontStyle: 'italic'
-  }
 });
 
 export default ProjectScreen;

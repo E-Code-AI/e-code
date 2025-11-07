@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -110,7 +109,8 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
   useEffect(() => {
     if (!previewUrl) return;
 
-    const ws = new WebSocket(`ws://localhost:5000/ws/preview-devtools/${projectId}`);
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/preview-devtools/${projectId}`);
     wsRef.current = ws;
 
     ws.onopen = () => {

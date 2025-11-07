@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Real Kubernetes Deployment Service
  * Provides actual Kubernetes orchestration for deployments

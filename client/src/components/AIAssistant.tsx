@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Bot, Send, Sparkles, Code, FileText, HelpCircle,

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as k8s from '@kubernetes/client-node';
 import * as crypto from 'crypto';
 import * as path from 'path';

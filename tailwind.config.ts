@@ -9,8 +9,34 @@ export default {
         lg: "var(--ecode-radius-lg)",
         md: "var(--ecode-radius-md)",
         sm: "var(--ecode-radius-sm)",
+        'ecode-sm': '4px',
+        'ecode-md': '8px',
+        'ecode-lg': '12px',
+      },
+      spacing: {
+        'ecode-1': '4px',
+        'ecode-2': '8px',
+        'ecode-3': '12px',
+        'ecode-4': '16px',
+        'ecode-5': '20px',
+        'ecode-6': '24px',
+        'ecode-8': '32px',
+        'ecode-10': '40px',
+        'ecode-12': '48px',
+      },
+      fontFamily: {
+        sans: ["'IBM Plex Sans'", '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', '"Fira Sans"', '"Droid Sans"', '"Helvetica Neue"', 'sans-serif'],
+        mono: ["'IBM Plex Mono'", '"SF Mono"', 'Monaco', 'Inconsolata', '"Fira Mono"', '"Droid Sans Mono"', '"Source Code Pro"', 'monospace'],
       },
       colors: {
+        // E-Code brand colors
+        'ecode-orange': {
+          DEFAULT: '#F26207',
+          hover: '#D04E00',
+          light: '#FF7A2B',
+          tint: '#ffe4d3',
+        },
+        'ecode-yellow': '#F99D25',
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

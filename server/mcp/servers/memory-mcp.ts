@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createLogger } from '../../utils/logger';
 import { db } from '../../db';
 import { eq, and, or, desc, sql } from 'drizzle-orm';

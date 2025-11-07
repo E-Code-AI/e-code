@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Runtimes Page
  * Provides UI for viewing and managing language runtimes

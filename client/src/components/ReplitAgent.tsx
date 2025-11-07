@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Bot, Send, Sparkles, Code, FileText, HelpCircle,
@@ -7,7 +6,7 @@ import {
   Wrench, Rocket, GitBranch, Database, Globe, Server,
   MessageSquare, DollarSign, Link, Camera, Brain, Power,
   Pause, Play, Plus, ChevronLeft, ChevronRight, FileTerminal,
-  History, Palette, Heart
+  History, Palette, Heart, Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,12 +37,14 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useLocation } from 'wouter';
+import { PendingApprovalsPanel } from './PendingApprovalsPanel';
 
 interface ReplitAgentProps {
-  projectId: number;
+  projectId: string | number;
   selectedFile?: string;
   selectedCode?: string;
   className?: string;
+  initialPrompt?: string | null;
 }
 
 interface Message {
@@ -86,6 +87,7 @@ interface AgentAction {
   content?: string;
   package?: string;
   description?: string;
+  actionId?: string; // From approval queue
 }
 
 interface BuildTemplate {
@@ -706,7 +708,7 @@ const QUICK_ACTIONS = [
   { id: 'generate', label: 'Generate', icon: Code }
 ];
 
-export function ReplitAgent({ projectId, selectedFile, selectedCode, className }: ReplitAgentProps) {
+export function ReplitAgent({ projectId, selectedFile, selectedCode, className, initialPrompt }: ReplitAgentProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -746,7 +748,7 @@ What would you like me to build for you today?`,
   const [autoCheckpoints, setAutoCheckpoints] = useState(true);
   const [featureFlags, setFeatureFlags] = useState<any>(null);
   const [userPreferences, setUserPreferences] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'chat' | 'progress'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'approvals' | 'progress'>('chat');
   const [progressLogs, setProgressLogs] = useState<Array<{
     id: string;
     timestamp: Date;
@@ -769,6 +771,20 @@ What would you like me to build for you today?`,
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Handle initial prompt if provided
+  useEffect(() => {
+    if (initialPrompt && messages.length === 1) {
+      // Only send if we haven't already started a conversation
+      const hasStarted = sessionStorage.getItem(`agent-started-${projectId}`);
+      if (!hasStarted) {
+        sessionStorage.setItem(`agent-started-${projectId}`, 'true');
+        setTimeout(() => {
+          sendMessage(initialPrompt);
+        }, 500);
+      }
+    }
+  }, [initialPrompt, projectId]);
 
   // Load feature flags and user preferences
   useEffect(() => {
@@ -973,10 +989,61 @@ What would you like me to build for you today?`,
   };
 
   const executeAction = async (action: AgentAction) => {
+    console.log('[executeAction] Called with action:', action);
     try {
+      // If action has actionId, use approval endpoint (from AI Agent)
+      if (action.actionId) {
+        console.log('[executeAction] Using approval endpoint for actionId:', action.actionId);
+        
+        const response = await fetch(`/api/projects/${projectId}/ai/approve/${action.actionId}`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'credentials': 'include'
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: response.statusText }));
+          const errorMessage = errorData.message || errorData.error || response.statusText;
+          
+          // Show security error in chat
+          const securityError: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `⚠️ **Security Block**: ${errorMessage}\n\nThis action was blocked by Fortune 500 security controls to protect your project.`,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, securityError]);
+          
+          toast({
+            title: "Security: Action Blocked",
+            description: errorMessage,
+            variant: "destructive",
+            duration: 5000,
+          });
+          
+          throw new Error(`Security blocked: ${errorMessage}`);
+        }
+        
+        const result = await response.json();
+        console.log('[executeAction] Approval result:', result);
+        return; // Exit after approval endpoint handles everything
+      }
+      
+      // Fallback: Direct file creation (for template builds without approval queue)
       switch (action.type) {
         case 'create_file':
           if (action.path && action.content !== undefined) {
+            console.log('[executeAction] Creating file (direct):', action.path);
+            const requestBody = {
+              name: action.path.split('/').pop(),
+              path: action.path,
+              content: action.content,
+              parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
+            };
+            
             const response = await fetch(`/api/files/${projectId}`, {
               method: 'POST',
               headers: { 
@@ -984,15 +1051,29 @@ What would you like me to build for you today?`,
                 'credentials': 'include'
               },
               credentials: 'include',
-              body: JSON.stringify({
-                name: action.path.split('/').pop(),
-                content: action.content,
-                parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
-              })
+              body: JSON.stringify(requestBody)
             });
             
             if (!response.ok) {
-              throw new Error(`Failed to create file: ${response.statusText}`);
+              const errorData = await response.json().catch(() => ({ message: response.statusText }));
+              const errorMessage = errorData.message || response.statusText;
+              
+              const securityError: Message = {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: `⚠️ **Error**: ${errorMessage}`,
+                timestamp: new Date()
+              };
+              setMessages(prev => [...prev, securityError]);
+              
+              toast({
+                title: "Error",
+                description: errorMessage,
+                variant: "destructive",
+                duration: 5000,
+              });
+              
+              throw new Error(errorMessage);
             }
           }
           break;
@@ -1292,6 +1373,7 @@ What would you like me to build for you today?`,
     }
 
     try {
+      // Use Server-Sent Events (SSE) for streaming responses
       const response = await fetch(`/api/projects/${projectId}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1302,7 +1384,7 @@ What would you like me to build for you today?`,
             file: selectedFile,
             code: selectedCode,
             history: messages.slice(-5),
-            mode: 'agent', // Indicate this is the autonomous agent
+            mode: 'agent',
             extendedThinking,
             highPowerMode,
             conversationHistory: sessions.find(s => s.id === activeSessionId)?.messages || []
@@ -1312,45 +1394,91 @@ What would you like me to build for you today?`,
 
       if (!response.ok) throw new Error('Failed to get AI response');
 
-      const data = await response.json();
+      // Handle SSE streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
       
-      // Check if response contains actions to execute
-      if (data.actions && Array.isArray(data.actions)) {
-        // Start building if actions are present
-        setIsBuilding(true);
-        setBuildProgress(0);
-        
-        const totalActions = data.actions.length;
-        let completedActions = 0;
-        
-        for (const action of data.actions) {
-          completedActions++;
-          const progress = Math.floor((completedActions / totalActions) * 100);
-          
-          await updateProgress(
-            `${action.type === 'create_file' ? '📄' : action.type === 'create_folder' ? '📁' : '📦'} ${action.description || action.path || action.package}`,
-            progress
-          );
-          
-          await executeAction(action);
-          await new Promise(resolve => setTimeout(resolve, 300));
+      // Create assistant message that we'll update as we stream
+      const assistantMessageId = (Date.now() + 1).toString();
+      const assistantMessage: Message = {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+
+      if (!reader) throw new Error('No reader available');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.substring(6);
+            try {
+              const data = JSON.parse(dataStr);
+              
+              if (data.type === 'done') {
+                // Stream complete
+                break;
+              } else if (data.type === 'error') {
+                throw new Error(data.content || 'AI error');
+              } else if (data.type === 'action_pending_approval') {
+                // AI wants to execute an action - add to message with clickable button
+                console.log('[AI Chat] Action pending approval:', data.actionId, data.action);
+                const actionWithId = { ...data.action, actionId: data.actionId };
+                setMessages(prev => prev.map(m => 
+                  m.id === assistantMessageId 
+                    ? { 
+                        ...m, 
+                        actions: [...(m.actions || []), actionWithId]
+                      }
+                    : m
+                ));
+              } else if (data.type === 'security_blocked') {
+                // Security blocked an action - show error message in chat
+                const securityMessage: Message = {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: data.message || `⚠️ **Security Block**: ${data.reason}\n\nThis action was blocked by Fortune 500 security controls.`,
+                  timestamp: new Date()
+                };
+                setMessages(prev => [...prev, securityMessage]);
+                
+                // Show toast notification
+                toast({
+                  title: "Security: Action Blocked",
+                  description: data.reason || "Action blocked by security controls",
+                  variant: "destructive",
+                  duration: 5000,
+                });
+              } else if (data.type === 'action_result' && data.result?.success) {
+                // File was created/updated
+                addProgressLog('success', `${data.action.type === 'create_file' ? 'Created' : 'Updated'} file: ${data.action.path}`);
+              } else if (data.content) {
+                // Add content to assistant message
+                assistantContent += data.content;
+                setMessages(prev => prev.map(m => 
+                  m.id === assistantMessageId 
+                    ? { ...m, content: assistantContent }
+                    : m
+                ));
+              }
+            } catch (e) {
+              // Invalid JSON, skip
+            }
+          }
         }
-        
-        setIsBuilding(false);
-        setBuildProgress(100);
       }
 
-      const assistantMessage: Message = {
-        id: data.id || (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.content || 'I can help you with that! Let me know what specific functionality you need.',
-        timestamp: new Date(data.timestamp || Date.now()),
-        pricing: data.pricing,
-        metrics: data.metrics,
-        checkpoint: data.checkpoint
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
+      // Message already added during streaming, no need to add again
     } catch (error) {
       console.error('AI chat error:', error);
       
@@ -1465,6 +1593,89 @@ What would you like me to build?`,
                 metrics={message.metrics}
                 checkpoint={message.checkpoint}
               />
+            </div>
+          )}
+          {/* Render approval action buttons (Fortune 500 Security) */}
+          {message.actions && message.actions.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {message.actions.map((action, idx) => (
+                <div 
+                  key={idx} 
+                  className="p-3 rounded-lg border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-950/10"
+                  data-testid={`action-card-${action.type}-${idx}`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
+                        {action.type === 'create_file' && <FileText className="h-4 w-4" />}
+                        {action.type === 'edit_file' && <Edit className="h-4 w-4" />}
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">
+                          {action.type === 'create_file' ? `Create ${action.path}` : `Edit ${action.path}`}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {action.type.replace('_', ' ')}
+                        </div>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      <AlertCircle className="h-3 w-3 mr-1 text-amber-600" />
+                      Requires Approval
+                    </Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-xs"
+                      onClick={async () => {
+                        console.log('[Approve Button] Approving action:', action);
+                        try {
+                          await executeAction(action);
+                          toast({
+                            title: "✅ Action Approved",
+                            description: `${action.type === 'create_file' ? 'Created' : 'Updated'} ${action.path}`,
+                          });
+                          // Remove this action from the message after execution
+                          setMessages(prev => prev.map(m => 
+                            m.id === message.id 
+                              ? { ...m, actions: m.actions?.filter((_, i) => i !== idx) }
+                              : m
+                          ));
+                        } catch (error: any) {
+                          console.error('[Approve Button] Approval failed:', error);
+                        }
+                      }}
+                      data-testid={`approve-button-${action.type}-${idx}`}
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Approve & Execute
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="text-xs"
+                      onClick={() => {
+                        // Remove this action without executing
+                        setMessages(prev => prev.map(m => 
+                          m.id === message.id 
+                            ? { ...m, actions: m.actions?.filter((_, i) => i !== idx) }
+                            : m
+                        ));
+                        toast({
+                          title: "Action Rejected",
+                          description: `Rejected ${action.type}`,
+                        });
+                      }}
+                      data-testid={`reject-button-${action.type}-${idx}`}
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
           {/* Feedback Mechanism - Show after AI messages with actions */}
@@ -1633,12 +1844,16 @@ What would you like me to build?`,
         </div>
       </div>
 
-      {/* Tabs for Chat and Progress */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'chat' | 'progress')} className="flex-1 flex flex-col">
-        <TabsList className="w-full rounded-none border-b">
-          <TabsTrigger value="chat" className="flex-1">Chat</TabsTrigger>
+      {/* Tabs for Chat, Approvals, and Progress - Fortune 500 Security */}
+      {console.log('[ReplitAgent] Rendering tabs. ActiveTab:', activeTab, 'FeatureFlags:', featureFlags)}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'chat' | 'progress' | 'approvals')} className="flex-1 flex flex-col">
+        <TabsList className="w-full rounded-none border-b bg-white dark:bg-gray-900">
+          <TabsTrigger value="chat" className="flex-1" data-testid="chat-tab">Chat</TabsTrigger>
+          <TabsTrigger value="approvals" className="flex-1" data-testid="approvals-tab">
+            🔒 Approvals
+          </TabsTrigger>
           {featureFlags?.aiUx?.progressTab !== false && (
-            <TabsTrigger value="progress" className="flex-1">Progress</TabsTrigger>
+            <TabsTrigger value="progress" className="flex-1" data-testid="progress-tab">Progress</TabsTrigger>
           )}
         </TabsList>
         
@@ -1691,6 +1906,30 @@ What would you like me to build?`,
         </ScrollArea>
       </TabsContent>
       
+      {/* Approvals Tab - Fortune 500 Security */}
+      <TabsContent value="approvals" className="flex-1 m-0" data-testid="approvals-content">
+        <ScrollArea className="h-full">
+          <div className="p-4">
+            <PendingApprovalsPanel 
+              projectId={projectId}
+              onActionApproved={() => {
+                // Refresh messages to clear completed actions
+                toast({
+                  title: "Action Completed",
+                  description: "The approved action has been executed.",
+                });
+              }}
+              onActionRejected={() => {
+                toast({
+                  title: "Action Rejected",
+                  description: "The action has been rejected.",
+                });
+              }}
+            />
+          </div>
+        </ScrollArea>
+      </TabsContent>
+
       {/* Progress Tab */}
       {featureFlags?.aiUx?.progressTab !== false && (
         <TabsContent value="progress" className="flex-1 m-0">

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useRoute } from 'wouter';
 import { MarketingLayout } from '@/components/layout/MarketingLayout';
 import { Badge } from '@/components/ui/badge';

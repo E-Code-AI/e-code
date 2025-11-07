@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router } from 'express';
 import { performanceMonitor } from './performance';
 import { monitoringService } from '../services/monitoring-service';

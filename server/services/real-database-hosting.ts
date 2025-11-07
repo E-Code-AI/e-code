@@ -1,4 +1,3 @@
-// @ts-nocheck
 import EventEmitter from 'events';
 import { createLogger } from '../utils/logger';
 import { spawn, ChildProcess } from 'child_process';

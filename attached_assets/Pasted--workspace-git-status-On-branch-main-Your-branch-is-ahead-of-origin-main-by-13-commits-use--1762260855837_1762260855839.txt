@@ -1,0 +1,889 @@
+~/workspace$ git status
+On branch main
+Your branch is ahead of 'origin/main' by 13 commits.
+  (use "git push" to publish your local commits)
+
+You are currently rebasing.
+  (all conflicts fixed: run "git rebase --continue")
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+    modified:   .replit
+    deleted:    AUTOSCALE_REPLIT_CONFIG.txt
+    deleted:    COPY_THIS_TO_REPLIT_FILE.txt
+    deleted:    CORRECT_REPLIT_FILE.txt
+    modified:   DEPLOYMENT_FIX.md
+    deleted:    DEPLOYMENT_GUIDE.md
+    modified:   DEPLOYMENT_SOLUTION.md
+    deleted:    DEPLOYMENT_TROUBLESHOOTING.md
+    deleted:    FIXED_REPLIT_CONFIG.txt
+    deleted:    FIX_DEPLOYMENT_PORT.md
+    deleted:    FIX_PERMISSIONS.md
+    modified:   README.md
+    deleted:    RESERVED_VM_CONFIG.txt
+    deleted:    ROADMAP_TO_FORTUNE500.md
+    modified:   client/index.html
+    modified:   client/src/App.tsx
+    modified:   client/src/components/AIAssistant.tsx
+    modified:   client/src/components/AIPanel.tsx
+    modified:   client/src/components/AIUsageDashboard.tsx
+    modified:   client/src/components/AdvancedAIPanel.tsx
+    modified:   client/src/components/AdvancedCollaboration.tsx
+    modified:   client/src/components/AdvancedDeployments.tsx
+    modified:   client/src/components/AdvancedSearch.tsx
+    modified:   client/src/components/AgentPricingDisplay.tsx
+    modified:   client/src/components/AgentV2Interface.tsx
+    modified:   client/src/components/AllModelsSelector.tsx
+    modified:   client/src/components/AnimatedPlatformDemo.tsx
+    modified:   client/src/components/ApplicationIDEWrapper.tsx
+    modified:   client/src/components/AuthModal.tsx
+    modified:   client/src/components/AuthenticationDemo.tsx
+    modified:   client/src/components/AutoSaveIndicator.tsx
+    modified:   client/src/components/BillingSystem.tsx
+    modified:   client/src/components/BottomPanel.tsx
+    modified:   client/src/components/CheckpointManager.tsx
+    modified:   client/src/components/CheckpointsPanel.tsx
+    modified:   client/src/components/CodeEditor.tsx
+    modified:   client/src/components/CodeHealthRadar.tsx
+    modified:   client/src/components/Collaboration.tsx
+    modified:   client/src/components/CollaborationPanel.tsx
+    modified:   client/src/components/CollaborativePresence.tsx
+    modified:   client/src/components/CommandPalette.tsx
+    modified:   client/src/components/CommentsPanel.tsx
+    modified:   client/src/components/CommunityFeatures.tsx
+    modified:   client/src/components/ComparisonLayout.tsx
+    modified:   client/src/components/ConsolePanel.tsx
+    modified:   client/src/components/ContextMenu.tsx
+    modified:   client/src/components/CreateProjectModal.tsx
+    modified:   client/src/components/CreditBalance.tsx
+    modified:   client/src/components/DatabaseBrowser.tsx
+    modified:   client/src/components/DatabaseHosting.tsx
+    modified:   client/src/components/DatabaseManagement.tsx
+    modified:   client/src/components/DebuggerPanel.tsx
+    modified:   client/src/components/DeploymentDashboard.tsx
+    modified:   client/src/components/DeploymentManager.tsx
+    modified:   client/src/components/DeploymentPanel.tsx
+    modified:   client/src/components/DeploymentTypes.tsx
+    modified:   client/src/components/ECodeLoading.tsx
+    modified:   client/src/components/ECodeLogo.tsx
+    modified:   client/src/components/EdgeDeployment.tsx
+    modified:   client/src/components/EditorContainer.tsx
+    modified:   client/src/components/EditorWorkspace.tsx
+    modified:   client/src/components/EducationDashboard.tsx
+    modified:   client/src/components/EffortPricingDisplay.tsx
+    modified:   client/src/components/EnterpriseSSO.tsx
+    modified:   client/src/components/EnvironmentManager.tsx
+    modified:   client/src/components/EnvironmentPanel.tsx
+    modified:   client/src/components/EnvironmentVariables.tsx
+    modified:   client/src/components/ErrorBoundary.tsx
+    modified:   client/src/components/ExecutionConsole.tsx
+    modified:   client/src/components/ExportOptions.tsx
+    modified:   client/src/components/ExtensionsManager.tsx
+    modified:   client/src/components/ExtensionsMarketplace.tsx
+    modified:   client/src/components/FileExplorer.tsx
+    modified:   client/src/components/FileUpload.tsx
+    modified:   client/src/components/FileUploadDropzone.tsx
+    modified:   client/src/components/FolderOrganization.tsx
+    modified:   client/src/components/GPUManagement.tsx
+    modified:   client/src/components/Gamification.tsx
+    modified:   client/src/components/Ghostwriter.tsx
+    modified:   client/src/components/GitIntegration.tsx
+    modified:   client/src/components/GitPanel.tsx
+    modified:   client/src/components/GlobalSearch.tsx
+    modified:   client/src/components/HistoryTimeline.tsx
+    modified:   client/src/components/ImportExport.tsx
+    modified:   client/src/components/IsolationManager.tsx
+    modified:   client/src/components/KeyboardShortcuts.tsx
+    modified:   client/src/components/LanguageEnvironments.tsx
+    modified:   client/src/components/LanguageTemplates.tsx
+    modified:   client/src/components/MCPServersPanel.tsx
+    modified:   client/src/components/MainAgentInterface.tsx
+    modified:   client/src/components/MobileAgentInterface.tsx
+    modified:   client/src/components/MobileApp.tsx
+    modified:   client/src/components/MobileAppDevelopment.tsx
+    modified:   client/src/components/MobileChatInterface.tsx
+    modified:   client/src/components/MobileHeader.tsx
+    modified:   client/src/components/MobileNavigation.tsx
+    modified:   client/src/components/NixConfig.tsx
+    modified:   client/src/components/NotificationCenter.tsx
+    modified:   client/src/components/ObjectStorage.tsx
+    modified:   client/src/components/OpenAIModelSelector.tsx
+    modified:   client/src/components/PackageManager.tsx
+    modified:   client/src/components/PackageViewer.tsx
+    modified:   client/src/components/PolyglotBackend.tsx
+    modified:   client/src/components/PolyglotIndicator.tsx
+    modified:   client/src/components/PowerUps.tsx
+    modified:   client/src/components/Preview.tsx
+    modified:   client/src/components/PreviewDevTools.tsx
+    modified:   client/src/components/PreviewPanel.tsx
+    modified:   client/src/components/ProjectSearch.tsx
+    modified:   client/src/components/ProjectSharing.tsx
+    modified:   client/src/components/ProjectStats.tsx
+    modified:   client/src/components/ProjectTemplates.tsx
+    modified:   client/src/components/ReplitAgent.tsx
+    modified:   client/src/components/ReplitAgentChat.tsx
+    modified:   client/src/components/ReplitAgentV2.tsx
+    modified:   client/src/components/ReplitAnalytics.tsx
+    modified:   client/src/components/ReplitAssistant.tsx
+    modified:   client/src/components/ReplitBackups.tsx
+    modified:   client/src/components/ReplitCollaboration.tsx
+    modified:   client/src/components/ReplitCoreServices.tsx
+    modified:   client/src/components/ReplitDB.tsx
+    modified:   client/src/components/ReplitDatabase.tsx
+    modified:   client/src/components/ReplitDeploymentPipeline.tsx
+    modified:   client/src/components/ReplitDevTools.tsx
+    modified:   client/src/components/ReplitForkGraph.tsx
+    modified:   client/src/components/ReplitJSONEditor.tsx
+    modified:   client/src/components/ReplitMonitoring.tsx
+    modified:   client/src/components/ReplitMultiplayer.tsx
+    modified:   client/src/components/ReplitNetworking.tsx
+    modified:   client/src/components/ReplitObjectStorage.tsx
+    modified:   client/src/components/ReplitPackageExplorer.tsx
+    modified:   client/src/components/ReplitPackages.tsx
+    modified:   client/src/components/ReplitResourceMonitor.tsx
+    modified:   client/src/components/ReplitSecrets.tsx
+    modified:   client/src/components/ReplitTesting.tsx
+    modified:   client/src/components/ReplitVersionControl.tsx
+    modified:   client/src/components/ReplitWorkflows.tsx
+    modified:   client/src/components/ResourceMonitor.tsx
+    modified:   client/src/components/RunButton.tsx
+    modified:   client/src/components/RuntimePanel.tsx
+    modified:   client/src/components/ScalabilityDashboard.tsx
+    modified:   client/src/components/ScreenshotsPanel.tsx
+    modified:   client/src/components/SecretManagement.tsx
+    modified:   client/src/components/ShareSnippetDialog.tsx
+    modified:   client/src/components/Shell.tsx
+    modified:   client/src/components/Sidebar.tsx
+    modified:   client/src/components/SpotlightSearch.tsx
+    modified:   client/src/components/SpotlightSettingsPanel.tsx
+    modified:   client/src/components/StatusPage.tsx
+    modified:   client/src/components/TaskSummariesPanel.tsx
+    modified:   client/src/components/TemplateGallery.tsx
+    modified:   client/src/components/Terminal.tsx
+    modified:   client/src/components/TerminalPanel.tsx
+    modified:   client/src/components/TestAuth.tsx
+    modified:   client/src/components/TestRunner.tsx
+    modified:   client/src/components/ThreadsPanel.tsx
+    modified:   client/src/components/TimeTrackingPanel.tsx
+    modified:   client/src/components/ToolsDropdown.tsx
+    modified:   client/src/components/TopNavbar.tsx
+    modified:   client/src/components/UnifiedAIInterface.tsx
+    modified:   client/src/components/UnifiedAgentInterface.tsx
+    modified:   client/src/components/UsageAlerts.tsx
+    modified:   client/src/components/WebPreview.tsx
+    modified:   client/src/components/admin/NewsletterComposer.tsx
+    modified:   client/src/components/admin/NewsletterSubscribers.tsx
+    modified:   client/src/components/collaboration/RealTimeCollaboration.tsx
+    modified:   client/src/components/docs/DocContent.tsx
+    modified:   client/src/components/editor/AdvancedEditorIntegration.tsx
+    modified:   client/src/components/editor/CollaborationPresence.tsx
+    modified:   client/src/components/editor/FileUpload.tsx
+    modified:   client/src/components/editor/MobileEditorTabs.tsx
+    modified:   client/src/components/editor/ReplitCodeEditor.tsx
+    modified:   client/src/components/editor/ReplitConsole.tsx
+    modified:   client/src/components/editor/ReplitEditorLayout.tsx
+    modified:   client/src/components/editor/ReplitFileExplorer.tsx
+    modified:   client/src/components/editor/ReplitFileSidebar.tsx
+    modified:   client/src/components/editor/ReplitMonacoEditor.tsx
+    modified:   client/src/components/editor/ResponsiveTerminal.tsx
+    modified:   client/src/components/editor/ResponsiveWebPreview.tsx
+    modified:   client/src/components/files/ReplitFileExplorer.tsx
+    modified:   client/src/components/layout/AdminSidebar.tsx
+    modified:   client/src/components/layout/AppLayout.tsx
+    modified:   client/src/components/layout/EditorLayout.tsx
+    modified:   client/src/components/layout/MobileMenu.tsx
+    modified:   client/src/components/layout/PublicFooter.tsx
+    modified:   client/src/components/layout/PublicLayout.tsx
+    modified:   client/src/components/layout/PublicNavbar.tsx
+    modified:   client/src/components/layout/ReplitFooter.tsx
+    modified:   client/src/components/layout/ReplitHeader.tsx
+    modified:   client/src/components/layout/ReplitLayout.tsx
+    modified:   client/src/components/layout/ReplitSidebar.tsx
+    modified:   client/src/components/layout/Sidebar.tsx
+    modified:   client/src/components/mcp/GitHubMCPPanel.tsx
+    modified:   client/src/components/mcp/MemoryMCPPanel.tsx
+    modified:   client/src/components/mcp/PostgreSQLMCPPanel.tsx
+    modified:   client/src/components/monitoring/PerformanceDashboard.tsx
+    modified:   client/src/components/replit/ReplitBreadcrumb.tsx
+    modified:   client/src/components/replit/ReplitContextMenu.tsx
+    modified:   client/src/components/replit/ReplitEditorInterface.tsx
+    modified:   client/src/components/replit/ReplitMinimap.tsx
+    modified:   client/src/components/replit/ReplitSearchBox.tsx
+    modified:   client/src/components/replit/ReplitStatusBar.tsx
+    modified:   client/src/components/replit/ReplitTabBar.tsx
+    modified:   client/src/components/replit/ReplitToolbar.tsx
+    modified:   client/src/components/runtime/RuntimeEnvironments.tsx
+    modified:   client/src/components/terminal/AdvancedTerminal.tsx
+    modified:   client/src/components/terminal/ReplitTerminal.tsx
+    modified:   client/src/components/ui/accordion.tsx
+    modified:   client/src/components/ui/alert-dialog.tsx
+    modified:   client/src/components/ui/aspect-ratio.tsx
+    modified:   client/src/components/ui/avatar.tsx
+    modified:   client/src/components/ui/breadcrumb.tsx
+    modified:   client/src/components/ui/button.tsx
+    modified:   client/src/components/ui/calendar.tsx
+    modified:   client/src/components/ui/card.tsx
+    modified:   client/src/components/ui/carousel.tsx
+    modified:   client/src/components/ui/chart.tsx
+    modified:   client/src/components/ui/checkbox.tsx
+    modified:   client/src/components/ui/collapsible.tsx
+    modified:   client/src/components/ui/command.tsx
+    modified:   client/src/components/ui/confetti.tsx
+    modified:   client/src/components/ui/context-menu.tsx
+    modified:   client/src/components/ui/cursor.tsx
+    modified:   client/src/components/ui/dialog.tsx
+    modified:   client/src/components/ui/drawer.tsx
+    modified:   client/src/components/ui/dropdown-menu.tsx
+    modified:   client/src/components/ui/form.tsx
+    modified:   client/src/components/ui/hover-card.tsx
+    modified:   client/src/components/ui/input-otp.tsx
+    modified:   client/src/components/ui/input.tsx
+    modified:   client/src/components/ui/label.tsx
+    modified:   client/src/components/ui/markdown.tsx
+    modified:   client/src/components/ui/menubar.tsx
+    modified:   client/src/components/ui/navigation-menu.tsx
+    modified:   client/src/components/ui/pagination.tsx
+    modified:   client/src/components/ui/popover.tsx
+    modified:   client/src/components/ui/progress.tsx
+    modified:   client/src/components/ui/radio-group.tsx
+    modified:   client/src/components/ui/resizable.tsx
+    modified:   client/src/components/ui/scroll-area.tsx
+    modified:   client/src/components/ui/select.tsx
+    modified:   client/src/components/ui/separator.tsx
+    modified:   client/src/components/ui/sheet.tsx
+    modified:   client/src/components/ui/sidebar.tsx
+    modified:   client/src/components/ui/skeleton.tsx
+    modified:   client/src/components/ui/slider.tsx
+    modified:   client/src/components/ui/spinner.tsx
+    modified:   client/src/components/ui/switch.tsx
+    modified:   client/src/components/ui/table.tsx
+    modified:   client/src/components/ui/tabs.tsx
+    modified:   client/src/components/ui/textarea.tsx
+    modified:   client/src/components/ui/toast.tsx
+    modified:   client/src/components/ui/toaster.tsx
+    modified:   client/src/components/ui/toggle-group.tsx
+    modified:   client/src/components/ui/toggle.tsx
+    modified:   client/src/components/ui/tooltip.tsx
+    modified:   client/src/constants/brand.ts
+    modified:   client/src/hooks/use-auth.tsx
+    modified:   client/src/hooks/use-debounce.ts
+    modified:   client/src/hooks/use-media-query.ts
+    modified:   client/src/hooks/use-mobile.tsx
+    modified:   client/src/hooks/use-search-params.ts
+    modified:   client/src/hooks/use-toast.ts
+    modified:   client/src/hooks/useAI.tsx
+    modified:   client/src/hooks/useCollaboration.ts
+    modified:   client/src/hooks/useEnvironment.tsx
+    modified:   client/src/hooks/usePolyglotStatus.ts
+    modified:   client/src/hooks/useRuntime.ts
+    modified:   client/src/hooks/useYjsCollaboration.ts
+    modified:   client/src/index.css
+    modified:   client/src/lib/ai-code-completion.ts
+    modified:   client/src/lib/collaboration.ts
+    modified:   client/src/lib/languages.ts
+    modified:   client/src/lib/monaco-config.ts
+    modified:   client/src/lib/monaco-setup.ts
+    modified:   client/src/lib/monitoring.ts
+    modified:   client/src/lib/protected-route.tsx
+    modified:   client/src/lib/queryClient.ts
+    modified:   client/src/lib/responsive.ts
+    modified:   client/src/lib/types.ts
+    modified:   client/src/lib/utils.ts
+    modified:   client/src/lib/utils/file-icons.ts
+    modified:   client/src/main.tsx
+    modified:   client/src/pages/AI.tsx
+    modified:   client/src/pages/AIAgent.tsx
+    modified:   client/src/pages/APISDKPage.tsx
+    modified:   client/src/pages/About.tsx
+    modified:   client/src/pages/Account.tsx
+    modified:   client/src/pages/AdminBilling.tsx
+    modified:   client/src/pages/AdminDashboard.tsx
+    modified:   client/src/pages/AdminUsage.tsx
+    modified:   client/src/pages/Analytics.tsx
+    modified:   client/src/pages/AuditLogs.tsx
+    modified:   client/src/pages/Badges.tsx
+    modified:   client/src/pages/Blog.tsx
+    modified:   client/src/pages/BlogDetail.tsx
+    modified:   client/src/pages/BoltImport.tsx
+    modified:   client/src/pages/Bounties.tsx
+    modified:   client/src/pages/Careers.tsx
+    modified:   client/src/pages/CodeGeneration.tsx
+    modified:   client/src/pages/CommercialAgreement.tsx
+    modified:   client/src/pages/Community.tsx
+    modified:   client/src/pages/CommunityPost.tsx
+    modified:   client/src/pages/ContactSales.tsx
+    modified:   client/src/pages/CustomRoles.tsx
+    modified:   client/src/pages/Cycles.tsx
+    modified:   client/src/pages/DPA.tsx
+    modified:   client/src/pages/Dashboard.tsx
+    modified:   client/src/pages/DatabaseManagement.tsx
+    modified:   client/src/pages/Dependencies.tsx
+    modified:   client/src/pages/Deployments.tsx
+    modified:   client/src/pages/Desktop.tsx
+    modified:   client/src/pages/Editor.tsx
+    modified:   client/src/pages/EditorPage.tsx
+    modified:   client/src/pages/Education.tsx
+    modified:   client/src/pages/Explore.tsx
+    modified:   client/src/pages/FeaturePlaceholder.tsx
+    modified:   client/src/pages/Features.tsx
+    modified:   client/src/pages/FigmaImport.tsx
+    modified:   client/src/pages/Forum.tsx
+    modified:   client/src/pages/Git.tsx
+    modified:   client/src/pages/GitHubImport.tsx
+    modified:   client/src/pages/HealthDashboard.tsx
+    modified:   client/src/pages/Home.tsx
+    modified:   client/src/pages/Landing.tsx
+    modified:   client/src/pages/Languages.tsx
+    modified:   client/src/pages/Learn.tsx
+    modified:   client/src/pages/Login.tsx
+    modified:   client/src/pages/LovableImport.tsx
+    modified:   client/src/pages/MCPInterface.tsx
+    modified:   client/src/pages/Marketplace.tsx
+    modified:   client/src/pages/MobileAppsPage.tsx
+    modified:   client/src/pages/NewsletterConfirm.tsx
+    modified:   client/src/pages/NewsletterConfirmed.tsx
+    modified:   client/src/pages/NewsletterUnsubscribe.tsx
+    modified:   client/src/pages/Notifications.tsx
+    modified:   client/src/pages/ObjectStorage.tsx
+    modified:   client/src/pages/Plans.tsx
+    modified:   client/src/pages/PolyglotBackendPage.tsx
+    modified:   client/src/pages/PowerUps.tsx
+    modified:   client/src/pages/Press.tsx
+    modified:   client/src/pages/PreviewWithDevTools.tsx
+    modified:   client/src/pages/Pricing.tsx
+    modified:   client/src/pages/Privacy.tsx
+    modified:   client/src/pages/Profile.tsx
+    modified:   client/src/pages/ProjectPage.tsx
+    modified:   client/src/pages/ProjectsPage.tsx
+    modified:   client/src/pages/PublicTeamPage.tsx
+    modified:   client/src/pages/Register.tsx
+    modified:   client/src/pages/ReplitAIAgentPage.tsx
+    modified:   client/src/pages/ReportAbuse.tsx
+    modified:   client/src/pages/RuntimeDiagnosticsPage.tsx
+    modified:   client/src/pages/RuntimePublicPage.tsx
+    modified:   client/src/pages/RuntimesPage.tsx
+    modified:   client/src/pages/SSH.tsx
+    modified:   client/src/pages/SSOConfiguration.tsx
+    modified:   client/src/pages/Scalability.tsx
+    modified:   client/src/pages/SearchPage.tsx
+    modified:   client/src/pages/SecretManagement.tsx
+    modified:   client/src/pages/Secrets.tsx
+    modified:   client/src/pages/Security.tsx
+    modified:   client/src/pages/SecurityScanner.tsx
+    modified:   client/src/pages/Settings.tsx
+    modified:   client/src/pages/SharedSnippet.tsx
+    modified:   client/src/pages/Shell.tsx
+    modified:   client/src/pages/SolarTechAIChatApp.tsx
+    modified:   client/src/pages/SolarTechCRMApp.tsx
+    modified:   client/src/pages/SolarTechStoreApp.tsx
+    modified:   client/src/pages/Status.tsx
+    modified:   client/src/pages/StudentDPA.tsx
+    modified:   client/src/pages/Subprocessors.tsx
+    modified:   client/src/pages/Subscribe.tsx
+    modified:   client/src/pages/Support.tsx
+    modified:   client/src/pages/TeamPage.tsx
+    modified:   client/src/pages/TeamSettings.tsx
+    modified:   client/src/pages/Teams.tsx
+    modified:   client/src/pages/TemplatesPage.tsx
+    modified:   client/src/pages/Terms.tsx
+    modified:   client/src/pages/Themes.tsx
+    modified:   client/src/pages/Usage.tsx
+    modified:   client/src/pages/UsageAlerts.tsx
+    modified:   client/src/pages/UserProfile.tsx
+    modified:   client/src/pages/UserSettings.tsx
+    modified:   client/src/pages/Workflows.tsx
+    modified:   client/src/pages/admin/AIModels.tsx
+    modified:   client/src/pages/admin/AdminDashboard.tsx
+    modified:   client/src/pages/admin/AdminLayout.tsx
+    modified:   client/src/pages/admin/FormRequests.tsx
+    modified:   client/src/pages/admin/NewsletterSettings.tsx
+    modified:   client/src/pages/admin/PerformanceMonitor.tsx
+    modified:   client/src/pages/admin/PitchDeck.tsx
+    modified:   client/src/pages/auth-page.tsx
+    modified:   client/src/pages/compare/ComparePage.tsx
+    modified:   client/src/pages/marketing/Bounties.tsx
+    modified:   client/src/pages/mobile.tsx
+    modified:   client/src/pages/not-found.tsx
+    modified:   client/src/pages/solutions/AppBuilder.tsx
+    modified:   client/src/pages/solutions/ChatbotBuilder.tsx
+    modified:   client/src/pages/solutions/DashboardBuilder.tsx
+    modified:   client/src/pages/solutions/GameBuilder.tsx
+    modified:   client/src/pages/solutions/InternalAIBuilder.tsx
+    modified:   client/src/pages/solutions/WebsiteBuilder.tsx
+    modified:   client/src/styles/replit-theme.css
+    modified:   client/src/types/react-syntax-highlighter.d.ts
+    modified:   client/src/utils/collaboration-provider.ts
+    modified:   docs/README.md
+    modified:   eslint.config.mjs
+    modified:   package-lock.json
+    modified:   package.json
+    modified:   replit.md
+    modified:   scripts/deploy-production.sh
+    modified:   server/admin/routes.ts
+    modified:   server/ai.ts
+    modified:   server/ai/advanced-ai-service.ts
+    modified:   server/ai/ai-provider-factory.ts
+    modified:   server/ai/ai-provider.ts
+    modified:   server/ai/ai-providers.ts
+    modified:   server/ai/ai-service.ts
+    modified:   server/ai/autonomous-builder.ts
+    modified:   server/ai/code-analyzer.ts
+    modified:   server/ai/code-completion-service.ts
+    modified:   server/ai/context-awareness-service.ts
+    modified:   server/ai/enhanced-autonomous-agent.ts
+    modified:   server/ai/mcp-client.ts
+    modified:   server/ai/openai-agents-service.ts
+    modified:   server/ai/openai-enhanced-provider.ts
+    modified:   server/ai/opensource-models-provider.ts
+    modified:   server/ai/real-code-generator.ts
+    modified:   server/ai/voice-command-service.ts
+    modified:   server/analytics/simple-analytics.ts
+    modified:   server/api/api-manager.ts
+    modified:   server/api/challenges-service.ts
+    modified:   server/api/code-review-service.ts
+    modified:   server/api/isolation.ts
+    modified:   server/api/mcp.ts
+    modified:   server/api/mentorship-service.ts
+    modified:   server/api/mobile-app-service.ts
+    modified:   server/api/mobile.ts
+    modified:   server/api/opensource-models.ts
+    modified:   server/api/sdk-service.ts
+    modified:   server/auth.ts
+    modified:   server/backup/simple-backup-manager.ts
+    modified:   server/billing/simple-payment-processor.ts
+    modified:   server/billing/subscription-manager.ts
+    modified:   server/collaboration/advanced-collaboration-service.ts
+    modified:   server/collaboration/collaboration-server.ts
+    modified:   server/collaboration/real-collaboration.ts
+    modified:   server/community/community-service.ts
+    modified:   server/config/deployment.ts
+    modified:   server/config/environment.ts
+    modified:   server/config/feature-flags.ts
+    modified:   server/containers/container-orchestrator.ts
+    modified:   server/data/data-provisioning-service.ts
+    modified:   server/database/database-hosting.ts
+    modified:   server/database/replitdb.ts
+    modified:   server/db-init.ts
+    modified:   server/db-seed.ts
+    modified:   server/db.ts
+    modified:   server/deployment.ts
+    modified:   server/deployment/ab-testing-service.ts
+    modified:   server/deployment/autoscale-deployment.ts
+    modified:   server/deployment/blue-green-deployment.ts
+    modified:   server/deployment/build-pipeline.ts
+    modified:   server/deployment/buildpack-deployment.ts
+    modified:   server/deployment/container-builder.ts
+    modified:   server/deployment/container-orchestrator.ts
+    modified:   server/deployment/deployment-pipeline.ts
+    modified:   server/deployment/k8s-deployment-service.ts
+    modified:   server/deployment/multi-region-failover-service.ts
+    modified:   server/deployment/real-deployment-service-v2.ts
+    modified:   server/deployment/real-deployment-service.ts
+    modified:   server/deployment/real-kubernetes-deployment.ts
+    modified:   server/deployment/simple-deployer.ts
+    modified:   server/dev-auth-bypass.ts
+    modified:   server/distributed/cluster-manager.ts
+    modified:   server/distributed/task-scheduler.ts
+    modified:   server/edge/cdn-service.ts
+    modified:   server/edge/edge-functions.ts
+    modified:   server/edge/edge-manager.ts
+    modified:   server/education/auto-grading-service.ts
+    modified:   server/education/lms-integration.ts
+    modified:   server/education/plagiarism-detector.ts
+    modified:   server/education/progress-tracking.ts
+    modified:   server/execution/container-executor.ts
+    modified:   server/execution/docker-executor.ts
+    modified:   server/execution/executor.ts
+    modified:   server/execution/sandbox.ts
+    modified:   server/execution/simple-executor.ts
+    modified:   server/export/export-manager.ts
+    modified:   server/extensions/extension-manager.ts
+    modified:   server/git.ts
+    modified:   server/git/git-backend.ts
+    modified:   server/git/simple-git-manager.ts
+    modified:   server/gpu/gpu-instance-manager.ts
+    modified:   server/import-export/exporter.ts
+    modified:   server/import/bolt-import-service.ts
+    modified:   server/import/figma-import-service.ts
+    modified:   server/import/lovable-import-service.ts
+    modified:   server/index.ts
+    modified:   server/integrations/datadog-newrelic-service.ts
+    modified:   server/integrations/jira-linear-service.ts
+    modified:   server/integrations/slack-discord-service.ts
+    modified:   server/integrations/webhook-service.ts
+    modified:   server/isolation/process-isolation.ts
+    modified:   server/kubernetes/deployment-manager.ts
+    modified:   server/kubernetes/orchestrator.ts
+    modified:   server/logs.ts
+    modified:   server/mcp/api/github.ts
+    modified:   server/mcp/api/memory.ts
+    modified:   server/mcp/api/postgres.ts
+    modified:   server/mcp/auth.ts
+    modified:   server/mcp/client.ts
+    modified:   server/mcp/cors.ts
+    modified:   server/mcp/http-transport.ts
+    modified:   server/mcp/routes.ts
+    modified:   server/mcp/server.ts
+    modified:   server/mcp/servers/figma-mcp.ts
+    modified:   server/mcp/servers/github-mcp.ts
+    modified:   server/mcp/servers/memory-mcp.ts
+    modified:   server/mcp/servers/postgres-mcp.ts
+    modified:   server/mcp/servers/slack-mcp.ts
+    modified:   server/mcp/simple-http-transport.ts
+    modified:   server/mcp/standalone-server.ts
+    modified:   server/middleware/auth.ts
+    modified:   server/middleware/compression.ts
+    modified:   server/middleware/rate-limiter.ts
+    modified:   server/middleware/security.ts
+    modified:   server/mobile/mobile-api-service.ts
+    modified:   server/mobile/mobile-compiler.ts
+    modified:   server/monitoring/log-aggregator.ts
+    modified:   server/monitoring/performance-monitor.ts
+    modified:   server/monitoring/performance.ts
+    modified:   server/monitoring/routes.ts
+    modified:   server/newsletter/dispatch-helpers.ts
+    modified:   server/orchestration/container-orchestrator.ts
+    modified:   server/orchestration/container-runtime.ts
+    modified:   server/package-installer.ts
+    modified:   server/package-management/nix-environment-builder.ts
+    modified:   server/package-management/nix-package-manager.ts
+    modified:   server/package-management/simple-package-installer.ts
+    modified:   server/payments/stripe-service.ts
+    modified:   server/polyglot-routes.ts
+    modified:   server/polyglot-services.ts
+    modified:   server/preview/preview-service.ts
+    modified:   server/preview/preview-websocket.ts
+    modified:   server/realtime/collaboration-server.ts
+    modified:   server/realtime/http-proxy.ts
+    modified:   server/realtime/realtime-service.ts
+    modified:   server/realtime/websocket-service.ts
+    modified:   server/routes.ts
+    modified:   server/routes/admin.ts
+    modified:   server/routes/auth-complete.ts
+    modified:   server/routes/containers.ts
+    modified:   server/routes/deployment.ts
+    modified:   server/routes/file-upload.ts
+    modified:   server/routes/notifications.ts
+    modified:   server/routes/preview.ts
+    modified:   server/routes/scalability.ts
+    modified:   server/routes/shell.ts
+    modified:   server/runtime.ts
+    modified:   server/runtimes/api.ts
+    modified:   server/runtimes/container-manager.ts
+    modified:   server/runtimes/languages.ts
+    modified:   server/runtimes/nix-manager.ts
+    modified:   server/runtimes/runtime-health.ts
+    modified:   server/runtimes/runtime-manager.ts
+    modified:   server/sandbox/network-security.ts
+    modified:   server/sandbox/sandbox-executor.ts
+    modified:   server/sandbox/sandbox-manager.ts
+    modified:   server/sandbox/sandbox-monitor.ts
+    modified:   server/sandbox/seccomp-filter.ts
+    modified:   server/sandbox/security-policy.ts
+    modified:   server/search/search-engine.ts
+    modified:   server/security/roles-permissions-service.ts
+    modified:   server/security/security-scanner.ts
+    modified:   server/seed-blog.ts
+    modified:   server/seed-templates.ts
+    modified:   server/services/admin-service.ts
+    modified:   server/services/advanced-analytics-service.ts
+    modified:   server/services/advanced-capabilities-service.ts
+    modified:   server/services/advanced-deployment-service.ts
+    modified:   server/services/advanced-monitoring.ts
+    modified:   server/services/agent-progress-service.ts
+    modified:   server/services/agent-usage-tracking-service.ts
+    modified:   server/services/agent-v2-service.ts
+    modified:   server/services/agent-websocket-service.ts
+    modified:   server/services/ai-billing-service.ts
+    modified:   server/services/billing-service.ts
+    modified:   server/services/bolt-import-service.ts
+    modified:   server/services/cdn-optimization.ts
+    modified:   server/services/checkpoint-service.ts
+    modified:   server/services/comments-service.ts
+    modified:   server/services/conversation-management-service.ts
+    modified:   server/services/database-hosting-service.ts
+    modified:   server/services/database-management-service.ts
+    modified:   server/services/database-pool.ts
+    modified:   server/services/database-query-optimizer.ts
+    modified:   server/services/deployment-manager.ts
+    modified:   server/services/education-service.ts
+    modified:   server/services/effort-pricing-service.ts
+    modified:   server/services/encryption-service.ts
+    modified:   server/services/enhanced-auth.ts
+    modified:   server/services/export-service.ts
+    modified:   server/services/feedback-service.ts
+    modified:   server/services/figma-import-service.ts
+    modified:   server/services/gamification-service.ts
+    modified:   server/services/github-oauth.ts
+    modified:   server/services/gpu-service.ts
+    modified:   server/services/history-service.ts
+    modified:   server/services/integration.ts
+    modified:   server/services/load-balancer.ts
+    modified:   server/services/marketplace-service.ts
+    modified:   server/services/mobile-app-service.ts
+    modified:   server/services/mobile-container-service.ts
+    modified:   server/services/monitoring-service.ts
+    modified:   server/services/performance-monitor.ts
+    modified:   server/services/polyglot-ai-proxy.ts
+    modified:   server/services/polyglot-container-proxy.ts
+    modified:   server/services/polyglot-coordinator.ts
+    modified:   server/services/polyglot-integration.ts
+    modified:   server/services/powerups-service.ts
+    modified:   server/services/preview-devtools-service.ts
+    modified:   server/services/prompt-refinement-service.ts
+    modified:   server/services/real-2fa-service.ts
+    modified:   server/services/real-audit-logs.ts
+    modified:   server/services/real-custom-roles.ts
+    modified:   server/services/real-database-hosting.ts
+    modified:   server/services/real-database-management.ts
+    modified:   server/services/real-email-service.ts
+    modified:   server/services/real-mobile-compiler.ts
+    modified:   server/services/real-object-storage.ts
+    modified:   server/services/real-package-manager.ts
+    modified:   server/services/real-secret-management.ts
+    modified:   server/services/real-time-monitoring.ts
+    modified:   server/services/real-usage-tracking.ts
+    modified:   server/services/real-web-search.ts
+    modified:   server/services/redis-cache.ts
+    modified:   server/services/resource-monitor.ts
+    modified:   server/services/scalability-orchestrator.ts
+    modified:   server/services/screenshot-service.ts
+    modified:   server/services/spotlight-service.ts
+    modified:   server/services/status-page-service.ts
+    modified:   server/services/stripe-billing-service.ts
+    modified:   server/services/uptime-monitor.ts
+    modified:   server/services/usage-tracking-service.ts
+    modified:   server/services/web-search-service.ts
+    modified:   server/simple-executor.ts
+    modified:   server/ssh/ssh-manager.ts
+    modified:   server/sso/enterprise-sso-service.ts
+    modified:   server/start-production.js
+    modified:   server/status/status-page-service.ts
+    modified:   server/storage.ts
+    modified:   server/teams/teams-service.ts
+    modified:   server/terminal.ts
+    modified:   server/terminal/real-terminal.ts
+    modified:   server/tools/web-import-service.ts
+    modified:   server/utils/api-utils.ts
+    modified:   server/utils/auth-utils.ts
+    modified:   server/utils/build-optimizer.ts
+    modified:   server/utils/email-utils.ts
+    modified:   server/utils/email-validator.ts
+    modified:   server/utils/gandi-email.ts
+    modified:   server/utils/logger.ts
+    modified:   server/utils/slug.ts
+    modified:   server/version-control/git-manager.ts
+    modified:   server/vite.ts
+    modified:   server/webrtc/voice-video-service.ts
+    modified:   server/websocket/mobile-websocket.ts
+    modified:   server/workflows/simple-workflow-runner.ts
+    modified:   shared/admin-schema.ts
+    modified:   shared/schema.ts
+    modified:   shared/schema/checkpoints.ts
+    modified:   shared/schema/comments.ts
+    modified:   shared/schema/imports.ts
+    modified:   shared/schema/project-tracking.ts
+    modified:   shared/teams-schema.ts
+    modified:   theme.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+    .env.staging
+    .replitdb/project-43804.json
+    .replitdb/project-5.json
+    .replitdb/project-689.json
+    PRODUCTION_FIXES_SUMMARY.md
+    PRODUCTION_SECRETS_SETUP.md
+    USER_LIFECYCLE_IMPLEMENTATION.md
+    "attached_assets/Capture d\342\200\231e\314\201cran 2025-10-28 a\314\200 12.56.55_1761649029829.png"
+    attached_assets/Pasted--ts-nocheck-import-React-useState-useEffect-from-react-import-useQuery-useMutation--1761662446034_1761662446035.txt
+    attached_assets/WorkSpace Replit 1 with 3 panels resizable._1761681905643.png
+    attached_assets/WorkSpace Replit 1 with 3 panels resizable._1761746325758.png
+    "attached_assets/WorkSpace Replit 2 with Column 3 \"Files\" closed with panels resizable with left top menu opened_1761681905648.png"
+    "attached_assets/WorkSpace Replit 2 with Column 3 \"Files\" closed with panels resizable with left top menu opened_1761746325775.png"
+    "attached_assets/WorkSpace Replit 2 with Column 3 \"Files\" closed with panels resizable._1761681905649.png"
+    "attached_assets/WorkSpace Replit 2 with Column 3 \"Files\" closed with panels resizable._1761746325776.png"
+    "attached_assets/WorkSpace Replit 4 with Column 3 \"Files\" closed with panels resizable with right top icon Teams opened_1761681905650.png"
+    "attached_assets/WorkSpace Replit 4 with Column 3 \"Files\" closed with panels resizable with right top icon Teams opened_1761746325776.png"
+    build-and-start.sh
+    build.sh
+    client/public/manifest.json
+    client/public/offline.html
+    client/public/sw.js
+    client/src/components/ActivityFeed.tsx
+    client/src/components/ChatGPTAdmin.tsx
+    client/src/components/CodeReviewSettings.tsx
+    client/src/components/DashboardCharts.tsx
+    client/src/components/LazyChart.tsx
+    client/src/components/LazyMonacoEditor.tsx
+    client/src/components/OptimizedDashboard.tsx
+    client/src/components/OptimizedErrorBoundary.tsx
+    client/src/components/OptimizedImage.tsx
+    client/src/components/PerformanceWrapper.tsx
+    client/src/components/deployment/
+    client/src/components/editor/AIAgentPanel.tsx
+    client/src/components/editor/AICodeCompletion.tsx
+    client/src/components/editor/AICodeReview.tsx
+    client/src/components/editor/CodeReviewPanel.tsx
+    client/src/components/editor/CollaborativeProvider.tsx
+    client/src/components/editor/CollaboratorPresence.tsx
+    client/src/components/editor/ReplitAgentPanel.tsx
+    client/src/components/editor/ReplitDatabasePanel.tsx
+    client/src/components/editor/ReplitDebuggerPanel.tsx
+    client/src/components/editor/ReplitGitPanel.tsx
+    client/src/components/editor/ReplitHistoryPanel.tsx
+    client/src/components/editor/ReplitMultiplayers.tsx
+    client/src/components/editor/ReplitPackagesPanel.tsx
+    client/src/components/editor/ReplitSearchPanel.tsx
+    client/src/components/editor/ReplitSecretsPanel.tsx
+    client/src/components/editor/ReplitSettingsPanel.tsx
+    client/src/components/editor/ReplitSidebarMenu.tsx
+    client/src/components/editor/ReplitTerminalPanel.tsx
+    client/src/components/editor/ReplitThemesPanel.tsx
+    client/src/components/editor/ReplitToolDock.tsx
+    client/src/components/marketplace/
+    client/src/components/mobile/
+    client/src/components/monitoring/AlertManager.tsx
+    client/src/components/monitoring/CustomMetricChart.tsx
+    client/src/components/monitoring/ErrorRateChart.tsx
+    client/src/components/monitoring/ResourceUsageChart.tsx
+    client/src/components/monitoring/ResponseTimeChart.tsx
+    client/src/components/monitoring/ThroughputChart.tsx
+    client/src/components/splits/
+    client/src/components/ui/animated-chart.tsx
+    client/src/components/ui/dark-mode-transition.tsx
+    client/src/components/ui/enhanced-feedback.tsx
+    client/src/components/ui/lazy-image.tsx
+    client/src/components/ui/mobile-gestures.tsx
+    client/src/components/ui/skeleton-loader.tsx
+    client/src/components/ui/stagger-container.tsx
+    client/src/components/ui/typewriter-effect.tsx
+    client/src/hooks/use-ai-preferences.ts
+    client/src/hooks/use-debounced-save.ts
+    client/src/hooks/use-performance.ts
+    client/src/hooks/use-splits-dnd.ts
+    client/src/lib/memoization-helpers.tsx
+    client/src/lib/performance.ts
+    client/src/pages/ChatGPTAdmin.tsx
+    client/src/pages/PerformanceDashboard.tsx
+    client/src/pages/TemplateMarketplace.tsx
+    client/src/stores/
+    client/src/styles/micro-interactions.css
+    client/src/styles/performance-animations.css
+    client/src/styles/performance.css
+    client/src/styles/splits.css
+    client/src/types/splits.ts
+    client/src/utils/image-optimization.tsx
+    client/src/utils/mobile-detection.ts
+    client/src/utils/mobile-performance.ts
+    client/src/utils/network-optimization.ts
+    client/src/utils/performance-budget.ts
+    client/src/utils/performance.ts
+    client/src/utils/react-performance.tsx
+    client/src/utils/security.ts
+    client/src/utils/service-worker.ts
+    cookies.txt
+    deploy-production.sh
+    deploy.js
+    docs/archive/
+    docs/operations/deployment.md
+    ecosystem.config.js
+    final_session_id.txt
+    jest.config.js
+    nginx.conf
+    playwright.config.ts
+    run-production-checks.sh
+    scripts/build-production.sh
+    scripts/check-all.js
+    scripts/deploy.sh
+    scripts/remove-ts-nocheck.cjs
+    scripts/set-admin.ts
+    scripts/start-dev.ts
+    server/api/ai-streaming.ts
+    server/auth/
+    server/db/index.ts
+    server/debug-startup.ts
+    server/index-broken.ts
+    server/index-fixed.ts
+    server/middleware/admin-auth.ts
+    server/middleware/cors-config.ts
+    server/middleware/csrf.ts
+    server/middleware/helmet-config.ts
+    server/middleware/passport-setup.ts
+    server/minimal-server-full-test.ts
+    server/minimal-server-with-routes.ts
+    server/minimal-server.ts
+    server/production.ts
+    server/routes.old.ts
+    server/routes/agent.router.ts
+    server/routes/auth.router.ts
+    server/routes/chatgpt.router.ts
+    server/routes/collaboration.ts
+    server/routes/files.router.ts
+    server/routes/health.router.ts
+    server/routes/health.ts
+    server/routes/index.ts
+    server/routes/marketplace.ts
+    server/routes/projects.router.ts
+    server/routes/test-agent.ts
+    server/routes/users.router.ts
+    server/services/agent-command-execution.service.ts
+    server/services/agent-file-operations.service.ts
+    server/services/agent-orchestrator.service.ts
+    server/services/agent-tool-framework.service.ts
+    server/services/agent-workflow-engine.service.ts
+    server/services/ai-code-completion.ts
+    server/services/ai-code-review.ts
+    server/services/alert-system.ts
+    server/services/audit-logger.ts
+    server/services/auto-scaling.ts
+    server/services/chatgpt-service.ts
+    server/services/code-analysis-engine.ts
+    server/services/collaborative-editing.ts
+    server/services/deployment-metrics.ts
+    server/services/deployment-rollback.ts
+    server/services/error-tracking.ts
+    server/services/file-service.ts
+    server/services/git-review-integration.ts
+    server/services/metrics-collector.ts
+    server/services/performance-monitoring.ts
+    server/services/security-monitoring.ts
+    server/services/template-marketplace.ts
+    server/services/template-submission.ts
+    server/start.ts
+    server/test-dbinit-import.ts
+    server/test-middleware-imports.ts
+    server/test-remaining-imports.ts
+    server/test-service-imports.ts
+    server/test-tsx.ts
+    server/test-vite-import.ts
+    server/utils/billing-email-templates.ts
+    server/utils/secrets.ts
+    server/utils/security.ts
+    server/utils/sendgrid-email-service.ts
+    server/utils/validators.ts
+    server/websocket/collaborative-editing-ws.ts
+    server/websocket/monitoring-ws.ts
+    session_id.txt
+    shared/schema/security.ts
+    start.js
+    test-agent-functionality.js
+    test-agent-simple.sh
+    test-auth-fixes.js
+    test-email-auth.js
+    test/auth-production.test.ts
+    test/cors-production-simulation.js
+    test/cors-security.test.ts
+    test/e2e/
+    test/package-installer-security.test.ts
+    test/performance/
+    test/run-all-tests.sh
+    test/setup/jest-setup.ts
+    test/unit/
+    tsconfig.server.json
+    verify-deployment.js
+    vite.config.optimized.ts
+
+no changes added to commit (use "git add" and/or "git commit -a")
+~/workspace$ 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as k8s from '@kubernetes/client-node';
 import { createLogger } from '../utils/logger';
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
@@ -22,8 +21,9 @@ export async function seedDatabase() {
       return;
     }
 
-    // Create test user
-    const hashedPassword = await hashPassword("testpass123");
+    // Create test user with secure random password
+    const randomPassword = randomBytes(32).toString("hex");
+    const hashedPassword = await hashPassword(randomPassword);
     const testUser = await storage.createUser({
       username: "testuser",
       password: hashedPassword,
@@ -36,10 +36,11 @@ export async function seedDatabase() {
       emailVerified: true
     });
 
-    console.log("✅ Test user created successfully:");
+    console.log("✅ Test user created successfully with secure random password:");
     console.log("   Username: testuser");
-    console.log("   Password: testpass123");
+    console.log("   Password: [Randomly generated - not logged for security]");
     console.log("   Email: test@example.com");
+    console.log("   Note: Use the login form to authenticate in development");
     
     // Also update admin user if exists to have email verified for development
     const adminUser = await storage.getUserByUsername("admin");

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Nix configuration manager for PLOT runtime
  * This module handles Nix configuration for reproducible environments

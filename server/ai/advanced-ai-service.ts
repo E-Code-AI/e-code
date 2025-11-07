@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { CodeAnalyzer } from './code-analyzer';
 import { AIProvider, aiProviderManager } from './ai-provider';
 import { File, Project } from '@shared/schema';

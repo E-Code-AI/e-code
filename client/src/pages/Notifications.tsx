@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
+import { ReplitLayout } from '@/components/layout/ReplitLayout';
 
 interface Notification {
   id: number;
@@ -340,8 +340,9 @@ export default function Notifications() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl py-8 px-6">
-      <div className="mb-8">
+    <ReplitLayout showSidebar={false}>
+      <div className="container mx-auto max-w-4xl py-8 px-6">
+        <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold flex items-center gap-3">
@@ -503,6 +504,7 @@ export default function Notifications() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </ReplitLayout>
   );
 }

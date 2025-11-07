@@ -8,9 +8,24 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './src/navigation/types';
 import { AuthResponse, User } from './src/types';
 import { login as loginRequest } from './src/services/api';
+import { validateConfig } from './src/services/config';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import AgentScreen from './src/screens/AgentScreen';
 import ProjectScreen from './src/screens/ProjectScreen';
+
+/**
+ * Validate configuration at app startup
+ * This will throw an error immediately if misconfigured in production
+ * Ensures the app fails fast rather than silently using localhost
+ */
+try {
+  validateConfig();
+} catch (error) {
+  console.error('[App Startup Error]', error);
+  // In production, this will prevent the app from starting with invalid config
+  throw error;
+}
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -100,6 +115,17 @@ export default function App() {
                   token={token}
                   user={user}
                   onLogout={handleLogout}
+                />
+              )}
+            </Stack.Screen>
+            <Stack.Screen
+              name="Agent"
+              options={({ route }) => ({ title: route.params.projectName })}
+            >
+              {(props) => (
+                <AgentScreen
+                  {...props}
+                  token={token}
                 />
               )}
             </Stack.Screen>

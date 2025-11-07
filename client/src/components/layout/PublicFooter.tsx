@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Link } from 'wouter';
 import {
   Twitter,

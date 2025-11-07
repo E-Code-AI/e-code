@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useRef, useEffect } from 'react';
 import { ReplitTabBar } from './ReplitTabBar';
 import { ReplitToolbar } from './ReplitToolbar';

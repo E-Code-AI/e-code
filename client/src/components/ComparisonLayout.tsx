@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { PublicNavbar } from "./layout/PublicNavbar";
 import { PublicFooter } from "./layout/PublicFooter";
 import { Button } from "@/components/ui/button";

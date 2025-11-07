@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { db, client } from "./db";
 import * as schema from "@shared/schema";
 import { scrypt, randomBytes } from "crypto";

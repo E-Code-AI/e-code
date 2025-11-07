@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Production Monitoring Service
  * Provides enterprise-grade monitoring, error tracking, and performance metrics

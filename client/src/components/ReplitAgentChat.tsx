@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -268,7 +267,7 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
                     console.error('Failed to create file:', action.data.path, await fileResponse.text());
                   } else {
                     console.log('Successfully created file:', action.data.path);
-                    queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+                    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
                     
                     // If this is a main file, show preview
                     if (action.data.path && (
@@ -297,7 +296,7 @@ export function ReplitAgentChat({ projectId }: ReplitAgentChatProps) {
                     console.error('Failed to create folder:', action.data.path, await folderResponse.text());
                   } else {
                     console.log('Successfully created folder:', action.data.path);
-                    queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+                    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
                   }
                 } catch (error) {
                   console.error('Error creating folder:', action.data.path, error);
@@ -639,7 +638,7 @@ Would you like me to explain any part of the implementation or make adjustments?
         setBuildProgress(100);
         
         // Refresh file list
-        queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       }
 
       const assistantMessage: Message = {

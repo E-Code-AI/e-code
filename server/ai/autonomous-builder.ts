@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Autonomous Builder - Helps non-coders build complete applications
 // This module provides AI-powered app building capabilities with comprehensive templates
 

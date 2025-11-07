@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Download, Presentation, TrendingUp, Users, Zap, Shield, Globe, Rocket, DollarSign, Award, Target, Building, Code, Cpu, Database, Cloud, Lock, BarChart3, PieChart, GitBranch } from 'lucide-react';
 import { Button } from '@/components/ui/button';

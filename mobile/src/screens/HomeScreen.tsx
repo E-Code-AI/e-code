@@ -94,7 +94,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, token, user, onLogo
     ({ item }: { item: Project }) => (
       <TouchableOpacity
         style={styles.projectCard}
-        onPress={() => navigation.navigate('Project', { projectId: item.id, projectName: item.name })}
+        onPress={() => navigation.navigate('Agent', { projectId: item.id, projectName: item.name })}
       >
         <View style={styles.cardHeader}>
           <Text style={styles.projectName}>{item.name}</Text>

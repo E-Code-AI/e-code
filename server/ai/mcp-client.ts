@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * MCP Client for AI Agent Integration
  * This client connects the AI agent to the MCP server for all operations

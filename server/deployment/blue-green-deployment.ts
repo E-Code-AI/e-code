@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Blue-Green Deployment Service
  * Provides zero-downtime deployments with instant rollback capabilities

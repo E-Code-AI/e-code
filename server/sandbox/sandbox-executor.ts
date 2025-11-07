@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { SandboxManager, SandboxConfig, SandboxResult } from './sandbox-manager';
 import { SecurityPolicy, getPolicyByName } from './security-policy';
 import { sandboxMonitor } from './sandbox-monitor';

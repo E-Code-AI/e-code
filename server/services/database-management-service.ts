@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { db, pool } from '../db';
 import { sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';

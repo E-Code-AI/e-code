@@ -1,4 +1,3 @@
-// @ts-nocheck
 // E-Code Brand Constants
 // Inspired by Replit's design but with unique E-Code identity
 

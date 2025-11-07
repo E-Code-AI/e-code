@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createLogger } from '../utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';

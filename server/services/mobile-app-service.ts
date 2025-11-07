@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { DatabaseStorage } from '../storage';
+import { fcmService } from '../integrations/fcm-service';
 
 export interface MobileSession {
   id: number;
@@ -195,8 +195,28 @@ export class MobileAppService {
   }
 
   private async sendToDevice(pushToken: string, data: any): Promise<void> {
-    // In production, integrate with Firebase Cloud Messaging or Apple Push Notification service
-    console.log(`Sending push to ${pushToken}:`, data);
+    if (!fcmService.isInitialized()) {
+      console.warn('[MobileAppService] FCM service not initialized. Set FIREBASE_SERVICE_ACCOUNT_JSON environment variable.');
+      console.log(`[MobileAppService] Push notification queued (not sent) for ${pushToken}:`, {
+        title: data.title,
+        body: data.body?.substring(0, 50)
+      });
+      return;
+    }
+
+    const success = await fcmService.sendToDevice(pushToken, {
+      title: data.title,
+      body: data.body,
+      data: data.data ? Object.fromEntries(
+        Object.entries(data.data).map(([k, v]) => [k, String(v)])
+      ) : undefined
+    });
+
+    if (success) {
+      console.log(`[MobileAppService] Push notification sent successfully to ${pushToken}`);
+    } else {
+      console.error(`[MobileAppService] Failed to send push notification to ${pushToken}`);
+    }
   }
 
   async startOfflineSync(data: {

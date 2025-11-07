@@ -1,28 +1,37 @@
-// @ts-nocheck
 import { Router } from 'express';
 import { AdminService } from '../services/admin-service';
 import { storage } from '../storage';
 import { z } from 'zod';
+import { ensureAdmin } from '../middleware/admin-auth';
+import { ensureAuthenticated } from '../middleware/auth';
+import { createLogger } from '../utils/logger';
 
 const router = Router();
 const adminService = new AdminService(storage);
+const logger = createLogger('admin-routes');
 
-// Admin authorization middleware
-const requireAdmin = async (req: any, res: any, next: any) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
+// After ensureAuthenticated + ensureAdmin middleware, req.user is guaranteed to exist
+// TypeScript doesn't understand middleware guarantees, so we use type assertion helper
+const getAuthUser = (req: any): Express.User => req.user!;
 
-  const user = await storage.getUser(req.user.id);
-  if (!user || user.role !== 'admin') {
-    return res.status(403).json({ message: 'Forbidden: Admin access required' });
-  }
+// SECURITY: Apply authentication + admin authorization to ALL routes
+// No dev bypasses - authorization must ALWAYS be enforced
+router.use(ensureAuthenticated);
+router.use(ensureAdmin);
 
+// Security audit logging middleware
+router.use((req, res, next) => {
+  const adminUser = getAuthUser(req);
+  logger.info('Admin action', {
+    action: `${req.method} ${req.path}`,
+    adminId: adminUser.id,
+    adminUsername: adminUser.username,
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+    timestamp: new Date().toISOString()
+  });
   next();
-};
-
-// Apply admin middleware to all routes
-router.use(requireAdmin);
+});
 
 // Dashboard stats
 router.get('/dashboard/stats', async (req, res) => {
@@ -30,6 +39,7 @@ router.get('/dashboard/stats', async (req, res) => {
     const stats = await adminService.getDashboardStats();
     res.json(stats);
   } catch (error) {
+    logger.error('Error fetching dashboard stats', { error: error.message });
     console.error('Error fetching dashboard stats:', error);
     res.status(500).json({ message: 'Failed to fetch dashboard stats' });
   }
@@ -54,35 +64,85 @@ router.get('/users', async (req, res) => {
   }
 });
 
-router.patch('/users/:id/role', async (req, res) => {
+router.patch('/users/:id/toggle-admin', async (req, res) => {
   try {
-    const { role } = req.body;
-    await adminService.updateUserRole(parseInt(req.params.id), role, req.user.id);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error updating user role:', error);
-    res.status(500).json({ message: 'Failed to update user role' });
+    const userId = req.params.id;
+    const adminUser = getAuthUser(req);
+    
+    // SECURITY: Prevent self-modification (admin removing their own admin rights)
+    if (adminUser.id === userId) {
+      logger.warn('Admin self-modification attempt blocked', {
+        adminId: adminUser.id,
+        ip: req.ip
+      });
+      return res.status(400).json({ 
+        message: 'Cannot modify your own admin status',
+        code: 'SELF_MODIFICATION_FORBIDDEN'
+      });
+    }
+    
+    const user = await storage.getUser(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Toggle isAdmin status
+    const updated = await storage.updateUser(userId, {
+      isAdmin: !user.isAdmin
+    });
+    
+    if (!updated) {
+      return res.status(500).json({ message: 'Failed to update user' });
+    }
+    
+    logger.info('Admin status toggled', {
+      targetUserId: userId,
+      newStatus: updated.isAdmin,
+      adminId: adminUser.id
+    });
+    
+    res.json({ success: true, user: updated });
+  } catch (error: any) {
+    logger.error('Error toggling admin status', { error: error?.message });
+    console.error('Error toggling admin status:', error);
+    res.status(500).json({ message: 'Failed to toggle admin status' });
   }
 });
 
-router.post('/users/:id/suspend', async (req, res) => {
+router.post('/users/:id/lock', async (req, res) => {
   try {
+    const userId = req.params.id;
     const { reason } = req.body;
-    await adminService.suspendUser(parseInt(req.params.id), req.user.id, reason);
-    res.json({ success: true });
+    
+    // Lock account for 24 hours
+    const lockUntil = new Date();
+    lockUntil.setHours(lockUntil.getHours() + 24);
+    
+    const updated = await storage.updateUser(userId, {
+      lockedUntil: lockUntil
+    });
+    
+    res.json({ success: true, user: updated, reason });
   } catch (error) {
-    console.error('Error suspending user:', error);
-    res.status(500).json({ message: 'Failed to suspend user' });
+    console.error('Error locking user:', error);
+    res.status(500).json({ message: 'Failed to lock user' });
   }
 });
 
-router.post('/users/:id/unsuspend', async (req, res) => {
+router.post('/users/:id/unlock', async (req, res) => {
   try {
-    await adminService.unsuspendUser(parseInt(req.params.id), req.user.id);
-    res.json({ success: true });
+    const userId = req.params.id;
+    
+    const updated = await storage.updateUser(userId, {
+      lockedUntil: null,
+      failedLoginAttempts: 0
+    });
+    
+    res.json({ success: true, user: updated });
   } catch (error) {
-    console.error('Error unsuspending user:', error);
-    res.status(500).json({ message: 'Failed to unsuspend user' });
+    console.error('Error unlocking user:', error);
+    res.status(500).json({ message: 'Failed to unlock user' });
   }
 });
 
@@ -127,7 +187,7 @@ router.post('/api-keys', async (req, res) => {
     });
     
     const data = schema.parse(req.body);
-    const apiKey = await adminService.createApiKey(data, req.user.id);
+    const apiKey = await adminService.createApiKey(data, getAuthUser(req).id);
     res.json({ ...apiKey, key: 'REDACTED' });
   } catch (error) {
     console.error('Error creating API key:', error);
@@ -141,7 +201,7 @@ router.patch('/api-keys/:id', async (req, res) => {
     // Don't allow updating the key itself through this endpoint
     delete updates.key;
     
-    const apiKey = await adminService.updateApiKey(parseInt(req.params.id), updates, req.user.id);
+    const apiKey = await adminService.updateApiKey(parseInt(req.params.id), updates, getAuthUser(req).id);
     if (!apiKey) {
       return res.status(404).json({ message: 'API key not found' });
     }
@@ -154,11 +214,164 @@ router.patch('/api-keys/:id', async (req, res) => {
 
 router.delete('/api-keys/:id', async (req, res) => {
   try {
-    await adminService.deleteApiKey(parseInt(req.params.id), req.user.id);
+    await adminService.deleteApiKey(parseInt(req.params.id), getAuthUser(req).id);
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting API key:', error);
     res.status(500).json({ message: 'Failed to delete API key' });
+  }
+});
+
+// Update user details (admin can update any user)
+router.patch('/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const updates = req.body;
+    
+    // Don't allow updating sensitive fields through this endpoint
+    delete updates.id;
+    delete updates.passwordHash;
+    
+    const user = await storage.updateUser(userId, updates);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Failed to update user' });
+  }
+});
+
+// Delete user (admin only)
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const adminUser = getAuthUser(req);
+    
+    // SECURITY: Prevent self-deletion
+    if (adminUser.id === userId) {
+      logger.warn('Admin self-deletion attempt blocked', {
+        adminId: adminUser.id,
+        ip: req.ip
+      });
+      return res.status(400).json({ 
+        message: 'Cannot delete your own account',
+        code: 'SELF_DELETION_FORBIDDEN'
+      });
+    }
+    
+    await storage.deleteUser(userId);
+    logger.info('User deleted', {
+      deletedUserId: userId,
+      adminId: adminUser.id
+    });
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error('Error deleting user', { error: error?.message });
+    console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Failed to delete user' });
+  }
+});
+
+// Project management
+router.get('/projects', async (req, res) => {
+  try {
+    const search = req.query.search as string;
+    const visibility = req.query.visibility as string;
+    const language = req.query.language as string;
+    const status = req.query.status as string;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+    const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+
+    const result = await adminService.getAllProjects({
+      search,
+      visibility,
+      language,
+      status,
+      limit,
+      offset
+    });
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching projects:', error);
+    res.status(500).json({ message: 'Failed to fetch projects' });
+  }
+});
+
+router.patch('/projects/:id', async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const updates = req.body;
+    
+    // Don't allow updating sensitive fields
+    delete updates.id;
+    delete updates.ownerId;
+    delete updates.createdAt;
+    
+    const project = await storage.updateProject(projectId, updates);
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+    
+    res.json({ success: true, project });
+  } catch (error) {
+    console.error('Error updating project:', error);
+    res.status(500).json({ message: 'Failed to update project' });
+  }
+});
+
+router.delete('/projects/:id', async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    
+    await storage.deleteProject(projectId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting project:', error);
+    res.status(500).json({ message: 'Failed to delete project' });
+  }
+});
+
+router.patch('/projects/:id/pin', async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    
+    const project = await storage.updateProject(projectId, {
+      isPinned: true
+    });
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+    
+    res.json({ success: true, project });
+  } catch (error) {
+    console.error('Error pinning project:', error);
+    res.status(500).json({ message: 'Failed to pin project' });
+  }
+});
+
+router.patch('/projects/:id/unpin', async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    
+    const project = await storage.updateProject(projectId, {
+      isPinned: false
+    });
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+    
+    res.json({ success: true, project });
+  } catch (error) {
+    console.error('Error unpinning project:', error);
+    res.status(500).json({ message: 'Failed to unpin project' });
   }
 });
 
@@ -201,7 +414,7 @@ router.post('/cms/pages', async (req, res) => {
     });
     
     const data = schema.parse(req.body);
-    const page = await adminService.createCmsPage(data, req.user.id);
+    const page = await adminService.createCmsPage(data, getAuthUser(req).id);
     res.json(page);
   } catch (error) {
     console.error('Error creating CMS page:', error);
@@ -211,7 +424,7 @@ router.post('/cms/pages', async (req, res) => {
 
 router.patch('/cms/pages/:id', async (req, res) => {
   try {
-    const page = await adminService.updateCmsPage(parseInt(req.params.id), req.body, req.user.id);
+    const page = await adminService.updateCmsPage(parseInt(req.params.id), req.body, getAuthUser(req).id);
     if (!page) {
       return res.status(404).json({ message: 'Page not found' });
     }
@@ -224,7 +437,7 @@ router.patch('/cms/pages/:id', async (req, res) => {
 
 router.post('/cms/pages/:id/publish', async (req, res) => {
   try {
-    const page = await adminService.publishCmsPage(parseInt(req.params.id), req.user.id);
+    const page = await adminService.publishCmsPage(parseInt(req.params.id), getAuthUser(req).id);
     if (!page) {
       return res.status(404).json({ message: 'Page not found' });
     }
@@ -237,7 +450,7 @@ router.post('/cms/pages/:id/publish', async (req, res) => {
 
 router.delete('/cms/pages/:id', async (req, res) => {
   try {
-    await adminService.deleteCmsPage(parseInt(req.params.id), req.user.id);
+    await adminService.deleteCmsPage(parseInt(req.params.id), getAuthUser(req).id);
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting CMS page:', error);
@@ -268,7 +481,7 @@ router.post('/docs/categories', async (req, res) => {
     });
     
     const data = schema.parse(req.body);
-    const category = await adminService.createDocCategory(data, req.user.id);
+    const category = await adminService.createDocCategory(data, getAuthUser(req).id);
     res.json(category);
   } catch (error) {
     console.error('Error creating doc category:', error);
@@ -304,7 +517,7 @@ router.post('/docs', async (req, res) => {
     });
     
     const data = schema.parse(req.body);
-    const doc = await adminService.createDocumentation(data, req.user.id);
+    const doc = await adminService.createDocumentation(data, getAuthUser(req).id);
     res.json(doc);
   } catch (error) {
     console.error('Error creating documentation:', error);
@@ -314,7 +527,7 @@ router.post('/docs', async (req, res) => {
 
 router.patch('/docs/:id', async (req, res) => {
   try {
-    const doc = await adminService.updateDocumentation(parseInt(req.params.id), req.body, req.user.id);
+    const doc = await adminService.updateDocumentation(parseInt(req.params.id), req.body, getAuthUser(req).id);
     if (!doc) {
       return res.status(404).json({ message: 'Documentation not found' });
     }
@@ -327,7 +540,7 @@ router.patch('/docs/:id', async (req, res) => {
 
 router.post('/docs/:id/publish', async (req, res) => {
   try {
-    const doc = await adminService.publishDocumentation(parseInt(req.params.id), req.user.id);
+    const doc = await adminService.publishDocumentation(parseInt(req.params.id), getAuthUser(req).id);
     if (!doc) {
       return res.status(404).json({ message: 'Documentation not found' });
     }
@@ -392,9 +605,9 @@ router.post('/support/tickets/:id/replies', async (req, res) => {
     const data = schema.parse(req.body);
     const reply = await adminService.createTicketReply({
       ticketId: parseInt(req.params.id),
-      userId: req.user.id,
+      userId: getAuthUser(req).id,
       ...data
-    }, req.user.id);
+    }, getAuthUser(req).id);
     res.json(reply);
   } catch (error) {
     console.error('Error creating ticket reply:', error);
@@ -405,7 +618,7 @@ router.post('/support/tickets/:id/replies', async (req, res) => {
 router.post('/support/tickets/:id/assign', async (req, res) => {
   try {
     const { assignedTo } = req.body;
-    await adminService.assignTicket(parseInt(req.params.id), assignedTo, req.user.id);
+    await adminService.assignTicket(parseInt(req.params.id), assignedTo, getAuthUser(req).id);
     res.json({ success: true });
   } catch (error) {
     console.error('Error assigning ticket:', error);
@@ -415,7 +628,7 @@ router.post('/support/tickets/:id/assign', async (req, res) => {
 
 router.post('/support/tickets/:id/resolve', async (req, res) => {
   try {
-    await adminService.resolveTicket(parseInt(req.params.id), req.user.id);
+    await adminService.resolveTicket(parseInt(req.params.id), getAuthUser(req).id);
     res.json({ success: true });
   } catch (error) {
     console.error('Error resolving ticket:', error);
@@ -425,7 +638,7 @@ router.post('/support/tickets/:id/resolve', async (req, res) => {
 
 router.post('/support/tickets/:id/close', async (req, res) => {
   try {
-    await adminService.closeTicket(parseInt(req.params.id), req.user.id);
+    await adminService.closeTicket(parseInt(req.params.id), getAuthUser(req).id);
     res.json({ success: true });
   } catch (error) {
     console.error('Error closing ticket:', error);
@@ -460,7 +673,7 @@ router.post('/subscriptions', async (req, res) => {
     });
     
     const data = schema.parse(req.body);
-    const subscription = await adminService.createUserSubscription(data, req.user.id);
+    const subscription = await adminService.createUserSubscription(data, getAuthUser(req).id);
     res.json(subscription);
   } catch (error) {
     console.error('Error creating subscription:', error);
@@ -473,7 +686,7 @@ router.patch('/subscriptions/:id', async (req, res) => {
     const subscription = await adminService.updateUserSubscription(
       parseInt(req.params.id), 
       req.body, 
-      req.user.id
+      getAuthUser(req).id
     );
     if (!subscription) {
       return res.status(404).json({ message: 'Subscription not found' });
@@ -487,7 +700,7 @@ router.patch('/subscriptions/:id', async (req, res) => {
 
 router.post('/subscriptions/:id/cancel', async (req, res) => {
   try {
-    await adminService.cancelSubscription(parseInt(req.params.id), req.user.id);
+    await adminService.cancelSubscription(parseInt(req.params.id), getAuthUser(req).id);
     res.json({ success: true });
   } catch (error) {
     console.error('Error cancelling subscription:', error);

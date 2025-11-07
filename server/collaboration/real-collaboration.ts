@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Real-time Collaboration Service
  * Provides WebRTC/CRDT-based collaborative editing

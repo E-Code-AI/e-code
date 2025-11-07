@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * CORS Configuration for MCP Server
  * Allows Claude.ai and other authorized clients to connect

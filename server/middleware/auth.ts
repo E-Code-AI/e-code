@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Request, Response, NextFunction } from 'express';
 
 import { devAuthBypass } from '../dev-auth-bypass';

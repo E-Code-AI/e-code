@@ -1,8 +1,10 @@
-// @ts-nocheck
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
+import { IncomingMessage } from 'http';
 import { previewService } from './preview-service';
 import { EventEmitter } from 'events';
+import { parse as parseCookie } from 'cookie';
+import { storage } from '../storage';
 
 // Event emitter for preview updates
 export const previewEvents = new EventEmitter();
@@ -10,6 +12,7 @@ export const previewEvents = new EventEmitter();
 interface PreviewClient {
   ws: WebSocket;
   projectId?: number;
+  userId: number;
 }
 
 class PreviewWebSocketService {
@@ -18,16 +21,84 @@ class PreviewWebSocketService {
 
   initialize(server: Server) {
     this.wss = new WebSocketServer({ 
-      server, 
-      path: '/ws/preview'
+      noServer: true
     });
 
-    this.wss.on('connection', (ws: WebSocket, req) => {
-      const clientId = Math.random().toString(36).substring(7);
-      const client: PreviewClient = { ws };
-      this.clients.set(clientId, client);
+    // Handle WebSocket upgrade with authentication
+    server.on('upgrade', async (request: IncomingMessage, socket, head) => {
+      const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
+      
+      if (pathname !== '/ws/preview' && !pathname.startsWith('/ws/preview-devtools/')) {
+        return; // Not our WebSocket path
+      }
 
-      console.log(`Preview WebSocket client connected: ${clientId}`);
+      try {
+        // Extract and verify session
+        const cookies = parseCookie(request.headers.cookie || '');
+        const sessionId = cookies['connect.sid'];
+        
+        if (!sessionId) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+
+        // Get userId from session
+        const userId = await this.getUserIdFromSession(sessionId);
+        
+        if (!userId) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+
+        // Handle upgrade
+        this.wss!.handleUpgrade(request, socket, head, (ws) => {
+          const clientId = Math.random().toString(36).substring(7);
+          const client: PreviewClient = { ws, userId };
+          this.clients.set(clientId, client);
+
+          console.log(`Preview WebSocket client connected: ${clientId} (user: ${userId})`);
+          this.setupClient(clientId, ws);
+        });
+      } catch (error) {
+        console.error('WebSocket upgrade error:', error);
+        socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+        socket.destroy();
+      }
+    });
+  }
+
+  private async getUserIdFromSession(sessionId: string): Promise<number | null> {
+    try {
+      // Parse the session ID (remove signature if present)
+      const cleanSessionId = sessionId.split('.')[0].replace('s:', '');
+      
+      // Query session store
+      const sessionStore = (global as any).sessionStore;
+      if (!sessionStore) {
+        console.error('Session store not available');
+        return null;
+      }
+
+      return new Promise((resolve) => {
+        sessionStore.get(cleanSessionId, (err: any, session: any) => {
+          if (err || !session || !session.passport?.user) {
+            resolve(null);
+          } else {
+            resolve(session.passport.user);
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error getting userId from session:', error);
+      return null;
+    }
+  }
+
+  private setupClient(clientId: string, ws: WebSocket) {
+    const client = this.clients.get(clientId);
+    if (!client) return;
 
       ws.on('message', (message: string) => {
         try {
@@ -53,7 +124,6 @@ class PreviewWebSocketService {
         type: 'connected',
         message: 'Preview WebSocket connected'
       }));
-    });
 
     // Listen for preview events
     previewEvents.on('preview:start', (data) => this.broadcastToProject(data.projectId, {
@@ -98,28 +168,40 @@ class PreviewWebSocketService {
     }));
   }
 
-  private handleMessage(clientId: string, data: any) {
+  private async handleMessage(clientId: string, data: any) {
     const client = this.clients.get(clientId);
     if (!client) return;
 
     switch (data.type) {
       case 'subscribe':
         // Subscribe to a specific project's preview updates
-        client.projectId = data.projectId;
+        const projectId = data.projectId;
+        
+        // Security: Verify user has access to this project
+        const hasAccess = await this.verifyProjectAccess(client.userId, projectId);
+        if (!hasAccess) {
+          client.ws.send(JSON.stringify({
+            type: 'error',
+            message: 'Access denied to this project'
+          }));
+          return;
+        }
+
+        client.projectId = projectId;
         client.ws.send(JSON.stringify({
           type: 'subscribed',
-          projectId: data.projectId
+          projectId: projectId
         }));
         
         // Send current preview status
-        const preview = previewService.getPreview(data.projectId);
+        const preview = previewService.getPreview(projectId);
         if (preview) {
           client.ws.send(JSON.stringify({
             type: 'preview:status',
-            projectId: data.projectId,
+            projectId: projectId,
             status: preview.status,
             port: preview.port,
-            url: preview.status === 'running' ? `/preview/${data.projectId}` : null,
+            url: preview.status === 'running' ? `/preview/${projectId}` : null,
             logs: preview.logs || []
           }));
         }
@@ -159,6 +241,27 @@ class PreviewWebSocketService {
 
   sendToProject(projectId: number, message: any) {
     this.broadcastToProject(projectId, message);
+  }
+
+  private async verifyProjectAccess(userId: number, projectId: number): Promise<boolean> {
+    try {
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return false;
+      }
+
+      // Check if user is owner
+      if (project.ownerId === userId) {
+        return true;
+      }
+
+      // Check if user is collaborator
+      const collaborators = await storage.getProjectCollaborators(projectId);
+      return collaborators.some((c: any) => c.userId === userId);
+    } catch (error) {
+      console.error('Error verifying project access:', error);
+      return false;
+    }
   }
 }
 

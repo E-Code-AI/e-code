@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Responsive Design System for E-Code
  * Matching Replit's responsive breakpoints and design patterns

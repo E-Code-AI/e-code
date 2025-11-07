@@ -1,6 +1,20 @@
-export const API_BASE_URL = process.env.ECODE_API_URL || 'https://api.e-code.com';
-export const WEB_BASE_URL = process.env.ECODE_WEB_URL || 'https://e-code.com';
-export const WS_BASE_URL = process.env.ECODE_WS_URL || 'wss://api.e-code.com';
+/**
+ * API Configuration
+ * 
+ * Uses shared configuration from @shared/config.ts to ensure
+ * consistent endpoints across CLI and SDK.
+ * 
+ * Environment variables:
+ * - ECODE_ENV: Set environment (development|staging|production)
+ * - ECODE_API_URL: Override API endpoint
+ * - ECODE_WEB_URL: Override web endpoint  
+ * - ECODE_WS_URL: Override WebSocket endpoint
+ */
+import { getAPIURL, getWebURL, getWebSocketURL } from '@shared/config';
+
+export const API_BASE_URL = getAPIURL();
+export const WEB_BASE_URL = getWebURL();
+export const WS_BASE_URL = getWebSocketURL();
 
 export const LANGUAGES = [
   'javascript',

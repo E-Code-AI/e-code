@@ -15,13 +15,16 @@
     "allowImportingTsExtensions": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "downlevelIteration": true,
     "baseUrl": ".",
     "types": ["node", "vite/client"],
     "useUnknownInCatchVariables": false,
     "paths": {
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"],
-      "@shared/schema": ["./shared/schema.ts"]
+      "@shared/schema": ["./shared/schema.ts"],
+      "@shared/schema.ts": ["./shared/schema.ts"]
     }
   }
 }

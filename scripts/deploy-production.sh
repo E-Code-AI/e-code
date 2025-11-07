@@ -53,6 +53,35 @@ case $DEPLOY_METHOD in
     pm2)
         echo "🔧 Deploying with PM2..."
         
+        # Check if ecosystem.config.js exists
+        if [ ! -f "$APP_DIR/ecosystem.config.js" ]; then
+            echo "⚠️  ecosystem.config.js not found. Creating default configuration..."
+            cat > "$APP_DIR/ecosystem.config.js" <<'EOF'
+module.exports = {
+  apps: [{
+    name: 'e-code-platform',
+    script: 'dist/server/index.js',
+    instances: 'max',
+    exec_mode: 'cluster',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 5000
+    },
+    error_file: '/var/log/e-code/error.log',
+    out_file: '/var/log/e-code/out.log',
+    log_date_format: 'YYYY-MM-DD HH:mm:ss',
+    merge_logs: true,
+    autorestart: true,
+    max_memory_restart: '2G',
+    node_args: '--max-old-space-size=2048'
+  }]
+};
+EOF
+            echo "✅ Created default ecosystem.config.js"
+        else
+            echo "✅ Using existing ecosystem.config.js"
+        fi
+        
         # Stop existing instances
         pm2 stop ecosystem.config.js || true
         
@@ -118,8 +147,60 @@ esac
 # Setup Nginx if not already configured
 if [ ! -f "/etc/nginx/sites-enabled/e-code.conf" ]; then
     echo "⚙️  Setting up Nginx..."
-    sudo cp nginx.conf /etc/nginx/sites-available/e-code.conf
-    sudo ln -s /etc/nginx/sites-available/e-code.conf /etc/nginx/sites-enabled/
+    
+    # Check if nginx.conf exists
+    if [ ! -f "$APP_DIR/nginx.conf" ]; then
+        echo "⚠️  nginx.conf not found. Creating default configuration..."
+        cat > "$APP_DIR/nginx.conf" <<'EOF'
+server {
+    listen 80;
+    server_name e-code.com www.e-code.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name e-code.com www.e-code.com;
+
+    ssl_certificate /etc/letsencrypt/live/e-code.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/e-code.com/privkey.pem;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /ws {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    client_max_body_size 100M;
+}
+EOF
+        echo "✅ Created default nginx.conf"
+    else
+        echo "✅ Using existing nginx.conf"
+    fi
+    
+    sudo cp "$APP_DIR/nginx.conf" /etc/nginx/sites-available/e-code.conf
+    sudo ln -sf /etc/nginx/sites-available/e-code.conf /etc/nginx/sites-enabled/
     sudo nginx -t && sudo systemctl reload nginx
 fi
 

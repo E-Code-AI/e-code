@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Monaco Editor Configuration and Worker Setup
 // Use CDN for production-ready worker loading
 const MONACO_VERSION = '0.52.2';

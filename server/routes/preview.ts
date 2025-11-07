@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router } from 'express';
 import { storage } from '../storage';
 import { ensureAuthenticated } from '../middleware/auth';
@@ -39,8 +38,106 @@ import path from 'path';
 
 const router = Router();
 
+// Get preview URL - matches frontend query endpoint
+// Note: Router is mounted at /api/preview, so this becomes /api/preview/url
+router.get('/url', ensureAuthenticated, async (req, res) => {
+  try {
+    // Extract projectId from query params (TanStack Query may pass it here)
+    const projectIdParam = req.query.projectId || req.query.id;
+    
+    if (!projectIdParam) {
+      return res.status(400).json({ error: 'Project ID is required' });
+    }
+    
+    const projectId = parseInt(projectIdParam as string);
+    
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+    
+    // Check project access
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const project = await storage.getProject(projectId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    // Check access permissions
+    if (project.ownerId !== userId) {
+      const collaborators = await storage.getProjectCollaborators(projectId);
+      const isCollaborator = collaborators.some((c: any) => c.userId === userId);
+      
+      if (!isCollaborator) {
+        return res.status(403).json({ error: "You don't have access to this project" });
+      }
+    }
+    
+    // Check if project has runnable files
+    const files = await storage.getFilesByProject(projectId);
+    const hasHtmlFile = files.some(f => f.name.endsWith('.html') && !f.isFolder);
+    const hasPackageJson = files.some(f => f.name === 'package.json' && !f.isFolder);
+    const hasPythonFiles = files.some(f => f.name.endsWith('.py') && !f.isFolder);
+    
+    if (!hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
+      // No runnable files, return null URL
+      return res.json({ 
+        previewUrl: null,
+        status: 'no_runnable_files',
+        message: 'No runnable files found in project'
+      });
+    }
+    
+    // Check if preview service is running
+    const { previewService } = await import('../preview/preview-service');
+    const preview = previewService.getPreview(projectId);
+    
+    if (!preview || preview.status !== 'running') {
+      // For HTML-only projects, return static preview URL
+      if (hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
+        const previewUrl = `/api/preview/projects/${projectId}/preview/`;
+        return res.json({ 
+          previewUrl,
+          status: 'static',
+          message: 'Static HTML preview available'
+        });
+      }
+      
+      // For projects needing a server, indicate it's not running
+      return res.json({ 
+        previewUrl: null,
+        status: 'stopped',
+        message: 'Preview server not running'
+      });
+    }
+    
+    // Preview is running, return the URL
+    const previewUrl = previewService.getPreviewUrl(projectId, preview.primaryPort);
+    const availablePorts = previewService.getPreviewPorts(projectId);
+    const services = previewService.getPreviewServices(projectId);
+    
+    res.json({ 
+      previewUrl,
+      status: preview.status,
+      runId: preview.runId,
+      ports: availablePorts,
+      primaryPort: preview.primaryPort,
+      services,
+      frameworkType: preview.frameworkType,
+      lastHealthCheck: preview.lastHealthCheck
+    });
+  } catch (error) {
+    console.error('Error getting preview URL:', error);
+    res.status(500).json({ error: 'Failed to get preview URL' });
+  }
+});
+
 // Live preview for HTML/CSS/JS projects
-router.get('/api/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+// Note: This route handles /api/preview/projects/:id/preview/:filepath
+router.get('/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     const filepath = req.params.filepath || 'index.html';
@@ -98,13 +195,13 @@ router.get('/api/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensure
       const modifiedContent = file.content.replace(
         /<head>/i,
         `<head>
-        <base href="/api/projects/${projectId}/preview/">
+        <base href="/api/preview/projects/${projectId}/preview/">
         <script>
           // Handle relative imports for JS modules
           const originalFetch = window.fetch;
           window.fetch = function(url, ...args) {
             if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('/api')) {
-              url = '/api/projects/${projectId}/preview/' + url;
+              url = '/api/preview/projects/${projectId}/preview/' + url;
             }
             return originalFetch(url, ...args);
           };
@@ -121,7 +218,8 @@ router.get('/api/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensure
 });
 
 // Get preview URL for a project with port support
-router.get('/api/projects/:id/preview-url', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+// Note: This route handles /api/preview/projects/:id/preview-url
+router.get('/projects/:id/preview-url', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     const { port } = req.query;
@@ -146,7 +244,7 @@ router.get('/api/projects/:id/preview-url', ensureAuthenticated, ensureProjectAc
     
     if (!preview || preview.status !== 'running') {
       // Return potential preview URL for client to start preview
-      const previewUrl = `/api/projects/${projectId}/preview/`;
+      const previewUrl = `/api/preview/projects/${projectId}/preview/`;
       return res.json({ 
         previewUrl,
         status: 'stopped',
@@ -177,7 +275,8 @@ router.get('/api/projects/:id/preview-url', ensureAuthenticated, ensureProjectAc
 });
 
 // Start preview server
-router.post('/api/projects/:id/preview/start', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+// Note: This route handles /api/preview/projects/:id/preview/start
+router.post('/projects/:id/preview/start', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     const { runId } = req.body;
@@ -203,7 +302,8 @@ router.post('/api/projects/:id/preview/start', ensureAuthenticated, ensureProjec
 });
 
 // Stop preview server
-router.post('/api/projects/:id/preview/stop', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+// Note: This route handles /api/preview/projects/:id/preview/stop
+router.post('/projects/:id/preview/stop', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     
@@ -218,7 +318,8 @@ router.post('/api/projects/:id/preview/stop', ensureAuthenticated, ensureProject
 });
 
 // Switch preview port
-router.post('/api/projects/:id/preview/switch-port', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+// Note: This route handles /api/preview/projects/:id/preview/switch-port
+router.post('/projects/:id/preview/switch-port', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     const { port } = req.body;
@@ -246,7 +347,8 @@ router.post('/api/projects/:id/preview/switch-port', ensureAuthenticated, ensure
 });
 
 // Get preview status and health
-router.get('/api/projects/:id/preview/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+// Note: This route handles /api/preview/projects/:id/preview/status
+router.get('/projects/:id/preview/status', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     

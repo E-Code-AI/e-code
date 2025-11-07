@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -31,6 +30,12 @@ export function useCollaboration(projectId: number, fileId: number) {
   // Connect to collaboration server
   useEffect(() => {
     if (!projectId || !fileId) return;
+
+    // Skip WebSocket connection in development to avoid errors
+    if (import.meta.env.DEV) {
+      console.log('[Collaboration] Skipping WebSocket connection in development mode');
+      return;
+    }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws/collaboration`;

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Polyglot AI Proxy - Routes AI/ML operations to Python service
  * This replaces TypeScript AI operations with Python-based ML processing
@@ -214,14 +213,24 @@ class PolyglotAIProxy {
   }
 }
 
-// Export singleton instance
-export const aiProxy = new PolyglotAIProxy();
+// Lazy initialize to prevent blocking server startup
+let _aiProxy: PolyglotAIProxy | null = null;
+
+function getAIProxy(): PolyglotAIProxy {
+  if (!_aiProxy) {
+    _aiProxy = new PolyglotAIProxy();
+  }
+  return _aiProxy;
+}
+
+// Export getter function instead of instance
+export const aiProxy = getAIProxy;
 
 // Export functions for backward compatibility
-export const generateCode = (prompt: string, context?: any) => aiProxy.generateCode(prompt, context);
-export const analyzeCode = (request: CodeAnalysisRequest) => aiProxy.analyzeCode(request);
-export const trainModel = (request: MLTrainingRequest) => aiProxy.trainModel(request);
-export const analyzeText = (text: string, type?: string) => aiProxy.analyzeText(text, type);
-export const processData = (data: any[], ops: string[]) => aiProxy.processData(data, ops);
-export const runInference = (request: AIInferenceRequest) => aiProxy.runInference(request);
-export const optimizeCode = (code: string, lang: string) => aiProxy.optimizeCode(code, lang);
+export const generateCode = (prompt: string, context?: any) => getAIProxy().generateCode(prompt, context);
+export const analyzeCode = (request: CodeAnalysisRequest) => getAIProxy().analyzeCode(request);
+export const trainModel = (request: MLTrainingRequest) => getAIProxy().trainModel(request);
+export const analyzeText = (text: string, type?: string) => getAIProxy().analyzeText(text, type);
+export const processData = (data: any[], ops: string[]) => getAIProxy().processData(data, ops);
+export const runInference = (request: AIInferenceRequest) => getAIProxy().runInference(request);
+export const optimizeCode = (code: string, lang: string) => getAIProxy().optimizeCode(code, lang);

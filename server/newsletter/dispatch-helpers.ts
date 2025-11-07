@@ -1,4 +1,3 @@
-// @ts-nocheck
 export function chunkArray<T>(items: T[], size: number): T[][] {
   const chunkSize = Math.max(1, Math.floor(size));
   if (!items || items.length === 0) {

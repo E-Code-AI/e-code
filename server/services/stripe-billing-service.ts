@@ -1,4 +1,3 @@
-// @ts-nocheck
 import Stripe from 'stripe';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';

@@ -1,8 +1,6 @@
-// @ts-nocheck
 import { EventEmitter } from 'events';
 import axios from 'axios';
 import { db } from '../db';
-// // import { deployments } from '@shared/schema'; // TODO: Add deployments table to new schema
 import { eq, and, inArray } from 'drizzle-orm';
 
 interface Region {

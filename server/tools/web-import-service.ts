@@ -1,4 +1,3 @@
-// @ts-nocheck
 import fetch from 'node-fetch';
 import { JSDOM } from 'jsdom';
 import { createLogger } from '../utils/logger';

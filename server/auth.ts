@@ -1,4 +1,3 @@
-// @ts-nocheck
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express, Request, Response, NextFunction } from "express";
@@ -29,44 +28,14 @@ import {
 // Rate limiter imports removed - simplified in middleware
 import { devAuthBypass } from "./dev-auth-bypass";
 
-// Define a type that matches what Express.User needs to be
-type UserForAuth = {
-  id: string | number; // Can be UUID string or numeric ID
-  username: string;
-  password: string;
-  email: string;
-  displayName: string | null;
-  avatarUrl: string | null;
-  bio: string | null;
-  emailVerified: boolean;
-  emailVerificationToken: string | null;
-  emailVerificationExpiry: Date | null;
-  passwordResetToken: string | null;
-  passwordResetExpiry: Date | null;
-  failedLoginAttempts: number;
-  accountLockedUntil: Date | null;
-  twoFactorEnabled: boolean;
-  twoFactorSecret: string | null;
-  lastLoginAt: Date | null;
-  lastLoginIp: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-// Extend Express Request type to include User
-declare global {
-  namespace Express {
-    // Define Express.User as our User type
-    interface User extends UserForAuth {}
-  }
-}
+// Express.User type is now defined in types/express.d.ts
 
 // Extend session data to include custom properties
 declare module 'express-session' {
   interface SessionData {
     userAgent?: string;
     ipAddress?: string;
-    userId?: number;
+    userId?: string; // Changed from number to string to match UUID
     lastActivityAt?: string;
   }
 }
@@ -129,20 +98,19 @@ export function setupAuth(app: Express) {
 
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret || randomBytes(32).toString('hex'),
-    resave: false, // Changed to false as we're using a store that implements touch
-    saveUninitialized: false, // Only save sessions after meaningful data is set
-    saveUninitialized: false, // Do not create sessions until something is stored
+    resave: false, // Don't save session if unmodified
+    saveUninitialized: false, // Don't create session until something is stored
     store: sessionStore, // Using PostgreSQL session store
-    name: 'plot.sid', // Custom name to avoid using the default
+    name: 'plot.sid', // Use the same name as what's being set by the app
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // Only secure in production
-      httpOnly: true,
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      secure: false, // Set to false for development (change to true for production HTTPS)
+      httpOnly: true, // Prevent XSS attacks
+      sameSite: 'lax', // Allow cookies with navigation (not 'strict' which blocks)
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      path: '/',
-      domain: process.env.NODE_ENV === 'development' ? undefined : undefined // Let browser set domain automatically
+      path: '/', // Available on all paths
+      domain: undefined // Let browser set domain automatically
     },
-    rolling: true
+    rolling: true // Reset expiry on activity
   };
   
   // Debug session configuration
@@ -183,42 +151,20 @@ export function setupAuth(app: Express) {
         }
         
         // Handle null password
-        if (!user.password) {
+        if (!user.passwordHash) {
           console.log(`No password set for user: ${username}`);
           return done(null, false, { message: "No password set for this user" });
         }
         
-        const isValidPassword = await comparePasswords(password, user.password);
+        const isValidPassword = await comparePasswords(password, user.passwordHash);
         if (!isValidPassword) {
           console.log(`Invalid password for user: ${username}`);
           return done(null, false, { message: "Incorrect password" });
         }
         
         console.log(`Authentication successful for user: ${username}`);
-        // Convert database user to auth user format
-        const authUser: UserForAuth = {
-          id: user.id,
-          username: user.username || '',
-          password: user.password || '',
-          email: user.email || '',
-          displayName: user.displayName,
-          avatarUrl: user.profileImageUrl,
-          bio: user.bio,
-          emailVerified: user.emailVerified || false,
-          emailVerificationToken: null,
-          emailVerificationExpiry: null,
-          passwordResetToken: null,
-          passwordResetExpiry: null,
-          failedLoginAttempts: 0,
-          accountLockedUntil: null,
-          twoFactorEnabled: false,
-          twoFactorSecret: null,
-          lastLoginAt: null,
-          lastLoginIp: null,
-          createdAt: user.createdAt || new Date(),
-          updatedAt: user.updatedAt || new Date()
-        };
-        return done(null, authUser as any);
+        // Return the user directly - Express.User now extends our schema User type
+        return done(null, user);
       } catch (err) {
         console.error(`Authentication error for user ${username}:`, err);
         return done(err);
@@ -228,41 +174,22 @@ export function setupAuth(app: Express) {
 
   // Serialize user to the session
   passport.serializeUser((user: Express.User, done) => {
+    console.log('[Passport] Serializing user to session:', user.id, 'type:', typeof user.id);
     done(null, user.id);
   });
 
-  // Deserialize user from the session (ID can be string or number)
-  passport.deserializeUser(async (id: string | number, done) => {
+  // Deserialize user from the session
+  passport.deserializeUser(async (id: string, done) => {
     try {
+      console.log('[Passport] Deserializing user from session:', id, 'type:', typeof id);
       const user = await storage.getUser(id);
       if (!user) {
-        console.log('User not found during deserialization:', id);
+        console.log('[Passport] User not found during deserialization:', id);
         return done(null, false);
       }
-      // Convert to auth user format
-      const authUser: UserForAuth = {
-        id: user.id,
-        username: user.username || '',
-        password: user.password || '',
-        email: user.email || '',
-        displayName: user.displayName,
-        avatarUrl: user.profileImageUrl,
-        bio: user.bio,
-        emailVerified: user.emailVerified || false,
-        emailVerificationToken: null,
-        emailVerificationExpiry: null,
-        passwordResetToken: null,
-        passwordResetExpiry: null,
-        failedLoginAttempts: 0,
-        accountLockedUntil: null,
-        twoFactorEnabled: false,
-        twoFactorSecret: null,
-        lastLoginAt: null,
-        lastLoginIp: null,
-        createdAt: user.createdAt || new Date(),
-        updatedAt: user.updatedAt || new Date()
-      };
-      done(null, authUser);
+      console.log('[Passport] User found during deserialization:', user.username);
+      // Return the user directly - Express.User now extends our schema User type
+      return done(null, user);
     } catch (err) {
       console.error('Error deserializing user:', err);
       done(err, null);
@@ -364,7 +291,7 @@ export function setupAuth(app: Express) {
       const user = await storage.getUserByUsername(username);
       console.log('[Auth Debug] User object:', JSON.stringify(user, null, 2));
 
-      passport.authenticate("local", async (err: any, authenticatedUser: UserForAuth | false, info: { message: string }) => {
+      passport.authenticate("local", async (err: any, authenticatedUser: Express.User | false, info: { message: string }) => {
           if (err) return next(err);
 
           if (!authenticatedUser) {
@@ -503,8 +430,8 @@ export function setupAuth(app: Express) {
         res.clearCookie('plot.sid', {
           path: '/',
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+          secure: false, // Match session configuration
+          sameSite: 'lax'
         });
         
         console.log('[Logout] Cookie cleared, logout complete');
@@ -526,8 +453,8 @@ export function setupAuth(app: Express) {
     }
     
     try {
-      // Email verification not implemented yet
-      // TODO: Add email verification token fields to users table
+      // Email verification requires additional database fields (emailVerified, verificationToken, verificationExpiry)
+      // This feature is planned for future implementation
       return res.status(400).json({ message: "Email verification is not yet implemented" });
     } catch (error) {
       console.error("Email verification error:", error);
@@ -587,8 +514,8 @@ export function setupAuth(app: Express) {
     }
     
     try {
-      // For now, return error until password reset tokens are implemented
-      // TODO: Implement password reset token storage and validation
+      // Password reset requires additional database fields (passwordResetToken, passwordResetExpiry)
+      // This feature is planned for future implementation when the schema is extended
       return res.status(400).json({ message: "Password reset functionality is not yet implemented" });
     } catch (error) {
       console.error("Password reset error:", error);
@@ -740,25 +667,30 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res, next) => {
     // Apply dev auth bypass first
     devAuthBypass(req, res, async () => {
+      // Type-safe session access
+      type PassportSession = { passport?: { user?: string } };
+      
       console.log('User auth check:', {
         isAuthenticated: req.isAuthenticated(),
         hasSession: !!req.session,
         hasUser: !!req.user,
         sessionId: req.sessionID,
-        passportUser: (req.session as any)?.passport?.user
+        passportUser: (req.session as PassportSession)?.passport?.user
       });
       
       // In development, try to recover session if passport user exists but req.user doesn't
-      if (!req.user && process.env.NODE_ENV === 'development' && (req.session as any)?.passport?.user) {
-        const userId = (req.session as any).passport.user;
-        try {
-          const user = await storage.getUser(userId);
-          if (user) {
-            req.user = user as any as Express.User;
-            console.log('Recovered user from session:', user.username);
+      if (!req.user && process.env.NODE_ENV === 'development') {
+        const userId = (req.session as PassportSession)?.passport?.user;
+        if (userId) {
+          try {
+            const user = await storage.getUser(userId);
+            if (user) {
+              req.user = user;
+              console.log('Recovered user from session:', user.username);
+            }
+          } catch (error) {
+            console.error('Failed to recover user from session:', error);
           }
-        } catch (error) {
-          console.error('Failed to recover user from session:', error);
         }
       }
       
@@ -767,10 +699,10 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      // Return user info without password
+      // Return user info - User schema doesn't have password field (it's passwordHash)
+      // passwordHash is excluded by not including it in the response
       console.log(`User ${req.user?.username} retrieved their profile`);
-      // Using as any to get around type checking since the shapes are compatible but TypeScript doesn't know
-      const { password, ...userWithoutPassword } = req.user as any; 
+      const { passwordHash, ...userWithoutPassword } = req.user;
       res.json(userWithoutPassword);
     });
   });
@@ -786,7 +718,12 @@ export function setupAuth(app: Express) {
         bio
       });
       
-      const { password, ...userWithoutPassword } = updatedUser as any;
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Exclude passwordHash from response
+      const { passwordHash, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
     } catch (error) {
       console.error('Error updating profile:', error);

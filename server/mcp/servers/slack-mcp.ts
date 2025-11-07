@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Slack MCP Server
  * Provides Slack integration capabilities

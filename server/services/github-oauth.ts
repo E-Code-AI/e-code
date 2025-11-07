@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Request, Response, NextFunction } from 'express';
 import fetch from 'node-fetch';
 import { storage } from '../storage';
@@ -43,15 +42,29 @@ export class GitHubOAuthService {
   private redirectUri: string;
 
   constructor() {
-    // These would typically come from environment variables
-    // For development, we'll use placeholder values that need to be configured
-    this.clientId = process.env.GITHUB_CLIENT_ID || 'your_github_client_id';
-    this.clientSecret = process.env.GITHUB_CLIENT_SECRET || 'your_github_client_secret';
+    // Environment variables are required for GitHub OAuth
+    this.clientId = process.env.GITHUB_CLIENT_ID || '';
+    this.clientSecret = process.env.GITHUB_CLIENT_SECRET || '';
     this.redirectUri = process.env.GITHUB_REDIRECT_URI || 'http://localhost:5000/api/auth/github/callback';
+    
+    // Validate configuration on initialization
+    if (!this.clientId || !this.clientSecret) {
+      console.warn('[GitHubOAuthService] WARNING: GitHub OAuth not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables to enable GitHub integration.');
+    }
+  }
+  
+  // Check if GitHub OAuth is properly configured
+  isConfigured(): boolean {
+    return !!(this.clientId && this.clientSecret && 
+              this.clientId !== '' && this.clientSecret !== '');
   }
 
   // Generate OAuth authorization URL
   getAuthorizationUrl(state: string): string {
+    if (!this.isConfigured()) {
+      throw new Error('GitHub OAuth is not configured. Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables.');
+    }
+    
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
@@ -65,6 +78,10 @@ export class GitHubOAuthService {
 
   // Exchange authorization code for access token
   async exchangeCodeForToken(code: string): Promise<string> {
+    if (!this.isConfigured()) {
+      throw new Error('GitHub OAuth is not configured. Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables.');
+    }
+    
     const response = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: {

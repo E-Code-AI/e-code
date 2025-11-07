@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router, Express } from 'express';
 import githubRoutes from '../mcp/api/github';
 import postgresRoutes from '../mcp/api/postgres';

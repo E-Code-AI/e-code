@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router } from 'express';
 import { z } from 'zod';
 import { storage } from '../storage';
@@ -216,4 +215,4 @@ router.post('/api/notifications', ensureAuthenticated, async (req, res) => {
   }
 });
 
-export { router as notificationRoutes };
+export default router;

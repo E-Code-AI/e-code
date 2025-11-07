@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

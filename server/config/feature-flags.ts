@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Feature flags configuration for AI UX features
  * Controls which AI UX features are enabled/disabled

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { deployments } from '@shared/schema';

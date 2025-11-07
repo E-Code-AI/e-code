@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
 import { agentUsageTrackingService } from './agent-usage-tracking-service';

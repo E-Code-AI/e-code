@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ReactNode, useState } from "react";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 

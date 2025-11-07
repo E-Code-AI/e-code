@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Module pour contourner l'authentification en développement
  * NE PAS UTILISER EN PRODUCTION !
@@ -12,17 +11,29 @@ let bypassAuth = false;
 let productionBypassWarningLogged = false;
 const BYPASS_HEADER = 'x-dev-auth-token';
 
-const isBypassFeatureEnabled = () => {
-  const enabled = process.env.ENABLE_DEV_AUTH_BYPASS === 'true';
+// Export getter function for auth bypass status
+export const isAuthBypassEnabled = () => {
+  return isBypassFeatureEnabled() && bypassAuth;
+};
 
-  if (
-    enabled &&
-    process.env.NODE_ENV === 'production' &&
-    !productionBypassWarningLogged
-  ) {
-    productionBypassWarningLogged = true;
+const isBypassFeatureEnabled = () => {
+  // CRITICAL SECURITY: Never allow auth bypass in production
+  if (process.env.NODE_ENV === 'production') {
+    if (!productionBypassWarningLogged && process.env.ENABLE_DEV_AUTH_BYPASS === 'true') {
+      productionBypassWarningLogged = true;
+      console.error(
+        'SECURITY ERROR: DEV auth bypass is DISABLED in production mode. ENABLE_DEV_AUTH_BYPASS is ignored for security.'
+      );
+    }
+    return false; // Always return false in production
+  }
+
+  // Only allow in development if explicitly enabled
+  const enabled = process.env.ENABLE_DEV_AUTH_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
+  
+  if (enabled) {
     console.warn(
-      'Auth Bypass: ENABLE_DEV_AUTH_BYPASS est actif alors que NODE_ENV=production. À n\'utiliser que pour le débogage.'
+      'Auth Bypass: ENABLED in development mode. This should NEVER be active in production.'
     );
   }
 

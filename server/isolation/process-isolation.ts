@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Process-Based Project Isolation System
  * 

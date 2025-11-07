@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Octokit } from '@octokit/rest';
 import { createLogger } from '../../utils/logger';
 

@@ -1,19 +1,104 @@
-node_modules
-npm-debug.log
-.env
-.git
+# Node modules (will be reinstalled during build)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Development files
+.git/
 .gitignore
-Dockerfile
-README.md
-*.md
-.nyc_output
-coverage
-.vscode
-.DS_Store
+.env
+.env.local
+.env.*.local
+
+# Build artifacts that will be regenerated
+dist/
+builds/
+temp/
+.cache/
+coverage/
+.nyc_output/
+
+# Logs and temporary files
+logs/
 *.log
-dist/public/*.map
-attached_assets
-docs
+*.tmp
+*.temp
+/tmp/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test files
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+test/
+tests/
+playwright/
+.playwright/
+
+# Documentation
+*.md
+docs/
+README.md
+PRODUCTION_READINESS.md
 audit-report.md
+
+# Development configuration
+tsconfig.check.json
+tsconfig.full.json
+.eslintrc*
+.prettierrc*
+vite.config.ts.timestamp*
+
+# Mobile development (not needed for web deployment)
+mobile/
+android/
+ios/
+
+# Source maps (remove to save space)
+**/*.map
+dist/public/*.map
+
+# CI/CD and Docker
+.github/
+.gitlab-ci.yml
+.travis.yml
+Dockerfile
+.dockerignore
+
+# Replit specific
+.replit
+replit.nix
+.config/
+
+# Large image assets
+attached_assets/
+generated-icon.png
+
+# Database files (use remote database)
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated files (will be built during deployment)
+server/public/
+
+# Java and containers
 *.jar
 containers/seccomp.json
+
+# Development dependencies metadata
+.npm/
+.yarn/
+.pnpm-store/

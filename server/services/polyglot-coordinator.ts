@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Polyglot Backend Coordinator
  * Routes requests to appropriate backend services (TypeScript, Go, Python)
@@ -32,7 +31,11 @@ export class PolyglotCoordinator {
 
   constructor() {
     this.initializeServices();
-    this.startHealthChecks();
+    // Don't start health checks immediately - let the server start first
+    // Health checks will start after a delay
+    setTimeout(() => {
+      this.startHealthChecks();
+    }, 5000); // Start health checks after 5 seconds
   }
 
   private initializeServices() {
@@ -69,8 +72,10 @@ export class PolyglotCoordinator {
       await this.performHealthChecks();
     }, 30000); // Check every 30 seconds
 
-    // Initial health check
-    this.performHealthChecks();
+    // Delay initial health check to allow services to start
+    setTimeout(() => {
+      this.performHealthChecks();
+    }, 2000); // Wait 2 seconds before first health check
   }
 
   private async performHealthChecks() {

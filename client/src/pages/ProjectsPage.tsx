@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -93,29 +92,15 @@ const projectFormSchema = z.object({
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
-// Extended Project type that includes owner information and stats
+// Extended Project type that includes owner information from the backend
 interface ProjectWithOwner extends Project {
   owner?: {
-    id: number;
-    username: string;
-    email: string;
+    id: string;
+    username: string | null;
+    email: string | null;
+    displayName: string | null;
+    profileImageUrl: string | null;
   };
-  stats?: {
-    stars: number;
-    forks: number;
-    views: number;
-    commits: number;
-  };
-  lastCommit?: {
-    message: string;
-    date: string;
-    author: string;
-  };
-  technologies?: string[];
-  isDeployed?: boolean;
-  deploymentUrl?: string;
-  isPinned?: boolean;
-  isArchived?: boolean;
 }
 
 // Technology stack colors and icons
@@ -134,46 +119,26 @@ const techStackConfig = {
   AWS: { color: 'bg-orange-600', icon: '☁️' },
 };
 
-// Mock data generator for demo
-const generateMockProjects = (): ProjectWithOwner[] => {
-  const languages = ['JavaScript', 'TypeScript', 'Python', 'React', 'Node.js', 'Vue'];
-  const projects = [];
-  
-  for (let i = 1; i <= 12; i++) {
-    const techs = languages.sort(() => 0.5 - Math.random()).slice(0, 3);
-    projects.push({
-      id: i,
-      name: `Project ${i}`,
-      description: `An amazing project that demonstrates ${techs.join(', ')}`,
-      language: techs[0],
-      visibility: ['public', 'private', 'unlisted'][i % 3],
-      createdAt: new Date(Date.now() - i * 86400000 * 7),
-      updatedAt: new Date(Date.now() - i * 86400000),
-      slug: `project-${i}`,
-      technologies: techs,
-      owner: {
-        id: 1,
-        username: 'developer',
-        email: 'dev@example.com',
-      },
-      stats: {
-        stars: Math.floor(Math.random() * 1000),
-        forks: Math.floor(Math.random() * 100),
-        views: Math.floor(Math.random() * 5000),
-        commits: Math.floor(Math.random() * 500),
-      },
-      lastCommit: {
-        message: 'Updated README and fixed bugs',
-        date: new Date(Date.now() - i * 86400000).toISOString(),
-        author: 'developer',
-      },
-      isDeployed: Math.random() > 0.5,
-      isPinned: i <= 3,
-      isArchived: i > 10,
-    });
-  }
-  
-  return projects;
+// Language display names and colors
+const languageColors: Record<string, string> = {
+  javascript: 'bg-yellow-500',
+  typescript: 'bg-blue-600',
+  python: 'bg-green-600',
+  java: 'bg-red-600',
+  cpp: 'bg-pink-600',
+  c: 'bg-gray-600',
+  csharp: 'bg-purple-600',
+  go: 'bg-cyan-600',
+  rust: 'bg-orange-600',
+  php: 'bg-indigo-600',
+  ruby: 'bg-red-500',
+  swift: 'bg-orange-500',
+  kotlin: 'bg-violet-600',
+  html: 'bg-orange-400',
+  css: 'bg-blue-400',
+  sql: 'bg-blue-700',
+  bash: 'bg-gray-700',
+  other: 'bg-gray-500',
 };
 
 const ProjectsPage = () => {
@@ -181,7 +146,7 @@ const ProjectsPage = () => {
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
   const [newProjectOpen, setNewProjectOpen] = useState(false);
-  const [deleteProjectId, setDeleteProjectId] = useState<number | null>(null);
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   
   // Enhanced state management
@@ -189,12 +154,10 @@ const ProjectsPage = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'updated' | 'created' | 'name' | 'stars'>('updated');
   const [filterLanguage, setFilterLanguage] = useState<string[]>([]);
-  const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [filterVisibility, setFilterVisibility] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
-  const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [bulkActionOpen, setBulkActionOpen] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
   
   // Debounced search
@@ -219,19 +182,16 @@ const ProjectsPage = () => {
       if (!res.ok) {
         throw new Error('Failed to fetch projects');
       }
-      const data = await res.json();
-      // If no projects, return mock data for demo
-      return data.length > 0 ? data : generateMockProjects();
+      return await res.json();
     },
     enabled: !!user,
   });
 
-  // Get unique languages and technologies from projects
+  // Get unique languages from projects
   const availableLanguages = useMemo(() => {
     const langs = new Set<string>();
     projects.forEach(p => {
       if (p.language) langs.add(p.language);
-      p.technologies?.forEach(t => langs.add(t));
     });
     return Array.from(langs).sort();
   }, [projects]);
@@ -251,29 +211,13 @@ const ProjectsPage = () => {
     // Apply language filter
     if (filterLanguage.length > 0) {
       filtered = filtered.filter(p => {
-        const projectTechs = [p.language, ...(p.technologies || [])];
-        return filterLanguage.some(lang => projectTechs.includes(lang));
-      });
-    }
-
-    // Apply status filter
-    if (filterStatus.length > 0) {
-      filtered = filtered.filter(p => {
-        if (filterStatus.includes('deployed') && !p.isDeployed) return false;
-        if (filterStatus.includes('active') && p.isArchived) return false;
-        if (filterStatus.includes('archived') && !p.isArchived) return false;
-        return true;
+        return p.language && filterLanguage.includes(p.language);
       });
     }
 
     // Apply visibility filter
     if (filterVisibility.length > 0) {
       filtered = filtered.filter(p => filterVisibility.includes(p.visibility));
-    }
-
-    // Apply archived filter
-    if (!showArchived) {
-      filtered = filtered.filter(p => !p.isArchived);
     }
 
     // Apply date range filter
@@ -292,7 +236,8 @@ const ProjectsPage = () => {
         case 'created':
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         case 'stars':
-          return (b.stats?.stars || 0) - (a.stats?.stars || 0);
+          // Sort by likes since we don't have stars
+          return (b.likes || 0) - (a.likes || 0);
         case 'updated':
         default:
           return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
@@ -300,7 +245,7 @@ const ProjectsPage = () => {
     });
 
     return filtered;
-  }, [projects, debouncedSearchQuery, filterLanguage, filterStatus, filterVisibility, showArchived, dateRange, sortBy]);
+  }, [projects, debouncedSearchQuery, filterLanguage, filterVisibility, dateRange, sortBy]);
 
   // Mutations
   const createProjectMutation = useMutation({
@@ -321,7 +266,7 @@ const ProjectsPage = () => {
   });
 
   const deleteProjectMutation = useMutation({
-    mutationFn: async (projectId: number) => {
+    mutationFn: async (projectId: string) => {
       const res = await apiRequest('DELETE', `/api/projects/${projectId}`);
       if (!res.ok) throw new Error('Failed to delete project');
       return res.json();
@@ -360,7 +305,7 @@ const ProjectsPage = () => {
   };
 
   // Handle project selection
-  const toggleProjectSelection = (projectId: number) => {
+  const toggleProjectSelection = (projectId: string) => {
     setSelectedProjects(prev => 
       prev.includes(projectId) 
         ? prev.filter(id => id !== projectId)
@@ -611,34 +556,6 @@ const ProjectsPage = () => {
                     </ScrollArea>
                   </div>
 
-                  {/* Status Filter */}
-                  <div>
-                    <Label className="text-sm font-medium mb-2">Status</Label>
-                    <div className="space-y-2">
-                      {['active', 'deployed', 'archived'].map(status => (
-                        <div key={status} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`status-${status}`}
-                            checked={filterStatus.includes(status)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setFilterStatus([...filterStatus, status]);
-                              } else {
-                                setFilterStatus(filterStatus.filter(s => s !== status));
-                              }
-                            }}
-                          />
-                          <Label
-                            htmlFor={`status-${status}`}
-                            className="text-sm font-normal cursor-pointer capitalize"
-                          >
-                            {status}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Visibility Filter */}
                   <div>
                     <Label className="text-sm font-medium mb-2">Visibility</Label>
@@ -675,7 +592,6 @@ const ProjectsPage = () => {
                     onClick={() => {
                       setSearchQuery('');
                       setFilterLanguage([]);
-                      setFilterStatus([]);
                       setFilterVisibility([]);
                       setDateRange([null, null]);
                     }}
@@ -830,7 +746,7 @@ const ProjectsPage = () => {
                 <Folder className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-xl font-semibold mb-2">No projects found</h3>
                 <p className="text-muted-foreground mb-6">
-                  {searchQuery || filterLanguage.length > 0 || filterStatus.length > 0 || filterVisibility.length > 0
+                  {searchQuery || filterLanguage.length > 0 || filterVisibility.length > 0
                     ? "Try adjusting your filters or search query"
                     : "Create your first project to get started"}
                 </p>
@@ -870,16 +786,6 @@ const ProjectsPage = () => {
                             <Pin className="h-3 w-3" />
                           </Badge>
                         )}
-                        {project.isDeployed && (
-                          <Badge className="bg-green-500/90 text-white">
-                            <CheckCircle2 className="h-3 w-3" />
-                          </Badge>
-                        )}
-                        {project.isArchived && (
-                          <Badge className="bg-gray-500/90 text-white">
-                            <Archive className="h-3 w-3" />
-                          </Badge>
-                        )}
                       </div>
 
                       {/* Project Thumbnail */}
@@ -895,21 +801,17 @@ const ProjectsPage = () => {
                           </div>
                         </div>
 
-                        {/* Technology Stack */}
-                        <div className="absolute bottom-2 left-2 flex gap-1">
-                          {project.technologies?.slice(0, 3).map(tech => {
-                            const config = techStackConfig[tech] || { color: 'bg-gray-500', icon: '⚙️' };
-                            return (
-                              <Badge
-                                key={tech}
-                                variant="secondary"
-                                className={`${config.color} text-white text-xs`}
-                              >
-                                {tech}
-                              </Badge>
-                            );
-                          })}
-                        </div>
+                        {/* Language Badge */}
+                        {project.language && (
+                          <div className="absolute bottom-2 left-2">
+                            <Badge
+                              variant="secondary"
+                              className={`${languageColors[project.language] || languageColors.other} text-white text-xs`}
+                            >
+                              {project.language}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
 
                       {/* Card Content */}
@@ -925,16 +827,20 @@ const ProjectsPage = () => {
                         <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1">
-                              <Star className="h-3 w-3" />
-                              <span>{project.stats?.stars || 0}</span>
+                              <Heart className="h-3 w-3" />
+                              <span>{project.likes || 0}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <GitFork className="h-3 w-3" />
-                              <span>{project.stats?.forks || 0}</span>
+                              <span>{project.forks || 0}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Eye className="h-3 w-3" />
-                              <span>{project.stats?.views || 0}</span>
+                              <span>{project.views || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Play className="h-3 w-3" />
+                              <span>{project.runs || 0}</span>
                             </div>
                           </div>
                           <Badge variant="outline" className="text-xs">
@@ -942,19 +848,16 @@ const ProjectsPage = () => {
                           </Badge>
                         </div>
 
-                        {/* Last Commit */}
-                        {project.lastCommit && (
-                          <div className="text-xs text-muted-foreground border-t pt-3">
-                            <div className="flex items-center gap-1 mb-1">
-                              <GitCommit className="h-3 w-3" />
-                              <span className="truncate">{project.lastCommit.message}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span>{project.lastCommit.author}</span>
-                              <span>{new Date(project.lastCommit.date).toLocaleDateString()}</span>
-                            </div>
+                        {/* Updated At */}
+                        <div className="text-xs text-muted-foreground border-t pt-3">
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              Updated
+                            </span>
+                            <span>{new Date(project.updatedAt).toLocaleDateString()}</span>
                           </div>
-                        )}
+                        </div>
 
                         {/* Quick Actions */}
                         <div className="flex gap-1 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -963,9 +866,9 @@ const ProjectsPage = () => {
                             variant="secondary"
                             className="flex-1"
                             onClick={() => {
-                              const projectUrl = getProjectUrl(project, user?.username);
-                              setLocation(projectUrl);
+                              setLocation(`/editor/${project.id}`);
                             }}
+                            data-testid={`button-open-${project.id}`}
                           >
                             <ExternalLink className="h-4 w-4 mr-1" />
                             Open
@@ -1045,41 +948,44 @@ const ProjectsPage = () => {
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-semibold text-lg">{project.name}</h3>
                               {project.isPinned && <Pin className="h-4 w-4 text-yellow-500" />}
-                              {project.isDeployed && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                              {project.isArchived && <Archive className="h-4 w-4 text-gray-500" />}
                             </div>
                             <p className="text-sm text-muted-foreground mb-2">
                               {project.description || 'No description available'}
                             </p>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1">
-                                <Star className="h-3 w-3" />
-                                {project.stats?.stars || 0}
+                                <Heart className="h-3 w-3" />
+                                {project.likes || 0}
                               </span>
                               <span className="flex items-center gap-1">
                                 <GitFork className="h-3 w-3" />
-                                {project.stats?.forks || 0}
+                                {project.forks || 0}
                               </span>
                               <span className="flex items-center gap-1">
                                 <Eye className="h-3 w-3" />
-                                {project.stats?.views || 0}
+                                {project.views || 0}
                               </span>
                               <span className="flex items-center gap-1">
-                                <GitCommit className="h-3 w-3" />
-                                {project.stats?.commits || 0}
+                                <Play className="h-3 w-3" />
+                                {project.runs || 0}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(project.updatedAt).toLocaleDateString()}
                               </span>
                               <Badge variant="outline">{project.visibility}</Badge>
                             </div>
                           </div>
 
-                          {/* Technology Stack */}
-                          <div className="flex gap-1">
-                            {project.technologies?.slice(0, 4).map(tech => (
-                              <Badge key={tech} variant="secondary">
-                                {tech}
-                              </Badge>
-                            ))}
-                          </div>
+                          {/* Language Badge */}
+                          {project.language && (
+                            <Badge 
+                              variant="secondary"
+                              className={`${languageColors[project.language] || languageColors.other} text-white`}
+                            >
+                              {project.language}
+                            </Badge>
+                          )}
 
                           {/* Actions */}
                           <div className="flex items-center gap-1">
@@ -1087,9 +993,9 @@ const ProjectsPage = () => {
                               size="sm"
                               variant="ghost"
                               onClick={() => {
-                                const projectUrl = getProjectUrl(project, user?.username);
-                                setLocation(projectUrl);
+                                setLocation(`/editor/${project.id}`);
                               }}
+                              data-testid={`button-quick-open-${project.id}`}
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
