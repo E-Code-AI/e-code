@@ -8,6 +8,7 @@ import { MobileTerminal } from './MobileTerminal';
 import { MobilePreviewPanel } from './MobilePreviewPanel';
 import { MobileMoreMenu } from './MobileMoreMenu';
 import { ReplitBottomTabs } from './ReplitBottomTabs';
+import { MobileFAB } from './MobileFAB';
 import { useTabPersistence, useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
 
 export type MobileTab = 'files' | 'code' | 'terminal' | 'preview' | 'more';
@@ -176,6 +177,9 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
+
+      {/* Floating Action Button (Run) */}
+      <MobileFAB projectId={projectId} />
 
       {/* File Explorer Modal */}
       <MobileFileExplorer
