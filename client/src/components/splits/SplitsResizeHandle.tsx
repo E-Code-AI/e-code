@@ -23,6 +23,8 @@ export function SplitsResizeHandle({
     startResize,
     updateResize,
     endResize,
+    findNode,
+    toggleMinimize,
   } = useSplitsStore();
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -73,6 +75,19 @@ export function SplitsResizeHandle({
     document.addEventListener('touchend', handleTouchEnd);
   }, [splitId, direction, startResize, updateResize, endResize]);
 
+  // Replit-style double-click to toggle minimize/restore
+  const handleDoubleClick = useCallback(() => {
+    // Find the split and check if it contains center-bottom panel
+    const split = findNode(splitId);
+    if (!split) return;
+    
+    // Only apply to bottom panel for now
+    const bottomChild = (split as any).children?.find((c: any) => c.id === 'center-bottom');
+    if (bottomChild) {
+      toggleMinimize('center-bottom');
+    }
+  }, [splitId, findNode, toggleMinimize]);
+
   return (
     <motion.div
       className={cn(
@@ -84,6 +99,7 @@ export function SplitsResizeHandle({
       onMouseLeave={() => setIsHovered(false)}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
+      onDoubleClick={handleDoubleClick}
       whileHover={{ scale: direction === 'horizontal' ? [1, 1.5, 1] : [1, 1, 1.5] }}
       transition={{ duration: 0.2 }}
     >

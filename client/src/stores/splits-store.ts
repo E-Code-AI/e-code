@@ -16,6 +16,49 @@ import {
   DropZone,
 } from '@/types/splits';
 
+// Replit-style bottom panel constants
+const MIN_BOTTOM_PANEL_PERCENT = 20; // Minimum 20% height (header + minimal content)
+const DEFAULT_BOTTOM_PANEL_PERCENT = 30; // Default expanded height (30%)
+
+/**
+ * Normalize layout to enforce Replit-style minimum heights
+ * Walks tree and clamps center-bottom to MIN_BOTTOM_PANEL_PERCENT
+ */
+function normalizeLayout(root: LayoutNode | null): void {
+  if (!root) return;
+  
+  function walkAndNormalize(node: LayoutNode): void {
+    if (isSplit(node)) {
+      // Check if this split contains center-bottom panel
+      node.children.forEach((child, index) => {
+        if (isPaneGroup(child) && child.id === 'center-bottom') {
+          const currentPercent = child.percent || DEFAULT_BOTTOM_PANEL_PERCENT;
+          
+          // Enforce minimum (clamp to 20-100%)
+          if (currentPercent < MIN_BOTTOM_PANEL_PERCENT) {
+            const clampedPercent = MIN_BOTTOM_PANEL_PERCENT;
+            child.percent = clampedPercent;
+            child.collapsed = false; // Clear stale collapsed flag
+            
+            // Rebalance sibling to maintain 100% total
+            const siblingIndex = index === 0 ? 1 : 0;
+            if (node.children[siblingIndex]) {
+              node.children[siblingIndex].percent = 100 - clampedPercent;
+            }
+            
+            console.log('[normalizeLayout] Clamped center-bottom from', currentPercent, 'to', clampedPercent);
+          }
+        }
+        
+        // Recurse into child splits
+        walkAndNormalize(child);
+      });
+    }
+  }
+  
+  walkAndNormalize(root);
+}
+
 interface SplitsStore {
   // State
   root: LayoutNode | null;
@@ -40,6 +83,8 @@ interface SplitsStore {
   maximizePane: (paneId: string) => void;
   restorePane: () => void;
   resizeSplit: (splitId: string, sizes: number[]) => void;
+  setPaneSize: (paneId: string, percent: number) => void;
+  toggleMinimize: (paneId: string) => void;
   setActivePane: (paneId: string) => void;
   setActiveTab: (paneId: string, tabIndexOrId: number | string) => void;
   toggleCollapse: (splitId: string, childIndex: number) => void;
@@ -195,6 +240,9 @@ const useSplitsStore = create<SplitsStore>()(
         
         // Hydrate parent metadata to ensure parentSplitId and collapsible flags are set
         hydrateParentMetadata(state.root);
+        
+        // Normalize layout to enforce Replit-style minimums (Fortune 500-grade)
+        normalizeLayout(state.root);
         
         state.floatingPanes = new Map();
         state.activePane = null;
@@ -409,6 +457,72 @@ const useSplitsStore = create<SplitsStore>()(
       });
     },
 
+    // Set pane size (Replit-style with minimum enforcement)
+    setPaneSize: (paneId, percent) => {
+      set((state) => {
+        const pane = findNodeRecursive(paneId, state.root) as PaneGroup;
+        if (!pane || !isPaneGroup(pane)) return;
+        
+        // Enforce minimum height for bottom panel
+        const clampedPercent = Math.max(MIN_BOTTOM_PANEL_PERCENT, Math.min(100, percent));
+        pane.percent = clampedPercent;
+        
+        // Update parent split siblings
+        const parent = get().findParentSplit(paneId);
+        if (!parent) return;
+        
+        const childIndex = parent.children.findIndex(child => child.id === paneId);
+        if (childIndex === -1) return;
+        
+        // Adjust sibling to maintain 100% total
+        const siblingIndex = childIndex === 0 ? 1 : 0;
+        parent.children[siblingIndex].percent = 100 - clampedPercent;
+      });
+    },
+
+    // Toggle minimize (Replit-style: minimum ↔ last expanded height)
+    toggleMinimize: (paneId) => {
+      set((state) => {
+        const pane = findNodeRecursive(paneId, state.root) as PaneGroup;
+        if (!pane || !isPaneGroup(pane)) return;
+        
+        const currentPercent = pane.percent || DEFAULT_BOTTOM_PANEL_PERCENT;
+        const isMinimized = currentPercent <= MIN_BOTTOM_PANEL_PERCENT;
+        
+        if (isMinimized) {
+          // Restore: Use saved size or default
+          const savedPercent = pane.previousPercent || DEFAULT_BOTTOM_PANEL_PERCENT;
+          pane.percent = savedPercent;
+          pane.collapsed = false;
+          
+          // Update sibling
+          const parent = get().findParentSplit(paneId);
+          if (parent) {
+            const childIndex = parent.children.findIndex(child => child.id === paneId);
+            if (childIndex !== -1) {
+              const siblingIndex = childIndex === 0 ? 1 : 0;
+              parent.children[siblingIndex].percent = 100 - savedPercent;
+            }
+          }
+        } else {
+          // Minimize: Save current size and go to minimum
+          pane.previousPercent = currentPercent;
+          pane.percent = MIN_BOTTOM_PANEL_PERCENT;
+          pane.collapsed = false; // Not fully collapsed, just minimized
+          
+          // Update sibling
+          const parent = get().findParentSplit(paneId);
+          if (parent) {
+            const childIndex = parent.children.findIndex(child => child.id === paneId);
+            if (childIndex !== -1) {
+              const siblingIndex = childIndex === 0 ? 1 : 0;
+              parent.children[siblingIndex].percent = 100 - MIN_BOTTOM_PANEL_PERCENT;
+            }
+          }
+        }
+      });
+    },
+
     // Set active pane
     setActivePane: (paneId) => {
       set((state) => {
@@ -437,7 +551,8 @@ const useSplitsStore = create<SplitsStore>()(
       });
     },
 
-    // Toggle collapse for a collapsible pane (preserves user-resized proportions)
+    // Toggle collapse/minimize (Replit-style: respects MIN_BOTTOM_PANEL_PERCENT)
+    // DEPRECATED: Use toggleMinimize instead for Replit-style behavior
     toggleCollapse: (splitId, childIndex) => {
       set((state) => {
         const split = findNodeRecursive(splitId, state.root) as Split;
@@ -446,12 +561,13 @@ const useSplitsStore = create<SplitsStore>()(
         const child = split.children[childIndex] as PaneGroup;
         if (!isPaneGroup(child) || !child.collapsible) return;
         
-        const currentPercent = child.percent || 0;
-        const isCurrentlyCollapsed = currentPercent <= 1; // Collapsed if <= 1%
+        // Replit-style: Use MIN_BOTTOM_PANEL_PERCENT instead of 0%
+        const currentPercent = child.percent || DEFAULT_BOTTOM_PANEL_PERCENT;
+        const isMinimized = currentPercent <= MIN_BOTTOM_PANEL_PERCENT;
         
-        if (isCurrentlyCollapsed) {
+        if (isMinimized) {
           // Expand: Restore to saved size or default (30%)
-          const savedPercent = child.previousPercent || 30;
+          const savedPercent = child.previousPercent || DEFAULT_BOTTOM_PANEL_PERCENT;
           child.percent = savedPercent;
           child.collapsed = false;
           
@@ -462,16 +578,16 @@ const useSplitsStore = create<SplitsStore>()(
             split.children[0].percent = 100 - savedPercent;
           }
         } else {
-          // Collapse: Save current size and collapse to 0%
+          // Minimize: Save current size and go to minimum (NOT 0%)
           child.previousPercent = currentPercent;
-          child.percent = 0;
-          child.collapsed = true;
+          child.percent = MIN_BOTTOM_PANEL_PERCENT; // Replit-style: tabs always visible
+          child.collapsed = false; // Not fully collapsed
           
-          // Give all space to sibling
+          // Adjust sibling
           if (childIndex === 0) {
-            split.children[1].percent = 100;
+            split.children[1].percent = 100 - MIN_BOTTOM_PANEL_PERCENT;
           } else {
-            split.children[0].percent = 100;
+            split.children[0].percent = 100 - MIN_BOTTOM_PANEL_PERCENT;
           }
         }
       });
@@ -619,13 +735,25 @@ const useSplitsStore = create<SplitsStore>()(
           const totalSize = state.resizeState.direction === 'horizontal' ? window.innerWidth : window.innerHeight;
           const deltaPercent = (delta / totalSize) * 100;
           
-          // Update sizes
+          // Check if bottom panel is involved (Replit-style minimum enforcement)
+          const hasBottomPanel = split.children.some(child => child.id === 'center-bottom');
+          
+          // Update sizes with Replit-style minimums
           split.children.forEach((child, index) => {
             const startSize = state.resizeState.startSizes[index];
+            let newPercent: number;
+            
             if (index === 0) {
-              child.percent = Math.max(10, Math.min(90, startSize + deltaPercent));
+              newPercent = startSize + deltaPercent;
             } else {
-              child.percent = Math.max(10, Math.min(90, startSize - deltaPercent));
+              newPercent = startSize - deltaPercent;
+            }
+            
+            // Enforce minimum for bottom panel
+            if (hasBottomPanel && child.id === 'center-bottom') {
+              child.percent = Math.max(MIN_BOTTOM_PANEL_PERCENT, Math.min(90, newPercent));
+            } else {
+              child.percent = Math.max(10, Math.min(90, newPercent));
             }
           });
         }
@@ -703,6 +831,10 @@ const useSplitsStore = create<SplitsStore>()(
           
           // Hydrate parent metadata after loading from storage
           hydrateParentMetadata(state.root);
+          
+          // Normalize layout to enforce Replit-style minimums (Fortune 500-grade)
+          // This ensures old localStorage layouts with invalid percents are fixed
+          normalizeLayout(state.root);
           
           state.floatingPanes = new Map(layoutData.floatingPanes || []);
           state.activePane = layoutData.activePane || null;
