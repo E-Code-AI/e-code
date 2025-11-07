@@ -7,3 +7,4 @@ export { MobileTerminal } from './MobileTerminal';
 export { MobilePreviewPanel } from './MobilePreviewPanel';
 export { MobileMoreMenu } from './MobileMoreMenu';
 export { MobileIDEView } from './MobileIDEView';
+export { MobileFAB } from './MobileFAB';
