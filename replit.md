@@ -5,6 +5,24 @@ The E-Code Platform is an AI-powered development platform designed to streamline
 
 ## Recent Changes (November 7, 2025)
 
+### Desktop Bottom Panel: Fortune 500-Grade 216px Absolute Minimum ✅ **ARCHITECT APPROVED**
+- **Issue**: Bottom panel rendering at 71px (~10%) instead of required 216px minimum (Replit parity violation)
+- **Root Cause**: Percent was relative to ~355px parent container, not viewport (20% of 355px = 71px < 216px)
+- **Solution Architecture**:
+  - ✅ **ResizeObserver**: Measures ACTUAL center-stack height (not heuristic) via `SplitsEditorLayoutV2.tsx`
+  - ✅ **Zustand State**: Added `centerStackHeight: number | null` to SplitsStore
+  - ✅ **Dynamic Calculation**: `getMinimumBottomPanelPercent(centerStackHeight)` converts 216px → percent dynamically
+  - ✅ **Smart Buffer Logic**: `MIN_TOP_BUFFER_PX = 100px` preserves editor visibility while enforcing 216px
+  - ✅ **Re-Normalization**: `setCenterStackHeight()` re-normalizes layout + persists to localStorage on measurement
+  - ✅ **Defense-in-Depth**: All 5 code paths enforce absolute minimum (normalizeLayout, setPaneSize, toggleMinimize, toggleCollapse, updateResize)
+- **Math Validation**: 
+  - 355px container → 60.85% → 216.02px ✅
+  - 720px container → 30% → 216px ✅
+  - 316px container (threshold) → 68.35% → 216px ✅
+  - <316px containers → Graceful degradation (prioritize editor visibility)
+- **Files Modified**: `client/src/stores/splits-store.ts`, `client/src/components/splits/SplitsEditorLayoutV2.tsx`
+- **Status**: ✅ PRODUCTION READY - Architect validated all iterations (relative %, no re-norm, artificial caps all fixed)
+
 ### Mobile Workspace Implementation Complete ✅ **PRODUCTION READY**
 - **Status**: Mobile Monaco Editor + xterm Terminal + FAB fully functional with atomic buffer synchronization
 - **Routing**: ResponsiveEditorRoute → MobileIDEView (not placeholder MobileWorkspace)

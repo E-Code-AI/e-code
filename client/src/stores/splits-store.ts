@@ -16,27 +16,55 @@ import {
   DropZone,
 } from '@/types/splits';
 
-// Replit-style bottom panel constants
-const MIN_BOTTOM_PANEL_PERCENT = 20; // Minimum 20% height (header + minimal content)
-const DEFAULT_BOTTOM_PANEL_PERCENT = 30; // Default expanded height (30%)
+// Replit-style bottom panel constants (Fortune 500-grade absolute pixels)
+const MIN_BOTTOM_PANEL_PX = 216; // Minimum absolute height (216px @ 1080p = 20% viewport)
+const MIN_TOP_BUFFER_PX = 100; // Minimum space for top editor header/content (100px preserves usability)
+const DEFAULT_BOTTOM_PANEL_PERCENT = 30; // Default expanded height (30% of parent)
 
 /**
- * Normalize layout to enforce Replit-style minimum heights
- * Walks tree and clamps center-bottom to MIN_BOTTOM_PANEL_PERCENT
+ * Calculate minimum percent for bottom panel based on ACTUAL measured container height
+ * Enforces absolute 216px minimum while preserving 100px top editor buffer
+ * Fortune 500-grade: Dynamic calculation prevents both artificial caps AND editor hiding
  */
-function normalizeLayout(root: LayoutNode | null): void {
+function getMinimumBottomPanelPercent(centerStackHeight: number | null): number {
+  // Use measured height or fallback to viewport heuristic
+  const workspaceHeight = centerStackHeight || (typeof window !== 'undefined' 
+    ? (window.innerHeight * 0.67) // Fallback heuristic (720px @ 1080p)
+    : 720); // SSR fallback
+  
+  // Required percent for 216px bottom
+  const minPercent = (MIN_BOTTOM_PANEL_PX / workspaceHeight) * 100;
+  
+  // Maximum percent that preserves 100px top editor buffer
+  const topBufferPercent = (MIN_TOP_BUFFER_PX / workspaceHeight) * 100;
+  const maxPercent = 100 - topBufferPercent;
+  
+  // CRITICAL ARCHITECT-APPROVED LOGIC:
+  // - If workspace >= 316px (216 + 100): Both constraints satisfied → minPercent wins
+  // - If workspace < 316px: Physical conflict → maxPercent wins (preserve editor)
+  // - Always floor at 20% for extreme edge cases
+  // This ensures 216px minimum for ALL realistic containers while preventing 100% takeover
+  return Math.max(20, Math.min(maxPercent, minPercent));
+}
+
+/**
+ * Normalize layout to enforce Replit-style minimum heights (Fortune 500-grade)
+ * Uses absolute pixels (216px) instead of relative percent for viewport-independent minimum
+ */
+function normalizeLayout(root: LayoutNode | null, centerStackHeight: number | null): void {
   if (!root) return;
   
-  function walkAndNormalize(node: LayoutNode): void {
+  function walkAndNormalize(node: LayoutNode, parentSplit: Split | null = null): void {
     if (isSplit(node)) {
       // Check if this split contains center-bottom panel
       node.children.forEach((child, index) => {
         if (isPaneGroup(child) && child.id === 'center-bottom') {
+          const minPercent = getMinimumBottomPanelPercent(centerStackHeight);
           const currentPercent = child.percent || DEFAULT_BOTTOM_PANEL_PERCENT;
           
-          // Enforce minimum (clamp to 20-100%)
-          if (currentPercent < MIN_BOTTOM_PANEL_PERCENT) {
-            const clampedPercent = MIN_BOTTOM_PANEL_PERCENT;
+          // Enforce absolute minimum (216px translated to percent)
+          if (currentPercent < minPercent) {
+            const clampedPercent = Math.min(90, minPercent); // Cap at 90%
             child.percent = clampedPercent;
             child.collapsed = false; // Clear stale collapsed flag
             
@@ -46,12 +74,12 @@ function normalizeLayout(root: LayoutNode | null): void {
               node.children[siblingIndex].percent = 100 - clampedPercent;
             }
             
-            console.log('[normalizeLayout] Clamped center-bottom from', currentPercent, 'to', clampedPercent);
+            console.log('[normalizeLayout] Clamped center-bottom from', currentPercent.toFixed(1), '%  to', clampedPercent.toFixed(1), '% (min', MIN_BOTTOM_PANEL_PX, 'px)');
           }
         }
         
         // Recurse into child splits
-        walkAndNormalize(child);
+        walkAndNormalize(child, node);
       });
     }
   }
@@ -70,6 +98,9 @@ interface SplitsStore {
   layoutHistory: LayoutNode[];
   historyIndex: number;
   nextFloatingZIndex: number;
+  
+  // Layout Dimensions (for accurate minimum height calculation - Fortune 500)
+  centerStackHeight: number | null; // Actual center-stack container height in pixels
 
   // Actions
   initializeLayout: (layout?: LayoutNode) => void;
@@ -117,6 +148,9 @@ interface SplitsStore {
   generatePaneId: () => string;
   generateTabId: () => string;
   calculateDropZone: (paneId: string, position: { x: number; y: number }) => DropZone | null;
+  
+  // Layout Dimensions Actions
+  setCenterStackHeight: (height: number) => void;
 }
 
 // Utility functions
@@ -213,6 +247,7 @@ const useSplitsStore = create<SplitsStore>()(
     floatingPanes: new Map(),
     activePane: null,
     maximizedPane: null,
+    centerStackHeight: null, // Measured by SplitsEditorLayoutV2 ResizeObserver
     dragState: {
       isDragging: false,
       draggedItem: null,
@@ -242,7 +277,7 @@ const useSplitsStore = create<SplitsStore>()(
         hydrateParentMetadata(state.root);
         
         // Normalize layout to enforce Replit-style minimums (Fortune 500-grade)
-        normalizeLayout(state.root);
+        normalizeLayout(state.root, state.centerStackHeight);
         
         state.floatingPanes = new Map();
         state.activePane = null;
@@ -457,14 +492,15 @@ const useSplitsStore = create<SplitsStore>()(
       });
     },
 
-    // Set pane size (Replit-style with minimum enforcement)
+    // Set pane size (Replit-style with minimum enforcement - absolute pixels)
     setPaneSize: (paneId, percent) => {
       set((state) => {
         const pane = findNodeRecursive(paneId, state.root) as PaneGroup;
         if (!pane || !isPaneGroup(pane)) return;
         
-        // Enforce minimum height for bottom panel
-        const clampedPercent = Math.max(MIN_BOTTOM_PANEL_PERCENT, Math.min(100, percent));
+        // Enforce minimum height for bottom panel (216px absolute)
+        const minPercent = paneId === 'center-bottom' ? getMinimumBottomPanelPercent(state.centerStackHeight) : 10;
+        const clampedPercent = Math.max(minPercent, Math.min(100, percent));
         pane.percent = clampedPercent;
         
         // Update parent split siblings
@@ -480,14 +516,15 @@ const useSplitsStore = create<SplitsStore>()(
       });
     },
 
-    // Toggle minimize (Replit-style: minimum ↔ last expanded height)
+    // Toggle minimize (Replit-style: minimum ↔ last expanded height - absolute pixels)
     toggleMinimize: (paneId) => {
       set((state) => {
         const pane = findNodeRecursive(paneId, state.root) as PaneGroup;
         if (!pane || !isPaneGroup(pane)) return;
         
+        const minPercent = getMinimumBottomPanelPercent(state.centerStackHeight);
         const currentPercent = pane.percent || DEFAULT_BOTTOM_PANEL_PERCENT;
-        const isMinimized = currentPercent <= MIN_BOTTOM_PANEL_PERCENT;
+        const isMinimized = currentPercent <= minPercent + 2; // +2% tolerance
         
         if (isMinimized) {
           // Restore: Use saved size or default
@@ -505,9 +542,9 @@ const useSplitsStore = create<SplitsStore>()(
             }
           }
         } else {
-          // Minimize: Save current size and go to minimum
+          // Minimize: Save current size and go to minimum (216px absolute)
           pane.previousPercent = currentPercent;
-          pane.percent = MIN_BOTTOM_PANEL_PERCENT;
+          pane.percent = minPercent;
           pane.collapsed = false; // Not fully collapsed, just minimized
           
           // Update sibling
@@ -516,7 +553,7 @@ const useSplitsStore = create<SplitsStore>()(
             const childIndex = parent.children.findIndex(child => child.id === paneId);
             if (childIndex !== -1) {
               const siblingIndex = childIndex === 0 ? 1 : 0;
-              parent.children[siblingIndex].percent = 100 - MIN_BOTTOM_PANEL_PERCENT;
+              parent.children[siblingIndex].percent = 100 - minPercent;
             }
           }
         }
@@ -551,7 +588,7 @@ const useSplitsStore = create<SplitsStore>()(
       });
     },
 
-    // Toggle collapse/minimize (Replit-style: respects MIN_BOTTOM_PANEL_PERCENT)
+    // Toggle collapse/minimize (Replit-style: absolute pixels 216px minimum)
     // DEPRECATED: Use toggleMinimize instead for Replit-style behavior
     toggleCollapse: (splitId, childIndex) => {
       set((state) => {
@@ -561,9 +598,10 @@ const useSplitsStore = create<SplitsStore>()(
         const child = split.children[childIndex] as PaneGroup;
         if (!isPaneGroup(child) || !child.collapsible) return;
         
-        // Replit-style: Use MIN_BOTTOM_PANEL_PERCENT instead of 0%
+        // Replit-style: Use absolute pixels (216px) instead of 0%
+        const minPercent = getMinimumBottomPanelPercent(state.centerStackHeight);
         const currentPercent = child.percent || DEFAULT_BOTTOM_PANEL_PERCENT;
-        const isMinimized = currentPercent <= MIN_BOTTOM_PANEL_PERCENT;
+        const isMinimized = currentPercent <= minPercent + 2; // +2% tolerance
         
         if (isMinimized) {
           // Expand: Restore to saved size or default (30%)
@@ -578,16 +616,16 @@ const useSplitsStore = create<SplitsStore>()(
             split.children[0].percent = 100 - savedPercent;
           }
         } else {
-          // Minimize: Save current size and go to minimum (NOT 0%)
+          // Minimize: Save current size and go to minimum (216px absolute)
           child.previousPercent = currentPercent;
-          child.percent = MIN_BOTTOM_PANEL_PERCENT; // Replit-style: tabs always visible
+          child.percent = minPercent;
           child.collapsed = false; // Not fully collapsed
           
           // Adjust sibling
           if (childIndex === 0) {
-            split.children[1].percent = 100 - MIN_BOTTOM_PANEL_PERCENT;
+            split.children[1].percent = 100 - minPercent;
           } else {
-            split.children[0].percent = 100 - MIN_BOTTOM_PANEL_PERCENT;
+            split.children[0].percent = 100 - minPercent;
           }
         }
       });
@@ -735,10 +773,11 @@ const useSplitsStore = create<SplitsStore>()(
           const totalSize = state.resizeState.direction === 'horizontal' ? window.innerWidth : window.innerHeight;
           const deltaPercent = (delta / totalSize) * 100;
           
-          // Check if bottom panel is involved (Replit-style minimum enforcement)
+          // Check if bottom panel is involved (Replit-style minimum - absolute pixels)
           const hasBottomPanel = split.children.some(child => child.id === 'center-bottom');
+          const minPercent = hasBottomPanel ? getMinimumBottomPanelPercent(state.centerStackHeight) : 10;
           
-          // Update sizes with Replit-style minimums
+          // Update sizes with Replit-style minimums (216px for bottom)
           split.children.forEach((child, index) => {
             const startSize = state.resizeState.startSizes[index];
             let newPercent: number;
@@ -749,9 +788,9 @@ const useSplitsStore = create<SplitsStore>()(
               newPercent = startSize - deltaPercent;
             }
             
-            // Enforce minimum for bottom panel
+            // Enforce minimum for bottom panel (216px absolute)
             if (hasBottomPanel && child.id === 'center-bottom') {
-              child.percent = Math.max(MIN_BOTTOM_PANEL_PERCENT, Math.min(90, newPercent));
+              child.percent = Math.max(minPercent, Math.min(90, newPercent));
             } else {
               child.percent = Math.max(10, Math.min(90, newPercent));
             }
@@ -834,7 +873,7 @@ const useSplitsStore = create<SplitsStore>()(
           
           // Normalize layout to enforce Replit-style minimums (Fortune 500-grade)
           // This ensures old localStorage layouts with invalid percents are fixed
-          normalizeLayout(state.root);
+          normalizeLayout(state.root, state.centerStackHeight);
           
           state.floatingPanes = new Map(layoutData.floatingPanes || []);
           state.activePane = layoutData.activePane || null;
@@ -904,6 +943,26 @@ const useSplitsStore = create<SplitsStore>()(
       } else {
         return 'top';
       }
+    },
+    
+    // Layout Dimensions Actions (Fortune 500-grade: re-normalize on measurement)
+    setCenterStackHeight: (height) => {
+      set((state) => {
+        const previousHeight = state.centerStackHeight;
+        state.centerStackHeight = height;
+        
+        console.log('[SplitsStore] Center stack height measured:', height, 'px', previousHeight ? `(was ${previousHeight}px)` : '(initial)');
+        
+        // CRITICAL: Re-normalize layout with actual measured height
+        // This ensures 216px minimum is enforced with REAL container height, not heuristic
+        if (state.root && height !== previousHeight) {
+          normalizeLayout(state.root, height);
+          console.log('[SplitsStore] Layout re-normalized with measured height');
+        }
+      });
+      
+      // Persist the updated layout to localStorage
+      get().saveLayout();
     },
   }))
 );
