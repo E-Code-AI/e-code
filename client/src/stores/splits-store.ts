@@ -42,6 +42,7 @@ interface SplitsStore {
   resizeSplit: (splitId: string, sizes: number[]) => void;
   setActivePane: (paneId: string) => void;
   setActiveTab: (paneId: string, tabIndexOrId: number | string) => void;
+  toggleCollapse: (splitId: string, childIndex: number) => void;
   updateFloatingPosition: (paneId: string, position: { x: number; y: number; width?: number; height?: number }) => void;
   bringFloatingToFront: (paneId: string) => void;
   
@@ -397,6 +398,46 @@ const useSplitsStore = create<SplitsStore>()(
           const tabIndex = pane.tabs.findIndex(t => t.id === tabIndexOrId);
           if (tabIndex >= 0) {
             pane.activeTabIndex = tabIndex;
+          }
+        }
+      });
+    },
+
+    // Toggle collapse for a collapsible pane (preserves user-resized proportions)
+    toggleCollapse: (splitId, childIndex) => {
+      set((state) => {
+        const split = findNodeRecursive(splitId, state.root) as Split;
+        if (!split || !isSplit(split) || childIndex >= split.children.length) return;
+        
+        const child = split.children[childIndex] as PaneGroup;
+        if (!isPaneGroup(child) || !child.collapsible) return;
+        
+        const currentPercent = child.percent || 0;
+        const isCurrentlyCollapsed = currentPercent <= 1; // Collapsed if <= 1%
+        
+        if (isCurrentlyCollapsed) {
+          // Expand: Restore to saved size or default (30%)
+          const savedPercent = child.previousPercent || 30;
+          child.percent = savedPercent;
+          child.collapsed = false;
+          
+          // Adjust sibling
+          if (childIndex === 0) {
+            split.children[1].percent = 100 - savedPercent;
+          } else {
+            split.children[0].percent = 100 - savedPercent;
+          }
+        } else {
+          // Collapse: Save current size and collapse to 0%
+          child.previousPercent = currentPercent;
+          child.percent = 0;
+          child.collapsed = true;
+          
+          // Give all space to sibling
+          if (childIndex === 0) {
+            split.children[1].percent = 100;
+          } else {
+            split.children[0].percent = 100;
           }
         }
       });

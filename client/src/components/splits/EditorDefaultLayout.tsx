@@ -183,6 +183,9 @@ export function createEditorDefaultLayout(
           // Bottom panel - Terminal, Output, Problems, etc.
           {
             id: 'center-bottom',
+            collapsible: true, // Enable collapse/expand button
+            collapsed: false, // Start expanded
+            parentSplitId: 'center-stack', // For resizeSplit calls
             tabs: [
               {
                 id: 'terminal-tab',
