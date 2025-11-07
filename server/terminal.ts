@@ -82,7 +82,34 @@ export function setupTerminalWebsocket(server: Server) {
         try {
           const data = JSON.parse(message.toString());
           
-          if (data.type === 'input') {
+          if (data.type === 'replace_line') {
+            // Atomic replace: clear current line and set new command (prevents race conditions)
+            const newCommand = data.command || '';
+            const currentBufferLength = terminalSession.outputBuffer.length;
+            
+            // Clear current buffer
+            terminalSession.outputBuffer = '';
+            
+            // Echo backspaces to clear the visual line
+            if (currentBufferLength > 0) {
+              const clearSequence = '\b \b'.repeat(currentBufferLength);
+              broadcast(projectId, JSON.stringify({
+                type: 'output',
+                data: clearSequence
+              }));
+            }
+            
+            // Set new command in buffer
+            terminalSession.outputBuffer = newCommand;
+            
+            // Echo new command to terminal
+            if (newCommand) {
+              broadcast(projectId, JSON.stringify({
+                type: 'output',
+                data: newCommand
+              }));
+            }
+          } else if (data.type === 'input') {
             const input = data.data;
             
             // Process each character in the input
