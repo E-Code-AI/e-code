@@ -1,10 +1,10 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { File, Project } from '@shared/schema';
 import CodeEditor from './CodeEditor';
 import FileExplorer from './FileExplorer';
 import { ReplitFileExplorer } from './editor/ReplitFileExplorer';
 import { ReplitAgent } from './ReplitAgent';
+import { MobileAgentInterface } from './MobileAgentInterface';
 import Terminal from './Terminal';
 import { Ghostwriter } from './Ghostwriter';
 import { CollaborationPanel } from './CollaborationPanel';
@@ -74,15 +74,29 @@ export function EditorWorkspace({
   const [activeFile, setActiveFile] = useState<File | undefined>(undefined);
   const [showTerminal, setShowTerminal] = useState(true); // Show terminal by default
   const [terminalMinimized, setTerminalMinimized] = useState(false);
-  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [showAIAssistant, setShowAIAssistant] = useState(true); // Default open for Replit-like layout
   const [showFileExplorer, setShowFileExplorer] = useState(true);
   const [showCollaboration, setShowCollaboration] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showReplitDB, setShowReplitDB] = useState(false);
   const [showNixConfig, setShowNixConfig] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'agent' | 'files' | 'editor'>('agent'); // Agent-first on mobile
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Listen for openAgent custom event from sidebar
+  useEffect(() => {
+    const handleOpenAgent = () => {
+      setShowAIAssistant(true);
+    };
+    
+    window.addEventListener('openAgent', handleOpenAgent);
+    
+    return () => {
+      window.removeEventListener('openAgent', handleOpenAgent);
+    };
+  }, []);
 
   // Set active file when files change or on initial load
   useEffect(() => {
@@ -324,80 +338,163 @@ export function EditorWorkspace({
   // Otherwise, show the full workspace
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Editor toolbar - only visible on smaller screens for responsive design */}
-      <div className="flex md:hidden items-center justify-between px-4 py-2 border-b border-border bg-background/80">
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={toggleFileExplorer}
-            className="h-8 w-8 p-0"
-            title={showFileExplorer ? "Hide file explorer" : "Show file explorer"}
-          >
-            {showFileExplorer ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
-          </Button>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={toggleTerminal}
-            className="h-8"
-          >
-            <TerminalIcon className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Terminal</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={toggleAIAssistant}
-            className="h-8"
-          >
-            <Sparkles className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">AI Assistant</span>
-          </Button>
-        </div>
+      {/* Mobile Layout (Agent-first) - Visible only on mobile */}
+      <div className="md:hidden h-full flex flex-col">
+        <Tabs value={mobileTab} onValueChange={(value) => setMobileTab(value as 'agent' | 'files' | 'editor')} className="h-full flex flex-col">
+          {/* Mobile Tab Bar */}
+          <TabsList className="w-full rounded-none border-b border-border bg-background/80 h-12 px-2">
+            <TabsTrigger value="agent" className="flex-1 data-[state=active]:bg-primary/10" data-testid="tab-agent">
+              <Sparkles className="h-4 w-4 mr-2" />
+              <span className="text-xs sm:text-sm">Agent</span>
+            </TabsTrigger>
+            <TabsTrigger value="files" className="flex-1 data-[state=active]:bg-primary/10" data-testid="tab-files">
+              <PanelLeft className="h-4 w-4 mr-2" />
+              <span className="text-xs sm:text-sm">Files</span>
+            </TabsTrigger>
+            <TabsTrigger value="editor" className="flex-1 data-[state=active]:bg-primary/10" data-testid="tab-editor">
+              <Code className="h-4 w-4 mr-2" />
+              <span className="text-xs sm:text-sm">Editor</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Agent Tab Content */}
+          <TabsContent value="agent" className="flex-1 overflow-hidden m-0 border-0 p-0">
+            <MobileAgentInterface projectId={project.id} className="h-full" />
+          </TabsContent>
+
+          {/* Files Tab Content */}
+          <TabsContent value="files" className="flex-1 overflow-hidden m-0 border-0 p-0">
+            <div className="h-full overflow-y-auto bg-background">
+              <ReplitFileExplorer 
+                projectId={project.id}
+                onFileSelect={(file) => {
+                  handleFileSelect({
+                    id: file.id,
+                    name: file.name,
+                    content: file.content || '',
+                    projectId: project.id,
+                    parentId: file.parentId,
+                    isFolder: file.type === 'folder',
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                  });
+                  // Switch to editor tab after selecting a file
+                  if (file.type !== 'folder') {
+                    setMobileTab('editor');
+                  }
+                }}
+                selectedFileId={activeFileId || undefined}
+              />
+            </div>
+          </TabsContent>
+
+          {/* Editor Tab Content */}
+          <TabsContent value="editor" className="flex-1 overflow-hidden m-0 border-0 p-0">
+            <div className="h-full flex flex-col">
+              {activeFile ? (
+                <CodeEditor file={activeFile} onChange={handleFileChange} />
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-center p-6">
+                    <Code className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-medium mb-2">No file selected</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Switch to Files tab to select a file
+                    </p>
+                    <Button 
+                      onClick={() => setMobileTab('files')} 
+                      variant="outline"
+                      data-testid="button-go-to-files"
+                    >
+                      <PanelLeft className="h-4 w-4 mr-2" />
+                      Go to Files
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
-      {/* Main workspace area */}
-      <div className="flex-grow grid grid-cols-1 md:grid-cols-[auto,1fr] overflow-hidden mb-14 md:mb-0">
-        {/* File explorer (left sidebar) - Responsive sidebar */}
-        {showFileExplorer && (
-          <div className={`${showFileExplorer ? 'block' : 'hidden'} md:block w-full md:w-64 border-r border-border bg-background overflow-y-auto`}>
-            {/* Desktop toolbar visible only in sidebar */}
-            <div className="hidden md:flex items-center justify-between px-4 py-2 border-b border-border">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={toggleFileExplorer}
-                className="h-8 w-8 p-0"
-              >
-                <PanelLeftClose className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium">Files</span>
-            </div>
-            
-            <ReplitFileExplorer 
-              projectId={project.id}
-              onFileSelect={(file) => handleFileSelect({
-                id: file.id,
-                name: file.name,
-                content: file.content || '',
-                projectId: project.id,
-                parentId: file.parentId,
-                isFolder: file.type === 'folder',
-                createdAt: new Date(),
-                updatedAt: new Date()
-              })}
-              selectedFileId={activeFileId || undefined}
-            />
-          </div>
-        )}
-
-        {/* Right side content - Editor area */}
+      {/* Desktop Layout - Visible only on desktop */}
+      <div className="hidden md:flex flex-grow overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="w-full">
-          {/* Editor area */}
-          <ResizablePanel defaultSize={showAIAssistant ? 70 : 100} minSize={40} className="h-full">
+          {/* AI Assistant panel - LEFT (Replit-like) */}
+          {showAIAssistant && (
+            <>
+              <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
+                <div className="flex flex-col h-full border-r border-border">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+                    <span className="text-sm font-medium">AI Agent</span>
+                    <Button
+                      variant="ghost" 
+                      size="sm"
+                      onClick={toggleAIAssistant}
+                      className="h-6 w-6 p-0"
+                      data-testid="button-close-agent"
+                    >
+                      <span className="sr-only">Close</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </Button>
+                  </div>
+                  
+                  <div className="flex-1 overflow-hidden">
+                    <ReplitAgent 
+                      projectId={project.id}
+                      selectedFile={activeFile?.name}
+                      selectedCode=""
+                    />
+                  </div>
+                </div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+            </>
+          )}
+
+          {/* File explorer - MIDDLE */}
+          {showFileExplorer && (
+            <>
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                <div className="flex flex-col h-full border-r border-border bg-background">
+                  {/* Desktop toolbar visible only in sidebar */}
+                  <div className="hidden md:flex items-center justify-between px-4 py-2 border-b border-border">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={toggleFileExplorer}
+                      className="h-8 w-8 p-0"
+                      data-testid="button-close-files"
+                    >
+                      <PanelLeftClose className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium">Files</span>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto">
+                    <ReplitFileExplorer 
+                      projectId={project.id}
+                      onFileSelect={(file) => handleFileSelect({
+                        id: file.id,
+                        name: file.name,
+                        content: file.content || '',
+                        projectId: project.id,
+                        parentId: file.parentId,
+                        isFolder: file.type === 'folder',
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                      })}
+                      selectedFileId={activeFileId || undefined}
+                    />
+                  </div>
+                </div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+            </>
+          )}
+
+          {/* Editor area - RIGHT */}
+          <ResizablePanel defaultSize={55} minSize={40} className="h-full">
             {/* Desktop toolbar */}
             <div className="hidden md:flex items-center justify-between px-4 py-2 border-b border-border bg-background/80">
               <div className="flex items-center space-x-2">
@@ -467,43 +564,12 @@ export function EditorWorkspace({
               )}
             </div>
           </ResizablePanel>
-
-          {/* AI Assistant panel */}
-          {showAIAssistant && (
-            <>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={30} minSize={25}>
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-                    <span className="text-sm font-medium">AI Agent</span>
-                    <Button
-                      variant="ghost" 
-                      size="sm"
-                      onClick={toggleAIAssistant}
-                      className="h-6 w-6 p-0"
-                    >
-                      <span className="sr-only">Close</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                    </Button>
-                  </div>
-                  
-                  <div className="flex-1 overflow-hidden">
-                    <ReplitAgent 
-                      projectId={project.id}
-                      selectedFile={activeFile?.name}
-                      selectedCode=""
-                    />
-                  </div>
-                </div>
-              </ResizablePanel>
-            </>
-          )}
         </ResizablePanelGroup>
       </div>
 
-      {/* Terminal panel */}
+      {/* Terminal panel - Hidden on mobile (using tabs instead) */}
       {showTerminal && !terminalMinimized && (
-        <div className="h-1/3 border-t border-border">
+        <div className="hidden md:block h-1/3 border-t border-border">
           <Terminal 
             project={project}
             minimized={terminalMinimized}

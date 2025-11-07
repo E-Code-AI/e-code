@@ -1,5 +1,4 @@
 
-// @ts-nocheck
 import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 import {
@@ -30,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
   } = useQuery<SelectUser | undefined, Error>({
-    queryKey: ["/api/user"],
+    queryKey: ["/api/me"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: 2,
     retryDelay: 500,
@@ -48,15 +47,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: async (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+      queryClient.setQueryData(["/api/me"], user);
       // Invalidate and refetch all queries that depend on authentication
       await queryClient.invalidateQueries();
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.username}!`,
       });
-      // Force a page reload to ensure session is properly initialized
-      window.location.href = '/dashboard';
+      // If user is admin, redirect to admin page, otherwise dashboard
+      if (user.role === 'admin') {
+        window.location.href = '/admin/chatgpt';
+      } else {
+        window.location.href = '/dashboard';
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -77,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+      queryClient.setQueryData(["/api/me"], user);
       toast({
         title: "Registration successful",
         description: `Welcome, ${user.username}!`,
@@ -109,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear all cached data
       queryClient.clear();
       // Set user to null
-      queryClient.setQueryData(["/api/user"], null);
+      queryClient.setQueryData(["/api/me"], null);
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Real Mobile App Compilation Service
  * Provides actual mobile app building capabilities

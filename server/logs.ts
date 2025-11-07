@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { WebSocket, WebSocketServer } from 'ws';
 import { Server } from 'http';
 import { log } from './vite';

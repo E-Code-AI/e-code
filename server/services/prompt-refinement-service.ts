@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createLogger } from '../utils/logger';
 import { aiProviderManager } from '../ai/ai-provider';
 import { checkpointService } from './checkpoint-service';

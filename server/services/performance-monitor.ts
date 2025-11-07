@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Performance Monitoring Service
  * Fortune 500-grade performance tracking

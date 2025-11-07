@@ -1,4 +1,3 @@
-// @ts-nocheck
 import crypto from 'crypto';
 import { db } from '../db';
 import { projects, users } from '@shared/schema';

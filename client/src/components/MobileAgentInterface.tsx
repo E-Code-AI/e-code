@@ -1,74 +1,54 @@
-// @ts-nocheck
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Bot, User, Send, Paperclip, Image, FileText, 
-  Loader2, CheckCircle, AlertCircle, Clock, 
-  Play, Square, Upload, MoreHorizontal, X,
-  Settings, Sparkles, Check, Edit3, Trash2,
-  File, Folder, Package, Download, RefreshCw,
-  ThumbsUp, ThumbsDown, Eye, EyeOff
+  Bot, User, Send, Paperclip, FileText, 
+  Loader2, CheckCircle, Clock, 
+  Play, X, Settings, Sparkles, MoreHorizontal,
+  Folder, Package
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { useAgentSession } from '@/../../shared/agent';
+import '@/lib/agentApiClient'; // Initialize web API client
 
 interface MobileAgentInterfaceProps {
   projectId: number;
   className?: string;
 }
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: Date;
-  isStreaming?: boolean;
-  attachments?: File[];
-  plan?: ProjectPlan;
-  actions?: Array<{
-    type: 'create_file' | 'create_folder' | 'install_package' | 'deploy' | 'run_command';
-    data: any;
-    completed: boolean;
-    progress?: number;
-    approved?: boolean;
-  }>;
-}
-
-interface ProjectPlan {
-  id: string;
-  title: string;
-  description: string;
-  tasks: Array<{
-    id: string;
-    title: string;
-    description: string;
-    type: 'file' | 'folder' | 'package' | 'config';
-    selected: boolean;
-    required: boolean;
-    estimated: string;
-  }>;
-  approved: boolean;
-}
-
 export function MobileAgentInterface({ projectId, className }: MobileAgentInterfaceProps) {
   const { toast } = useToast();
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [isBuilding, setIsBuilding] = useState(false);
-  const [buildProgress, setBuildProgress] = useState(0);
-  const [showPlanDialog, setShowPlanDialog] = useState(false);
-  const [currentPlan, setCurrentPlan] = useState<ProjectPlan | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Use shared Agent session hook
+  const { state, actions } = useAgentSession({
+    projectId,
+    onBuildComplete: () => {
+      toast({
+        title: "Project built successfully!",
+        description: "Your application is ready to use.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const { messages, isLoading, isBuilding, buildProgress, currentPlan, showPlanDialog } = state;
+  const { sendMessage: sendAgentMessage, approvePlan, toggleTaskSelection } = actions;
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -78,141 +58,13 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  useEffect(() => {
-    // Check for initial prompt from dashboard
-    const storedPrompt = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
-    if (storedPrompt) {
-      setInput(storedPrompt);
-      window.sessionStorage.removeItem(`agent-prompt-${projectId}`);
-      // Auto-send the prompt
-      setTimeout(() => {
-        sendMessage(storedPrompt);
-      }, 500);
-    }
-  }, [projectId]);
-
   const sendMessage = async (messageText?: string) => {
     const messageContent = messageText || input.trim();
     if (!messageContent && attachments.length === 0) return;
 
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: messageContent,
-      timestamp: new Date(),
-      attachments: [...attachments]
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+    await sendAgentMessage(messageContent, attachments);
     setInput('');
     setAttachments([]);
-    setIsLoading(true);
-
-    try {
-      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
-        message: messageContent,
-        mode: 'agent',
-        attachments: attachments.length > 0 ? attachments.map(f => f.name) : undefined
-      });
-
-      // Parse the response properly
-      const responseData = await response.json();
-
-      // Check if response includes a project plan
-      if (responseData.plan) {
-        const plan: ProjectPlan = {
-          id: `plan-${Date.now()}`,
-          title: responseData.plan.title || 'Project Implementation Plan',
-          description: responseData.plan.description || 'Here\'s what I\'ll build for you:',
-          tasks: responseData.plan.tasks || [],
-          approved: false
-        };
-        setCurrentPlan(plan);
-        setShowPlanDialog(true);
-      }
-
-      const assistantMessage: Message = {
-        id: responseData.id || `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: responseData.content || responseData.message,
-        timestamp: new Date(),
-        plan: responseData.plan && currentPlan ? currentPlan : undefined,
-        actions: responseData.actions
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // If there are actions and plan is approved, start building
-      if (responseData.actions && responseData.actions.length > 0) {
-        setIsBuilding(true);
-        await executeActions(responseData.actions);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const executeActions = async (actions: any[]) => {
-    setBuildProgress(0);
-    
-    for (let i = 0; i < actions.length; i++) {
-      const action = actions[i];
-      setBuildProgress(((i + 1) / actions.length) * 100);
-      
-      try {
-        switch (action.type) {
-          case 'create_file':
-            await apiRequest('POST', `/api/files/${projectId}`, {
-              name: action.data.name,
-              content: action.data.content || '',
-              path: action.data.path
-            });
-            break;
-          case 'create_folder':
-            await apiRequest('POST', `/api/files/${projectId}/folders`, {
-              name: action.data.name,
-              path: action.data.path
-            });
-            break;
-          case 'install_package':
-            await apiRequest('POST', `/api/packages/${projectId}/install`, {
-              name: action.data.name,
-              version: action.data.version
-            });
-            break;
-        }
-        
-        // Update action status
-        setMessages(prev => prev.map(msg => ({
-          ...msg,
-          actions: msg.actions?.map(a => 
-            a.type === action.type && a.data.name === action.data.name
-              ? { ...a, completed: true, progress: 100 }
-              : a
-          )
-        })));
-        
-        // Simulate delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-      } catch (error) {
-        console.error(`Error executing action ${action.type}:`, error);
-      }
-    }
-    
-    setIsBuilding(false);
-    setBuildProgress(100);
-    
-    toast({
-      title: "Project built successfully!",
-      description: "Your application is ready to use.",
-    });
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,49 +82,15 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const approvePlan = () => {
+  const handleApprovePlan = () => {
     if (currentPlan) {
       const selectedTasks = currentPlan.tasks.filter(task => task.selected);
-      
-      setCurrentPlan(prev => prev ? { ...prev, approved: true } : null);
-      setShowPlanDialog(false);
-      
       toast({
         title: "Plan approved!",
         description: `Building ${selectedTasks.length} selected features.`,
       });
-
-      // Start building with selected tasks
-      const actions = selectedTasks.map(task => ({
-        type: task.type === 'file' ? 'create_file' : 
-              task.type === 'folder' ? 'create_folder' : 
-              task.type === 'package' ? 'install_package' : 'run_command',
-        data: {
-          name: task.title,
-          description: task.description
-        },
-        completed: false,
-        progress: 0,
-        approved: true
-      }));
-
-      if (actions.length > 0) {
-        setIsBuilding(true);
-        executeActions(actions);
-      }
+      approvePlan(selectedTasks);
     }
-  };
-
-  const toggleTaskSelection = (taskId: string) => {
-    setCurrentPlan(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        tasks: prev.tasks.map(task => 
-          task.id === taskId ? { ...task, selected: !task.selected } : task
-        )
-      };
-    });
   };
 
   const adjustTextareaHeight = () => {
@@ -353,7 +171,7 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
                     
                     {message.attachments && message.attachments.length > 0 && (
                       <div className="mt-2 space-y-1">
-                        {message.attachments.map((file, index) => (
+                        {message.attachments.map((file: any, index: number) => (
                           <div key={index} className="flex items-center gap-2 text-xs opacity-80">
                             <FileText className="h-3 w-3" />
                             <span>{file.name}</span>
@@ -382,7 +200,9 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
                               <Clock className="h-4 w-4 text-gray-500" />
                             )}
                           </div>
-                          <p className="text-xs text-gray-400">{action.data.name}</p>
+                          <p className="text-xs text-gray-400">
+                            {action.path || action.package || action.data?.name || action.description}
+                          </p>
                           {action.progress && action.progress > 0 && (
                             <Progress value={action.progress} className="mt-2 h-1" />
                           )}
@@ -501,7 +321,7 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
       />
 
       {/* Plan Approval Dialog */}
-      <Dialog open={showPlanDialog} onOpenChange={setShowPlanDialog}>
+      <Dialog open={showPlanDialog} onOpenChange={() => actions.cancelPlan()}>
         <DialogContent className="max-w-md mx-auto bg-gray-900 text-white border-gray-700">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -541,13 +361,13 @@ export function MobileAgentInterface({ projectId, className }: MobileAgentInterf
           <div className="flex gap-3 pt-4">
             <Button 
               variant="outline" 
-              onClick={() => setShowPlanDialog(false)}
+              onClick={() => actions.cancelPlan()}
               className="flex-1"
             >
               Cancel
             </Button>
             <Button 
-              onClick={approvePlan}
+              onClick={handleApprovePlan}
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
               <Play className="h-4 w-4 mr-2" />

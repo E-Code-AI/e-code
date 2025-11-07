@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router } from 'express';
 import { openSourceModelsProvider, OPENSOURCE_MODELS } from '../ai/opensource-models-provider';
 import { aiBillingService } from '../services/ai-billing-service';

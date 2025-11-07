@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Redis Cache Service
  * Fortune 500-grade caching implementation

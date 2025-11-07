@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * API endpoints for project isolation management
  */

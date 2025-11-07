@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { db } from '../db';
 import { codeReviews, reviewComments, reviewApprovals, users, projects } from '@shared/schema';
 import { eq, and, desc, count } from 'drizzle-orm';

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useRef, useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,7 @@ interface ConsoleLog {
 }
 
 interface ReplitConsoleProps {
-  projectId: number;
+  projectId: string | number; // Support both UUID strings and numeric IDs
   isRunning?: boolean;
   executionId?: string;
   className?: string;
@@ -30,15 +29,16 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
 
   // Fetch initial logs - REAL BACKEND
   const { data: initialLogs } = useQuery<ConsoleLog[]>({
-    queryKey: [`/api/terminal/logs`, projectId],
-    enabled: !!projectId,
+    queryKey: [`/api/terminal/logs?projectId=${projectId}`],
+    enabled: !!projectId && projectId > 0,
   });
 
   // WebSocket connection for real-time logs
   useEffect(() => {
     if (!isRunning || !executionId) return;
 
-    const ws = new WebSocket(`ws://${window.location.host}/api/terminal/ws?projectId=${projectId}&executionId=${executionId}`);
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}&executionId=${executionId}`);
     
     ws.onmessage = (event) => {
       const log = JSON.parse(event.data);
@@ -62,10 +62,13 @@ export function ReplitConsole({ projectId, isRunning, executionId, className }: 
     };
   }, [projectId, isRunning, executionId]);
 
-  // Initialize with any existing logs
+  // Initialize with any existing logs (normalize timestamps from JSON)
   useEffect(() => {
     if (initialLogs) {
-      setLogs(initialLogs);
+      setLogs(initialLogs.map(log => ({
+        ...log,
+        timestamp: new Date(log.timestamp)
+      })));
     }
   }, [initialLogs]);
 

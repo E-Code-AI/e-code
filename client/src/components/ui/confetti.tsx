@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Confetti animation component
 export function Confetti() {
   // Create confetti effect

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router } from 'express';
 import { storage } from '../storage';
 import multer from 'multer';

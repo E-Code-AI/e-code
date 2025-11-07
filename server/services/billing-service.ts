@@ -1,7 +1,14 @@
-// @ts-nocheck
 import { storage } from '../storage';
 import { EventEmitter } from 'events';
 import type { userCredits, budgetLimits, usageAlerts } from '@shared/schema';
+import sgMail from '@sendgrid/mail';
+import { billingEmailTemplates } from '../utils/billing-email-templates';
+
+// Initialize SendGrid
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
+if (SENDGRID_API_KEY) {
+  sgMail.setApiKey(SENDGRID_API_KEY);
+}
 
 type UserCredits = typeof userCredits.$inferSelect;
 type BudgetLimit = typeof budgetLimits.$inferSelect;
@@ -185,8 +192,20 @@ export class BillingService extends EventEmitter {
         // Send email if configured
         if (limits.notificationEmail) {
           try {
-            // TODO: Implement email sending
-            logger.info(`Would send budget alert to ${limits.notificationEmail} - ${usagePercentage}% used`);
+            // Send actual email using SendGrid
+            await this.sendBillingEmail(
+              'budgetThresholdAlert',
+              limits.notificationEmail,
+              {
+                username: await this.getUsernameById(userId),
+                usagePercentage: Math.round(usagePercentage),
+                remainingCredits: remainingCredits,
+                totalCredits: totalCredits,
+                threshold: limits.alertThreshold
+              }
+            );
+            
+            logger.info(`Sent budget alert to ${limits.notificationEmail} - ${Math.round(usagePercentage)}% used`);
             await storage.markAlertSent(alert.id);
           } catch (error) {
             logger.error('Failed to send budget alert email:', error);
@@ -254,9 +273,13 @@ export class BillingService extends EventEmitter {
         resetDate: this.getNextResetDate()
       });
 
-      // Clear old alerts
-      const alerts = await storage.getUsageAlerts(userId);
-      // TODO: Implement alert cleanup
+      // Clear old alerts (purge alerts older than the previous reset date)
+      const previousResetDate = new Date(credits.resetDate);
+      const deletedCount = await storage.deleteOldUsageAlerts(userId.toString(), previousResetDate);
+      
+      if (deletedCount > 0) {
+        logger.info(`Purged ${deletedCount} old usage alerts for user ${userId}`);
+      }
 
       logger.info(`Reset monthly credits for user ${userId}`);
     } catch (error) {
@@ -348,6 +371,239 @@ export class BillingService extends EventEmitter {
   private getCurrentMonthStart(): Date {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+
+  // Email sending methods
+  async sendBillingEmail(
+    templateType: keyof typeof billingEmailTemplates,
+    toEmail: string,
+    data: any
+  ): Promise<void> {
+    if (!SENDGRID_API_KEY) {
+      logger.warn('SendGrid API key not configured, skipping email send');
+      return;
+    }
+
+    try {
+      let emailContent: { subject: string; html: string; text: string };
+      
+      switch (templateType) {
+        case 'budgetThresholdAlert':
+          emailContent = billingEmailTemplates.budgetThresholdAlert(
+            data.username,
+            data.usagePercentage,
+            data.remainingCredits,
+            data.totalCredits,
+            data.threshold
+          );
+          break;
+        
+        case 'lowCreditsWarning':
+          emailContent = billingEmailTemplates.lowCreditsWarning(
+            data.username,
+            data.remainingCredits,
+            data.totalCredits
+          );
+          break;
+        
+        case 'creditDepleted':
+          emailContent = billingEmailTemplates.creditDepleted(data.username);
+          break;
+        
+        case 'overageAlert':
+          emailContent = billingEmailTemplates.overageAlert(
+            data.username,
+            data.overageAmount,
+            data.monthlyLimit
+          );
+          break;
+        
+        case 'monthlyUsageSummary':
+          emailContent = billingEmailTemplates.monthlyUsageSummary(
+            data.username,
+            data.month,
+            data.totalUsed,
+            data.totalCredits,
+            data.topResources
+          );
+          break;
+        
+        default:
+          throw new Error(`Unknown email template type: ${templateType}`);
+      }
+
+      const msg = {
+        to: toEmail,
+        from: {
+          email: process.env.FROM_EMAIL || 'noreply@e-code.ai',
+          name: process.env.FROM_NAME || 'E-Code Platform'
+        },
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+      };
+
+      await sgMail.send(msg);
+      logger.info(`Successfully sent ${templateType} email to ${toEmail}`);
+      
+      // Track email send in database
+      await storage.trackUsage(data.userId || 0, 'email.billing_notification', 1, {
+        emailType: templateType,
+        recipient: toEmail,
+        sentAt: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      logger.error(`Failed to send ${templateType} email:`, error);
+      throw error;
+    }
+  }
+
+  // Helper method to get username by user ID
+  async getUsernameById(userId: number): Promise<string> {
+    try {
+      const user = await storage.getUserById(userId);
+      return user?.displayName || user?.username || 'User';
+    } catch (error) {
+      logger.error(`Failed to get username for user ${userId}:`, error);
+      return 'User';
+    }
+  }
+
+  // Send low credits warning
+  async sendLowCreditsWarning(userId: number, credits: UserCredits): Promise<void> {
+    try {
+      const limits = await storage.getBudgetLimits(userId);
+      if (!limits?.notificationEmail) return;
+
+      const monthlyCredits = parseFloat(credits.monthlyCredits as any) || 0;
+      const extraCredits = parseFloat(credits.extraCredits as any) || 0;
+      const remainingCredits = parseFloat(credits.remainingCredits as any) || 0;
+      const totalCredits = monthlyCredits + extraCredits;
+
+      // Send warning if credits are below 20%
+      if (remainingCredits < totalCredits * 0.2) {
+        // Check if we already sent this alert recently
+        const existingAlerts = await storage.getUsageAlerts(userId);
+        const recentAlert = existingAlerts.some(
+          alert => alert.alertType === 'low_credits' &&
+          new Date(alert.createdAt).getTime() > Date.now() - 24 * 60 * 60 * 1000 // Within last 24 hours
+        );
+
+        if (!recentAlert) {
+          await this.sendBillingEmail(
+            'lowCreditsWarning',
+            limits.notificationEmail,
+            {
+              userId,
+              username: await this.getUsernameById(userId),
+              remainingCredits,
+              totalCredits
+            }
+          );
+
+          await storage.createUsageAlert({
+            userId,
+            alertType: 'low_credits',
+            threshold: 20,
+            sent: true
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('Failed to send low credits warning:', error);
+    }
+  }
+
+  // Send credit depletion notification
+  async sendCreditDepletedNotification(userId: number): Promise<void> {
+    try {
+      const limits = await storage.getBudgetLimits(userId);
+      if (!limits?.notificationEmail) return;
+
+      // Check if we already sent this alert recently
+      const existingAlerts = await storage.getUsageAlerts(userId);
+      const recentAlert = existingAlerts.some(
+        alert => alert.alertType === 'credits_depleted' &&
+        new Date(alert.createdAt).getTime() > Date.now() - 6 * 60 * 60 * 1000 // Within last 6 hours
+      );
+
+      if (!recentAlert) {
+        await this.sendBillingEmail(
+          'creditDepleted',
+          limits.notificationEmail,
+          {
+            userId,
+            username: await this.getUsernameById(userId)
+          }
+        );
+
+        await storage.createUsageAlert({
+          userId,
+          alertType: 'credits_depleted',
+          threshold: 100,
+          sent: true
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to send credit depleted notification:', error);
+    }
+  }
+
+  // Send monthly usage summary
+  async sendMonthlyUsageSummary(userId: number): Promise<void> {
+    try {
+      const limits = await storage.getBudgetLimits(userId);
+      if (!limits?.notificationEmail) return;
+
+      const credits = await storage.getUserCredits(userId);
+      if (!credits) return;
+
+      // Get usage statistics for the month
+      const monthStart = this.getCurrentMonthStart();
+      const usageHistory = await storage.getUsageHistory(userId, monthStart, new Date());
+
+      // Aggregate usage by resource type
+      const resourceUsage = new Map<string, { usage: number; cost: number }>();
+      
+      usageHistory.forEach((record: any) => {
+        const existing = resourceUsage.get(record.resourceType) || { usage: 0, cost: 0 };
+        existing.usage += record.quantity || 0;
+        existing.cost += record.creditCost || 0;
+        resourceUsage.set(record.resourceType, existing);
+      });
+
+      // Get top 5 resources by cost
+      const topResources = Array.from(resourceUsage.entries())
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.cost - a.cost)
+        .slice(0, 5);
+
+      const monthlyCredits = parseFloat(credits.monthlyCredits as any) || 0;
+      const extraCredits = parseFloat(credits.extraCredits as any) || 0;
+      const remainingCredits = parseFloat(credits.remainingCredits as any) || 0;
+      const totalCredits = monthlyCredits + extraCredits;
+      const totalUsed = totalCredits - remainingCredits;
+
+      const monthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+      await this.sendBillingEmail(
+        'monthlyUsageSummary',
+        limits.notificationEmail,
+        {
+          userId,
+          username: await this.getUsernameById(userId),
+          month: monthName,
+          totalUsed,
+          totalCredits,
+          topResources
+        }
+      );
+
+      logger.info(`Sent monthly usage summary to user ${userId}`);
+    } catch (error) {
+      logger.error('Failed to send monthly usage summary:', error);
+    }
   }
 
   // Background job to reset credits monthly

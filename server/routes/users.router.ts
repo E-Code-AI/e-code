@@ -1,0 +1,231 @@
+import { Router, Request, Response, NextFunction } from "express";
+import { type IStorage } from "../storage";
+import { devAuthBypass, isAuthBypassEnabled } from "../dev-auth-bypass";
+import { csrfProtection } from "../middleware/csrf";
+import type { User } from "@shared/schema";
+import bcrypt from "bcrypt";
+
+export class UsersRouter {
+  private router: Router;
+  private storage: IStorage;
+
+  constructor(storage: IStorage) {
+    this.router = Router();
+    this.storage = storage;
+    this.initializeRoutes();
+  }
+
+  private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+    // Always allow in development mode for testing
+    if (process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) {
+      if (!req.user) {
+        req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
+      }
+      return next();
+    }
+    
+    // Apply auth bypass middleware
+    devAuthBypass(req, res, () => {
+      if (req.isAuthenticated()) {
+        return next();
+      }
+      
+      res.status(401).json({ 
+        message: "Unauthorized",
+        code: "AUTH_REQUIRED",
+        path: req.path 
+      });
+    });
+  };
+
+  private initializeRoutes() {
+    // Get user profile by ID
+    this.router.get("/api/users/:id", async (req: Request, res: Response) => {
+      try {
+        const userId = req.params.id;
+        const user = await this.storage.getUser(userId);
+        
+        if (!user) {
+          return res.status(404).json({
+            message: "User not found",
+            code: "USER_NOT_FOUND"
+          });
+        }
+        
+        // Remove sensitive information
+        const publicUser = {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
+          bio: user.bio,
+          createdAt: user.createdAt
+        };
+        
+        res.json(publicUser);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).json({ 
+          message: "Failed to fetch user",
+          code: "FETCH_ERROR"
+        });
+      }
+    });
+
+    // Get user profile by username
+    this.router.get("/api/users/username/:username", async (req: Request, res: Response) => {
+      try {
+        const username = req.params.username;
+        const user = await this.storage.getUserByUsername(username);
+        
+        if (!user) {
+          return res.status(404).json({
+            message: "User not found",
+            code: "USER_NOT_FOUND"
+          });
+        }
+        
+        // Remove sensitive information
+        const publicUser = {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
+          bio: user.bio,
+          createdAt: user.createdAt
+        };
+        
+        res.json(publicUser);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).json({ 
+          message: "Failed to fetch user",
+          code: "FETCH_ERROR"
+        });
+      }
+    });
+
+    // Update user profile
+    this.router.put("/api/users/:id", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const userId = req.params.id;
+        
+        // Can only update own profile
+        if (req.user!.id !== userId) {
+          return res.status(403).json({
+            message: "Can only update own profile",
+            code: "ACCESS_DENIED"
+          });
+        }
+        
+        const updates = req.body;
+        
+        // Don't allow changing id or username
+        delete updates.id;
+        delete updates.username;
+        
+        // If updating password, hash it
+        if (updates.password) {
+          updates.password = await bcrypt.hash(updates.password, 10);
+        }
+        
+        const user = await this.storage.updateUser(userId, updates);
+        
+        if (!user) {
+          return res.status(404).json({
+            message: "User not found",
+            code: "USER_NOT_FOUND"
+          });
+        }
+        
+        // Remove sensitive information
+        const publicUser = {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
+          bio: user.bio,
+          createdAt: user.createdAt
+        };
+        
+        res.json(publicUser);
+      } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ 
+          message: "Failed to update user",
+          code: "UPDATE_ERROR"
+        });
+      }
+    });
+
+    // Delete user account
+    this.router.delete("/api/users/:id", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const userId = req.params.id;
+        
+        // Can only delete own account
+        if (req.user!.id !== userId) {
+          return res.status(403).json({
+            message: "Can only delete own account",
+            code: "ACCESS_DENIED"
+          });
+        }
+        
+        await this.storage.deleteUser(userId);
+        
+        // Logout after deletion
+        req.logout((err: any) => {
+          if (err) {
+            console.error('Logout error after account deletion:', err);
+          }
+          res.json({ message: "Account deleted successfully" });
+        });
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ 
+          message: "Failed to delete user",
+          code: "DELETE_ERROR"
+        });
+      }
+    });
+
+    // Search users
+    this.router.get("/api/users/search", async (req: Request, res: Response) => {
+      try {
+        const query = (req.query.q || '').toString();
+        
+        if (!query || query.length < 2) {
+          return res.status(400).json({
+            message: "Search query must be at least 2 characters",
+            code: "INVALID_QUERY"
+          });
+        }
+        
+        const users = await this.storage.searchUsers(query);
+        
+        // Remove sensitive information
+        const publicUsers = users.map(user => ({
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl
+        }));
+        
+        res.json(publicUsers);
+      } catch (error) {
+        console.error('Error searching users:', error);
+        res.status(500).json({ 
+          message: "Failed to search users",
+          code: "SEARCH_ERROR"
+        });
+      }
+    });
+  }
+
+  getRouter(): Router {
+    return this.router;
+  }
+}

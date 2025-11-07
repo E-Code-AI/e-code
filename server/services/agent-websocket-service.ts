@@ -1,4 +1,3 @@
-// @ts-nocheck
 // WebSocket service for real-time agent progress updates
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';

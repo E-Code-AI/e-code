@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Network Layer Security for Enterprise Sandboxing
  * Implements network isolation, firewall rules, and traffic filtering

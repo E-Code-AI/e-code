@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * HTTP Transport for MCP Server
  * Enables MCP server to work over HTTP instead of STDIO

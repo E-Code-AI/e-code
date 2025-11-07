@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { File } from "@shared/schema";
 import { Terminal, AlertCircle, Workflow, X } from "lucide-react";

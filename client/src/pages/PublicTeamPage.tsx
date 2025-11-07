@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Users, Zap, Shield, Globe, Code2, GitBranch, MessageSquare } from "lucide-react";

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { codeAnalyzer } from './code-analyzer';
@@ -39,8 +38,7 @@ export class OpenAIProvider implements AIProvider {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt },
       ],
-      max_tokens: maxTokens,
-      temperature,
+      max_completion_tokens: maxTokens,
     });
 
     const result = completion.choices[0].message.content?.trim() || '';
@@ -67,8 +65,7 @@ export class OpenAIProvider implements AIProvider {
     const completion = await this.client.chat.completions.create({
       model: this.model,
       messages: messages as any,
-      max_tokens: maxTokens,
-      temperature,
+      max_completion_tokens: maxTokens,
     });
 
     const result = completion.choices[0].message.content?.trim() || '';
@@ -442,8 +439,19 @@ export class AIProviderManager {
       }
     }
     
-    // Return OpenAI as fallback even if not available
-    return this.providers.get('OpenAI GPT-4')!;
+    // No providers available - throw a clear error
+    const missingKeys = [];
+    if (!process.env.OPENAI_API_KEY) {
+      missingKeys.push('OPENAI_API_KEY');
+    }
+    if (!process.env.ANTHROPIC_API_KEY) {
+      missingKeys.push('ANTHROPIC_API_KEY');
+    }
+    
+    throw new Error(
+      `No AI providers are configured. Please configure at least one of the following API keys: ${missingKeys.join(', ')}. ` +
+      `You can set these in your environment variables or use the Replit integrations to manage them securely.`
+    );
   }
 }
 

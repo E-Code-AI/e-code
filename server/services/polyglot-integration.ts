@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Complete Polyglot Backend Integration - Routes all operations through appropriate services
 // Exactly like Replit's multi-language architecture
 
@@ -151,4 +150,15 @@ export class PolyglotIntegration {
   }
 }
 
-export const polyglotIntegration = new PolyglotIntegration();
+// Lazy initialize to prevent blocking server startup
+let _polyglotIntegration: PolyglotIntegration | null = null;
+
+export function getPolyglotIntegration(): PolyglotIntegration {
+  if (!_polyglotIntegration) {
+    _polyglotIntegration = new PolyglotIntegration();
+  }
+  return _polyglotIntegration;
+}
+
+// Export getter function instead of instance  
+export const polyglotIntegration = getPolyglotIntegration;

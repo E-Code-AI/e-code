@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useRef, useState } from "react";
 import * as monaco from "monaco-editor";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,11 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { registerAICodeCompletion, checkAICompletionAvailability } from "@/lib/ai-code-completion";
+import { CollaborativeProvider } from "./CollaborativeProvider";
+import { CollaboratorPresence } from "./CollaboratorPresence";
+import AICodeReview from "./AICodeReview";
+import CodeReviewPanel from "./CodeReviewPanel";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface EditorFile {
   id: number;
@@ -63,13 +67,15 @@ interface EditorUser {
 }
 
 interface ReplitMonacoEditorProps {
-  projectId: number;
+  projectId: string | number;
   fileId?: number;
   onRunCode?: () => void;
   onStopCode?: () => void;
   isRunning?: boolean;
   showCollaborators?: boolean;
   theme?: "dark" | "light";
+  enableCollaboration?: boolean;
+  onEditorMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
 }
 
 export function ReplitMonacoEditor({
@@ -79,24 +85,31 @@ export function ReplitMonacoEditor({
   onStopCode,
   isRunning = false,
   showCollaborators = true,
-  theme = "dark"
+  theme = "dark",
+  enableCollaboration = true,
+  onEditorMount
 }: ReplitMonacoEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentFile, setCurrentFile] = useState<EditorFile | null>(null);
   const [collaborators, setCollaborators] = useState<EditorUser[]>([]);
+  const [collaborationEnabled, setCollaborationEnabled] = useState(enableCollaboration);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [aiCompletionsEnabled, setAiCompletionsEnabled] = useState(true);
   const aiCompletionDisposables = useRef<monaco.IDisposable[]>([]);
+  const [showCodeReview, setShowCodeReview] = useState(false);
+  const [showCodeReviewPanel, setShowCodeReviewPanel] = useState(false);
+  const [codeReviewIssues, setCodeReviewIssues] = useState<any[]>([]);
+  const [editorContent, setEditorContent] = useState("");
 
   const { toast } = useToast();
 
   // Récupération du fichier actuel
   const { data: file, isLoading: fileLoading } = useQuery<EditorFile>({
-    queryKey: ["/api/files", fileId],
-    enabled: !!fileId,
+    queryKey: [`/api/projects/${projectId}/files/${fileId}`],
+    enabled: !!fileId && !!projectId,
   });
 
   // Mutation pour sauvegarder le fichier
@@ -119,7 +132,7 @@ export function ReplitMonacoEditor({
         title: "File saved",
         description: "Your changes have been saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/files", fileId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
     },
     onError: (error: Error) => {
       toast({
@@ -247,6 +260,11 @@ export function ReplitMonacoEditor({
     });
 
     editorInstanceRef.current = editor;
+    
+    // Call onEditorMount callback if provided
+    if (onEditorMount) {
+      onEditorMount(editor);
+    }
 
     // Register AI code completion
     if (aiCompletionsEnabled) {
@@ -324,6 +342,61 @@ export function ReplitMonacoEditor({
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
+  };
+  
+  // Handle code review issue click
+  const handleCodeReviewIssueClick = (issue: any) => {
+    if (!editorInstanceRef.current) return;
+    
+    // Jump to the issue line in the editor
+    const line = issue.line || 1;
+    editorInstanceRef.current.revealLineInCenter(line);
+    editorInstanceRef.current.setPosition({ lineNumber: line, column: issue.column || 1 });
+    
+    // Add highlighting for the issue line
+    const decorations = editorInstanceRef.current.deltaDecorations([], [
+      {
+        range: new monaco.Range(line, 1, line + (issue.endLine ? issue.endLine - line : 0), 1000),
+        options: {
+          isWholeLine: true,
+          className: `code-review-issue-${issue.severity}`,
+          glyphMarginClassName: `code-review-glyph-${issue.severity}`,
+          hoverMessage: {
+            value: `**${issue.severity.toUpperCase()}: ${issue.message}**\n\n${issue.explanation || ''}\n\n${issue.suggestion ? `💡 ${issue.suggestion}` : ''}`,
+          }
+        }
+      }
+    ]);
+    
+    // Clear decoration after 5 seconds
+    setTimeout(() => {
+      editorInstanceRef.current?.deltaDecorations(decorations, []);
+    }, 5000);
+  };
+
+  // Apply code review fix
+  const handleCodeReviewFix = (issue: any, fixCode: string) => {
+    if (!editorInstanceRef.current) return;
+    
+    const model = editorInstanceRef.current.getModel();
+    if (!model) return;
+    
+    const line = issue.line;
+    const endLine = issue.endLine || line;
+    
+    // Apply the fix by replacing the problematic lines
+    const range = new monaco.Range(line, 1, endLine, model.getLineMaxColumn(endLine));
+    
+    editorInstanceRef.current.executeEdits('code-review-fix', [{
+      range: range,
+      text: fixCode,
+      forceMoveMarkers: true
+    }]);
+    
+    toast({
+      title: "Fix Applied",
+      description: `Applied fix for ${issue.severity} issue on line ${line}`,
+    });
   };
 
   const formatLastSaved = (date: Date | null) => {
@@ -486,24 +559,111 @@ export function ReplitMonacoEditor({
                     {aiCompletionsEnabled ? "ON" : "OFF"}
                   </Badge>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[var(--ecode-border)]" />
+                <DropdownMenuItem 
+                  onClick={() => setShowCodeReview(!showCodeReview)}
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                >
+                  <Sparkles className="mr-2 h-4 w-4 text-[var(--ecode-orange)]" />
+                  Code Review
+                  <Badge variant={showCodeReview ? "default" : "secondary"} className="ml-auto text-xs">
+                    {showCodeReview ? "ON" : "OFF"}
+                  </Badge>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setShowCodeReviewPanel(!showCodeReviewPanel)}
+                  className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                >
+                  <FileText className="mr-2 h-4 w-4 text-[var(--ecode-orange)]" />
+                  Review Panel
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
-        {/* Zone de l'éditeur */}
-        <div className="flex-1 relative overflow-hidden">
-          <div ref={editorRef} className="h-full w-full replit-scrollbar" />
+        {/* Zone de l'éditeur avec code review */}
+        <div className="flex-1 relative overflow-hidden flex">
+          <div className={showCodeReviewPanel ? "flex-1" : "w-full"}>
+            <div ref={editorRef} className="h-full w-full replit-scrollbar" />
+            
+            {/* Overlay de status */}
+            {isRunning && (
+              <div className="absolute top-2 right-2 flex items-center space-x-2 bg-[var(--ecode-green)] text-white px-3 py-1 rounded-md text-sm">
+                <Zap className="h-3 w-3 animate-pulse" />
+                <span>Running</span>
+              </div>
+            )}
+            
+            {/* Code Review Inline */}
+            {showCodeReview && currentFile && (
+              <div className="absolute bottom-4 right-4 z-10">
+                <AICodeReview
+                  projectId={String(projectId)}
+                  fileId={fileId}
+                  filePath={currentFile.path}
+                  code={editorContent || currentFile.content}
+                  onIssueFix={handleCodeReviewFix}
+                  onIssueClick={handleCodeReviewIssueClick}
+                  inline={true}
+                  className="shadow-lg"
+                />
+              </div>
+            )}
+          </div>
           
-          {/* Overlay de status */}
-          {isRunning && (
-            <div className="absolute top-2 right-2 flex items-center space-x-2 bg-[var(--ecode-green)] text-white px-3 py-1 rounded-md text-sm">
-              <Zap className="h-3 w-3 animate-pulse" />
-              <span>Running</span>
+          {/* Code Review Panel */}
+          {showCodeReviewPanel && (
+            <div className="w-96 border-l border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+              <div className="h-full overflow-auto">
+                <CodeReviewPanel
+                  projectId={String(projectId)}
+                  onIssueSelect={handleCodeReviewIssueClick}
+                  onFileOpen={(fileId) => {
+                    // Handle file open if needed
+                    console.log('Open file:', fileId);
+                  }}
+                />
+              </div>
             </div>
           )}
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+// Export wrapped version with collaborative features
+export function CollaborativeReplitMonacoEditor(props: ReplitMonacoEditorProps) {
+  const { projectId, fileId, enableCollaboration = true } = props;
+  const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+
+  if (!enableCollaboration || !fileId) {
+    return <ReplitMonacoEditor {...props} />;
+  }
+
+  return (
+    <CollaborativeProvider
+      projectId={String(projectId)}
+      fileId={fileId}
+      editor={editorInstance}
+      enabled={enableCollaboration}
+    >
+      <div className="flex flex-col h-full">
+        {/* Collaboration Presence Bar */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--ecode-border)]">
+          <div className="text-sm text-[var(--ecode-text-secondary)]">
+            Real-time Collaboration
+          </div>
+          <CollaboratorPresence showFullList={false} />
+        </div>
+        
+        {/* Editor with collaboration */}
+        <ReplitMonacoEditor
+          {...props}
+          onEditorMount={(editor) => setEditorInstance(editor)}
+        />
+      </div>
+    </CollaborativeProvider>
   );
 }

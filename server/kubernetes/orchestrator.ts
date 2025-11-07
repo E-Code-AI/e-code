@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { KubeConfig, CoreV1Api, AppsV1Api, NetworkingV1Api } from '@kubernetes/client-node';
 import { v4 as uuidv4 } from 'uuid';
 import { createLogger } from '../utils/logger';

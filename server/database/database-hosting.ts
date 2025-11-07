@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Database Hosting Service
  * Implements managed database instances for E-Code projects

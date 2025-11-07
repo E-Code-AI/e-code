@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * MCP Server Authentication Layer
  * Provides OAuth and API key authentication for external clients like Claude.ai

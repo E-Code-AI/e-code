@@ -1,7 +1,7 @@
-// @ts-nocheck
 import { db } from '../db';
 import { mentorProfiles, mentorshipSessions, users } from '@shared/schema';
 import { eq, and, desc, gte, lte, count, avg } from 'drizzle-orm';
+import { zoomService } from '../integrations/zoom-service';
 
 export class MentorshipService {
   // Create mentor profile
@@ -156,7 +156,21 @@ export class MentorshipService {
       })
       .returning();
 
-    return session;
+    // Automatically generate meeting URL
+    const meetingUrl = await this.generateMeetingUrl(session.id, {
+      title: data.title,
+      scheduledAt: data.scheduledAt,
+      duration: data.duration
+    });
+
+    // Update session with meeting URL
+    const [updatedSession] = await db
+      .update(mentorshipSessions)
+      .set({ meetingUrl })
+      .where(eq(mentorshipSessions.id, session.id))
+      .returning();
+
+    return updatedSession;
   }
 
   // Get mentorship sessions
@@ -331,10 +345,46 @@ export class MentorshipService {
       .orderBy(mentorshipSessions.scheduledAt);
   }
 
-  // Generate meeting URL (placeholder for integration with video services)
-  generateMeetingUrl(sessionId: number): string {
-    // In real implementation, integrate with Zoom, Meet, etc.
-    return `https://meet.ecode.com/session/${sessionId}`;
+  // Generate meeting URL for mentorship sessions using Zoom
+  async generateMeetingUrl(
+    sessionId: number,
+    sessionData: {
+      title: string;
+      scheduledAt: Date;
+      duration: number;
+    }
+  ): Promise<string> {
+    if (!zoomService.isInitialized()) {
+      console.warn(`[MentorshipService] Zoom service not initialized for session ${sessionId}`);
+      console.warn('[MentorshipService] Set ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, and ZOOM_ACCOUNT_ID to enable real meeting links');
+      return `https://meet.ecode.com/session/${sessionId}`;
+    }
+
+    try {
+      const meeting = await zoomService.createMeeting({
+        topic: sessionData.title,
+        start_time: sessionData.scheduledAt,
+        duration: sessionData.duration,
+        settings: {
+          host_video: true,
+          participant_video: true,
+          join_before_host: false,
+          waiting_room: true,
+          auto_recording: 'none'
+        }
+      });
+
+      if (meeting) {
+        console.log(`[MentorshipService] Zoom meeting created for session ${sessionId}: ${meeting.id}`);
+        return meeting.join_url;
+      } else {
+        console.error(`[MentorshipService] Failed to create Zoom meeting for session ${sessionId}`);
+        return `https://meet.ecode.com/session/${sessionId}`;
+      }
+    } catch (error) {
+      console.error(`[MentorshipService] Error creating Zoom meeting:`, error);
+      return `https://meet.ecode.com/session/${sessionId}`;
+    }
   }
 }
 

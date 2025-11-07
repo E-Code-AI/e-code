@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { getProjectUrl } from '@/lib/utils';
+import { ECodeLogo } from '@/components/ECodeLogo';
 
 // Import stock images
 import modernSoftwareImg from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
@@ -116,14 +116,14 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-gray-50/50 to-background dark:from-background dark:via-gray-900/50 dark:to-background flex">
-      {/* Left Side - Form */}
+      {/* Left Side - Form - Mobile Optimized */}
       <motion.div 
-        className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16"
+        className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-16"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-md space-y-6 sm:space-y-8">
           {/* Back to Home */}
           <button
             onClick={() => navigate('/')}
@@ -134,20 +134,15 @@ export default function Login() {
           </button>
 
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">E</span>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">E-Code</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Enterprise Development Platform</p>
-            </div>
+          <div className="flex flex-col items-center justify-center mb-2">
+            <ECodeLogo size="lg" showText={true} />
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Enterprise Development Platform</p>
           </div>
 
-          {/* Welcome Message */}
+          {/* Welcome Message - Responsive Typography */}
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">Welcome back</h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Welcome back</h2>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Sign in to continue building amazing applications
             </p>
           </div>
@@ -166,7 +161,7 @@ export default function Login() {
                     name="username"
                     type="text"
                     placeholder="Enter your username or email"
-                    className="pl-10 h-12"
+                    className="pl-10 h-12 sm:h-11 text-base sm:text-sm"
                     value={formData.username}
                     onChange={handleInputChange}
                     disabled={loginMutation.isPending}
@@ -180,7 +175,7 @@ export default function Login() {
                   <Label htmlFor="password" className="text-sm font-medium">
                     Password
                   </Label>
-                  <Link href="/forgot-password" className="text-sm text-violet-600 dark:text-violet-400 hover:underline">
+                  <Link href="/forgot-password" className="text-sm text-orange-600 dark:text-orange-400 hover:underline">
                     Forgot password?
                   </Link>
                 </div>
@@ -191,7 +186,7 @@ export default function Login() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
-                    className="pl-10 pr-10 h-12"
+                    className="pl-10 pr-12 h-12 sm:h-11 text-base sm:text-sm"
                     value={formData.password}
                     onChange={handleInputChange}
                     disabled={loginMutation.isPending}
@@ -200,9 +195,9 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 -mr-2 sm:mr-0 flex items-center justify-center"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className="h-5 w-5 sm:h-4 sm:w-4" /> : <Eye className="h-5 w-5 sm:h-4 sm:w-4" />}
                   </button>
                 </div>
               </div>
@@ -226,7 +221,16 @@ export default function Login() {
 
             <Button 
               type="submit" 
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+              className="w-full h-12 sm:h-11 text-base sm:text-sm font-semibold"
+              style={{
+                background: 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #D85506 0%, #E88D20 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)';
+              }}
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? (
@@ -328,10 +332,13 @@ export default function Login() {
 
       {/* Right Side - Image & Features */}
       <motion.div 
-        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-violet-600 to-fuchsia-600 relative overflow-hidden"
+        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-500 to-amber-500 relative overflow-hidden"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
+        style={{
+          background: 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)'
+        }}
       >
         {/* Background Image */}
         <div className="absolute inset-0">
@@ -340,7 +347,9 @@ export default function Login() {
             alt="Modern Software Development"
             className="w-full h-full object-cover opacity-20"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-600/90 to-fuchsia-600/90" />
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(135deg, rgba(242, 98, 7, 0.9) 0%, rgba(249, 157, 37, 0.9) 100%)'
+          }} />
         </div>
 
         {/* Content */}

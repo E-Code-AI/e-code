@@ -1,13 +1,17 @@
-// @ts-nocheck
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { ReplitHeader } from '@/components/layout/ReplitHeader';
 import { ReplitSidebar } from '@/components/layout/ReplitSidebar';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
-import { ReplitAgentChat } from '@/components/ReplitAgentChat';
-import Terminal from '@/components/Terminal';
+import { ReplitAgent } from '@/components/ReplitAgent';
+import { ReplitConsole } from '@/components/editor/ReplitConsole';
+import { RunButton } from '@/components/RunButton';
+import { WebPreview } from '@/components/WebPreview';
 import { File } from '@shared/schema';
 import { 
   FileCode,
@@ -15,9 +19,11 @@ import {
   Bot,
   X,
   PanelLeft,
-  PanelLeftClose
+  PanelLeftClose,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ECodeLoading } from '@/components/ECodeLoading';
 
 interface ApplicationIDEWrapperProps {
   projectName: string;
@@ -32,80 +38,130 @@ export function ApplicationIDEWrapper({
   appComponent,
   projectId = 1
 }: ApplicationIDEWrapperProps) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [showSidebar, setShowSidebar] = useState(true);
   const [showAIChat, setShowAIChat] = useState(true);
   const [showTerminal, setShowTerminal] = useState(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
+  const [isRunning, setIsRunning] = useState(false);
+  const [executionId, setExecutionId] = useState<string | undefined>();
+  const [selectedFile, setSelectedFile] = useState<File | undefined>();
 
-  // Mock file structure for the application
-  const mockFiles: File[] = [
-    { 
-      id: 1, 
-      name: 'src', 
-      path: '/src',
-      content: null,
-      projectId: projectId,
-      isDirectory: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  // Fetch project files from backend - REAL DATA
+  const { 
+    data: files = [], 
+    isLoading: isLoadingFiles,
+    error: filesError,
+  } = useQuery<File[]>({
+    queryKey: [`/api/projects/${projectId}/files`],
+    enabled: !!projectId,
+  });
+
+  // Update file content mutation - REAL BACKEND
+  const updateFileMutation = useMutation({
+    mutationFn: async ({ fileId, content }: { fileId: number, content: string }) => {
+      const res = await apiRequest('PATCH', `/api/files/${fileId}`, { content });
+      return res.json();
     },
-    { 
-      id: 2, 
-      name: 'App.tsx', 
-      path: '/src/App.tsx',
-      content: '// Main application component\nimport React from "react";\n\nexport default function App() {\n  return <div>Application</div>;\n}',
-      projectId: projectId,
-      isDirectory: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+      toast({
+        title: 'File saved',
+        description: 'Your changes have been saved successfully',
+      });
     },
-    { 
-      id: 3, 
-      name: 'components', 
-      path: '/src/components',
-      content: null,
-      projectId: projectId,
-      isDirectory: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to save file',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
-    { 
-      id: 4, 
-      name: 'styles.css', 
-      path: '/src/styles.css',
-      content: '/* Application styles */\n* {\n  box-sizing: border-box;\n}',
-      projectId: projectId,
-      isDirectory: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  });
+
+  // Create file mutation - REAL BACKEND
+  const createFileMutation = useMutation({
+    mutationFn: async ({ name, isFolder, parentId }: { name: string, isFolder: boolean, parentId?: number | null }) => {
+      const res = await apiRequest('POST', `/api/files/${projectId}`, {
+        name,
+        isFolder,
+        parentId: parentId || null,
+        content: isFolder ? null : '',
+      });
+      return res.json();
     },
-    { 
-      id: 5, 
-      name: 'package.json', 
-      path: '/package.json',
-      content: JSON.stringify({
-        name: projectName.toLowerCase().replace(/\s+/g, '-'),
-        version: "1.0.0",
-        dependencies: {}
-      }, null, 2),
-      projectId: projectId,
-      isDirectory: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+      toast({
+        title: 'File created',
+        description: 'New file created successfully',
+      });
     },
-    { 
-      id: 6, 
-      name: 'README.md', 
-      path: '/README.md',
-      content: `# ${projectName}\n\n${projectDescription}`,
-      projectId: projectId,
-      isDirectory: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to create file',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Set default selected file when files load (using useEffect to avoid render-time state mutation)
+  useEffect(() => {
+    if (!selectedFile && files.length > 0) {
+      const defaultFile = files.find(f => !f.isDirectory);
+      if (defaultFile) {
+        setSelectedFile(defaultFile);
+      }
     }
-  ];
+  }, [files, selectedFile]);
 
-  const [selectedFile, setSelectedFile] = useState<File | undefined>(mockFiles[1]);
+  // Handle runtime state changes
+  const handleRunStateChange = (running: boolean, execId?: string) => {
+    setIsRunning(running);
+    setExecutionId(execId);
+    if (running) {
+      setShowTerminal(true);
+    }
+  };
+
+  // Show loading state while files are fetching
+  if (isLoadingFiles) {
+    return (
+      <div className="h-screen flex flex-col bg-background">
+        <ReplitHeader
+          projectName={projectName}
+          language="TypeScript"
+          projectId={projectId}
+          showMenu={true}
+        />
+        <div className="flex-1 flex items-center justify-center">
+          <ECodeLoading message="Loading project files..." />
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if files failed to load
+  if (filesError) {
+    return (
+      <div className="h-screen flex flex-col bg-background">
+        <ReplitHeader
+          projectName={projectName}
+          language="TypeScript"
+          projectId={projectId}
+          showMenu={true}
+        />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-destructive mb-2">Failed to load project files</p>
+            <p className="text-sm text-muted-foreground">{(filesError as Error).message}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -133,7 +189,14 @@ export function ApplicationIDEWrapper({
             <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
               <div className="h-full flex flex-col border-r">
                 <div className="p-3 border-b flex items-center justify-between">
-                  <h3 className="text-sm font-medium">Files</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-medium">Files</h3>
+                    {files.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        ({files.length})
+                      </span>
+                    )}
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -144,14 +207,20 @@ export function ApplicationIDEWrapper({
                   </Button>
                 </div>
                 <div className="flex-1 overflow-auto p-2">
-                  <FileExplorer
-                    files={mockFiles}
-                    projectId={projectId}
-                    onFileSelect={(file) => {
-                      setSelectedFile(file);
-                      setActiveTab('code');
-                    }}
-                  />
+                  {files.length === 0 ? (
+                    <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
+                      No files in this project
+                    </div>
+                  ) : (
+                    <FileExplorer
+                      files={files}
+                      projectId={projectId}
+                      onFileSelect={(file) => {
+                        setSelectedFile(file);
+                        setActiveTab('code');
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             </ResizablePanel>
@@ -162,43 +231,69 @@ export function ApplicationIDEWrapper({
             <ResizablePanel defaultSize={50} minSize={30}>
               <div className="h-full flex flex-col">
                 <div className="border-b">
-                  <div className="flex">
-                    <button
-                      className={cn(
-                        "px-4 py-2 text-sm font-medium border-b-2 transition-colors",
-                        activeTab === 'preview' 
-                          ? "border-primary text-primary" 
-                          : "border-transparent text-muted-foreground hover:text-foreground"
+                  <div className="flex items-center justify-between">
+                    <div className="flex">
+                      <button
+                        className={cn(
+                          "px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+                          activeTab === 'preview' 
+                            ? "border-primary text-primary" 
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        )}
+                        onClick={() => setActiveTab('preview')}
+                        data-testid="tab-preview"
+                      >
+                        Preview
+                      </button>
+                      <button
+                        className={cn(
+                          "px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+                          activeTab === 'code' 
+                            ? "border-primary text-primary" 
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        )}
+                        onClick={() => setActiveTab('code')}
+                        data-testid="tab-code"
+                      >
+                        Code
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 px-3">
+                      <RunButton 
+                        projectId={projectId}
+                        onRunning={handleRunStateChange}
+                        size="sm"
+                      />
+                      {isRunning && (
+                        <div className="flex items-center gap-1 text-xs text-green-600">
+                          <div className="h-2 w-2 rounded-full bg-green-600 animate-pulse" />
+                          Running
+                        </div>
                       )}
-                      onClick={() => setActiveTab('preview')}
-                    >
-                      Preview
-                    </button>
-                    <button
-                      className={cn(
-                        "px-4 py-2 text-sm font-medium border-b-2 transition-colors",
-                        activeTab === 'code' 
-                          ? "border-primary text-primary" 
-                          : "border-transparent text-muted-foreground hover:text-foreground"
-                      )}
-                      onClick={() => setActiveTab('code')}
-                    >
-                      Code
-                    </button>
+                    </div>
                   </div>
                 </div>
                 <div className="flex-1 overflow-hidden">
                   {activeTab === 'preview' ? (
                     <div className="h-full w-full">
-                      {appComponent}
+                      {appComponent || (
+                        <WebPreview 
+                          projectId={projectId}
+                          isRunning={isRunning}
+                        />
+                      )}
                     </div>
-                  ) : (
+                  ) : selectedFile ? (
                     <CodeEditor
-                      file={selectedFile || mockFiles[1]}
+                      file={selectedFile}
                       onSave={(fileId, content) => {
-                        console.log('Saving file', fileId, content);
+                        updateFileMutation.mutate({ fileId, content });
                       }}
                     />
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                      Select a file to edit
+                    </div>
                   )}
                 </div>
               </div>
@@ -225,7 +320,7 @@ export function ApplicationIDEWrapper({
                     </Button>
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <ReplitAgentChat
+                    <ReplitAgent
                       projectId={projectId}
                       selectedCode=""
                     />
@@ -235,26 +330,38 @@ export function ApplicationIDEWrapper({
             )}
           </ResizablePanelGroup>
 
-          {/* Terminal */}
+          {/* Console/Terminal */}
           {showTerminal && (
             <div className="h-64 border-t">
               <div className="h-full flex flex-col">
                 <div className="p-2 border-b flex items-center justify-between bg-muted/30">
                   <div className="flex items-center gap-2">
                     <TerminalIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">Terminal</span>
+                    <span className="text-sm font-medium">Console</span>
+                    {isRunning && (
+                      <span className="text-xs text-green-600 flex items-center gap-1">
+                        <div className="h-1.5 w-1.5 rounded-full bg-green-600 animate-pulse" />
+                        Live
+                      </span>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => setShowTerminal(false)}
+                    data-testid="button-close-terminal"
                   >
                     <X className="h-3 w-3" />
                   </Button>
                 </div>
-                <div className="flex-1">
-                  <Terminal projectId={projectId} />
+                <div className="flex-1 overflow-hidden">
+                  <ReplitConsole 
+                    projectId={projectId}
+                    isRunning={isRunning}
+                    executionId={executionId}
+                    className="h-full"
+                  />
                 </div>
               </div>
             </div>

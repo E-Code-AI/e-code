@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Service Integration Module
  * Integrates all real services into the application

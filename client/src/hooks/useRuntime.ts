@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Hook for managing project runtimes
  * This provides an interface to start, stop and monitor project runtimes

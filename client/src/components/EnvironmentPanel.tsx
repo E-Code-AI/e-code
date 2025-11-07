@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { useEnvironment, EnvironmentVariable } from "@/hooks/useEnvironment";
 import { Button } from "@/components/ui/button";

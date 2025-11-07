@@ -1,0 +1,22 @@
+{
+  "name": "E-Code Platform",
+  "short_name": "E-Code",
+  "description": "AI-powered development platform",
+  "theme_color": "#F26207",
+  "background_color": "#0A0A0A",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["developer", "productivity"],
+  "edge_side_panel": {
+    "preferred_width": 412
+  }
+}

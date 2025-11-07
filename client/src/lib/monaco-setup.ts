@@ -1,6 +1,4 @@
-// @ts-nocheck
 import * as monaco from 'monaco-editor';
-import loader from '@monaco-editor/loader';
 
 export interface EditorOptions {
   theme?: string;
@@ -274,40 +272,3 @@ export function setupMonacoTheme() {
   registerSnippets();
 }
 
-export async function initializeMonaco() {
-  try {
-    // Check if Monaco is already loaded
-    if ((window as any).monaco) {
-      return (window as any).monaco;
-    }
-
-    // Configure Monaco environment
-    self.MonacoEnvironment = {
-      getWorkerUrl: function (_moduleId: string, label: string) {
-        if (label === 'json') {
-          return '/monaco-editor/esm/vs/language/json/json.worker.js';
-        }
-        if (label === 'css' || label === 'scss' || label === 'less') {
-          return '/monaco-editor/esm/vs/language/css/css.worker.js';
-        }
-        if (label === 'html' || label === 'handlebars' || label === 'razor') {
-          return '/monaco-editor/esm/vs/language/html/html.worker.js';
-        }
-        if (label === 'typescript' || label === 'javascript') {
-          return '/monaco-editor/esm/vs/language/typescript/ts.worker.js';
-        }
-        return '/monaco-editor/esm/vs/editor/editor.worker.js';
-      }
-    };
-
-    loader.config({ monaco });
-
-    const monacoInstance = await loader.init();
-    (window as any).monaco = monacoInstance;
-    return monacoInstance;
-  } catch (error) {
-    console.error('Monaco initialization error:', error);
-    // Return a minimal fallback to prevent crashes
-    return null;
-  }
-}

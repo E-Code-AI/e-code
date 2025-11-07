@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { WebSocketServer, WebSocket } from 'ws';
 import * as Y from 'yjs';
 import * as encoding from 'lib0/encoding';

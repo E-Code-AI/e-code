@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -16,7 +15,7 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { useQuery } from '@tanstack/react-query';
 
 interface ResponsiveWebPreviewProps {
-  projectId: number;
+  projectId: string | number; // Support both UUID strings and numeric IDs
   isRunning?: boolean;
   className?: string;
   onClose?: () => void;
@@ -49,8 +48,8 @@ export function ResponsiveWebPreview({
 
   // Get preview URL from the backend - REAL BACKEND
   const { data: previewData } = useQuery<{ previewUrl: string }>({
-    queryKey: [`/api/preview/url`, projectId],
-    enabled: !!projectId
+    queryKey: [`/api/preview/url?projectId=${projectId}`],
+    enabled: !!projectId && (typeof projectId === 'string' ? projectId.length > 0 : projectId > 0)
   });
 
   useEffect(() => {

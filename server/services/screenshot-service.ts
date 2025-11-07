@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createLogger } from '../utils/logger';
 import { checkpointService } from './checkpoint-service';
 import * as fs from 'fs/promises';
@@ -106,8 +105,6 @@ export class ScreenshotService {
             apiCallsCount: 1
           });
 
-          await page.close();
-
           return {
             screenshotPath,
             thumbnail: `data:image/jpeg;base64,${thumbnailBase64}`,
@@ -119,15 +116,19 @@ export class ScreenshotService {
             }
           };
         } finally {
-          await page.close();
+          if (page && !page.isClosed()) {
+            await page.close();
+          }
         }
       } else {
-        // Fallback: Return a placeholder response
-        logger.warn('Browser not available, returning placeholder screenshot');
+        // Deterministic fallback: Generate project-specific preview
+        logger.warn('Browser not available, generating deterministic project preview');
+        
+        const projectPreview = await this.generateProjectPreview(projectId);
         
         return {
-          screenshotPath: '/screenshots/placeholder.png',
-          thumbnail: 'data:image/svg+xml;base64,' + Buffer.from(this.getPlaceholderSvg()).toString('base64'),
+          screenshotPath: `/screenshots/project-${projectId}-preview.png`,
+          thumbnail: 'data:image/svg+xml;base64,' + Buffer.from(projectPreview).toString('base64'),
           metadata: {
             width: 1920,
             height: 1080,
@@ -246,13 +247,126 @@ export class ScreenshotService {
     return `http://localhost:3100/preview/${projectId}/${workflow}`;
   }
 
-  private getPlaceholderSvg(): string {
-    return `<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-      <rect width="400" height="300" fill="#f3f4f6"/>
-      <text x="200" y="150" text-anchor="middle" fill="#6b7280" font-family="Arial" font-size="16">
-        Screenshot Preview
+  private async generateProjectPreview(projectId: number): Promise<string> {
+    try {
+      // Fetch project details from storage
+      const { storage } = await import('../storage');
+      const project = await storage.getProjectById(projectId);
+      
+      if (!project) {
+        return this.getGenericPreviewSvg(projectId);
+      }
+
+      // Get project stats
+      const files = await storage.getProjectFiles(projectId).catch(() => []);
+      const fileCount = files.length;
+      
+      // Determine project type based on files
+      const hasReact = files.some((f: any) => f.path?.includes('.jsx') || f.path?.includes('.tsx'));
+      const hasVue = files.some((f: any) => f.path?.includes('.vue'));
+      const hasPython = files.some((f: any) => f.path?.endsWith('.py'));
+      const hasNode = files.some((f: any) => f.path?.includes('package.json'));
+      
+      let projectType = 'Project';
+      let iconColor = '#3b82f6';
+      let icon = '📁';
+      
+      if (hasReact) {
+        projectType = 'React App';
+        iconColor = '#61dafb';
+        icon = '⚛️';
+      } else if (hasVue) {
+        projectType = 'Vue App';
+        iconColor = '#42b883';
+        icon = '🟢';
+      } else if (hasPython) {
+        projectType = 'Python App';
+        iconColor = '#3776ab';
+        icon = '🐍';
+      } else if (hasNode) {
+        projectType = 'Node.js App';
+        iconColor = '#68a063';
+        icon = '📦';
+      }
+
+      // Generate SVG with project information
+      return `<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="grad${projectId}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:${iconColor};stop-opacity:0.1" />
+            <stop offset="100%" style="stop-color:${iconColor};stop-opacity:0.05" />
+          </linearGradient>
+        </defs>
+        <rect width="1920" height="1080" fill="url(#grad${projectId})"/>
+        <rect width="1920" height="1080" fill="#ffffff" opacity="0.95"/>
+        
+        <!-- Header -->
+        <rect width="1920" height="80" fill="${iconColor}" opacity="0.1"/>
+        <text x="60" y="50" fill="${iconColor}" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600">
+          E-Code Platform
+        </text>
+        
+        <!-- Project Icon and Name -->
+        <text x="960" y="400" text-anchor="middle" font-size="120">
+          ${icon}
+        </text>
+        <text x="960" y="520" text-anchor="middle" fill="#111827" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700">
+          ${this.escapeXml(project.name || 'Untitled Project')}
+        </text>
+        
+        <!-- Project Type -->
+        <text x="960" y="580" text-anchor="middle" fill="#6b7280" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="500">
+          ${projectType}
+        </text>
+        
+        <!-- Stats -->
+        <text x="960" y="680" text-anchor="middle" fill="#9ca3af" font-family="system-ui, -apple-system, sans-serif" font-size="18">
+          ${fileCount} file${fileCount !== 1 ? 's' : ''} · Project ID: ${projectId}
+        </text>
+        
+        <!-- Description if available -->
+        ${project.description ? `
+        <text x="960" y="760" text-anchor="middle" fill="#6b7280" font-family="system-ui, -apple-system, sans-serif" font-size="20">
+          ${this.escapeXml(project.description.substring(0, 80))}${project.description.length > 80 ? '...' : ''}
+        </text>
+        ` : ''}
+        
+        <!-- Footer -->
+        <text x="960" y="1000" text-anchor="middle" fill="#9ca3af" font-family="system-ui, -apple-system, sans-serif" font-size="16">
+          Preview generated at ${new Date().toLocaleString()}
+        </text>
+        <text x="960" y="1030" text-anchor="middle" fill="#d1d5db" font-family="system-ui, -apple-system, sans-serif" font-size="14">
+          Real-time screenshot unavailable - Playwright not configured
+        </text>
+      </svg>`;
+    } catch (error) {
+      logger.error('Failed to generate project preview:', error);
+      return this.getGenericPreviewSvg(projectId);
+    }
+  }
+
+  private getGenericPreviewSvg(projectId: number): string {
+    return `<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1920" height="1080" fill="#f9fafb"/>
+      <text x="960" y="500" text-anchor="middle" fill="#6b7280" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="600">
+        Project Preview
+      </text>
+      <text x="960" y="560" text-anchor="middle" fill="#9ca3af" font-family="system-ui, -apple-system, sans-serif" font-size="20">
+        Project ID: ${projectId}
+      </text>
+      <text x="960" y="620" text-anchor="middle" fill="#d1d5db" font-family="system-ui, -apple-system, sans-serif" font-size="16">
+        Real-time screenshot unavailable
       </text>
     </svg>`;
+  }
+
+  private escapeXml(unsafe: string): string {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
   }
 
   private getErrorSvg(message: string): string {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -904,17 +903,17 @@ export default function Landing() {
               variants={fadeInUp}
             >
               {[
-                { Icon: SiPython, name: 'Python', color: 'text-blue-500' },
+                { Icon: SiPython, name: 'Python', color: 'text-orange-500' },
                 { Icon: SiJavascript, name: 'JavaScript', color: 'text-yellow-500' },
-                { Icon: SiTypescript, name: 'TypeScript', color: 'text-blue-600' },
+                { Icon: SiTypescript, name: 'TypeScript', color: 'text-orange-600' },
                 { Icon: SiReact, name: 'React', color: 'text-cyan-500' },
                 { Icon: SiNodedotjs, name: 'Node.js', color: 'text-green-500' },
                 { Icon: SiGo, name: 'Go', color: 'text-cyan-600' },
                 { Icon: SiRust, name: 'Rust', color: 'text-orange-600' },
                 { Icon: SiPhp, name: 'PHP', color: 'text-purple-500' },
                 { Icon: SiOpenjdk, name: 'Java', color: 'text-red-600' },
-                { Icon: SiDocker, name: 'Docker', color: 'text-blue-500' },
-                { Icon: SiKubernetes, name: 'Kubernetes', color: 'text-blue-600' },
+                { Icon: SiDocker, name: 'Docker', color: 'text-orange-500' },
+                { Icon: SiKubernetes, name: 'Kubernetes', color: 'text-orange-600' },
                 { Icon: SiSpring, name: 'Spring', color: 'text-green-600' }
               ].map(({ Icon, name, color }, index) => (
                 <motion.div

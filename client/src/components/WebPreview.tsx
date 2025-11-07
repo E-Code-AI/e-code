@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,8 +43,8 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
   
   // Get preview URL for the project - REAL BACKEND
   const { data: previewData } = useQuery<{ previewUrl: string }>({
-    queryKey: [`/api/preview/url`, projectId],
-    enabled: !!projectId
+    queryKey: [`/api/preview/url?projectId=${projectId}`],
+    enabled: !!projectId && projectId > 0
   });
   
   useEffect(() => {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Request, Response } from 'express';
 import { createLogger } from '../utils/logger';
 import * as saml from 'samlify';

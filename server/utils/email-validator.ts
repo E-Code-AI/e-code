@@ -1,4 +1,3 @@
-// @ts-nocheck
 // E-Code Design Email Validation
 export function validateEmail(email: string): { valid: boolean; error?: string } {
   // Check if email is provided

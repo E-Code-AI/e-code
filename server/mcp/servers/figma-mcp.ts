@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Figma MCP Server
  * Provides Figma integration capabilities

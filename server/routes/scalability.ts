@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Scalability Routes
  * Fortune 500-grade scalability endpoints

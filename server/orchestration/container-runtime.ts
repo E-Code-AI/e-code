@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { EventEmitter } from 'events';
 import * as fs from 'fs/promises';
 import * as path from 'path';

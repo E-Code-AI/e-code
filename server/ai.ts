@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Request, Response } from 'express';
 import { aiProviderManager, ChatMessage } from './ai/ai-provider';
 
@@ -22,9 +21,25 @@ export async function generateCompletion(req: Request, res: Response) {
       return res.status(400).json({ error: 'Code is required' });
     }
 
-    const provider = providerName 
-      ? aiProviderManager.getProvider(providerName) || aiProviderManager.getDefaultProvider()
-      : aiProviderManager.getDefaultProvider();
+    let provider;
+    if (providerName) {
+      provider = aiProviderManager.getProvider(providerName);
+      if (!provider) {
+        return res.status(404).json({ 
+          error: `Provider '${providerName}' not found`,
+          code: 'PROVIDER_NOT_FOUND'
+        });
+      }
+      if (!provider.isAvailable()) {
+        return res.status(503).json({ 
+          error: `Provider '${providerName}' is not configured. Please configure the required API key.`,
+          code: 'PROVIDER_NOT_CONFIGURED',
+          suggestion: 'Configure AI provider API keys using environment variables or Replit integrations'
+        });
+      }
+    } else {
+      provider = aiProviderManager.getDefaultProvider();
+    }
 
     const prompt = getPromptForLanguage(language, code);
     const systemPrompt = 'You are an expert programmer that generates high-quality code completion suggestions. Complete the code in a way that follows best practices for the language and implements the functionality that seems to be intended based on variable names, comments, and existing code. Return only the suggested code to complete what was given.';
@@ -35,9 +50,22 @@ export async function generateCompletion(req: Request, res: Response) {
       completion,
       provider: provider.name
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating code completion:', error);
-    res.status(500).json({ error: 'Failed to generate code completion' });
+    
+    // Check if error is due to missing API keys
+    if (error.message?.includes('not configured') || error.message?.includes('Please configure')) {
+      return res.status(503).json({ 
+        error: error.message,
+        code: 'PROVIDER_NOT_CONFIGURED',
+        suggestion: 'Configure AI provider API keys using environment variables or Replit integrations'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to generate code completion',
+      details: error.message 
+    });
   }
 }
 
@@ -50,9 +78,25 @@ export async function generateExplanation(req: Request, res: Response) {
       return res.status(400).json({ error: 'Code is required' });
     }
 
-    const provider = providerName 
-      ? aiProviderManager.getProvider(providerName) || aiProviderManager.getDefaultProvider()
-      : aiProviderManager.getDefaultProvider();
+    let provider;
+    if (providerName) {
+      provider = aiProviderManager.getProvider(providerName);
+      if (!provider) {
+        return res.status(404).json({ 
+          error: `Provider '${providerName}' not found`,
+          code: 'PROVIDER_NOT_FOUND'
+        });
+      }
+      if (!provider.isAvailable()) {
+        return res.status(503).json({ 
+          error: `Provider '${providerName}' is not configured. Please configure the required API key.`,
+          code: 'PROVIDER_NOT_CONFIGURED',
+          suggestion: 'Configure AI provider API keys using environment variables or Replit integrations'
+        });
+      }
+    } else {
+      provider = aiProviderManager.getDefaultProvider();
+    }
 
     const messages: ChatMessage[] = [
       {
@@ -71,9 +115,22 @@ export async function generateExplanation(req: Request, res: Response) {
       explanation,
       provider: provider.name
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating code explanation:', error);
-    res.status(500).json({ error: 'Failed to generate code explanation' });
+    
+    // Check if error is due to missing API keys
+    if (error.message?.includes('not configured') || error.message?.includes('Please configure')) {
+      return res.status(503).json({ 
+        error: error.message,
+        code: 'PROVIDER_NOT_CONFIGURED',
+        suggestion: 'Configure AI provider API keys using environment variables or Replit integrations'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to generate code explanation',
+      details: error.message 
+    });
   }
 }
 
@@ -86,9 +143,25 @@ export async function convertCode(req: Request, res: Response) {
       return res.status(400).json({ error: 'Code, source language, and target language are required' });
     }
 
-    const provider = providerName 
-      ? aiProviderManager.getProvider(providerName) || aiProviderManager.getDefaultProvider()
-      : aiProviderManager.getDefaultProvider();
+    let provider;
+    if (providerName) {
+      provider = aiProviderManager.getProvider(providerName);
+      if (!provider) {
+        return res.status(404).json({ 
+          error: `Provider '${providerName}' not found`,
+          code: 'PROVIDER_NOT_FOUND'
+        });
+      }
+      if (!provider.isAvailable()) {
+        return res.status(503).json({ 
+          error: `Provider '${providerName}' is not configured. Please configure the required API key.`,
+          code: 'PROVIDER_NOT_CONFIGURED',
+          suggestion: 'Configure AI provider API keys using environment variables or Replit integrations'
+        });
+      }
+    } else {
+      provider = aiProviderManager.getDefaultProvider();
+    }
 
     const messages: ChatMessage[] = [
       {
@@ -107,9 +180,22 @@ export async function convertCode(req: Request, res: Response) {
       convertedCode,
       provider: provider.name
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error converting code:', error);
-    res.status(500).json({ error: 'Failed to convert code' });
+    
+    // Check if error is due to missing API keys
+    if (error.message?.includes('not configured') || error.message?.includes('Please configure')) {
+      return res.status(503).json({ 
+        error: error.message,
+        code: 'PROVIDER_NOT_CONFIGURED',
+        suggestion: 'Configure AI provider API keys using environment variables or Replit integrations'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to convert code',
+      details: error.message 
+    });
   }
 }
 
@@ -150,9 +236,22 @@ export async function generateDocumentation(req: Request, res: Response) {
       documentedCode,
       provider: provider.name
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating documentation:', error);
-    res.status(500).json({ error: 'Failed to generate documentation' });
+    
+    // Check if error is due to missing API keys
+    if (error.message?.includes('not configured') || error.message?.includes('Please configure')) {
+      return res.status(503).json({ 
+        error: error.message,
+        code: 'PROVIDER_NOT_CONFIGURED',
+        suggestion: 'Configure AI provider API keys using environment variables or Replit integrations'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to generate documentation',
+      details: error.message 
+    });
   }
 }
 
@@ -189,9 +288,22 @@ export async function generateTests(req: Request, res: Response) {
       testCode,
       provider: provider.name
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating tests:', error);
-    res.status(500).json({ error: 'Failed to generate tests' });
+    
+    // Check if error is due to missing API keys
+    if (error.message?.includes('not configured') || error.message?.includes('Please configure')) {
+      return res.status(503).json({ 
+        error: error.message,
+        code: 'PROVIDER_NOT_CONFIGURED',
+        suggestion: 'Configure AI provider API keys using environment variables or Replit integrations'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to generate tests',
+      details: error.message 
+    });
   }
 }
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Polyglot Container Proxy - Routes container operations to Go service
  * This replaces the TypeScript container manager with Go-based operations
@@ -145,21 +144,31 @@ class PolyglotContainerProxy {
   }
 }
 
-// Export singleton instance
-export const containerProxy = new PolyglotContainerProxy();
+// Lazy initialize to prevent blocking server startup
+let _containerProxy: PolyglotContainerProxy | null = null;
+
+function getContainerProxy(): PolyglotContainerProxy {
+  if (!_containerProxy) {
+    _containerProxy = new PolyglotContainerProxy();
+  }
+  return _containerProxy;
+}
+
+// Export getter function instead of instance
+export const containerProxy = getContainerProxy;
 
 // Replace the old createContainer function with Go-based implementation
 export async function createContainer(config: ContainerConfig): Promise<ContainerResult> {
-  return containerProxy.createContainer(config);
+  return getContainerProxy().createContainer(config);
 }
 
 // Replace the old stopContainer function
 export async function stopContainer(containerId: string): Promise<void> {
-  return containerProxy.stopContainer(containerId);
+  return getContainerProxy().stopContainer(containerId);
 }
 
 // Export other functions for backward compatibility
-export const getContainerLogs = (id: string) => containerProxy.getContainerLogs(id);
-export const listContainers = () => containerProxy.listContainers();
-export const executeInContainer = (id: string, cmd: string) => containerProxy.executeInContainer(id, cmd);
-export const buildProject = (id: string, lang: string, files: any[]) => containerProxy.buildProject(id, lang, files);
+export const getContainerLogs = (id: string) => getContainerProxy().getContainerLogs(id);
+export const listContainers = () => getContainerProxy().listContainers();
+export const executeInContainer = (id: string, cmd: string) => getContainerProxy().executeInContainer(id, cmd);
+export const buildProject = (id: string, lang: string, files: any[]) => getContainerProxy().buildProject(id, lang, files);

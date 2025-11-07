@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Real AI Code Generation Service
  * Provides actual code generation and file modification capabilities
@@ -53,28 +52,82 @@ export interface CodeGenerationResult {
 }
 
 export class RealCodeGenerator {
-  private openai: OpenAI;
-  private anthropic: Anthropic;
+  private openai: OpenAI | null;
+  private anthropic: Anthropic | null;
   private dmp: diff_match_patch;
+  private providersAvailable: boolean;
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    const openaiKey = process.env.OPENAI_API_KEY;
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
     
-    this.anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY
-    });
+    // Initialize providers only if keys are available
+    this.openai = openaiKey ? new OpenAI({
+      apiKey: openaiKey
+    }) : null;
+    
+    this.anthropic = anthropicKey ? new Anthropic({
+      apiKey: anthropicKey
+    }) : null;
 
     this.dmp = new diff_match_patch();
+    this.providersAvailable = !!(this.openai || this.anthropic);
+    
+    // Log provider status
+    logger.info('RealCodeGenerator initialized', {
+      openai: !!openaiKey,
+      anthropic: !!anthropicKey,
+      providersAvailable: this.providersAvailable
+    });
+  }
+  
+  // Get provider status
+  getProviderStatus() {
+    return {
+      openai: !!this.openai,
+      anthropic: !!this.anthropic,
+      anyAvailable: this.providersAvailable,
+      missingKeys: [
+        !this.openai ? 'OPENAI_API_KEY' : null,
+        !this.anthropic ? 'ANTHROPIC_API_KEY' : null
+      ].filter(Boolean)
+    };
   }
 
   async generateCode(request: CodeGenerationRequest): Promise<CodeGenerationResult> {
+    // Early validation - check if AI providers are available
+    if (!this.providersAvailable) {
+      const status = this.getProviderStatus();
+      logger.error('No AI providers available for code generation', status);
+      
+      return {
+        success: false,
+        modifications: [],
+        explanation: 'AI code generation service is not available',
+        error: `AI service is not configured. Please set up at least one API key: ${status.missingKeys.join(' or ')}`
+      };
+    }
+
     try {
+      // Validate request
+      if (!request.instruction || request.instruction.trim() === '') {
+        return {
+          success: false,
+          modifications: [],
+          explanation: '',
+          error: 'No instruction provided for code generation'
+        };
+      }
+
       // Get project context
       const project = await storage.getProject(request.projectId);
       if (!project) {
-        throw new Error('Project not found');
+        return {
+          success: false,
+          modifications: [],
+          explanation: '',
+          error: 'Project not found. Please ensure the project exists.'
+        };
       }
 
       // Get all project files
@@ -93,11 +146,25 @@ export class RealCodeGenerator {
 
     } catch (error) {
       logger.error(`Code generation failed: ${error}`);
+      
+      // Provide user-friendly error messages
+      let userMessage = 'An error occurred during code generation';
+      
+      if (error.message.includes('API key')) {
+        userMessage = 'AI service authentication failed. Please check API key configuration.';
+      } else if (error.message.includes('rate limit')) {
+        userMessage = 'AI service rate limit exceeded. Please try again in a few moments.';
+      } else if (error.message.includes('timeout')) {
+        userMessage = 'AI service request timed out. Please try again.';
+      } else if (error.message.includes('No AI service available')) {
+        userMessage = 'No AI service is currently available. Please configure API keys.';
+      }
+      
       return {
         success: false,
         modifications: [],
         explanation: '',
-        error: error.message
+        error: `${userMessage} (${error.message})`
       };
     }
   }

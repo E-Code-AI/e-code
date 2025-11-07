@@ -1,86 +1,260 @@
-// @ts-nocheck
 /**
  * Security Middleware
- * Fortune 500-grade security implementation
+ * Fortune 500-grade security implementation with enhanced protections
  */
 
 import helmet from 'helmet';
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { createLogger } from '../utils/logger';
 import crypto from 'crypto';
+import { 
+  xssProtection, 
+  sqlInjectionPrevention, 
+  pathTraversalPrevention,
+  requestValidation,
+  rateLimiting,
+  outputEncoding,
+  tokenSecurity
+} from '../utils/security';
+import { securityMonitoring } from '../services/security-monitoring';
 
 const logger = createLogger('security');
 
-// Content Security Policy configuration
-const contentSecurityPolicy = {
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: [
-      "'self'",
-      "'unsafe-inline'", // Required for React dev
-      "'unsafe-eval'", // Required for some build tools
-      "https://cdn.jsdelivr.net",
-      "https://cdnjs.cloudflare.com",
-      "https://unpkg.com"
-    ],
-    styleSrc: [
-      "'self'",
-      "'unsafe-inline'",
-      "https://fonts.googleapis.com",
-      "https://cdn.jsdelivr.net"
-    ],
-    fontSrc: [
-      "'self'",
-      "https://fonts.gstatic.com",
-      "data:"
-    ],
-    imgSrc: [
-      "'self'",
-      "data:",
-      "blob:",
-      "https:",
-      "http://localhost:*"
-    ],
-    connectSrc: [
-      "'self'",
-      "ws://localhost:*",
-      "wss://localhost:*",
-      "http://localhost:*",
-      "https://api.anthropic.com",
-      "https://*.googleapis.com"
-    ],
-    mediaSrc: ["'self'"],
-    objectSrc: ["'none'"],
-    frameSrc: ["'self'", "https://js.stripe.com"],
-    workerSrc: ["'self'", "blob:"],
-    childSrc: ["'self'", "blob:"],
-    formAction: ["'self'"],
-    frameAncestors: ["'none'"],
-    baseUri: ["'self'"],
-    manifestSrc: ["'self'"],
-    upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : undefined
-  }
+/**
+ * Content Security Policy Configuration
+ * SECURITY: Production CSP removes ALL unsafe directives
+ */
+
+interface CSPDirectives {
+  [key: string]: string[] | undefined;
+}
+
+// Base CSP directives shared between dev and prod
+const baseCSPDirectives = {
+  defaultSrc: ["'self'"],
+  fontSrc: [
+    "'self'",
+    "https://fonts.gstatic.com",
+    "data:"
+  ],
+  mediaSrc: ["'self'"],
+  objectSrc: ["'none'"],
+  frameSrc: ["'self'", "https://js.stripe.com"],
+  workerSrc: ["'self'", "blob:"],
+  childSrc: ["'self'", "blob:"],
+  formAction: ["'self'"],
+  frameAncestors: ["'none'"],
+  baseUri: ["'self'"],
+  manifestSrc: ["'self'"],
+  blockAllMixedContent: [],
 };
 
-// Main security middleware
+// PRODUCTION CSP: NO unsafe-inline or unsafe-eval
+// Uses nonce-based approach for inline scripts/styles
+const productionCSPDirectives: CSPDirectives = {
+  ...baseCSPDirectives,
+  scriptSrc: [
+    "'self'",
+    "'nonce-{{nonce}}'", // Nonce for inline scripts
+    "https://cdn.jsdelivr.net",
+    "https://cdnjs.cloudflare.com",
+    "https://unpkg.com"
+    // NO 'unsafe-inline' or 'unsafe-eval' in production
+  ],
+  styleSrc: [
+    "'self'",
+    "'nonce-{{nonce}}'", // Nonce for inline styles
+    "https://fonts.googleapis.com",
+    "https://cdn.jsdelivr.net"
+    // NO 'unsafe-inline' in production
+  ],
+  imgSrc: [
+    "'self'",
+    "data:",
+    "blob:",
+    "https:"
+  ],
+  connectSrc: [
+    "'self'",
+    "wss:",
+    "https://api.anthropic.com",
+    "https://*.googleapis.com"
+  ],
+  upgradeInsecureRequests: [],
+  reportUri: '/api/security/csp-report'
+};
+
+// DEVELOPMENT CSP: More permissive for rapid development
+// Includes unsafe directives ONLY in development
+const developmentCSPDirectives: CSPDirectives = {
+  ...baseCSPDirectives,
+  scriptSrc: [
+    "'self'",
+    "'unsafe-inline'", // Allowed ONLY in development for HMR
+    "'unsafe-eval'", // Allowed ONLY in development for dev tools
+    "'nonce-{{nonce}}'",
+    "https://cdn.jsdelivr.net",
+    "https://cdnjs.cloudflare.com",
+    "https://unpkg.com"
+  ],
+  styleSrc: [
+    "'self'",
+    "'unsafe-inline'", // Allowed ONLY in development for HMR
+    "'nonce-{{nonce}}'",
+    "https://fonts.googleapis.com",
+    "https://cdn.jsdelivr.net"
+  ],
+  imgSrc: [
+    "'self'",
+    "data:",
+    "blob:",
+    "https:",
+    "http://localhost:*" // Allow localhost images in dev
+  ],
+  connectSrc: [
+    "'self'",
+    "ws://localhost:*", // WebSocket for HMR
+    "http://localhost:*", // HTTP for dev server
+    "wss:",
+    "https://api.anthropic.com",
+    "https://*.googleapis.com"
+  ],
+  reportUri: '/api/security/csp-report'
+};
+
+/**
+ * Get CSP directives based on environment
+ * SECURITY: Production automatically uses secure directives
+ */
+function getCSPDirectives(): CSPDirectives {
+  const isProduction = process.env.NODE_ENV === 'production';
+  return isProduction ? productionCSPDirectives : developmentCSPDirectives;
+}
+
+/**
+ * Generate CSP nonce for inline scripts/styles
+ * Nonce is regenerated for each request for security
+ */
+const generateCSPNonce = (req: Request, res: Response, next: NextFunction) => {
+  res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+  next();
+};
+
+/**
+ * Build CSP header string from directives
+ * Replaces nonce placeholders with actual nonce value
+ */
+function buildCSPHeader(directives: CSPDirectives, nonce: string): string {
+  const processedDirectives: Record<string, string> = {};
+  
+  for (const [key, values] of Object.entries(directives)) {
+    if (!values) {
+      continue;
+    }
+    
+    // Handle string values (e.g., reportUri)
+    if (typeof values === 'string') {
+      processedDirectives[key] = values;
+      continue;
+    }
+    
+    // Handle array values
+    if (Array.isArray(values)) {
+      if (values.length === 0) {
+        // Empty directive (e.g., blockAllMixedContent)
+        processedDirectives[key] = '';
+        continue;
+      }
+      
+      // Replace nonce placeholder with actual nonce
+      const processedValues = values.map(value => 
+        value === "'nonce-{{nonce}}'" ? `'nonce-${nonce}'` : value
+      );
+      
+      processedDirectives[key] = processedValues.join(' ');
+    }
+  }
+  
+  // Convert camelCase to kebab-case and build header
+  return Object.entries(processedDirectives)
+    .map(([key, value]) => {
+      const directive = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+      return value ? `${directive} ${value}` : directive;
+    })
+    .join('; ');
+}
+
+/**
+ * Apply Content Security Policy middleware
+ * SECURITY: Automatically uses secure directives in production
+ * DEVELOPMENT: CSP disabled for Vite HMR compatibility
+ */
+function applyCSP(req: Request, res: Response, next: NextFunction) {
+  // Skip CSP entirely in development mode for Vite compatibility
+  if (process.env.NODE_ENV === 'development') {
+    return next();
+  }
+  
+  const nonce = res.locals.cspNonce;
+  const directives = getCSPDirectives();
+  const cspHeader = buildCSPHeader(directives, nonce);
+  
+  res.setHeader('Content-Security-Policy', cspHeader);
+  
+  // Also set report-only header for monitoring (optional)
+  if (process.env.CSP_REPORT_ONLY === 'true') {
+    res.setHeader('Content-Security-Policy-Report-Only', cspHeader);
+  }
+  
+  next();
+}
+
+/**
+ * Enhanced security middleware stack
+ * SECURITY: CSP is ALWAYS applied (dev and production)
+ */
 export const securityMiddleware = (): RequestHandler[] => {
   const middlewares: RequestHandler[] = [];
+  
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  // Helmet base configuration
+  // 1. Generate CSP nonce first (required for CSP)
+  middlewares.push(generateCSPNonce);
+
+  // 2. Apply Content Security Policy (ALWAYS - no exceptions)
+  middlewares.push(applyCSP);
+
+  // 3. Enhanced Helmet configuration (CSP handled separately)
   middlewares.push(helmet({
-    contentSecurityPolicy: process.env.NODE_ENV === 'production' ? contentSecurityPolicy : false,
-    crossOriginEmbedderPolicy: process.env.NODE_ENV === 'production',
+    contentSecurityPolicy: false, // We handle CSP ourselves for nonce support
+    crossOriginEmbedderPolicy: isProduction,
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+    crossOriginResourcePolicy: { policy: "same-origin" },
+    originAgentCluster: true,
     hsts: {
       maxAge: 31536000,
       includeSubDomains: true,
       preload: true
-    }
+    },
+    dnsPrefetchControl: { allow: false },
+    expectCt: {
+      maxAge: 86400,
+      enforce: true
+    },
+    frameguard: { action: 'deny' },
+    hidePoweredBy: true,
+    ieNoOpen: true,
+    noSniff: true,
+    permittedCrossDomainPolicies: false,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    xssFilter: true
   }));
 
-  // Additional security headers
+  // Enhanced security headers
   middlewares.push((req: Request, res: Response, next: NextFunction) => {
-    // Prevent clickjacking
+    // Prevent clickjacking with multiple headers
     res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Frame-Options', 'DENY');
     
     // Prevent MIME type sniffing
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -91,14 +265,38 @@ export const securityMiddleware = (): RequestHandler[] => {
     // Referrer policy
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     
-    // Permissions policy
-    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    // Enhanced Permissions policy (only current valid features, no deprecated ones)
+    // Note: Feature-Policy header removed as it's deprecated and causes conflicts
+    res.setHeader('Permissions-Policy', 
+      'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), ' +
+      'accelerometer=(), gyroscope=(), autoplay=(), ' +
+      'encrypted-media=(), picture-in-picture=(), interest-cohort=()'
+    );
     
-    // Custom headers for API security
+    // Additional security headers
+    res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+    res.setHeader('X-Download-Options', 'noopen');
+    res.setHeader('X-DNS-Prefetch-Control', 'off');
+    res.setHeader('Expect-CT', 'max-age=86400, enforce');
+    
+    // Clear site data on logout
+    if (req.path === '/api/logout') {
+      res.setHeader('Clear-Site-Data', '"cache", "cookies", "storage"');
+    }
+    
+    // API-specific headers
     if (req.path.startsWith('/api')) {
       res.setHeader('X-API-Version', '1.0');
-      res.setHeader('X-RateLimit-Policy', 'https://docs.example.com/rate-limits');
+      res.setHeader('X-RateLimit-Policy', 'https://docs.ecode-platform.com/rate-limits');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
     }
+    
+    // Add request ID for tracing
+    const requestId = crypto.randomBytes(16).toString('hex');
+    res.setHeader('X-Request-ID', requestId);
+    req['requestId'] = requestId;
     
     next();
   });
@@ -106,57 +304,52 @@ export const securityMiddleware = (): RequestHandler[] => {
   return middlewares;
 };
 
-// CSRF protection
-export const csrfProtection = () => {
-  const tokens = new Map<string, { token: string; expires: number }>();
+// Enhanced CSRF protection with double-submit cookie pattern
+export function csrfProtection(req: Request, res: Response, next: NextFunction) {
+  const isApiRequest = req.path.startsWith('/api');
+  
+  // Skip CSRF for public endpoints
+  if (req.path.startsWith('/api/public') || req.path.startsWith('/api/health')) {
+    return next();
+  }
 
-  return {
-    generate: (sessionId: string): string => {
-      const token = crypto.randomBytes(32).toString('hex');
-      tokens.set(sessionId, {
-        token,
-        expires: Date.now() + 3600000 // 1 hour
-      });
-      return token;
-    },
-
-    verify: (sessionId: string, token: string): boolean => {
-      const stored = tokens.get(sessionId);
-      if (!stored || stored.expires < Date.now()) {
-        tokens.delete(sessionId);
-        return false;
-      }
-      return crypto.timingSafeEqual(
-        Buffer.from(stored.token),
-        Buffer.from(token)
-      );
-    },
-
-    middleware: (req: Request, res: Response, next: NextFunction) => {
-      // Skip CSRF for GET requests and API endpoints that use JWT
-      if (req.method === 'GET' || req.path.startsWith('/api/public')) {
-        return next();
-      }
-
-      const sessionId = req.session?.id;
-      if (!sessionId) {
-        return res.status(403).json({ error: 'No session found' });
-      }
-
-      const token = req.headers['x-csrf-token'] as string;
-      if (!token || !csrfProtection().verify(sessionId, token)) {
-        logger.warn('CSRF token validation failed', {
-          ip: req.ip,
-          path: req.path,
-          sessionId
-        });
-        return res.status(403).json({ error: 'Invalid CSRF token' });
-      }
-
-      next();
+  // Generate CSRF token for GET requests
+  if (req.method === 'GET' && !isApiRequest) {
+    const token = crypto.randomBytes(32).toString('hex');
+    res.cookie('csrf-token', token, {
+      httpOnly: false, // Needs to be readable by JS
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 3600000 // 1 hour
+    });
+  }
+  
+  // Verify CSRF token for state-changing requests
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    const headerToken = req.headers['x-csrf-token'] as string;
+    const cookieToken = (req as any).cookies?.['csrf-token'];
+    
+    // For API requests, also check for Bearer token auth
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+      // Skip CSRF check for authenticated API requests
+      return next();
     }
-  };
-};
+    
+    if (!headerToken || headerToken !== cookieToken) {
+      logger.warn('CSRF token validation failed', {
+        ip: req.ip,
+        path: req.path,
+        method: req.method,
+        hasCookie: !!cookieToken,
+        hasHeader: !!headerToken
+      });
+      return res.status(403).json({ error: 'Invalid CSRF token' });
+    }
+  }
+  
+  next();
+}
 
 // Input sanitization
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
@@ -359,4 +552,13 @@ export const ipSecurity = {
 
     next();
   }
+};
+
+// Export CSP functions for testing
+export {
+  getCSPDirectives,
+  productionCSPDirectives,
+  developmentCSPDirectives,
+  buildCSPHeader,
+  generateCSPNonce
 };

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, useCallback } from 'react';
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
 import { useLocation } from 'wouter';
@@ -27,8 +26,9 @@ export function CommandPalette() {
   
   // Fetch recent projects and files
   const { data: recentProjects } = useQuery({
-    queryKey: ['/api/projects/recent'],
-    enabled: !!user
+    queryKey: ['/api/projects'],
+    enabled: !!user,
+    select: (data) => data.slice(0, 5) // Show 5 most recent projects
   });
 
   // Keyboard shortcut to open command palette

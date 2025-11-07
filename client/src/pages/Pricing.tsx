@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +14,7 @@ import {
   ArrowRight, Server, Cloud, Cpu, HardDrive, Gauge,
   Phone, MessageSquare, Mail, Headphones,
   CreditCard, Award, BarChart3, Users2, Briefcase,
-  Brain, Layers, GitBranch, Timer, Infinity, CheckCircle2, PlayCircle
+  Brain, Layers, GitBranch, Timer, CheckCircle2, PlayCircle
 } from 'lucide-react';
 import { useState, useEffect, type ReactNode, Fragment } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';

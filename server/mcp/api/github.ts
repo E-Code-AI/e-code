@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router } from 'express';
 import fetch from 'node-fetch';
 import { ensureAuthenticated } from '../../middleware/auth';

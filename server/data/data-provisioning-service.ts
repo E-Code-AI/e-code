@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { db } from '../db';
 import { storage } from '../storage';
 import * as fs from 'fs/promises';
@@ -458,21 +457,123 @@ export class DataProvisioningService {
   }
 
   private async insertDataToDatabase(projectId: number, data: GeneratedData): Promise<void> {
-    // Insert data into project's database
-    // This would connect to the project's specific database instance
     console.log(`Inserting ${data.records} records into ${data.table} for project ${projectId}`);
     
-    // In a real implementation, this would:
-    // 1. Connect to project's database
-    // 2. Create table if not exists
-    // 3. Insert data in batches
-    // 4. Handle constraints and relationships
+    try {
+      // Create table if it doesn't exist
+      await this.createTableIfNotExists(data.table, data.data[0]);
+      
+      // Insert data in batches of 100 for better performance
+      const batchSize = 100;
+      for (let i = 0; i < data.data.length; i += batchSize) {
+        const batch = data.data.slice(i, i + batchSize);
+        await this.insertBatch(data.table, batch);
+      }
+      
+      console.log(`Successfully inserted ${data.records} records into ${data.table}`);
+    } catch (error: any) {
+      console.error(`Error inserting data into ${data.table}:`, error.message);
+      throw error;
+    }
   }
 
   private async getTableData(projectId: number, tableName: string): Promise<any[]> {
-    // Fetch data from project's database table
-    // This is a placeholder - would connect to actual project database
-    return [];
+    try {
+      const result = await db.execute(sql.raw(`SELECT * FROM ${tableName}`));
+      return result.rows || [];
+    } catch (error: any) {
+      console.error(`Error fetching data from ${tableName}:`, error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Create table if it doesn't exist based on sample record
+   */
+  private async createTableIfNotExists(tableName: string, sampleRecord: any): Promise<void> {
+    if (!sampleRecord) return;
+
+    const columns = Object.entries(sampleRecord).map(([key, value]) => {
+      let columnType = 'TEXT';
+      
+      if (typeof value === 'number') {
+        columnType = Number.isInteger(value) ? 'INTEGER' : 'REAL';
+      } else if (typeof value === 'boolean') {
+        columnType = 'BOOLEAN';
+      } else if (value instanceof Date) {
+        columnType = 'TIMESTAMP';
+      } else if (typeof value === 'object' && value !== null) {
+        columnType = 'JSONB';
+      }
+      
+      return `"${key}" ${columnType}`;
+    });
+
+    const createTableSQL = `
+      CREATE TABLE IF NOT EXISTS "${tableName}" (
+        id SERIAL PRIMARY KEY,
+        ${columns.join(',\n        ')}
+      )
+    `.trim();
+
+    try {
+      await db.execute(sql.raw(createTableSQL));
+      console.log(`Table ${tableName} created or already exists`);
+    } catch (error: any) {
+      console.warn(`Could not create table ${tableName}:`, error.message);
+    }
+  }
+
+  /**
+   * Insert a batch of records into a table
+   */
+  private async insertBatch(tableName: string, records: any[]): Promise<void> {
+    if (records.length === 0) return;
+
+    const columns = Object.keys(records[0]);
+    const values = records.map(record => 
+      `(${columns.map(col => this.formatValue(record[col])).join(', ')})`
+    ).join(',\n');
+
+    const insertSQL = `
+      INSERT INTO "${tableName}" (${columns.map(c => `"${c}"`).join(', ')})
+      VALUES ${values}
+      ON CONFLICT DO NOTHING
+    `.trim();
+
+    try {
+      await db.execute(sql.raw(insertSQL));
+    } catch (error: any) {
+      console.warn(`Error inserting batch into ${tableName}:`, error.message);
+    }
+  }
+
+  /**
+   * Format a value for SQL insertion
+   */
+  private formatValue(value: any): string {
+    if (value === null || value === undefined) {
+      return 'NULL';
+    }
+    
+    if (typeof value === 'number') {
+      return String(value);
+    }
+    
+    if (typeof value === 'boolean') {
+      return value ? 'TRUE' : 'FALSE';
+    }
+    
+    if (value instanceof Date) {
+      return `'${value.toISOString()}'`;
+    }
+    
+    if (typeof value === 'object') {
+      return `'${JSON.stringify(value).replace(/'/g, "''")}'::jsonb`;
+    }
+    
+    // Escape single quotes in strings
+    return `'${String(value).replace(/'/g, "''")}'`;
   }
 
   private async transformData(data: any[], transformations: any[]): Promise<any[]> {

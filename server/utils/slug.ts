@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Generate a URL-friendly slug from a string
  */

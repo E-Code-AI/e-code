@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Production Monitoring Service Backend
  * Handles error tracking, performance metrics, and analytics

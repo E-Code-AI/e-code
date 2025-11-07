@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, X, File, FolderOpen, Code, FileText, Image, 
@@ -21,7 +20,7 @@ import { ECodeSpinner } from '@/components/ECodeLoading';
 interface GlobalSearchProps {
   isOpen: boolean;
   onClose: () => void;
-  projectId: number;
+  projectId: string | number; // Support both UUID strings and numeric IDs
   onFileSelect: (file: { id: number; name: string; content?: string | null; isFolder: boolean; parentId: number | null; projectId: number; createdAt: Date; updatedAt: Date }) => void;
 }
 

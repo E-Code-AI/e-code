@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { AllModelsSelector } from '@/components/AllModelsSelector';

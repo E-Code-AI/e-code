@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Security Scanner Service
  * Implements comprehensive security scanning for E-Code projects

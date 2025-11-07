@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { 
   Database, Plus, Search, Trash2, Edit, Save, X, 

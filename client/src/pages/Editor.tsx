@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +27,8 @@ export default function Editor(props: EditorProps = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
+  const agentRef = useRef<any>(null);
+  const hasStartedAgent = useRef(false);
 
   const resolvedProjectId = props.projectId ?? id ?? null;
   const initialProject = props.initialProject ?? null;
@@ -41,6 +42,7 @@ export default function Editor(props: EditorProps = {}) {
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
   const [isProjectRunning, setIsProjectRunning] = useState(false);
   const [executionId, setExecutionId] = useState<string | undefined>();
+  const [initialAgentPrompt, setInitialAgentPrompt] = useState<string | null>(null);
 
   const { data: project, isLoading: isProjectLoading } = useQuery<Project>({
     queryKey: [`/api/projects/${resolvedProjectId}`],
@@ -54,9 +56,30 @@ export default function Editor(props: EditorProps = {}) {
   });
 
   const { data: files = [], isLoading: isFilesLoading } = useQuery<File[]>({
-    queryKey: [`/api/files/${resolvedProjectId}`],
+    queryKey: [`/api/projects/${resolvedProjectId}/files`],
     enabled: !!resolvedProjectId && !!user,
   });
+
+  // Check for agent and prompt query parameters
+  useEffect(() => {
+    if (!hasStartedAgent.current && user && resolvedProjectId) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isAgent = urlParams.get('agent') === 'true';
+      const prompt = urlParams.get('prompt');
+      
+      if (isAgent && prompt) {
+        // Open the agent panel
+        setActiveRightPanel('agent');
+        setRightPanelOpen(true);
+        setInitialAgentPrompt(decodeURIComponent(prompt));
+        hasStartedAgent.current = true;
+        
+        // Clean up the URL to remove the query parameters
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+      }
+    }
+  }, [user, resolvedProjectId]);
 
   useEffect(() => {
     if (!files || files.length === 0) {
@@ -72,7 +95,7 @@ export default function Editor(props: EditorProps = {}) {
       return;
     }
 
-    const firstFile = files.find(file => !file.isFolder);
+    const firstFile = files.find(file => !file.isDirectory);
     if (firstFile) {
       setActiveFileId(firstFile.id);
     }
@@ -90,7 +113,7 @@ export default function Editor(props: EditorProps = {}) {
     },
     onSuccess: (data) => {
       if (!resolvedProjectId) return;
-      queryClient.setQueryData<File[]>([`/api/files/${resolvedProjectId}`], (old) => {
+      queryClient.setQueryData<File[]>([`/api/projects/${resolvedProjectId}/files`], (old) => {
         if (!old) return old;
         return old.map(file => file.id === data.id ? { ...file, content: data.content } : file);
       });
@@ -123,7 +146,7 @@ export default function Editor(props: EditorProps = {}) {
     },
     onSuccess: (data) => {
       if (!resolvedProjectId) return;
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${resolvedProjectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${resolvedProjectId}/files`] });
       toast({
         title: data.isFolder ? "Folder created" : "File created",
         description: `${data.name} has been created.`,
@@ -145,7 +168,7 @@ export default function Editor(props: EditorProps = {}) {
     },
     onSuccess: (fileId) => {
       if (!resolvedProjectId) return;
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${resolvedProjectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${resolvedProjectId}/files`] });
       if (activeFileId === fileId) {
         setActiveFileId(null);
       }
@@ -170,7 +193,7 @@ export default function Editor(props: EditorProps = {}) {
     },
     onSuccess: (data) => {
       if (!resolvedProjectId) return;
-      queryClient.setQueryData<File[]>([`/api/files/${resolvedProjectId}`], (old) => {
+      queryClient.setQueryData<File[]>([`/api/projects/${resolvedProjectId}/files`], (old) => {
         if (!old) return old;
         return old.map(file => file.id === data.id ? { ...file, name: data.name } : file);
       });
@@ -243,7 +266,7 @@ export default function Editor(props: EditorProps = {}) {
   }
 
   const handleFileSelect = (file: File) => {
-    if (file.isFolder) return;
+    if (file.isDirectory) return;
     setActiveFileId(file.id);
   };
 
@@ -341,6 +364,7 @@ export default function Editor(props: EditorProps = {}) {
               selectedFile={activeFile?.name}
               selectedCode={selectedCode}
               className="h-full"
+              initialPrompt={initialAgentPrompt}
             />
           </div>
         )
@@ -370,7 +394,7 @@ export default function Editor(props: EditorProps = {}) {
     }
 
     return panels;
-  }, [project, activeProjectId, activeFile, selectedCode, isProjectRunning]);
+  }, [project, activeProjectId, activeFile, selectedCode, isProjectRunning, initialAgentPrompt]);
 
   const bottomPanel = activeProjectId ? (
     <ReplitConsole
@@ -416,6 +440,14 @@ export default function Editor(props: EditorProps = {}) {
       />
 
       <ReplitEditorLayout
+        files={files}
+        activeFileId={activeFileId ?? undefined}
+        onFileSelect={handleFileSelect}
+        onFileCreate={handleFileCreate}
+        onFileDelete={handleFileDelete}
+        onFileRename={handleFileRename}
+        projectName={project?.name}
+        projectId={(project?.id ?? resolvedProjectId) as any}
         leftPanel={
           <ReplitFileSidebar
             files={files}
@@ -425,8 +457,6 @@ export default function Editor(props: EditorProps = {}) {
             onFileDelete={handleFileDelete}
             onFileRename={handleFileRename}
             projectName={project?.name}
-            projectId={(project?.id ?? resolvedProjectId) as any}
-            onClose={() => setLeftPanelOpen(false)}
           />
         }
         centerPanel={

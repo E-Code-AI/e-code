@@ -1,19 +1,31 @@
-// @ts-nocheck
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { apiRequest } from '../utils/api-utils';
 import { createLogger } from '../utils/logger';
 
-// Initialize AI clients
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 const logger = createLogger('ai-service');
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Initialize AI clients with proper validation
+const openaiKey = process.env.OPENAI_API_KEY;
+const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+const openai = openaiKey ? new OpenAI({
+  apiKey: openaiKey,
+}) : null;
+
+const anthropic = anthropicKey ? new Anthropic({
+  apiKey: anthropicKey,
+}) : null;
+
+// Log provider status on initialization
+if (!openaiKey && !anthropicKey) {
+  logger.error('No AI providers configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY');
+} else {
+  logger.info('AI providers initialized', {
+    openai: !!openaiKey,
+    anthropic: !!anthropicKey
+  });
+}
 
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system';
@@ -35,6 +47,52 @@ export interface AIResponse {
 }
 
 export class AIService {
+  // Get the status of available AI providers
+  getProviderStatus() {
+    return {
+      openai: {
+        available: !!openai,
+        configured: !!openaiKey,
+        keyPresent: !!process.env.OPENAI_API_KEY,
+        models: openai ? ['gpt-4', 'gpt-4-turbo', 'gpt-5'] : []
+      },
+      anthropic: {
+        available: !!anthropic,
+        configured: !!anthropicKey,
+        keyPresent: !!process.env.ANTHROPIC_API_KEY,
+        models: anthropic ? ['claude-3-sonnet', 'claude-3-opus', 'claude-3-5-sonnet-20241022'] : []
+      },
+      anyAvailable: !!openai || !!anthropic,
+      missingKeys: [
+        !openaiKey ? 'OPENAI_API_KEY' : null,
+        !anthropicKey ? 'ANTHROPIC_API_KEY' : null
+      ].filter(Boolean)
+    };
+  }
+
+  // Check if any provider is available
+  hasAvailableProvider(): boolean {
+    return !!openai || !!anthropic;
+  }
+
+  // Validate provider before attempting to use it
+  private validateProvider(model: string): void {
+    const isOpenAIModel = model.startsWith('gpt');
+    const isAnthropicModel = model.startsWith('claude');
+    
+    if (isOpenAIModel && !openai) {
+      throw new Error('OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.');
+    }
+    
+    if (isAnthropicModel && !anthropic) {
+      throw new Error('Anthropic API key is not configured. Please set ANTHROPIC_API_KEY environment variable.');
+    }
+    
+    if (!isOpenAIModel && !isAnthropicModel) {
+      throw new Error(`Unsupported model: ${model}. Available models: gpt-4, gpt-5, claude-3-sonnet, claude-3-5-sonnet-20241022`);
+    }
+  }
+
   async generateResponse(
     messages: AIMessage[],
     options: {
@@ -46,6 +104,9 @@ export class AIService {
     }
   ): Promise<AIResponse> {
     const { model, projectContext, tools = true, temperature = 0.7, maxTokens = 4096 } = options;
+
+    // Validate provider before attempting to use it
+    this.validateProvider(model);
 
     // Route to appropriate AI provider based on model
     if (model.startsWith('gpt')) {
@@ -62,6 +123,10 @@ export class AIService {
     options: any
   ): Promise<AIResponse> {
     const { model, tools, temperature, maxTokens, projectContext } = options;
+
+    if (!openai) {
+      throw new Error('OpenAI service is not available. Please configure OPENAI_API_KEY.');
+    }
 
     // Add project context to system message
     const systemMessage = this.buildSystemMessage(projectContext);
@@ -122,6 +187,10 @@ export class AIService {
     options: any
   ): Promise<AIResponse> {
     const { model, temperature, maxTokens, projectContext } = options;
+
+    if (!anthropic) {
+      throw new Error('Anthropic service is not available. Please configure ANTHROPIC_API_KEY.');
+    }
 
     // Add project context to system message
     const systemMessage = this.buildSystemMessage(projectContext);

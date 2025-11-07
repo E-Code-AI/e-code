@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Voice/Video Collaboration Service using WebRTC
  * Provides real-time voice and video communication capabilities
@@ -405,4 +404,38 @@ export class VoiceVideoService extends EventEmitter {
       .from(voiceVideoParticipants)
       .where(eq(voiceVideoParticipants.sessionId, sessionId));
   }
+
+  getSession(roomId: string): Room | undefined {
+    return this.rooms.get(roomId);
+  }
+
+  async getSessionStats(roomId: string) {
+    const room = this.rooms.get(roomId);
+    if (!room) {
+      return null;
+    }
+
+    const participants = await this.getSessionParticipants(room.sessionId);
+
+    return {
+      roomId,
+      sessionId: room.sessionId,
+      type: room.type,
+      currentParticipants: room.peers.size,
+      totalParticipants: participants.length,
+      isRecording: room.recording,
+      startedAt: participants[0]?.joinedAt,
+      participants: Array.from(room.peers.values()).map(p => ({
+        id: p.id,
+        userId: p.userId,
+        username: p.username,
+        audioEnabled: p.audioEnabled,
+        videoEnabled: p.videoEnabled,
+        screenSharing: p.screenSharing
+      }))
+    };
+  }
 }
+
+// Export singleton instance
+export const voiceVideoService = new VoiceVideoService();

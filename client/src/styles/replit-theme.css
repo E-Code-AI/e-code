@@ -9,32 +9,32 @@
   --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
-  --primary: 221 83% 53%;
+  --primary: 24 96 49;  /* E-Code Orange #F26207 */
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 17% 96%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 39 96 56;  /* E-Code Yellow-Orange #F99D25 */
+  --secondary-foreground: 0 0% 0%;
   --muted: 210 17% 96%;
   --muted-foreground: 215 16% 40%;
-  --accent: 210 17% 93%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 39 96 56;  /* E-Code Yellow-Orange #F99D25 */
+  --accent-foreground: 0 0% 0%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
   --border: 214 32% 88%;
   --input: 214 32% 90%;
-  --ring: 221 83% 53%;
-  --chart-1: 221 83% 53%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 38 92% 50%;
-  --chart-4: 280 87% 65%;
-  --chart-5: 340 82% 52%;
+  --ring: 24 96 49;  /* E-Code Orange #F26207 */
+  --chart-1: 24 96 49;  /* E-Code Orange #F26207 */
+  --chart-2: 39 96 56;  /* E-Code Yellow-Orange #F99D25 */
+  --chart-3: 142 71% 45%;
+  --chart-4: 38 92% 50%;
+  --chart-5: 280 87% 65%;
   --sidebar-background: 0 0% 98%;
   --sidebar-foreground: 222 47% 11%;
-  --sidebar-primary: 221 83% 53%;
+  --sidebar-primary: 24 96 49;  /* E-Code Orange #F26207 */
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 17% 93%;
+  --sidebar-accent: 39 96 56;  /* E-Code Yellow-Orange #F99D25 */
   --sidebar-accent-foreground: 222 47% 11%;
   --sidebar-border: 220 13% 88%;
-  --sidebar-ring: 221 83% 53%;
+  --sidebar-ring: 24 96 49;  /* E-Code Orange #F26207 */
   --background-rgb: 252, 252, 253;
 
   /* E-Code corporate light palette - Pure White Design */
@@ -47,37 +47,37 @@
   --ecode-text: #1a1a1a;
   --ecode-text-secondary: #333333;
   --ecode-text-muted: #666666;
-  --ecode-accent: #0066cc;
-  --ecode-accent-hover: #0052a3;
+  --ecode-accent: #F26207;  /* E-Code Orange */
+  --ecode-accent-hover: #D04E00;
   --ecode-danger: #dc3545;
   --ecode-warning: #f59e0b;
-  --ecode-info: #0066cc;
+  --ecode-info: #3b82f6;  /* Keep blue for info */
 
   --ecode-surface-hover: #f5f5f5;
   --ecode-surface-elevated: #ffffff;
 
   --ecode-green: #10b981;
-  --ecode-blue: #0066cc;
+  --ecode-blue: #3b82f6;  /* Keep blue for certain elements */
   --ecode-purple: #7c3aed;
-  --ecode-orange: #f59e0b;
+  --ecode-orange: #F26207;  /* E-Code Orange */
   --ecode-red: #dc3545;
 
   --ecode-sidebar-bg: #f7f8fa;
   --ecode-sidebar-hover: #eef0f3;
-  --ecode-sidebar-active: #0066cc;
+  --ecode-sidebar-active: #F26207;  /* E-Code Orange */
   --ecode-sidebar-border: #dfe3e8;
 
   --ecode-editor-bg: #ffffff;
   --ecode-editor-gutter: #f7f8fa;
-  --ecode-editor-selection: #d4e5ff;
+  --ecode-editor-selection: #ffe4d3;  /* Light orange tint */
   --ecode-editor-line-highlight: #f7f8fa;
 
   --ecode-terminal-bg: #1a1f36;
   --ecode-terminal-text: #f7f8fa;
-  --ecode-terminal-cursor: #0066cc;
+  --ecode-terminal-cursor: #F26207;  /* E-Code Orange */
 
-  --ecode-button-primary: #0066cc;
-  --ecode-button-primary-hover: #0052a3;
+  --ecode-button-primary: #F26207;  /* E-Code Orange */
+  --ecode-button-primary-hover: #D04E00;
   --ecode-button-secondary: #f7f8fa;
   --ecode-button-secondary-hover: #eef0f3;
 
@@ -134,7 +134,7 @@
   --card-foreground: 205.7 53.8% 97.5%;
   --popover: 221.7 29.1% 15.5%;
   --popover-foreground: 205.7 53.8% 97.5%;
-  --primary: 210 92% 60%;
+  --primary: 24 96 49;  /* E-Code Orange #F26207 */
   --primary-foreground: 210 40% 98%;
   --secondary: 222.9 21.6% 19%;
   --secondary-foreground: 205.7 53.8% 97.5%;
@@ -146,20 +146,20 @@
   --destructive-foreground: 210 40% 98%;
   --border: 221.1 16.2% 22.9%;
   --input: 221.1 16.2% 22.9%;
-  --ring: 210 92% 60%;
-  --chart-1: 210 92% 60%;
+  --ring: 24 96 49;  /* E-Code Orange #F26207 */
+  --chart-1: 24 96 49;  /* E-Code Orange #F26207 */
   --chart-2: 160.1 84.1% 39.4%;
   --chart-3: 24.6 95% 61%;
   --chart-4: 258.3 89.5% 70.3%;
   --chart-5: 0 84.2% 65.2%;
   --sidebar-background: 221.7 29.1% 15.5%;
   --sidebar-foreground: 205.7 53.8% 97.5%;
-  --sidebar-primary: 210 92% 60%;
+  --sidebar-primary: 24 96 49;  /* E-Code Orange #F26207 */
   --sidebar-primary-foreground: 210 40% 98%;
   --sidebar-accent: 222.9 21.6% 19%;
   --sidebar-accent-foreground: 205.7 53.8% 97.5%;
   --sidebar-border: 221.1 16.2% 22.9%;
-  --sidebar-ring: 210 92% 60%;
+  --sidebar-ring: 24 96 49;  /* E-Code Orange #F26207 */
   --background-rgb: 14, 21, 37;
 
   --ecode-background: #0e1525;
@@ -170,8 +170,8 @@
   --ecode-text: #f5f9fc;
   --ecode-text-secondary: #9ba3b3;
   --ecode-text-muted: #8b95a7;
-  --ecode-accent: #3b82f6;
-  --ecode-accent-hover: #60a5fa;
+  --ecode-accent: #F26207;  /* E-Code Orange */
+  --ecode-accent-hover: #FF7A2B;
   --ecode-danger: #ef4444;
   --ecode-warning: #f59e0b;
   --ecode-info: #38bdf8;
@@ -187,7 +187,7 @@
 
   --ecode-sidebar-bg: #1c2333;
   --ecode-sidebar-hover: #262c3b;
-  --ecode-sidebar-active: #3b82f6;
+  --ecode-sidebar-active: #F26207;  /* E-Code Orange */
   --ecode-sidebar-border: #313744;
 
   --ecode-editor-bg: #0e1525;
@@ -197,10 +197,10 @@
 
   --ecode-terminal-bg: #0e1525;
   --ecode-terminal-text: #f5f9fc;
-  --ecode-terminal-cursor: #3b82f6;
+  --ecode-terminal-cursor: #F26207;  /* E-Code Orange */
 
-  --ecode-button-primary: #3b82f6;
-  --ecode-button-primary-hover: #60a5fa;
+  --ecode-button-primary: #F26207;  /* E-Code Orange */
+  --ecode-button-primary-hover: #FF7A2B;
   --ecode-button-secondary: #262c3b;
   --ecode-button-secondary-hover: #313744;
 
@@ -254,12 +254,12 @@
   --chart-5: 340 82% 52%;
   --sidebar-background: 0 0% 98%;
   --sidebar-foreground: 222 47% 11%;
-  --sidebar-primary: 221 83% 53%;
+  --sidebar-primary: 24 96 49;  /* E-Code Orange #F26207 */
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 17% 93%;
+  --sidebar-accent: 39 96 56;  /* E-Code Yellow-Orange #F99D25 */
   --sidebar-accent-foreground: 222 47% 11%;
   --sidebar-border: 220 13% 88%;
-  --sidebar-ring: 221 83% 53%;
+  --sidebar-ring: 24 96 49;  /* E-Code Orange #F26207 */
   --background-rgb: 252, 252, 253;
 
   --ecode-background: #ffffff;
@@ -271,34 +271,34 @@
   --ecode-text: #1a1a1a;
   --ecode-text-secondary: #333333;
   --ecode-text-muted: #666666;
-  --ecode-accent: #0066cc;
-  --ecode-accent-hover: #0052a3;
+  --ecode-accent: #F26207;  /* E-Code Orange */
+  --ecode-accent-hover: #D04E00;
   --ecode-danger: #dc3545;
   --ecode-warning: #f59e0b;
-  --ecode-info: #0066cc;
+  --ecode-info: #3b82f6;  /* Keep blue for info */
 
   --ecode-green: #10b981;
-  --ecode-blue: #0066cc;
+  --ecode-blue: #3b82f6;  /* Keep blue for certain elements */
   --ecode-purple: #7c3aed;
-  --ecode-orange: #f59e0b;
+  --ecode-orange: #F26207;  /* E-Code Orange */
   --ecode-red: #dc3545;
 
   --ecode-sidebar-bg: #ffffff;
   --ecode-sidebar-hover: #f5f5f5;
-  --ecode-sidebar-active: #0066cc;
+  --ecode-sidebar-active: #F26207;  /* E-Code Orange */
   --ecode-sidebar-border: #e0e0e0;
 
   --ecode-editor-bg: #ffffff;
   --ecode-editor-gutter: #f8f9fa;
-  --ecode-editor-selection: #d4e5ff;
+  --ecode-editor-selection: #ffe4d3;  /* Light orange tint */
   --ecode-editor-line-highlight: #f8f9fa;
 
   --ecode-terminal-bg: #1a1f36;
   --ecode-terminal-text: #f7f8fa;
-  --ecode-terminal-cursor: #0066cc;
+  --ecode-terminal-cursor: #F26207;  /* E-Code Orange */
 
-  --ecode-button-primary: #0066cc;
-  --ecode-button-primary-hover: #0052a3;
+  --ecode-button-primary: #F26207;  /* E-Code Orange */
+  --ecode-button-primary-hover: #D04E00;
   --ecode-button-secondary: #ffffff;
   --ecode-button-secondary-hover: #f5f5f5;
 

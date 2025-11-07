@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { db } from '../db';
 import { usageTracking, users, projects } from '@shared/schema';
 import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';

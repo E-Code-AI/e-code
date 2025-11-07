@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Progress Tracking Service
  * Detailed student analytics and learning progress monitoring

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { DatabaseStorage } from '../storage';
 import { 
   ApiKey, InsertApiKey,
@@ -47,6 +46,48 @@ export class AdminService {
     }
     
     return { users: filteredUsers, total };
+  }
+
+  async getAllProjects(filter?: {
+    search?: string;
+    visibility?: string;
+    language?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ projects: any[]; total: number }> {
+    const projects = await this.storage.getAllProjects();
+    
+    let filteredProjects = projects;
+    
+    if (filter?.search) {
+      const searchLower = filter.search.toLowerCase();
+      filteredProjects = filteredProjects.filter(project => 
+        project.name.toLowerCase().includes(searchLower) ||
+        (project.description?.toLowerCase() || '').includes(searchLower)
+      );
+    }
+    
+    if (filter?.visibility) {
+      filteredProjects = filteredProjects.filter(project => 
+        project.visibility === filter.visibility
+      );
+    }
+    
+    if (filter?.language) {
+      filteredProjects = filteredProjects.filter(project => 
+        project.language === filter.language
+      );
+    }
+    
+    const total = filteredProjects.length;
+    
+    if (filter?.limit) {
+      const offset = filter.offset || 0;
+      filteredProjects = filteredProjects.slice(offset, offset + filter.limit);
+    }
+    
+    return { projects: filteredProjects, total };
   }
 
   async updateUserRole(userId: number, role: string, adminId: number): Promise<void> {

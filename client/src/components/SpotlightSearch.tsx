@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import {
@@ -64,8 +63,9 @@ export function SpotlightSearch() {
 
   // Fetch recent projects
   const { data: recentProjects } = useQuery<Project[]>({
-    queryKey: ['/api/projects/recent'],
+    queryKey: ['/api/projects'],
     enabled: !!user && open,
+    select: (data) => data.slice(0, 5) // Show 5 most recent projects
   });
 
   useEffect(() => {
@@ -309,7 +309,7 @@ export function SpotlightSearch() {
               {recentProjects.slice(0, 5).map((project) => (
                 <CommandItem
                   key={project.id}
-                  onSelect={() => handleSelect(() => navigate(getProjectUrl(project, project.owner?.username)))}
+                  onSelect={() => handleSelect(() => navigate(`/project/${project.id}`))}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   <span>{project.name}</span>

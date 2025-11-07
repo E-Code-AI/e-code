@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +19,8 @@ import PerformanceMonitor from '@/pages/admin/PerformanceMonitor';
 import { formatDistanceToNow } from 'date-fns';
 import NewsletterSubscribers from '@/components/admin/NewsletterSubscribers';
 import NewsletterComposer from '@/components/admin/NewsletterComposer';
+import UserManagement from '@/components/admin/UserManagement';
+import { ProjectManagement } from '@/components/admin/ProjectManagement';
 
 interface SystemStatus {
   database: { status: string; connections: number };
@@ -364,37 +365,11 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>Manage platform users and permissions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert>
-                <Lock className="h-4 w-4" />
-                <AlertDescription>
-                  User management interface coming soon. Use database tools for now.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
+          <UserManagement />
         </TabsContent>
 
         <TabsContent value="projects" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Management</CardTitle>
-              <CardDescription>Monitor and manage user projects</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert>
-                <FileText className="h-4 w-4" />
-                <AlertDescription>
-                  Project management interface coming soon. Use database tools for now.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
+          <ProjectManagement />
         </TabsContent>
 
         <TabsContent value="newsletter" className="space-y-6">

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Standalone MCP Server that runs on port 3200
  * This provides the actual MCP functionality for AI operations

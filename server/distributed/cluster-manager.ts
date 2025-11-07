@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { EventEmitter } from 'events';
 import * as net from 'net';
 import * as crypto from 'crypto';

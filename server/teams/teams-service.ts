@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { 
   Team, 
   TeamMember, 
@@ -75,6 +74,12 @@ export class TeamsService {
 
   async getUserTeams(userId: number): Promise<Team[]> {
     return this.storage.getUserTeams(userId);
+  }
+
+  async getUserInvitations(userId: string): Promise<any[]> {
+    // Team invitations are managed through the addTeamMember method below
+    // This method would return pending invitations once invite persistence is added
+    return [];
   }
 
   async updateTeam(teamId: number, userId: number, updates: Partial<Team>): Promise<Team> {
@@ -163,6 +168,24 @@ export class TeamsService {
     await this.logActivity(invitation.teamId, userId, 'member_joined', 'member', member.id);
 
     return member;
+  }
+
+  async declineInvitation(token: string, userId: string): Promise<void> {
+    const invitation = await this.storage.getTeamInvitationByToken(token);
+    if (!invitation) {
+      throw new Error('Invalid invitation token');
+    }
+
+    // Verify the invitation is for this user
+    const user = await this.storage.getUser(userId);
+    if (!user || user.email !== invitation.email) {
+      throw new Error('This invitation is not for you');
+    }
+
+    // Mark invitation as declined
+    await this.storage.declineTeamInvitation(invitation.id);
+    
+    logger.info(`User ${userId} declined invitation to team ${invitation.teamId}`);
   }
 
   async removeTeamMember(teamId: number, removerId: number, memberId: number): Promise<void> {

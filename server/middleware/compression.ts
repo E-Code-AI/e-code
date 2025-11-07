@@ -1,4 +1,3 @@
-// @ts-nocheck
 import compression from 'compression';
 import { Request, Response } from 'express';
 import * as zlib from 'zlib';

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -273,7 +272,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
       refetchGitStatus();
       refetchCommitHistory();
       // Refresh file list to get updated contents
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
     },
     onError: (error: Error) => {
       toast({
@@ -306,7 +305,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
       refetchGitStatus();
       refetchCommitHistory();
       // Refresh file list to get updated contents
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
     },
     onError: (error: Error) => {
       toast({

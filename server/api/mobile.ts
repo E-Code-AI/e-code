@@ -1,47 +1,123 @@
-// @ts-nocheck
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { storage } from '../storage';
 import { db } from '../db';
 import { projects, files } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
 import { aiService } from '../ai/ai-service';
 import { mobileContainerService } from '../services/mobile-container-service';
+import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
 
 const router = Router();
 
+// JWT configuration
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+
+if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
+  throw new Error(
+    'FATAL: JWT_SECRET and JWT_REFRESH_SECRET environment variables must be set for mobile authentication. ' +
+    'Set them in your environment or .env file before starting the server.'
+  );
+}
+
+// Token expiration times
 const MOBILE_TOKEN_MAX_AGE = 1000 * 60 * 60 * 24; // 24 hours
+const ACCESS_TOKEN_EXPIRY = '24h'; // Mobile devices need longer sessions
+const REFRESH_TOKEN_EXPIRY = '30d'; // Refresh tokens last 30 days
 
-const parseMobileToken = (token: string) => {
-  const decoded = Buffer.from(token, 'base64').toString('utf-8');
-  const [userIdPart, issuedAtPart] = decoded.split(':');
+// Rate limiting for login attempts
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_LOGIN_ATTEMPTS = 5;
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 
-  const userId = Number(userIdPart);
-  const issuedAt = Number(issuedAtPart);
+// JWT token generation for mobile
+function generateMobileAccessToken(userId: string, username: string): string {
+  return jwt.sign(
+    { userId, username, type: 'mobile-access' },
+    JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_EXPIRY }
+  );
+}
 
-  if (!userId || Number.isNaN(userId) || Number.isNaN(issuedAt)) {
-    throw new Error('Invalid token payload');
+function generateMobileRefreshToken(userId: string): string {
+  return jwt.sign(
+    { userId, type: 'mobile-refresh' },
+    JWT_REFRESH_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRY }
+  );
+}
+
+// Type for JWT payloads
+interface JWTRefreshPayload {
+  userId: string;
+  type: string;
+  iat?: number;
+  exp?: number;
+}
+
+function verifyMobileRefreshToken(token: string): { userId: string } | null {
+  try {
+    const payload = jwt.verify(token, JWT_REFRESH_SECRET) as JWTRefreshPayload;
+    if (payload.type !== 'mobile-refresh') {
+      return null;
+    }
+    return { userId: payload.userId };
+  } catch (error) {
+    return null;
   }
+}
 
-  if (Date.now() - issuedAt > MOBILE_TOKEN_MAX_AGE) {
-    throw new Error('Token expired');
+// Rate limiting helper
+function checkLoginRateLimit(key: string): boolean {
+  const now = Date.now();
+  const attempt = loginAttempts.get(key);
+  
+  if (!attempt) {
+    loginAttempts.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return true;
   }
+  
+  if (now > attempt.resetAt) {
+    loginAttempts.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+  
+  if (attempt.count >= MAX_LOGIN_ATTEMPTS) {
+    return false;
+  }
+  
+  attempt.count++;
+  return true;
+}
 
-  return { userId, issuedAt };
+// Type for access JWT payload
+interface JWTAccessPayload {
+  userId: string;
+  username: string;
+  type: string;
+  iat?: number;
+  exp?: number;
+}
+
+// Verify mobile access token (JWT)
+const parseMobileToken = (token: string): { userId: string; issuedAt?: number } => {
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as JWTAccessPayload;
+    if (payload.type !== 'mobile-access') {
+      throw new Error('Invalid token type');
+    }
+    return { userId: payload.userId, issuedAt: payload.iat };
+  } catch (error) {
+    throw new Error('Invalid or expired token');
+  }
 };
 
-const mobileEnsureAuthenticated = async (req, res, next) => {
+const mobileEnsureAuthenticated = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      if (!req.user) {
-        req.user = {
-          id: 1,
-          username: 'admin',
-          email: 'admin@example.com'
-        } as any;
-      }
-      return next();
-    }
-
+    // Development bypass disabled - proper authentication required
+    // (Development user must be created in database)
+    
     if (req.isAuthenticated && req.isAuthenticated() && req.user) {
       return next();
     }
@@ -65,13 +141,8 @@ const mobileEnsureAuthenticated = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid authentication token' });
     }
 
-    req.user = {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      displayName: user.displayName,
-      avatarUrl: user.avatarUrl
-    } as any;
+    // Assign the full user object - Express.User extends our schema User type
+    req.user = user;
 
     return next();
   } catch (error) {
@@ -100,25 +171,17 @@ router.post('/mobile/auth/login', async (req, res) => {
     }
     
     const user = await storage.getUserByUsername(username);
-    if (!user) {
+    if (!user || !user.passwordHash) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Properly verify password with bcrypt
+    // Verify password with bcrypt
     let isValidPassword = false;
     try {
-      // Check if password is hashed (bcrypt hashes start with $2a$, $2b$, or $2y$)
-      if (user.password && user.password.startsWith('$2')) {
-        isValidPassword = await bcrypt.compare(password, user.password);
-      } else {
-        // Fallback for non-hashed passwords (only for demo/dev)
-        // In production, all passwords should be hashed
-        isValidPassword = user.password === password || 
-                         (username === 'admin' && password === 'admin');
-      }
+      isValidPassword = await bcrypt.compare(password, user.passwordHash);
     } catch (bcryptError) {
       console.error('Password verification error:', bcryptError);
-      isValidPassword = false;
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
     
     if (!isValidPassword) {
@@ -172,7 +235,7 @@ router.post('/mobile/auth/refresh', async (req, res) => {
     }
     
     // Get user from database to ensure they still exist and are active
-    const user = await storage.getUserById(payload.userId);
+    const user = await storage.getUser(payload.userId);
     if (!user) {
       return res.status(401).json({ 
         message: 'User not found',

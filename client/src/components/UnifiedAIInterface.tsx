@@ -1,23 +1,47 @@
-// @ts-nocheck
-import { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Bot, Send, Code, FileText, Terminal, Zap, Brain, 
-  Sparkles, Settings, History, Copy, Download, Share,
-  RotateCcw, ChevronDown, ChevronUp, Loader2, Check,
-  FileCode, Play, Square, RefreshCw, AlertCircle
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Bot,
+  Send,
+  Code,
+  FileText,
+  Terminal,
+  Zap,
+  Brain,
+  Sparkles,
+  Settings,
+  History,
+  Copy,
+  Download,
+  Share,
+  RotateCcw,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Check,
+  FileCode,
+  Play,
+  Square,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface UnifiedAIInterfaceProps {
   projectId: number;
@@ -28,7 +52,7 @@ interface UnifiedAIInterfaceProps {
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
   model?: string;
@@ -36,18 +60,18 @@ interface Message {
   effort?: number;
 }
 
-export function UnifiedAIInterface({ 
-  projectId, 
-  currentFile, 
+export function UnifiedAIInterface({
+  projectId,
+  currentFile,
   selectedCode,
-  onApplyCode 
+  onApplyCode,
 }: UnifiedAIInterfaceProps) {
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<'agent' | 'assistant' | 'advanced'>('agent');
-  const [model, setModel] = useState('claude-sonnet-4-20250514');
+  const [mode, setMode] = useState<"agent" | "assistant" | "advanced">("agent");
+  const [model, setModel] = useState("claude-sonnet-4-20250514");
   const [autoRun, setAutoRun] = useState(true);
   const [showEffortPricing, setShowEffortPricing] = useState(false);
   const [totalEffort, setTotalEffort] = useState(0);
@@ -55,19 +79,21 @@ export function UnifiedAIInterface({
 
   // Load agent prompt if available
   useEffect(() => {
-    const storedPrompt = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
+    const storedPrompt = window.sessionStorage.getItem(
+      `agent-prompt-${projectId}`,
+    );
     if (storedPrompt) {
       setInput(storedPrompt);
       window.sessionStorage.removeItem(`agent-prompt-${projectId}`);
       // Auto-send if in agent mode
-      if (mode === 'agent' && storedPrompt) {
+      if (mode === "agent" && storedPrompt) {
         handleSend();
       }
     }
   }, [projectId, mode]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -79,13 +105,13 @@ export function UnifiedAIInterface({
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: 'user',
+      role: "user",
       content: input,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
     setIsLoading(true);
 
     try {
@@ -94,30 +120,33 @@ export function UnifiedAIInterface({
         const effort = Math.floor(Math.random() * 50) + 10;
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
-          role: 'assistant',
+          role: "assistant",
           content: getAIResponse(userMessage.content, mode),
           timestamp: new Date(),
           model: model,
           tokens: Math.floor(Math.random() * 1000) + 200,
-          effort: mode === 'agent' ? effort : undefined
+          effort: mode === "agent" ? effort : undefined,
         };
 
-        setMessages(prev => [...prev, assistantMessage]);
-        setTotalEffort(prev => prev + (effort || 0));
+        setMessages((prev) => [...prev, assistantMessage]);
+        setTotalEffort((prev) => prev + (effort || 0));
         setIsLoading(false);
 
         // Show preview if mentioned
-        if (userMessage.content.toLowerCase().includes('preview') || 
-            userMessage.content.toLowerCase().includes('show') ||
-            userMessage.content.toLowerCase().includes('display')) {
-          window.postMessage({ type: 'show-preview' }, '*');
+        if (
+          userMessage.content.toLowerCase().includes("preview") ||
+          userMessage.content.toLowerCase().includes("show") ||
+          userMessage.content.toLowerCase().includes("display")
+        ) {
+          window.postMessage({ type: "show-preview" }, "*");
         }
 
         // Auto-run if enabled and in agent mode
-        if (autoRun && mode === 'agent') {
+        if (autoRun && mode === "agent") {
           toast({
             title: "Running project",
-            description: "Your changes are being applied and the project is running"
+            description:
+              "Your changes are being applied and the project is running",
           });
         }
       }, 1500);
@@ -126,13 +155,13 @@ export function UnifiedAIInterface({
       toast({
         title: "Error",
         description: "Failed to get AI response",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const getAIResponse = (query: string, currentMode: string): string => {
-    if (currentMode === 'agent') {
+    if (currentMode === "agent") {
       return `I'll help you build that! Let me analyze your requirements and create the implementation.
 
 🔨 **Building your application:**
@@ -150,7 +179,7 @@ export function UnifiedAIInterface({
 - Applied styling and animations
 
 📱 **Your app is now ready!** The preview is available in the preview panel.`;
-    } else if (currentMode === 'assistant') {
+    } else if (currentMode === "assistant") {
       if (selectedCode) {
         return `I can see you've selected some code. Here's my analysis:
 
@@ -205,7 +234,7 @@ The implementation is complete and ready for use.`;
     navigator.clipboard.writeText(content);
     toast({
       title: "Copied",
-      description: "Message copied to clipboard"
+      description: "Message copied to clipboard",
     });
   };
 
@@ -216,7 +245,7 @@ The implementation is complete and ready for use.`;
       onApplyCode(codeMatch[1]);
       toast({
         title: "Code applied",
-        description: "The code has been applied to your file"
+        description: "The code has been applied to your file",
       });
     }
   };
@@ -232,47 +261,61 @@ The implementation is complete and ready for use.`;
             Claude 4.0
           </Badge>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="w-auto">
+          <Tabs
+            value={mode}
+            onValueChange={(v) => setMode(v as any)}
+            className="w-auto"
+          >
             <TabsList className="grid w-full grid-cols-3 h-8">
-              <TabsTrigger value="agent" className="text-xs">Agent</TabsTrigger>
-              <TabsTrigger value="assistant" className="text-xs">Assistant</TabsTrigger>
-              <TabsTrigger value="advanced" className="text-xs">Advanced</TabsTrigger>
+              <TabsTrigger value="agent" className="text-xs">
+                Agent
+              </TabsTrigger>
+              <TabsTrigger value="assistant" className="text-xs">
+                Assistant
+              </TabsTrigger>
+              <TabsTrigger value="advanced" className="text-xs">
+                Advanced
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </div>
 
       {/* Settings Bar */}
-      {(mode === 'advanced' || mode === 'agent') && (
+      {(mode === "advanced" || mode === "agent") && (
         <div className="p-3 border-b bg-muted/50">
           <div className="flex items-center gap-4">
-            {mode === 'advanced' && (
+            {mode === "advanced" && (
               <Select value={model} onValueChange={setModel}>
                 <SelectTrigger className="w-[200px] h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
+                  <SelectItem value="claude-3-5-sonnet-20241022">
+                    Claude 3.5 Sonnet
+                  </SelectItem>
                   <SelectItem value="gpt-5">GPT-5</SelectItem>
                   <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
                   <SelectItem value="grok-2-1212">Grok 2</SelectItem>
                 </SelectContent>
               </Select>
             )}
-            
-            {mode === 'agent' && (
+
+            {mode === "agent" && (
               <div className="flex items-center gap-2">
-                <Switch 
-                  id="auto-run" 
+                <Switch
+                  id="auto-run"
                   checked={autoRun}
                   onCheckedChange={setAutoRun}
                 />
-                <Label htmlFor="auto-run" className="text-sm">Auto-run</Label>
+                <Label htmlFor="auto-run" className="text-sm">
+                  Auto-run
+                </Label>
               </div>
             )}
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -292,37 +335,41 @@ The implementation is complete and ready for use.`;
             <div className="text-center py-8 text-muted-foreground">
               <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium mb-2">
-                {mode === 'agent' ? 'AI Agent Ready' : mode === 'assistant' ? 'AI Assistant Ready' : 'Advanced AI Ready'}
+                {mode === "agent"
+                  ? "AI Agent Ready"
+                  : mode === "assistant"
+                    ? "AI Assistant Ready"
+                    : "Advanced AI Ready"}
               </p>
               <p className="text-sm">
-                {mode === 'agent' 
-                  ? 'Describe what you want to build and I\'ll create it for you'
-                  : mode === 'assistant'
-                  ? 'Select code or ask questions about your project'
-                  : 'Use advanced AI models for complex tasks'}
+                {mode === "agent"
+                  ? "Describe what you want to build and I'll create it for you"
+                  : mode === "assistant"
+                    ? "Select code or ask questions about your project"
+                    : "Use advanced AI models for complex tasks"}
               </p>
             </div>
           )}
-          
+
           {messages.map((message) => (
             <div
               key={message.id}
               className={cn(
                 "flex gap-3",
-                message.role === 'user' ? 'justify-end' : 'justify-start'
+                message.role === "user" ? "justify-end" : "justify-start",
               )}
             >
               <div
                 className={cn(
                   "max-w-[80%] rounded-lg p-4",
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
+                  message.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted",
                 )}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
-                    {message.role === 'assistant' && (
+                    {message.role === "assistant" && (
                       <Bot className="h-4 w-4" />
                     )}
                     <span className="text-xs opacity-70">
@@ -339,7 +386,7 @@ The implementation is complete and ready for use.`;
                       </Badge>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center gap-1">
                     <Button
                       variant="ghost"
@@ -349,33 +396,37 @@ The implementation is complete and ready for use.`;
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
-                    {message.role === 'assistant' && message.content.includes('```') && onApplyCode && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => handleApplyCodeFromMessage(message.content)}
-                      >
-                        <FileCode className="h-3 w-3" />
-                      </Button>
-                    )}
+                    {message.role === "assistant" &&
+                      message.content.includes("```") &&
+                      onApplyCode && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleApplyCodeFromMessage(message.content)
+                          }
+                        >
+                          <FileCode className="h-3 w-3" />
+                        </Button>
+                      )}
                   </div>
                 </div>
-                
+
                 <div className="prose prose-sm dark:prose-invert max-w-none">
                   <p className="whitespace-pre-wrap">{message.content}</p>
                 </div>
               </div>
             </div>
           ))}
-          
+
           {isLoading && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="text-sm">AI is thinking...</span>
             </div>
           )}
-          
+
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
@@ -398,29 +449,29 @@ The implementation is complete and ready for use.`;
 
       {/* Input */}
       <div className="p-4 border-t">
-        {currentFile && mode === 'assistant' && (
+        {currentFile && mode === "assistant" && (
           <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
             <FileText className="h-3 w-3" />
             <span>Working on: {currentFile}</span>
           </div>
         )}
-        
+
         <div className="flex gap-2">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSend();
               }
             }}
             placeholder={
-              mode === 'agent'
+              mode === "agent"
                 ? "Describe what you want to build..."
-                : mode === 'assistant'
-                ? "Ask about your code or select code to analyze..."
-                : "Enter your advanced query..."
+                : mode === "assistant"
+                  ? "Ask about your code or select code to analyze..."
+                  : "Enter your advanced query..."
             }
             className="min-h-[60px] resize-none"
           />

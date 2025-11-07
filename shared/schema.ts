@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { sql } from 'drizzle-orm';
 import {
   index,
@@ -49,7 +48,7 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   username: varchar("username").unique(),
-  password: varchar("password"),
+  passwordHash: varchar("password_hash"), // For bcrypt hashed passwords
   email: varchar("email").unique(),
   displayName: varchar("display_name"),
   firstName: varchar("first_name"),
@@ -62,14 +61,43 @@ export const users = pgTable("users", {
   linkedinUsername: varchar("linkedin_username"),
   reputation: integer("reputation").default(0),
   isMentor: boolean("is_mentor").default(false),
+  isAdmin: boolean("is_admin").default(false),
   emailVerified: boolean("email_verified").default(false),
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   stripePriceId: varchar("stripe_price_id"),
   subscriptionStatus: varchar("subscription_status"),
   subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
+  // Security fields
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  twoFactorSecret: varchar("two_factor_secret"),
+  passwordResetToken: varchar("password_reset_token"),
+  passwordResetExpiry: timestamp("password_reset_expiry"),
+  lastLogin: timestamp("last_login"),
+  failedLoginAttempts: integer("failed_login_attempts").default(0),
+  lockedUntil: timestamp("locked_until"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Email Verification Tokens table
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: varchar("token").notNull().unique(), // Hashed token
+  email: varchar("email").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Password Reset Tokens table
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: varchar("token").notNull().unique(), // Hashed token
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const projects = pgTable("projects", {
@@ -97,6 +125,7 @@ export const files = pgTable("files", {
   path: text("path").notNull(),
   content: text("content").default(''),
   projectId: varchar("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  parentId: integer("parent_id"),
   isDirectory: boolean("is_directory").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -104,17 +133,27 @@ export const files = pgTable("files", {
   storageUrl: text("storage_url"),
 });
 
-// API SDK Tables
+// API SDK Tables - Enhanced with security features
 export const apiKeys = pgTable("api_keys", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   userId: varchar("user_id").notNull().references(() => users.id),
   name: varchar("name").notNull(),
-  key: varchar("key").notNull().unique(),
+  publicKey: varchar("public_key").unique(), // Public identifier
+  keyHash: varchar("key_hash").notNull().unique(), // SHA-256 hash of the actual key
   permissions: jsonb("permissions").$type<string[]>().default([]),
-  isActive: boolean("is_active").default(true),
-  lastUsed: timestamp("last_used"),
+  active: boolean("active").default(true),
+  lastUsedAt: timestamp("last_used_at"),
   createdAt: timestamp("created_at").defaultNow(),
   expiresAt: timestamp("expires_at"),
+  revokedAt: timestamp("revoked_at"),
+  rotatedAt: timestamp("rotated_at"),
+  usageCount: integer("usage_count").default(0),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  
+  // Legacy support - can be removed in future
+  key: varchar("key").unique(), // Deprecated
+  isActive: boolean("is_active").default(true), // Deprecated - use 'active'
+  lastUsed: timestamp("last_used"), // Deprecated - use 'lastUsedAt'
 });
 
 export const apiUsage = pgTable("api_usage", {
@@ -125,6 +164,22 @@ export const apiUsage = pgTable("api_usage", {
   statusCode: integer("status_code").notNull(),
   responseTime: integer("response_time"),
   timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// Security logs table for audit logging
+export const securityLogs = pgTable("security_logs", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  userId: varchar("user_id").references(() => users.id),
+  ip: varchar("ip").notNull(),
+  action: varchar("action").notNull(),
+  resource: text("resource"),
+  result: varchar("result").notNull(), // 'success' or 'failure'
+  userAgent: text("user_agent"),
+  sessionId: varchar("session_id"),
+  statusCode: integer("status_code"),
+  duration: integer("duration"), // in milliseconds
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
 export const newsletterSubscribers = pgTable("newsletter_subscribers", {
@@ -242,37 +297,7 @@ export const usageAlerts = pgTable("usage_alerts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Code Review Tables
-export const codeReviews = pgTable("code_reviews", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  projectId: varchar("project_id").notNull().references(() => projects.id),
-  authorId: varchar("author_id").notNull().references(() => users.id),
-  title: varchar("title").notNull(),
-  description: text("description"),
-  status: reviewStatusEnum("status").default('pending'),
-  filesChanged: jsonb("files_changed").$type<string[]>().default([]),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const reviewComments = pgTable("review_comments", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  reviewId: integer("review_id").notNull().references(() => codeReviews.id),
-  authorId: varchar("author_id").notNull().references(() => users.id),
-  content: text("content").notNull(),
-  filePath: varchar("file_path"),
-  lineNumber: integer("line_number"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const reviewApprovals = pgTable("review_approvals", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  reviewId: integer("review_id").notNull().references(() => codeReviews.id),
-  reviewerId: varchar("reviewer_id").notNull().references(() => users.id),
-  approved: boolean("approved").notNull(),
-  comment: text("comment"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// Code Review Tables (moved to line 606)
 
 // Mentorship Tables
 export const mentorProfiles = pgTable("mentor_profiles", {
@@ -602,6 +627,83 @@ export const checkpointDatabase = pgTable('checkpoint_database', {
   metadata: jsonb('metadata').default({}),
 });
 
+// Code Review Tables
+export const codeReviews = pgTable('code_reviews', {
+  id: serial('id').primaryKey(),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
+  fileId: integer('file_id').references(() => files.id),
+  reviewType: varchar('review_type').notNull().default('manual'), // manual, automatic, git-diff, pre-commit
+  status: varchar('status').notNull().default('pending'), // pending, completed, failed
+  totalIssues: integer('total_issues').notNull().default(0),
+  criticalIssues: integer('critical_issues').notNull().default(0),
+  highIssues: integer('high_issues').notNull().default(0),
+  mediumIssues: integer('medium_issues').notNull().default(0),
+  lowIssues: integer('low_issues').notNull().default(0),
+  codeQualityScore: real('code_quality_score').notNull().default(100),
+  summary: text('summary'),
+  metadata: jsonb('metadata').default({}),
+  createdBy: varchar('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+});
+
+export const reviewIssues = pgTable('review_issues', {
+  id: serial('id').primaryKey(),
+  reviewId: integer('review_id').notNull().references(() => codeReviews.id, { onDelete: 'cascade' }),
+  fileId: integer('file_id').references(() => files.id),
+  issueType: varchar('issue_type').notNull(), // error, warning, suggestion, security, performance, style
+  severity: varchar('severity').notNull(), // critical, high, medium, low, info
+  line: integer('line').notNull(),
+  column: integer('column'),
+  endLine: integer('end_line'),
+  endColumn: integer('end_column'),
+  message: text('message').notNull(),
+  explanation: text('explanation'),
+  suggestion: text('suggestion'),
+  fixCode: text('fix_code'),
+  category: varchar('category').notNull(), // Security, Performance, Style, Best Practices, etc.
+  rule: varchar('rule'),
+  confidence: real('confidence').notNull().default(1.0),
+  isFixed: boolean('is_fixed').notNull().default(false),
+  fixedAt: timestamp('fixed_at'),
+  fixedBy: varchar('fixed_by').references(() => users.id),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const reviewSettings = pgTable('review_settings', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id').notNull().references(() => users.id).unique(),
+  enabledChecks: jsonb('enabled_checks').notNull().default({
+    security: true,
+    performance: true,
+    style: true,
+    bestPractices: true,
+    complexity: true,
+    duplication: true,
+    documentation: true
+  }),
+  severityThresholds: jsonb('severity_thresholds').notNull().default({
+    critical: 'error',
+    high: 'error',
+    medium: 'warning',
+    low: 'info'
+  }),
+  aiProvider: varchar('ai_provider').notNull().default('anthropic'), // anthropic, openai, both
+  confidenceThreshold: real('confidence_threshold').notNull().default(0.7),
+  maxIssues: integer('max_issues').notNull().default(100),
+  autoReviewEnabled: boolean('auto_review_enabled').notNull().default(true),
+  autoReviewTriggers: jsonb('auto_review_triggers').notNull().default({
+    onSave: false,
+    onCommit: true,
+    onPullRequest: true
+  }),
+  customRules: jsonb('custom_rules').default([]),
+  ignoredPatterns: jsonb('ignored_patterns').default([]),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // WebRTC Voice/Video Session Tables
 export const webrtcSessions = pgTable('webrtc_sessions', {
   id: serial('id').primaryKey(),
@@ -671,6 +773,67 @@ export const projectScreenshots = pgTable('project_screenshots', {
   createdBy: varchar('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+// Deployment Metrics Table
+export const deploymentMetrics = pgTable('deployment_metrics', {
+  id: serial('id').primaryKey(),
+  deploymentId: varchar('deployment_id').notNull(),
+  cpuUsage: real('cpu_usage').notNull(), // percentage 0-100
+  memoryUsage: real('memory_usage').notNull(), // percentage 0-100
+  requestCount: integer('request_count').notNull().default(0),
+  errorCount: integer('error_count').notNull().default(0),
+  responseTime: real('response_time').notNull(), // milliseconds
+  activeConnections: integer('active_connections').notNull().default(0),
+  networkIn: varchar('network_in').notNull().default('0'), // bytes as string
+  networkOut: varchar('network_out').notNull().default('0'), // bytes as string
+  diskUsage: real('disk_usage').notNull().default(0), // percentage 0-100
+  containerCount: integer('container_count').notNull().default(1),
+  healthScore: real('health_score').notNull().default(100), // 0-100
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+}, (table) => [
+  index('idx_deployment_metrics_deployment_id').on(table.deploymentId),
+  index('idx_deployment_metrics_timestamp').on(table.timestamp),
+]);
+
+// Auto-Scaling Policies Table
+export const scalingPolicies = pgTable('scaling_policies', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  deploymentId: varchar('deployment_id').notNull(),
+  name: text('name').notNull(),
+  enabled: boolean('enabled').notNull().default(true),
+  metric: varchar('metric', { length: 50 }).notNull(), // cpu, memory, requests, responseTime, custom
+  thresholdUp: real('threshold_up').notNull(),
+  thresholdDown: real('threshold_down').notNull(),
+  scaleUpBy: integer('scale_up_by').notNull().default(1),
+  scaleDownBy: integer('scale_down_by').notNull().default(1),
+  minInstances: integer('min_instances').notNull().default(1),
+  maxInstances: integer('max_instances').notNull().default(10),
+  cooldownPeriod: integer('cooldown_period').notNull().default(300), // seconds
+  customMetric: jsonb('custom_metric'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('idx_scaling_policies_deployment_id').on(table.deploymentId),
+]);
+
+// Deployment Snapshots Table
+export const deploymentSnapshots = pgTable('deployment_snapshots', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  deploymentId: varchar('deployment_id').notNull(),
+  version: varchar('version').notNull(),
+  environment: varchar('environment', { length: 50 }).notNull().default('production'),
+  config: jsonb('config').notNull().default({}),
+  fileManifest: jsonb('file_manifest').notNull().default([]),
+  databaseSchema: jsonb('database_schema'),
+  metadata: jsonb('metadata').notNull().default({}),
+  status: varchar('status', { length: 50 }).notNull().default('active'), // active, archived, failed
+  size: integer('size').notNull().default(0), // bytes
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('idx_deployment_snapshots_deployment_id').on(table.deploymentId),
+  index('idx_deployment_snapshots_version').on(table.version),
+  index('idx_deployment_snapshots_created_at').on(table.createdAt),
+]);
 
 // Task summaries
 export const taskSummaries = pgTable('task_summaries', {
@@ -979,7 +1142,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   projects: many(projects),
   apiKeys: many(apiKeys),
   codeReviews: many(codeReviews),
-  reviewComments: many(reviewComments),
   mentorProfile: many(mentorProfiles),
   mentorshipSessions: many(mentorshipSessions),
   challengeSubmissions: many(challengeSubmissions),
@@ -1008,20 +1170,21 @@ export const codeReviewsRelations = relations(codeReviews, ({ one, many }) => ({
     fields: [codeReviews.projectId],
     references: [projects.id],
   }),
-  author: one(users, {
-    fields: [codeReviews.authorId],
+  createdBy: one(users, {
+    fields: [codeReviews.createdBy],
     references: [users.id],
   }),
-  comments: many(reviewComments),
-  approvals: many(reviewApprovals),
+  issues: many(reviewIssues),
 }));
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertEmailVerificationTokenSchema = createInsertSchema(emailVerificationTokens).omit({ id: true, createdAt: true });
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({ id: true, createdAt: true });
 export const insertProjectSchema = createInsertSchema(projects).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertFileSchema = createInsertSchema(files).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertApiKeySchema = createInsertSchema(apiKeys).omit({ id: true, createdAt: true });
-export const insertCodeReviewSchema = createInsertSchema(codeReviews).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCodeReviewSchema = createInsertSchema(codeReviews).omit({ id: true, createdAt: true, completedAt: true });
 export const insertChallengeSchema = createInsertSchema(challenges).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMentorProfileSchema = createInsertSchema(mentorProfiles).omit({ id: true, createdAt: true });
 export const insertDeploymentSchema = createInsertSchema(deployments).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1086,6 +1249,12 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = typeof users.$inferInsert;
 
+export type EmailVerificationToken = typeof emailVerificationTokens.$inferSelect;
+export type InsertEmailVerificationToken = z.infer<typeof insertEmailVerificationTokenSchema>;
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
+
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 
@@ -1107,8 +1276,6 @@ export type InsertMentorProfile = z.infer<typeof insertMentorProfileSchema>;
 export type ChallengeSubmission = typeof challengeSubmissions.$inferSelect;
 export type MentorshipSession = typeof mentorshipSessions.$inferSelect;
 export type MobileDevice = typeof mobileDevices.$inferSelect;
-export type ReviewComment = typeof reviewComments.$inferSelect;
-export type ReviewApproval = typeof reviewApprovals.$inferSelect;
 
 export type Deployment = typeof deployments.$inferSelect;
 export type InsertDeployment = z.infer<typeof insertDeploymentSchema>;
@@ -1171,18 +1338,23 @@ export type { ProjectImport, InsertProjectImport, ImportTemplate, InsertImportTe
 export const voiceVideoSessions = pgTable("voice_video_sessions", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   projectId: varchar("project_id").notNull().references(() => projects.id),
-  type: varchar("type").notNull(), // 'voice' or 'video'
+  roomId: varchar("room_id").notNull().unique(),
+  hostUserId: varchar("host_user_id").notNull().references(() => users.id),
+  sessionType: varchar("session_type").notNull(), // 'voice', 'video', or 'screen'
   status: varchar("status").notNull().default('active'), // 'active', 'ended'
+  maxParticipants: integer("max_participants").notNull().default(10),
+  recordingEnabled: boolean("recording_enabled").notNull().default(false),
+  recordingUrl: text("recording_url"),
   startedAt: timestamp("started_at").notNull().defaultNow(),
   endedAt: timestamp("ended_at"),
-  recordingUrl: text("recording_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const voiceVideoParticipants = pgTable("voice_video_participants", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  sessionId: integer("session_id").notNull().references(() => voiceVideoSessions.id),
+  sessionId: integer("session_id").notNull().references(() => voiceVideoSessions.id, { onDelete: 'cascade' }),
   userId: varchar("user_id").notNull().references(() => users.id),
+  role: varchar("role").notNull().default('participant'), // 'host' or 'participant'
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
   leftAt: timestamp("left_at"),
   isMuted: boolean("is_muted").notNull().default(false),
@@ -1258,14 +1430,20 @@ export const monitoringEvents = pgTable("monitoring_events", {
 export const performanceMetrics = pgTable("performance_metrics", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
+  type: varchar("type"), // 'system', 'application', 'deployment'
+  category: varchar("category"), // 'cpu', 'memory', 'network', 'disk', 'request'
   metric_name: varchar("metric_name").notNull(),
   metric_value: decimal("metric_value", { precision: 20, scale: 4 }).notNull(),
+  value: real("value"), // Alternative numeric value for compatibility
   unit: varchar("unit").notNull(),
+  deploymentId: varchar("deployment_id"),
   endpoint: varchar("endpoint"),
   method: varchar("method"),
   statusCode: integer("status_code"),
   durationMs: integer("duration_ms"),
   memoryUsage: jsonb("memory_usage"),
+  metadata: jsonb("metadata"),
+  tags: jsonb("tags"),
   context: jsonb("context"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -1288,7 +1466,28 @@ export const errorLogs = pgTable("error_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Templates table for project templates
+// Collaborative Editing Sessions
+export const collaborationSessions = pgTable("collaboration_sessions", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
+  fileId: integer("file_id").notNull().references(() => files.id),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Session Participants for Collaborative Editing
+export const sessionParticipants = pgTable("session_participants", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar("session_id").notNull().references(() => collaborationSessions.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  username: varchar("username").notNull(),
+  cursorColor: varchar("cursor_color").notNull(),
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  leftAt: timestamp("left_at"),
+  active: boolean("active").notNull().default(true),
+});
+
+// Templates table for project templates with marketplace features
 export const templates = pgTable("templates", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   slug: varchar("slug").notNull().unique(),
@@ -1296,6 +1495,7 @@ export const templates = pgTable("templates", {
   description: text("description"),
   category: varchar("category").notNull(), // 'web', 'backend', 'bot', 'game', etc.
   tags: text().array().notNull().default([]),
+  authorId: varchar("author_id").references(() => users.id), // Link to user for community templates
   authorName: varchar("author_name").notNull(),
   authorVerified: boolean("author_verified").notNull().default(false),
   uses: integer("uses").notNull().default(0),
@@ -1309,6 +1509,130 @@ export const templates = pgTable("templates", {
   isFeatured: boolean("is_featured").notNull().default(false),
   isOfficial: boolean("is_official").notNull().default(false),
   isPublished: boolean("is_published").notNull().default(true),
+  isCommunity: boolean("is_community").notNull().default(false), // Community submitted templates
+  status: varchar("status").notNull().default('published'), // 'draft', 'pending_review', 'published', 'rejected'
+  githubUrl: text("github_url"), // Source repository URL
+  demoUrl: text("demo_url"), // Live demo URL
+  thumbnailUrl: text("thumbnail_url"), // Screenshot/preview image
+  version: varchar("version").notNull().default('1.0.0'),
+  license: varchar("license").notNull().default('MIT'),
+  price: decimal("price", { precision: 10, scale: 2 }).default('0.00'), // For premium templates
+  downloads: integer("downloads").notNull().default(0),
+  rating: real("rating").notNull().default(0), // Average rating
+  reviewCount: integer("review_count").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Template categories with icons
+export const templateCategories = pgTable("template_categories", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: varchar("name").notNull().unique(),
+  slug: varchar("slug").notNull().unique(),
+  description: text("description"),
+  icon: varchar("icon").notNull(), // Lucide icon name
+  color: varchar("color").notNull().default('#F26207'), // E-Code orange by default
+  templateCount: integer("template_count").notNull().default(0),
+  order: integer("order").notNull().default(0), // Display order
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Template ratings and reviews
+export const templateRatings = pgTable("template_ratings", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  templateId: varchar("template_id").notNull().references(() => templates.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  rating: integer("rating").notNull(), // 1-5 stars
+  review: text("review"),
+  isVerifiedPurchase: boolean("is_verified_purchase").notNull().default(false),
+  helpful: integer("helpful").notNull().default(0), // Upvotes on the review
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  unique('unique_template_user_rating').on(table.templateId, table.userId),
+]);
+
+// Template tags for enhanced categorization
+export const templateTags = pgTable("template_tags", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  templateId: varchar("template_id").notNull().references(() => templates.id, { onDelete: 'cascade' }),
+  tag: varchar("tag").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index('template_tags_template_idx').on(table.templateId),
+  index('template_tags_tag_idx').on(table.tag),
+  unique('unique_template_tag').on(table.templateId, table.tag),
+]);
+
+// Template collections (curated lists)
+export const templateCollections = pgTable("template_collections", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: varchar("name").notNull(),
+  slug: varchar("slug").notNull().unique(),
+  description: text("description"),
+  authorId: varchar("author_id").notNull().references(() => users.id),
+  thumbnailUrl: text("thumbnail_url"),
+  isPublic: boolean("is_public").notNull().default(true),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  templateCount: integer("template_count").notNull().default(0),
+  likes: integer("likes").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Templates in collections
+export const collectionTemplates = pgTable("collection_templates", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  collectionId: varchar("collection_id").notNull().references(() => templateCollections.id, { onDelete: 'cascade' }),
+  templateId: varchar("template_id").notNull().references(() => templates.id),
+  order: integer("order").notNull().default(0),
+  addedAt: timestamp("added_at").notNull().defaultNow(),
+}, (table) => [
+  unique('unique_collection_template').on(table.collectionId, table.templateId),
+]);
+
+// Monitoring and Alert Tables
+export const alerts = pgTable("alerts", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  type: varchar("type").notNull(),
+  severity: varchar("severity").notNull(), // 'info', 'warning', 'error', 'critical'
+  message: text("message").notNull(),
+  status: varchar("status").notNull().default('active'), // 'active', 'acknowledged', 'resolved', 'muted'
+  triggered_at: timestamp("triggered_at").notNull().defaultNow(),
+  acknowledged_by: varchar("acknowledged_by"),
+  acknowledged_at: timestamp("acknowledged_at"),
+  resolved_at: timestamp("resolved_at"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const alertHistory = pgTable("alert_history", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  alertId: integer("alert_id").notNull().references(() => alerts.id),
+  action: varchar("action").notNull(), // 'triggered', 'acknowledged', 'resolved', 'muted', 'escalated'
+  performedBy: varchar("performed_by"),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  details: jsonb("details"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Community Templates Table
+export const communityTemplates = pgTable("community_templates", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  authorId: varchar("author_id").notNull().references(() => users.id),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  githubUrl: text("github_url").notNull(),
+  downloads: integer("downloads").notNull().default(0),
+  stars: integer("stars").notNull().default(0),
+  category: varchar("category").notNull(),
+  tags: text().array().notNull().default([]),
+  language: varchar("language").notNull(),
+  framework: varchar("framework"),
+  license: varchar("license").notNull().default('MIT'),
+  isPublished: boolean("is_published").notNull().default(false),
+  publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -1323,7 +1647,14 @@ export const insertSubmissionSchema = createInsertSchema(submissions).omit({ id:
 export const insertMonitoringEventSchema = createInsertSchema(monitoringEvents).omit({ id: true, createdAt: true });
 export const insertPerformanceMetricSchema = createInsertSchema(performanceMetrics).omit({ id: true, createdAt: true });
 export const insertErrorLogSchema = createInsertSchema(errorLogs).omit({ id: true, createdAt: true, resolved: true });
+export const insertAlertSchema = createInsertSchema(alerts).omit({ id: true, createdAt: true, status: true, triggered_at: true });
+export const insertAlertHistorySchema = createInsertSchema(alertHistory).omit({ id: true, createdAt: true, timestamp: true });
 export const insertTemplateSchema = createInsertSchema(templates).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertTemplateCategorySchema = createInsertSchema(templateCategories).omit({ id: true, createdAt: true });
+export const insertTemplateRatingSchema = createInsertSchema(templateRatings).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertTemplateTagSchema = createInsertSchema(templateTags).omit({ id: true, createdAt: true });
+export const insertTemplateCollectionSchema = createInsertSchema(templateCollections).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCollectionTemplateSchema = createInsertSchema(collectionTemplates).omit({ id: true, addedAt: true });
 export const insertNotificationSchema = createInsertSchema(pushNotifications, {
   type: z.string().min(1).optional(),
   actionUrl: z.string().min(1).optional(),
@@ -1365,7 +1696,771 @@ export type InsertErrorLog = z.infer<typeof insertErrorLogSchema>;
 
 export type Template = typeof templates.$inferSelect;
 export type InsertTemplate = z.infer<typeof insertTemplateSchema>;
+export type TemplateCategory = typeof templateCategories.$inferSelect;
+export type InsertTemplateCategory = z.infer<typeof insertTemplateCategorySchema>;
+export type TemplateRating = typeof templateRatings.$inferSelect;
+export type InsertTemplateRating = z.infer<typeof insertTemplateRatingSchema>;
+export type TemplateTag = typeof templateTags.$inferSelect;
+export type InsertTemplateTag = z.infer<typeof insertTemplateTagSchema>;
+export type TemplateCollection = typeof templateCollections.$inferSelect;
+export type InsertTemplateCollection = z.infer<typeof insertTemplateCollectionSchema>;
+export type CollectionTemplate = typeof collectionTemplates.$inferSelect;
+export type InsertCollectionTemplate = z.infer<typeof insertCollectionTemplateSchema>;
 export type Notification = typeof pushNotifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type NotificationPreference = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreference = z.infer<typeof insertNotificationPreferenceSchema>;
+
+// Security Tables
+
+// Authentication attempts tracking
+export const authAttempts = pgTable('auth_attempts', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  username: text('username').notNull(),
+  ipAddress: text('ip_address').notNull(),
+  attemptType: text('attempt_type').notNull(), // 'success' | 'failed'
+  lockedUntil: timestamp('locked_until'),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('auth_attempts_username_idx').on(table.username),
+  index('auth_attempts_ip_idx').on(table.ipAddress),
+  index('auth_attempts_created_at_idx').on(table.createdAt),
+]);
+
+// User sessions for enhanced session management
+export const userSessions = pgTable('user_sessions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  ipAddress: text('ip_address').notNull(),
+  userAgent: text('user_agent').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lastActivity: timestamp('last_activity').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  revokedAt: timestamp('revoked_at'),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+}, (table) => [
+  index('user_sessions_user_id_idx').on(table.userId),
+  index('user_sessions_expires_at_idx').on(table.expiresAt),
+]);
+
+// Security events logging
+export const securityEvents = pgTable('security_events', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  type: text('type').notNull(), // 'failed_login', 'xss_attempt', 'sql_injection', etc.
+  severity: text('severity').notNull(), // 'low', 'medium', 'high', 'critical'
+  source: text('source').notNull(), // IP address or user ID
+  description: text('description').notNull(),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+  resolved: boolean('resolved').default(false),
+  resolvedAt: timestamp('resolved_at'),
+  resolvedBy: text('resolved_by'),
+}, (table) => [
+  index('security_events_type_idx').on(table.type),
+  index('security_events_severity_idx').on(table.severity),
+  index('security_events_source_idx').on(table.source),
+  index('security_events_timestamp_idx').on(table.timestamp),
+]);
+
+// Audit logs for sensitive operations
+export const auditLogs = pgTable('audit_logs', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull(),
+  action: text('action').notNull(),
+  resource: text('resource').notNull(),
+  resourceId: text('resource_id'),
+  oldValue: jsonb('old_value').$type<Record<string, any>>(),
+  newValue: jsonb('new_value').$type<Record<string, any>>(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+}, (table) => [
+  index('audit_logs_user_id_idx').on(table.userId),
+  index('audit_logs_action_idx').on(table.action),
+  index('audit_logs_resource_idx').on(table.resource),
+  index('audit_logs_timestamp_idx').on(table.timestamp),
+]);
+
+// Add security-specific fields to users table if not exists
+// NOTE: Update users table with security fields in a migration
+
+// ============================================
+// AUTONOMOUS AGENT SYSTEM TABLES
+// ============================================
+
+// Enum for agent operation types
+export const agentOperationTypeEnum = pgEnum('agent_operation_type', [
+  'file_create', 'file_read', 'file_update', 'file_delete', 'file_rename', 'file_move',
+  'command_execute', 'database_query', 'database_migration', 'tool_execution',
+  'workflow_start', 'workflow_step', 'workflow_complete', 'workflow_error'
+]);
+
+// Enum for operation status
+export const operationStatusEnum = pgEnum('operation_status', [
+  'pending', 'in_progress', 'completed', 'failed', 'cancelled', 'rolled_back'
+]);
+
+// Enum for tool capability types
+export const toolCapabilityEnum = pgEnum('tool_capability', [
+  'file_system', 'command_execution', 'database', 'ide_integration',
+  'git_operations', 'package_management', 'testing', 'deployment',
+  'monitoring', 'security', 'api_integration', 'ai_analysis'
+]);
+
+// Agent Sessions - Track active AI agent sessions
+export const agentSessions = pgTable('agent_sessions', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar('user_id').notNull().references(() => users.id),
+  projectId: varchar('project_id').references(() => projects.id),
+  sessionToken: text('session_token').notNull().unique(),
+  model: text('model').notNull(), // gpt-5, gpt-4, claude-3, etc
+  context: jsonb('context').$type<{
+    files: string[];
+    currentFile?: string;
+    workingDirectory: string;
+    environment: Record<string, string>;
+    capabilities: string[];
+  }>(),
+  isActive: boolean('is_active').default(true),
+  totalTokensUsed: integer('total_tokens_used').default(0),
+  totalOperations: integer('total_operations').default(0),
+  startedAt: timestamp('started_at').defaultNow(),
+  endedAt: timestamp('ended_at'),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+}, (table) => [
+  index('agent_sessions_user_id_idx').on(table.userId),
+  index('agent_sessions_project_id_idx').on(table.projectId),
+  index('agent_sessions_active_idx').on(table.isActive),
+]);
+
+// File Operations - Track all file system operations
+export const fileOperations = pgTable('file_operations', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  operationType: agentOperationTypeEnum('operation_type').notNull(),
+  filePath: text('file_path').notNull(),
+  newPath: text('new_path'), // For rename/move operations
+  content: text('content'), // File content for create/update
+  previousContent: text('previous_content'), // For rollback capability
+  checksum: text('checksum'), // File integrity check
+  status: operationStatusEnum('status').notNull().default('pending'),
+  error: text('error'),
+  executedAt: timestamp('executed_at'),
+  completedAt: timestamp('completed_at'),
+  rollbackOf: varchar('rollback_of'), // Reference to operation being rolled back
+  metadata: jsonb('metadata').$type<{
+    fileSize?: number;
+    mimeType?: string;
+    encoding?: string;
+    permissions?: string;
+    diff?: string;
+  }>(),
+}, (table) => [
+  index('file_operations_session_id_idx').on(table.sessionId),
+  index('file_operations_status_idx').on(table.status),
+  index('file_operations_file_path_idx').on(table.filePath),
+]);
+
+// Command Executions - Track all command/process executions
+export const commandExecutions = pgTable('command_executions', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  command: text('command').notNull(),
+  arguments: jsonb('arguments').$type<string[]>(),
+  workingDirectory: text('working_directory').notNull(),
+  environment: jsonb('environment').$type<Record<string, string>>(),
+  stdin: text('stdin'),
+  stdout: text('stdout'),
+  stderr: text('stderr'),
+  exitCode: integer('exit_code'),
+  status: operationStatusEnum('status').notNull().default('pending'),
+  timeout: integer('timeout'), // In milliseconds
+  resourceLimits: jsonb('resource_limits').$type<{
+    maxMemory?: number;
+    maxCpu?: number;
+    maxDiskIo?: number;
+  }>(),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  killedAt: timestamp('killed_at'),
+  error: text('error'),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+}, (table) => [
+  index('command_executions_session_id_idx').on(table.sessionId),
+  index('command_executions_status_idx').on(table.status),
+  index('command_executions_started_at_idx').on(table.startedAt),
+]);
+
+// Tool Registry - Define available tools and their capabilities
+export const toolRegistry = pgTable('tool_registry', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull().unique(),
+  displayName: text('display_name').notNull(),
+  description: text('description'),
+  capability: toolCapabilityEnum('capability').notNull(),
+  version: text('version').notNull(),
+  isEnabled: boolean('is_enabled').default(true),
+  requiresAuth: boolean('requires_auth').default(false),
+  permissions: jsonb('permissions').$type<string[]>(),
+  configuration: jsonb('configuration').$type<{
+    endpoint?: string;
+    apiKey?: string;
+    rateLimit?: number;
+    timeout?: number;
+    parameters?: Record<string, any>;
+  }>(),
+  inputSchema: jsonb('input_schema').$type<Record<string, any>>(), // JSON Schema
+  outputSchema: jsonb('output_schema').$type<Record<string, any>>(), // JSON Schema
+  examples: jsonb('examples').$type<Array<{
+    input: Record<string, any>;
+    output: Record<string, any>;
+    description?: string;
+  }>>(),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => [
+  index('tool_registry_capability_idx').on(table.capability),
+  index('tool_registry_enabled_idx').on(table.isEnabled),
+]);
+
+// Tool Executions - Track tool usage
+export const toolExecutions = pgTable('tool_executions', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  toolId: varchar('tool_id').notNull().references(() => toolRegistry.id),
+  input: jsonb('input').$type<Record<string, any>>().notNull(),
+  output: jsonb('output').$type<Record<string, any>>(),
+  status: operationStatusEnum('status').notNull().default('pending'),
+  error: text('error'),
+  executionTime: integer('execution_time'), // In milliseconds
+  tokensUsed: integer('tokens_used'),
+  startedAt: timestamp('started_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+}, (table) => [
+  index('tool_executions_session_id_idx').on(table.sessionId),
+  index('tool_executions_tool_id_idx').on(table.toolId),
+  index('tool_executions_status_idx').on(table.status),
+]);
+
+// Workflows - Multi-step operation orchestration
+export const agentWorkflows = pgTable('agent_workflows', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  name: text('name').notNull(),
+  description: text('description'),
+  steps: jsonb('steps').$type<Array<{
+    id: string;
+    name: string;
+    type: 'file_operation' | 'command' | 'tool' | 'database' | 'conditional';
+    config: Record<string, any>;
+    dependencies?: string[];
+    retryPolicy?: {
+      maxRetries: number;
+      backoffMs: number;
+    };
+  }>>().notNull(),
+  currentStep: text('current_step'),
+  status: operationStatusEnum('status').notNull().default('pending'),
+  progress: integer('progress').default(0), // Percentage 0-100
+  result: jsonb('result').$type<Record<string, any>>(),
+  error: text('error'),
+  startedAt: timestamp('started_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+  checkpoints: jsonb('checkpoints').$type<Array<{
+    stepId: string;
+    timestamp: string;
+    state: Record<string, any>;
+  }>>(),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+}, (table) => [
+  index('agent_workflows_session_id_idx').on(table.sessionId),
+  index('agent_workflows_status_idx').on(table.status),
+]);
+
+// Database Operations - Track database queries and migrations
+export const databaseOperations = pgTable('database_operations', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  operationType: text('operation_type').notNull(), // query, migration, backup, restore
+  database: text('database').notNull(),
+  query: text('query'),
+  migration: text('migration'),
+  affectedRows: integer('affected_rows'),
+  result: jsonb('result').$type<any>(),
+  status: operationStatusEnum('status').notNull().default('pending'),
+  error: text('error'),
+  executionTime: integer('execution_time'), // In milliseconds
+  transaction: boolean('transaction').default(false),
+  rollbackQuery: text('rollback_query'),
+  executedAt: timestamp('executed_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+}, (table) => [
+  index('database_operations_session_id_idx').on(table.sessionId),
+  index('database_operations_status_idx').on(table.status),
+  index('database_operations_type_idx').on(table.operationType),
+]);
+
+// Agent Audit Trail - Comprehensive audit logging for all agent actions
+export const agentAuditTrail = pgTable('agent_audit_trail', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  userId: varchar('user_id').notNull().references(() => users.id),
+  action: text('action').notNull(),
+  resourceType: text('resource_type').notNull(),
+  resourceId: text('resource_id'),
+  details: jsonb('details').$type<Record<string, any>>(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+  severity: text('severity').notNull().default('info'), // info, warning, error, critical
+}, (table) => [
+  index('agent_audit_trail_session_id_idx').on(table.sessionId),
+  index('agent_audit_trail_user_id_idx').on(table.userId),
+  index('agent_audit_trail_timestamp_idx').on(table.timestamp),
+  index('agent_audit_trail_severity_idx').on(table.severity),
+]);
+
+// Agent Permissions - Fine-grained permission control
+export const agentPermissions = pgTable('agent_permissions', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar('user_id').references(() => users.id),
+  roleId: varchar('role_id'), // For future role-based permissions
+  resource: text('resource').notNull(),
+  action: text('action').notNull(),
+  conditions: jsonb('conditions').$type<Record<string, any>>(),
+  isAllowed: boolean('is_allowed').notNull().default(true),
+  priority: integer('priority').default(0),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => [
+  index('agent_permissions_user_id_idx').on(table.userId),
+  index('agent_permissions_resource_action_idx').on(table.resource, table.action),
+]);
+
+// ============================================================================
+// AI AGENT APPROVAL QUEUE & AUDIT - Fortune 500 Security
+// ============================================================================
+
+// AI Approval Queue - Stores pending actions requiring human approval
+export const aiApprovalQueue = pgTable('ai_approval_queue', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar('user_id').notNull().references(() => users.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
+  action: jsonb('action').$type<{
+    type: string;
+    path?: string;
+    content?: string;
+    package?: string;
+    description?: string;
+  }>().notNull(),
+  status: text('status').notNull().default('pending'), // pending, approved, rejected, expired
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  processedAt: timestamp('processed_at'),
+  processedBy: varchar('processed_by').references(() => users.id),
+  rejectionReason: text('rejection_reason'),
+}, (table) => [
+  index('ai_approval_queue_user_id_idx').on(table.userId),
+  index('ai_approval_queue_project_id_idx').on(table.projectId),
+  index('ai_approval_queue_status_idx').on(table.status),
+  index('ai_approval_queue_expires_at_idx').on(table.expiresAt),
+]);
+
+// AI Audit Logs - Comprehensive compliance-grade audit trail for all AI actions
+export const aiAuditLogs = pgTable('ai_audit_logs', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id').notNull().references(() => users.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id),
+  approvalId: varchar('approval_id').references(() => aiApprovalQueue.id),
+  action: jsonb('action').$type<{
+    type: string;
+    path?: string;
+    content?: string;
+    package?: string;
+    description?: string;
+  }>().notNull(),
+  result: jsonb('result').$type<{
+    success: boolean;
+    error?: string;
+    fileId?: string;
+  }>().notNull(),
+  securityValidation: jsonb('security_validation').$type<{
+    pathValid: boolean;
+    reason?: string;
+    sanitized?: string;
+  }>(),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+}, (table) => [
+  index('ai_audit_logs_user_id_idx').on(table.userId),
+  index('ai_audit_logs_project_id_idx').on(table.projectId),
+  index('ai_audit_logs_approval_id_idx').on(table.approvalId),
+  index('ai_audit_logs_timestamp_idx').on(table.timestamp),
+]);
+
+// ============================================================================
+// IDE WORKSPACE FEATURES - For true Replit parity
+// ============================================================================
+
+// LSP Diagnostics - For Problems Panel (real-time error/warning display)
+export const lspDiagnostics = pgTable('lsp_diagnostics', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  projectId: varchar('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  fileId: integer('file_id').references(() => files.id, { onDelete: 'cascade' }),
+  filePath: text('file_path').notNull(),
+  severity: text('severity').notNull(), // 'error', 'warning', 'info', 'hint'
+  message: text('message').notNull(),
+  source: text('source'), // 'typescript', 'eslint', etc.
+  code: text('code'), // Error code like 'TS2322'
+  startLine: integer('start_line').notNull(),
+  startColumn: integer('start_column').notNull(),
+  endLine: integer('end_line').notNull(),
+  endColumn: integer('end_column').notNull(),
+  tags: text('tags').array(), // 'unnecessary', 'deprecated', etc.
+  relatedInformation: jsonb('related_information').$type<Array<{
+    message: string;
+    filePath: string;
+    line: number;
+    column: number;
+  }>>(),
+  createdAt: timestamp('created_at').defaultNow(),
+  resolvedAt: timestamp('resolved_at'),
+}, (table) => [
+  index('lsp_diagnostics_project_id_idx').on(table.projectId),
+  index('lsp_diagnostics_file_id_idx').on(table.fileId),
+  index('lsp_diagnostics_severity_idx').on(table.severity),
+]);
+
+// Build Logs - For Output Panel (real-time build/runtime output)
+export const buildLogs = pgTable('build_logs', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  projectId: varchar('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  buildId: varchar('build_id').notNull(), // Groups logs by build session
+  logType: text('log_type').notNull(), // 'stdout', 'stderr', 'build', 'runtime'
+  level: text('level').notNull(), // 'info', 'warn', 'error', 'debug'
+  message: text('message').notNull(),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+  source: text('source'), // 'vite', 'tsc', 'node', etc.
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+}, (table) => [
+  index('build_logs_project_id_idx').on(table.projectId),
+  index('build_logs_build_id_idx').on(table.buildId),
+  index('build_logs_timestamp_idx').on(table.timestamp),
+  index('build_logs_level_idx').on(table.level),
+]);
+
+// Test Runs - For Testing Panel (test execution tracking)
+export const testRuns = pgTable('test_runs', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  projectId: varchar('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  runId: varchar('run_id').notNull().unique(), // Unique identifier for this test run
+  runner: text('runner').notNull(), // 'jest', 'playwright', 'vitest', etc.
+  status: text('status').notNull(), // 'running', 'passed', 'failed', 'cancelled'
+  totalTests: integer('total_tests').notNull().default(0),
+  passedTests: integer('passed_tests').notNull().default(0),
+  failedTests: integer('failed_tests').notNull().default(0),
+  skippedTests: integer('skipped_tests').notNull().default(0),
+  duration: integer('duration'), // milliseconds
+  startedAt: timestamp('started_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+  config: jsonb('config').$type<Record<string, any>>(),
+  coverage: jsonb('coverage').$type<{
+    lines: number;
+    statements: number;
+    functions: number;
+    branches: number;
+  }>(),
+}, (table) => [
+  index('test_runs_project_id_idx').on(table.projectId),
+  index('test_runs_status_idx').on(table.status),
+  index('test_runs_started_at_idx').on(table.startedAt),
+]);
+
+// Test Cases - Individual test results
+export const testCases = pgTable('test_cases', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  testRunId: varchar('test_run_id').notNull().references(() => testRuns.id, { onDelete: 'cascade' }),
+  suiteName: text('suite_name').notNull(),
+  testName: text('test_name').notNull(),
+  filePath: text('file_path').notNull(),
+  status: text('status').notNull(), // 'passed', 'failed', 'skipped', 'pending'
+  duration: integer('duration'), // milliseconds
+  error: text('error'),
+  errorStack: text('error_stack'),
+  retries: integer('retries').default(0),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+}, (table) => [
+  index('test_cases_test_run_id_idx').on(table.testRunId),
+  index('test_cases_status_idx').on(table.status),
+  index('test_cases_file_path_idx').on(table.filePath),
+]);
+
+// Security Scans - For Security Scanner Panel
+export const securityScans = pgTable('security_scans', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  projectId: varchar('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  scanType: text('scan_type').notNull(), // 'dependencies', 'code', 'secrets', 'full'
+  status: text('status').notNull(), // 'queued', 'running', 'completed', 'failed'
+  totalVulnerabilities: integer('total_vulnerabilities').default(0),
+  criticalCount: integer('critical_count').default(0),
+  highCount: integer('high_count').default(0),
+  mediumCount: integer('medium_count').default(0),
+  lowCount: integer('low_count').default(0),
+  scanner: text('scanner'), // 'snyk', 'npm-audit', 'custom', etc.
+  startedAt: timestamp('started_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+  errorMessage: text('error_message'),
+}, (table) => [
+  index('security_scans_project_id_idx').on(table.projectId),
+  index('security_scans_status_idx').on(table.status),
+  index('security_scans_started_at_idx').on(table.startedAt),
+]);
+
+// Vulnerabilities - Individual security issues found
+export const vulnerabilities = pgTable('vulnerabilities', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  scanId: varchar('scan_id').notNull().references(() => securityScans.id, { onDelete: 'cascade' }),
+  projectId: varchar('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  severity: text('severity').notNull(), // 'critical', 'high', 'medium', 'low'
+  type: text('type').notNull(), // 'dependency', 'code', 'secret', 'config'
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  filePath: text('file_path'),
+  lineNumber: integer('line_number'),
+  cve: text('cve'), // CVE identifier if applicable
+  cwe: text('cwe'), // CWE identifier if applicable
+  packageName: text('package_name'),
+  vulnerableVersion: text('vulnerable_version'),
+  fixedVersion: text('fixed_version'),
+  recommendation: text('recommendation'),
+  references: text('references').array(),
+  status: text('status').notNull().default('open'), // 'open', 'fixed', 'ignored', 'false_positive'
+  discoveredAt: timestamp('discovered_at').defaultNow().notNull(),
+  resolvedAt: timestamp('resolved_at'),
+}, (table) => [
+  index('vulnerabilities_scan_id_idx').on(table.scanId),
+  index('vulnerabilities_project_id_idx').on(table.projectId),
+  index('vulnerabilities_severity_idx').on(table.severity),
+  index('vulnerabilities_status_idx').on(table.status),
+]);
+
+// Resource Metrics - For Resources Panel (live CPU/RAM/storage monitoring)
+export const resourceMetrics = pgTable('resource_metrics', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  projectId: varchar('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+  cpuUsage: real('cpu_usage').notNull(), // CPU usage percentage (0-100)
+  memoryUsage: real('memory_usage').notNull(), // Memory usage in MB
+  memoryLimit: real('memory_limit').notNull(), // Memory limit in MB
+  networkRxBytes: integer('network_rx_bytes').default(0).notNull(),
+  networkTxBytes: integer('network_tx_bytes').default(0).notNull(),
+  diskUsage: real('disk_usage').notNull(), // Disk usage in MB
+  diskLimit: real('disk_limit').notNull(), // Disk limit in MB
+  activeConnections: integer('active_connections').default(0).notNull(),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+}, (table) => [
+  index('resource_metrics_project_id_idx').on(table.projectId),
+  index('resource_metrics_timestamp_idx').on(table.timestamp),
+]);
+
+// Pane Configurations - For Split Editor workspace layout persistence
+export const paneConfigurations = pgTable('pane_configurations', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: varchar('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  projectId: varchar('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(), // 'default', 'custom-1', etc.
+  isDefault: boolean('is_default').default(false),
+  layout: jsonb('layout').notNull().$type<{
+    type: 'horizontal' | 'vertical' | 'tabs';
+    children?: Array<any>;
+    activeTab?: string;
+    size?: number;
+    panes?: Array<{
+      id: string;
+      type: string;
+      fileId?: number;
+      tool?: string;
+    }>;
+  }>(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => [
+  index('pane_configurations_user_id_idx').on(table.userId),
+  index('pane_configurations_project_id_idx').on(table.projectId),
+]);
+
+// Export schemas and types for agent tables
+export const insertAgentSessionSchema = createInsertSchema(agentSessions).omit({
+  id: true,
+  startedAt: true,
+  totalTokensUsed: true,
+  totalOperations: true,
+});
+
+export const insertFileOperationSchema = createInsertSchema(fileOperations).omit({
+  id: true,
+  executedAt: true,
+  completedAt: true,
+});
+
+export const insertCommandExecutionSchema = createInsertSchema(commandExecutions).omit({
+  id: true,
+  startedAt: true,
+  completedAt: true,
+  killedAt: true,
+});
+
+export const insertToolRegistrySchema = createInsertSchema(toolRegistry).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertToolExecutionSchema = createInsertSchema(toolExecutions).omit({
+  id: true,
+  startedAt: true,
+  completedAt: true,
+});
+
+export const insertAgentWorkflowSchema = createInsertSchema(agentWorkflows).omit({
+  id: true,
+  startedAt: true,
+  completedAt: true,
+  progress: true,
+});
+
+export const insertDatabaseOperationSchema = createInsertSchema(databaseOperations).omit({
+  id: true,
+  executedAt: true,
+  completedAt: true,
+});
+
+export const insertAgentAuditTrailSchema = createInsertSchema(agentAuditTrail).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertAgentPermissionSchema = createInsertSchema(agentPermissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiApprovalQueueSchema = createInsertSchema(aiApprovalQueue).omit({
+  id: true,
+  createdAt: true,
+  processedAt: true,
+});
+
+export const insertAiAuditLogSchema = createInsertSchema(aiAuditLogs).omit({
+  id: true,
+  timestamp: true,
+});
+
+// Type exports
+export type AgentSession = typeof agentSessions.$inferSelect;
+export type InsertAgentSession = z.infer<typeof insertAgentSessionSchema>;
+
+export type FileOperation = typeof fileOperations.$inferSelect;
+export type InsertFileOperation = z.infer<typeof insertFileOperationSchema>;
+
+export type AiApprovalQueue = typeof aiApprovalQueue.$inferSelect;
+export type InsertAiApprovalQueue = z.infer<typeof insertAiApprovalQueueSchema>;
+
+export type AiAuditLog = typeof aiAuditLogs.$inferSelect;
+export type InsertAiAuditLog = z.infer<typeof insertAiAuditLogSchema>;
+
+export type CommandExecution = typeof commandExecutions.$inferSelect;
+export type InsertCommandExecution = z.infer<typeof insertCommandExecutionSchema>;
+
+export type ToolRegistry = typeof toolRegistry.$inferSelect;
+export type InsertToolRegistry = z.infer<typeof insertToolRegistrySchema>;
+
+export type ToolExecution = typeof toolExecutions.$inferSelect;
+export type InsertToolExecution = z.infer<typeof insertToolExecutionSchema>;
+
+export type AgentWorkflow = typeof agentWorkflows.$inferSelect;
+export type InsertAgentWorkflow = z.infer<typeof insertAgentWorkflowSchema>;
+
+export type DatabaseOperation = typeof databaseOperations.$inferSelect;
+export type InsertDatabaseOperation = z.infer<typeof insertDatabaseOperationSchema>;
+
+export type AgentAuditTrail = typeof agentAuditTrail.$inferSelect;
+export type InsertAgentAuditTrail = z.infer<typeof insertAgentAuditTrailSchema>;
+
+export type AgentPermission = typeof agentPermissions.$inferSelect;
+export type InsertAgentPermission = z.infer<typeof insertAgentPermissionSchema>;
+// Insert schemas for IDE workspace features
+export const insertLspDiagnosticSchema = createInsertSchema(lspDiagnostics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertBuildLogSchema = createInsertSchema(buildLogs).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertTestRunSchema = createInsertSchema(testRuns).omit({
+  id: true,
+  startedAt: true,
+});
+
+export const insertTestCaseSchema = createInsertSchema(testCases).omit({
+  id: true,
+});
+
+export const insertSecurityScanSchema = createInsertSchema(securityScans).omit({
+  id: true,
+  startedAt: true,
+});
+
+export const insertVulnerabilitySchema = createInsertSchema(vulnerabilities).omit({
+  id: true,
+  discoveredAt: true,
+});
+
+export const insertResourceMetricSchema = createInsertSchema(resourceMetrics).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertPaneConfigurationSchema = createInsertSchema(paneConfigurations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Type exports for IDE workspace features
+export type LspDiagnostic = typeof lspDiagnostics.$inferSelect;
+export type InsertLspDiagnostic = z.infer<typeof insertLspDiagnosticSchema>;
+
+export type BuildLog = typeof buildLogs.$inferSelect;
+export type InsertBuildLog = z.infer<typeof insertBuildLogSchema>;
+
+export type TestRun = typeof testRuns.$inferSelect;
+export type InsertTestRun = z.infer<typeof insertTestRunSchema>;
+
+export type TestCase = typeof testCases.$inferSelect;
+export type InsertTestCase = z.infer<typeof insertTestCaseSchema>;
+
+export type SecurityScan = typeof securityScans.$inferSelect;
+export type InsertSecurityScan = z.infer<typeof insertSecurityScanSchema>;
+
+export type Vulnerability = typeof vulnerabilities.$inferSelect;
+export type InsertVulnerability = z.infer<typeof insertVulnerabilitySchema>;
+
+export type ResourceMetric = typeof resourceMetrics.$inferSelect;
+export type InsertResourceMetric = z.infer<typeof insertResourceMetricSchema>;
+
+export type PaneConfiguration = typeof paneConfigurations.$inferSelect;
+export type InsertPaneConfiguration = z.infer<typeof insertPaneConfigurationSchema>;
+

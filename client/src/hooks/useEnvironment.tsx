@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,

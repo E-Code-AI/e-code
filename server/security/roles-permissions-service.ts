@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Custom Roles & Permissions Service
  * Provides enterprise-grade role-based access control (RBAC)

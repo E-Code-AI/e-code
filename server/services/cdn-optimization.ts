@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * CDN Optimization Service
  * Optimized for Replit deployment with built-in CDN

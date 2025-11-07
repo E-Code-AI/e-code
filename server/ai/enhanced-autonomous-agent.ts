@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Enhanced Autonomous AI Agent - Builds complete applications autonomously
 // This is the core of the AI agent that can understand natural language and build full applications
 // Now powered by MCP (Model Context Protocol) for all operations

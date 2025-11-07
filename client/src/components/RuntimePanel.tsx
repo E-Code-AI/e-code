@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * RuntimePanel component
  * Provides UI for interacting with project runtimes, viewing logs, etc.

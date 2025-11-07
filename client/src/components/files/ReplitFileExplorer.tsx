@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,7 +112,7 @@ export function ReplitFileExplorer({
 
   // Récupération de l'arbre de fichiers
   const { data: fileTree = [], isLoading, refetch } = useQuery<FileNode[]>({
-    queryKey: [`/api/files/${projectId}`],
+    queryKey: [`/api/projects/${projectId}/files`],
     staleTime: 30000, // 30 secondes
   });
 
@@ -129,7 +128,7 @@ export function ReplitFileExplorer({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       setCreateDialogOpen(false);
       setNewItemName("");
       toast({
@@ -155,7 +154,7 @@ export function ReplitFileExplorer({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({
         title: "Deleted successfully",
         description: "File/folder deleted successfully.",
@@ -181,7 +180,7 @@ export function ReplitFileExplorer({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/files", projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({
         title: "Renamed successfully",
         description: "File/folder renamed successfully.",

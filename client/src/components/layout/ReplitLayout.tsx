@@ -1,84 +1,207 @@
-// @ts-nocheck
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect, useCallback } from "react";
 import { ReplitHeader } from "./ReplitHeader";
 import { ReplitSidebar } from "./ReplitSidebar";
-import { Button } from "@/components/ui/button";
-import { Link, useLocation } from "wouter";
+import { MobileNavigation } from "@/components/mobile/MobileNavigation";
+import { MobileFileExplorer } from "@/components/mobile/MobileFileExplorer";
+import { MobileToolsPanel } from "@/components/mobile/MobileToolsPanel";
+import { MobileCreateModal } from "@/components/mobile/MobileCreateModal";
+import { PullToRefresh } from "@/components/ui/mobile-gestures";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { mobileNavigation, isActiveNavigationItem } from "@/constants/navigation";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface ReplitLayoutProps {
   children: ReactNode;
   showSidebar?: boolean;
   projectId?: number;
   className?: string;
+  onRefresh?: () => Promise<void>;
 }
 
 export function ReplitLayout({
   children,
   showSidebar = true,
   projectId,
-  className = ""
+  className = "",
+  onRefresh
 }: ReplitLayoutProps) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
+  const isLandscape = useMediaQuery("(orientation: landscape)");
+  const [showFileExplorer, setShowFileExplorer] = useState(false);
+  const [showToolsPanel, setShowToolsPanel] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchStartY, setTouchStartY] = useState(0);
+  const [orientation, setOrientation] = useState(window.orientation || 0);
+
+  // Viewport meta tag management for mobile scaling
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    let viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+      viewport = document.createElement('meta');
+      viewport.setAttribute('name', 'viewport');
+      document.head.appendChild(viewport);
+    }
+    
+    viewport.setAttribute('content', 
+      'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
+    );
+    
+    // Add mobile-specific body classes
+    document.body.classList.add('mobile-device');
+    if (isTablet) document.body.classList.add('tablet-device');
+    if (isLandscape) document.body.classList.add('landscape-mode');
+    
+    return () => {
+      document.body.classList.remove('mobile-device', 'tablet-device', 'landscape-mode');
+    };
+  }, [isMobile, isTablet, isLandscape]);
+
+  // Orientation change detection
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      setOrientation(window.orientation || 0);
+      // Force re-render to adjust layout
+      window.dispatchEvent(new Event('resize'));
+    };
+    
+    window.addEventListener('orientationchange', handleOrientationChange);
+    return () => window.removeEventListener('orientationchange', handleOrientationChange);
+  }, []);
+
+  // Enhanced gesture detection with velocity tracking
+  useEffect(() => {
+    if (!isMobile) return;
+
+    let touchStartTime = 0;
+    let touchEndTime = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      setTouchStartX(touch.clientX);
+      setTouchStartY(touch.clientY);
+      touchStartTime = Date.now();
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+      touchEndTime = Date.now();
+      
+      const velocity = Math.abs(deltaX) / (touchEndTime - touchStartTime);
+      const edgeThreshold = 30; // pixels from edge
+      const swipeThreshold = 80; // minimum swipe distance
+      const velocityThreshold = 0.3; // minimum velocity for quick swipe
+
+      // Check if swipe is more horizontal than vertical
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Swipe right from left edge - open file explorer
+        if (touchStartX < edgeThreshold && 
+            (deltaX > swipeThreshold || velocity > velocityThreshold)) {
+          setShowFileExplorer(true);
+          // Haptic feedback if available
+          if ('vibrate' in navigator) navigator.vibrate(10);
+        }
+        
+        // Swipe left from right edge - open tools panel
+        if (touchStartX > window.innerWidth - edgeThreshold && 
+            (Math.abs(deltaX) > swipeThreshold || velocity > velocityThreshold)) {
+          setShowToolsPanel(true);
+          // Haptic feedback if available
+          if ('vibrate' in navigator) navigator.vibrate(10);
+        }
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [touchStartX, touchStartY, isMobile]);
+
+  const handleCreateClick = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleFileSelect = (file: any) => {
+    console.log('Selected file:', file);
+    // Handle file selection
+  };
+
+  const handleCreateProject = (template: any) => {
+    console.log('Creating project with template:', template);
+    navigate('/editor/new');
+  };
+
+  const handleRefresh = async () => {
+    if (onRefresh) {
+      await onRefresh();
+    } else {
+      // Default refresh behavior
+      window.location.reload();
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col bg-[var(--ecode-background)] overflow-hidden">
       <ReplitHeader />
       
       <div className="flex flex-1 overflow-hidden">
-        {showSidebar && (
+        {showSidebar && !isMobile && (
           <div className="hidden md:block">
             <ReplitSidebar projectId={projectId} />
           </div>
         )}
         
-        <main className={`flex-1 flex flex-col overflow-auto ${className}`}>
-          {children}
+        <main className={cn(
+          "flex-1 flex flex-col overflow-auto",
+          isMobile && "pb-14", // Add padding for mobile navigation
+          className
+        )}>
+          {isMobile && onRefresh ? (
+            <PullToRefresh onRefresh={handleRefresh}>
+              {children}
+            </PullToRefresh>
+          ) : (
+            children
+          )}
         </main>
       </div>
       
-      {/* Mobile bottom navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 safe-area-inset-bottom">
-        <nav className="flex h-14 items-stretch justify-around">
-          {mobileNavigation.map((item) => {
-            const Icon = item.icon;
-            const isActive = isActiveNavigationItem(location, item);
-
-            return (
-              <Button
-                key={item.key}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "flex-1 rounded-none px-2",
-                  isActive && "bg-primary/10 text-primary"
-                )}
-                asChild
-              >
-                <Link href={item.path} aria-label={item.ctaLabel || item.label}>
-                  <div className="flex h-full flex-col items-center justify-center gap-1">
-                    <Icon
-                      className={cn(
-                        "h-4 w-4 transition-colors",
-                        isActive ? "text-primary" : "text-muted-foreground"
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "text-xs font-medium",
-                        isActive ? "text-primary" : "text-muted-foreground"
-                      )}
-                    >
-                      {item.label}
-                    </span>
-                  </div>
-                </Link>
-              </Button>
-            );
-          })}
-        </nav>
-      </div>
+      {/* Mobile Navigation */}
+      {isMobile && (
+        <MobileNavigation onCreateClick={handleCreateClick} />
+      )}
+      
+      {/* Mobile File Explorer */}
+      <MobileFileExplorer
+        isOpen={showFileExplorer}
+        onClose={() => setShowFileExplorer(false)}
+        onFileSelect={handleFileSelect}
+        currentFile={projectId?.toString()}
+      />
+      
+      {/* Mobile Tools Panel */}
+      <MobileToolsPanel
+        isOpen={showToolsPanel}
+        onClose={() => setShowToolsPanel(false)}
+        activeTab="console"
+      />
+      
+      {/* Mobile Create Modal */}
+      <MobileCreateModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreate={handleCreateProject}
+      />
     </div>
   );
 }

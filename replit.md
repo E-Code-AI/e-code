@@ -1,7 +1,38 @@
 # E-Code Platform
 
 ## Overview
-E-Code Platform is a production-ready, AI-powered development platform designed to streamline software creation through automated deployment and collaboration tools. It provides enterprise-grade infrastructure, advanced AI capabilities including custom prompts and a template library, and comprehensive tools for the entire software development lifecycle. The platform emphasizes performance, security, and scalability, optimized for Replit Reserved VM deployment.
+The E-Code Platform is an AI-powered development platform designed to streamline software creation. It offers automated deployment, real-time collaboration, and a comprehensive suite of tools for the entire software development lifecycle. The platform emphasizes performance, security, and scalability, leveraging AI assistance and a robust architecture optimized for Replit Reserved VM deployment. Its core purpose is to facilitate rapid software development with enterprise-grade infrastructure and advanced AI capabilities, targeting enterprise software development and aiming for a significant market presence.
+
+## Recent Changes (November 7, 2025)
+
+### UI Parity Roadmap Documentation Update ✅ **COMPREHENSIVE**
+- **Status**: Updated REPLIT_UI_PARITY_ROADMAP.md to reflect actual implementation vs. documented status
+- **Desktop**: 90% complete (Command Palette, Multi-Editor, Git, Debugger, Breadcrumbs all ✅)
+- **Tablet**: 70% layout complete (TabletIDEView, Split View, Gestures ✅) **BUT** depends on mobile editor/terminal which are placeholders
+- **Mobile**: 25% foundation (Navigation, Gestures ✅ | Editor, Terminal, File Tree, FAB all ❌ placeholders)
+- **Documentation**: Created MOBILE_WORKSPACE_IMPLEMENTATION.md and PUSH_NOTIFICATIONS_IMPLEMENTATION.md
+- **Critical Reality**: Mobile editor and terminal show "Coming soon" - these block both mobile AND tablet production readiness
+
+### Build System Fix ✅
+- **Issue**: Vite build failure due to npm optional dependency bug with `@rollup/rollup-linux-x64-gnu`
+- **Root Cause**: npm v10.8.2 bug (#4828) - optional dependencies not installing correctly
+- **Solution**: Explicitly installed `@rollup/rollup-linux-x64-gnu@4.52.5` to resolve Rollup native module loading
+- **Result**: Frontend build now completes successfully, deploying to `dist/public/`
+- **Production Build**: All fixes deployed and serving correctly via static file fallback
+
+### ProjectsPage Navigation Fix ✅ **PRODUCTION VERIFIED**
+- **Issue**: "Workspace unavailable" error when opening projects - wrong route navigation
+- **Root Cause**: ProjectsPage (not Dashboard) was using `getProjectUrl()` which returns `/u/:username/:slug`
+- **Fix**: Updated ProjectsPage.tsx lines 872 & 999 to navigate to `/editor/${project.id}`
+- **Testing**: E2E test verified navigation to `/editor/a4ad01ec-d85d-411d-9ff7-fd0272102074`
+- **Status**: ✅ FULLY DEPLOYED AND VERIFIED (ProjectsPage-Cp33IZs3.js @ 2025-11-07 08:42:12)
+- **Routes**: `/projects` loads ProjectsPage → Open button → `/editor/:id` → ResponsiveEditorRoute
+
+### Tablet Integration Complete ✅
+- **Phase 3 Complete**: ResponsiveEditorRoute, LazyTabletIDEView, code splitting all architect-approved
+- **Device Detection**: Canonical breakpoints with automatic view switching
+- **Type Safety**: UUID-based project IDs with `string | number` support throughout
+- **iPad Pro Optimizations**: Touch events, prefetching, hardware acceleration wired into tablet entry point
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
@@ -11,85 +42,54 @@ E-Code Platform is a production-ready, AI-powered development platform designed 
 - **Documentation**: Maintain clear documentation for deployment and architecture
 - **File Management**: NEVER remove existing pages/files without explicit user request. If files are missing, CREATE them instead of removing imports.
 - **Deployment**: Replit Reserved VM with 4-port configuration for optimal performance
+- **React Best Practices**: ALL React hooks MUST be called before any early returns (conditional rendering) to maintain consistent hook order across renders
 
 ## System Architecture
+The platform utilizes a polyglot backend architecture with Go for container orchestration, Python for AI/ML, and TypeScript for web API, user management, and database operations. It integrates an MCP Standalone Server for AI Agent operations and an AI Agent System for autonomous code generation. Real-time collaboration is facilitated via WebSockets and WebRTC. The system is designed for enterprise-grade security and performance, including advanced monitoring and a human-in-the-loop approval process for AI-generated actions.
 
-### Core Services
-The platform employs a polyglot backend architecture:
-- **Go Runtime Service** (Port 8080): Manages container orchestration, file operations, and WebSocket real-time services.
-- **Python ML Service** (Port 8081): Handles AI/ML workloads.
-- **TypeScript Core** (Port 5000): Manages Web API, user management, database operations, and serves the frontend.
-- **MCP Standalone Server** (Port 3200): Facilitates AI Agent operations, tools, and Model Context Protocol integration.
-- **AI Agent System**: Supports autonomous code generation using various AI models (Anthropic, OpenAI, etc.) and the OpenAI Assistants API.
-- **Real-time Collaboration**: WebSocket-based editing and live progress streaming.
-- **Process Isolation**: Node.js child processes with configurable resource limits.
-- **Database Management**: PostgreSQL with Drizzle ORM.
-- **Security Services**: Role-based permissions, audit logs, secret management, advanced authentication (7 OAuth providers, hardware security key support), and secure session management.
-- **Analytics & Monitoring**: Production monitoring with a 95% memory threshold and 5-minute intervals.
+**UI/UX Decisions:**
+- Replit-identical IDE interface with a dark theme, centralized design tokens (E-Code branding, IBM Plex Sans/Mono), and consistent spacing.
+- Mobile UI features a bottom tab bar, swipe panels, and bottom sheet/full-screen modals.
+- Tablet UI is optimized for dual-panel layouts, with comprehensive device detection, sliding drawer navigation, and touch-optimized controls.
+- Desktop UI includes Monaco minimap, breadcrumbs, multi-editor instances, and Command Palette.
 
-### Production Hardening
-Includes Redis caching, CDN optimization (via Replit's built-in CDN), multi-tier rate limiting, comprehensive security middleware, database connection pooling, and performance monitoring.
-
-### Technology Stack
-- **Frontend**: React.js with TypeScript, Tailwind CSS, shadcn/ui, wouter.
-- **Backend**: Express.js with TypeScript, Drizzle ORM.
-- **Deployment**: Replit Reserved VM with `cloudrun` deployment target.
-
-### UI/UX Decisions
-Features a streamlined interface with a 4-tab layout (Files, Preview, Features, Deploy) and a principal AI Agent interface. Routing ensures backwards compatibility with automatic redirects.
-
-### Technical Implementations
-- **Routing**: Replit-style slug routing (`/u/username/projectname`) with authentication.
-- **Performance**: Compression, code splitting, caching, and build optimizations.
-- **Security**: CSP headers, input validation.
+**Technical Implementations:**
+- **Routing**: Replit-style slug routing with authentication. ResponsiveEditorRoute wrapper at `/editor/:id` provides device-aware routing with lazy-loaded device-specific views (TabletIDEView for tablets, MobileWorkspace for mobile, Editor for desktop/laptop).
+- **Device Detection**: Canonical breakpoints (Mobile: ≤640px, Tablet: 641-1024px, Laptop: 1025-1440px, Desktop: >1440px) via useDeviceType() hook. useIsTablet(), useIsMobile(), useIsLaptop(), useIsDesktop() helpers available.
+- **Code Splitting**: Tablet UI (LazyTabletIDEView) loads only for tablet devices via React.lazy(), with optimized bundle splitting for performance. iPad Pro optimizations (prefetchTabletResources, optimizeTouchEvents, hardware acceleration) wire into tablet entry point.
+- **Performance**: Compression, code splitting, caching, build optimizations, service workers, network/image optimization.
+- **Security**: CSP headers, input validation, OWASP Top 10, production-ready CORS, path sandboxing, and admin authorization hardening.
 - **Deployment**: Dynamic 4-port configuration, non-blocking initialization, optimized for Replit Reserved VM.
-- **Preview System**: Live server previews via WebSockets, Eruda developer tools integration, responsive device testing.
-- **Memory Management**: Optimized monitoring (95% threshold, 5-minute intervals).
-- **Database Optimization**: Graceful handling of missing tables, proper SQL syntax, efficient connection pooling.
 
-### Deployment Configuration
-The `.replit` file is configured for Replit Reserved VM deployment with `deploymentTarget = "cloudrun"`. It specifies `npm install` for building and `npm run dev` for running. A 4-port configuration is used, mapping local ports 5000, 3200, 8080, and 8081 to their respective external ports for the main Express server, MCP server, Go Runtime, and Python ML service.
+**Feature Specifications:**
+- **AI Agent System**: Autonomous code generation with database-backed approval queues and audit logging.
+- **Real-time Collaboration**: WebSocket-based editing and WebRTC for voice/video/screen sharing.
+- **Admin Dashboard**: Comprehensive UI for managing projects and users.
+- **Template Marketplace**: Allows users to fork and deploy project templates.
+- **Production Hardening**: Redis caching, CDN optimization, multi-tier rate limiting, security middleware, DB connection pooling, performance monitoring, input validation, and sanitization.
+- **Workspace Parity**: True backend integration for IDE panels (LSP/Problems, Build Logs/Output, Testing, Security Scanner) with real-time WebSocket updates.
+- **Responsive UI**: 
+  - **Desktop (90% Complete)**: Command Palette, Multi-Editor Manager, Draggable Tabs, Git Panel, Debugger, Breadcrumbs, Minimap
+  - **Tablet (70% Layout, Blocked by Mobile)**: TabletIDEView, Split View, Gestures | BLOCKED: Depends on mobile editor/terminal which are placeholders
+  - **Mobile (25% Foundation Only)**: Bottom Tabs, Gesture Framework | CRITICAL GAPS: Editor, Terminal, File Tree, FAB all show placeholders
+- **Multi-Tab Editor System**: Maintains independent Monaco editor instances per tab via MultiEditorManager, preserving state.
 
-## Recent Changes (October 20, 2025)
-
-### Critical Bug Fixes
-- **Deployment Button Hanging Fix**: Resolved critical issue where publish/deploy button would get stuck in loading state.
-  - Refactored DeploymentManager to use truly non-blocking container creation via `setTimeout(() => fetch(), 0)` pattern
-  - Implemented manual AbortController with 30-second timeout for better browser compatibility
-  - Container creation now runs fire-and-forget, cannot block deployment flow
-  - Proper cleanup with clearTimeout prevents memory leaks
-  - Clear error messages distinguish timeouts from other failures
-  - Files modified: client/src/components/DeploymentManager.tsx
-
-- **Workspace Loading Error Fix**: Fixed "useQuery is not defined" error preventing workspace from rendering.
-  - Added missing `import { useQuery } from '@tanstack/react-query'` to NixConfig.tsx
-  - Workspace editor now loads correctly, showing file tree, editor toolbar, and deploy button
-  - Files modified: client/src/components/NixConfig.tsx
-
-### Platform Updates
-- **Google Cloud Platform Removal**: All Google Cloud dependencies and deployment references removed. Platform now exclusively uses Replit Reserved VM deployment.
-  - Removed packages: @google-cloud/storage, @google/genai, @google/generative-ai, googleapis, google-auth-library
-  - Replaced Google Cloud Storage with Replit's built-in Object Storage (server/services/real-object-storage.ts)
-  - Removed Gemini AI provider from ai-providers.ts, ai-service.ts, ai-provider-factory.ts
-  - Commented out Google OAuth in auth-complete.ts
-  - Removed Google Drive MCP integration from server/mcp/server.ts
-  - Updated all documentation (replit.md, README.md, docs/) to focus on Replit Reserved VM deployment only
-  - AI providers now limited to: Anthropic Claude, OpenAI, Together AI, Replicate, Hugging Face, Groq, Anyscale
-
-- **Dashboard Responsiveness Enhancements**: Upgraded dashboard to Fortune 500-grade responsive design.
-  - Search/filter bar: Stacks vertically on mobile, horizontal scrolling for filter pills with hidden scrollbar
-  - Project grid: 1 column (mobile), 2 columns (tablet), 3 columns (desktop), 4 columns (large desktop)
-  - List view: Optimized for mobile with hidden icons and condensed deployment badges
-  - Popular examples: Shortened labels on mobile for better UX
-  - Added comprehensive data-testid attributes for automated testing
-  - Enhanced dark mode support for all interactive elements
+**System Design Choices:**
+- **Vertical Slice Approach**: End-to-end feature development.
+- **Storage Layer**: `IStorage` interface with `DatabaseStorage` implementation using PostgreSQL and Drizzle ORM.
+- **Type Safety**: Zod, TypeScript, Drizzle ORM.
+- **Real-time Updates**: Hybrid WebSocket + HTTP polling.
+- **Hybrid Security Model**: AI-generated actions require approval, manual file operations use immediate validation with audit logging.
+- **Production Compliance**: Fortune 500-readiness with PostgreSQL persistence, tamper-proof append-only logging, and queryable audit trail.
 
 ## External Dependencies
 - **AI Integration**: Anthropic Claude API, OpenAI API, Together AI, Replicate, Hugging Face, Groq, Anyscale.
+- **Push Notifications**: Firebase Cloud Messaging (FCM), Firebase Admin SDK.
+- **Video Conferencing**: Zoom API.
 - **Deployment Platform**: Replit Reserved VM.
-- **Authentication**: Passport.js (for GitHub, Google, GitLab, Bitbucket, Discord, Slack, Azure AD).
-- **Real-time Communication**: WebSockets.
-- **Database**: PostgreSQL (111 tables).
+- **Authentication**: Passport.js (GitHub, Google, GitLab, Bitbucket, Discord, Slack, Azure AD).
+- **Real-time Communication**: WebSockets (y-websocket), WebRTC.
+- **Database**: PostgreSQL.
 - **Frontend Libraries**: React.js, Tailwind CSS, shadcn/ui, wouter.
 - **Backend Framework**: Express.js.
 - **ORM**: Drizzle ORM.
@@ -98,33 +98,47 @@ The `.replit` file is configured for Replit Reserved VM deployment with `deploym
 - **Containerization**: Docker.
 - **Caching**: Redis/ioredis.
 - **CDN**: Replit's built-in CDN.
+## 🎯 Top Priorities for Replit UI Parity (November 2025)
 
-## Common Development Commands
+### **CRITICAL PRIORITIES (P0 - Week 1-2)**
+1. **Mobile Monaco Editor** - Replace "Coming soon" placeholder with functional editor
+   - See: MOBILE_WORKSPACE_IMPLEMENTATION.md Phase 1
+   - Status: 0% (placeholder only) **BLOCKS mobile AND tablet**
+   - Dependencies: Verify backend terminal endpoints exist
+   
+2. **Mobile Terminal** - Replace placeholder with xterm.js + WebSocket connection
+   - See: MOBILE_WORKSPACE_IMPLEMENTATION.md Phase 2
+   - Status: 0% (placeholder only) **BLOCKS mobile AND tablet**
+   - Dependencies: Confirm `/api/terminal/ws` endpoint and auth
 
-### Database Operations
-- `npm run db:push` - Push schema changes to database
-- `npm run db:seed` - Seed database with initial data
-- Database automatically initializes on first run
+### **HIGH PRIORITIES (P1 - Week 3-4)**
+3. **Mobile File Tree** - Touch-optimized virtual file tree with 44px tap targets
+   - See: MOBILE_WORKSPACE_IMPLEMENTATION.md Phase 3
+   - Status: Not started
+   
+4. **Mobile FAB** - Floating action button for Run with haptic feedback
+   - See: MOBILE_WORKSPACE_IMPLEMENTATION.md Phase 4
+   - Status: Not started
 
-### Development
-- `npm run dev` - Start development server (runs automatically)
-- Server runs on port 5000 (mapped to port 80 in production)
-- Hot reload enabled for both frontend and backend
+### **MEDIUM PRIORITIES (P2 - Week 5-6)**
+5. **Desktop Floating Panes** - Wire FloatingPane.tsx to Editor.tsx
+   - Status: Component scaffolded, user actions not implemented
+   
+6. **Tablet Keyboard Accessories** - Virtual keyboard shortcut row
+   - Status: Keyboard detection exists but not surfaced to UI
 
-### File Operations
-- Files are auto-saved via the IDE
-- Use the File Explorer in the left panel to manage files
-- Support for drag-and-drop file uploads
+### **LOW PRIORITIES (P3 - After Mobile Core)**
+7. **Push Notifications** - FCM integration (implement AFTER mobile editor/terminal)
+   - See: PUSH_NOTIFICATIONS_IMPLEMENTATION.md
+   - Status: Not started (defer until mobile core functional)
 
-### AI Agent Usage
-- Use the AI Agent panel (right sidebar) for code generation
-- Select code in editor and use Ctrl/Cmd + I to invoke AI assistance
-- AI has full context of project structure and recent changes
+8. **iOS Live Activities** - Dynamic Island (requires native Swift)
+   - Status: Not started
 
-## Project Structure
-- `/client` - React frontend application
-- `/server` - Express.js backend services
-- `/shared` - Shared TypeScript types and schemas
-- `/services` - Polyglot backend services (Go runtime, Python ML)
-- `/docs` - Platform documentation
-- `/migrations` - Database migration files
+### **Completed Features** ✅
+- ✅ Desktop IDE (90%): Command Palette, Multi-Editor, Git, Debugger, Breadcrumbs, Minimap
+- ✅ Tablet Layout (70%): ResponsiveEditorRoute, dual-panel, gestures (blocked by mobile placeholders)
+- ✅ Mobile Navigation (25%): Bottom tabs, gesture framework (core IDE features missing)
+- ✅ Device Detection: useDeviceType, canonical breakpoints, automatic view switching
+- ✅ Code Splitting: LazyTabletIDEView with optimized bundle splitting
+

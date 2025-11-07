@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { deploymentManager } from '../services/deployment-manager.js';

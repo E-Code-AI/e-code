@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { DatabaseStorage } from '../storage';
 import { GitManager } from '../git/git-manager';
 import * as fs from 'fs';

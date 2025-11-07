@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Auto-Grading Service
  * Provides automated assignment grading and test execution for education
@@ -51,6 +50,7 @@ export class AutoGradingService {
     title: string,
     description: string,
     testCases: TestCase[],
+    createdBy: number,
     options: {
       dueDate?: Date;
       totalPoints?: number;
@@ -68,7 +68,7 @@ export class AutoGradingService {
       testCases,
       rubric: options.rubric,
       autoGradeEnabled: true,
-      createdBy: 1, // TODO: Get from context
+      createdBy,
     }).returning();
 
     return assignment;

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Polyglot Backend Routes
  * Integrates TypeScript, Go, and Python services into unified API
@@ -8,11 +7,19 @@ import { Router } from 'express';
 import { PolyglotCoordinator } from './services/polyglot-coordinator';
 
 const router = Router();
-const coordinator = new PolyglotCoordinator();
+// Lazy initialize coordinator to prevent health checks before server starts
+let coordinator: PolyglotCoordinator | null = null;
+
+function getCoordinator(): PolyglotCoordinator {
+  if (!coordinator) {
+    coordinator = new PolyglotCoordinator();
+  }
+  return coordinator;
+}
 
 // Health check for all services
 router.get('/api/polyglot/health', async (req, res) => {
-  const healthStatus = coordinator.getHealthStatus();
+  const healthStatus = getCoordinator().getHealthStatus();
   const overallHealth = healthStatus.every(service => service.status === 'healthy');
   
   res.json({
@@ -32,7 +39,7 @@ router.post('/api/containers/create', async (req, res) => {
     // Create container using Go service or fallback to local implementation
     let result;
     try {
-      result = await coordinator.forwardRequest(
+      result = await getCoordinator().forwardRequest(
         'container-orchestration',
         '/api/containers',
         'POST',
@@ -79,7 +86,7 @@ router.post('/api/containers/create', async (req, res) => {
 
 router.get('/api/containers/list', async (req, res) => {
   try {
-    const result = await coordinator.forwardRequest(
+    const result = await getCoordinator().forwardRequest(
       'container-orchestration',
       '/api/containers',
       'GET'
@@ -97,7 +104,7 @@ router.get('/api/containers/list', async (req, res) => {
 // High-Performance File Operations (Go Service)
 router.post('/api/files/batch-operations', async (req, res) => {
   try {
-    const result = await coordinator.forwardRequest(
+    const result = await getCoordinator().forwardRequest(
       'file-operations',
       '/api/files/batch',
       'POST',
@@ -116,7 +123,7 @@ router.post('/api/files/batch-operations', async (req, res) => {
 // Fast Build Pipeline (Go Service)
 router.post('/api/builds/fast-build', async (req, res) => {
   try {
-    const result = await coordinator.forwardRequest(
+    const result = await getCoordinator().forwardRequest(
       'builds',
       '/api/build',
       'POST',
@@ -135,7 +142,7 @@ router.post('/api/builds/fast-build', async (req, res) => {
 // AI/ML Code Analysis (Python Service)
 router.post('/api/ai/code-analysis', async (req, res) => {
   try {
-    const result = await coordinator.forwardRequest(
+    const result = await getCoordinator().forwardRequest(
       'ai-ml',
       '/api/code/analyze',
       'POST',
@@ -154,7 +161,7 @@ router.post('/api/ai/code-analysis', async (req, res) => {
 // Machine Learning Training (Python Service)
 router.post('/api/ml/train-model', async (req, res) => {
   try {
-    const result = await coordinator.forwardRequest(
+    const result = await getCoordinator().forwardRequest(
       'ai-ml',
       '/api/ml/train',
       'POST',
@@ -173,7 +180,7 @@ router.post('/api/ml/train-model', async (req, res) => {
 // ML Training Status (Python Service)
 router.get('/api/ml/training-status/:jobId', async (req, res) => {
   try {
-    const result = await coordinator.forwardRequest(
+    const result = await getCoordinator().forwardRequest(
       'ai-ml',
       `/api/ml/training/${req.params.jobId}`,
       'GET'
@@ -191,7 +198,7 @@ router.get('/api/ml/training-status/:jobId', async (req, res) => {
 // Text Analysis (Python Service)
 router.post('/api/ai/text-analysis', async (req, res) => {
   try {
-    const result = await coordinator.forwardRequest(
+    const result = await getCoordinator().forwardRequest(
       'ai-ml',
       '/api/text/analyze',
       'POST',
@@ -210,7 +217,7 @@ router.post('/api/ai/text-analysis', async (req, res) => {
 // Advanced Data Processing (Python Service)
 router.post('/api/data/advanced-processing', async (req, res) => {
   try {
-    const result = await coordinator.forwardRequest(
+    const result = await getCoordinator().forwardRequest(
       'data-analysis',
       '/api/data/process',
       'POST',
@@ -229,7 +236,7 @@ router.post('/api/data/advanced-processing', async (req, res) => {
 // AI Inference (Python Service)
 router.post('/api/ai/inference', async (req, res) => {
   try {
-    const result = await coordinator.forwardRequest(
+    const result = await getCoordinator().forwardRequest(
       'ai-ml',
       '/api/ai/inference',
       'POST',
@@ -251,7 +258,7 @@ router.post('/api/smart-route', async (req, res) => {
     const { operation, data, requestType } = req.body;
     const dataSize = JSON.stringify(data || {}).length;
     
-    const serviceUrl = coordinator.selectOptimalService(requestType, dataSize);
+    const serviceUrl = getCoordinator().selectOptimalService(requestType, dataSize);
     
     if (!serviceUrl) {
       return res.status(503).json({

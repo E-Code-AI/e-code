@@ -1,19 +1,24 @@
-// @ts-nocheck
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Square, Loader2 } from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface RunButtonProps {
-  projectId: number;
+  projectId: string | number; // Support both UUID strings and numeric IDs
   language?: string;
   onRunning?: (running: boolean, executionId?: string) => void;
   className?: string;
   variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link' | 'destructive';
   size?: 'default' | 'sm' | 'lg' | 'icon';
+}
+
+interface RuntimeStatus {
+  isRunning: boolean;
+  status: 'starting' | 'running' | 'stopped' | 'error';
+  url?: string;
 }
 
 export function RunButton({ 
@@ -25,7 +30,37 @@ export function RunButton({
   size = 'default'
 }: RunButtonProps) {
   const [isRunning, setIsRunning] = useState(false);
+  const [localExecutionId, setLocalExecutionId] = useState<string | undefined>();
   const { toast } = useToast();
+
+  // Poll runtime status from backend - REAL STATUS TRACKING
+  const { data: runtimeStatus } = useQuery<RuntimeStatus>({
+    queryKey: [`/api/runtime/${projectId}`],
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      // Poll more frequently when starting, less when running/stopped
+      if (data?.status === 'starting') return 1000;
+      if (data?.status === 'running') return 5000;
+      return false; // Don't poll when stopped/error
+    },
+    enabled: !!projectId,
+  });
+
+  // Sync local state with backend status - BACKEND IS SOURCE OF TRUTH
+  useEffect(() => {
+    if (runtimeStatus) {
+      const backendIsRunning = runtimeStatus.status === 'running' || runtimeStatus.status === 'starting';
+      
+      // Only update if backend status differs from local state
+      if (backendIsRunning !== isRunning) {
+        setIsRunning(backendIsRunning);
+        
+        // Use executionId from backend or local fallback
+        const execId = localExecutionId;
+        onRunning?.(backendIsRunning, execId);
+      }
+    }
+  }, [runtimeStatus]);
 
   // Start project execution - REAL BACKEND
   const runProjectMutation = useMutation({
@@ -35,23 +70,31 @@ export function RunButton({
         mainFile: undefined, // Will use auto-detection
         timeout: 30000 // 30 seconds timeout
       });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to start runtime');
+      }
       return res.json();
     },
-    onSuccess: (data) => {
-      setIsRunning(true);
-      onRunning?.(true, data.executionId);
-      
+    onSuccess: async (data) => {
       // Store execution ID for stopping later
-      (window as any).__currentExecutionId = data.executionId;
+      const execId = data.executionId || `exec-${Date.now()}`;
+      setLocalExecutionId(execId);
+      (window as any).__currentExecutionId = execId;
+      
+      // CRITICAL: Invalidate query to force refetch and start polling
+      await queryClient.invalidateQueries({ 
+        queryKey: [`/api/runtime/${projectId}`] 
+      });
       
       toast({
-        title: 'Code executing',
-        description: 'Your code is now running',
+        title: 'Starting runtime',
+        description: 'Your project is starting...',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to execute code',
+        title: 'Failed to start runtime',
         description: error.message,
         variant: 'destructive',
       });
@@ -61,28 +104,35 @@ export function RunButton({
   // Stop project execution - REAL BACKEND
   const stopProjectMutation = useMutation({
     mutationFn: async () => {
-      const executionId = (window as any).__currentExecutionId;
+      const executionId = (window as any).__currentExecutionId || localExecutionId;
       const res = await apiRequest('POST', `/api/runtime/stop`, {
         projectId,
         executionId
       });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to stop runtime');
+      }
       return res.json();
     },
-    onSuccess: () => {
-      setIsRunning(false);
-      onRunning?.(false);
-      
+    onSuccess: async () => {
       // Clear execution ID
+      setLocalExecutionId(undefined);
       delete (window as any).__currentExecutionId;
       
+      // CRITICAL: Invalidate query to force refetch and clear stale "running" status
+      await queryClient.invalidateQueries({ 
+        queryKey: [`/api/runtime/${projectId}`] 
+      });
+      
       toast({
-        title: 'Execution stopped',
-        description: 'Code execution has been stopped',
+        title: 'Runtime stopped',
+        description: 'Your project has been stopped',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to stop execution',
+        title: 'Failed to stop runtime',
         description: error.message,
         variant: 'destructive',
       });
@@ -97,7 +147,10 @@ export function RunButton({
     }
   };
 
-  const isLoading = runProjectMutation.isPending || stopProjectMutation.isPending;
+  const isStarting = runtimeStatus?.status === 'starting';
+  const isStartMutating = runProjectMutation.isPending;
+  const isStopMutating = stopProjectMutation.isPending;
+  const isLoading = isStartMutating || isStopMutating || isStarting;
 
   return (
     <Button
@@ -106,12 +159,13 @@ export function RunButton({
       size={size}
       variant={isRunning ? "destructive" : variant}
       className={cn("gap-2 font-medium", className)}
+      data-testid={isRunning ? "button-stop-runtime" : "button-run-runtime"}
     >
       {isLoading ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin" />
           <span className="hidden sm:inline">
-            {isRunning ? 'Stopping...' : 'Starting...'}
+            {isStopMutating ? 'Stopping...' : 'Starting...'}
           </span>
         </>
       ) : isRunning ? (

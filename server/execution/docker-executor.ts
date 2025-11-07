@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Real Docker-based code execution environment
  * Provides sandboxed, containerized runtime for user code

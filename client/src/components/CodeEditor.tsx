@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useRef, useState } from "react";
 import * as monaco from 'monaco-editor';
 import { setupMonacoTheme, getMonacoEditorOptions } from "@/lib/monaco-setup";
@@ -104,7 +103,7 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
           enabled: editorSettings.minimap,
         },
         theme: editorSettings.theme,
-        renderWhitespace: editorSettings.renderWhitespace as any,
+        renderWhitespace: editorSettings.renderWhitespace as 'none' | 'boundary' | 'selection' | 'trailing' | 'all',
         bracketPairColorization: {
           enabled: editorSettings.bracketPairColorization,
         },
@@ -243,9 +242,9 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
         bracketPairColorization: editorSettings.bracketPairColorization,
         formatOnPaste: editorSettings.formatOnPaste,
         formatOnType: editorSettings.formatOnType,
-        renderWhitespace: editorSettings.renderWhitespace as any,
+        renderWhitespace: editorSettings.renderWhitespace as 'none' | 'boundary' | 'selection' | 'trailing' | 'all',
         lineNumbers: editorSettings.lineNumbers ? 'on' : 'off',
-        folding: editorSettings.folding,
+        // folding is added directly in the create options below
       });
       
       // Create editor instance
@@ -672,12 +671,13 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       
       {/* Share snippet dialog */}
       <ShareSnippetDialog
-        open={shareDialogOpen}
-        onOpenChange={setShareDialogOpen}
-        projectId={file.projectId || 0}
+        isOpen={shareDialogOpen}
+        onClose={() => setShareDialogOpen(false)}
+        projectId={typeof file.projectId === 'string' ? parseInt(file.projectId, 10) : (file.projectId || 0)}
         fileName={file.name}
         filePath={file.path || file.name}
         code={shareData.code}
+        language={getLanguageFromFilename(file.name)}
         lineStart={shareData.lineStart}
         lineEnd={shareData.lineEnd}
       />

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -67,15 +66,15 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(["/"]));
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
-  // Récupération des fichiers du projet
+  // Récupération des fichiers du projet - Fixed to use correct project-scoped endpoint
   const { data: files = [], isLoading: filesLoading } = useQuery<FileNode[]>({
-    queryKey: ["/api/files", projectId],
+    queryKey: [`/api/projects/${projectId}/files`],
     enabled: !!projectId,
   });
 
-  // Récupération des projets récents - REAL BACKEND
+  // Récupération des projets récents - Fixed to use correct user projects endpoint
   const { data: recentProjects = [] } = useQuery<Project[]>({
-    queryKey: ["/api/user/projects"],
+    queryKey: ["/api/projects"],
   });
 
   const toggleFolder = (path: string) => {

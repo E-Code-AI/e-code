@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useParams } from "wouter";
 import { SecretManagement as SecretManagementComponent } from "@/components/SecretManagement";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";

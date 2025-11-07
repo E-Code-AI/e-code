@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -140,10 +139,10 @@ export default function Home() {
     <AppLayout>
       <div className="flex flex-col h-full">
         {/* Hero Section with Chat Input - E-Code Style */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-8 text-white">
+        <div className="bg-gradient-to-r from-orange-500 to-yellow-500 p-8 text-white">
           <div className="max-w-5xl mx-auto">
             <h1 className="text-4xl font-bold mb-4">Let's build something amazing</h1>
-            <p className="text-xl mb-6 text-blue-100">The collaborative, in-browser IDE that makes coding accessible</p>
+            <p className="text-xl mb-6 text-orange-50">The collaborative, in-browser IDE that makes coding accessible</p>
             
             <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg border border-white/20 shadow-xl">
               <div className="flex items-center gap-2 bg-white dark:bg-black rounded-md p-1">
@@ -159,7 +158,7 @@ export default function Home() {
                   }}
                 />
                 <Button 
-                  className="shrink-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-semibold"
+                  className="shrink-0 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-semibold"
                   onClick={() => searchQuery.trim() ? handleCreateProject(searchQuery) : setIsCreateModalOpen(true)}
                   disabled={createProjectMutation.isPending}
                 >
@@ -171,7 +170,7 @@ export default function Home() {
                 <span>Exemples:</span>
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-blue-100 hover:text-white"
+                  className="p-0 h-auto text-orange-50 hover:text-white"
                   onClick={() => {
                     setSearchQuery("Application web de todo list avec design moderne");
                     handleCreateProject("Application web de todo list avec design moderne");
@@ -181,7 +180,7 @@ export default function Home() {
                 </Button>
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-blue-100 hover:text-white"
+                  className="p-0 h-auto text-orange-50 hover:text-white"
                   onClick={() => {
                     setSearchQuery("Portfolio professionnel avec animations");
                     handleCreateProject("Portfolio professionnel avec animations");
@@ -191,7 +190,7 @@ export default function Home() {
                 </Button>
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-blue-100 hover:text-white"
+                  className="p-0 h-auto text-orange-50 hover:text-white"
                   onClick={() => {
                     setSearchQuery("Dashboard analytique avec graphiques");
                     handleCreateProject("Dashboard analytique avec graphiques");

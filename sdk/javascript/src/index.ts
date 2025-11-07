@@ -7,7 +7,17 @@ import { SecretManager } from './secrets';
 import { PackageManager } from './packages';
 import { AnalyticsTracker } from './analytics';
 import { WebhookManager } from './webhooks';
+import { getAPIBaseURL, getWebSocketURL } from '@shared/config';
 
+/**
+ * Configuration options for E-Code SDK
+ * 
+ * Environment variables:
+ * - ECODE_API_KEY: API key for authentication
+ * - ECODE_ENV: Environment (development|staging|production)
+ * - ECODE_API_URL: Override API endpoint
+ * - ECODE_WS_URL: Override WebSocket endpoint
+ */
 export interface ECodeConfig {
     apiKey?: string;
     baseUrl?: string;
@@ -26,16 +36,20 @@ export class ECode {
     public webhooks: WebhookManager;
 
     constructor(config: ECodeConfig = {}) {
+        // Use shared configuration for consistent endpoints
+        const baseUrl = config.baseUrl || getAPIBaseURL();
+        const websocketUrl = config.websocketUrl || getWebSocketURL();
+        
         this.client = new ECodeClient({
             apiKey: config.apiKey || process.env.ECODE_API_KEY || '',
-            baseUrl: config.baseUrl || 'https://e-code.app'
+            baseUrl
         });
 
         // Initialize managers
         this.projects = new ProjectManager(this.client);
         this.deployments = new DeploymentManager(this.client);
         this.ai = new AIAssistant(this.client);
-        this.realtime = new RealtimeCollaboration(this.client, config.websocketUrl);
+        this.realtime = new RealtimeCollaboration(this.client, websocketUrl);
         this.secrets = new SecretManager(this.client);
         this.packages = new PackageManager(this.client);
         this.analytics = new AnalyticsTracker(this.client);

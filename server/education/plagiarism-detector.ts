@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Plagiarism Detection Service
  * Detects code similarity and potential plagiarism using multiple algorithms
