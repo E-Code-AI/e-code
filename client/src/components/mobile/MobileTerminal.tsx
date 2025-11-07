@@ -26,6 +26,7 @@ export function MobileTerminal({
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstanceRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const wsRef = useRef<WebSocket | null>(null); // WebSocket reference for backend communication
   const commandBufferRef = useRef<string>(''); // Shared command buffer
   const [showKeyboard, setShowKeyboard] = useState(true);
   const [canPaste, setCanPaste] = useState(false);
@@ -90,10 +91,10 @@ export function MobileTerminal({
     // Connect to WebSocket backend
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}`;
-    let ws: WebSocket;
     
     try {
-      ws = new WebSocket(wsUrl);
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws; // Store WebSocket in ref for clearBackendBuffer()
       
       ws.onopen = () => {
         console.log('[MobileTerminal] WebSocket connected');
@@ -121,6 +122,7 @@ export function MobileTerminal({
       ws.onclose = () => {
         console.log('[MobileTerminal] WebSocket disconnected');
         terminal.writeln('\r\n\x1b[33mTerminal disconnected. Please refresh.\x1b[0m\r\n');
+        wsRef.current = null; // Clear ref on disconnect
       };
       
     } catch (error) {
@@ -135,6 +137,7 @@ export function MobileTerminal({
       terminal.scrollToBottom();
       
       // Send input to WebSocket backend
+      const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
           type: 'input',
@@ -173,6 +176,7 @@ export function MobileTerminal({
     const handleResize = () => {
       fitAddon.fit();
       
+      const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
         const { cols, rows } = terminal;
         ws.send(JSON.stringify({
@@ -187,6 +191,7 @@ export function MobileTerminal({
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.close();
       }
@@ -205,6 +210,32 @@ export function MobileTerminal({
   const handleEscape = () => sendToTerminal('\x1B');
   const handleBackspace = () => sendToTerminal('\x7F');
   
+  // Atomic replace current line with recalled command (prevents race conditions)
+  const replaceCurrentLine = (newCommand: string) => {
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(JSON.stringify({ 
+          type: 'replace_line',
+          command: newCommand
+        }));
+        
+        // Update local buffer to match
+        commandBufferRef.current = newCommand;
+        setCurrentLine(newCommand);
+      } catch (error) {
+        console.error('[MobileTerminal] Failed to send replace_line:', error);
+        toast({
+          title: 'Terminal sync error',
+          description: 'Failed to replace command line',
+          variant: 'destructive',
+        });
+      }
+    } else {
+      console.warn('[MobileTerminal] WebSocket not connected, cannot replace line');
+    }
+  };
+
   // Navigate backward in command history
   const handleArrowUp = () => {
     if (history.length > 0) {
@@ -213,18 +244,8 @@ export function MobileTerminal({
         setHistoryIndex(newIndex);
         const command = history[history.length - 1 - newIndex];
         
-        // Clear current input buffer
-        const clearLength = commandBufferRef.current.length;
-        for (let i = 0; i < clearLength; i++) {
-          sendToTerminal('\x7F'); // Send backspace for each character
-        }
-        
-        // Update command buffer
-        commandBufferRef.current = command;
-        setCurrentLine(command);
-        
-        // Send recalled command characters through terminal (triggers WebSocket)
-        sendToTerminal(command);
+        // Atomic replace: clear + set new command in single operation
+        replaceCurrentLine(command);
       }
     }
   };
@@ -236,31 +257,14 @@ export function MobileTerminal({
       setHistoryIndex(newIndex);
       const command = history[history.length - 1 - newIndex];
       
-      // Clear current input buffer
-      const clearLength = commandBufferRef.current.length;
-      for (let i = 0; i < clearLength; i++) {
-        sendToTerminal('\x7F'); // Send backspace for each character
-      }
-      
-      // Update command buffer
-      commandBufferRef.current = command;
-      setCurrentLine(command);
-      
-      // Send recalled command characters through terminal (triggers WebSocket)
-      sendToTerminal(command);
+      // Atomic replace
+      replaceCurrentLine(command);
     } else if (historyIndex === 0) {
       // Back to empty line
       setHistoryIndex(-1);
       
-      // Clear current input buffer
-      const clearLength = commandBufferRef.current.length;
-      for (let i = 0; i < clearLength; i++) {
-        sendToTerminal('\x7F'); // Send backspace for each character
-      }
-      
-      // Update command buffer
-      commandBufferRef.current = '';
-      setCurrentLine('');
+      // Atomic replace with empty command
+      replaceCurrentLine('');
     }
   };
   
