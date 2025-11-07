@@ -3,7 +3,7 @@
  * Simplified version to prove floating panes work on desktop
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { File } from '@shared/schema';
 import { SplitsLayout } from './SplitsLayout';
@@ -66,7 +66,11 @@ export function SplitsEditorLayoutV2({
     findNode,
     setActivePane,
     setActiveTab,
+    setCenterStackHeight,
   } = useSplitsStore();
+  
+  // Measure actual center-stack height for Fortune 500-grade 216px minimum enforcement
+  const centerStackRef = useRef<HTMLDivElement>(null);
 
   // Initialize layout on mount with pre-populated content
   useEffect(() => {
@@ -168,6 +172,23 @@ export function SplitsEditorLayoutV2({
     }
   };
 
+  // Measure center-stack height with ResizeObserver (Fortune 500-grade precision)
+  useEffect(() => {
+    const container = centerStackRef.current;
+    if (!container) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const height = entry.contentRect.height;
+        setCenterStackHeight(height);
+      }
+    });
+    
+    observer.observe(container);
+    
+    return () => observer.disconnect();
+  }, [setCenterStackHeight]);
+
   // Command palette commands
   const commands = useMemo(() => generateDefaultCommands({
     onToolSelect: handleToolChange,
@@ -229,7 +250,7 @@ export function SplitsEditorLayoutV2({
         </div>
 
         {/* Main Layout - Tool Dock + SplitsLayout */}
-        <div className="flex flex-1 overflow-hidden">
+        <div ref={centerStackRef} className="flex flex-1 overflow-hidden">
           {/* Tool Dock */}
           <ReplitToolDock
             activeTool={activeTool}
