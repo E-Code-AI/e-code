@@ -54,6 +54,7 @@ export function SplitsPane({
     maximizePane,
     restorePane,
     toggleCollapse,
+    findParentSplit,
     startDrag,
     updateDrag,
     endDrag,
@@ -153,16 +154,19 @@ export function SplitsPane({
   const handleMaximize = () => maximizePane(paneGroup.id);
   const handleRestore = () => restorePane();
   
-  // Collapse/expand bottom panel using store action
+  // Collapse/expand bottom panel using store action (dynamic childIndex)
   const handleToggleCollapse = useCallback(() => {
     if (!paneGroup.parentSplitId || !paneGroup.collapsible) return;
     
-    // Find child index in parent split (usually 1 for bottom panel)
-    // Assumes center-bottom is the second child (index 1) of center-stack
-    const childIndex = 1; // TODO: Make this dynamic if needed
+    // Find parent split and dynamically compute child index
+    const parentSplit = findParentSplit(paneGroup.id);
+    if (!parentSplit) return;
+    
+    const childIndex = parentSplit.children.findIndex(child => child.id === paneGroup.id);
+    if (childIndex === -1) return;
     
     toggleCollapse(paneGroup.parentSplitId, childIndex);
-  }, [paneGroup.parentSplitId, paneGroup.collapsible, toggleCollapse]);
+  }, [paneGroup.id, paneGroup.parentSplitId, paneGroup.collapsible, toggleCollapse, findParentSplit]);
   
   // Derive collapsed state from actual percent (driven from store!)
   const isCollapsed = paneGroup.collapsed || (paneGroup.percent || 0) <= 1;
