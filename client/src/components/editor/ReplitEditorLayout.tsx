@@ -11,7 +11,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useMediaQuery, useIsDesktop } from '@/hooks/use-media-query';
 import { ReplitMultiplayers } from './ReplitMultiplayers';
 import { ReplitToolDock } from './ReplitToolDock';
 import { ReplitAgent } from '../ReplitAgent';
@@ -83,9 +83,11 @@ export function ReplitEditorLayout({
   bottomPanelOpen: bottomPanelOpenProp,
   onBottomPanelOpenChange,
 }: ReplitEditorLayoutProps) {
-  // Use the new Splits layout system if enabled
-  // TODO: Update SplitsEditorLayout to support tool dock before re-enabling
-  const useSplitsLayout = false; // Feature flag - disabled to use tool dock with AI Agent
+  // Use the new Splits layout system on desktop only (enables floating panes)
+  // SplitsEditorLayout includes ReplitToolDock + AI Agent + all IDE panels
+  // Keep legacy layout for mobile/tablet (different UX patterns)
+  const isDesktop = useIsDesktop();
+  const useSplitsLayout = isDesktop; // Enable floating panes on desktop (>1440px)
 
   if (useSplitsLayout) {
     return (
