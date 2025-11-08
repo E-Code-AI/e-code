@@ -1708,7 +1708,7 @@ What would you like me to build?`,
   };
 
   return (
-    <div className={cn("flex flex-col h-full bg-[var(--ecode-background)]", className)}>
+    <div className={cn("flex flex-col h-full bg-[var(--ecode-background)]", className)} data-testid="replit-agent-component">
       {/* Chat header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--ecode-border)]">
         <div className="flex items-center gap-2">

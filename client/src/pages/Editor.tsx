@@ -358,7 +358,7 @@ export default function Editor(props: EditorProps = {}) {
         title: "Agent",
         icon: <Bot className="h-3.5 w-3.5" />,
         content: (
-          <div className="h-full overflow-hidden">
+          <div className="h-full overflow-hidden" data-testid="agent-panel">
             <ReplitAgent
               projectId={activeProjectId as any}
               selectedFile={activeFile?.name}
