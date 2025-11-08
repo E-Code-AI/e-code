@@ -81,6 +81,20 @@ interface Message {
   checkpoint?: any;
   actions?: AgentAction[];
   completed?: boolean;
+  thinking?: {
+    steps: Array<{
+      id: string;
+      type: 'reasoning' | 'analysis' | 'planning';
+      title: string;
+      content: string;
+      status: 'active' | 'completed' | 'error';
+      timestamp: Date;
+      duration?: number;
+    }>;
+    isStreaming?: boolean;
+    totalTokens?: number;
+    thinkingTime?: number;
+  };
 }
 
 interface AgentAction {
@@ -1454,6 +1468,66 @@ What would you like me to build for you today?`,
                 break;
               } else if (data.type === 'error') {
                 throw new Error(data.content || 'AI error');
+              } else if (data.type === 'thinking_start') {
+                // Extended thinking started
+                setMessages(prev => prev.map(m => 
+                  m.id === assistantMessageId 
+                    ? { 
+                        ...m, 
+                        thinking: {
+                          steps: [],
+                          isStreaming: true,
+                          totalTokens: 0,
+                          thinkingTime: 0
+                        }
+                      }
+                    : m
+                ));
+              } else if (data.type === 'thinking_update') {
+                // Extended thinking update
+                setMessages(prev => prev.map(m => {
+                  if (m.id === assistantMessageId && m.thinking) {
+                    const existingStepIndex = m.thinking.steps.findIndex(s => s.id === data.stepId);
+                    const newStep = {
+                      id: data.stepId || Date.now().toString(),
+                      type: (data.stepType || 'reasoning') as 'reasoning' | 'analysis' | 'planning',
+                      title: data.title || 'Thinking...',
+                      content: data.content || '',
+                      status: (data.status || 'active') as 'active' | 'completed' | 'error',
+                      timestamp: new Date(),
+                      duration: data.duration
+                    };
+                    
+                    const updatedSteps = existingStepIndex >= 0
+                      ? m.thinking.steps.map((s, i) => i === existingStepIndex ? newStep : s)
+                      : [...m.thinking.steps, newStep];
+                    
+                    return {
+                      ...m,
+                      thinking: {
+                        ...m.thinking,
+                        steps: updatedSteps,
+                        totalTokens: data.totalTokens || m.thinking.totalTokens
+                      }
+                    };
+                  }
+                  return m;
+                }));
+              } else if (data.type === 'thinking_complete') {
+                // Extended thinking completed
+                setMessages(prev => prev.map(m => 
+                  m.id === assistantMessageId && m.thinking
+                    ? { 
+                        ...m, 
+                        thinking: {
+                          ...m.thinking,
+                          isStreaming: false,
+                          totalTokens: data.totalTokens || m.thinking.totalTokens,
+                          thinkingTime: data.thinkingTime || m.thinking.thinkingTime
+                        }
+                      }
+                    : m
+                ));
               } else if (data.type === 'action_pending_approval') {
                 // AI wants to execute an action - add to message with clickable button
                 console.log('[AI Chat] Action pending approval:', data.actionId, data.action);
@@ -1609,6 +1683,19 @@ What would you like me to build?`,
               return <p key={index} className={index > 0 ? "mt-2" : ""}>{part}</p>;
             })}
           </div>
+          
+          {/* Extended Thinking Display for assistant messages */}
+          {!isUser && message.thinking && (
+            <div className="mt-3">
+              <ExtendedThinkingDisplay
+                thinkingSteps={message.thinking.steps || []}
+                isStreaming={message.thinking.isStreaming || false}
+                totalTokens={message.thinking.totalTokens}
+                thinkingTime={message.thinking.thinkingTime}
+              />
+            </div>
+          )}
+          
           {/* Display pricing information if available */}
           {message.pricing && (
             <div className="mt-4">
