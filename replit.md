@@ -31,13 +31,13 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 - **Deployment**: Dynamic 4-port configuration, non-blocking initialization, optimized for Replit Reserved VM.
 
 **Feature Specifications:**
-- **AI Agent System**: Autonomous code generation with database-backed approval queues and audit logging, including an AI Agent Panel with extended thinking and reasoning breakpoints.
+- **AI Agent System**: Autonomous code generation with database-backed approval queues and audit logging, including an AI Agent Panel with extended thinking and reasoning breakpoints. **Mobile-first UX**: AI Agent is the default tab on mobile, with production-ready chat scrolling using sentinel ref pattern and requestAnimationFrame for reliable auto-scroll during streaming. Horizontal swipe gestures disabled on agent tab to prevent interference with vertical chat scrolling.
 - **Real-time Collaboration**: WebSocket-based editing and WebRTC for voice/video/screen sharing.
 - **Admin Dashboard**: Comprehensive UI for managing projects and users.
 - **Template Marketplace**: Allows users to fork and deploy project templates.
 - **Production Hardening**: Redis caching, CDN optimization, multi-tier rate limiting, security middleware, DB connection pooling, performance monitoring, input validation, and sanitization.
 - **Workspace Parity**: True backend integration for IDE panels (LSP/Problems, Build Logs/Output, Testing, Security Scanner) with real-time WebSocket updates, including a functional Mobile Monaco Editor, Mobile Terminal, Mobile File Tree, and Floating Action Button (FAB).
-- **Responsive UI**: Desktop, Tablet, and Mobile layouts are largely complete, with specific features like Command Palette, Multi-Editor, Git, Debugger, Breadcrumbs, Minimap for Desktop; TabletIDEView, Split View, Gestures for Tablet; and Bottom Tabs, Gesture Framework, Monaco Editor, xterm Terminal, File Tree, FAB for Mobile.
+- **Responsive UI**: Desktop, Tablet, and Mobile layouts are largely complete, with specific features like Command Palette, Multi-Editor, Git, Debugger, Breadcrumbs, Minimap for Desktop; TabletIDEView, Split View, Gestures for Tablet; and Bottom Tabs (with Agent as default), Gesture Framework (disabled on agent tab), Monaco Editor, xterm Terminal, File Tree, FAB for Mobile.
 - **Multi-Tab Editor System**: Maintains independent Monaco editor instances per tab via MultiEditorManager, preserving state.
 
 **System Design Choices:**
