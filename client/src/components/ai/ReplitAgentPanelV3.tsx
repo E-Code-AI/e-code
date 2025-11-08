@@ -39,6 +39,21 @@ import {
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
 import { useToast } from '@/hooks/use-toast';
 
+interface ToolExecution {
+  id: string;
+  tool: string;
+  parameters: any;
+  result?: any;
+  success?: boolean;
+  status: 'pending' | 'running' | 'complete' | 'error';
+  metadata?: {
+    executionTime?: number;
+    filesChanged?: string[];
+    commandOutput?: string;
+  };
+  error?: string;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -46,6 +61,7 @@ interface Message {
   timestamp: Date;
   status?: 'sending' | 'sent' | 'error';
   thinking?: ThinkingStep[];
+  toolExecutions?: ToolExecution[];
   isStreaming?: boolean;
   metadata?: {
     model?: string;
@@ -260,6 +276,7 @@ export function ReplitAgentPanelV3({
 
       let fullContent = '';
       const thinkingSteps: ThinkingStep[] = [];
+      const toolExecutions: ToolExecution[] = [];
       
       while (reader) {
         const { done, value } = await reader.read();
@@ -303,6 +320,59 @@ export function ReplitAgentPanelV3({
                 }
                 
                 setActiveThinking([...thinkingSteps]);
+              }
+              
+              // Handle tool execution events
+              if (data.toolCallId) {
+                const toolId = data.toolCallId;
+                
+                // Tool start event
+                if (data.tool && data.parameters && !data.result) {
+                  const toolExecution: ToolExecution = {
+                    id: toolId,
+                    tool: data.tool,
+                    parameters: data.parameters,
+                    status: 'running'
+                  };
+                  toolExecutions.push(toolExecution);
+                }
+                
+                // Tool result event
+                if (data.result !== undefined) {
+                  const index = toolExecutions.findIndex(t => t.id === toolId);
+                  if (index >= 0) {
+                    toolExecutions[index] = {
+                      ...toolExecutions[index],
+                      result: data.result,
+                      success: data.success,
+                      status: 'complete',
+                      metadata: data.metadata
+                    };
+                  }
+                }
+                
+                // Tool error event
+                if (data.error) {
+                  const index = toolExecutions.findIndex(t => t.id === toolId);
+                  if (index >= 0) {
+                    toolExecutions[index] = {
+                      ...toolExecutions[index],
+                      status: 'error',
+                      error: data.error
+                    };
+                  }
+                }
+                
+                // Update assistant message with tool executions
+                assistantMessage.toolExecutions = [...toolExecutions];
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  const lastMessage = newMessages[newMessages.length - 1];
+                  if (lastMessage && lastMessage.role === 'assistant') {
+                    lastMessage.toolExecutions = [...toolExecutions];
+                  }
+                  return newMessages;
+                });
               }
             } catch (e) {
               // Skip invalid JSON
