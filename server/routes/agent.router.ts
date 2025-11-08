@@ -6,18 +6,117 @@ import { agentFileOperations } from '../services/agent-file-operations.service';
 import { agentCommandExecution } from '../services/agent-command-execution.service';
 import { agentToolFramework } from '../services/agent-tool-framework.service';
 import { agentWorkflowEngine } from '../services/agent-workflow-engine.service';
+import { AgentPreferencesService } from '../services/agent-preferences.service';
 import { db } from '../db';
-import { agentSessions, fileOperations, commandExecutions, toolExecutions, agentWorkflows } from '@shared/schema';
+import { agentSessions, fileOperations, commandExecutions, toolExecutions, agentWorkflows, AI_MODELS } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
+import type { IStorage } from '../storage';
 
 const router = Router();
 
-// All agent routes require admin authentication
+// Public agent routes (require authentication only)
 router.use(ensureAuthenticated);
-router.use(ensureAdmin);
 
+// Model Selection & Preferences Routes (for all authenticated users)
+// GET /api/agent/models - Get available AI models
+router.get('/models', async (req, res) => {
+  try {
+    const storage: IStorage = (req.app.locals as any).storage;
+    const preferencesService = new AgentPreferencesService(storage);
+    const models = preferencesService.getAvailableModels();
+    res.json({ models });
+  } catch (error: any) {
+    console.error('[AgentRouter] Error fetching models:', error);
+    res.status(500).json({ error: 'Failed to fetch models' });
+  }
+});
+
+// GET /api/agent/preferences - Get user agent preferences
+router.get('/preferences', async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const storage: IStorage = (req.app.locals as any).storage;
+    const preferencesService = new AgentPreferencesService(storage);
+    
+    const preferences = await preferencesService.getUserPreferences(userId);
+    
+    // Return defaults if no preferences found
+    if (!preferences) {
+      return res.json({
+        extendedThinking: false,
+        highPowerMode: false,
+        autoWebSearch: true,
+        preferredModel: 'claude-3-5-sonnet',
+        customInstructions: null,
+        improvePromptEnabled: false,
+        progressTabEnabled: false,
+        pauseResumeEnabled: false,
+        autoCheckpoints: true,
+      });
+    }
+
+    res.json(preferences);
+  } catch (error: any) {
+    console.error('[AgentRouter] Error fetching preferences:', error);
+    res.status(500).json({ error: 'Failed to fetch preferences' });
+  }
+});
+
+// PUT /api/agent/preferences - Update user agent preferences
+router.put('/preferences', async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const storage: IStorage = (req.app.locals as any).storage;
+    const preferencesService = new AgentPreferencesService(storage);
+    const updates = req.body;
+
+    // Validate model if provided
+    if (updates.preferredModel && !AI_MODELS.includes(updates.preferredModel)) {
+      return res.status(400).json({
+        error: `Invalid model: ${updates.preferredModel}`,
+        validModels: AI_MODELS,
+      });
+    }
+
+    const updated = await preferencesService.updateUserPreferences(userId, updates);
+    res.json(updated);
+  } catch (error: any) {
+    console.error('[AgentRouter] Error updating preferences:', error);
+    res.status(500).json({ error: error.message || 'Failed to update preferences' });
+  }
+});
+
+// POST /api/agent/recommend-model - Get model recommendation
+router.post('/recommend-model', async (req, res) => {
+  try {
+    const storage: IStorage = (req.app.locals as any).storage;
+    const preferencesService = new AgentPreferencesService(storage);
+    const { requiresExtendedThinking, complexity, speedPriority } = req.body;
+
+    const recommended = preferencesService.getRecommendedModel({
+      requiresExtendedThinking,
+      complexity,
+      speedPriority,
+    });
+
+    const models = preferencesService.getAvailableModels();
+    const modelInfo = models.find(m => m.id === recommended);
+
+    res.json({
+      recommended,
+      modelInfo,
+      reasoning: `Selected ${recommended} based on: complexity=${complexity || 'medium'}, speedPriority=${speedPriority || 'balanced'}, extendedThinking=${requiresExtendedThinking || false}`,
+    });
+  } catch (error: any) {
+    console.error('[AgentRouter] Error recommending model:', error);
+    res.status(500).json({ error: 'Failed to recommend model' });
+  }
+});
+
+// ====== ADMIN-ONLY ROUTES ======
+// These routes require admin authentication
 // Create new agent session
-router.post('/sessions', async (req, res) => {
+router.post('/sessions', ensureAdmin, async (req, res) => {
   try {
     const { projectId, model } = req.body;
     const userId = req.user!.id;
@@ -31,7 +130,7 @@ router.post('/sessions', async (req, res) => {
 });
 
 // Get active sessions
-router.get('/sessions', async (req, res) => {
+router.get('/sessions', ensureAdmin, async (req, res) => {
   try {
     const userId = req.user!.id;
     const sessions = await agentOrchestrator.getActiveSessions(userId);
@@ -42,7 +141,7 @@ router.get('/sessions', async (req, res) => {
 });
 
 // Execute agent command
-router.post('/sessions/:sessionId/execute', async (req, res) => {
+router.post('/sessions/:sessionId/execute', ensureAdmin, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const { messages } = req.body;
@@ -57,7 +156,7 @@ router.post('/sessions/:sessionId/execute', async (req, res) => {
 });
 
 // Stream agent execution
-router.post('/sessions/:sessionId/stream', async (req, res) => {
+router.post('/sessions/:sessionId/stream', ensureAdmin, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const { prompt } = req.body;
@@ -82,7 +181,7 @@ router.post('/sessions/:sessionId/stream', async (req, res) => {
 });
 
 // Close session
-router.post('/sessions/:sessionId/close', async (req, res) => {
+router.post('/sessions/:sessionId/close', ensureAdmin, async (req, res) => {
   try {
     const { sessionId } = req.params;
     await agentOrchestrator.closeSession(sessionId);
@@ -93,7 +192,7 @@ router.post('/sessions/:sessionId/close', async (req, res) => {
 });
 
 // File operations
-router.post('/files/read', async (req, res) => {
+router.post('/files/read', ensureAdmin, async (req, res) => {
   try {
     const { sessionId, path } = req.body;
     const userId = req.user!.id;
@@ -105,7 +204,7 @@ router.post('/files/read', async (req, res) => {
   }
 });
 
-router.post('/files/write', async (req, res) => {
+router.post('/files/write', ensureAdmin, async (req, res) => {
   try {
     const { sessionId, path, content } = req.body;
     const userId = req.user!.id;
@@ -117,7 +216,7 @@ router.post('/files/write', async (req, res) => {
   }
 });
 
-router.post('/files/delete', async (req, res) => {
+router.post('/files/delete', ensureAdmin, async (req, res) => {
   try {
     const { sessionId, path } = req.body;
     const userId = req.user!.id;
@@ -129,7 +228,7 @@ router.post('/files/delete', async (req, res) => {
   }
 });
 
-router.post('/files/list', async (req, res) => {
+router.post('/files/list', ensureAdmin, async (req, res) => {
   try {
     const { sessionId, path, recursive } = req.body;
     
@@ -140,7 +239,7 @@ router.post('/files/list', async (req, res) => {
   }
 });
 
-router.get('/files/history/:sessionId', async (req, res) => {
+router.get('/files/history/:sessionId', ensureAdmin, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const history = await agentFileOperations.getOperationHistory(sessionId);
@@ -151,7 +250,7 @@ router.get('/files/history/:sessionId', async (req, res) => {
 });
 
 // Command execution
-router.post('/commands/execute', async (req, res) => {
+router.post('/commands/execute', ensureAdmin, async (req, res) => {
   try {
     const { sessionId, command, args, options } = req.body;
     const userId = req.user!.id;
@@ -169,7 +268,7 @@ router.post('/commands/execute', async (req, res) => {
   }
 });
 
-router.post('/commands/kill', async (req, res) => {
+router.post('/commands/kill', ensureAdmin, async (req, res) => {
   try {
     const { executionId, sessionId } = req.body;
     
@@ -180,7 +279,7 @@ router.post('/commands/kill', async (req, res) => {
   }
 });
 
-router.get('/commands/history/:sessionId', async (req, res) => {
+router.get('/commands/history/:sessionId', ensureAdmin, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const history = await agentCommandExecution.getExecutionHistory(sessionId);
@@ -191,7 +290,7 @@ router.get('/commands/history/:sessionId', async (req, res) => {
 });
 
 // Tool execution
-router.get('/tools', async (req, res) => {
+router.get('/tools', ensureAdmin, async (req, res) => {
   try {
     const { capability } = req.query;
     const tools = await agentToolFramework.getAvailableTools(capability as string);
@@ -201,7 +300,7 @@ router.get('/tools', async (req, res) => {
   }
 });
 
-router.post('/tools/execute', async (req, res) => {
+router.post('/tools/execute', ensureAdmin, async (req, res) => {
   try {
     const { toolName, input, sessionId } = req.body;
     const userId = req.user!.id;
@@ -220,7 +319,7 @@ router.post('/tools/execute', async (req, res) => {
   }
 });
 
-router.get('/tools/history/:sessionId', async (req, res) => {
+router.get('/tools/history/:sessionId', ensureAdmin, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const history = await agentToolFramework.getExecutionHistory(sessionId);
@@ -231,7 +330,7 @@ router.get('/tools/history/:sessionId', async (req, res) => {
 });
 
 // Workflow execution
-router.post('/workflows/create', async (req, res) => {
+router.post('/workflows/create', ensureAdmin, async (req, res) => {
   try {
     const { sessionId, name, description, steps } = req.body;
     const userId = req.user!.id;
@@ -249,7 +348,7 @@ router.post('/workflows/create', async (req, res) => {
   }
 });
 
-router.post('/workflows/generate', async (req, res) => {
+router.post('/workflows/generate', ensureAdmin, async (req, res) => {
   try {
     const { prompt, sessionId } = req.body;
     
@@ -260,7 +359,7 @@ router.post('/workflows/generate', async (req, res) => {
   }
 });
 
-router.get('/workflows/:workflowId/status', async (req, res) => {
+router.get('/workflows/:workflowId/status', ensureAdmin, async (req, res) => {
   try {
     const { workflowId } = req.params;
     const status = await agentWorkflowEngine.getWorkflowStatus(workflowId);
@@ -270,7 +369,7 @@ router.get('/workflows/:workflowId/status', async (req, res) => {
   }
 });
 
-router.post('/workflows/:workflowId/cancel', async (req, res) => {
+router.post('/workflows/:workflowId/cancel', ensureAdmin, async (req, res) => {
   try {
     const { workflowId } = req.params;
     await agentWorkflowEngine.cancelWorkflow(workflowId);
@@ -280,7 +379,7 @@ router.post('/workflows/:workflowId/cancel', async (req, res) => {
   }
 });
 
-router.post('/workflows/:workflowId/restore', async (req, res) => {
+router.post('/workflows/:workflowId/restore', ensureAdmin, async (req, res) => {
   try {
     const { workflowId } = req.params;
     const { checkpointIndex } = req.body;
@@ -294,7 +393,7 @@ router.post('/workflows/:workflowId/restore', async (req, res) => {
 });
 
 // Get project context
-router.get('/context/:projectId', async (req, res) => {
+router.get('/context/:projectId', ensureAdmin, async (req, res) => {
   try {
     const { projectId } = req.params;
     const projectPath = projectId ? 
@@ -355,7 +454,7 @@ export function setupAgentWebSocket(io: SocketIOServer) {
 }
 
 // Dashboard stats
-router.get('/stats/:sessionId', async (req, res) => {
+router.get('/stats/:sessionId', ensureAdmin, async (req, res) => {
   try {
     const { sessionId } = req.params;
     

@@ -491,6 +491,10 @@ export interface IStorage {
     timestamp: Date;
   }): Promise<any>;
 
+  // Dynamic Intelligence / Agent Preferences operations
+  getDynamicIntelligenceSettings(userId: string): Promise<DynamicIntelligence | undefined>;
+  updateDynamicIntelligenceSettings(userId: string, settings: Partial<InsertDynamicIntelligence>): Promise<DynamicIntelligence>;
+
   // Time tracking operations
   startTimeTracking(tracking: InsertTimeTracking): Promise<TimeTracking>;
   stopTimeTracking(trackingId: number): Promise<TimeTracking | undefined>;
@@ -2857,9 +2861,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Dynamic Intelligence operations
-  async getDynamicIntelligence(userId: string): Promise<DynamicIntelligence | undefined> {
+  async getDynamicIntelligenceSettings(userId: string): Promise<DynamicIntelligence | undefined> {
     const [settings] = await this.db.select().from(dynamicIntelligence).where(eq(dynamicIntelligence.userId, userId));
     return settings;
+  }
+
+  async updateDynamicIntelligenceSettings(userId: string, settings: Partial<InsertDynamicIntelligence>): Promise<DynamicIntelligence> {
+    // Check if settings exist for user
+    const existing = await this.getDynamicIntelligenceSettings(userId);
+    
+    if (existing) {
+      // Update existing settings
+      const [updated] = await this.db
+        .update(dynamicIntelligence)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(dynamicIntelligence.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      // Create new settings
+      const [created] = await this.db
+        .insert(dynamicIntelligence)
+        .values({ userId, ...settings })
+        .returning();
+      return created;
+    }
   }
 
   async createDynamicIntelligence(settings: InsertDynamicIntelligence): Promise<DynamicIntelligence> {
