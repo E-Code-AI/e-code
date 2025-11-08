@@ -1878,6 +1878,12 @@ export const toolCapabilityEnum = pgEnum('tool_capability', [
   'monitoring', 'security', 'api_integration', 'ai_analysis'
 ]);
 
+// Enum for autonomous mode risk thresholds
+export const riskThresholdEnum = pgEnum('risk_threshold', [
+  'low', 'medium', 'high', 'critical'
+]);
+export type RiskThreshold = 'low' | 'medium' | 'high' | 'critical';
+
 // Agent Sessions - Track active AI agent sessions
 export const agentSessions = pgTable('agent_sessions', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -1895,6 +1901,10 @@ export const agentSessions = pgTable('agent_sessions', {
   isActive: boolean('is_active').default(true),
   totalTokensUsed: integer('total_tokens_used').default(0),
   totalOperations: integer('total_operations').default(0),
+  // Autonomous Mode Settings
+  autonomousMode: boolean('autonomous_mode').default(false),
+  riskThreshold: riskThresholdEnum('risk_threshold').default('medium'),
+  autoApproveActions: boolean('auto_approve_actions').default(false),
   startedAt: timestamp('started_at').defaultNow(),
   endedAt: timestamp('ended_at'),
   metadata: jsonb('metadata').$type<Record<string, any>>(),
@@ -2085,6 +2095,10 @@ export const agentAuditTrail = pgTable('agent_audit_trail', {
   details: jsonb('details').$type<Record<string, any>>(),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
+  // Autonomous Mode Tracking
+  riskScore: integer('risk_score'), // 0-100 scale
+  autoApproved: boolean('auto_approved').default(false),
+  rollbackAvailable: boolean('rollback_available').default(false),
   timestamp: timestamp('timestamp').defaultNow().notNull(),
   severity: text('severity').notNull().default('info'), // info, warning, error, critical
 }, (table) => [
@@ -2092,6 +2106,38 @@ export const agentAuditTrail = pgTable('agent_audit_trail', {
   index('agent_audit_trail_user_id_idx').on(table.userId),
   index('agent_audit_trail_timestamp_idx').on(table.timestamp),
   index('agent_audit_trail_severity_idx').on(table.severity),
+]);
+
+// Autonomous Actions - Track all autonomous agent actions
+export const autonomousActions = pgTable('autonomous_actions', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  actionType: text('action_type').notNull(), // file_write, command_execute, tool_call, etc
+  actionData: jsonb('action_data').$type<Record<string, any>>(),
+  riskScore: integer('risk_score').notNull(), // 0-100 scale
+  riskFactors: jsonb('risk_factors').$type<{
+    fileModification?: boolean;
+    commandExecution?: boolean;
+    networkAccess?: boolean;
+    databaseAccess?: boolean;
+    systemChange?: boolean;
+    impact?: string;
+  }>(),
+  autoApproved: boolean('auto_approved').notNull().default(false),
+  approvalRequired: boolean('approval_required').notNull().default(true),
+  status: operationStatusEnum('status').notNull().default('pending'),
+  result: jsonb('result').$type<any>(),
+  error: text('error'),
+  rollbackAvailable: boolean('rollback_available').default(true),
+  rollbackData: jsonb('rollback_data').$type<Record<string, any>>(),
+  executedAt: timestamp('executed_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+  rolledBackAt: timestamp('rolled_back_at'),
+}, (table) => [
+  index('autonomous_actions_session_id_idx').on(table.sessionId),
+  index('autonomous_actions_status_idx').on(table.status),
+  index('autonomous_actions_risk_score_idx').on(table.riskScore),
+  index('autonomous_actions_auto_approved_idx').on(table.autoApproved),
 ]);
 
 // Agent Permissions - Fine-grained permission control
