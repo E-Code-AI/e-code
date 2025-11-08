@@ -1867,11 +1867,13 @@ What would you like me to build?`,
         </div>
         <div className="flex items-center gap-2">
           {/* Model Selection */}
-          <ModelSelector
-            selectedModel={selectedModel}
-            onModelChange={handleModelChange}
-            className="mr-2"
-          />
+          <div className="flex-shrink-0">
+            <ModelSelector
+              selectedModel={selectedModel}
+              onModelChange={handleModelChange}
+              className="w-[200px]"
+            />
+          </div>
           
           {/* Advanced Capabilities */}
           <div className="flex items-center gap-4 text-xs">
@@ -1941,7 +1943,7 @@ What would you like me to build?`,
             </div>
           )}
           
-          {/* Usage Tracking Icon */}
+          {/* Usage Tracking Icon - Temporarily disabled due to click interference
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1950,6 +1952,7 @@ What would you like me to build?`,
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={() => window.location.href = '/subscribe'}
+                  data-testid="button-usage-tracking"
                 >
                   <DollarSign className="h-4 w-4" />
                 </Button>
@@ -1959,6 +1962,7 @@ What would you like me to build?`,
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          */}
         </div>
       </div>
 
