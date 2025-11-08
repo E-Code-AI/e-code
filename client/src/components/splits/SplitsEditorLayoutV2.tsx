@@ -10,7 +10,7 @@ import { SplitsLayout } from './SplitsLayout';
 import { ReplitToolDock } from '../editor/ReplitToolDock';
 import { ReplitFileSidebar } from '../editor/ReplitFileSidebar';
 import { ReplitSearchPanel } from '../editor/ReplitSearchPanel';
-import { ReplitAgentPanel } from '../editor/ReplitAgentPanel';
+import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
 import { ReplitGitPanel } from '../editor/ReplitGitPanel';
 import { ReplitDebuggerPanel } from '../editor/ReplitDebuggerPanel';
 import { ReplitTestingPanel } from '../editor/ReplitTestingPanel';
@@ -90,7 +90,7 @@ export function SplitsEditorLayoutV2({
         ),
         search: <ReplitSearchPanel />,
         git: <ReplitGitPanel projectId={projectId} />,
-        agent: <ReplitAgentPanel projectId={projectId} />,
+        agent: <ReplitAgentPanelV3 projectId={projectId || '1'} mode="desktop" />,
         debugger: <ReplitDebuggerPanel projectId={projectId} />,
         testing: <ReplitTestingPanel projectId={projectId} />,
         database: <ReplitDatabasePanel projectId={projectId} />,

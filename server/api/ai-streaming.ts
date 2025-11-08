@@ -53,7 +53,8 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     temperature = 0.7,
     maxTokens = 4096,
     tools = [],
-    systemPrompt
+    systemPrompt,
+    capabilities = {}
   } = req.body;
   
   const userId = (req as any).user?.id;
@@ -88,7 +89,12 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
         break;
         
       case 'anthropic':
-        await streamAnthropic(res, messages, { model, temperature, maxTokens });
+        await streamAnthropic(res, messages, { 
+          model, 
+          temperature, 
+          maxTokens,
+          extendedThinking: capabilities.extendedThinking || false
+        });
         break;
         
       case 'gemini':
@@ -174,7 +180,7 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
 }
 
 /**
- * Stream from Anthropic API
+ * Stream from Anthropic API with Extended Thinking support
  */
 async function streamAnthropic(res: any, messages: any[], options: any) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -199,25 +205,68 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
     system: systemMessage?.content,
     max_tokens: options.maxTokens,
     temperature: options.temperature,
-    stream: true
+    stream: true,
+    thinking: options.extendedThinking ? {
+      type: 'enabled',
+      budget_tokens: 10000
+    } : undefined
   });
   
   let fullContent = '';
+  let thinkingContent = '';
+  let currentThinkingStep: any = null;
   
   for await (const event of stream) {
+    // Handle thinking blocks (extended thinking)
+    if (event.type === 'content_block_start' && (event as any).content_block?.type === 'thinking') {
+      currentThinkingStep = {
+        id: Date.now().toString(),
+        type: 'reasoning',
+        title: 'AI Thinking',
+        content: '',
+        status: 'active',
+        timestamp: new Date(),
+        isStreaming: true
+      };
+      sendSSE(res, 'thinking_start', { step: currentThinkingStep });
+    }
+    
     if (event.type === 'content_block_delta') {
       const delta = event.delta as any;
+      
+      // Thinking content
+      if (delta.type === 'thinking_delta' && delta.thinking) {
+        thinkingContent += delta.thinking;
+        if (currentThinkingStep) {
+          currentThinkingStep.content = thinkingContent;
+          sendSSE(res, 'thinking_update', { 
+            step: currentThinkingStep,
+            content: delta.thinking 
+          });
+        }
+      }
+      
+      // Regular text content
       if (delta.type === 'text_delta' && delta.text) {
         fullContent += delta.text;
         sendSSE(res, 'token', { content: delta.text });
       }
+    }
+    
+    if (event.type === 'content_block_stop' && currentThinkingStep) {
+      currentThinkingStep.status = 'complete';
+      currentThinkingStep.isStreaming = false;
+      sendSSE(res, 'thinking_complete', { step: currentThinkingStep });
+      currentThinkingStep = null;
+      thinkingContent = '';
     }
   }
   
   // Send final message
   sendSSE(res, 'message', { 
     content: fullContent,
-    model: options.model || 'claude-3-5-sonnet-20241022'
+    model: options.model || 'claude-3-5-sonnet-20241022',
+    thinking: thinkingContent
   });
 }
 
