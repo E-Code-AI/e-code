@@ -32,6 +32,15 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 
 **Feature Specifications:**
 - **AI Agent System**: Autonomous code generation with real tool execution (create_file, edit_file, run_command, read_file, list_files, web_search), extended thinking via Anthropic Claude, and database-backed audit logging. **Build from Prompt**: Homepage feature allows users to describe an app and AI autonomously builds it. **Mobile-first UX**: AI Agent is the default tab on mobile, with production-ready chat scrolling using sentinel ref pattern and requestAnimationFrame for reliable auto-scroll during streaming. Horizontal swipe gestures disabled on agent tab to prevent interference with vertical chat scrolling. **Auto-Start**: Agent automatically starts building when navigating with `?agent=true&prompt=...` URL parameters.
+  
+  **Replit AI Agent V3 Parity Features (Latest):**
+  - **Model Selection API**: Backend service (`AgentPreferencesService`) with GET/PUT endpoints for user preferences including model selection (GPT-4, Claude 3.5 Sonnet, Claude 3 Opus, Gemini), extended thinking toggle, auto web search, custom instructions, and more. Routes: `/api/agent/models` (list available models), `/api/agent/preferences` (CRUD user preferences), `/api/agent/recommend-model` (intelligent model recommendation).
+  - **Extended Thinking Streaming**: Fully implemented in `ai-streaming.ts` with real-time streaming of AI reasoning via `thinking_start`, `thinking_update`, and `thinking_complete` SSE events. Supports Anthropic's extended thinking mode with 10k token budget for chain-of-thought reasoning.
+  - **Conversation Persistence**: Complete database integration using `aiConversations` and `agentMessages` tables. All conversations and messages are persisted to PostgreSQL with proper type safety, token tracking, and metadata storage (thinking steps, reasoning, attachments). Hybrid memory + DB architecture for fast access with permanent storage.
+  - **Security Hardening**: All admin-only agent routes (sessions, file ops, commands, tools, workflows) protected with `ensureAdmin` middleware. Public routes (models, preferences) accessible to authenticated users. Prevents privilege escalation.
+  - **Frontend Components**: Two production-ready React components created:
+    - `ModelSelector.tsx`: Comprehensive dropdown UI with model categorization (GPT/Claude/Gemini), capability badges (extended thinking, speed, cost), detailed descriptions, and search.
+    - `ExtendedThinkingDisplay.tsx`: Collapsible reasoning viewer with streaming support, color-coded thinking steps, timestamps, and skeleton loading states.
 - **Real-time Collaboration**: WebSocket-based editing and WebRTC for voice/video/screen sharing.
 - **Admin Dashboard**: Comprehensive UI for managing projects and users.
 - **Template Marketplace**: Allows users to fork and deploy project templates.
@@ -42,11 +51,11 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 
 **System Design Choices:**
 - **Vertical Slice Approach**: End-to-end feature development.
-- **Storage Layer**: `IStorage` interface with `DatabaseStorage` implementation using PostgreSQL and Drizzle ORM.
-- **Type Safety**: Zod, TypeScript, Drizzle ORM.
-- **Real-time Updates**: Hybrid WebSocket + HTTP polling.
-- **Hybrid Security Model**: AI-generated actions require approval, manual file operations use immediate validation with audit logging.
-- **Production Compliance**: Fortune 500-readiness with PostgreSQL persistence, tamper-proof append-only logging, and queryable audit trail.
+- **Storage Layer**: `IStorage` interface with `DatabaseStorage` implementation using PostgreSQL and Drizzle ORM. Extended with agent-specific methods: `getDynamicIntelligenceSettings`, `updateDynamicIntelligenceSettings`, `getAiConversation`, `createAiConversation`, `updateAiConversation`, `addMessageToConversation`.
+- **Type Safety**: Zod, TypeScript, Drizzle ORM. Agent preferences validated using `insertAgentPreferencesSchema` and `aiModelEnum` type.
+- **Real-time Updates**: Hybrid WebSocket + HTTP polling. AI streaming uses Server-Sent Events (SSE) for token streaming, thinking updates, and tool execution progress.
+- **Hybrid Security Model**: AI-generated actions require approval, manual file operations use immediate validation with audit logging. Agent routes split into public (models/preferences) and admin-only (sessions/operations) tiers.
+- **Production Compliance**: Fortune 500-readiness with PostgreSQL persistence, tamper-proof append-only logging, and queryable audit trail. All agent conversations and messages persisted with full metadata.
 
 ## External Dependencies
 - **AI Integration**: Anthropic Claude API, OpenAI API, Together AI, Replicate, Hugging Face, Groq, Anyscale.
