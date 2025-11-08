@@ -4,6 +4,8 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import winston from 'winston';
+import { allTools, toOpenAITools, toAnthropicTools } from '../agent/tool-definitions';
+import { ToolExecutor } from '../agent/tool-executor';
 
 // Create logger instance
 const logger = winston.createLogger({
@@ -130,7 +132,7 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
 });
 
 /**
- * Stream from OpenAI API
+ * Stream from OpenAI API with tool execution
  */
 async function streamOpenAI(res: any, messages: any[], options: any) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -144,6 +146,10 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   }
   
   const openai = new OpenAI({ apiKey });
+  const executor = new ToolExecutor(options.projectId || 'default');
+  
+  // Add tools to the stream
+  const tools = toOpenAITools(allTools);
   
   const stream = await openai.chat.completions.create({
     model: options.model || 'gpt-4-turbo-preview',
@@ -151,11 +157,12 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
     temperature: options.temperature,
     max_tokens: options.maxTokens,
     stream: true,
-    tools: options.tools?.length > 0 ? options.tools : undefined
+    tools: tools.length > 0 ? tools : undefined
   });
   
   let fullContent = '';
   let toolCalls: any[] = [];
+  let currentToolCall: any = null;
   
   for await (const chunk of stream) {
     const delta = chunk.choices[0]?.delta;
@@ -165,9 +172,66 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
       sendSSE(res, 'token', { content: delta.content });
     }
     
+    // Handle tool calls
     if (delta?.tool_calls) {
-      toolCalls.push(...delta.tool_calls);
-      sendSSE(res, 'tool_call', { tools: delta.tool_calls });
+      for (const toolCallDelta of delta.tool_calls) {
+        if (toolCallDelta.index !== undefined) {
+          if (!toolCalls[toolCallDelta.index]) {
+            toolCalls[toolCallDelta.index] = {
+              id: toolCallDelta.id,
+              type: 'function',
+              function: { name: '', arguments: '' }
+            };
+          }
+          
+          const toolCall = toolCalls[toolCallDelta.index];
+          
+          if (toolCallDelta.function?.name) {
+            toolCall.function.name += toolCallDelta.function.name;
+          }
+          if (toolCallDelta.function?.arguments) {
+            toolCall.function.arguments += toolCallDelta.function.arguments;
+          }
+        }
+      }
+    }
+  }
+  
+  // Execute tools autonomously
+  const toolResults: any[] = [];
+  for (const toolCall of toolCalls) {
+    try {
+      const functionName = toolCall.function.name;
+      const functionArgs = JSON.parse(toolCall.function.arguments);
+      
+      sendSSE(res, 'tool_start', {
+        toolCallId: toolCall.id,
+        tool: functionName,
+        parameters: functionArgs
+      });
+      
+      const result = await executor.execute(functionName, functionArgs);
+      
+      toolResults.push({
+        tool_call_id: toolCall.id,
+        role: 'tool',
+        name: functionName,
+        content: JSON.stringify(result)
+      });
+      
+      sendSSE(res, 'tool_result', {
+        toolCallId: toolCall.id,
+        tool: functionName,
+        result: result.output,
+        success: result.success,
+        metadata: result.metadata
+      });
+      
+    } catch (error: any) {
+      sendSSE(res, 'tool_error', {
+        toolCallId: toolCall.id,
+        error: error.message
+      });
     }
   }
   
@@ -175,6 +239,7 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   sendSSE(res, 'message', { 
     content: fullContent,
     tool_calls: toolCalls,
+    tool_results: toolResults,
     model: options.model || 'gpt-4-turbo-preview'
   });
 }
@@ -194,10 +259,14 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
   }
   
   const anthropic = new Anthropic({ apiKey });
+  const executor = new ToolExecutor(options.projectId || 'default');
   
   // Convert messages format for Anthropic
   const systemMessage = messages.find(m => m.role === 'system');
   const userMessages = messages.filter(m => m.role !== 'system');
+  
+  // Add tools to the request
+  const tools = toAnthropicTools(allTools);
   
   const stream = await anthropic.messages.create({
     model: options.model || 'claude-3-5-sonnet-20241022',
@@ -206,6 +275,7 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
     max_tokens: options.maxTokens,
     temperature: options.temperature,
     stream: true,
+    tools: tools.length > 0 ? tools : undefined,
     thinking: options.extendedThinking ? {
       type: 'enabled',
       budget_tokens: 10000
@@ -215,6 +285,8 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
   let fullContent = '';
   let thinkingContent = '';
   let currentThinkingStep: any = null;
+  let toolCalls: any[] = [];
+  let currentToolUse: any = null;
   
   for await (const event of stream) {
     // Handle thinking blocks (extended thinking)
@@ -229,6 +301,15 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
         isStreaming: true
       };
       sendSSE(res, 'thinking_start', { step: currentThinkingStep });
+    }
+    
+    // Handle tool use blocks
+    if (event.type === 'content_block_start' && (event as any).content_block?.type === 'tool_use') {
+      currentToolUse = {
+        id: (event as any).content_block.id,
+        name: (event as any).content_block.name,
+        input: ''
+      };
     }
     
     if (event.type === 'content_block_delta') {
@@ -251,20 +332,70 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
         fullContent += delta.text;
         sendSSE(res, 'token', { content: delta.text });
       }
+      
+      // Tool use input
+      if (delta.type === 'input_json_delta' && delta.partial_json && currentToolUse) {
+        currentToolUse.input += delta.partial_json;
+      }
     }
     
-    if (event.type === 'content_block_stop' && currentThinkingStep) {
-      currentThinkingStep.status = 'complete';
-      currentThinkingStep.isStreaming = false;
-      sendSSE(res, 'thinking_complete', { step: currentThinkingStep });
-      currentThinkingStep = null;
-      thinkingContent = '';
+    if (event.type === 'content_block_stop') {
+      if (currentThinkingStep) {
+        currentThinkingStep.status = 'complete';
+        currentThinkingStep.isStreaming = false;
+        sendSSE(res, 'thinking_complete', { step: currentThinkingStep });
+        currentThinkingStep = null;
+        thinkingContent = '';
+      }
+      
+      if (currentToolUse) {
+        toolCalls.push(currentToolUse);
+        currentToolUse = null;
+      }
+    }
+  }
+  
+  // Execute tools autonomously
+  const toolResults: any[] = [];
+  for (const toolCall of toolCalls) {
+    try {
+      const functionArgs = JSON.parse(toolCall.input);
+      
+      sendSSE(res, 'tool_start', {
+        toolCallId: toolCall.id,
+        tool: toolCall.name,
+        parameters: functionArgs
+      });
+      
+      const result = await executor.execute(toolCall.name, functionArgs);
+      
+      toolResults.push({
+        tool_use_id: toolCall.id,
+        type: 'tool_result',
+        content: JSON.stringify(result)
+      });
+      
+      sendSSE(res, 'tool_result', {
+        toolCallId: toolCall.id,
+        tool: toolCall.name,
+        result: result.output,
+        success: result.success,
+        metadata: result.metadata
+      });
+      
+    } catch (error: any) {
+      sendSSE(res, 'tool_error', {
+        toolCallId: toolCall.id,
+        error: error.message
+      });
     }
   }
   
   // Send final message
   sendSSE(res, 'message', { 
     content: fullContent,
+    tool_calls: toolCalls,
+    tool_results: toolResults,
     model: options.model || 'claude-3-5-sonnet-20241022',
     thinking: thinkingContent
   });
