@@ -87,15 +87,15 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
     x.set(0);
   };
 
-  // Handle tab bar clicks
-  const handleTabClick = (tabId: MobileTab) => {
+  // Handle tab bar clicks with modal management
+  const handleTabClick = (tabId: string) => {
     if (tabId === 'more') {
       setIsMoreMenuOpen(true);
     } else if (tabId === 'files') {
       setIsFilesOpen(true);
-      setActiveTab(tabId as string); // Cast to string for persistence
     } else {
-      setActiveTab(tabId as string); // Cast to string for persistence
+      // Only set active tab for content tabs (agent, code, terminal, preview)
+      setActiveTab(tabId);
     }
     
     // Haptic feedback
@@ -118,7 +118,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
         data-testid="mobile-ide-content"
       >
         <motion.div
-          drag="x"
+          drag={activeTab === 'agent' ? false : "x"}
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.2}
           onDragStart={handleDragStart}
@@ -184,7 +184,7 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
       {/* Bottom Tab Bar using ReplitBottomTabs */}
       <ReplitBottomTabs
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabClick}
       />
 
       {/* Floating Action Button (Run) */}

@@ -11,8 +11,8 @@ interface Tab {
 }
 
 interface ReplitBottomTabsProps {
-  activeTab: MobileTab;
-  onTabChange: (tab: MobileTab) => void;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }
 
 export function ReplitBottomTabs({ 
@@ -29,7 +29,7 @@ export function ReplitBottomTabs({
     { id: 'more', icon: MoreHorizontal, label: 'More' },
   ];
 
-  const handleTabClick = (tabId: MobileTab) => {
+  const handleTabClick = (tabId: string) => {
     onTabChange(tabId);
     
     // Haptic feedback for tab switch
