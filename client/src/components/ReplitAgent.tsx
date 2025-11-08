@@ -1688,10 +1688,8 @@ What would you like me to build?`,
           {!isUser && message.thinking && (
             <div className="mt-3">
               <ExtendedThinkingDisplay
-                thinkingSteps={message.thinking.steps || []}
-                isStreaming={message.thinking.isStreaming || false}
-                totalTokens={message.thinking.totalTokens}
-                thinkingTime={message.thinking.thinkingTime}
+                steps={message.thinking.steps || []}
+                isThinking={message.thinking.isStreaming || false}
               />
             </div>
           )}
@@ -1942,32 +1940,10 @@ What would you like me to build?`,
               {buildProgress}%
             </div>
           )}
-          
-          {/* Usage Tracking Icon - Temporarily disabled due to click interference
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={() => window.location.href = '/subscribe'}
-                  data-testid="button-usage-tracking"
-                >
-                  <DollarSign className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>View usage & billing</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          */}
         </div>
       </div>
 
       {/* Tabs for Chat, Approvals, and Progress - Fortune 500 Security */}
-      {console.log('[ReplitAgent] Rendering tabs. ActiveTab:', activeTab, 'FeatureFlags:', featureFlags)}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'chat' | 'progress' | 'approvals')} className="flex-1 flex flex-col">
         <TabsList className="w-full rounded-none border-b bg-white dark:bg-gray-900">
           <TabsTrigger value="chat" className="flex-1" data-testid="chat-tab">Chat</TabsTrigger>

@@ -35,12 +35,19 @@ The platform utilizes a polyglot backend architecture with Go for container orch
   
   **Replit AI Agent V3 Parity Features (Latest):**
   - **Model Selection API**: Backend service (`AgentPreferencesService`) with GET/PUT endpoints for user preferences including model selection (GPT-4, Claude 3.5 Sonnet, Claude 3 Opus, Gemini), extended thinking toggle, auto web search, custom instructions, and more. Routes: `/api/agent/models` (list available models), `/api/agent/preferences` (CRUD user preferences), `/api/agent/recommend-model` (intelligent model recommendation).
-  - **Extended Thinking Streaming**: Fully implemented in `ai-streaming.ts` with real-time streaming of AI reasoning via `thinking_start`, `thinking_update`, and `thinking_complete` SSE events. Supports Anthropic's extended thinking mode with 10k token budget for chain-of-thought reasoning.
+  - **Extended Thinking Streaming**: Fully implemented in `ai-streaming.ts` with real-time streaming of AI reasoning via `thinking_start`, `thinking_update`, and `thinking_complete` SSE events. Supports Anthropic's extended thinking mode with 10k token budget for chain-of-thought reasoning. **INTEGRATED**: ExtendedThinkingDisplay component now wired into ReplitAgent.tsx chat message stream, displaying thinking steps in real-time during AI responses.
   - **Conversation Persistence**: Complete database integration using `aiConversations` and `agentMessages` tables. All conversations and messages are persisted to PostgreSQL with proper type safety, token tracking, and metadata storage (thinking steps, reasoning, attachments). Hybrid memory + DB architecture for fast access with permanent storage.
   - **Security Hardening**: All admin-only agent routes (sessions, file ops, commands, tools, workflows) protected with `ensureAdmin` middleware. Public routes (models, preferences) accessible to authenticated users. Prevents privilege escalation.
-  - **Frontend Components**: Two production-ready React components created:
-    - `ModelSelector.tsx`: Comprehensive dropdown UI with model categorization (GPT/Claude/Gemini), capability badges (extended thinking, speed, cost), detailed descriptions, and search.
-    - `ExtendedThinkingDisplay.tsx`: Collapsible reasoning viewer with streaming support, color-coded thinking steps, timestamps, and skeleton loading states.
+  - **Frontend Components - FULLY INTEGRATED**: Two production-ready React components created and integrated into AI Agent UI:
+    - `ModelSelector.tsx`: Comprehensive dropdown UI with model categorization (GPT/Claude/Gemini), capability badges (extended thinking, speed, cost), detailed descriptions, and search. **INTEGRATED**: Now visible in AI Agent header with full state management, model preference persistence via `/api/agent/preferences`, and toast notifications on model changes.
+    - `ExtendedThinkingDisplay.tsx`: Collapsible reasoning viewer with streaming support, color-coded thinking steps, timestamps, and skeleton loading states. **INTEGRATED**: Renders below assistant messages in chat when thinking data is available, with real-time updates during SSE streaming.
+  - **UI Integration Details**: 
+    - ModelSelector positioned in ReplitAgent header with 200px fixed width to prevent layout overlap
+    - ExtendedThinkingDisplay conditionally renders for assistant messages with `message.thinking` property
+    - Message interface extended with `thinking` property containing steps, streaming status, tokens, and timing
+    - SSE handlers in `sendMessage` function process `thinking_start`, `thinking_update`, `thinking_complete` events
+    - State management uses React hooks with proper scoping per assistant message
+    - Preferences load on component mount and sync automatically on changes
 - **Real-time Collaboration**: WebSocket-based editing and WebRTC for voice/video/screen sharing.
 - **Admin Dashboard**: Comprehensive UI for managing projects and users.
 - **Template Marketplace**: Allows users to fork and deploy project templates.
