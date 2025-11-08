@@ -154,6 +154,226 @@ export function ReplitAgentPanelV3({
     textareaRef.current?.focus();
   }, []);
 
+  // Auto-start building from URL prompt (Build from Homepage feature)
+  useEffect(() => {
+    // Check URL params for prompt
+    const urlParams = new URLSearchParams(window.location.search);
+    const promptFromUrl = urlParams.get('prompt');
+    const agentEnabled = urlParams.get('agent') === 'true';
+    
+    // Check session storage for prompt
+    const promptFromSession = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
+    
+    const initialPrompt = promptFromUrl || promptFromSession;
+    
+    if (agentEnabled && initialPrompt && !isWorking) {
+      // Set the prompt in the input
+      setInput(initialPrompt);
+      
+      // Clear session storage
+      if (promptFromSession) {
+        window.sessionStorage.removeItem(`agent-prompt-${projectId}`);
+      }
+      
+      // Auto-start building after a brief delay
+      setTimeout(() => {
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          role: 'user',
+          content: initialPrompt.trim(),
+          timestamp: new Date(),
+          status: 'sent'
+        };
+
+        setMessages(prev => [...prev, userMessage]);
+        setInput('');
+        setIsWorking(true);
+        setStreamingContent('');
+
+        // Show thinking if extended thinking is enabled
+        const extendedThinkingEnabled = capabilities.find(c => c.id === 'extended_thinking')?.enabled;
+        
+        if (extendedThinkingEnabled) {
+          const thinkingSteps = simulateThinkingSteps(userMessage.content);
+          setActiveThinking(thinkingSteps);
+        }
+
+        // Call the AI streaming API
+        (async () => {
+          try {
+            const provider = extendedThinkingEnabled ? 'anthropic' : 'openai';
+            
+            const response = await fetch('/api/agent/chat/stream', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                message: userMessage.content,
+                projectId: projectId,
+                conversationId: `conv-${Date.now()}`,
+                provider,
+                context: messages.slice(-5).map(m => ({
+                  role: m.role,
+                  content: m.content
+                })),
+                capabilities: {
+                  extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
+                  webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
+                  highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
+                }
+              }),
+              credentials: 'include'
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to get AI response');
+            }
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: '',
+              timestamp: new Date(),
+              thinking: extendedThinkingEnabled ? [...activeThinking] : undefined,
+              isStreaming: true,
+              metadata: {
+                extendedThinking: extendedThinkingEnabled
+              }
+            };
+
+            let fullContent = '';
+            const thinkingSteps: ThinkingStep[] = [];
+            const toolExecutions: ToolExecution[] = [];
+            
+            while (reader) {
+              const { done, value } = await reader.read();
+              
+              if (done) break;
+              
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n');
+              
+              for (const line of lines) {
+                if (line.startsWith('event: ')) {
+                  continue;
+                }
+                
+                if (line.startsWith('data: ')) {
+                  try {
+                    const data = JSON.parse(line.slice(6));
+                    
+                    if (data.content) {
+                      fullContent += data.content;
+                      setStreamingContent(fullContent);
+                    }
+                    
+                    if (data.step) {
+                      const step: ThinkingStep = {
+                        ...data.step,
+                        timestamp: new Date(data.step.timestamp)
+                      };
+                      
+                      const existingIndex = thinkingSteps.findIndex(s => s.id === step.id);
+                      if (existingIndex >= 0) {
+                        thinkingSteps[existingIndex] = step;
+                      } else {
+                        thinkingSteps.push(step);
+                      }
+                      
+                      setActiveThinking([...thinkingSteps]);
+                    }
+                    
+                    if (data.toolCallId) {
+                      const toolId = data.toolCallId;
+                      
+                      if (data.tool && data.parameters && !data.result) {
+                        const toolExecution: ToolExecution = {
+                          id: toolId,
+                          tool: data.tool,
+                          parameters: data.parameters,
+                          status: 'running'
+                        };
+                        toolExecutions.push(toolExecution);
+                      }
+                      
+                      if (data.result !== undefined) {
+                        const index = toolExecutions.findIndex(t => t.id === toolId);
+                        if (index >= 0) {
+                          toolExecutions[index] = {
+                            ...toolExecutions[index],
+                            result: data.result,
+                            success: data.success,
+                            status: 'complete',
+                            metadata: data.metadata
+                          };
+                        }
+                      }
+                      
+                      if (data.error) {
+                        const index = toolExecutions.findIndex(t => t.id === toolId);
+                        if (index >= 0) {
+                          toolExecutions[index] = {
+                            ...toolExecutions[index],
+                            status: 'error',
+                            error: data.error
+                          };
+                        }
+                      }
+                      
+                      assistantMessage.toolExecutions = [...toolExecutions];
+                      setMessages(prev => {
+                        const newMessages = [...prev];
+                        const lastMessage = newMessages[newMessages.length - 1];
+                        if (lastMessage && lastMessage.role === 'assistant') {
+                          lastMessage.toolExecutions = [...toolExecutions];
+                        }
+                        return newMessages;
+                      });
+                    }
+                  } catch (e) {
+                    // Skip invalid JSON
+                  }
+                }
+              }
+            }
+
+            assistantMessage.content = fullContent || "I'll help you build that! Let me start working on it...";
+            assistantMessage.isStreaming = false;
+            setMessages(prev => [...prev, assistantMessage]);
+            setStreamingContent('');
+            setActiveThinking([]);
+            
+          } catch (error) {
+            console.error('AI chat error:', error);
+            
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: "I'll help you build that! Let me start creating the project structure...",
+              timestamp: new Date(),
+              thinking: extendedThinkingEnabled ? activeThinking : undefined,
+              metadata: {
+                extendedThinking: extendedThinkingEnabled
+              }
+            };
+            setMessages(prev => [...prev, assistantMessage]);
+            setActiveThinking([]);
+          } finally {
+            setIsWorking(false);
+          }
+        })();
+      }, 1000); // 1 second delay for smooth UX
+      
+      // Remove URL params to clean up the URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [projectId]); // Only run once on mount
+
   const toggleCapability = useCallback((capabilityId: string) => {
     setCapabilities(prev => prev.map(cap =>
       cap.id === capabilityId ? { ...cap, enabled: !cap.enabled } : cap
