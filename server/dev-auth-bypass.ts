@@ -29,7 +29,7 @@ const isBypassFeatureEnabled = () => {
   }
 
   // Only allow in development if explicitly enabled
-  const enabled = process.env.ENABLE_DEV_AUTH_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
+  const enabled = process.env.ENABLE_DEV_AUTH_BYPASS === 'true' && process.env.NODE_ENV === 'development';
   
   if (enabled) {
     console.warn(
