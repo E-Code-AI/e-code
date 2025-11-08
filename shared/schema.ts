@@ -30,6 +30,17 @@ export const reviewStatusEnum = pgEnum('review_status', ['pending', 'approved', 
 export const mentorshipStatusEnum = pgEnum('mentorship_status', ['active', 'completed', 'cancelled']);
 export const challengeStatusEnum = pgEnum('challenge_status', ['draft', 'published', 'archived']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'accepted', 'rejected']);
+export const aiModelEnum = pgEnum('ai_model', [
+  'gpt-4',
+  'gpt-4-turbo',
+  'gpt-5',
+  'claude-3-opus',
+  'claude-3-sonnet',
+  'claude-3-5-sonnet',
+  'claude-3-haiku',
+  'gemini-pro',
+  'gemini-ultra'
+]);
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -931,6 +942,45 @@ export const webSearchHistory = pgTable('web_search_history', {
   timestamp: timestamp('timestamp').defaultNow().notNull(),
 });
 
+// Agent Conversation Messages - For detailed message tracking with extended thinking
+export const agentMessages = pgTable('agent_messages', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').references(() => agentSessions.id, { onDelete: 'cascade' }),
+  conversationId: integer('conversation_id').notNull().references(() => aiConversations.id, { onDelete: 'cascade' }), // Primary thread identifier
+  projectId: varchar('project_id').notNull().references(() => projects.id),
+  userId: varchar('user_id').notNull().references(() => users.id),
+  role: varchar('role').notNull(), // 'user' | 'assistant' | 'system'
+  content: text('content').notNull(),
+  model: varchar('model'), // Model used for this specific message
+  extendedThinking: jsonb('extended_thinking').$type<{
+    enabled: boolean;
+    reasoning: string;
+    steps: Array<{
+      step: number;
+      thought: string;
+      conclusion: string;
+    }>;
+    confidence: number;
+  }>(),
+  metadata: jsonb('metadata').$type<{
+    tokensUsed?: number;
+    processingTimeMs?: number;
+    toolsUsed?: string[];
+    filesModified?: string[];
+    actions?: Array<{
+      type: string;
+      path?: string;
+      success: boolean;
+    }>;
+  }>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('agent_messages_session_id_idx').on(table.sessionId),
+  index('agent_messages_conversation_id_idx').on(table.conversationId),
+  index('agent_messages_project_id_idx').on(table.projectId),
+  index('agent_messages_timeline_idx').on(table.projectId, table.createdAt), // For timeline queries
+]);
+
 // Secrets Management
 export const secrets = pgTable('secrets', {
   id: serial('id').primaryKey(),
@@ -1212,6 +1262,7 @@ export const insertKeyValueStoreSchema = createInsertSchema(keyValueStore).omit(
 export const insertAiConversationSchema = createInsertSchema(aiConversations).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertDynamicIntelligenceSchema = createInsertSchema(dynamicIntelligence).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertWebSearchHistorySchema = createInsertSchema(webSearchHistory).omit({ id: true, timestamp: true });
+export const insertAgentMessageSchema = createInsertSchema(agentMessages).omit({ id: true, createdAt: true });
 export const insertSecretSchema = createInsertSchema(secrets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertEnvironmentVariableSchema = createInsertSchema(environmentVariables).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertGitRepositorySchema = createInsertSchema(gitRepositories).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1329,6 +1380,24 @@ export type InsertPromptUsageHistory = z.infer<typeof insertPromptUsageHistorySc
 
 export type PromptTemplateRating = typeof promptTemplateRatings.$inferSelect;
 export type InsertPromptTemplateRating = z.infer<typeof insertPromptTemplateRatingSchema>;
+
+// Agent Messages Types
+export type AgentMessage = typeof agentMessages.$inferSelect;
+export type InsertAgentMessage = z.infer<typeof insertAgentMessageSchema>;
+
+// AI Model Enum Values
+export const AI_MODELS = [
+  'gpt-4',
+  'gpt-4-turbo',
+  'gpt-5',
+  'claude-3-opus',
+  'claude-3-sonnet',
+  'claude-3-5-sonnet',
+  'claude-3-haiku',
+  'gemini-pro',
+  'gemini-ultra'
+] as const;
+export type AiModel = typeof AI_MODELS[number];
 
 // Import tables from separate schema files
 export { projectImports, importTemplates } from './schema/imports';
