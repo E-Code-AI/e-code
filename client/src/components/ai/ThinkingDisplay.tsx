@@ -1,0 +1,276 @@
+import { useState } from 'react';
+import { ChevronDown, ChevronRight, Brain, CheckCircle, Loader2, Sparkles, Code, Search, FileText, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+
+export interface ThinkingStep {
+  id: string;
+  type: 'reasoning' | 'analysis' | 'planning' | 'implementation' | 'verification';
+  title: string;
+  content: string;
+  status: 'pending' | 'active' | 'complete' | 'error';
+  timestamp: Date;
+  details?: string[];
+  progress?: number;
+  isStreaming?: boolean;
+}
+
+export interface ThinkingDisplayProps {
+  steps: ThinkingStep[];
+  isActive?: boolean;
+  className?: string;
+  onStepClick?: (stepId: string) => void;
+  mode?: 'compact' | 'detailed';
+}
+
+const STEP_ICONS = {
+  reasoning: Brain,
+  analysis: Search,
+  planning: FileText,
+  implementation: Code,
+  verification: CheckCircle,
+} as const;
+
+const STEP_COLORS = {
+  reasoning: 'text-purple-600 dark:text-purple-400',
+  analysis: 'text-blue-600 dark:text-blue-400',
+  planning: 'text-green-600 dark:text-green-400',
+  implementation: 'text-orange-600 dark:text-orange-400',
+  verification: 'text-emerald-600 dark:text-emerald-400',
+} as const;
+
+export function ThinkingDisplay({ 
+  steps, 
+  isActive = false, 
+  className,
+  onStepClick,
+  mode = 'detailed'
+}: ThinkingDisplayProps) {
+  const [expandedSteps, setExpandedSteps] = useState<Set<string>>(
+    new Set(steps.filter(s => s.status === 'active').map(s => s.id))
+  );
+
+  const toggleStep = (stepId: string) => {
+    setExpandedSteps(prev => {
+      const next = new Set(prev);
+      if (next.has(stepId)) {
+        next.delete(stepId);
+      } else {
+        next.add(stepId);
+      }
+      return next;
+    });
+    onStepClick?.(stepId);
+  };
+
+  if (steps.length === 0 && !isActive) {
+    return null;
+  }
+
+  return (
+    <Card 
+      className={cn(
+        "border-2 transition-all duration-300",
+        isActive ? "border-primary shadow-lg" : "border-muted",
+        className
+      )}
+      data-testid="thinking-display"
+    >
+      {/* Header */}
+      <div className="px-4 py-3 border-b bg-muted/30 dark:bg-muted/10" data-testid="thinking-header">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles 
+              className={cn(
+                "h-4 w-4 transition-all",
+                isActive && "animate-pulse text-primary"
+              )}
+              data-testid="thinking-icon"
+            />
+            <h3 className="font-semibold text-sm" data-testid="thinking-title">AI Thinking</h3>
+            {isActive && (
+              <Badge variant="secondary" className="text-xs animate-pulse" data-testid="thinking-status-active">
+                Active
+              </Badge>
+            )}
+          </div>
+          {mode === 'detailed' && steps.length > 0 && (
+            <span className="text-xs text-muted-foreground" data-testid="thinking-progress">
+              {steps.filter(s => s.status === 'complete').length} / {steps.length} steps
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Steps */}
+      <div className="divide-y divide-border">
+        {steps.map((step, index) => {
+          const isExpanded = expandedSteps.has(step.id);
+          const Icon = STEP_ICONS[step.type];
+          const iconColor = STEP_COLORS[step.type];
+          
+          return (
+            <div key={step.id} className="group">
+              {/* Step Header */}
+              <button
+                onClick={() => toggleStep(step.id)}
+                className={cn(
+                  "w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors text-left",
+                  step.status === 'active' && "bg-primary/5"
+                )}
+                data-testid={`thinking-step-${step.id}`}
+              >
+                {/* Expand/Collapse Icon */}
+                <div className="flex-shrink-0">
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+
+                {/* Step Icon */}
+                <div className={cn(
+                  "flex-shrink-0 rounded-full p-1.5",
+                  step.status === 'complete' && "bg-green-100 dark:bg-green-900/20",
+                  step.status === 'active' && "bg-primary/10",
+                  step.status === 'pending' && "bg-muted",
+                  step.status === 'error' && "bg-red-100 dark:bg-red-900/20"
+                )}>
+                  {step.status === 'active' ? (
+                    <Loader2 className={cn("h-4 w-4 animate-spin", iconColor)} />
+                  ) : step.status === 'complete' ? (
+                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  ) : (
+                    <Icon className={cn("h-4 w-4", iconColor)} />
+                  )}
+                </div>
+
+                {/* Step Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium text-sm truncate">{step.title}</h4>
+                    <Badge variant="outline" className="text-xs capitalize">
+                      {step.type}
+                    </Badge>
+                  </div>
+                  
+                  {!isExpanded && mode === 'detailed' && (
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {step.content}
+                    </p>
+                  )}
+                </div>
+
+                {/* Status Badge */}
+                <div className="flex-shrink-0">
+                  {step.status === 'active' && step.isStreaming && (
+                    <div className="flex items-center gap-1 text-primary">
+                      <Zap className="h-3 w-3 animate-pulse" />
+                      <span className="text-xs font-medium">Streaming...</span>
+                    </div>
+                  )}
+                  {step.progress !== undefined && step.status === 'active' && (
+                    <span className="text-xs font-medium text-primary">
+                      {step.progress}%
+                    </span>
+                  )}
+                </div>
+              </button>
+
+              {/* Expanded Content */}
+              {isExpanded && (
+                <div className="px-4 pb-4 pt-2 bg-muted/20 dark:bg-muted/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Main Content */}
+                  <div className="pl-12">
+                    <p className="text-sm text-foreground whitespace-pre-wrap">
+                      {step.content}
+                      {step.isStreaming && (
+                        <span className="inline-block w-1.5 h-4 bg-primary animate-pulse ml-1 align-middle" />
+                      )}
+                    </p>
+
+                    {/* Progress Bar (if active with progress) */}
+                    {step.status === 'active' && step.progress !== undefined && (
+                      <Progress value={step.progress} className="h-1 mt-2" />
+                    )}
+
+                    {/* Details */}
+                    {step.details && step.details.length > 0 && (
+                      <div className="mt-3 space-y-1.5">
+                        {step.details.map((detail, i) => (
+                          <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                            <div className="mt-1.5 w-1 h-1 rounded-full bg-muted-foreground flex-shrink-0" />
+                            <span className="flex-1">{detail}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Timestamp */}
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {step.timestamp.toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Visual Breakpoint Line */}
+              {index < steps.length - 1 && (
+                <div className="pl-[52px]">
+                  <div className={cn(
+                    "w-0.5 h-2 ml-[11px]",
+                    step.status === 'complete' ? "bg-green-300 dark:bg-green-700" : "bg-muted"
+                  )} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Active Indicator */}
+      {isActive && steps.length === 0 && (
+        <div className="px-4 py-8 text-center space-y-2" data-testid="thinking-initializing">
+          <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" data-testid="thinking-loader" />
+          <p className="text-sm text-muted-foreground" data-testid="thinking-init-message">Initializing thinking process...</p>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// Compact version for mobile/tablet
+export function ThinkingDisplayCompact({ steps, isActive, className }: ThinkingDisplayProps) {
+  const activeStep = steps.find(s => s.status === 'active');
+  const completedCount = steps.filter(s => s.status === 'complete').length;
+
+  return (
+    <div 
+      className={cn(
+        "rounded-lg border px-3 py-2 bg-card text-card-foreground",
+        isActive && "border-primary",
+        className
+      )}
+      data-testid="thinking-display-compact"
+    >
+      <div className="flex items-center gap-2">
+        {isActive ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary flex-shrink-0" data-testid="thinking-compact-loader" />
+        ) : (
+          <Brain className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" data-testid="thinking-compact-icon" />
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium truncate" data-testid="thinking-compact-text">
+            {activeStep ? activeStep.title : `Thinking (${completedCount}/${steps.length})`}
+          </p>
+        </div>
+        {isActive && (
+          <Sparkles className="h-3 w-3 animate-pulse text-primary flex-shrink-0" data-testid="thinking-compact-active" />
+        )}
+      </div>
+    </div>
+  );
+}
