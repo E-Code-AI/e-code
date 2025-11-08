@@ -550,6 +550,57 @@ export class ProjectsRouter {
               code: 'EXECUTION_FAILED' 
             });
           }
+        } else if (action.type === 'create_folder') {
+          try {
+            // Validate path
+            const pathValidation = aiSecurityService.validatePath(action.path);
+            if (!pathValidation.valid) {
+              await aiSecurityService.logAction(userId, projectId, action, {
+                success: false,
+                error: `Path validation failed: ${pathValidation.reason}`
+              });
+
+              return res.status(403).json({ 
+                error: pathValidation.reason,
+                code: 'SECURITY_BLOCKED' 
+              });
+            }
+
+            // Create folder as directory file
+            const folder = await this.storage.createFile({
+              projectId,
+              path: pathValidation.sanitized || action.path,
+              content: '',
+              isDirectory: true
+            });
+
+            // Log successful action
+            await aiSecurityService.logAction(userId, projectId, action, {
+              success: true,
+              folderId: String(folder.id)
+            }, actionId);
+
+            console.log(`[ProjectAI] Folder created successfully:`, folder.id);
+
+            return res.json({ 
+              success: true,
+              folder,
+              message: `Created folder ${action.path}` 
+            });
+
+          } catch (error: any) {
+            console.error(`[ProjectAI] Failed to create folder:`, error);
+
+            await aiSecurityService.logAction(userId, projectId, action, {
+              success: false,
+              error: error.message
+            });
+
+            return res.status(500).json({ 
+              error: error.message || 'Failed to create folder',
+              code: 'EXECUTION_FAILED' 
+            });
+          }
         } else {
           // Unsupported action type
           return res.status(400).json({ 
