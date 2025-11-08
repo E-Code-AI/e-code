@@ -105,7 +105,7 @@ export function useMobileIDEPersistence(projectId: string | number) {
 export function useTabPersistence(projectId: string | number) {
   const [activeTab, setActiveTabState] = useState<string>(() => {
     const state = loadState(projectId);
-    return state.activeTab || 'code';
+    return state.activeTab || 'agent';
   });
 
   useEffect(() => {

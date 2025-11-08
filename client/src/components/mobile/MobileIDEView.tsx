@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, PanInfo } from 'framer-motion';
-import { FileText, Code, Terminal, Monitor, MoreHorizontal } from 'lucide-react';
+import { FileText, Code, Terminal, Monitor, MoreHorizontal, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MobileFileExplorer } from './MobileFileExplorer';
 import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
@@ -10,8 +10,9 @@ import { MobileMoreMenu } from './MobileMoreMenu';
 import { ReplitBottomTabs } from './ReplitBottomTabs';
 import { MobileFAB } from './MobileFAB';
 import { useTabPersistence, useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
+import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
 
-export type MobileTab = 'files' | 'code' | 'terminal' | 'preview' | 'more';
+export type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'more';
 
 interface MobileIDEViewProps {
   projectId: string | number; // Support both UUID strings and numeric IDs
@@ -19,6 +20,7 @@ interface MobileIDEViewProps {
 }
 
 const tabs: { id: MobileTab; label: string; icon: typeof FileText }[] = [
+  { id: 'agent', label: 'Agent', icon: Sparkles },
   { id: 'files', label: 'Files', icon: FileText },
   { id: 'code', label: 'Code', icon: Code },
   { id: 'terminal', label: 'Terminal', icon: Terminal },
@@ -133,6 +135,13 @@ export function MobileIDEView({ projectId, className }: MobileIDEViewProps) {
               transition={{ duration: 0.2 }}
               className="h-full"
             >
+              {activeTab === 'agent' && (
+                <ReplitAgentPanelV3 
+                  projectId={String(projectId)}
+                  mode="mobile"
+                />
+              )}
+              
               {activeTab === 'code' && (
                 <LazyMobileCodeEditor 
                   projectId={projectId}

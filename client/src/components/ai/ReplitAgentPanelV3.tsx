@@ -475,8 +475,9 @@ export function ReplitAgentPanelV3({
       </div>
 
       {/* Messages */}
-      <ScrollArea ref={scrollRef} className="flex-1 px-4 py-3">
-        <div className="space-y-4">
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea ref={scrollRef} className="h-full px-4 py-3">
+          <div className="space-y-4">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -630,8 +631,9 @@ export function ReplitAgentPanelV3({
               </div>
             </div>
           )}
-        </div>
-      </ScrollArea>
+          </div>
+        </ScrollArea>
+      </div>
 
       {/* Input area */}
       <div className="p-4 border-t border-border">
