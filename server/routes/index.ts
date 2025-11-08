@@ -24,6 +24,7 @@ import scalabilityRouter from "./scalability";
 import marketplaceRouter from "./marketplace";
 import adminRouter from "./admin";
 import aiRouter from "./ai.router";
+import aiStreamingRouter from "../api/ai-streaming";
 import voiceVideoRouter from "./voice-video.router";
 import dataProvisioningRouter from "./data-provisioning.router";
 import terminalRouter from "./terminal.router";
@@ -122,6 +123,9 @@ export class MainRouter {
     // AI routes
     app.use('/api', aiRouter);
     
+    // AI Streaming routes (Agent chat with SSE)
+    app.use(aiStreamingRouter);
+    
     // Voice/Video WebRTC routes
     app.use('/api', voiceVideoRouter);
     
@@ -170,6 +174,7 @@ export class MainRouter {
     console.log('  - ChatGPT Admin: /api/admin/chatgpt/* (admin only)');
     console.log('  - Agent Admin: /api/admin/agent/* (admin only)');
     console.log('  - AI: /api/ai/completion, /api/ai/explanation, /api/ai/convert, /api/ai/documentation, /api/ai/tests');
+    console.log('  - AI Streaming: /api/agent/chat/stream (SSE), /api/agent/chat/stop, /api/agent/models');
     console.log('  - Voice/Video: /api/voice-video/sessions (WebRTC)');
     console.log('  - Data Provisioning: /api/data-provisioning/seed, /api/data-provisioning/generate, /api/data-provisioning/import');
     console.log('  - Terminal: /api/terminal/logs (HTTP), ws://…/api/terminal/ws (WebSocket)');
