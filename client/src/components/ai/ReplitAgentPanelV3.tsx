@@ -118,13 +118,17 @@ export function ReplitAgentPanelV3({
   ]);
   
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom using instant scroll for reliability
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (lastMessageRef.current) {
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        lastMessageRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+      });
     }
   }, [messages, streamingContent, activeThinking]);
 
@@ -631,6 +635,9 @@ export function ReplitAgentPanelV3({
               </div>
             </div>
           )}
+          
+          {/* Scroll sentinel - always at the bottom */}
+          <div ref={lastMessageRef} className="h-0" />
           </div>
         </ScrollArea>
       </div>
