@@ -1,8 +1,8 @@
-import { FileText, Code2, Terminal as TerminalIcon, Monitor, MoreHorizontal } from 'lucide-react';
+import { FileText, Code2, Terminal as TerminalIcon, Monitor, MoreHorizontal, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type MobileTab = 'files' | 'code' | 'terminal' | 'preview' | 'more';
+type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'more';
 
 interface Tab {
   id: MobileTab;
@@ -19,8 +19,9 @@ export function ReplitBottomTabs({
   activeTab,
   onTabChange
 }: ReplitBottomTabsProps) {
-  // Five required mobile tabs (mobile-1 spec)
+  // Mobile tabs with AI Agent first
   const tabs: Tab[] = [
+    { id: 'agent', icon: Sparkles, label: 'Agent' },
     { id: 'files', icon: FileText, label: 'Files' },
     { id: 'code', icon: Code2, label: 'Code' },
     { id: 'terminal', icon: TerminalIcon, label: 'Terminal' },
