@@ -302,15 +302,57 @@ export class ToolExecutor {
    * Search Tools
    */
   private async webSearch(params: { query: string; max_results?: number }): Promise<ToolExecutionResult> {
-    // In production, integrate with Tavily or Perplexity API
-    // For now, return a stub indicating the feature is available
+    const tavilyApiKey = process.env.TAVILY_API_KEY;
+    const perplexityApiKey = process.env.PERPLEXITY_API_KEY;
     
+    // If Tavily API key is configured, use it
+    if (tavilyApiKey) {
+      try {
+        const response = await fetch('https://api.tavily.com/search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            api_key: tavilyApiKey,
+            query: params.query,
+            max_results: params.max_results || 5,
+            include_answer: true,
+            include_raw_content: false
+          })
+        });
+        
+        const data = await response.json();
+        
+        return {
+          success: true,
+          output: {
+            query: params.query,
+            answer: data.answer,
+            results: data.results?.map((r: any) => ({
+              title: r.title,
+              url: r.url,
+              content: r.content,
+              score: r.score
+            }))
+          }
+        };
+      } catch (error: any) {
+        return {
+          success: false,
+          error: `Tavily API error: ${error.message}`
+        };
+      }
+    }
+    
+    // Fallback: Indicate web search is available but needs configuration
     return {
       success: true,
       output: {
         query: params.query,
-        message: 'Web search capability requires external API key. Please configure TAVILY_API_KEY or PERPLEXITY_API_KEY.',
-        results: []
+        message: 'Web search capability is available but requires API key configuration. Please add TAVILY_API_KEY to your secrets for real-time web search.',
+        results: [],
+        suggestion: 'You can get a free API key from https://tavily.com'
       }
     };
   }
