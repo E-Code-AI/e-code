@@ -145,6 +145,7 @@ export default function Landing() {
   ];
 
   const handleStartBuilding = async (description: string) => {
+    // Store the app description for post-auth use
     sessionStorage.setItem('pendingAppDescription', description);
     setChatOpen(false);
     
@@ -172,9 +173,21 @@ export default function Landing() {
         }
       } catch (error) {
         console.error('Failed to create project:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to create project. Please try again.',
+          variant: 'destructive'
+        });
       }
     } else {
-      navigate('/register?redirect=dashboard&build=true');
+      // Redirect to auth with preserved prompt in session storage
+      toast({
+        title: 'Sign up to continue',
+        description: 'Create a free account to build your app with AI',
+      });
+      setTimeout(() => {
+        navigate('/register?redirect=build-from-prompt');
+      }, 1000);
     }
   };
 
