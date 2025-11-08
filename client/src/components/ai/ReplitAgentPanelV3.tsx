@@ -37,6 +37,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
+import { ToolExecutionList } from './ToolExecutionDisplay';
 import { useToast } from '@/hooks/use-toast';
 
 interface ToolExecution {
@@ -621,6 +622,13 @@ export function ReplitAgentPanelV3({
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
+
+                {/* Tool Executions */}
+                {message.toolExecutions && message.toolExecutions.length > 0 && (
+                  <div className="w-full mt-2" data-testid={`tool-executions-${message.id}`}>
+                    <ToolExecutionList toolExecutions={message.toolExecutions} />
+                  </div>
+                )}
 
                 {/* Metadata */}
                 {message.metadata && (
