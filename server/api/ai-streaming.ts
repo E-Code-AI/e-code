@@ -6,6 +6,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import winston from 'winston';
 import { allTools, toOpenAITools, toAnthropicTools } from '../agent/tool-definitions';
 import { ToolExecutor } from '../agent/tool-executor';
+import { ProjectContextProvider } from '../agent/project-context';
 
 // Create logger instance
 const logger = winston.createLogger({
@@ -62,13 +63,20 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   const userId = (req as any).user?.id;
   
   try {
+    // Get project context
+    const contextProvider = new ProjectContextProvider(projectId);
+    const projectContext = await contextProvider.getContext();
+    const contextPrompt = ProjectContextProvider.formatAsSystemPrompt(projectContext);
+    
     // Build messages array with context
     const messages = [
       {
         role: 'system',
         content: systemPrompt || `You are an expert AI coding assistant integrated into the E-Code Platform IDE. 
         You help users build, debug, and improve their applications with detailed explanations and high-quality code.
-        You have access to the project context and can execute actions like creating files, running commands, and modifying code.`
+        You have access to the project context and can execute actions like creating files, running commands, and modifying code.
+        
+        ${contextPrompt}`
       },
       ...context,
       { role: 'user', content: message }
