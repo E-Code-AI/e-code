@@ -1,7 +1,7 @@
 import { createLogger } from '../utils/logger';
-// import { db } from '../db';
-// import { agentConversations, agentMessages } from '@shared/schema';
-// import { eq, desc, and } from 'drizzle-orm';
+import { db } from '../db';
+import { aiConversations, agentMessages } from '@shared/schema';
+import { eq, desc, and } from 'drizzle-orm';
 import { checkpointService } from './checkpoint-service';
 
 const logger = createLogger('ConversationManagementService');
@@ -59,6 +59,17 @@ export class ConversationManagementService {
   }): Promise<Conversation> {
     const conversationId = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+    // Create in database
+    const [created] = await db.insert(aiConversations).values({
+      projectId: String(params.projectId),
+      userId: String(params.userId),
+      conversationId,
+      messages: [],
+      context: params.initialContext || {},
+      totalTokensUsed: 0,
+      model: 'claude-3-5-sonnet'
+    }).returning();
+
     const conversation: Conversation = {
       id: conversationId,
       projectId: params.projectId,
@@ -69,13 +80,13 @@ export class ConversationManagementService {
       messages: [],
       totalTokensUsed: 0,
       estimatedCost: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: created.createdAt,
+      updatedAt: created.updatedAt
     };
 
-    // In-memory storage only for now
+    // Also keep in memory for quick access
     this.activeConversations.set(conversationId, conversation);
-    logger.info(`Created new conversation: ${conversationId}`);
+    logger.info(`Created new conversation in database: ${conversationId}`);
 
     return conversation;
   }
@@ -111,8 +122,35 @@ export class ConversationManagementService {
       conversation.estimatedCost = Math.ceil(conversation.totalTokensUsed * 0.00003 * 100); // cents
     }
 
-    // In-memory storage only
-    // Add to buffer for batching
+    // Persist to database
+    try {
+      // Insert message into agentMessages table
+      await db.insert(agentMessages).values({
+        conversationId,
+        role: message.role,
+        content: message.content,
+        model: message.metadata?.model,
+        tokensUsed: message.metadata?.tokensUsed,
+        thinkingSteps: message.metadata?.thinkingSteps,
+        reasoning: message.metadata?.reasoning,
+      });
+
+      // Update conversation in aiConversations table with new message array and token count
+      await db.update(aiConversations)
+        .set({
+          messages: conversation.messages as any,
+          totalTokensUsed: conversation.totalTokensUsed,
+          updatedAt: conversation.updatedAt
+        })
+        .where(eq(aiConversations.conversationId, conversationId));
+
+      logger.info(`Persisted message to database for conversation ${conversationId}`);
+    } catch (dbError: any) {
+      logger.error(`Failed to persist message to database: ${dbError.message}`);
+      // Continue even if DB write fails (message is in memory)
+    }
+
+    // Also add to buffer for batching
     if (!this.messageBuffer.has(conversationId)) {
       this.messageBuffer.set(conversationId, []);
     }
@@ -129,8 +167,39 @@ export class ConversationManagementService {
       return this.activeConversations.get(conversationId)!;
     }
 
-    // In-memory only for now
-    return null;
+    // Load from database
+    try {
+      const [dbConv] = await db.select()
+        .from(aiConversations)
+        .where(eq(aiConversations.conversationId, conversationId));
+      
+      if (!dbConv) {
+        return null;
+      }
+
+      // Convert DB record to Conversation
+      const conversation: Conversation = {
+        id: dbConv.conversationId,
+        projectId: parseInt(dbConv.projectId),
+        userId: parseInt(dbConv.userId),
+        title: `Conversation ${conversationId.slice(0, 8)}`,
+        status: 'active',
+        context: dbConv.context as any || {},
+        messages: dbConv.messages as any || [],
+        totalTokensUsed: dbConv.totalTokensUsed || 0,
+        estimatedCost: Math.ceil((dbConv.totalTokensUsed || 0) * 0.00003 * 100),
+        createdAt: dbConv.createdAt,
+        updatedAt: dbConv.updatedAt,
+        lastMessageAt: dbConv.updatedAt
+      };
+
+      // Cache it
+      this.activeConversations.set(conversationId, conversation);
+      return conversation;
+    } catch (error: any) {
+      logger.error(`Failed to load conversation from database: ${error.message}`);
+      return null;
+    }
   }
 
   async getProjectConversations(projectId: number, options?: {
