@@ -38,6 +38,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { useLocation } from 'wouter';
 import { PendingApprovalsPanel } from './PendingApprovalsPanel';
+import { ModelSelector } from './agent/ModelSelector';
+import { ExtendedThinkingDisplay } from './agent/ExtendedThinkingDisplay';
 
 interface ReplitAgentProps {
   projectId: string | number;
@@ -746,6 +748,17 @@ What would you like me to build for you today?`,
   const [extendedThinking, setExtendedThinking] = useState(false);
   const [highPowerMode, setHighPowerMode] = useState(false);
   const [autoCheckpoints, setAutoCheckpoints] = useState(true);
+  const [selectedModel, setSelectedModel] = useState('claude-3-5-sonnet');
+  const [thinkingSteps, setThinkingSteps] = useState<Array<{
+    id: string;
+    type: 'reasoning' | 'analysis' | 'planning';
+    title: string;
+    content: string;
+    status: 'active' | 'completed' | 'error';
+    timestamp: Date;
+    duration?: number;
+    isStreaming?: boolean;
+  }>>([]);
   const [featureFlags, setFeatureFlags] = useState<any>(null);
   const [userPreferences, setUserPreferences] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'chat' | 'approvals' | 'progress'>('chat');
@@ -798,7 +811,7 @@ What would you like me to build for you today?`,
         }
 
         // Load user AI preferences
-        const prefsResponse = await fetch('/api/user/ai-preferences');
+        const prefsResponse = await fetch('/api/agent/preferences');
         if (prefsResponse.ok) {
           const prefs = await prefsResponse.json();
           setUserPreferences(prefs);
@@ -807,6 +820,7 @@ What would you like me to build for you today?`,
           setExtendedThinking(prefs.extendedThinking || false);
           setHighPowerMode(prefs.highPowerMode || false);
           setAutoCheckpoints(prefs.autoCheckpoints ?? true);
+          setSelectedModel(prefs.preferredModel || 'claude-3-5-sonnet');
         }
       } catch (error) {
         console.error('Error loading feature flags or preferences:', error);
@@ -819,7 +833,7 @@ What would you like me to build for you today?`,
   // Save preferences when toggle states change
   const savePreferences = async (updates: any) => {
     try {
-      await fetch('/api/user/ai-preferences', {
+      await fetch('/api/agent/preferences', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
@@ -827,6 +841,16 @@ What would you like me to build for you today?`,
     } catch (error) {
       console.error('Error saving preferences:', error);
     }
+  };
+
+  // Handle model selection change
+  const handleModelChange = (modelId: string) => {
+    setSelectedModel(modelId);
+    savePreferences({ preferredModel: modelId });
+    toast({
+      title: 'Model updated',
+      description: `Now using ${modelId}`,
+    });
   };
 
   // Initialize default session
@@ -1755,6 +1779,13 @@ What would you like me to build?`,
           )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Model Selection */}
+          <ModelSelector
+            selectedModel={selectedModel}
+            onModelChange={handleModelChange}
+            className="mr-2"
+          />
+          
           {/* Advanced Capabilities */}
           <div className="flex items-center gap-4 text-xs">
             {featureFlags?.aiUx?.extendedThinking !== false && (
