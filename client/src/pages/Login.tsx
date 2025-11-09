@@ -35,7 +35,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
 
@@ -77,10 +77,10 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.username || !formData.password) {
+    if (!formData.email || !formData.password) {
       toast({
         title: 'Error',
-        description: 'Please enter both username and password',
+        description: 'Please enter both email and password',
         variant: 'destructive'
       });
       return;
@@ -144,18 +144,18 @@ export default function Login() {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-medium">
+                <Label htmlFor="email" className="text-sm font-medium">
                   Username or Email
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    id="username"
-                    name="username"
+                    id="email"
+                    name="email"
                     type="text"
                     placeholder="Enter your username or email"
                     className="pl-10 h-12 sm:h-11 text-base sm:text-sm"
-                    value={formData.username}
+                    value={formData.email}
                     onChange={handleInputChange}
                     disabled={loginMutation.isPending}
                     required
@@ -298,7 +298,7 @@ export default function Login() {
                   variant="outline"
                   className="w-full"
                   onClick={() => {
-                    setFormData({ username: 'testuser', password: 'testpass' });
+                    setFormData({ email: 'testuser@test.com', password: 'testpass123' });
                     setTimeout(() => {
                       const form = document.querySelector('form') as HTMLFormElement;
                       if (form) form.requestSubmit();
