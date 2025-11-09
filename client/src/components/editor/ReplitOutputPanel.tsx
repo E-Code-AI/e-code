@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import type { BuildLog } from '@shared/schema';
 
 interface OutputLine {
@@ -170,10 +171,7 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
     if (!projectId) return;
     
     try {
-      await fetch(`/api/workspace/projects/${projectId}/build-logs`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
+      await apiRequest('DELETE', `/api/workspace/projects/${projectId}/build-logs`, {});
       setOutput([]);
     } catch (error) {
       console.error('[Output] Error clearing logs:', error);

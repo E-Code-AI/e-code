@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface FileUploadDropzoneProps {
   projectId: number;
@@ -92,18 +93,11 @@ export function FileUploadDropzone({
         ));
 
         // Upload to server
-        const response = await fetch(`/api/projects/${projectId}/files`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            name: uploadFile.file.name,
-            content: content,
-            isFolder: false,
-            parentId: currentPath ? parseInt(currentPath) : null
-          })
+        const response = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+          name: uploadFile.file.name,
+          content: content,
+          isFolder: false,
+          parentId: currentPath ? parseInt(currentPath) : null
         });
 
         if (!response.ok) {

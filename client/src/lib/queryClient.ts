@@ -44,8 +44,12 @@ export async function apiRequest(
     csrfToken = await fetchCSRFToken();
   }
   
+  // Detect if body is FormData or other non-JSON type
+  const isFormData = body instanceof FormData;
+  
   const headers: HeadersInit = {
-    ...(body && { "Content-Type": "application/json" }),
+    // Only set Content-Type for JSON bodies, let browser set it for FormData
+    ...(body && !isFormData && { "Content-Type": "application/json" }),
     ...(needsCsrf && csrfToken && { "X-CSRF-Token": csrfToken }),
     ...options?.headers,
   };
@@ -54,7 +58,8 @@ export async function apiRequest(
     method,
     credentials: "include",
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    // Only JSON.stringify non-FormData bodies
+    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     ...options,
   });
 

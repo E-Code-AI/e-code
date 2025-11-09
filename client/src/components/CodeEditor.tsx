@@ -22,6 +22,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { apiRequest } from '@/lib/queryClient';
 
 interface Collaborator {
   clientId: number;
@@ -200,15 +201,8 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       const fileContent = content ?? monacoEditorRef.current?.getValue() ?? file.content;
       
       // Update file via API
-      const response = await fetch(`/api/files/${file.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          content: fileContent,
-        }),
+      const response = await apiRequest('PATCH', `/api/files/${file.id}`, {
+        content: fileContent,
       });
       
       if (response.ok) {
@@ -263,16 +257,10 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
         handleAutoSave(newValue);
         
         // Broadcast file change to real-time service
-        fetch(`/api/realtime/${file.projectId}/file-change`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            fileId: file.id,
-            path: file.path,
-            content: newValue
-          })
+        apiRequest('POST', `/api/realtime/${file.projectId}/file-change`, {
+          fileId: file.id,
+          path: file.path,
+          content: newValue
         }).catch(console.error);
       });
       

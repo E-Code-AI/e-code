@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
+import { apiRequest } from '@/lib/queryClient';
 import { ECodeSpinner } from '@/components/ECodeLoading';
 
 interface GlobalSearchProps {
@@ -109,14 +110,10 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
   const performSearch = async () => {
     setIsSearching(true);
     try {
-      const response = await fetch(`/api/search/${projectId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: debouncedQuery,
-          type: searchType,
-          filters
-        })
+      const response = await apiRequest('POST', `/api/search/${projectId}`, {
+        query: debouncedQuery,
+        type: searchType,
+        filters
       });
 
       if (!response.ok) throw new Error('Search failed');
