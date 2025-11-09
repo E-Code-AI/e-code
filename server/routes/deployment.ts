@@ -43,7 +43,7 @@ const deploymentConfigSchema = z.object({
 // Create deployment
 router.post('/api/projects/:projectId/deploy', async (req, res) => {
   try {
-    const projectId = parseInt(req.params.projectId);
+    const projectId = req.params.projectId; // Keep as string, don't parse as int
     const userId = req.user!.id;
 
     console.log(`📦 Starting deployment for project ${projectId} by user ${userId}`);
@@ -62,6 +62,7 @@ router.post('/api/projects/:projectId/deploy', async (req, res) => {
     
     // Store initial deployment status
     await storage.createDeployment({
+      name: `Deployment ${new Date().toLocaleString()}`, // Add required name field
       projectId,
       status: 'building',
       url: `https://project-${projectId}-${deploymentId.slice(-8)}.replit.app`,
@@ -155,7 +156,7 @@ router.get('/api/deployments/:deploymentId', async (req, res) => {
 // List project deployments
 router.get('/api/projects/:projectId/deployments', async (req, res) => {
   try {
-    const projectId = parseInt(req.params.projectId);
+    const projectId = req.params.projectId; // Keep as string
     const deployments = await deploymentManager.listDeployments(projectId);
 
     res.json({
