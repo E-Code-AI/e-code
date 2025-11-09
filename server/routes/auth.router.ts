@@ -64,6 +64,14 @@ export class AuthRouter {
         });
         const validatedData = registerSchema.parse(req.body);
         
+        // Validate required fields
+        if (!validatedData.username || !validatedData.email) {
+          return res.status(400).json({
+            message: "Username and email are required",
+            code: "MISSING_FIELDS"
+          });
+        }
+        
         // Check if user exists
         const existingUser = await this.storage.getUserByUsername(validatedData.username);
         if (existingUser) {
@@ -100,7 +108,7 @@ export class AuthRouter {
         
         await this.storage.saveEmailVerificationToken(
           user.id,
-          user.email,
+          user.email!,
           hashedToken,
           expiresAt
         );
@@ -109,8 +117,8 @@ export class AuthRouter {
         try {
           await sendVerificationEmail(
             user.id,
-            user.email,
-            user.displayName || user.username,
+            user.email!,
+            user.displayName || user.username || 'User',
             verificationToken // Send unhashed token to user
           );
         } catch (emailError: any) {
@@ -127,7 +135,7 @@ export class AuthRouter {
           userId: user.id,
           ip: req.ip || 'unknown',
           action: 'user_registration',
-          resource: user.email,
+          resource: user.email || 'unknown',
           result: 'success',
           userAgent: req.headers['user-agent'] || '',
           metadata: { username: user.username }
@@ -146,7 +154,7 @@ export class AuthRouter {
                   username: user.username,
                   email: user.email,
                   displayName: user.displayName,
-                  avatarUrl: user.avatarUrl,
+                  profileImageUrl: user.profileImageUrl,
                   bio: user.bio,
                   emailVerified: false
                 }
@@ -160,7 +168,7 @@ export class AuthRouter {
                 username: user.username,
                 email: user.email,
                 displayName: user.displayName,
-                avatarUrl: user.avatarUrl,
+                profileImageUrl: user.profileImageUrl,
                 bio: user.bio,
                 emailVerified: false
               }
@@ -175,7 +183,7 @@ export class AuthRouter {
               username: user.username,
               email: user.email,
               displayName: user.displayName,
-              avatarUrl: user.avatarUrl,
+              profileImageUrl: user.profileImageUrl,
               bio: user.bio,
               emailVerified: false
             }
@@ -231,7 +239,7 @@ export class AuthRouter {
               username: user.username,
               email: user.email,
               displayName: user.displayName,
-              avatarUrl: user.avatarUrl,
+              profileImageUrl: user.profileImageUrl,
               bio: user.bio
             }
           });
@@ -274,7 +282,7 @@ export class AuthRouter {
           username: req.user.username,
           email: req.user.email,
           displayName: req.user.displayName,
-          avatarUrl: req.user.avatarUrl
+          profileImageUrl: req.user.profileImageUrl
         } : null
       });
     });
