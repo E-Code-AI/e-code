@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader, PageShell } from '@/components/layout/PageShell';
+import { apiRequest } from '@/lib/queryClient';
 import { 
   HelpCircle, MessageSquare, Book, Mail, 
   ChevronRight, Search, Clock, CheckCircle,
@@ -119,39 +120,24 @@ export default function Support() {
 
     try {
       const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/support';
-      const response = await fetch('/api/support/tickets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: ticketName,
-          email: ticketEmail,
-          issueType: ticketType,
-          subject: ticketSubject,
-          description: ticketDescription,
-          pagePath,
-        }),
+      await apiRequest('POST', '/api/support/tickets', {
+        name: ticketName,
+        email: ticketEmail,
+        issueType: ticketType,
+        subject: ticketSubject,
+        description: ticketDescription,
+        pagePath,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: 'Support ticket created',
-          description: data.message || "We'll get back to you within 24-48 hours.",
-        });
+      toast({
+        title: 'Support ticket created',
+        description: "We'll get back to you within 24-48 hours.",
+      });
         setTicketType('');
         setTicketSubject('');
         setTicketDescription('');
         setTicketName('');
         setTicketEmail('');
-      } else {
-        toast({
-          title: 'Unable to submit support ticket',
-          description: data.error || 'Please try again in a few moments.',
-          variant: 'destructive',
-        });
-      }
     } catch (error) {
       toast({
         title: 'Network error',

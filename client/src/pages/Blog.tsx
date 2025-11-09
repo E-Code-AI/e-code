@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+import { apiRequest } from '@/lib/queryClient';
 
 interface BlogPost {
   id: string;
@@ -73,29 +74,12 @@ export default function Blog() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+      await apiRequest('POST', '/api/newsletter/subscribe', { email });
+      toast({
+        title: "Success!",
+        description: "You've been subscribed to our newsletter.",
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: "Success!",
-          description: data.message,
-        });
-        setEmail('');
-      } else {
-        toast({
-          title: "Error",
-          description: data.message || 'Failed to subscribe',
-          variant: "destructive",
-        });
-      }
+      setEmail('');
     } catch (error) {
       toast({
         title: "Error",

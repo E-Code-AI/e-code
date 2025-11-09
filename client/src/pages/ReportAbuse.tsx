@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, AlertTriangle, Send, FileText, ExternalLink } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ReportAbuse() {
   const { toast } = useToast();
@@ -25,38 +26,23 @@ export default function ReportAbuse() {
       const formData = new FormData(formElement);
       const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/report-abuse';
 
-      const response = await fetch('/api/report/abuse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          reportType: reportType,
-          targetUrl: formData.get('url'),
-          description: formData.get('description'),
-          reporterEmail: formData.get('email'),
-          username: formData.get('username'),
-          pagePath,
-        }),
+      await apiRequest('POST', '/api/report/abuse', {
+        reportType: reportType,
+        targetUrl: formData.get('url'),
+        description: formData.get('description'),
+        reporterEmail: formData.get('email'),
+        username: formData.get('username'),
+        pagePath,
       });
-
-      const data = await response.json();
       
-      if (response.ok) {
-        toast({
-          title: "Report submitted",
-          description: data.message || "Thank you for helping keep E-Code safe. We'll review your report and take appropriate action.",
-        });
+      toast({
+        title: "Report submitted",
+        description: "Thank you for helping keep E-Code safe. We'll review your report and take appropriate action.",
+      });
         
         // Reset form
         formElement.reset();
         setReportType('code');
-      } else {
-        toast({
-          title: "Submission failed",
-          description: data.error || "Failed to submit report. Please try again.",
-          variant: "destructive",
-        });
-      }
     } catch (error) {
       toast({
         title: "Error",

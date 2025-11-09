@@ -17,6 +17,7 @@ import {
 import { Link } from 'wouter';
 import { getProjectUrl } from '@/lib/utils';
 import { ECodeLogo } from '@/components/ECodeLogo';
+import { apiRequest } from '@/lib/queryClient';
 
 // Import stock images
 import modernSoftwareImg from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
@@ -41,24 +42,16 @@ export default function Login() {
   // Function to create project and navigate
   const createProjectAndNavigate = async (description: string) => {
     try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: description.slice(0, 30),
-          description: description,
-          language: 'javascript',
-          visibility: 'private'
-        }),
+      const project = await apiRequest('POST', '/api/projects', {
+        name: description.slice(0, 30),
+        description: description,
+        language: 'javascript',
+        visibility: 'private'
       });
-
-      if (response.ok) {
-        const project = await response.json();
-        window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
-        const projectUrl = getProjectUrl(project, project.owner?.username);
-        navigate(`${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`);
-      }
+      
+      window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
+      const projectUrl = getProjectUrl(project, project.owner?.username);
+      navigate(`${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`);
     } catch (error) {
       console.error('Failed to create project:', error);
       navigate('/dashboard');
