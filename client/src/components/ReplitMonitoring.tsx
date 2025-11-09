@@ -9,6 +9,7 @@ import {
   MemoryStick, Cpu, HardDrive, Globe, Shield
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface SystemMetrics {
   cpu: {
@@ -149,10 +150,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
 
   const resolveAlert = async (alertId: string) => {
     try {
-      const response = await fetch(`/api/monitoring/${projectId}/alerts/${alertId}/resolve`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/monitoring/${projectId}/alerts/${alertId}/resolve`);
 
       if (response.ok) {
         setAlerts(prev => prev.map(alert => 

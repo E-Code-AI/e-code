@@ -30,9 +30,8 @@ export function AlertManager({ alerts }: AlertManagerProps) {
   // Acknowledge alert mutation
   const acknowledgeAlert = useMutation({
     mutationFn: async (alertId: string) => {
-      return apiRequest(`/api/monitoring/alerts/${alertId}/ack`, {
-        method: 'POST'
-      });
+      const response = await apiRequest('POST', `/api/monitoring/alerts/${alertId}/ack`);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/monitoring/alerts'] });
@@ -42,10 +41,8 @@ export function AlertManager({ alerts }: AlertManagerProps) {
   // Mute alert mutation
   const muteAlert = useMutation({
     mutationFn: async ({ alertId, duration }: { alertId: string; duration?: number }) => {
-      return apiRequest(`/api/monitoring/alerts/${alertId}/mute`, {
-        method: 'POST',
-        body: JSON.stringify({ duration })
-      });
+      const response = await apiRequest('POST', `/api/monitoring/alerts/${alertId}/mute`, { duration });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/monitoring/alerts'] });
@@ -56,7 +53,7 @@ export function AlertManager({ alerts }: AlertManagerProps) {
     switch (severity) {
       case 'critical': return 'destructive';
       case 'error': return 'destructive';
-      case 'warning': return 'warning';
+      case 'warning': return 'outline';
       case 'info': return 'secondary';
       default: return 'default';
     }

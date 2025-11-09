@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
   Server, Database, Cloud, Activity, Cpu, HardDrive, 
   Zap, Shield, Globe, BarChart3, RefreshCw, Settings,
@@ -115,11 +115,7 @@ export const ScalabilityDashboard: React.FC = () => {
   // Create container mutation
   const createContainer = useMutation({
     mutationFn: async (projectId: string) => {
-      const response = await fetch('/api/scalability/cluster/containers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: '1', projectId })
-      });
+      const response = await apiRequest('POST', '/api/scalability/cluster/containers', { userId: '1', projectId });
       return response.json();
     },
     onSuccess: () => {
@@ -134,10 +130,7 @@ export const ScalabilityDashboard: React.FC = () => {
   // Scale cluster mutation
   const scaleCluster = useMutation({
     mutationFn: async (direction: 'up' | 'down') => {
-      const response = await fetch(`/api/scalability/cluster/scale/${direction}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await apiRequest('POST', `/api/scalability/cluster/scale/${direction}`);
       return response.json();
     },
     onSuccess: (_, direction) => {
@@ -149,11 +142,7 @@ export const ScalabilityDashboard: React.FC = () => {
   // Purge CDN cache
   const purgeCDN = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/scalability/cdn/purge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pattern: '*' })
-      });
+      const response = await apiRequest('POST', '/api/scalability/cdn/purge', { pattern: '*' });
       return response.json();
     },
     onSuccess: () => {

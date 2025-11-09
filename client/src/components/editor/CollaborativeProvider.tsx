@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 interface CollaborativeSession {
   sessionId: string;
@@ -450,13 +451,7 @@ export function CollaborativeProvider({
   // Generate shareable link
   const generateShareLink = async (): Promise<string> => {
     try {
-      const response = await fetch('/api/collaboration/generate-link', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ projectId, fileId }),
-      });
+      const response = await apiRequest('POST', '/api/collaboration/generate-link', { projectId, fileId });
 
       if (!response.ok) throw new Error('Failed to generate share link');
 

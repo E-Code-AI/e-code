@@ -29,6 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { apiRequest } from '@/lib/queryClient';
 
 interface PendingAction {
   id: string;
@@ -86,10 +87,7 @@ export function PendingApprovalsPanel({
   const handleApprove = async (actionId: string) => {
     setActionInProgress(actionId);
     try {
-      const response = await fetch(`/api/projects/${projectId}/ai/approve/${actionId}`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/approve/${actionId}`);
 
       if (!response.ok) {
         const error = await response.json();
@@ -119,12 +117,7 @@ export function PendingApprovalsPanel({
   const handleReject = async (actionId: string, reason?: string) => {
     setActionInProgress(actionId);
     try {
-      const response = await fetch(`/api/projects/${projectId}/ai/reject/${actionId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ reason: reason || 'User rejected' }),
-      });
+      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/reject/${actionId}`, { reason: reason || 'User rejected' });
 
       if (!response.ok) {
         const error = await response.json();
