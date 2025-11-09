@@ -38,6 +38,7 @@ import { GitRouter } from "./git.router";
 import debugRouter from "./debug.router";
 import agentAutonomousRouter from "./agent-autonomous.router";
 import agentTestingRouter from "./agent-testing.router";
+import agentWorkflowRouter from "./agent-workflow.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -91,6 +92,9 @@ export class MainRouter {
     
     // Autonomous agent routes (authenticated users) - single mount point
     app.use('/api/agent', agentAutonomousRouter);
+    
+    // Agent workflow routes (feature generation, build selection) - authenticated users
+    app.use('/api/agent', agentWorkflowRouter);
     
     // Agent testing routes (browser testing, element selector, recording) - Phase 2 (ADMIN ONLY)
     app.use('/api/admin/agent', agentTestingRouter);
