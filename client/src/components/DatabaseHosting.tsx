@@ -98,16 +98,16 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
   // Fetch databases
   const { data: databases = [] } = useQuery<DatabaseInstance[]>({
     queryKey: ['/api/database-hosting', projectId],
-    queryFn: () => apiRequest(`/api/database-hosting/${projectId}`)
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/database-hosting/${projectId}`, undefined);
+      return res.json();
+    }
   });
 
   // Create database
   const createDatabaseMutation = useMutation({
     mutationFn: (data: typeof databaseConfig) =>
-      apiRequest(`/api/database-hosting/${projectId}`, {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }),
+      apiRequest('POST', `/api/database-hosting/${projectId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/database-hosting', projectId] });
       setShowNewDatabase(false);
@@ -121,9 +121,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
   // Create backup
   const createBackupMutation = useMutation({
     mutationFn: (databaseId: number) =>
-      apiRequest(`/api/database-hosting/${projectId}/${databaseId}/backup`, {
-        method: 'POST'
-      }),
+      apiRequest('POST', `/api/database-hosting/${projectId}/${databaseId}/backup`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/database-hosting', projectId] });
       toast({
@@ -135,11 +133,10 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
 
   // Execute query
   const executeQueryMutation = useMutation({
-    mutationFn: ({ databaseId, query }: { databaseId: number; query: string }) =>
-      apiRequest(`/api/database-hosting/${projectId}/${databaseId}/query`, {
-        method: 'POST',
-        body: JSON.stringify({ query })
-      }),
+    mutationFn: async ({ databaseId, query }: { databaseId: number; query: string }) => {
+      const res = await apiRequest('POST', `/api/database-hosting/${projectId}/${databaseId}/query`, { query });
+      return res.json();
+    },
     onSuccess: (data) => {
       toast({
         title: "Query executed",

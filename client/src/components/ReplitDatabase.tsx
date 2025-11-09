@@ -12,6 +12,7 @@ import {
   RefreshCw, Copy, Check
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface DatabaseEntry {
   key: string;
@@ -110,14 +111,9 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
           break;
       }
 
-      const response = await fetch(`/api/database/${projectId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          key: newEntry.key,
-          value: parsedValue
-        })
+      const response = await apiRequest('POST', `/api/database/${projectId}`, {
+        key: newEntry.key,
+        value: parsedValue
       });
 
       if (response.ok) {
@@ -141,10 +137,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
 
   const deleteEntry = async (key: string) => {
     try {
-      const response = await fetch(`/api/database/${projectId}/${encodeURIComponent(key)}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await apiRequest('DELETE', `/api/database/${projectId}/${encodeURIComponent(key)}`, {});
 
       if (response.ok) {
         toast({

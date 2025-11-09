@@ -12,6 +12,7 @@ import {
   Settings, Trash2, Plus, FileArchive
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Backup {
   id: string;
@@ -124,16 +125,11 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
     try {
       setCreating(true);
-      const response = await fetch(`/api/backups/${projectId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: newBackup.name,
-          description: newBackup.description,
-          includes: newBackup.includes,
-          type: 'manual'
-        })
+      const response = await apiRequest('POST', `/api/backups/${projectId}`, {
+        name: newBackup.name,
+        description: newBackup.description,
+        includes: newBackup.includes,
+        type: 'manual'
       });
 
       if (response.ok) {
@@ -171,10 +167,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
   const restoreBackup = async (backupId: string) => {
     try {
       setRestoring(backupId);
-      const response = await fetch(`/api/backups/${projectId}/${backupId}/restore`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/backups/${projectId}/${backupId}/restore`, {});
 
       if (response.ok) {
         toast({
@@ -250,10 +243,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
   const deleteBackup = async (backupId: string) => {
     try {
-      const response = await fetch(`/api/backups/${projectId}/${backupId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await apiRequest('DELETE', `/api/backups/${projectId}/${backupId}`, {});
 
       if (response.ok) {
         toast({
@@ -273,12 +263,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
   const updateSettings = async (newSettings: Partial<BackupSettings>) => {
     try {
-      const response = await fetch(`/api/backups/${projectId}/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ ...settings, ...newSettings })
-      });
+      const response = await apiRequest('PUT', `/api/backups/${projectId}/settings`, { ...settings, ...newSettings });
 
       if (response.ok) {
         setSettings(prev => ({ ...prev, ...newSettings }));

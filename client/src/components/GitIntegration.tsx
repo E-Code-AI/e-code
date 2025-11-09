@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
+import { apiRequest } from '@/lib/queryClient';
 
 interface GitIntegrationProps {
   projectId: number;
@@ -142,9 +143,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleInit = async () => {
     try {
-      const response = await fetch(`/api/git/${projectId}/init`, {
-        method: 'POST'
-      });
+      const response = await apiRequest('POST', `/api/git/${projectId}/init`, {});
       if (response.ok) {
         setIsInitialized(true);
         await checkGitStatus();
@@ -166,11 +165,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
     if (!cloneUrl) return;
     
     try {
-      const response = await fetch(`/api/git/${projectId}/clone`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: cloneUrl })
-      });
+      const response = await apiRequest('POST', `/api/git/${projectId}/clone`, { url: cloneUrl });
       
       if (response.ok) {
         setShowCloneDialog(false);
@@ -192,11 +187,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleStageFile = async (path: string) => {
     try {
-      const response = await fetch(`/api/git/${projectId}/stage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paths: [path] })
-      });
+      const response = await apiRequest('POST', `/api/git/${projectId}/stage`, { paths: [path] });
       
       if (response.ok) {
         await checkGitStatus();
@@ -219,11 +210,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleUnstageFile = async (path: string) => {
     try {
-      const response = await fetch(`/api/git/${projectId}/unstage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paths: [path] })
-      });
+      const response = await apiRequest('POST', `/api/git/${projectId}/unstage`, { paths: [path] });
       
       if (response.ok) {
         await checkGitStatus();
@@ -249,11 +236,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
     
     setIsCommitting(true);
     try {
-      const response = await fetch(`/api/git/${projectId}/commit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: commitMessage })
-      });
+      const response = await apiRequest('POST', `/api/git/${projectId}/commit`, { message: commitMessage });
       
       if (response.ok) {
         setCommitMessage('');
@@ -278,9 +261,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
   const handlePush = async () => {
     setIsPushing(true);
     try {
-      const response = await fetch(`/api/git/${projectId}/push`, {
-        method: 'POST'
-      });
+      const response = await apiRequest('POST', `/api/git/${projectId}/push`, {});
       
       if (response.ok) {
         await checkGitStatus();
@@ -303,9 +284,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
   const handlePull = async () => {
     setIsPulling(true);
     try {
-      const response = await fetch(`/api/git/${projectId}/pull`, {
-        method: 'POST'
-      });
+      const response = await apiRequest('POST', `/api/git/${projectId}/pull`, {});
       
       if (response.ok) {
         await checkGitStatus();
@@ -330,11 +309,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
     if (!newBranchName.trim()) return;
     
     try {
-      const response = await fetch(`/api/git/${projectId}/branch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newBranchName })
-      });
+      const response = await apiRequest('POST', `/api/git/${projectId}/branch`, { name: newBranchName });
       
       if (response.ok) {
         setShowBranchDialog(false);
@@ -356,11 +331,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleCheckout = async (branchName: string) => {
     try {
-      const response = await fetch(`/api/git/${projectId}/checkout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ branch: branchName })
-      });
+      const response = await apiRequest('POST', `/api/git/${projectId}/checkout`, { branch: branchName });
       
       if (response.ok) {
         await checkGitStatus();

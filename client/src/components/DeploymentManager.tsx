@@ -27,6 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DeploymentMetrics } from './deployment/DeploymentMetrics';
 import { AutoScalingConfig } from './deployment/AutoScalingConfig';
 import { RollbackManager } from './deployment/RollbackManager';
+import { apiRequest } from '@/lib/queryClient';
 
 interface DeploymentManagerProps {
   projectId?: number;
@@ -274,11 +275,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
       // Start container creation in background (truly fire-and-forget)
       // This runs async and doesn't block deployment
       setTimeout(() => {
-        fetch(`/api/projects/${actualProjectId}/container`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        })
+        apiRequest('POST', `/api/projects/${actualProjectId}/container`, {})
           .then(response => {
             if (response.ok) {
               console.log('Container environment created successfully');
@@ -295,24 +292,18 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
       try {
-        const response = await fetch(`/api/projects/${actualProjectId}/deploy`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          signal: controller.signal,
-          body: JSON.stringify({
-            type: 'autoscale',
-            regions: ['us-east-1'],
-            environment: 'production',
-            sslEnabled: true,
-            customDomain: customDomain || undefined,
-            scaling: {
-              minInstances: 1,
-              maxInstances: 3,
-              targetCPU: 70,
-              targetMemory: 70
-            }
-          })
+        const response = await apiRequest('POST', `/api/projects/${actualProjectId}/deploy`, {
+          type: 'autoscale',
+          regions: ['us-east-1'],
+          environment: 'production',
+          sslEnabled: true,
+          customDomain: customDomain || undefined,
+          scaling: {
+            minInstances: 1,
+            maxInstances: 3,
+            targetCPU: 70,
+            targetMemory: 70
+          }
         });
 
         clearTimeout(timeoutId);
@@ -355,12 +346,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
   const handleRedeploy = async (deployment: Deployment) => {
     try {
       // Redeploy by calling the deploy endpoint again - REAL BACKEND
-      const response = await fetch(`/api/deployment/${actualProjectId}/redeploy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({})
-      });
+      const response = await apiRequest('POST', `/api/deployment/${actualProjectId}/redeploy`, {});
 
       if (response.ok) {
         await loadDeployments();
@@ -381,16 +367,10 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
   const handleStop = async (deployment: Deployment) => {
     try {
       // First stop the container
-      const containerResponse = await fetch(`/api/projects/${actualProjectId}/container/stop`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const containerResponse = await apiRequest('POST', `/api/projects/${actualProjectId}/container/stop`, {});
 
       // Then update deployment status
-      const response = await fetch(`/api/deployments/${deployment.id}/stop`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/deployments/${deployment.id}/stop`, {});
 
       if (response.ok && containerResponse.ok) {
         await loadDeployments();
@@ -413,15 +393,10 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     if (!newEnvKey.trim()) return;
 
     try {
-      const response = await fetch(`/api/environment/${actualProjectId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          key: newEnvKey,
-          value: newEnvValue,
-          isSecret: newEnvSecret
-        })
+      const response = await apiRequest('POST', `/api/environment/${actualProjectId}`, {
+        key: newEnvKey,
+        value: newEnvValue,
+        isSecret: newEnvSecret
       });
 
       if (response.ok) {

@@ -10,6 +10,7 @@ import {
   MemoryStick, Gauge, Activity, AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Breakpoint {
   id: string;
@@ -112,10 +113,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const startDebugSession = async () => {
     try {
-      const response = await fetch(`/api/debug/${projectId}/start`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/debug/${projectId}/start`, {});
 
       if (response.ok) {
         const data = await response.json();
@@ -137,10 +135,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const stopDebugSession = async () => {
     try {
-      const response = await fetch(`/api/debug/${projectId}/stop`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/debug/${projectId}/stop`, {});
 
       if (response.ok) {
         setDebugSession(null);
@@ -161,12 +156,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const addBreakpoint = async (file: string, line: number) => {
     try {
-      const response = await fetch(`/api/debug/${projectId}/breakpoints`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ file, line })
-      });
+      const response = await apiRequest('POST', `/api/debug/${projectId}/breakpoints`, { file, line });
 
       if (response.ok) {
         fetchBreakpoints();
@@ -186,10 +176,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const removeBreakpoint = async (breakpointId: string) => {
     try {
-      const response = await fetch(`/api/debug/${projectId}/breakpoints/${breakpointId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await apiRequest('DELETE', `/api/debug/${projectId}/breakpoints/${breakpointId}`, {});
 
       if (response.ok) {
         fetchBreakpoints();
@@ -209,10 +196,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const debugAction = async (action: 'continue' | 'step' | 'stepinto' | 'stepout') => {
     try {
-      const response = await fetch(`/api/debug/${projectId}/${action}`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/debug/${projectId}/${action}`, {});
 
       if (response.ok) {
         const data = await response.json();
