@@ -890,11 +890,7 @@ What would you like me to build for you today?`,
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/tools/web-import`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
-      });
+      const response = await apiRequest('POST', `/api/tools/web-import`, { url });
 
       if (response.ok) {
         const { content } = await response.json();
@@ -921,11 +917,7 @@ What would you like me to build for you today?`,
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/tools/screenshot`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
-      });
+      const response = await apiRequest('POST', `/api/tools/screenshot`, { url });
 
       if (response.ok) {
         const { screenshotUrl } = await response.json();
@@ -956,11 +948,7 @@ What would you like me to build for you today?`,
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/ai/improve-prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: input })
-      });
+      const response = await apiRequest('POST', '/api/ai/improve-prompt', { prompt: input });
 
       if (response.ok) {
         const { improvedPrompt } = await response.json();
@@ -1035,14 +1023,7 @@ What would you like me to build for you today?`,
       if (action.actionId) {
         console.log('[executeAction] Using approval endpoint for actionId:', action.actionId);
         
-        const response = await fetch(`/api/projects/${projectId}/ai/approve/${action.actionId}`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'credentials': 'include'
-          },
-          credentials: 'include'
-        });
+        const response = await apiRequest('POST', `/api/projects/${projectId}/ai/approve/${action.actionId}`, {});
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: response.statusText }));
@@ -1084,15 +1065,7 @@ What would you like me to build for you today?`,
               parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
             };
             
-            const response = await fetch(`/api/files/${projectId}`, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'credentials': 'include'
-              },
-              credentials: 'include',
-              body: JSON.stringify(requestBody)
-            });
+            const response = await apiRequest('POST', `/api/files/${projectId}`, requestBody);
             
             if (!response.ok) {
               const errorData = await response.json().catch(() => ({ message: response.statusText }));
@@ -1121,15 +1094,7 @@ What would you like me to build for you today?`,
           if (action.path && action.content !== undefined) {
             const fileId = await getFileIdByPath(action.path);
             if (fileId) {
-              const response = await fetch(`/api/files/${projectId}/${fileId}`, {
-                method: 'PUT',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'credentials': 'include'
-                },
-                credentials: 'include',
-                body: JSON.stringify({ content: action.content })
-              });
+              const response = await apiRequest('PUT', `/api/files/${projectId}/${fileId}`, { content: action.content });
               
               if (!response.ok) {
                 throw new Error(`Failed to edit file: ${response.statusText}`);
@@ -1139,15 +1104,7 @@ What would you like me to build for you today?`,
           break;
         case 'install_package':
           if (action.package) {
-            const response = await fetch(`/api/packages/${projectId}/install`, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'credentials': 'include'
-              },
-              credentials: 'include',
-              body: JSON.stringify({ packages: [action.package] })
-            });
+            const response = await apiRequest('POST', `/api/packages/${projectId}/install`, { packages: [action.package] });
             
             if (!response.ok) {
               throw new Error(`Failed to install package: ${response.statusText}`);
@@ -1156,17 +1113,9 @@ What would you like me to build for you today?`,
           break;
         case 'create_folder':
           if (action.path) {
-            const response = await fetch(`/api/files/${projectId}/folder`, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'credentials': 'include'
-              },
-              credentials: 'include',
-              body: JSON.stringify({ 
-                name: action.path.split('/').pop(),
-                parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
-              })
+            const response = await apiRequest('POST', `/api/files/${projectId}/folder`, { 
+              name: action.path.split('/').pop(),
+              parentPath: action.path.substring(0, action.path.lastIndexOf('/')) || '/'
             });
             
             if (!response.ok) {
@@ -1423,22 +1372,18 @@ What would you like me to build for you today?`,
 
     try {
       // Use Server-Sent Events (SSE) for streaming responses
-      const response = await fetch(`/api/projects/${projectId}/ai/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: content,
-          context: {
-            projectId,
-            file: selectedFile,
-            code: selectedCode,
-            history: messages.slice(-5),
-            mode: 'agent',
-            extendedThinking,
-            highPowerMode,
-            conversationHistory: sessions.find(s => s.id === activeSessionId)?.messages || []
-          }
-        })
+      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
+        message: content,
+        context: {
+          projectId,
+          file: selectedFile,
+          code: selectedCode,
+          history: messages.slice(-5),
+          mode: 'agent',
+          extendedThinking,
+          highPowerMode,
+          conversationHistory: sessions.find(s => s.id === activeSessionId)?.messages || []
+        }
       });
 
       if (!response.ok) throw new Error('Failed to get AI response');
@@ -1626,18 +1571,14 @@ What would you like me to build?`,
       setIsLoading(true);
       addProgressLog('info', `Generating execution plan for: ${goal}`);
       
-      const response = await fetch('/api/agent/plan/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          goal,
-          context: context || {
-            projectType: 'web application',
-            existingFiles: [],
-            technologies: ['React', 'TypeScript', 'Node.js'],
-            constraints: []
-          }
-        })
+      const response = await apiRequest('POST', '/api/agent/plan/generate', {
+        goal,
+        context: context || {
+          projectType: 'web application',
+          existingFiles: [],
+          technologies: ['React', 'TypeScript', 'Node.js'],
+          constraints: []
+        }
       });
       
       if (!response.ok) {
