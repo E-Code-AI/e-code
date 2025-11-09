@@ -43,6 +43,7 @@ export interface ExecutionPlan {
   };
   alternativeApproaches: string[];
   createdAt: Date;
+  ownerUserId?: string; // User who created/owns this plan
 }
 
 export class PlanGeneratorService extends EventEmitter {
@@ -71,6 +72,7 @@ export class PlanGeneratorService extends EventEmitter {
       existingFiles?: string[];
       technologies?: string[];
       constraints?: string[];
+      userId?: string; // Owner of the plan
     } = {}
   ): Promise<ExecutionPlan> {
     try {
@@ -103,7 +105,8 @@ export class PlanGeneratorService extends EventEmitter {
         criticalPath,
         riskAssessment,
         alternativeApproaches,
-        createdAt: new Date()
+        createdAt: new Date(),
+        ownerUserId: context.userId // Store ownership
       };
       
       // Cache the plan
@@ -378,6 +381,26 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
    */
   getPlan(planId: string): ExecutionPlan | undefined {
     return this.planCache.get(planId);
+  }
+
+  /**
+   * Get a plan with ownership verification
+   * Returns the plan only if it belongs to the specified user
+   */
+  getPlanForUser(planId: string, userId: string): ExecutionPlan | undefined {
+    const plan = this.planCache.get(planId);
+    
+    if (!plan) {
+      return undefined;
+    }
+    
+    // If plan has no owner (legacy plans), allow access
+    // Otherwise, verify ownership
+    if (plan.ownerUserId && plan.ownerUserId !== userId) {
+      return undefined;
+    }
+    
+    return plan;
   }
 
   /**
