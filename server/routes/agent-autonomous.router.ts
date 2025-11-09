@@ -63,7 +63,7 @@ async function ensureSessionOwnership(req: Request, res: Response, next: NextFun
 
 /**
  * Middleware to verify plan ownership
- * Verifies the plan belongs to the authenticated user
+ * Verifies the plan belongs to the authenticated user using getPlanForUser
  */
 async function ensurePlanOwnership(req: Request, res: Response, next: NextFunction) {
   try {
@@ -74,14 +74,10 @@ async function ensurePlanOwnership(req: Request, res: Response, next: NextFuncti
       return res.status(400).json({ error: 'planId is required' });
     }
 
-    const plan = planGenerator.getPlan(planId);
+    // Use getPlanForUser to verify ownership
+    const plan = planGenerator.getPlanForUser(planId, userId);
     
     if (!plan) {
-      return res.status(404).json({ error: 'Plan not found' });
-    }
-
-    // Verify plan ownership via userId tracking
-    if (plan.userId && plan.userId !== userId) {
       logger.warn(`Plan ownership check failed: planId=${planId}, userId=${userId}`);
       return res.status(404).json({ error: 'Plan not found or access denied' });
     }
@@ -99,7 +95,7 @@ async function ensurePlanOwnership(req: Request, res: Response, next: NextFuncti
  * POST /api/agent/autonomous/enable
  * Enable autonomous mode for a session
  */
-router.post('/enable', async (req, res) => {
+router.post('/enable', ensureSessionOwnership, async (req, res) => {
   try {
     const { sessionId, riskThreshold = 'medium' } = req.body;
     
@@ -136,7 +132,7 @@ router.post('/enable', async (req, res) => {
  * POST /api/agent/autonomous/disable
  * Disable autonomous mode for a session
  */
-router.post('/disable', async (req, res) => {
+router.post('/disable', ensureSessionOwnership, async (req, res) => {
   try {
     const { sessionId } = req.body;
     
@@ -192,7 +188,7 @@ router.post('/assess-risk', async (req, res) => {
     res.json({
       riskScore: riskAssessment.score,
       autoApprove: riskAssessment.autoApprove,
-      reasoning: riskAssessment.reasoning || riskAssessment.explanation
+      reasoning: riskAssessment.reasoning
     });
   } catch (error: any) {
     logger.error('Error assessing risk:', error);
@@ -235,7 +231,7 @@ router.post('/execute', ensureAdmin, async (req, res) => {
  * GET /api/agent/autonomous/actions/:sessionId
  * Get autonomous actions for a session
  */
-router.get('/actions/:sessionId', async (req, res) => {
+router.get('/actions/:sessionId', ensureSessionOwnership, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const limit = parseInt(req.query.limit as string) || 100;
@@ -262,12 +258,14 @@ router.post('/plan/generate', async (req, res) => {
     // Support both 'goal' and 'prompt' field names
     const goal = req.body.goal || req.body.prompt;
     const context = req.body.context || {};
+    const userId = req.user!.id;
     
     if (!goal) {
       return res.status(400).json({ error: 'goal or prompt is required' });
     }
     
-    const plan = await planGenerator.generatePlan(goal, context);
+    // Pass userId to plan generator for ownership tracking
+    const plan = await planGenerator.generatePlan(goal, { ...context, userId });
     
     logger.info(`Plan generated: ${plan.id} with ${plan.tasks.length} tasks for user ${req.user?.id}`);
     
@@ -285,7 +283,7 @@ router.post('/plan/generate', async (req, res) => {
  * GET /api/agent/plan/:planId
  * Get a specific execution plan
  */
-router.get('/plan/:planId', async (req, res) => {
+router.get('/plan/:planId', ensurePlanOwnership, async (req, res) => {
   try {
     const { planId } = req.params;
     
@@ -306,7 +304,7 @@ router.get('/plan/:planId', async (req, res) => {
  * POST /api/agent/plan/:planId/task/:taskId/status
  * Update task status in a plan
  */
-router.post('/plan/:planId/task/:taskId/status', async (req, res) => {
+router.post('/plan/:planId/task/:taskId/status', ensurePlanOwnership, async (req, res) => {
   try {
     const { planId, taskId } = req.params;
     const { status } = req.body;

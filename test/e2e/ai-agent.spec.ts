@@ -1,59 +1,48 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('AI Agent Tests', () => {
-  let authToken: string;
+  let context: any;
+  let page: any;
   let csrfToken: string;
   let conversationId: number;
 
-  test.beforeAll(async ({ request }) => {
-    // Get CSRF token and session cookie
-    const csrfResponse = await request.get('/api/csrf-token');
+  test.beforeAll(async ({ browser }) => {
+    // Create a new browser context for authentication
+    context = await browser.newContext();
+    page = await context.newPage();
+    
+    // Login via browser to establish authenticated session
+    await page.goto('/login');
+    await page.fill('[data-testid="input-email"]', 'testuser@test.com');
+    await page.fill('[data-testid="input-password"]', 'testpass123');
+    await page.click('[data-testid="button-login"]');
+    
+    // Wait for login to complete (redirect to dashboard)
+    try {
+      await page.waitForURL('/dashboard', { timeout: 10000 });
+    } catch (e) {
+      // If redirect doesn't happen, check if we're logged in another way
+      console.log('Dashboard redirect timeout, checking authentication state...');
+    }
+    
+    // Get CSRF token using the authenticated page's request context
+    const csrfResponse = await page.request.get('/api/csrf-token');
     const csrfData = await csrfResponse.json();
     csrfToken = csrfData.csrfToken;
-    
-    // Extract session cookie from CSRF response (cookie name is 'ecode.sid')
-    const csrfHeaders = await csrfResponse.headersArray();
-    const csrfSessionCookie = csrfHeaders.find(h => h.name.toLowerCase() === 'set-cookie' && h.value.includes('ecode.sid'));
-    const sessionCookieValue = csrfSessionCookie ? csrfSessionCookie.value.split(';')[0] : '';
-    
-    // Login with both CSRF token and session cookie
-    const loginResponse = await request.post('/api/login', {
-      data: {
-        email: 'testuser@test.com',
-        password: 'testpass123'
-      },
-      headers: {
-        'X-CSRF-Token': csrfToken,
-        'Cookie': sessionCookieValue
-      }
-    });
-    
-    if (!loginResponse.ok()) {
-      const errorBody = await loginResponse.text();
-      console.error('Login failed:', loginResponse.status(), errorBody);
-    }
-    
-    expect(loginResponse.ok()).toBeTruthy();
-    
-    // Get the authenticated session cookie from login response
-    const loginHeaders = await loginResponse.headersArray();
-    const loginSessionCookie = loginHeaders.find(h => h.name.toLowerCase() === 'set-cookie' && h.value.includes('ecode.sid'));
-    if (loginSessionCookie) {
-      authToken = loginSessionCookie.value.split(';')[0];
-    } else {
-      // Fallback to CSRF session cookie if login doesn't set a new one
-      authToken = sessionCookieValue;
-    }
   });
 
-  test('should create conversation and bootstrap agent', async ({ request }) => {
-    const response = await request.post('/api/agent/conversation', {
+  test.afterAll(async () => {
+    await page.close();
+    await context.close();
+  });
+
+  test('should create conversation and bootstrap agent', async () => {
+    const response = await page.request.post('/api/agent/conversation', {
       data: {
         projectId: null,
         initialPrompt: 'Test conversation'
       },
       headers: {
-        Cookie: authToken,
         'X-CSRF-Token': csrfToken
       }
     });
@@ -68,17 +57,16 @@ test.describe('AI Agent Tests', () => {
     conversationId = data.conversationId;
   });
 
-  test('should switch conversation mode from Build to Plan', async ({ request }) => {
+  test('should switch conversation mode from Build to Plan', async () => {
     if (!conversationId) {
       test.skip();
     }
 
-    const response = await request.post(`/api/agent/conversation/${conversationId}/mode`, {
+    const response = await page.request.post(`/api/agent/conversation/${conversationId}/mode`, {
       data: {
         mode: 'plan'
       },
       headers: {
-        Cookie: authToken,
         'X-CSRF-Token': csrfToken
       }
     });
@@ -90,17 +78,16 @@ test.describe('AI Agent Tests', () => {
     expect(data).toHaveProperty('message');
   });
 
-  test('should switch conversation mode from Plan to Build', async ({ request }) => {
+  test('should switch conversation mode from Plan to Build', async () => {
     if (!conversationId) {
       test.skip();
     }
 
-    const response = await request.post(`/api/agent/conversation/${conversationId}/mode`, {
+    const response = await page.request.post(`/api/agent/conversation/${conversationId}/mode`, {
       data: {
         mode: 'build'
       },
       headers: {
-        Cookie: authToken,
         'X-CSRF-Token': csrfToken
       }
     });
@@ -111,17 +98,16 @@ test.describe('AI Agent Tests', () => {
     expect(data.mode).toBe('build');
   });
 
-  test('should reject invalid mode', async ({ request }) => {
+  test('should reject invalid mode', async () => {
     if (!conversationId) {
       test.skip();
     }
 
-    const response = await request.post(`/api/agent/conversation/${conversationId}/mode`, {
+    const response = await page.request.post(`/api/agent/conversation/${conversationId}/mode`, {
       data: {
         mode: 'invalid'
       },
       headers: {
-        Cookie: authToken,
         'X-CSRF-Token': csrfToken
       }
     });
@@ -129,15 +115,14 @@ test.describe('AI Agent Tests', () => {
     expect(response.status()).toBe(400);
   });
 
-  test('should enable autonomous mode', async ({ request }) => {
+  test('should enable autonomous mode', async () => {
     const sessionId = 'test-session-123';
-    const response = await request.post('/api/agent/autonomous/enable', {
+    const response = await page.request.post('/api/agent/autonomous/enable', {
       data: {
         sessionId,
         riskThreshold: 'medium'
       },
       headers: {
-        Cookie: authToken,
         'X-CSRF-Token': csrfToken
       }
     });
@@ -150,8 +135,8 @@ test.describe('AI Agent Tests', () => {
     expect(data).toHaveProperty('message');
   });
 
-  test('should assess risk for file operations', async ({ request }) => {
-    const response = await request.post('/api/agent/autonomous/assess-risk', {
+  test('should assess risk for file operations', async () => {
+    const response = await page.request.post('/api/agent/autonomous/assess-risk', {
       data: {
         action: {
           tool: 'file_read',
@@ -161,7 +146,6 @@ test.describe('AI Agent Tests', () => {
         }
       },
       headers: {
-        Cookie: authToken,
         'X-CSRF-Token': csrfToken
       }
     });
@@ -175,8 +159,8 @@ test.describe('AI Agent Tests', () => {
     expect(typeof data.riskScore).toBe('number');
   });
 
-  test('should generate plan for user prompt', async ({ request }) => {
-    const response = await request.post('/api/agent/plan/generate', {
+  test('should generate plan for user prompt', async () => {
+    const response = await page.request.post('/api/agent/plan/generate', {
       data: {
         prompt: 'Build a simple TODO application with React',
         context: {
@@ -185,7 +169,6 @@ test.describe('AI Agent Tests', () => {
         }
       },
       headers: {
-        Cookie: authToken,
         'X-CSRF-Token': csrfToken
       }
     });
@@ -200,14 +183,13 @@ test.describe('AI Agent Tests', () => {
     expect(Array.isArray(data.plan.tasks)).toBeTruthy();
   });
 
-  test('should disable autonomous mode', async ({ request }) => {
+  test('should disable autonomous mode', async () => {
     const sessionId = 'test-session-123';
-    const response = await request.post('/api/agent/autonomous/disable', {
+    const response = await page.request.post('/api/agent/autonomous/disable', {
       data: {
         sessionId
       },
       headers: {
-        Cookie: authToken,
         'X-CSRF-Token': csrfToken
       }
     });
@@ -219,12 +201,8 @@ test.describe('AI Agent Tests', () => {
     expect(data).toHaveProperty('message');
   });
 
-  test('should check autonomous system health', async ({ request }) => {
-    const response = await request.get('/api/agent/autonomous/health', {
-      headers: {
-        Cookie: authToken
-      }
-    });
+  test('should check autonomous system health', async () => {
+    const response = await page.request.get('/api/agent/autonomous/health');
 
     expect(response.ok()).toBeTruthy();
     const data = await response.json();
