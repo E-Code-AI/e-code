@@ -14,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ImportExportProps {
   projectId: number;
@@ -54,14 +55,9 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
     setExportProgress(0);
     
     try {
-      const response = await fetch(`/api/import-export/${projectId}/export`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          format: exportFormat,
-          options: exportOptions
-        })
+      const response = await apiRequest('POST', `/api/import-export/${projectId}/export`, {
+        format: exportFormat,
+        options: exportOptions
       });
 
       if (!response.ok) {
@@ -147,14 +143,9 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
           body: formData
         });
       } else if (importSource === 'github') {
-        response = await fetch(`/api/import-export/${projectId}/import`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            source: 'github',
-            url: githubUrl
-          })
+        response = await apiRequest('POST', `/api/import-export/${projectId}/import`, {
+          source: 'github',
+          url: githubUrl
         });
       }
 

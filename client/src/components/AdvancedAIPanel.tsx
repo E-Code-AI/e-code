@@ -22,6 +22,7 @@ import {
   Copy,
   Sparkles
 } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface AdvancedAIPanelProps {
   projectId: string;
@@ -93,14 +94,10 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/ai/${projectId}/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code,
-          language,
-          ...extraParams
-        })
+      const response = await apiRequest('POST', `/api/ai/${projectId}/${endpoint}`, {
+        code,
+        language,
+        ...extraParams
       });
 
       if (!response.ok) {

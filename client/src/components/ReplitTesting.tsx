@@ -11,6 +11,7 @@ import {
   Plus, RefreshCw, Eye, Filter, TrendingUp
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface TestSuite {
   id: string;
@@ -116,10 +117,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
   const runAllTests = async () => {
     try {
       setRunning(true);
-      const response = await fetch(`/api/tests/${projectId}/run`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/tests/${projectId}/run`);
 
       if (response.ok) {
         toast({
@@ -168,10 +166,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
 
   const runSuite = async (suiteId: string) => {
     try {
-      const response = await fetch(`/api/tests/${projectId}/suites/${suiteId}/run`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/tests/${projectId}/suites/${suiteId}/run`);
 
       if (response.ok) {
         toast({

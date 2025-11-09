@@ -35,6 +35,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { Switch } from '@/components/ui/switch';
 import {
   Select,
@@ -333,24 +334,19 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
     if (!validateNewWorkflow()) return;
 
     try {
-      const response = await fetch(`/api/projects/${projectIdParam}/workflows`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: newWorkflow.name.trim(),
-          description: newWorkflow.description.trim(),
-          trigger: newWorkflow.trigger,
-          steps: newWorkflow.steps.map(step => ({
-            id: step.id,
-            name: step.name.trim(),
-            type: step.type,
-            command: step.command?.trim() || undefined,
-            script: step.script?.trim() || undefined,
-            config: step.config
-          })),
-          enabled: newWorkflow.enabled
-        })
+      const response = await apiRequest('POST', `/api/projects/${projectIdParam}/workflows`, {
+        name: newWorkflow.name.trim(),
+        description: newWorkflow.description.trim(),
+        trigger: newWorkflow.trigger,
+        steps: newWorkflow.steps.map(step => ({
+          id: step.id,
+          name: step.name.trim(),
+          type: step.type,
+          command: step.command?.trim() || undefined,
+          script: step.script?.trim() || undefined,
+          config: step.config
+        })),
+        enabled: newWorkflow.enabled
       });
 
       if (!response.ok) {
@@ -379,10 +375,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
     if (!projectIdParam) return;
 
     try {
-      const response = await fetch(`/api/projects/${projectIdParam}/workflows/${workflowId}/run`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/projects/${projectIdParam}/workflows/${workflowId}/run`);
 
       if (!response.ok) {
         throw new Error('Unable to start workflow');
@@ -419,12 +412,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
     if (!projectIdParam) return;
 
     try {
-      const response = await fetch(`/api/projects/${projectIdParam}/workflows/${workflowId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ enabled })
-      });
+      const response = await apiRequest('PATCH', `/api/projects/${projectIdParam}/workflows/${workflowId}`, { enabled });
 
       if (!response.ok) {
         throw new Error('Unable to update workflow');

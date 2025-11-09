@@ -30,6 +30,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { File } from '@shared/schema';
 
 interface GhostwriterProps {
@@ -140,11 +141,7 @@ export function Ghostwriter({ activeFile, onApplyCompletion }: GhostwriterProps)
     mutationFn: async (request: { endpoint: string, data: AIRequest }) => {
       const { endpoint, data } = request;
       
-      const response = await fetch(`/api/ai/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      const response = await apiRequest('POST', `/api/ai/${endpoint}`, data);
       
       if (!response.ok) {
         const errorData = await response.json();

@@ -31,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ReplitAgentV2Props {
   projectId: number;
@@ -188,12 +189,7 @@ export const ReplitAgentV2: React.FC<ReplitAgentV2Props> = ({
 
   const updateToolSetting = async (toolId: string, enabled: boolean) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/agent/tools`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toolId, enabled })
-      });
+      const response = await apiRequest('POST', `/api/projects/${projectId}/agent/tools`, { toolId, enabled });
       
       if (!response.ok) {
         throw new Error('Failed to update tool setting');
@@ -217,21 +213,16 @@ export const ReplitAgentV2: React.FC<ReplitAgentV2Props> = ({
     
     try {
       // Send message to AI agent
-      const response = await fetch(`/api/projects/${projectId}/ai/chat`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: input,
-          context: {
-            sessionId,
-            extendedThinking: extendedThinkingEnabled,
-            highPowerMode: highPowerEnabled,
-            webSearch: webSearchEnabled,
-            imageGeneration: imageGenerationEnabled,
-            isPaused
-          }
-        })
+      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
+        message: input,
+        context: {
+          sessionId,
+          extendedThinking: extendedThinkingEnabled,
+          highPowerMode: highPowerEnabled,
+          webSearch: webSearchEnabled,
+          imageGeneration: imageGenerationEnabled,
+          isPaused
+        }
       });
 
       if (!response.ok) {
