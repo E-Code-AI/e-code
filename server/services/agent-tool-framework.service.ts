@@ -411,7 +411,9 @@ export class AgentToolFrameworkService extends EventEmitter {
         analysisType: z.enum(['review', 'explain', 'optimize', 'debug', 'security'])
       }),
       execute: async (input, context) => {
-        const prompts = {
+        type AnalysisType = 'review' | 'explain' | 'optimize' | 'debug' | 'security';
+        
+        const prompts: Record<AnalysisType, string> = {
           review: 'Review this code and provide feedback on quality, best practices, and potential improvements:',
           explain: 'Explain what this code does in detail:',
           optimize: 'Suggest optimizations for this code:',
@@ -428,7 +430,7 @@ export class AgentToolFrameworkService extends EventEmitter {
             },
             {
               role: 'user',
-              content: `${prompts[input.analysisType]}\n\n\`\`\`\n${input.code}\n\`\`\``
+              content: `${prompts[input.analysisType as AnalysisType]}\n\n\`\`\`\n${input.code}\n\`\`\``
             }
           ]
         });
@@ -731,8 +733,10 @@ export class AgentToolFrameworkService extends EventEmitter {
           userId: context.userId,
           sessionId: context.sessionId,
           action: 'write_env',
-          target: input.key,
-          metadata: {
+          resourceType: 'environment_variable',
+          resourceId: input.key,
+          details: {
+            key: input.key,
             namespace: input.namespace,
             timestamp: new Date().toISOString()
           },
@@ -903,18 +907,18 @@ export class AgentToolFrameworkService extends EventEmitter {
 
   // Get available tools
   async getAvailableTools(capability?: string): Promise<ToolRegistry[]> {
-    let query = db.select()
-      .from(toolRegistry)
-      .where(eq(toolRegistry.isEnabled, true));
-    
     if (capability) {
-      query = query.where(and(
-        eq(toolRegistry.isEnabled, true),
-        eq(toolRegistry.capability, capability as any)
-      ));
+      return await db.select()
+        .from(toolRegistry)
+        .where(and(
+          eq(toolRegistry.isEnabled, true),
+          eq(toolRegistry.capability, capability as any)
+        ));
     }
     
-    return await query;
+    return await db.select()
+      .from(toolRegistry)
+      .where(eq(toolRegistry.isEnabled, true));
   }
 
   // Get tool execution history
@@ -966,7 +970,12 @@ export class AgentToolFrameworkService extends EventEmitter {
 
   private parseGitStatus(output: string): any {
     const lines = output.split('\n').filter(l => l.trim());
-    const status = {
+    const status: {
+      modified: string[];
+      added: string[];
+      deleted: string[];
+      untracked: string[];
+    } = {
       modified: [],
       added: [],
       deleted: [],
