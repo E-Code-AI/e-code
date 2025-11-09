@@ -43,6 +43,7 @@ import { ExtendedThinkingDisplay } from './agent/ExtendedThinkingDisplay';
 import { AutonomousControls } from './agent/AutonomousControls';
 import { PlanVisualizer } from './agent/PlanVisualizer';
 import { TestingToolsPanel } from './agent/TestingToolsPanel';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ReplitAgentProps {
   projectId: string | number;
@@ -852,11 +853,7 @@ What would you like me to build for you today?`,
   // Save preferences when toggle states change
   const savePreferences = async (updates: any) => {
     try {
-      await fetch('/api/agent/preferences', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
+      await apiRequest('PUT', '/api/agent/preferences', updates);
     } catch (error) {
       console.error('Error saving preferences:', error);
     }
