@@ -60,14 +60,14 @@ router.post('/api/projects/:projectId/deploy', async (req, res) => {
     // Create a simple deployment record first
     const deploymentId = `dep-${projectId}-${Date.now()}`;
     
-    // Store initial deployment status
+    // Store initial deployment status (remove 'name' - not in schema)
     await storage.createDeployment({
-      name: `Deployment ${new Date().toLocaleString()}`, // Add required name field
+      type: 'production',
       projectId,
       status: 'building',
+      deploymentId,
+      environment: 'production',
       url: `https://project-${projectId}-${deploymentId.slice(-8)}.replit.app`,
-      version: 'v1.0.0',
-      deploymentId
     });
 
     console.log(`✅ Deployment created with ID: ${deploymentId}`);

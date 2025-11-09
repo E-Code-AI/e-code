@@ -582,9 +582,10 @@ export class DeploymentManager {
     return this.deployments.get(deploymentId) || null;
   }
 
-  async listDeployments(projectId: number): Promise<DeploymentStatus[]> {
+  async listDeployments(projectId: string | number): Promise<DeploymentStatus[]> {
+    const projectIdStr = typeof projectId === 'number' ? projectId.toString() : projectId;
     return Array.from(this.deployments.values()).filter(d => 
-      d.id.includes(projectId.toString())
+      d.id.includes(projectIdStr)
     );
   }
 
