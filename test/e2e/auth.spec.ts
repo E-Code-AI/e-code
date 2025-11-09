@@ -4,10 +4,10 @@ test.describe('Authentication Tests', () => {
   test('should display login page', async ({ page }) => {
     await page.goto('/login');
     
-    // Check for login form elements
-    const emailInput = page.locator('input[type="email"], input[name="email"], input[name="username"]').first();
-    const passwordInput = page.locator('input[type="password"]').first();
-    const submitButton = page.locator('button[type="submit"], button:has-text("Login"), button:has-text("Sign In")').first();
+    // Check for login form elements using data-testids
+    const emailInput = page.locator('[data-testid="input-email"]');
+    const passwordInput = page.locator('[data-testid="input-password"]');
+    const submitButton = page.locator('[data-testid="button-login"]');
     
     await expect(emailInput).toBeVisible();
     await expect(passwordInput).toBeVisible();
@@ -51,42 +51,39 @@ test.describe('Authentication Tests', () => {
   test('should handle login with invalid credentials', async ({ page }) => {
     await page.goto('/login');
     
-    // Fill in invalid credentials
-    const emailInput = page.locator('input[type="email"], input[name="email"], input[name="username"]').first();
-    const passwordInput = page.locator('input[type="password"]').first();
-    const submitButton = page.locator('button[type="submit"], button:has-text("Login"), button:has-text("Sign In")').first();
+    // Fill in invalid credentials using data-testids
+    const emailInput = page.locator('[data-testid="input-email"]');
+    const passwordInput = page.locator('[data-testid="input-password"]');
+    const submitButton = page.locator('[data-testid="button-login"]');
     
     await emailInput.fill('nonexistent@example.com');
     await passwordInput.fill('wrongpassword123');
     await submitButton.click();
     
-    // Wait for error message
-    const errorMessage = await page.waitForSelector(
-      '.error, .text-red-500, [role="alert"], :text("Invalid"), :text("incorrect")',
-      { timeout: 5000 }
-    ).catch(() => null);
+    // Wait for error message (toast notification)
+    await page.waitForTimeout(2000);
     
-    // Should show some kind of error
-    expect(errorMessage).toBeTruthy();
+    // Check for toast error or inline error message
+    const hasError = await page.locator('[role="alert"], .toast, :text("Invalid"), :text("incorrect")').count() > 0;
+    expect(hasError).toBeTruthy();
   });
 
   test('should toggle between login and register', async ({ page }) => {
     await page.goto('/login');
     
-    // Find link to register
-    const registerLink = page.locator('a[href="/register"], :text("Sign up"), :text("Register"), :text("Create account")').first();
+    // Find link to register using data-testid
+    const registerLink = page.locator('[data-testid="link-register"]');
     
-    if (await registerLink.isVisible()) {
-      await registerLink.click();
-      await expect(page).toHaveURL(/register|signup/);
-      
-      // Find link back to login
-      const loginLink = page.locator('a[href="/login"], :text("Sign in"), :text("Login"), :text("Already have an account")').first();
-      
-      if (await loginLink.isVisible()) {
-        await loginLink.click();
-        await expect(page).toHaveURL(/login|signin/);
-      }
+    await expect(registerLink).toBeVisible();
+    await registerLink.click();
+    await expect(page).toHaveURL(/register/);
+    
+    // Find link back to login
+    const loginLink = page.locator('a[href="/login"]:has-text("Sign in"), a[href="/login"]:has-text("Already")').first();
+    
+    if (await loginLink.isVisible()) {
+      await loginLink.click();
+      await expect(page).toHaveURL(/login/);
     }
   });
 });

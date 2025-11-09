@@ -322,6 +322,7 @@ export default function Register() {
                     onChange={handleInputChange}
                     disabled={isLoading}
                     required
+                    data-testid="input-username"
                   />
                 </div>
               </div>
@@ -359,6 +360,7 @@ export default function Register() {
                   onChange={handleInputChange}
                   disabled={isLoading}
                   required
+                  data-testid="input-register-email"
                 />
               </div>
             </div>
@@ -379,6 +381,7 @@ export default function Register() {
                   onChange={handleInputChange}
                   disabled={isLoading}
                   required
+                  data-testid="input-register-password"
                 />
                 <button
                   type="button"
