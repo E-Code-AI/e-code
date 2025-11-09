@@ -170,22 +170,22 @@ export const ScalabilityDashboard: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
     switch (status) {
       case 'operational':
       case 'active':
       case 'healthy':
       case 'running':
-        return 'success';
+        return 'default';
       case 'degraded':
       case 'warning':
-        return 'warning';
+        return 'secondary';
       case 'down':
       case 'error':
       case 'stopped':
         return 'destructive';
       default:
-        return 'secondary';
+        return 'outline';
     }
   };
 
@@ -522,7 +522,7 @@ export const ScalabilityDashboard: React.FC = () => {
                       <div>Last Purge: {cdnStatus.purgeStats.lastPurge || 'Never'}</div>
                     </div>
                     <Button 
-                      onClick={() => purgeCDN.mutate()}
+                      onClick={() => purgeCDN.mutate(undefined)}
                       disabled={purgeCDN.isPending}
                       className="mt-4"
                       variant="outline"
