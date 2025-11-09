@@ -197,7 +197,7 @@ export function ElementSelector({ sessionId, projectId, className }: ElementSele
               </div>
 
               <Button
-                onClick={() => generateMutation.mutate()}
+                onClick={() => generateMutation.mutate(undefined)}
                 disabled={generateMutation.isPending || !pageUrl.trim() || !elementDescription.trim()}
                 className="w-full"
                 data-testid="button-generate-selectors"

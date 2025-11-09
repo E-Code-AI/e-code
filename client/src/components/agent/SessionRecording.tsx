@@ -235,7 +235,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
               <div className="flex gap-2">
                 {!activeRecordingId ? (
                   <Button
-                    onClick={() => startMutation.mutate()}
+                    onClick={() => startMutation.mutate(undefined)}
                     disabled={startMutation.isPending}
                     className="flex-1"
                     data-testid="button-start-recording"

@@ -92,7 +92,7 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
-      cacheTime: 10 * 60 * 1000, // 10 minutes - data kept in cache
+      gcTime: 10 * 60 * 1000, // 10 minutes - data kept in cache (renamed from cacheTime in v5)
       retry: (failureCount, error: any) => {
         // Only retry on network errors, not on 4xx errors
         if (error?.status >= 400 && error?.status < 500) return false;
