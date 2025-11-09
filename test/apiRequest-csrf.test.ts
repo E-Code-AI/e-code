@@ -32,32 +32,131 @@ describe('apiRequest Type Safety and Error Handling', () => {
     }) as any;
     
     try {
-      const result = await apiRequest('DELETE', '/api/test');
+      const result = await apiRequest<void>('DELETE', '/api/test');
       assert(result === undefined, '204 responses should return undefined');
     } finally {
       global.fetch = originalFetch;
     }
   });
   
-  it('should handle empty responses (Content-Length: 0)', async () => {
+  it('should handle 205 Reset Content responses', async () => {
     const { apiRequest } = await import('../client/src/lib/queryClient');
     
-    // Mock fetch for empty response
     const originalFetch = global.fetch;
-    global.fetch = async () => new Response('', {
-      status: 200,
-      headers: { 'Content-Length': '0', 'Content-Type': 'application/json' },
+    global.fetch = async () => new Response(null, {
+      status: 205,
     }) as any;
     
     try {
-      const result = await apiRequest('POST', '/api/test', {});
-      assert(result === undefined, 'Empty responses should return undefined');
+      const result = await apiRequest<void>('POST', '/api/test');
+      assert(result === undefined, '205 responses should return undefined');
     } finally {
       global.fetch = originalFetch;
     }
   });
   
-  it('should handle non-JSON responses gracefully', async () => {
+  it('should handle 304 Not Modified responses', async () => {
+    const { apiRequest } = await import('../client/src/lib/queryClient');
+    
+    const originalFetch = global.fetch;
+    global.fetch = async () => new Response(null, {
+      status: 304,
+    }) as any;
+    
+    try {
+      const result = await apiRequest<void>('GET', '/api/test');
+      assert(result === undefined, '304 responses should return undefined');
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+  
+  it('should handle empty responses regardless of Content-Length header', async () => {
+    const { apiRequest } = await import('../client/src/lib/queryClient');
+    
+    // Mock fetch for empty response WITHOUT Content-Length header
+    const originalFetch = global.fetch;
+    global.fetch = async () => new Response('', {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }) as any;
+    
+    try {
+      const result = await apiRequest('POST', '/api/test', {});
+      assert(result === undefined, 'Empty responses should return undefined even without Content-Length header');
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+  
+  it('should handle truly empty JSON bodies without crashing', async () => {
+    const { apiRequest } = await import('../client/src/lib/queryClient');
+    
+    // Mock fetch for response with empty string body
+    const originalFetch = global.fetch;
+    global.fetch = async () => new Response('', {
+      status: 200,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    }) as any;
+    
+    try {
+      const result = await apiRequest<void>('POST', '/api/test', {});
+      assert(result === undefined, 'Empty JSON responses should not crash');
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+  
+  it('should parse valid JSON correctly', async () => {
+    const { apiRequest } = await import('../client/src/lib/queryClient');
+    
+    interface TestResponse {
+      success: boolean;
+      message: string;
+    }
+    
+    const originalFetch = global.fetch;
+    global.fetch = async () => new Response(JSON.stringify({ success: true, message: 'test' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }) as any;
+    
+    try {
+      const result = await apiRequest<TestResponse>('POST', '/api/test', {});
+      assert(result.success === true, 'JSON should be parsed correctly');
+      assert(result.message === 'test', 'JSON fields should be accessible');
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+  
+  it('should throw error on malformed JSON with JSON content-type', async () => {
+    const { apiRequest } = await import('../client/src/lib/queryClient');
+    
+    const originalFetch = global.fetch;
+    global.fetch = async () => new Response('{ invalid json }', {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }) as any;
+    
+    try {
+      let errorThrown = false;
+      try {
+        await apiRequest('GET', '/api/test');
+      } catch (error: any) {
+        errorThrown = true;
+        assert(
+          error.message.includes('Failed to parse JSON'),
+          'Should throw error for malformed JSON'
+        );
+      }
+      assert(errorThrown, 'Should throw error for malformed JSON');
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+  
+  it('should handle non-JSON responses as raw text (type contract)', async () => {
     const { apiRequest } = await import('../client/src/lib/queryClient');
     
     // Mock fetch for text response
@@ -68,10 +167,11 @@ describe('apiRequest Type Safety and Error Handling', () => {
     }) as any;
     
     try {
-      const result = await apiRequest('GET', '/api/test');
+      // When caller expects string, they should get string
+      const result = await apiRequest<string>('GET', '/api/test');
       assert(
-        typeof result === 'object' && result.data === 'Plain text response',
-        'Non-JSON responses should be wrapped in { data: text }'
+        result === 'Plain text response',
+        'Non-JSON responses should return raw text to honor type contract'
       );
     } finally {
       global.fetch = originalFetch;
