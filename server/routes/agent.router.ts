@@ -116,42 +116,38 @@ router.post('/recommend-model', async (req, res) => {
 // POST /api/agent/conversation - Create or get conversation for project
 router.post('/conversation', async (req, res) => {
   try {
-    const { projectId } = req.body;
+    const { projectId, initialPrompt } = req.body;
     const userId = req.user!.id;
-
-    if (!projectId) {
-      return res.status(400).json({
-        error: 'projectId is required',
-      });
-    }
 
     const { aiConversations } = await import('@shared/schema');
     const { eq, and, desc } = await import('drizzle-orm');
 
-    // Try to find existing conversation for this project/user
-    const [existingConversation] = await db
-      .select()
-      .from(aiConversations)
-      .where(and(
-        eq(aiConversations.projectId, projectId.toString()),
-        eq(aiConversations.userId, userId)
-      ))
-      .orderBy(desc(aiConversations.createdAt))
-      .limit(1);
+    // If projectId provided, try to find existing conversation
+    if (projectId) {
+      const [existingConversation] = await db
+        .select()
+        .from(aiConversations)
+        .where(and(
+          eq(aiConversations.projectId, projectId.toString()),
+          eq(aiConversations.userId, userId)
+        ))
+        .orderBy(desc(aiConversations.createdAt))
+        .limit(1);
 
-    if (existingConversation) {
-      return res.json({
-        conversationId: existingConversation.id,
-        agentMode: existingConversation.agentMode,
-        existing: true,
-      });
+      if (existingConversation) {
+        return res.json({
+          conversationId: existingConversation.id,
+          agentMode: existingConversation.agentMode,
+          existing: true,
+        });
+      }
     }
 
-    // Create new conversation
+    // Create new conversation (projectId can be null)
     const [newConversation] = await db
       .insert(aiConversations)
       .values({
-        projectId: projectId.toString(),
+        projectId: projectId ? projectId.toString() : null,
         userId: userId,
         messages: [],
         agentMode: 'build', // Default to build mode
