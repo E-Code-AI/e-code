@@ -15,6 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -22,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 interface RollbackManagerProps {
   deploymentId: string;
@@ -138,11 +140,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
   // Rollback mutation
   const rollbackMutation = useMutation({
     mutationFn: async ({ version, options }: { version: string; options: typeof rollbackOptions }) => {
-      const response = await fetch(`/api/deployments/${deploymentId}/rollback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ version, ...options }),
-      });
+      const response = await apiRequest('POST', `/api/deployments/${deploymentId}/rollback`, { version, ...options });
       return response.json();
     },
     onSuccess: (data) => {
@@ -166,11 +164,8 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
 
   // Create snapshot mutation
   const createSnapshotMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/snapshot`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
+    mutationFn: async (data: {} = {}) => {
+      const response = await apiRequest('POST', `/api/deployments/${deploymentId}/snapshot`, data);
       return response.json();
     },
     onSuccess: () => {
@@ -411,7 +406,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => createSnapshotMutation.mutate()}
+            onClick={() => createSnapshotMutation.mutate({})}
             disabled={createSnapshotMutation.isPending}
           >
             <Save className="h-4 w-4 mr-2" />
@@ -486,7 +481,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
                 <p className="text-muted-foreground text-center mb-4">
                   No deployment snapshots have been created yet
                 </p>
-                <Button onClick={() => createSnapshotMutation.mutate()}>
+                <Button onClick={() => createSnapshotMutation.mutate({})}>
                   <Save className="h-4 w-4 mr-2" />
                   Create First Snapshot
                 </Button>

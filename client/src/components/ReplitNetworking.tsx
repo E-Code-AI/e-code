@@ -166,25 +166,39 @@ export function ReplitNetworking({ projectId, className }: ReplitNetworkingProps
   // Real HTTP proxy request
   const proxyHttpRequest = useMutation({
     mutationFn: async (request: NetworkRequest) => {
-      const response = await apiRequest(`/api/network/${projectId}/proxy`, {
-        method: 'POST',
-        body: JSON.stringify({
-          method: request.method,
-          url: request.url,
-          headers: request.headers,
-          body: request.body,
-          projectId
-        })
+      const response = await apiRequest('POST', `/api/network/${projectId}/proxy`, {
+        method: request.method,
+        url: request.url,
+        headers: request.headers,
+        body: request.body,
+        projectId
       });
+      
+      // Parse response based on Content-Type
+      const contentType = response.headers.get('content-type') || '';
+      let body: string;
+      let responseTime = 0;
+      
+      try {
+        if (contentType.includes('application/json')) {
+          const data = await response.json();
+          body = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+          responseTime = data.responseTime || 0;
+        } else {
+          // For non-JSON responses (HTML, XML, plain text, etc.), use text
+          body = await response.text();
+        }
+      } catch (error) {
+        // Fallback to text if JSON parsing fails
+        body = await response.text();
+      }
       
       return {
         status: response.status,
         statusText: response.statusText,
-        headers: response.headers,
-        body: typeof response.data === 'object' 
-          ? JSON.stringify(response.data, null, 2) 
-          : response.data,
-        responseTime: response.responseTime
+        headers: Object.fromEntries(response.headers.entries()),
+        body,
+        responseTime
       };
     }
   });

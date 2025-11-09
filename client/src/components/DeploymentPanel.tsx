@@ -14,11 +14,11 @@ import {
   Lock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient, apiRequest } from '@/lib/queryClient';
 
 interface DeploymentData {
   id?: number;
-  status?: 'running' | 'failed' | 'building' | 'stopped' | 'active';
+  status?: 'running' | 'failed' | 'building' | 'stopped' | 'active' | 'deploying';
   environment?: string;
   lastDeployedAgo?: string;
   visibility?: 'public' | 'private';
@@ -81,16 +81,11 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
 
   const handleRedeploy = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/deploy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          type: deployment?.type || 'autoscale',
-          regions: deployment?.regions || ['us-east-1'],
-          environment: deployment?.environment || 'production',
-          sslEnabled: true
-        })
+      const response = await apiRequest('POST', `/api/projects/${projectId}/deploy`, {
+        type: deployment?.type || 'autoscale',
+        regions: deployment?.regions || ['us-east-1'],
+        environment: deployment?.environment || 'production',
+        sslEnabled: true
       });
       if (response.ok) {
         await queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/deployments`] });
@@ -102,11 +97,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
 
   const handleSecurityScan = async () => {
     try {
-      const response = await fetch(`/api/security/${projectId}/scan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/security/${projectId}/scan`, {});
       if (response.ok) {
         await queryClient.invalidateQueries({ queryKey: [`/api/deployment/${projectId}`] });
       }
