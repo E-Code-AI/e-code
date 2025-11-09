@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function ContactSales() {
   const [, navigate] = useLocation();
@@ -43,30 +44,22 @@ export default function ContactSales() {
         ? `Enterprise inquiry - ${formData.interest}`
         : 'Enterprise inquiry';
 
-      const response = await fetch('/api/contact/sales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: `${formData.firstName} ${formData.lastName}`.trim(),
-          email: formData.email,
-          company: formData.company,
-          phone: formData.phone,
-          message: formData.message,
-          companySize: formData.companySize,
-          useCase: formData.interest,
-          subject,
-          pagePath,
-        }),
+      await apiRequest('POST', '/api/contact/sales', {
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        email: formData.email,
+        company: formData.company,
+        phone: formData.phone,
+        message: formData.message,
+        companySize: formData.companySize,
+        useCase: formData.interest,
+        subject,
+        pagePath,
       });
-
-      const data = await response.json();
       
-      if (response.ok) {
-        toast({
-          title: "Thank you for your interest!",
-          description: data.message || "Our sales team will contact you within 24 hours.",
-        });
+      toast({
+        title: "Thank you for your interest!",
+        description: "Our sales team will contact you within 24 hours.",
+      });
         
         // Reset form
         setFormData({
@@ -82,13 +75,6 @@ export default function ContactSales() {
         
         // Navigate to home after success
         setTimeout(() => navigate('/'), 2000);
-      } else {
-        toast({
-          title: "Submission failed",
-          description: data.error || "Failed to submit your inquiry. Please try again.",
-          variant: "destructive",
-        });
-      }
     } catch (error) {
       toast({
         title: "Error",
