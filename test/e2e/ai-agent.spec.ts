@@ -15,15 +15,23 @@ test.describe('AI Agent Tests', () => {
     await page.goto('/login');
     await page.fill('[data-testid="input-email"]', 'testuser@test.com');
     await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.click('[data-testid="button-login"]');
     
-    // Wait for login to complete (redirect to dashboard)
-    try {
-      await page.waitForURL('/dashboard', { timeout: 10000 });
-    } catch (e) {
-      // If redirect doesn't happen, check if we're logged in another way
-      console.log('Dashboard redirect timeout, checking authentication state...');
+    // Wait for the login XHR to complete and verify authentication
+    const [loginResponse] = await Promise.all([
+      page.waitForResponse(response => 
+        response.url().includes('/api/login') && response.request().method() === 'POST'
+      ),
+      page.click('[data-testid="button-login"]')
+    ]);
+    
+    // Verify login succeeded
+    if (!loginResponse.ok()) {
+      const responseBody = await loginResponse.text();
+      throw new Error(`Login failed: ${loginResponse.status()} - ${responseBody}`);
     }
+    
+    // Wait a moment for session cookie to be set
+    await page.waitForTimeout(500);
     
     // Get CSRF token using the authenticated page's request context
     const csrfResponse = await page.request.get('/api/csrf-token');
