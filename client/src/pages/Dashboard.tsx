@@ -109,7 +109,7 @@ export default function Dashboard() {
         description: aiPrompt,
         language: 'javascript',
         visibility: 'private'
-      });
+      }) as any;
 
       window.sessionStorage.setItem(`agent-prompt-${project.id}`, aiPrompt);
       const projectUrl = getProjectUrl(project, user?.username);

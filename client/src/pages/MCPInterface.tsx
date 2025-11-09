@@ -58,7 +58,7 @@ export default function MCPInterface() {
     setIsLoading(true);
     try {
       // Connect to MCP server first
-      const connection = await apiRequest('POST', `${MCP_SERVER_URL}/connect`, { sessionId: crypto.randomUUID() });
+      const connection = await apiRequest('POST', `${MCP_SERVER_URL}/connect`, { sessionId: crypto.randomUUID() }) as any;
       
       // List tools using MCP protocol (note: X-Session-Id custom header not supported by apiRequest)
       const result = await apiRequest('POST', `${MCP_SERVER_URL}/message`, {
@@ -67,7 +67,7 @@ export default function MCPInterface() {
         params: {},
         id: 1,
         sessionId: connection.sessionId, // Include session ID in body instead of header
-      });
+      }) as any;
       setTools(result.result?.tools || []);
       toast({
         title: 'Tools Loaded',
@@ -89,7 +89,7 @@ export default function MCPInterface() {
     setIsLoading(true);
     try {
       // Connect to MCP server first
-      const connection = await apiRequest('POST', `${MCP_SERVER_URL}/connect`, { sessionId: crypto.randomUUID() });
+      const connection = await apiRequest('POST', `${MCP_SERVER_URL}/connect`, { sessionId: crypto.randomUUID() }) as any;
       
       // List resources using MCP protocol (note: X-Session-Id custom header not supported by apiRequest)
       const result = await apiRequest('POST', `${MCP_SERVER_URL}/message`, {
@@ -98,7 +98,7 @@ export default function MCPInterface() {
         params: {},
         id: 1,
         sessionId: connection.sessionId, // Include session ID in body instead of header
-      });
+      }) as any;
       setResources(result.result?.resources || []);
       toast({
         title: 'Resources Loaded',
@@ -119,7 +119,7 @@ export default function MCPInterface() {
   const checkHealth = async () => {
     setIsLoading(true);
     try {
-      const data = await apiRequest('POST', `${MCP_SERVER_URL}/connect`, { sessionId: 'health-check' });
+      const data = await apiRequest('POST', `${MCP_SERVER_URL}/connect`, { sessionId: 'health-check' }) as any;
       setServerHealth({
         status: data.status || 'connected',
         capabilities: data.capabilities,
@@ -155,7 +155,7 @@ export default function MCPInterface() {
     
     try {
       const args = JSON.parse(toolArgs);
-      const result = await apiRequest('POST', `${MCP_SERVER_URL}/tools/${selectedTool}`, args);
+      const result = await apiRequest('POST', `${MCP_SERVER_URL}/tools/${selectedTool}`, args) as ExecutionResult;
       setExecutionResult(result);
       
       toast({

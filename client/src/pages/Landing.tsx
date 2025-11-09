@@ -157,7 +157,7 @@ export default function Landing() {
           description: description,
           language: 'javascript',
           visibility: 'private'
-        });
+        }) as any;
 
         window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
         const projectUrl = getProjectUrl(project, user?.username);
@@ -191,7 +191,7 @@ export default function Landing() {
     setIsSubmitting(true);
 
     try {
-      const data = await apiRequest('POST', '/api/newsletter/subscribe', { email });
+      const data = await apiRequest('POST', '/api/newsletter/subscribe', { email }) as any;
       toast({ title: "Success!", description: data.message || "You've been subscribed!" });
       setEmail('');
       setTimeout(() => navigate('/auth'), 1500);
