@@ -18,6 +18,7 @@ import { ECodeLoading } from '@/components/ECodeLoading';
 import { getProjectUrl, cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
+import { apiRequest } from '@/lib/queryClient';
 
 // Get personalized greeting based on time of day
 function getGreeting() {
@@ -102,45 +103,19 @@ export default function Dashboard() {
     setIsCreating(true);
 
     try {
-      // Get CSRF token first
-      const csrfResponse = await fetch('/api/csrf-token', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      const { csrfToken } = await csrfResponse.json();
-
-      // Create project with CSRF token
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: aiPrompt,
-          description: aiPrompt,
-          language: 'javascript',
-          visibility: 'private'
-        }),
+      // Create project with CSRF protection via apiRequest
+      const project = await apiRequest('POST', '/api/projects', {
+        name: aiPrompt,
+        description: aiPrompt,
+        language: 'javascript',
+        visibility: 'private'
       });
 
-      if (response.ok) {
-        const project = await response.json();
-        window.sessionStorage.setItem(`agent-prompt-${project.id}`, aiPrompt);
-        const projectUrl = getProjectUrl(project, user?.username);
-        setTimeout(() => {
-          window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(aiPrompt)}`;
-        }, 500);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        toast({
-          title: "Error",
-          description: errorData.message || "Failed to create project. Please try again.",
-          variant: "destructive"
-        });
-      }
+      window.sessionStorage.setItem(`agent-prompt-${project.id}`, aiPrompt);
+      const projectUrl = getProjectUrl(project, user?.username);
+      setTimeout(() => {
+        window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(aiPrompt)}`;
+      }, 500);
     } catch (error) {
       console.error('Failed to create project:', error);
       toast({

@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
 import { getProjectUrl } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import { 
   SiPython, SiJavascript, SiHtml5, SiCss3,
   SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
@@ -151,26 +152,18 @@ export default function Landing() {
     
     if (user) {
       try {
-        const response = await fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            name: description.slice(0, 30),
-            description: description,
-            language: 'javascript',
-            visibility: 'private'
-          }),
+        const project = await apiRequest('POST', '/api/projects', {
+          name: description.slice(0, 30),
+          description: description,
+          language: 'javascript',
+          visibility: 'private'
         });
 
-        if (response.ok) {
-          const project = await response.json();
-          window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
-          const projectUrl = getProjectUrl(project, user?.username);
-          setTimeout(() => {
-            window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`;
-          }, 500);
-        }
+        window.sessionStorage.setItem(`agent-prompt-${project.id}`, description);
+        const projectUrl = getProjectUrl(project, user?.username);
+        setTimeout(() => {
+          window.location.href = `${projectUrl}?agent=true&prompt=${encodeURIComponent(description)}`;
+        }, 500);
       } catch (error) {
         console.error('Failed to create project:', error);
         toast({
@@ -198,21 +191,10 @@ export default function Landing() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast({ title: "Success!", description: data.message });
-        setEmail('');
-        setTimeout(() => navigate('/auth'), 1500);
-      } else {
-        toast({ title: "Error", description: data.message || 'Failed to subscribe', variant: "destructive" });
-      }
+      const data = await apiRequest('POST', '/api/newsletter/subscribe', { email });
+      toast({ title: "Success!", description: data.message || "You've been subscribed!" });
+      setEmail('');
+      setTimeout(() => navigate('/auth'), 1500);
     } catch (error) {
       toast({ title: "Error", description: "Failed to subscribe. Please try again.", variant: "destructive" });
     } finally {

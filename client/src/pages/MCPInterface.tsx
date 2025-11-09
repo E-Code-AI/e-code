@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { 
   Terminal, FileText, Database, Globe, GitBranch, 
   Play, Loader2, CheckCircle, AlertCircle, Code,
@@ -57,28 +58,16 @@ export default function MCPInterface() {
     setIsLoading(true);
     try {
       // Connect to MCP server first
-      const connectResponse = await fetch(`${MCP_SERVER_URL}/connect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: crypto.randomUUID() }),
-      });
-      const connection = await connectResponse.json();
+      const connection = await apiRequest('POST', `${MCP_SERVER_URL}/connect`, { sessionId: crypto.randomUUID() });
       
-      // List tools using MCP protocol
-      const response = await fetch(`${MCP_SERVER_URL}/message`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Session-Id': connection.sessionId,
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'tools/list',
-          params: {},
-          id: 1,
-        }),
+      // List tools using MCP protocol (note: X-Session-Id custom header not supported by apiRequest)
+      const result = await apiRequest('POST', `${MCP_SERVER_URL}/message`, {
+        jsonrpc: '2.0',
+        method: 'tools/list',
+        params: {},
+        id: 1,
+        sessionId: connection.sessionId, // Include session ID in body instead of header
       });
-      const result = await response.json();
       setTools(result.result?.tools || []);
       toast({
         title: 'Tools Loaded',
@@ -100,28 +89,16 @@ export default function MCPInterface() {
     setIsLoading(true);
     try {
       // Connect to MCP server first
-      const connectResponse = await fetch(`${MCP_SERVER_URL}/connect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: crypto.randomUUID() }),
-      });
-      const connection = await connectResponse.json();
+      const connection = await apiRequest('POST', `${MCP_SERVER_URL}/connect`, { sessionId: crypto.randomUUID() });
       
-      // List resources using MCP protocol
-      const response = await fetch(`${MCP_SERVER_URL}/message`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Session-Id': connection.sessionId,
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'resources/list',
-          params: {},
-          id: 1,
-        }),
+      // List resources using MCP protocol (note: X-Session-Id custom header not supported by apiRequest)
+      const result = await apiRequest('POST', `${MCP_SERVER_URL}/message`, {
+        jsonrpc: '2.0',
+        method: 'resources/list',
+        params: {},
+        id: 1,
+        sessionId: connection.sessionId, // Include session ID in body instead of header
       });
-      const result = await response.json();
       setResources(result.result?.resources || []);
       toast({
         title: 'Resources Loaded',
@@ -142,12 +119,7 @@ export default function MCPInterface() {
   const checkHealth = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${MCP_SERVER_URL}/connect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: 'health-check' }),
-      });
-      const data = await response.json();
+      const data = await apiRequest('POST', `${MCP_SERVER_URL}/connect`, { sessionId: 'health-check' });
       setServerHealth({
         status: data.status || 'connected',
         capabilities: data.capabilities,
@@ -183,13 +155,7 @@ export default function MCPInterface() {
     
     try {
       const args = JSON.parse(toolArgs);
-      const response = await fetch(`${MCP_SERVER_URL}/tools/${selectedTool}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(args),
-      });
-      
-      const result = await response.json();
+      const result = await apiRequest('POST', `${MCP_SERVER_URL}/tools/${selectedTool}`, args);
       setExecutionResult(result);
       
       toast({
