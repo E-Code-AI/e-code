@@ -21,13 +21,13 @@ export async function seedDatabase() {
       return;
     }
 
-    // Create test user with secure random password
-    const randomPassword = randomBytes(32).toString("hex");
-    const hashedPassword = await hashPassword(randomPassword);
+    // Create test user with deterministic password for E2E testing
+    const testPassword = process.env.TEST_USER_PASSWORD || "testpass123";
+    const hashedPassword = await hashPassword(testPassword);
     const testUser = await storage.createUser({
       username: "testuser",
-      password: hashedPassword,
-      email: "test@example.com",
+      passwordHash: hashedPassword,
+      email: "testuser@test.com",
       displayName: "Test User",
     });
 
@@ -36,11 +36,11 @@ export async function seedDatabase() {
       emailVerified: true
     });
 
-    console.log("✅ Test user created successfully with secure random password:");
+    console.log("✅ Test user created successfully for E2E testing:");
     console.log("   Username: testuser");
-    console.log("   Password: [Randomly generated - not logged for security]");
-    console.log("   Email: test@example.com");
-    console.log("   Note: Use the login form to authenticate in development");
+    console.log("   Email: testuser@test.com");
+    console.log("   Password: testpass123");
+    console.log("   Note: This is a test account for automated testing only");
     
     // Also update admin user if exists to have email verified for development
     const adminUser = await storage.getUserByUsername("admin");
