@@ -1,20 +1,25 @@
 /**
- * Agent Testing Routes
+ * Agent Testing Routes (ADMIN ONLY)
  * 
  * API endpoints for Phase 2 browser testing and quality infrastructure.
  * 
+ * SECURITY: These routes are restricted to admin users only because:
+ * 1. Playwright test execution requires trusted code (similar to GitHub Actions, Replit Agent)
+ * 2. Admin users can execute arbitrary test scripts within the allowlisted domain boundary
+ * 3. This follows industry standard security models for development platforms
+ * 
  * Routes:
- * - POST /api/agent/test/execute - Execute a Playwright test
- * - POST /api/agent/test/screenshot - Take a screenshot
- * - GET  /api/agent/test/history/:sessionId - Get test execution history
- * - GET  /api/agent/test/artifacts/:executionId - Get test artifacts
- * - POST /api/agent/selector/generate - Generate element selectors
- * - GET  /api/agent/selector/history/:sessionId - Get selector history
- * - POST /api/agent/recording/start - Start recording
- * - POST /api/agent/recording/stop/:recordingId - Stop recording
- * - POST /api/agent/recording/marker/:recordingId - Add timeline marker
- * - GET  /api/agent/recording/:recordingId - Get recording
- * - GET  /api/agent/recording/session/:sessionId - Get session recordings
+ * - POST /api/admin/agent/test/execute - Execute a Playwright test
+ * - POST /api/admin/agent/test/screenshot - Take a screenshot
+ * - GET  /api/admin/agent/test/history/:sessionId - Get test execution history
+ * - GET  /api/admin/agent/test/artifacts/:executionId - Get test artifacts
+ * - POST /api/admin/agent/selector/generate - Generate element selectors
+ * - GET  /api/admin/agent/selector/history/:sessionId - Get selector history
+ * - POST /api/admin/agent/recording/start - Start recording
+ * - POST /api/admin/agent/recording/stop/:recordingId - Stop recording
+ * - POST /api/admin/agent/recording/marker/:recordingId - Add timeline marker
+ * - GET  /api/admin/agent/recording/:recordingId - Get recording
+ * - GET  /api/admin/agent/recording/session/:sessionId - Get session recordings
  * 
  * Fortune 500 Engineering Standards
  */
@@ -26,6 +31,27 @@ import { agentRecording } from '../services/agent-recording.service';
 import { z } from 'zod';
 
 const router = Router();
+
+// SECURITY: Admin-only middleware - all testing routes require admin access
+router.use((req: Request, res: Response, next) => {
+  const user = req.user as any;
+  
+  if (!user) {
+    return res.status(401).json({ 
+      success: false, 
+      error: 'Authentication required for testing features' 
+    });
+  }
+  
+  if (!user.isAdmin) {
+    return res.status(403).json({ 
+      success: false, 
+      error: 'Admin access required. Testing features execute trusted code and require elevated permissions.' 
+    });
+  }
+  
+  next();
+});
 
 // Validation schemas
 const executeTestSchema = z.object({

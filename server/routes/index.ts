@@ -92,8 +92,8 @@ export class MainRouter {
     // Autonomous agent routes (authenticated users) - single mount point
     app.use('/api/agent', agentAutonomousRouter);
     
-    // Agent testing routes (browser testing, element selector, recording) - Phase 2
-    app.use('/api/agent', agentTestingRouter);
+    // Agent testing routes (browser testing, element selector, recording) - Phase 2 (ADMIN ONLY)
+    app.use('/api/admin/agent', agentTestingRouter);
     
     // Test agent routes (for testing without auth)
     app.use(testAgentRouter);

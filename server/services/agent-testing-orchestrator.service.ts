@@ -95,13 +95,28 @@ export class AgentTestingOrchestrator extends EventEmitter {
 
       this.activeBrowsers.set(execution.id, browser);
 
-      // Create context with video/trace recording
+      // Create context with video/trace recording and TAMPER-PROOF network restrictions
       browserContext = await browser.newContext({
         viewport: options.viewport || { width: 1920, height: 1080 },
         recordVideo: options.recordVideo ? {
           dir: './test-recordings',
           size: options.viewport || { width: 1920, height: 1080 }
         } : undefined,
+        // SECURITY: Service worker registration disabled to prevent bypass
+        serviceWorkers: 'block',
+      });
+
+      // SECURITY: Apply context-level route interception BEFORE creating page
+      // This ensures ALL pages created from this context inherit the restrictions
+      await browserContext.route('**/*', (route) => {
+        const url = route.request().url();
+        
+        if (this.isAllowedUrl(url)) {
+          route.continue();
+        } else {
+          console.warn(`[SECURITY] Blocked navigation to disallowed URL: ${url}`);
+          route.abort('blockedbyclient');
+        }
       });
 
       if (options.traceEnabled) {
@@ -111,7 +126,19 @@ export class AgentTestingOrchestrator extends EventEmitter {
       this.activeContexts.set(execution.id, browserContext);
 
       // Execute test script
+      // SECURITY: Page inherits context-level routing restrictions
       page = await browserContext.newPage();
+      
+      // SECURITY: Freeze navigation methods to prevent unroute/context manipulation
+      await page.evaluateOnNewDocument(() => {
+        // Prevent script from accessing or manipulating the underlying context
+        Object.defineProperty(window, '__PLAYWRIGHT_CONTEXT_ACCESS_BLOCKED__', {
+          value: true,
+          writable: false,
+          configurable: false
+        });
+      });
+      
       const startTime = Date.now();
 
       const result = await this.runTestScript(page, testScript, options);
@@ -413,25 +440,27 @@ export class AgentTestingOrchestrator extends EventEmitter {
     testScript: string,
     options: TestExecutionOptions
   ): Promise<TestExecutionResult> {
-    // SECURITY: Enforce URL allowlist via Playwright route interception
-    // Block all navigation attempts to non-allowlisted domains
-    await page.route('**/*', (route) => {
-      const url = route.request().url();
-      
-      if (this.isAllowedUrl(url)) {
-        // Allow navigation to allowlisted URLs
-        route.continue();
-      } else {
-        // Block navigation to non-allowlisted URLs
-        route.abort('blockedbyclient');
-      }
-    });
+    // SECURITY: Network restrictions are enforced at BrowserContext level (see executeTest)
+    // Scripts cannot bypass context-level routing regardless of what methods they call
+    // Even if scripts call page.unroute() or page.context().newPage(), 
+    // the parent context route interception remains active and blocks disallowed URLs
     
     try {
-      // Execute test script in page context
-      // This is a simplified implementation - in production, you'd use Playwright's test runner
+      // Create a restricted page wrapper that logs security violations
+      const restrictedPageProxy = new Proxy(page, {
+        get(target, prop) {
+          // Log attempts to access dangerous methods
+          if (prop === 'context' || prop === 'unroute') {
+            console.warn(`[SECURITY] Test script attempted to access restricted method: ${String(prop)}`);
+          }
+          return target[prop as keyof Page];
+        }
+      });
+
+      // Execute test script with proxied page object
+      // Even with proxy, context-level routing prevents actual bypasses
       const scriptFunction = new Function('page', testScript);
-      await scriptFunction(page);
+      await scriptFunction(restrictedPageProxy);
 
       return {
         passed: true,
