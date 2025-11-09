@@ -198,7 +198,7 @@ export function PublicNavbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      <div className="hidden md:block border-b border-[var(--ecode-border)] dark:border-white/10 bg-[#ffffff] dark:bg-gradient-to-r dark:from-sky-500/20 dark:via-indigo-500/20 dark:to-purple-500/20">
+      <div className="hidden md:block border-b border-[var(--ecode-border)] dark:border-white/10 bg-background dark:bg-gradient-to-r dark:from-sky-500/20 dark:via-indigo-500/20 dark:to-purple-500/20">
         <div className="container-responsive flex h-10 items-center justify-between text-xs text-[var(--ecode-text)] dark:text-slate-100">
           <div className="flex items-center gap-3">
             <Badge variant="secondary" className="bg-[var(--ecode-accent)]/10 text-[var(--ecode-accent)] dark:bg-white/15 dark:text-white border-[var(--ecode-accent)]/20 dark:border-white/25 uppercase tracking-[0.2em]">
@@ -216,7 +216,7 @@ export function PublicNavbar() {
         </div>
       </div>
 
-      <nav className="relative border-b border-[var(--ecode-border)] bg-[#ffffff] dark:border-white/10 dark:bg-slate-950/75 backdrop-blur-xl">
+      <nav className="relative border-b border-[var(--ecode-border)] bg-background dark:border-white/10 dark:bg-slate-950/75 backdrop-blur-xl">
         <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-100" aria-hidden />
         <div className="container-responsive relative">
           <div className="flex h-16 items-center justify-between">
