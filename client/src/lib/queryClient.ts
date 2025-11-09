@@ -36,7 +36,7 @@ export async function apiRequest(
   url: string,
   body?: any,
   options?: RequestInit,
-): Promise<Response> {
+): Promise<any> {
   // For state-changing methods, ensure we have a CSRF token
   const needsCsrf = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase());
   
@@ -69,7 +69,11 @@ export async function apiRequest(
     csrfToken = newToken;
   }
 
-  return res;
+  // Throw if response not ok (following TanStack Query pattern)
+  await throwIfResNotOk(res);
+  
+  // Auto-parse JSON response (following TanStack Query queryFn pattern)
+  return await res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
