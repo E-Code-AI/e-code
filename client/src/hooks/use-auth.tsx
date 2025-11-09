@@ -19,7 +19,10 @@ type AuthContextType = {
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
 };
 
-type LoginData = Pick<InsertUser, "username" | "password">;
+type LoginData = {
+  email: string;
+  password: string;
+};
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -55,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: `Welcome back, ${user.username}!`,
       });
       // If user is admin, redirect to admin page, otherwise dashboard
-      if (user.role === 'admin') {
+      if (user.isAdmin) {
         window.location.href = '/admin/chatgpt';
       } else {
         window.location.href = '/dashboard';

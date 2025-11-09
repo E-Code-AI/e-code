@@ -207,6 +207,10 @@ export class AuthRouter {
 
     // Login endpoint
     this.router.post("/api/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
+      // Security: Only log non-sensitive fields
+      console.log('[LOGIN] Authentication attempt - Email:', req.body?.email);
+      console.log('[LOGIN] Password present:', req.body?.password ? 'YES' : 'NO');
+      
       passport.authenticate('local', (err: any, user: User, info: any) => {
         if (err) {
           console.error('Login error:', err);
