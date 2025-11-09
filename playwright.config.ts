@@ -17,11 +17,12 @@ export default defineConfig({
   
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:5000',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    actionTimeout: 15000,
-    navigationTimeout: 30000,
+    trace: process.env.TRACE || 'on-first-retry',
+    screenshot: process.env.SCREENSHOT || 'only-on-failure',
+    video: process.env.VIDEO || 'retain-on-failure',
+    actionTimeout: parseInt(process.env.ACTION_TIMEOUT || '15000'),
+    navigationTimeout: parseInt(process.env.NAV_TIMEOUT || '30000'),
+    storageState: process.env.STORAGE_STATE,
   },
 
   projects: [
