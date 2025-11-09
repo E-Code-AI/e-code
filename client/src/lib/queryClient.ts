@@ -93,21 +93,35 @@ export async function apiRequest<T = any>(
   // Throw if response not ok (following TanStack Query pattern)
   await throwIfResNotOk(res);
   
-  // Handle 204 No Content and other empty responses
-  if (res.status === 204 || res.headers.get('content-length') === '0') {
-    return undefined as T; // Safe for void types
+  // Handle responses that should not have a body (204, 205, 304)
+  // 204 No Content, 205 Reset Content, 304 Not Modified
+  if (res.status === 204 || res.status === 205 || res.status === 304) {
+    return undefined as T;
+  }
+  
+  // Read the response text once to avoid multiple consumptions
+  const text = await res.text();
+  
+  // If response is truly empty, return undefined
+  if (!text || text.length === 0) {
+    return undefined as T;
   }
   
   // Check if response has JSON content type
   const contentType = res.headers.get('content-type');
-  if (!contentType?.includes('application/json')) {
-    // For non-JSON responses, return empty object or text
-    const text = await res.text();
-    return (text ? { data: text } : {}) as T;
+  if (contentType?.includes('application/json')) {
+    // Parse JSON only if we have JSON content type
+    try {
+      return JSON.parse(text) as T;
+    } catch (error) {
+      // If JSON parsing fails despite Content-Type header, throw
+      throw new Error(`Failed to parse JSON response: ${error}`);
+    }
   }
   
-  // Auto-parse JSON response (following TanStack Query queryFn pattern)
-  return await res.json() as T;
+  // For non-JSON responses, return the text as-is
+  // This respects the type contract: if caller expects string, they get string
+  return text as T;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
