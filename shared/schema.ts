@@ -2318,6 +2318,113 @@ export const testCases = pgTable('test_cases', {
   index('test_cases_file_path_idx').on(table.filePath),
 ]);
 
+// ============================================================================
+// PHASE 2: BROWSER TESTING & QUALITY INFRASTRUCTURE
+// ============================================================================
+
+// Browser Test Executions - Agent-driven Playwright test executions
+export const browserTestExecutions = pgTable('browser_test_executions', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  testType: text('test_type').notNull(), // 'e2e', 'visual_regression', 'performance', 'accessibility', 'cross_browser'
+  browser: text('browser').notNull(), // 'chromium', 'firefox', 'webkit'
+  viewport: jsonb('viewport').$type<{ width: number; height: number; }>(),
+  testScript: text('test_script'), // Playwright test code
+  status: operationStatusEnum('status').notNull().default('pending'),
+  result: jsonb('result').$type<{
+    passed: boolean;
+    errors?: Array<{ message: string; stack?: string; }>;
+    assertions?: number;
+    performance?: { fcp: number; lcp: number; tti: number; };
+    accessibility?: { violations: number; issues: any[]; };
+  }>(),
+  screenshots: text('screenshots').array(), // Array of S3/storage URLs
+  videoUrl: text('video_url'),
+  traceUrl: text('trace_url'), // Playwright trace file URL
+  duration: integer('duration'), // milliseconds
+  startedAt: timestamp('started_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+}, (table) => [
+  index('browser_test_executions_session_id_idx').on(table.sessionId),
+  index('browser_test_executions_project_id_idx').on(table.projectId),
+  index('browser_test_executions_status_idx').on(table.status),
+  index('browser_test_executions_test_type_idx').on(table.testType),
+]);
+
+// Test Artifacts - Screenshots, videos, traces from test executions
+export const testArtifacts = pgTable('test_artifacts', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  executionId: varchar('execution_id').notNull().references(() => browserTestExecutions.id, { onDelete: 'cascade' }),
+  artifactType: text('artifact_type').notNull(), // 'screenshot', 'video', 'trace', 'har', 'coverage'
+  fileName: text('file_name').notNull(),
+  storageUrl: text('storage_url').notNull(), // S3/object storage URL
+  mimeType: text('mime_type').notNull(),
+  size: integer('size').notNull(), // bytes
+  metadata: jsonb('metadata').$type<{
+    width?: number;
+    height?: number;
+    duration?: number;
+    timestamp?: string;
+    stepName?: string;
+  }>(),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => [
+  index('test_artifacts_execution_id_idx').on(table.executionId),
+  index('test_artifacts_type_idx').on(table.artifactType),
+]);
+
+// Element Selectors - Visual element picker results
+export const elementSelectors = pgTable('element_selectors', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  elementName: text('element_name').notNull(),
+  cssSelector: text('css_selector').notNull(),
+  xpathSelector: text('xpath_selector'),
+  testId: text('test_id'), // data-testid attribute
+  elementType: text('element_type'), // 'button', 'input', 'link', 'div', etc.
+  elementText: text('element_text'),
+  elementAttributes: jsonb('element_attributes').$type<Record<string, string>>(),
+  screenshotUrl: text('screenshot_url'), // Screenshot with element highlighted
+  confidence: real('confidence'), // 0-1 score for selector reliability
+  pageUrl: text('page_url').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => [
+  index('element_selectors_session_id_idx').on(table.sessionId),
+  index('element_selectors_project_id_idx').on(table.projectId),
+  index('element_selectors_page_url_idx').on(table.pageUrl),
+]);
+
+// Session Recordings - Video recordings of agent sessions
+export const sessionRecordings = pgTable('session_recordings', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: varchar('session_id').notNull().references(() => agentSessions.id),
+  projectId: varchar('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  recordingType: text('recording_type').notNull(), // 'screen', 'browser', 'terminal'
+  videoUrl: text('video_url').notNull(),
+  thumbnailUrl: text('thumbnail_url'),
+  duration: integer('duration').notNull(), // milliseconds
+  size: integer('size').notNull(), // bytes
+  resolution: jsonb('resolution').$type<{ width: number; height: number; }>(),
+  fps: integer('fps').default(30),
+  timeline: jsonb('timeline').$type<Array<{
+    timestamp: number; // milliseconds from start
+    actionType: string; // 'file_edit', 'command_run', 'test_execute', etc.
+    description: string;
+    screenshotUrl?: string;
+  }>>(),
+  status: text('status').notNull().default('processing'), // 'processing', 'ready', 'failed'
+  startedAt: timestamp('started_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+  expiresAt: timestamp('expires_at'), // Auto-delete old recordings
+}, (table) => [
+  index('session_recordings_session_id_idx').on(table.sessionId),
+  index('session_recordings_project_id_idx').on(table.projectId),
+  index('session_recordings_status_idx').on(table.status),
+]);
+
 // Security Scans - For Security Scanner Panel
 export const securityScans = pgTable('security_scans', {
   id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -2566,6 +2673,51 @@ export type InsertTestRun = z.infer<typeof insertTestRunSchema>;
 
 export type TestCase = typeof testCases.$inferSelect;
 export type InsertTestCase = z.infer<typeof insertTestCaseSchema>;
+
+// Phase 2: Browser Testing & Quality Infrastructure
+export const insertBrowserTestExecutionSchema = createInsertSchema(browserTestExecutions).omit({
+  id: true,
+  startedAt: true,
+  completedAt: true,
+});
+
+export const insertTestArtifactSchema = createInsertSchema(testArtifacts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertElementSelectorSchema = createInsertSchema(elementSelectors).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSessionRecordingSchema = createInsertSchema(sessionRecordings).omit({
+  id: true,
+  startedAt: true,
+  completedAt: true,
+});
+
+export const insertAutonomousActionSchema = createInsertSchema(autonomousActions).omit({
+  id: true,
+  executedAt: true,
+  completedAt: true,
+  rolledBackAt: true,
+});
+
+export type BrowserTestExecution = typeof browserTestExecutions.$inferSelect;
+export type InsertBrowserTestExecution = z.infer<typeof insertBrowserTestExecutionSchema>;
+
+export type TestArtifact = typeof testArtifacts.$inferSelect;
+export type InsertTestArtifact = z.infer<typeof insertTestArtifactSchema>;
+
+export type ElementSelector = typeof elementSelectors.$inferSelect;
+export type InsertElementSelector = z.infer<typeof insertElementSelectorSchema>;
+
+export type SessionRecording = typeof sessionRecordings.$inferSelect;
+export type InsertSessionRecording = z.infer<typeof insertSessionRecordingSchema>;
+
+export type AutonomousAction = typeof autonomousActions.$inferSelect;
+export type InsertAutonomousAction = z.infer<typeof insertAutonomousActionSchema>;
 
 export type SecurityScan = typeof securityScans.$inferSelect;
 export type InsertSecurityScan = z.infer<typeof insertSecurityScanSchema>;
