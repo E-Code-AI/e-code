@@ -116,13 +116,13 @@ export class RealObjectStorageService {
 
       // Track in database if project ID provided
       if (projectId) {
-        const buckets = await dbStorage.getProjectObjectStorageBuckets(projectId);
-        let bucketRecord = buckets.find(b => b.name === 'replit-storage');
+        const buckets = await dbStorage.getProjectObjectStorageBuckets(projectId.toString());
+        let bucketRecord = buckets.find(b => b.bucketName === 'replit-storage');
         
         if (!bucketRecord) {
           bucketRecord = await dbStorage.createObjectStorageBucket({
-            projectId,
-            name: 'replit-storage',
+            projectId: projectId.toString(),
+            bucketName: 'replit-storage',
             region: 'replit',
             storageClass: 'STANDARD',
             metadata: {}
@@ -131,11 +131,13 @@ export class RealObjectStorageService {
 
         await dbStorage.createObjectStorageFile({
           bucketId: bucketRecord.id,
-          key,
+          fileName: key,
+          filePath: key,
           size: storageObject.size,
           contentType: storageObject.contentType,
           metadata: options.metadata || {},
-          url: storageObject.url || null
+          url: storageObject.url || '',
+          uploadedBy: userId || 1
         });
 
         // Track usage for billing
