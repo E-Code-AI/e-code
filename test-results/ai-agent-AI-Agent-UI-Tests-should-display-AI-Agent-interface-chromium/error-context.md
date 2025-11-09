@@ -1,0 +1,94 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - region "Notifications (F8)":
+    - list
+  - generic [ref=e5]:
+    - generic [ref=e7]:
+      - button "Back to home" [ref=e8] [cursor=pointer]:
+        - img [ref=e9]
+        - generic [ref=e11]: Back to home
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - img [ref=e14]
+          - generic [ref=e18]: E-Code
+        - paragraph [ref=e19]: Enterprise Development Platform
+      - generic [ref=e20]:
+        - heading "Welcome back" [level=2] [ref=e21]
+        - paragraph [ref=e22]: Sign in to continue building amazing applications
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - text: Username or Email
+            - generic [ref=e26]:
+              - img [ref=e27]
+              - textbox "Username or Email" [ref=e30]:
+                - /placeholder: Enter your username or email
+          - generic [ref=e31]:
+            - generic [ref=e32]:
+              - generic [ref=e33]: Password
+              - link "Forgot password?" [ref=e34] [cursor=pointer]:
+                - /url: /forgot-password
+            - generic [ref=e35]:
+              - img [ref=e36]
+              - textbox "Password" [ref=e39]:
+                - /placeholder: Enter your password
+              - button [ref=e40] [cursor=pointer]:
+                - img [ref=e41]
+          - generic [ref=e45]:
+            - checkbox "Remember me for 30 days" [ref=e46] [cursor=pointer]
+            - checkbox
+            - generic [ref=e47] [cursor=pointer]: Remember me for 30 days
+        - button "Sign in" [ref=e48] [cursor=pointer]:
+          - text: Sign in
+          - img [ref=e49]
+        - generic [ref=e54]: Or continue with
+        - generic [ref=e55]:
+          - button [ref=e56] [cursor=pointer]:
+            - img [ref=e57]
+          - button [ref=e60] [cursor=pointer]:
+            - img [ref=e61]
+          - button [ref=e66] [cursor=pointer]:
+            - img [ref=e67]
+      - paragraph [ref=e69]:
+        - text: Don't have an account?
+        - link "Sign up for free" [ref=e70] [cursor=pointer]:
+          - /url: /register
+      - paragraph [ref=e71]:
+        - text: By signing in, you agree to our
+        - link "Terms of Service" [ref=e72] [cursor=pointer]:
+          - /url: /terms
+        - text: and
+        - link "Privacy Policy" [ref=e73] [cursor=pointer]:
+          - /url: /privacy
+    - generic [ref=e74]:
+      - img "Modern Software Development" [ref=e76]
+      - generic [ref=e79]:
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - img [ref=e82]
+            - generic [ref=e84]: AI-Powered Development
+          - heading "Build faster with enterprise-grade tools" [level=2] [ref=e85]
+          - paragraph [ref=e86]: Join millions of developers using E-Code to ship production-ready applications 10x faster.
+        - generic [ref=e87]:
+          - generic [ref=e88]:
+            - img [ref=e90]
+            - generic [ref=e92]: SOC 2 Type II Certified
+          - generic [ref=e93]:
+            - img [ref=e95]
+            - generic [ref=e97]: AI Agent builds complete apps
+          - generic [ref=e98]:
+            - img [ref=e100]
+            - generic [ref=e103]: Support for 50+ languages
+          - generic [ref=e104]:
+            - img [ref=e106]
+            - generic [ref=e109]: 99.99% uptime guaranteed
+        - generic [ref=e110]:
+          - generic [ref=e111]:
+            - generic [ref=e112]: 2M+
+            - generic [ref=e113]: Active developers
+          - generic [ref=e114]:
+            - generic [ref=e115]: 10M+
+            - generic [ref=e116]: Apps deployed
+```

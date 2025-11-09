@@ -1,0 +1,649 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - region "Notifications (F8)":
+    - list
+  - generic [ref=e5]:
+    - banner [ref=e8]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]: NEW
+          - paragraph [ref=e13]: Introducing E-Code Enterprise Cloud with dedicated AI governance and auditability.
+        - button "Talk to an expert" [ref=e14] [cursor=pointer]:
+          - text: Talk to an expert
+          - img [ref=e15]
+      - navigation [ref=e17]:
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - link "E-Code" [ref=e21] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e23]:
+                - img [ref=e24]
+                - generic [ref=e28]: E-Code
+            - navigation "Main" [ref=e30]:
+              - list [ref=e32]:
+                - listitem [ref=e33]:
+                  - button "Product" [ref=e34] [cursor=pointer]:
+                    - text: Product
+                    - img [ref=e35]
+                - listitem [ref=e37]:
+                  - button "Solutions" [ref=e38] [cursor=pointer]:
+                    - text: Solutions
+                    - img [ref=e39]
+                - listitem [ref=e41]:
+                  - button "Resources" [ref=e42] [cursor=pointer]:
+                    - text: Resources
+                    - img [ref=e43]
+                - listitem [ref=e45]:
+                  - button "Company" [ref=e46] [cursor=pointer]:
+                    - text: Company
+                    - img [ref=e47]
+                - listitem [ref=e49]:
+                  - link "Pricing" [ref=e50] [cursor=pointer]:
+                    - /url: /pricing
+                - listitem [ref=e51]:
+                  - link "Teams" [ref=e52] [cursor=pointer]:
+                    - /url: /team
+          - generic [ref=e53]:
+            - button "System" [ref=e54] [cursor=pointer]:
+              - img [ref=e55]
+              - generic [ref=e57]: System
+            - button "Log in" [ref=e58] [cursor=pointer]:
+              - img [ref=e59]
+              - text: Log in
+            - button "Get started" [ref=e62] [cursor=pointer]
+    - main [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e65]:
+          - img "Cloud Computing Technology" [ref=e67]
+          - generic [ref=e71]:
+            - generic [ref=e73]:
+              - img [ref=e74]
+              - text: AI-Powered Enterprise Development Platform
+              - img [ref=e76]
+            - heading "Build & Deploy Production Apps in Minutes" [level=1] [ref=e78]:
+              - text: Build & Deploy
+              - text: Production Apps
+              - text: in Minutes
+            - paragraph [ref=e79]: The only platform that combines AI agents, cloud infrastructure, and enterprise security to deliver Fortune 500 development velocity to every team.
+            - generic [ref=e80]:
+              - generic [ref=e84]:
+                - textbox "Describe your app idea in any language..." [ref=e86]
+                - button "Build Now" [disabled]:
+                  - img
+                  - text: Build Now
+              - generic [ref=e87]:
+                - paragraph [ref=e88]: "Try these popular examples:"
+                - generic [ref=e89]:
+                  - button "E-commerce store with Stripe payments" [ref=e90] [cursor=pointer]:
+                    - img [ref=e92]
+                    - generic [ref=e96]: E-commerce store with Stripe payments
+                  - button "Real-time chat app with websockets" [ref=e97] [cursor=pointer]:
+                    - img [ref=e99]
+                    - generic [ref=e101]: Real-time chat app with websockets
+                  - button "AI chatbot with OpenAI GPT-4" [ref=e102] [cursor=pointer]:
+                    - img [ref=e104]
+                    - generic [ref=e107]: AI chatbot with OpenAI GPT-4
+                  - button "Social media dashboard with analytics" [ref=e108] [cursor=pointer]:
+                    - img [ref=e110]
+                    - generic [ref=e113]: Social media dashboard with analytics
+                  - button "SaaS landing page with auth" [ref=e114] [cursor=pointer]:
+                    - img [ref=e116]
+                    - generic [ref=e119]: SaaS landing page with auth
+                  - button "Project management tool like Jira" [ref=e120] [cursor=pointer]:
+                    - img [ref=e122]
+                    - generic [ref=e125]: Project management tool like Jira
+              - generic [ref=e126]:
+                - generic [ref=e127]:
+                  - img [ref=e128]
+                  - text: No credit card required
+                - generic [ref=e131]:
+                  - img [ref=e132]
+                  - text: Deploy instantly
+                - generic [ref=e135]:
+                  - img [ref=e136]
+                  - text: Scale to millions
+            - generic [ref=e139]:
+              - button "Watch Demo (2 min)" [ref=e140] [cursor=pointer]:
+                - img [ref=e141]
+                - text: Watch Demo (2 min)
+              - button "View Pricing" [ref=e144] [cursor=pointer]:
+                - text: View Pricing
+                - img [ref=e145]
+          - img [ref=e148]
+        - generic [ref=e152]:
+          - generic [ref=e153]:
+            - img [ref=e155]
+            - generic [ref=e160]: 2M+
+            - generic [ref=e161]: Active Developers
+          - generic [ref=e162]:
+            - img [ref=e164]
+            - generic [ref=e169]: 10M+
+            - generic [ref=e170]: Apps Deployed
+          - generic [ref=e171]:
+            - img [ref=e173]
+            - generic [ref=e178]: 5B+
+            - generic [ref=e179]: Lines of Code
+          - generic [ref=e180]:
+            - img [ref=e182]
+            - generic [ref=e185]: 99.99%
+            - generic [ref=e186]: Uptime SLA
+        - generic [ref=e188]:
+          - generic [ref=e189]:
+            - heading "See E-Code Platform in Action" [level=2] [ref=e190]
+            - paragraph [ref=e191]: "Watch a real demo: Build and deploy a full-stack application in under 2 minutes using AI agents"
+          - generic [ref=e192]:
+            - generic [ref=e194]:
+              - generic [ref=e195]: Your browser does not support the video tag.
+              - button [ref=e197] [cursor=pointer]:
+                - img [ref=e199]
+              - generic [ref=e201]:
+                - button [ref=e202] [cursor=pointer]:
+                  - img [ref=e203]
+                - button [ref=e207] [cursor=pointer]:
+                  - img [ref=e208]
+            - generic [ref=e213]:
+              - heading "Live Platform Demo" [level=3] [ref=e214]
+              - paragraph [ref=e215]: Watch how E-Code Platform's AI agent builds a complete full-stack application with database, authentication, and deployment - all from a single prompt
+              - generic [ref=e216]:
+                - generic [ref=e217]: AI Code Generation
+                - generic [ref=e218]: Real-time Preview
+                - generic [ref=e219]: Instant Deployment
+                - generic [ref=e220]: Database Setup
+        - generic [ref=e222]:
+          - generic [ref=e223]:
+            - heading "Built with E-Code Platform" [level=2] [ref=e224]
+            - paragraph [ref=e225]: Real production applications built by our community in hours, not months
+          - generic [ref=e226]:
+            - generic [ref=e228] [cursor=pointer]:
+              - generic [ref=e229]:
+                - img "TechStore Pro" [ref=e230]
+                - generic [ref=e232]:
+                  - heading "TechStore Pro" [level=3] [ref=e233]
+                  - paragraph [ref=e234]: Built by StartupX
+              - generic [ref=e235]:
+                - paragraph [ref=e236]: Full-featured e-commerce platform with 50K+ daily transactions
+                - generic [ref=e237]:
+                  - generic [ref=e238]: React
+                  - generic [ref=e239]: Node.js
+                  - generic [ref=e240]: PostgreSQL
+                  - generic [ref=e241]: Stripe
+                - generic [ref=e242]:
+                  - generic [ref=e243]:
+                    - generic [ref=e244]: 100K+
+                    - generic [ref=e245]: users
+                  - generic [ref=e246]:
+                    - generic [ref=e247]: $2M/mo
+                    - generic [ref=e248]: revenue
+                  - generic [ref=e250]: Built in 3 days
+            - generic [ref=e252] [cursor=pointer]:
+              - generic [ref=e253]:
+                - img "CollabSpace" [ref=e254]
+                - generic [ref=e256]:
+                  - heading "CollabSpace" [level=3] [ref=e257]
+                  - paragraph [ref=e258]: Built by TeamFlow Inc
+              - generic [ref=e259]:
+                - paragraph [ref=e260]: Real-time collaboration tool used by 500+ remote teams
+                - generic [ref=e261]:
+                  - generic [ref=e262]: Next.js
+                  - generic [ref=e263]: WebSockets
+                  - generic [ref=e264]: Redis
+                  - generic [ref=e265]: AI
+                - generic [ref=e266]:
+                  - generic [ref=e267]:
+                    - generic [ref=e268]: 50K+
+                    - generic [ref=e269]: users
+                  - generic [ref=e270]:
+                    - generic [ref=e271]: 10M+
+                    - generic [ref=e272]: messages
+                  - generic [ref=e274]: Built in 1 week
+            - generic [ref=e276] [cursor=pointer]:
+              - generic [ref=e277]:
+                - img "DataViz Pro" [ref=e278]
+                - generic [ref=e280]:
+                  - heading "DataViz Pro" [level=3] [ref=e281]
+                  - paragraph [ref=e282]: Built by AnalyticsCo
+              - generic [ref=e283]:
+                - paragraph [ref=e284]: Analytics dashboard processing 1B+ events daily
+                - generic [ref=e285]:
+                  - generic [ref=e286]: Vue.js
+                  - generic [ref=e287]: Python
+                  - generic [ref=e288]: MongoDB
+                  - generic [ref=e289]: D3.js
+                - generic [ref=e290]:
+                  - generic [ref=e291]:
+                    - generic [ref=e292]: 10K+
+                    - generic [ref=e293]: users
+                  - generic [ref=e294]:
+                    - generic [ref=e295]: 1B/day
+                    - generic [ref=e296]: events
+                  - generic [ref=e298]: Built in 5 days
+            - generic [ref=e300] [cursor=pointer]:
+              - generic [ref=e301]:
+                - img "EduLearn Platform" [ref=e302]
+                - generic [ref=e304]:
+                  - heading "EduLearn Platform" [level=3] [ref=e305]
+                  - paragraph [ref=e306]: Built by EduTech Global
+              - generic [ref=e307]:
+                - paragraph [ref=e308]: Online learning platform with 200K active students
+                - generic [ref=e309]:
+                  - generic [ref=e310]: React
+                  - generic [ref=e311]: Django
+                  - generic [ref=e312]: PostgreSQL
+                  - generic [ref=e313]: Zoom API
+                - generic [ref=e314]:
+                  - generic [ref=e315]:
+                    - generic [ref=e316]: 200K
+                    - generic [ref=e317]: students
+                  - generic [ref=e318]:
+                    - generic [ref=e319]: 5000+
+                    - generic [ref=e320]: courses
+                  - generic [ref=e322]: Built in 2 weeks
+            - generic [ref=e324] [cursor=pointer]:
+              - generic [ref=e325]:
+                - img "HealthTrack AI" [ref=e326]
+                - generic [ref=e328]:
+                  - heading "HealthTrack AI" [level=3] [ref=e329]
+                  - paragraph [ref=e330]: Built by MedTech Solutions
+              - generic [ref=e331]:
+                - paragraph [ref=e332]: AI-powered health monitoring app with FDA approval
+                - generic [ref=e333]:
+                  - generic [ref=e334]: React Native
+                  - generic [ref=e335]: FastAPI
+                  - generic [ref=e336]: TensorFlow
+                  - generic [ref=e337]: FHIR
+                - generic [ref=e338]:
+                  - generic [ref=e339]:
+                    - generic [ref=e340]: 1M+
+                    - generic [ref=e341]: patients
+                  - generic [ref=e342]:
+                    - generic [ref=e343]: 99.2%
+                    - generic [ref=e344]: accuracy
+                  - generic [ref=e346]: Built in 1 month
+            - generic [ref=e348] [cursor=pointer]:
+              - generic [ref=e349]:
+                - img "CryptoTrade Hub" [ref=e350]
+                - generic [ref=e352]:
+                  - heading "CryptoTrade Hub" [level=3] [ref=e353]
+                  - paragraph [ref=e354]: Built by FinTech Innovations
+              - generic [ref=e355]:
+                - paragraph [ref=e356]: Cryptocurrency trading platform with $100M daily volume
+                - generic [ref=e357]:
+                  - generic [ref=e358]: Angular
+                  - generic [ref=e359]: Go
+                  - generic [ref=e360]: Redis
+                  - generic [ref=e361]: WebSockets
+                - generic [ref=e362]:
+                  - generic [ref=e363]:
+                    - generic [ref=e364]: $100M/day
+                    - generic [ref=e365]: volume
+                  - generic [ref=e366]:
+                    - generic [ref=e367]: 1M+
+                    - generic [ref=e368]: trades
+                  - generic [ref=e370]: Built in 2 weeks
+          - button "Explore More Projects" [ref=e372] [cursor=pointer]:
+            - text: Explore More Projects
+            - img [ref=e373]
+        - generic [ref=e376]:
+          - generic [ref=e377]:
+            - heading "Enterprise Features, Startup Speed" [level=2] [ref=e378]
+            - paragraph [ref=e379]: Everything you need to build, deploy, and scale production applications
+          - generic [ref=e380]:
+            - generic [ref=e382]:
+              - generic [ref=e383]:
+                - img [ref=e386]
+                - heading "Enterprise-Grade Infrastructure" [level=3] [ref=e391]
+              - paragraph [ref=e393]: Built on Fortune 500 standards with 99.99% uptime SLA, auto-scaling, and global CDN distribution
+            - generic [ref=e395]:
+              - generic [ref=e396]:
+                - img [ref=e399]
+                - heading "AI-Powered Development" [level=3] [ref=e409]
+              - paragraph [ref=e411]: Advanced AI agents that understand context, write production code, and deploy automatically
+            - generic [ref=e413]:
+              - generic [ref=e414]:
+                - img [ref=e417]
+                - heading "Bank-Level Security" [level=3] [ref=e419]
+              - paragraph [ref=e421]: SOC 2 Type II certified with end-to-end encryption, RBAC, and continuous security monitoring
+            - generic [ref=e423]:
+              - generic [ref=e424]:
+                - img [ref=e427]
+                - heading "Real-Time Collaboration" [level=3] [ref=e431]
+              - paragraph [ref=e433]: Multiple developers can code simultaneously with instant sync and conflict resolution
+            - generic [ref=e435]:
+              - generic [ref=e436]:
+                - img [ref=e439]
+                - heading "10x Faster Development" [level=3] [ref=e442]
+              - paragraph [ref=e444]: Ship features in minutes instead of months with our optimized development pipeline
+            - generic [ref=e446]:
+              - generic [ref=e447]:
+                - img [ref=e450]
+                - heading "Global Edge Deployment" [level=3] [ref=e455]
+              - paragraph [ref=e457]: Deploy to 200+ edge locations worldwide with automatic SSL and DDoS protection
+        - generic [ref=e459]:
+          - generic [ref=e460]:
+            - img "Team Collaboration" [ref=e462]
+            - generic [ref=e463]:
+              - generic [ref=e464]: Real-Time Collaboration
+              - heading "Code Together, Ship Faster" [level=3] [ref=e465]
+              - paragraph [ref=e466]: Multiple developers can work on the same codebase simultaneously. See changes in real-time, resolve conflicts automatically, and ship features faster than ever before.
+              - list [ref=e467]:
+                - listitem [ref=e468]:
+                  - img [ref=e469]
+                  - generic [ref=e472]: Live cursor tracking
+                - listitem [ref=e473]:
+                  - img [ref=e474]
+                  - generic [ref=e477]: Instant code sync
+                - listitem [ref=e478]:
+                  - img [ref=e479]
+                  - generic [ref=e482]: Voice & video chat
+                - listitem [ref=e483]:
+                  - img [ref=e484]
+                  - generic [ref=e487]: Shared debugging
+              - button "Try Collaboration" [ref=e488] [cursor=pointer]:
+                - text: Try Collaboration
+                - img [ref=e489]
+          - generic [ref=e491]:
+            - generic [ref=e492]:
+              - generic [ref=e493]: AI Development
+              - heading "Your AI Pair Programmer" [level=3] [ref=e494]
+              - paragraph [ref=e495]: Our AI understands your codebase, suggests improvements, writes tests, and even deploys your applications. It's like having a senior developer available 24/7.
+              - list [ref=e496]:
+                - listitem [ref=e497]:
+                  - img [ref=e498]
+                  - generic [ref=e501]: Code generation
+                - listitem [ref=e502]:
+                  - img [ref=e503]
+                  - generic [ref=e506]: Bug detection & fixes
+                - listitem [ref=e507]:
+                  - img [ref=e508]
+                  - generic [ref=e511]: Performance optimization
+                - listitem [ref=e512]:
+                  - img [ref=e513]
+                  - generic [ref=e516]: Security scanning
+              - button "Explore AI Features" [ref=e517] [cursor=pointer]:
+                - text: Explore AI Features
+                - img [ref=e518]
+            - img "Developer Workspace" [ref=e521]
+        - generic [ref=e524]:
+          - heading "Any Language, Any Framework" [level=2] [ref=e525]
+          - paragraph [ref=e526]: Build with the tools you love. E-Code supports all major languages and frameworks out of the box.
+          - generic [ref=e527]:
+            - generic [ref=e528]:
+              - img [ref=e529]
+              - generic [ref=e531]: Python
+            - generic [ref=e532]:
+              - img [ref=e533]
+              - generic [ref=e535]: JavaScript
+            - generic [ref=e536]:
+              - img [ref=e537]
+              - generic [ref=e539]: TypeScript
+            - generic [ref=e540]:
+              - img [ref=e541]
+              - generic [ref=e543]: React
+            - generic [ref=e544]:
+              - img [ref=e545]
+              - generic [ref=e547]: Node.js
+            - generic [ref=e548]:
+              - img [ref=e549]
+              - generic [ref=e551]: Go
+            - generic [ref=e552]:
+              - img [ref=e553]
+              - generic [ref=e555]: Rust
+            - generic [ref=e556]:
+              - img [ref=e557]
+              - generic [ref=e559]: PHP
+            - generic [ref=e560]:
+              - img [ref=e561]
+              - generic [ref=e563]: Java
+            - generic [ref=e564]:
+              - img [ref=e565]
+              - generic [ref=e567]: Docker
+            - generic [ref=e568]:
+              - img [ref=e569]
+              - generic [ref=e571]: Kubernetes
+            - generic [ref=e572]:
+              - img [ref=e573]
+              - generic [ref=e575]: Spring
+        - generic [ref=e577]:
+          - generic [ref=e578]:
+            - heading "Trusted by Industry Leaders" [level=2] [ref=e579]
+            - paragraph [ref=e580]: See why thousands of companies choose E-Code
+          - generic [ref=e581]:
+            - generic [ref=e583]:
+              - generic [ref=e584]:
+                - generic [ref=e585]:
+                  - generic [ref=e586]: SC
+                  - generic [ref=e587]:
+                    - generic [ref=e588]: Sarah Chen
+                    - generic [ref=e589]: CTO, Fortune 500 Tech Company
+                    - generic [ref=e590]: TechCorp Global
+                - generic [ref=e591]:
+                  - img [ref=e592]
+                  - img [ref=e594]
+                  - img [ref=e596]
+                  - img [ref=e598]
+                  - img [ref=e600]
+              - paragraph [ref=e603]: "\"E-Code reduced our development time by 85% and saved us $2M annually in engineering costs.\""
+            - generic [ref=e605]:
+              - generic [ref=e606]:
+                - generic [ref=e607]:
+                  - generic [ref=e608]: MR
+                  - generic [ref=e609]:
+                    - generic [ref=e610]: Michael Rodriguez
+                    - generic [ref=e611]: VP Engineering, Series C Startup
+                    - generic [ref=e612]: InnovateTech
+                - generic [ref=e613]:
+                  - img [ref=e614]
+                  - img [ref=e616]
+                  - img [ref=e618]
+                  - img [ref=e620]
+                  - img [ref=e622]
+              - paragraph [ref=e625]: "\"The AI agent built our entire customer portal in 3 days. What used to take months now takes hours.\""
+            - generic [ref=e627]:
+              - generic [ref=e628]:
+                - generic [ref=e629]:
+                  - generic [ref=e630]: EW
+                  - generic [ref=e631]:
+                    - generic [ref=e632]: Emily Watson
+                    - generic [ref=e633]: Director of Engineering, Enterprise SaaS
+                    - generic [ref=e634]: CloudScale Solutions
+                - generic [ref=e635]:
+                  - img [ref=e636]
+                  - img [ref=e638]
+                  - img [ref=e640]
+                  - img [ref=e642]
+                  - img [ref=e644]
+              - paragraph [ref=e647]: "\"Best development platform we've used. Our team productivity increased by 400% in the first month.\""
+          - generic [ref=e648]:
+            - paragraph [ref=e649]: Trusted by Fortune 500 companies and startups alike
+            - generic [ref=e650]:
+              - img [ref=e651]
+              - generic [ref=e653]: Microsoft
+              - img [ref=e654]
+              - generic [ref=e656]: IBM
+              - generic [ref=e657]: Oracle
+              - generic [ref=e658]: Meta
+        - generic [ref=e661]:
+          - heading "Ready to Build Something Amazing?" [level=2] [ref=e662]
+          - paragraph [ref=e663]: Join 2 million developers who are shipping faster with E-Code. Start for free, scale to millions.
+          - generic [ref=e664]:
+            - button "Start Building Free" [ref=e665] [cursor=pointer]:
+              - img [ref=e666]
+              - text: Start Building Free
+            - button "Contact Sales" [ref=e668] [cursor=pointer]:
+              - img [ref=e669]
+              - text: Contact Sales
+    - contentinfo [ref=e673]:
+      - generic [ref=e674]:
+        - generic [ref=e675]:
+          - generic [ref=e676]:
+            - generic [ref=e677]:
+              - img [ref=e678]
+              - text: Built for Fortune 500
+            - heading "The future of enterprise software development" [level=3] [ref=e680]
+            - paragraph [ref=e681]: E-Code combines secure cloud workspaces, intelligent automation, and enterprise controls so your teams can ship faster across every device.
+            - generic [ref=e682]:
+              - button "Talk to sales" [ref=e683] [cursor=pointer]:
+                - text: Talk to sales
+                - img [ref=e684]
+              - button "Start building" [ref=e687] [cursor=pointer]
+            - generic [ref=e688]:
+              - generic [ref=e689]:
+                - paragraph [ref=e690]: Global uptime
+                - paragraph [ref=e691]: 99.99%
+              - generic [ref=e692]:
+                - paragraph [ref=e693]: Enterprise teams
+                - paragraph [ref=e694]: 4,500+
+          - generic [ref=e695]:
+            - generic [ref=e696]:
+              - heading "Product" [level=4] [ref=e697]
+              - list [ref=e698]:
+                - listitem [ref=e699]:
+                  - link "AI Agent" [ref=e700] [cursor=pointer]:
+                    - /url: /ai-agent
+                - listitem [ref=e701]:
+                  - link "IDE" [ref=e702] [cursor=pointer]:
+                    - /url: /features
+                - listitem [ref=e703]:
+                  - link "Multiplayer" [ref=e704] [cursor=pointer]:
+                    - /url: /features#multiplayer
+                - listitem [ref=e705]:
+                  - link "Mobile App" [ref=e706] [cursor=pointer]:
+                    - /url: /mobile
+                - listitem [ref=e707]:
+                  - link "Teams" [ref=e708] [cursor=pointer]:
+                    - /url: /marketing/teams
+                - listitem [ref=e709]:
+                  - link "Deployments" [ref=e710] [cursor=pointer]:
+                    - /url: /marketing/deployments
+                - listitem [ref=e711]:
+                  - link "Pricing" [ref=e712] [cursor=pointer]:
+                    - /url: /pricing
+                - listitem [ref=e713]:
+                  - link "Bounties" [ref=e714] [cursor=pointer]:
+                    - /url: /marketing/bounties
+                - listitem [ref=e715]:
+                  - link "AI Platform" [ref=e716] [cursor=pointer]:
+                    - /url: /ai
+            - generic [ref=e717]:
+              - heading "Resources" [level=4] [ref=e718]
+              - list [ref=e719]:
+                - listitem [ref=e720]:
+                  - link "Docs" [ref=e721] [cursor=pointer]:
+                    - /url: /docs
+                - listitem [ref=e722]:
+                  - link "Blog" [ref=e723] [cursor=pointer]:
+                    - /url: /blog
+                - listitem [ref=e724]:
+                  - link "Community" [ref=e725] [cursor=pointer]:
+                    - /url: /community
+                - listitem [ref=e726]:
+                  - link "Templates" [ref=e727] [cursor=pointer]:
+                    - /url: /templates
+                - listitem [ref=e728]:
+                  - link "Languages" [ref=e729] [cursor=pointer]:
+                    - /url: /templates/languages
+                - listitem [ref=e730]:
+                  - link "Status" [ref=e731] [cursor=pointer]:
+                    - /url: /status
+                - listitem [ref=e732]:
+                  - link "Forum" [ref=e733] [cursor=pointer]:
+                    - /url: /forum
+            - generic [ref=e734]:
+              - heading "Company" [level=4] [ref=e735]
+              - list [ref=e736]:
+                - listitem [ref=e737]:
+                  - link "About" [ref=e738] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e739]:
+                  - link "Careers" [ref=e740] [cursor=pointer]:
+                    - /url: /careers
+                - listitem [ref=e741]:
+                  - link "Press" [ref=e742] [cursor=pointer]:
+                    - /url: /press
+                - listitem [ref=e743]:
+                  - link "Partners" [ref=e744] [cursor=pointer]:
+                    - /url: /partners
+                - listitem [ref=e745]:
+                  - link "Contact Sales" [ref=e746] [cursor=pointer]:
+                    - /url: /contact-sales
+            - generic [ref=e747]:
+              - heading "Legal" [level=4] [ref=e748]
+              - list [ref=e749]:
+                - listitem [ref=e750]:
+                  - link "Terms" [ref=e751] [cursor=pointer]:
+                    - /url: /terms
+                - listitem [ref=e752]:
+                  - link "Privacy" [ref=e753] [cursor=pointer]:
+                    - /url: /privacy
+                - listitem [ref=e754]:
+                  - link "Subprocessors" [ref=e755] [cursor=pointer]:
+                    - /url: /subprocessors
+                - listitem [ref=e756]:
+                  - link "DPA" [ref=e757] [cursor=pointer]:
+                    - /url: /dpa
+                - listitem [ref=e758]:
+                  - link "US Student DPA" [ref=e759] [cursor=pointer]:
+                    - /url: /student-dpa
+                - listitem [ref=e760]:
+                  - link "Security" [ref=e761] [cursor=pointer]:
+                    - /url: /security
+                - listitem [ref=e762]:
+                  - link "Report Abuse" [ref=e763] [cursor=pointer]:
+                    - /url: /report-abuse
+            - generic [ref=e766]:
+              - generic [ref=e767]:
+                - paragraph [ref=e768]: Compare platforms
+                - paragraph [ref=e769]: See how E-Code stacks up against other development clouds.
+              - generic [ref=e770]:
+                - link "E-Code vs GitHub Codespaces" [ref=e771] [cursor=pointer]:
+                  - /url: /compare/github-codespaces
+                - link "E-Code vs Glitch" [ref=e772] [cursor=pointer]:
+                  - /url: /compare/glitch
+                - link "E-Code vs Heroku" [ref=e773] [cursor=pointer]:
+                  - /url: /compare/heroku
+                - link "E-Code vs CodeSandbox" [ref=e774] [cursor=pointer]:
+                  - /url: /compare/codesandbox
+                - link "E-Code vs AWS Cloud9" [ref=e775] [cursor=pointer]:
+                  - /url: /compare/aws-cloud9
+        - generic [ref=e776]:
+          - generic [ref=e777]:
+            - img [ref=e778]
+            - text: SOC2 Type II, ISO 27001, GDPR & HIPAA ready.
+          - generic [ref=e781]:
+            - img [ref=e782]
+            - text: 18 global regions with enterprise data residency.
+          - generic [ref=e787]:
+            - img [ref=e788]
+            - text: AI governance, policy controls, and audit logging.
+          - generic [ref=e790]:
+            - link [ref=e791] [cursor=pointer]:
+              - /url: https://twitter.com/ecode
+              - img [ref=e792]
+            - link [ref=e794] [cursor=pointer]:
+              - /url: https://github.com/ecode
+              - img [ref=e795]
+            - link [ref=e798] [cursor=pointer]:
+              - /url: https://youtube.com/ecode
+              - img [ref=e799]
+            - link [ref=e802] [cursor=pointer]:
+              - /url: https://linkedin.com/company/ecode
+              - img [ref=e803]
+            - link [ref=e807] [cursor=pointer]:
+              - /url: https://instagram.com/ecode
+              - img [ref=e808]
+        - generic [ref=e811]:
+          - generic [ref=e812]:
+            - link "E-Code" [ref=e813] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e815]:
+                - img [ref=e816]
+                - generic [ref=e820]: E-Code
+            - generic [ref=e821]: © 2025 E-Code Inc. All rights reserved.
+          - generic [ref=e822]:
+            - link "Email preferences" [ref=e823] [cursor=pointer]:
+              - /url: /newsletter/unsubscribe
+            - link "Newsletter" [ref=e824] [cursor=pointer]:
+              - /url: /newsletter-confirmed
+```

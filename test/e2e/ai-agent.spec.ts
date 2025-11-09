@@ -2,29 +2,47 @@ import { test, expect } from '@playwright/test';
 
 test.describe('AI Agent Tests', () => {
   let authToken: string;
+  let csrfToken: string;
   let conversationId: number;
 
   test.beforeAll(async ({ request }) => {
-    // Get CSRF token first
+    // Get CSRF token and session cookie
     const csrfResponse = await request.get('/api/csrf-token');
     const csrfData = await csrfResponse.json();
-    const csrfToken = csrfData.csrfToken;
+    csrfToken = csrfData.csrfToken;
     
+    // Extract session cookie from CSRF response (cookie name is 'ecode.sid')
+    const csrfHeaders = await csrfResponse.headersArray();
+    const csrfSessionCookie = csrfHeaders.find(h => h.name.toLowerCase() === 'set-cookie' && h.value.includes('ecode.sid'));
+    const sessionCookieValue = csrfSessionCookie ? csrfSessionCookie.value.split(';')[0] : '';
+    
+    // Login with both CSRF token and session cookie
     const loginResponse = await request.post('/api/login', {
       data: {
         email: 'testuser@test.com',
         password: 'testpass123'
       },
       headers: {
-        'X-CSRF-Token': csrfToken
+        'X-CSRF-Token': csrfToken,
+        'Cookie': sessionCookieValue
       }
     });
     
+    if (!loginResponse.ok()) {
+      const errorBody = await loginResponse.text();
+      console.error('Login failed:', loginResponse.status(), errorBody);
+    }
+    
     expect(loginResponse.ok()).toBeTruthy();
-    const cookies = await loginResponse.headersArray();
-    const sessionCookie = cookies.find(h => h.name === 'set-cookie' && h.value.includes('connect.sid'));
-    if (sessionCookie) {
-      authToken = sessionCookie.value.split(';')[0];
+    
+    // Get the authenticated session cookie from login response
+    const loginHeaders = await loginResponse.headersArray();
+    const loginSessionCookie = loginHeaders.find(h => h.name.toLowerCase() === 'set-cookie' && h.value.includes('ecode.sid'));
+    if (loginSessionCookie) {
+      authToken = loginSessionCookie.value.split(';')[0];
+    } else {
+      // Fallback to CSRF session cookie if login doesn't set a new one
+      authToken = sessionCookieValue;
     }
   });
 
@@ -35,7 +53,8 @@ test.describe('AI Agent Tests', () => {
         initialPrompt: 'Test conversation'
       },
       headers: {
-        Cookie: authToken
+        Cookie: authToken,
+        'X-CSRF-Token': csrfToken
       }
     });
 
@@ -59,7 +78,8 @@ test.describe('AI Agent Tests', () => {
         mode: 'plan'
       },
       headers: {
-        Cookie: authToken
+        Cookie: authToken,
+        'X-CSRF-Token': csrfToken
       }
     });
 
@@ -80,7 +100,8 @@ test.describe('AI Agent Tests', () => {
         mode: 'build'
       },
       headers: {
-        Cookie: authToken
+        Cookie: authToken,
+        'X-CSRF-Token': csrfToken
       }
     });
 
@@ -100,7 +121,8 @@ test.describe('AI Agent Tests', () => {
         mode: 'invalid'
       },
       headers: {
-        Cookie: authToken
+        Cookie: authToken,
+        'X-CSRF-Token': csrfToken
       }
     });
 
@@ -115,7 +137,8 @@ test.describe('AI Agent Tests', () => {
         riskThreshold: 'medium'
       },
       headers: {
-        Cookie: authToken
+        Cookie: authToken,
+        'X-CSRF-Token': csrfToken
       }
     });
 
