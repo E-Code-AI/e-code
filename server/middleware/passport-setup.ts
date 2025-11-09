@@ -34,20 +34,20 @@ export function setupPassportAuth(app: Application) {
   app.use(passport.initialize());
   app.use(passport.session());
   
-  // Setup local strategy for username/password authentication
+  // Setup local strategy for username/password authentication (using email as username field)
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
       try {
-        console.log(`Authentication attempt for user: ${username}`);
-        const user = await storage.getUserByUsername(username);
+        console.log(`Authentication attempt for email: ${email}`);
+        const user = await storage.getUserByEmail(email);
         if (!user) {
-          console.log(`User not found: ${username}`);
-          return done(null, false, { message: "Incorrect username" });
+          console.log(`User not found: ${email}`);
+          return done(null, false, { message: "Incorrect email or password" });
         }
         
         // Handle null password
         if (!user.passwordHash) {
-          console.log(`User has no password set: ${username}`);
+          console.log(`User has no password set: ${email}`);
           return done(null, false, { message: "Password not set" });
         }
         
@@ -55,11 +55,11 @@ export function setupPassportAuth(app: Application) {
         const isValid = await bcrypt.compare(password, user.passwordHash);
         
         if (!isValid) {
-          console.log(`Invalid password for user: ${username}`);
-          return done(null, false, { message: "Incorrect password" });
+          console.log(`Invalid password for email: ${email}`);
+          return done(null, false, { message: "Incorrect email or password" });
         }
         
-        console.log(`Authentication successful for user: ${username}`);
+        console.log(`Authentication successful for email: ${email}`);
         return done(null, user);
       } catch (error) {
         console.error('Authentication error:', error);

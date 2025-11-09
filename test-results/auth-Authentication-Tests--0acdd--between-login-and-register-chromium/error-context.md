@@ -1,0 +1,111 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - region "Notifications (F8)":
+    - list
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - img "Coding Workspace" [ref=e8]
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - img [ref=e14]
+            - generic [ref=e16]: Get Started in Seconds
+          - heading "Join millions of developers worldwide" [level=2] [ref=e17]
+          - paragraph [ref=e18]: Start building production-ready applications with AI assistance, enterprise security, and unlimited scalability.
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - img [ref=e21]
+            - generic [ref=e24]: Free forever starter plan
+          - generic [ref=e25]:
+            - img [ref=e26]
+            - generic [ref=e29]: No credit card required
+          - generic [ref=e30]:
+            - img [ref=e31]
+            - generic [ref=e34]: Unlimited public projects
+          - generic [ref=e35]:
+            - img [ref=e36]
+            - generic [ref=e39]: AI Agent included
+          - generic [ref=e40]:
+            - img [ref=e41]
+            - generic [ref=e44]: Deploy instantly
+        - generic [ref=e46]:
+          - paragraph [ref=e47]: "\"E-Code's AI Agent built our entire MVP in 2 days. What used to take months now takes hours.\""
+          - generic [ref=e48]:
+            - generic [ref=e50]: SC
+            - generic [ref=e51]:
+              - generic [ref=e52]: Sarah Chen
+              - generic [ref=e53]: CTO, TechStartup
+    - generic [ref=e55]:
+      - button "Back to home" [ref=e56] [cursor=pointer]:
+        - img [ref=e57]
+        - generic [ref=e59]: Back to home
+      - generic [ref=e60]:
+        - generic [ref=e62]: E
+        - generic [ref=e63]:
+          - heading "E-Code" [level=1] [ref=e64]
+          - paragraph [ref=e65]: Start building for free
+      - generic [ref=e66]:
+        - heading "Create your account" [level=2] [ref=e67]
+        - paragraph [ref=e68]: Get started with a free account. No credit card required.
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - text: Username *
+            - generic [ref=e72]:
+              - img [ref=e73]
+              - textbox "Username *" [ref=e76]:
+                - /placeholder: johndoe
+          - generic [ref=e77]:
+            - text: Display Name
+            - textbox "Display Name" [ref=e78]:
+              - /placeholder: John Doe
+        - generic [ref=e79]:
+          - text: Email Address *
+          - generic [ref=e80]:
+            - img [ref=e81]
+            - textbox "Email Address *" [ref=e84]:
+              - /placeholder: john@example.com
+        - generic [ref=e85]:
+          - text: Password *
+          - generic [ref=e86]:
+            - img [ref=e87]
+            - textbox "Password *" [ref=e90]:
+              - /placeholder: Create a strong password
+            - button [ref=e91] [cursor=pointer]:
+              - img [ref=e92]
+        - generic [ref=e95]:
+          - text: Confirm Password *
+          - generic [ref=e96]:
+            - img [ref=e97]
+            - textbox "Confirm Password *" [ref=e100]:
+              - /placeholder: Re-enter your password
+            - button [ref=e101] [cursor=pointer]:
+              - img [ref=e102]
+        - generic [ref=e105]:
+          - checkbox "I agree to the Terms of Service and Privacy Policy" [ref=e106] [cursor=pointer]
+          - checkbox
+          - generic [ref=e107] [cursor=pointer]:
+            - text: I agree to the
+            - link "Terms of Service" [ref=e108]:
+              - /url: /terms
+            - text: and
+            - link "Privacy Policy" [ref=e109]:
+              - /url: /privacy
+        - button "Create free account" [disabled]:
+          - text: Create free account
+          - img
+        - generic [ref=e113]: Or sign up with
+        - generic [ref=e114]:
+          - button [ref=e115] [cursor=pointer]:
+            - img [ref=e116]
+          - button [ref=e119] [cursor=pointer]:
+            - img [ref=e120]
+          - button [ref=e125] [cursor=pointer]:
+            - img [ref=e126]
+      - paragraph [ref=e128]:
+        - text: Already have an account?
+        - link "Sign in" [ref=e129] [cursor=pointer]:
+          - /url: /login
+```
