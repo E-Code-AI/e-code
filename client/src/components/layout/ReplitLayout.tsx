@@ -182,12 +182,15 @@ export function ReplitLayout({
       )}
       
       {/* Mobile File Explorer */}
-      <MobileFileExplorer
-        isOpen={showFileExplorer}
-        onClose={() => setShowFileExplorer(false)}
-        onFileSelect={handleFileSelect}
-        currentFileId={projectId}
-      />
+      {projectId && (
+        <MobileFileExplorer
+          isOpen={showFileExplorer}
+          onClose={() => setShowFileExplorer(false)}
+          onFileSelect={handleFileSelect}
+          projectId={projectId}
+          currentFileId={projectId}
+        />
+      )}
       
       {/* Mobile Tools Panel */}
       <MobileToolsPanel
