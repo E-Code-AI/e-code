@@ -159,6 +159,7 @@ export default function Login() {
                     onChange={handleInputChange}
                     disabled={loginMutation.isPending}
                     required
+                    data-testid="input-email"
                   />
                 </div>
               </div>
@@ -184,6 +185,7 @@ export default function Login() {
                     onChange={handleInputChange}
                     disabled={loginMutation.isPending}
                     required
+                    data-testid="input-password"
                   />
                   <button
                     type="button"
@@ -225,6 +227,7 @@ export default function Login() {
                 e.currentTarget.style.background = 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)';
               }}
               disabled={loginMutation.isPending}
+              data-testid="button-login"
             >
               {loginMutation.isPending ? (
                 <>
@@ -281,7 +284,7 @@ export default function Login() {
           {/* Sign Up Link */}
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
             Don't have an account?{' '}
-            <Link href="/register" className="font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+            <Link href="/register" className="font-semibold text-violet-600 dark:text-violet-400 hover:underline" data-testid="link-register">
               Sign up for free
             </Link>
           </p>

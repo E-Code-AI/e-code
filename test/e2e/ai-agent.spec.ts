@@ -161,7 +161,8 @@ test.describe('AI Agent Tests', () => {
         }
       },
       headers: {
-        Cookie: authToken
+        Cookie: authToken,
+        'X-CSRF-Token': csrfToken
       }
     });
 
@@ -184,7 +185,8 @@ test.describe('AI Agent Tests', () => {
         }
       },
       headers: {
-        Cookie: authToken
+        Cookie: authToken,
+        'X-CSRF-Token': csrfToken
       }
     });
 
@@ -205,7 +207,8 @@ test.describe('AI Agent Tests', () => {
         sessionId
       },
       headers: {
-        Cookie: authToken
+        Cookie: authToken,
+        'X-CSRF-Token': csrfToken
       }
     });
 
@@ -235,9 +238,9 @@ test.describe('AI Agent Tests', () => {
 test.describe('AI Agent UI Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', 'testuser@test.com');
-    await page.fill('input[type="password"]', 'testpass123');
-    await page.click('button[type="submit"]');
+    await page.fill('[data-testid="input-email"]', 'testuser@test.com');
+    await page.fill('[data-testid="input-password"]', 'testpass123');
+    await page.click('[data-testid="button-login"]');
     
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
