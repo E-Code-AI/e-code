@@ -62,7 +62,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 interface FileNode {
@@ -119,13 +119,7 @@ export function ReplitFileExplorer({
   // Mutations pour les opérations sur les fichiers
   const createFileMutation = useMutation({
     mutationFn: async ({ path, type, name }: { path: string; type: "file" | "folder"; name: string }) => {
-      const response = await fetch(`/api/files/${projectId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: `${path}/${name}`, type }),
-      });
-      if (!response.ok) throw new Error("Failed to create file/folder");
-      return response.json();
+      return apiRequest('POST', `/api/files/${projectId}`, { path: `${path}/${name}`, type });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
@@ -147,11 +141,7 @@ export function ReplitFileExplorer({
 
   const deleteFileMutation = useMutation({
     mutationFn: async (file: FileNode) => {
-      const response = await fetch(`/api/files/${projectId}/${file.id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete file/folder");
-      return response.json();
+      return apiRequest('DELETE', `/api/files/${projectId}/${file.id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
@@ -171,13 +161,7 @@ export function ReplitFileExplorer({
 
   const renameFileMutation = useMutation({
     mutationFn: async ({ file, newName }: { file: FileNode; newName: string }) => {
-      const response = await fetch(`/api/files/${projectId}/${file.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName }),
-      });
-      if (!response.ok) throw new Error("Failed to rename file/folder");
-      return response.json();
+      return apiRequest('PATCH', `/api/files/${projectId}/${file.id}`, { name: newName });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });

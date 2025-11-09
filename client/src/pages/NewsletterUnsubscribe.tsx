@@ -8,6 +8,7 @@ import { UserX, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function NewsletterUnsubscribe() {
   const [, navigate] = useLocation();
@@ -29,29 +30,13 @@ export default function NewsletterUnsubscribe() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/newsletter/unsubscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+      const data = await apiRequest('POST', '/api/newsletter/unsubscribe', { email });
+      
+      toast({
+        title: "Unsubscribed",
+        description: "You've been successfully unsubscribed from our newsletter.",
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: "Unsubscribed",
-          description: "You've been successfully unsubscribed from our newsletter.",
-        });
-        setTimeout(() => navigate('/'), 2000);
-      } else {
-        toast({
-          title: "Error",
-          description: data.message || 'Failed to unsubscribe',
-          variant: "destructive",
-        });
-      }
+      setTimeout(() => navigate('/'), 2000);
     } catch (error) {
       toast({
         title: "Error",

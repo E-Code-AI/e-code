@@ -36,7 +36,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { registerAICodeCompletion, checkAICompletionAvailability } from "@/lib/ai-code-completion";
 import { CollaborativeProvider } from "./CollaborativeProvider";
@@ -115,15 +115,7 @@ export function ReplitMonacoEditor({
   // Mutation pour sauvegarder le fichier
   const saveFileMutation = useMutation({
     mutationFn: async (content: string) => {
-      const response = await fetch(`/api/files/${fileId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content }),
-      });
-      if (!response.ok) throw new Error("Failed to save file");
-      return response.json();
+      return apiRequest('PUT', `/api/files/${fileId}`, { content });
     },
     onSuccess: () => {
       setHasUnsavedChanges(false);
