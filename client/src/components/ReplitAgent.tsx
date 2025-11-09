@@ -6,7 +6,7 @@ import {
   Wrench, Rocket, GitBranch, Database, Globe, Server,
   MessageSquare, DollarSign, Link, Camera, Brain, Power,
   Pause, Play, Plus, ChevronLeft, ChevronRight, FileTerminal,
-  History, Palette, Heart, Edit
+  History, Palette, Heart, Edit, BeakerIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,6 +42,7 @@ import { ModelSelector } from './agent/ModelSelector';
 import { ExtendedThinkingDisplay } from './agent/ExtendedThinkingDisplay';
 import { AutonomousControls } from './agent/AutonomousControls';
 import { PlanVisualizer } from './agent/PlanVisualizer';
+import { TestingToolsPanel } from './agent/TestingToolsPanel';
 
 interface ReplitAgentProps {
   projectId: string | number;
@@ -777,7 +778,7 @@ What would you like me to build for you today?`,
   }>>([]);
   const [featureFlags, setFeatureFlags] = useState<any>(null);
   const [userPreferences, setUserPreferences] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'chat' | 'approvals' | 'progress' | 'autonomous'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'approvals' | 'progress' | 'autonomous' | 'testing'>('chat');
   const [autonomousModeEnabled, setAutonomousModeEnabled] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<any>(null);
   const [progressLogs, setProgressLogs] = useState<Array<{
@@ -2005,8 +2006,8 @@ What would you like me to build?`,
         </div>
       </div>
 
-      {/* Tabs for Chat, Approvals, Progress, and Autonomous - Fortune 500 Security */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'chat' | 'progress' | 'approvals' | 'autonomous')} className="flex-1 flex flex-col">
+      {/* Tabs for Chat, Approvals, Progress, Autonomous, and Testing - Fortune 500 Security */}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'chat' | 'progress' | 'approvals' | 'autonomous' | 'testing')} className="flex-1 flex flex-col">
         <TabsList className="w-full rounded-none border-b bg-white dark:bg-gray-900">
           <TabsTrigger value="chat" className="flex-1" data-testid="chat-tab">Chat</TabsTrigger>
           <TabsTrigger value="approvals" className="flex-1" data-testid="approvals-tab">
@@ -2015,6 +2016,10 @@ What would you like me to build?`,
           <TabsTrigger value="autonomous" className="flex-1" data-testid="autonomous-tab">
             <Zap className="h-4 w-4 mr-1.5" />
             Autonomous
+          </TabsTrigger>
+          <TabsTrigger value="testing" className="flex-1" data-testid="testing-tab">
+            <BeakerIcon className="h-4 w-4 mr-1.5" />
+            Testing
           </TabsTrigger>
           {featureFlags?.aiUx?.progressTab !== false && (
             <TabsTrigger value="progress" className="flex-1" data-testid="progress-tab">Progress</TabsTrigger>
@@ -2160,6 +2165,16 @@ What would you like me to build?`,
             )}
           </div>
         </ScrollArea>
+      </TabsContent>
+
+      {/* Testing Tab - Phase 2 Feature */}
+      <TabsContent value="testing" className="flex-1 m-0" data-testid="testing-content">
+        <div className="h-full p-4">
+          <TestingToolsPanel 
+            sessionId={activeSessionId}
+            projectId={String(projectId)}
+          />
+        </div>
       </TabsContent>
 
       {/* Progress Tab */}
