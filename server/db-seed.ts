@@ -1,14 +1,9 @@
-import { scrypt, randomBytes } from "crypto";
-import { promisify } from "util";
+import bcrypt from "bcrypt";
 import { storage } from "./storage";
 
-const scryptAsync = promisify(scrypt);
-
-// Password hashing function
+// Password hashing function - uses bcrypt to match auth.router.ts
 async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+  return await bcrypt.hash(password, 10);
 }
 
 // Seed database with test user
