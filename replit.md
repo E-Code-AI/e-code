@@ -38,12 +38,24 @@ The platform utilizes a polyglot backend architecture with Go for container orch
   - **Extended Thinking Streaming**: Fully implemented in `ai-streaming.ts` with real-time streaming of AI reasoning via `thinking_start`, `thinking_update`, and `thinking_complete` SSE events. Supports Anthropic's extended thinking mode with 10k token budget for chain-of-thought reasoning. **INTEGRATED**: ExtendedThinkingDisplay component now wired into ReplitAgent.tsx chat message stream, displaying thinking steps in real-time during AI responses.
   - **Conversation Persistence**: Complete database integration using `aiConversations` and `agentMessages` tables. All conversations and messages are persisted to PostgreSQL with proper type safety, token tracking, and metadata storage (thinking steps, reasoning, attachments). Hybrid memory + DB architecture for fast access with permanent storage.
   - **Security Hardening**: All admin-only agent routes (sessions, file ops, commands, tools, workflows) protected with `ensureAdmin` middleware. Public routes (models, preferences) accessible to authenticated users. Prevents privilege escalation.
-  - **Frontend Components - FULLY INTEGRATED**: Two production-ready React components created and integrated into AI Agent UI:
+  - **Autonomous Mode (Phase 1 - NEW)**: Full autonomous agent execution with intelligent risk-based auto-approval system. Features include:
+    - **Risk Scoring Engine**: 0-100 risk assessment algorithm with configurable thresholds (Low/80, Medium/50, High/30, Critical/10). Actions below threshold auto-execute, above require human approval.
+    - **Plan Generation**: AI-powered strategic planning breaks down complex goals into sequential tasks with dependency analysis, critical path calculation, parallel execution opportunities, and risk mitigation strategies.
+    - **Autonomous Engine Service**: `agent-autonomous-engine.service.ts` manages autonomous sessions, evaluates action risk, and maintains audit trail of all auto-approved actions.
+    - **Plan Generator Service**: `agent-plan-generator.service.ts` uses GPT-4 to decompose goals into executable tasks with time estimates, dependencies, and alternative approaches.
+    - **API Routes**: `/api/agent/autonomous/*` endpoints for enabling/disabling autonomous mode, assessing risk, executing actions. `/api/agent/plan/*` endpoints for generating and retrieving execution plans.
+    - **AutonomousControls Component**: Production-ready UI with mode toggle, risk threshold selector (4 levels), real-time status display, and safety information. Includes TanStack Query cache invalidation for state synchronization.
+    - **PlanVisualizer Component**: Interactive task breakdown display with dependency visualization, critical path highlighting, parallel execution groups, risk assessment cards, and alternative approaches. Collapsible task details with progress tracking.
+    - **ReplitAgent Integration**: New "Autonomous" tab in agent UI with full plan generation workflow. Supports both manual "Generate Plan" button and automatic plan generation for prompts like "plan to build X".
+    - **25 Total Tools**: Extended from 15 to 25 tools with 10 new additions: `browser_open`, `take_screenshot`, `web_scrape`, `package_inspector`, `collect_metrics`, `watch_file_changes`, `deploy_project`, `scan_security`, `read_env` (allow-listed), `write_env` (audited).
+    - **Database Schema**: `autonomous_actions` table tracks all autonomous executions. `agentSessions` table extended with `autonomousModeEnabled`, `riskThreshold`, `autoApprovalCount`, and `rejectionCount` columns.
+  - **Frontend Components - FULLY INTEGRATED**: Production-ready React components created and integrated into AI Agent UI:
     - `ModelSelector.tsx`: Comprehensive dropdown UI with model categorization (GPT/Claude/Gemini), capability badges (extended thinking, speed, cost), detailed descriptions, and search. **INTEGRATED**: Now visible in AI Agent header with full state management, model preference persistence via `/api/agent/preferences`, and toast notifications on model changes.
     - `ExtendedThinkingDisplay.tsx`: Collapsible reasoning viewer with streaming support, color-coded thinking steps, timestamps, and skeleton loading states. **INTEGRATED**: Renders below assistant messages in chat when thinking data is available, with real-time updates during SSE streaming.
   - **UI Integration Details**: 
     - ModelSelector positioned in ReplitAgent header with 200px fixed width to prevent layout overlap
     - ExtendedThinkingDisplay conditionally renders for assistant messages with `message.thinking` property
+    - Autonomous tab provides dedicated interface for plan generation, execution control, and progress tracking
     - Message interface extended with `thinking` property containing steps, streaming status, tokens, and timing
     - SSE handlers in `sendMessage` function process `thinking_start`, `thinking_update`, `thinking_complete` events
     - State management uses React hooks with proper scoping per assistant message
