@@ -82,9 +82,13 @@ export class AgentTestingOrchestrator extends EventEmitter {
       browser: options.browser
     });
 
+    let browser: Browser | null = null;
+    let browserContext: BrowserContext | null = null;
+    let page: Page | null = null;
+
     try {
       // Launch browser
-      const browser = await this.launchBrowser(options.browser, {
+      browser = await this.launchBrowser(options.browser, {
         headless: options.headless !== false,
         viewport: options.viewport
       });
@@ -92,7 +96,7 @@ export class AgentTestingOrchestrator extends EventEmitter {
       this.activeBrowsers.set(execution.id, browser);
 
       // Create context with video/trace recording
-      const browserContext = await browser.newContext({
+      browserContext = await browser.newContext({
         viewport: options.viewport || { width: 1920, height: 1080 },
         recordVideo: options.recordVideo ? {
           dir: './test-recordings',
@@ -107,7 +111,7 @@ export class AgentTestingOrchestrator extends EventEmitter {
       this.activeContexts.set(execution.id, browserContext);
 
       // Execute test script
-      const page = await browserContext.newPage();
+      page = await browserContext.newPage();
       const startTime = Date.now();
 
       const result = await this.runTestScript(page, testScript, options);
@@ -143,14 +147,6 @@ export class AgentTestingOrchestrator extends EventEmitter {
         await browserContext.tracing.stop({ path: tracePath });
         traceUrl = await this.uploadTrace(execution.id, tracePath);
       }
-
-      // Clean up
-      await page.close();
-      await browserContext.close();
-      await browser.close();
-
-      this.activeBrowsers.delete(execution.id);
-      this.activeContexts.delete(execution.id);
 
       // Update execution record
       const [updated] = await db.update(browserTestExecutions)
@@ -195,11 +191,37 @@ export class AgentTestingOrchestrator extends EventEmitter {
       });
 
       throw error;
+
+    } finally {
+      // CRITICAL: Always cleanup browser resources, even on error
+      // This prevents memory leaks and orphaned Playwright processes
+      try {
+        if (page) await page.close();
+      } catch (e) {
+        console.error('Error closing page:', e);
+      }
+
+      try {
+        if (browserContext) await browserContext.close();
+      } catch (e) {
+        console.error('Error closing browser context:', e);
+      }
+
+      try {
+        if (browser) await browser.close();
+      } catch (e) {
+        console.error('Error closing browser:', e);
+      }
+
+      // Clean up tracking maps
+      this.activeBrowsers.delete(execution.id);
+      this.activeContexts.delete(execution.id);
     }
   }
 
   /**
    * Take a screenshot of current page
+   * SECURITY: URL allowlist enforced to prevent SSRF attacks
    */
   async takeScreenshot(
     context: TestExecutionContext,
@@ -210,6 +232,11 @@ export class AgentTestingOrchestrator extends EventEmitter {
       viewport?: { width: number; height: number; };
     }
   ): Promise<{ screenshotUrl: string; executionId: string; }> {
+    // SECURITY: URL validation to prevent SSRF
+    if (!this.isAllowedUrl(url)) {
+      throw new Error('URL not allowed. Only localhost and replit.app domains are permitted for security.');
+    }
+
     const { sessionId, projectId } = context;
 
     // Create execution record
@@ -223,9 +250,12 @@ export class AgentTestingOrchestrator extends EventEmitter {
       status: 'running',
     }).returning();
 
+    let browser: Browser | null = null;
+    let page: Page | null = null;
+
     try {
-      const browser = await chromium.launch({ headless: true });
-      const page = await browser.newPage({
+      browser = await chromium.launch({ headless: true });
+      page = await browser.newPage({
         viewport: options?.viewport || { width: 1920, height: 1080 }
       });
 
@@ -248,8 +278,6 @@ export class AgentTestingOrchestrator extends EventEmitter {
         mimeType: 'image/png'
       });
 
-      await browser.close();
-
       await db.update(browserTestExecutions)
         .set({
           status: 'completed',
@@ -266,6 +294,20 @@ export class AgentTestingOrchestrator extends EventEmitter {
         .where(eq(browserTestExecutions.id, execution.id));
       
       throw error;
+
+    } finally {
+      // CRITICAL: Always cleanup browser resources, even on error
+      try {
+        if (page) await page.close();
+      } catch (e) {
+        console.error('Error closing page:', e);
+      }
+
+      try {
+        if (browser) await browser.close();
+      } catch (e) {
+        console.error('Error closing browser:', e);
+      }
     }
   }
 
@@ -371,6 +413,20 @@ export class AgentTestingOrchestrator extends EventEmitter {
     testScript: string,
     options: TestExecutionOptions
   ): Promise<TestExecutionResult> {
+    // SECURITY: Enforce URL allowlist via Playwright route interception
+    // Block all navigation attempts to non-allowlisted domains
+    await page.route('**/*', (route) => {
+      const url = route.request().url();
+      
+      if (this.isAllowedUrl(url)) {
+        // Allow navigation to allowlisted URLs
+        route.continue();
+      } else {
+        // Block navigation to non-allowlisted URLs
+        route.abort('blockedbyclient');
+      }
+    });
+    
     try {
       // Execute test script in page context
       // This is a simplified implementation - in production, you'd use Playwright's test runner
@@ -399,8 +455,9 @@ export class AgentTestingOrchestrator extends EventEmitter {
       mimeType: string;
     }
   ): Promise<string> {
-    // In production, upload to S3/object storage
-    // For now, return a placeholder URL
+    // TODO [Phase 2 Production]: Replace with object storage abstraction (S3/R2)
+    // Current implementation uses filesystem paths that require directory provisioning
+    // Production should use setupObjectStorage() or equivalent cloud storage service
     const storageUrl = `/test-artifacts/${executionId}/${artifact.fileName}`;
 
     await db.insert(testArtifacts).values({
@@ -426,6 +483,36 @@ export class AgentTestingOrchestrator extends EventEmitter {
   private async uploadTrace(executionId: string, tracePath: string): Promise<string> {
     // In production, upload to S3/object storage
     return `/test-traces/${executionId}/trace.zip`;
+  }
+
+  /**
+   * SECURITY: URL allowlist to prevent SSRF attacks
+   * Only allows localhost and replit.app domains for testing
+   */
+  private isAllowedUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      const hostname = parsed.hostname.toLowerCase();
+      
+      // Allow localhost and 127.0.0.1
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+        return true;
+      }
+      
+      // Allow replit.app domains
+      if (hostname.endsWith('.replit.app') || hostname === 'replit.app') {
+        return true;
+      }
+      
+      // Allow replit.dev domains
+      if (hostname.endsWith('.replit.dev') || hostname === 'replit.dev') {
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      return false;
+    }
   }
 
   private emitEvent(event: any) {
