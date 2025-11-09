@@ -56,15 +56,8 @@ export function EdgeDeployment({ projectId }: { projectId: string }) {
 
   // Deploy to edge mutation
   const deployMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/edge-deployment/${projectId}/deploy`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(config),
-        credentials: 'include'
-      });
+    mutationFn: async (configData: EdgeDeploymentConfig) => {
+      const response = await apiRequest('POST', `/api/edge-deployment/${projectId}/deploy`, configData);
       
       if (!response.ok) {
         const error = await response.text();
@@ -227,7 +220,7 @@ export function EdgeDeployment({ projectId }: { projectId: string }) {
           )}
 
           <Button
-            onClick={() => deployMutation.mutate()}
+            onClick={() => deployMutation.mutate(config)}
             disabled={deployMutation.isPending || (config.edgeEnabled && config.edgeLocations.length === 0)}
             className="w-full"
           >

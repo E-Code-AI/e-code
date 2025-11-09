@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 interface AutoScalingConfigProps {
   deploymentId: string;
@@ -130,11 +131,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
         : `/api/deployments/${deploymentId}/autoscale`;
       const method = policy.id ? 'PUT' : 'POST';
       
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(policy),
-      });
+      const response = await apiRequest(method, url, policy);
       return response.json();
     },
     onSuccess: () => {
@@ -158,9 +155,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
   // Delete policy mutation
   const deletePolicyMutation = useMutation({
     mutationFn: async (policyId: string) => {
-      const response = await fetch(`/api/deployments/${deploymentId}/autoscale/${policyId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('DELETE', `/api/deployments/${deploymentId}/autoscale/${policyId}`, {});
       return response.json();
     },
     onSuccess: () => {
@@ -182,11 +177,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
   // Toggle policy mutation
   const togglePolicyMutation = useMutation({
     mutationFn: async ({ policyId, enabled }: { policyId: string; enabled: boolean }) => {
-      const response = await fetch(`/api/deployments/${deploymentId}/autoscale/${policyId}/toggle`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled }),
-      });
+      const response = await apiRequest('POST', `/api/deployments/${deploymentId}/autoscale/${policyId}/toggle`, { enabled });
       return response.json();
     },
     onSuccess: () => {

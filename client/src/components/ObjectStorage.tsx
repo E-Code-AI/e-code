@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { ObjectUploader } from '@/components/ObjectUploader';
+import { useToast } from '@/hooks/use-toast';
 
 interface StorageFile {
   id: string;
@@ -73,6 +73,8 @@ export function ObjectStorage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   // Mock data for cross-app object storage
   const buckets: StorageBucket[] = [
@@ -191,11 +193,11 @@ export function ObjectStorage() {
     return <File className="h-5 w-5 text-gray-500" />;
   };
 
-  const handleGetUploadParameters = async () => {
-    // This would normally call your backend to get a presigned URL
+  const handleGetUploadParameters = async (fileName: string, fileType: string) => {
+    // This would normally call your backend to get a presigned URL with file metadata
     return {
       method: 'PUT' as const,
-      url: 'https://storage.googleapis.com/bucket/uploads/file-123'
+      url: `https://storage.googleapis.com/bucket/uploads/${fileName}`
     };
   };
 
@@ -221,6 +223,55 @@ export function ObjectStorage() {
     setSelectedFiles(new Set());
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      // Upload each file using presigned URLs
+      for (const file of Array.from(files)) {
+        const uploadParams = await handleGetUploadParameters(file.name, file.type);
+        
+        // Upload to presigned URL
+        const response = await fetch(uploadParams.url, {
+          method: uploadParams.method,
+          body: file,
+          headers: {
+            'Content-Type': file.type,
+          },
+        });
+        
+        // Check response status
+        if (!response.ok) {
+          throw new Error(`Upload failed for ${file.name}: ${response.status} ${response.statusText}`);
+        }
+      }
+      
+      // Call completion handler only on success
+      handleUploadComplete({ filesUploaded: files.length });
+      
+      // Show success toast
+      toast({
+        title: 'Upload Successful',
+        description: `Successfully uploaded ${files.length} file${files.length > 1 ? 's' : ''}`,
+      });
+    } catch (error) {
+      console.error('Upload failed:', error);
+      
+      // Show error toast to user
+      toast({
+        title: 'Upload Failed',
+        description: error instanceof Error ? error.message : 'Failed to upload files',
+        variant: 'destructive',
+      });
+    } finally {
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -235,15 +286,18 @@ export function ObjectStorage() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <ObjectUploader
-            maxNumberOfFiles={5}
-            maxFileSize={100 * 1024 * 1024} // 100MB
-            onGetUploadParameters={handleGetUploadParameters}
-            onComplete={handleUploadComplete}
-          >
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={handleFileUpload}
+            data-testid="input-file-upload"
+          />
+          <Button onClick={() => fileInputRef.current?.click()} data-testid="button-upload-files">
             <Upload className="h-4 w-4 mr-2" />
             Upload Files
-          </ObjectUploader>
+          </Button>
           <Button variant="outline">
             <Settings className="h-4 w-4 mr-2" />
             Settings

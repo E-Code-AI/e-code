@@ -11,6 +11,7 @@ import {
   MapPin, Shield, Calendar, Play, Square, Monitor
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { DeploymentTypes } from './DeploymentTypes';
 
 interface DeploymentDashboardProps {
@@ -79,14 +80,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
 
   const handleCreateDeployment = async (config: any) => {
     try {
-      const response = await fetch(`/api/deployment/${projectId}/enterprise`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(config)
-      });
+      const response = await apiRequest('POST', `/api/deployment/${projectId}/enterprise`, config);
 
       if (response.ok) {
         const data = await response.json();
