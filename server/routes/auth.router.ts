@@ -12,6 +12,7 @@ import { sendVerificationEmail, sendPasswordResetEmail, resendVerificationEmail 
 import { z } from "zod";
 import { db } from "../db";
 import { eq, and, gte } from "drizzle-orm";
+import { sessionManager } from "../auth/session-manager";
 
 // Define a UserForAuth type that includes password for authentication
 interface UserForAuth extends User {
@@ -29,25 +30,8 @@ export class AuthRouter {
   }
 
   private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    // Always allow in development mode for testing
-    if (process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) {
-      if (!req.user) {
-        req.user = { 
-          id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', 
-          username: 'testauth', 
-          email: 'testauth@e-code.ai',
-          profileImageUrl: null,
-          bio: null,
-          displayName: 'Test Auth User',
-          passwordHash: null,
-          createdAt: new Date(),
-          updatedAt: null
-        } as any;
-      }
-      return next();
-    }
-    
-    // Apply auth bypass middleware
+    // Apply auth bypass middleware ONLY if explicitly enabled via bypass token
+    // DO NOT auto-inject testauth user - this prevents E2E testing
     devAuthBypass(req, res, () => {
       if (req.isAuthenticated()) {
         return next();
@@ -255,9 +239,10 @@ export class AuthRouter {
       })(req, res, next);
     });
 
-    // Logout endpoint
-    this.router.post("/api/logout", this.ensureAuthenticated, (req: Request, res: Response) => {
-      req.logout((err: any) => {
+    // Logout endpoint - properly destroy session and clear cookies
+    this.router.post("/api/logout", (req: Request, res: Response) => {
+      // Use SessionManager to properly destroy session and clear cookies
+      sessionManager.destroySession(req, res, (err: any) => {
         if (err) {
           console.error('Logout error:', err);
           return res.status(500).json({ 
@@ -265,7 +250,18 @@ export class AuthRouter {
             code: "LOGOUT_ERROR"
           });
         }
-        res.json({ message: "Logout successful" });
+        
+        // Also call passport logout for completeness
+        req.logout((logoutErr: any) => {
+          if (logoutErr) {
+            console.error('Passport logout error:', logoutErr);
+          }
+          
+          res.json({ 
+            message: "Logout successful",
+            code: "LOGOUT_SUCCESS"
+          });
+        });
       });
     });
 

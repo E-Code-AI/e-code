@@ -331,14 +331,29 @@ export class AutonomousEngineService extends EventEmitter {
     sessionId: string,
     riskThreshold: RiskThreshold = 'medium'
   ): Promise<void> {
-    await db
-      .update(agentSessions)
-      .set({
-        autonomousMode: true,
-        riskThreshold,
-        autoApproveActions: true
-      })
-      .where(eq(agentSessions.id, sessionId));
+    // Check if session exists
+    const existingSession = await db
+      .select()
+      .from(agentSessions)
+      .where(eq(agentSessions.id, sessionId))
+      .limit(1);
+    
+    if (existingSession.length === 0) {
+      // Session doesn't exist - this shouldn't happen normally
+      // Sessions should be created when agent starts, not here
+      logger.warn(`Session ${sessionId} not found, cannot enable autonomous mode`);
+      throw new Error(`Session ${sessionId} does not exist. Please start an agent session first.`);
+    } else {
+      // Update existing session
+      await db
+        .update(agentSessions)
+        .set({
+          autonomousMode: true,
+          riskThreshold,
+          autoApproveActions: true
+        })
+        .where(eq(agentSessions.id, sessionId));
+    }
     
     logger.info(`Autonomous mode enabled for session ${sessionId} with threshold: ${riskThreshold}`);
     this.emit('autonomous_mode_enabled', { sessionId, riskThreshold });
