@@ -1,0 +1,102 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - region "Notifications (F8)":
+    - list [ref=e5]:
+      - listitem [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]: Login failed
+          - generic [ref=e9]: "401: {\"message\":\"Missing credentials\",\"code\":\"INVALID_CREDENTIALS\"}"
+        - button [ref=e10] [cursor=pointer]:
+          - img [ref=e11]
+  - generic [ref=e16]:
+    - generic [ref=e18]:
+      - button "Back to home" [ref=e19] [cursor=pointer]:
+        - img [ref=e20]
+        - generic [ref=e22]: Back to home
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - img [ref=e25]
+          - generic [ref=e29]: E-Code
+        - paragraph [ref=e30]: Enterprise Development Platform
+      - generic [ref=e31]:
+        - heading "Welcome back" [level=2] [ref=e32]
+        - paragraph [ref=e33]: Sign in to continue building amazing applications
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - text: Username or Email
+            - generic [ref=e37]:
+              - img [ref=e38]
+              - textbox "Username or Email" [ref=e41]:
+                - /placeholder: Enter your username or email
+                - text: testuser@test.com
+          - generic [ref=e42]:
+            - generic [ref=e43]:
+              - generic [ref=e44]: Password
+              - link "Forgot password?" [ref=e45] [cursor=pointer]:
+                - /url: /forgot-password
+            - generic [ref=e46]:
+              - img [ref=e47]
+              - textbox "Password" [ref=e50]:
+                - /placeholder: Enter your password
+                - text: testpass123
+              - button [ref=e51] [cursor=pointer]:
+                - img [ref=e52]
+          - generic [ref=e56]:
+            - checkbox "Remember me for 30 days" [ref=e57] [cursor=pointer]
+            - checkbox
+            - generic [ref=e58] [cursor=pointer]: Remember me for 30 days
+        - button "Sign in" [ref=e59] [cursor=pointer]:
+          - text: Sign in
+          - img [ref=e60]
+        - generic [ref=e65]: Or continue with
+        - generic [ref=e66]:
+          - button [ref=e67] [cursor=pointer]:
+            - img [ref=e68]
+          - button [ref=e71] [cursor=pointer]:
+            - img [ref=e72]
+          - button [ref=e77] [cursor=pointer]:
+            - img [ref=e78]
+      - paragraph [ref=e80]:
+        - text: Don't have an account?
+        - link "Sign up for free" [ref=e81] [cursor=pointer]:
+          - /url: /register
+      - paragraph [ref=e82]:
+        - text: By signing in, you agree to our
+        - link "Terms of Service" [ref=e83] [cursor=pointer]:
+          - /url: /terms
+        - text: and
+        - link "Privacy Policy" [ref=e84] [cursor=pointer]:
+          - /url: /privacy
+    - generic [ref=e85]:
+      - img "Modern Software Development" [ref=e87]
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - img [ref=e93]
+            - generic [ref=e95]: AI-Powered Development
+          - heading "Build faster with enterprise-grade tools" [level=2] [ref=e96]
+          - paragraph [ref=e97]: Join millions of developers using E-Code to ship production-ready applications 10x faster.
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - img [ref=e101]
+            - generic [ref=e103]: SOC 2 Type II Certified
+          - generic [ref=e104]:
+            - img [ref=e106]
+            - generic [ref=e108]: AI Agent builds complete apps
+          - generic [ref=e109]:
+            - img [ref=e111]
+            - generic [ref=e114]: Support for 50+ languages
+          - generic [ref=e115]:
+            - img [ref=e117]
+            - generic [ref=e120]: 99.99% uptime guaranteed
+        - generic [ref=e121]:
+          - generic [ref=e122]:
+            - generic [ref=e123]: 2M+
+            - generic [ref=e124]: Active developers
+          - generic [ref=e125]:
+            - generic [ref=e126]: 10M+
+            - generic [ref=e127]: Apps deployed
+```
