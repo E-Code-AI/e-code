@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 // Example prompts categorized by type
 const examplePrompts = {
@@ -69,16 +70,11 @@ export default function ReplitAIAgentPage() {
 
     // Create a new project for this AI session
     try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: promptText.slice(0, 30),
-          description: promptText,
-          language: 'javascript',
-          visibility: 'private',
-        }),
+      const response = await apiRequest('POST', '/api/projects', {
+        name: promptText.slice(0, 30),
+        description: promptText,
+        language: 'javascript',
+        visibility: 'private',
       });
 
       if (response.ok) {
@@ -116,12 +112,7 @@ export default function ReplitAIAgentPage() {
         visibility: 'private',
       };
       
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(requestBody),
-      });
+      const response = await apiRequest('POST', '/api/projects', requestBody);
 
       if (response.ok) {
         const projectData = await response.json();
