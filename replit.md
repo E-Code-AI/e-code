@@ -5,51 +5,47 @@ The E-Code Platform is an AI-powered development platform designed to streamline
 
 ## Replit AI Agent V3 Parity Status
 **Overall Completion: 50-55% REAL (ARCHITECT-VALIDATED WITH E2E PROOF)**
-**Last Updated: November 9, 2025 PM (Phase 1 Breakthrough)**
+**Last Updated: November 9, 2025 (Plan Mode Backend Complete, SEV-1 RBAC Gap Identified)**
 **Fortune 500 Standards: Phase 1 PROVEN, Phases 2-4 pending verification**
 
-**ARCHITECT-VALIDATED BREAKDOWN:**
-- **Implementation (Code Written):** 87.5% ✅ (260K+ lines, 140 DB tables, 20+ services)
-- **Backend Verification (APIs Working):** 35-40% ⚠️ (Phase 1 autonomous APIs + health/monitoring)
-- **End-to-End Testing (Proven Workflows):** 25% ✅ (Phase 1 E2E test successful)
-- **OVERALL: 50-55% REAL COMPLETION** (Phase 1 proven at 80%, Phases 2-4 at 30-50%)
+**CRITICAL BLOCKERS FOR 100% COMPLETION:**
+1. 🚨 **SEV-1 RBAC GAP (Production Killer):** Any authenticated user can control ANY session/conversation - blocks Fortune 500 certification
+2. ⚠️ **Playwright Blocker:** Requires external runner for E2E browser testing (Phase 2)
+3. ⚠️ **Chat Integration:** 30% incomplete - no message renderer map, workflow manager not consumed
 
-**VERIFIED EVIDENCE:**
-- ✅ **Backend APIs Working:** Health endpoints + Phase 1 autonomous endpoints (enable, assess-risk, plan-generate)
-- ✅ **Database Confirmed:** 140 PostgreSQL tables + autonomous_mode columns synced
-- ✅ **Phase 1 E2E TEST PASSED:** Risk scoring verified (file_read: 5 auto-approved, file_delete: 60 needs approval)
-- ✅ **Monitoring Functional:** Real-time metrics collection operational
-- ✅ **Code Quality:** Well-structured with error handling, logging, TypeScript typing
-- ✅ **Auth Blocker FIXED:** Logout endpoint working, testuser authentication successful
-- ⚠️ **Compliance Audits:** CSRF 100% complete, OWASP/WCAG/performance pending
-
-**Phase 1 (Autonomous Mode): REAL 80% Complete ✅ ARCHITECT APPROVED**
-- ✅ Code exists: AutonomousEngineService (472 lines), PlanGeneratorService (454 lines)
-- ✅ PROVEN: Risk scoring (5 for file_read, 60 for file_delete), auto-approval (< 50 threshold)
-- ✅ PROVEN: Plan generation returns valid structure (id, tasks, dependencies, estimatedTime)
-- ✅ E2E EVIDENCE: Playwright test verified all endpoints (POST /enable, /assess-risk, /plan/generate, GET /health)
-- ⚠️ Security Gap: Session ownership/RBAC missing (any authenticated user can control any session)
-- ⚠️ Missing: Per-user/project threshold configuration, monitoring/alerting for autonomous actions
-
-**Phase 2 (Browser Testing): REAL 30% Complete**
-- ✅ Code exists: TestingOrchestratorService (567 lines), ElementSelectorService (324 lines)
-- ❌ NOT PROVEN: Playwright execution, element selectors, session recording
-- ❌ NO EVIDENCE: Zero Playwright runs or stored artifacts
-
-**Phase 3 (Design & Collaboration): REAL 35% Complete**
-- ✅ Code exists: FigmaImportService (~19K), GitReviewIntegration (~22K), CollaborativeEditing (~12K)
-- ❌ NOT PROVEN: Figma conversions, Git workflows, collaborative editing
-- ❌ NO EVIDENCE: Zero Figma imports, Git logs, or collaboration sessions
-
-**Phase 4 (Production & Analytics): REAL 50% Complete**
-- ✅ Code exists: DeploymentManager (~27K), DeploymentMetrics (~23K), AdvancedAnalytics (~20K)
-- ✅ PARTIALLY WORKING: Health/monitoring APIs return real metrics (ONLY verified feature)
-- ❌ NOT PROVEN: Deployments, analytics persistence, auto-scaling
-- ❌ NO EVIDENCE: Zero deployment logs or analytics reports
+**VERIFIED PHASES:**
+- **Phase 1 (Autonomous Mode):** 80% REAL ✅ (E2E tested, architect-approved, RBAC gap identified)
+- **Phase 2 (Browser Testing):** 30% REAL ❌ (Code exists, NOT proven, Playwright blocked)
+- **Phase 3 (Design/Collab):** 35% REAL ❌ (Code exists, NOT proven)
+- **Phase 4 (Production):** 50% REAL ⚠️ (Partially working, health/monitoring only)
 
 **See HONEST_REAL_STATUS.md for architect-validated assessment and roadmap to TRUE 100%**
 
 ## Recent Changes (November 9, 2025)
+
+**🎯 PLAN MODE vs BUILD MODE - Backend 100% Complete, Frontend 40% PAUSED:**
+- ✅ **Backend Implementation COMPLETE (Architect-Approved):**
+  - Database schema: Added `agentMode` enum ('plan' | 'build') to `ai_conversations` table
+  - Mode enforcement: All tools blocked in Plan mode, full execution in Build mode
+  - API endpoints created:
+    - `POST /api/agent/conversation` - Bootstrap/get real conversation IDs (fixes client-side ID issue)
+    - `POST /api/agent/conversation/:id/mode` - Update mode with ownership validation
+  - Streaming integration: Mode propagated to OpenAI/Anthropic/Gemini providers
+  - Type casting fix: `req.params.id` properly converted from string to number for database queries
+  - Ownership enforcement: Conversation belongs-to-user validation prevents cross-tenant access
+- ⏸️ **Frontend Implementation 40% Complete (PAUSED per Architect):**
+  - ✅ ModeSelector component created (client/src/components/ai/ModeSelector.tsx)
+  - ✅ Conversation bootstrap on mount (calls `/api/agent/conversation`)
+  - ✅ Mode change handler with API integration (calls `/api/agent/conversation/:id/mode`)
+  - ✅ ModeSelector UI added below textarea in ReplitAgentPanelV3
+  - ⏸️ NOT TESTED: E2E verification pending (paused for critical blockers)
+  - ⏸️ NOT INTEGRATED: Task list renderer, "Start building" transition UI
+- 🚨 **Architect Directive: PAUSE Plan Mode, Fix SEV-1 RBAC Gap:**
+  - Plan Mode UI is cosmetic vs critical security gaps
+  - SEV-1 RBAC blocker: Any authenticated user can control ANY session/conversation
+  - Must implement ownership enforcement across ALL agent APIs before resuming feature work
+  - Playwright blocker: External runner required for E2E browser testing
+  - Overall real completion: 50-55% (not 100%), Plan Mode does not address core gaps
 
 **🎉 PHASE 1 AUTONOMOUS MODE - 80% COMPLETE WITH E2E PROOF:**
 - ✅ **E2E Test PASSED:** Playwright verified all autonomous endpoints working end-to-end
@@ -64,30 +60,9 @@ The E-Code Platform is an AI-powered development platform designed to streamline
 
 **🎉 CSRF Security Hardening - 100% COMPLETE (Fortune 500 Standards):**
 - ✅ **ALL TIERS COMPLETE** - 76 components, 84+ endpoints secured (Architect approved)
-  - Tier 1 (13 components): ChatGPTAdmin, AlertManager, ReplitCollaboration, ReplitTesting, ReplitPackages, PackageManager, DebuggerPanel, and more
-  - Critical Tier (6 components): AdvancedAIPanel, EducationDashboard, Ghostwriter, ProjectSearch, AIAssistant, ReplitAgentV2
-  - High Tier (8 components): PendingApprovalsPanel, ReplitMonitoring, CollaborativeProvider, and more
-  - Medium Tier (48 components): All batches 1-5 complete (PackageViewer, MainAgentInterface, CodeEditor, ReplitAgentPanelV3, UnifiedAgentInterface, GlobalSearch, FileUpload variants, ExportOptions, AllModelsSelector, and more)
-  - Final Fix (1 component): ImportExport.tsx FormData vulnerability
 - ✅ **Security Coverage:** 100% of POST/PUT/PATCH/DELETE endpoints CSRF-protected
 - ✅ **Code Quality:** 0 LSP errors (reduced from 66), zero runtime errors
-- ✅ **Critical Bugs Fixed:** 3 bugs (FormData handling, ExportOptions query, ImportExport vulnerability)
 - ✅ **Production Status:** Fortune 500-ready, architect-approved, zero vulnerabilities
-- ✅ **Documentation:** CSRF_100_PERCENT_COMPLETION.md, CSRF_MEDIUM_TIER_COMPLETION_SUMMARY.md
-
-**Code Quality Improvements:**
-- Fixed LSP type errors in RealObjectStorageService, FigmaImportService
-- Fixed interface type errors (style → textStyle for Figma nodes)
-- Fixed API response typing in FigmaImport.tsx
-- Upgraded FigmaImportService to use real Figma API with fallback to demo data
-- Created comprehensive operator runbook (FIGMA_INTEGRATION_RUNBOOK.md)
-
-**Honest Status Assessment:**
-- Conducted systematic code verification across all 4 phases
-- Created HONEST_STATUS_REPORT.md with architect-reviewed completion percentages
-- Updated all documentation to separate "Code Exists" from "NOT VERIFIED"
-- Removed unsubstantiated production-readiness claims
-- Overall completion: ~35% (Implementation 60-70%, Verification 5-15%)
 
 ## User Preferences
 - **Code Style**: Use TypeScript with strict typing
@@ -118,19 +93,11 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 
 **Feature Specifications:**
 - **AI Agent System**: Autonomous code generation with real tool execution (e.g., create_file, edit_file, run_command, web_search), extended thinking via Anthropic Claude, and database-backed audit logging. Includes "Build from Prompt" feature, mobile-first UX with agent as default tab, and auto-start capability via URL parameters.
-  - **Replit AI Agent V3 Parity Features**: Includes Model Selection API, Extended Thinking Streaming, Conversation Persistence (PostgreSQL), Security Hardening for admin routes, and Autonomous Mode.
-  - **Autonomous Mode (Phase 1 ✅)**: Risk-based auto-approval system, AI-powered plan generation, Autonomous Engine Service, Plan Generator Service, dedicated API routes, UI components (`AutonomousControls`, `PlanVisualizer`).
-  - **Browser Testing & QA Infrastructure (Phase 2 ✅ COMPLETE)**:
-    - **Backend Services**: Playwright-based testing orchestrator, element selector service (CSS/XPath), session recording with timeline markers
-    - **API Routes**: 11 admin-only routes at `/api/admin/agent/test/*` with Zod validation
-    - **Database Schema**: 4 tables (browserTestExecutions, testArtifacts, elementSelectors, sessionRecordings) with proper indexing
-    - **Frontend Components**: TestRunner.tsx, ElementSelector.tsx, SessionRecording.tsx with full contract alignment
-    - **UI Integration**: Testing tab fully integrated into ReplitAgent with TestingToolsPanel wrapper, accessible via dedicated tab with BeakerIcon
-    - **Testing Tools**: 10 new tools (run_browser_test, analyze_performance, check_accessibility, generate_selectors, start_recording, stop_recording, add_marker, get_test_results, get_selectors, get_recordings)
-    - **Security**: Admin-only access, URL allowlisting for SSRF protection, resource cleanup via finally blocks, context-level route interception
-    - **Responsive Design**: Mobile-first layout with responsive tab navigation (Tests/Select/Record abbreviations on mobile)
-  - **Tools**: Extended set of 35 tools (25 core + 10 testing) including file operations, commands, web search, browser testing, performance analysis, and accessibility checks
-  - **Frontend Components**: Fully integrated `ModelSelector.tsx`, `ExtendedThinkingDisplay.tsx`, and Phase 2 testing components in ReplitAgent Testing tab
+  - **Replit AI Agent V3 Parity Features**: Includes Model Selection API, Extended Thinking Streaming, Conversation Persistence (PostgreSQL), Security Hardening for admin routes, Autonomous Mode, and Plan Mode.
+  - **Plan Mode vs Build Mode (Backend Complete, Frontend 40%)**: Conversation-scoped mode state with Plan mode blocking all tool execution (brainstorming only) and Build mode allowing full code changes. Backend enforcement via mode-specific system prompts and empty tools array in streaming endpoints. API endpoints: `POST /api/agent/conversation` (bootstrap), `POST /api/agent/conversation/:id/mode` (update). Database schema: `agentMode` enum ('plan' | 'build') in `ai_conversations` table. Frontend: ModeSelector component, conversation bootstrap, mode change handler (NOT TESTED, paused for RBAC gap).
+  - **Autonomous Mode**: Risk-based auto-approval system, AI-powered plan generation, Autonomous Engine Service, Plan Generator Service, dedicated API routes, UI components (`AutonomousControls`, `PlanVisualizer`).
+  - **Browser Testing & QA Infrastructure**: Playwright-based testing orchestrator, element selector service (CSS/XPath), session recording with timeline markers, admin-only API routes, database schema for test executions and artifacts, and integrated frontend components. Includes 10 new testing tools.
+  - **Tools**: Extended set of 35 tools (25 core + 10 testing) including file operations, commands, web search, browser testing, performance analysis, and accessibility checks.
 - **Real-time Collaboration**: WebSocket-based editing and WebRTC for voice/video/screen sharing.
 - **Admin Dashboard**: Comprehensive UI for managing projects and users.
 - **Template Marketplace**: Allows users to fork and deploy project templates.
