@@ -17,64 +17,40 @@ The E-Code Platform is an AI-powered development platform designed to streamline
 The platform utilizes a polyglot backend architecture with Go for container orchestration, Python for AI/ML, and TypeScript for web API, user management, and database operations. It integrates an MCP Standalone Server for AI Agent operations and an AI Agent System for autonomous code generation. Real-time collaboration is facilitated via WebSockets and WebRTC. The system is designed for enterprise-grade security and performance, including advanced monitoring and a human-in-the-loop approval process for AI-generated actions.
 
 **UI/UX Decisions:**
-- Replit-identical IDE interface with a dark theme, centralized design tokens (E-Code branding, IBM Plex Sans/Mono), and consistent spacing.
+- Replit-identical IDE interface with a dark theme, centralized design tokens, and consistent spacing.
 - Mobile UI features a bottom tab bar, swipe panels, and bottom sheet/full-screen modals.
 - Tablet UI is optimized for dual-panel layouts, with comprehensive device detection, sliding drawer navigation, and touch-optimized controls.
 - Desktop UI includes Monaco minimap, breadcrumbs, multi-editor instances, and Command Palette.
 
 **Technical Implementations:**
-- **Routing**: Replit-style slug routing with authentication. ResponsiveEditorRoute wrapper at `/editor/:id` provides device-aware routing with lazy-loaded device-specific views (TabletIDEView for tablets, MobileIDEView for mobile, Editor for desktop/laptop).
-- **Device Detection**: Canonical breakpoints (Mobile: ≤640px, Tablet: 641-1024px, Laptop: 1025-1440px, Desktop: >1440px) via `useDeviceType()` hook.
-- **Code Splitting**: Tablet UI (LazyTabletIDEView) loads only for tablet devices via React.lazy(), with optimized bundle splitting for performance, including iPad Pro optimizations.
+- **Routing**: Replit-style slug routing with authentication and device-aware views.
+- **Device Detection**: Canonical breakpoints for mobile, tablet, laptop, and desktop via `useDeviceType()` hook.
+- **Code Splitting**: Optimized bundle splitting using React.lazy() for device-specific UI components.
 - **Performance**: Compression, code splitting, caching, build optimizations, service workers, network/image optimization.
 - **Security**: CSP headers, input validation, OWASP Top 10, production-ready CORS, path sandboxing, and admin authorization hardening.
 - **Deployment**: Dynamic 4-port configuration, non-blocking initialization, optimized for Replit Reserved VM.
 
 **Feature Specifications:**
-- **AI Agent System**: Autonomous code generation with real tool execution (create_file, edit_file, run_command, read_file, list_files, web_search), extended thinking via Anthropic Claude, and database-backed audit logging. **Build from Prompt**: Homepage feature allows users to describe an app and AI autonomously builds it. **Mobile-first UX**: AI Agent is the default tab on mobile, with production-ready chat scrolling using sentinel ref pattern and requestAnimationFrame for reliable auto-scroll during streaming. Horizontal swipe gestures disabled on agent tab to prevent interference with vertical chat scrolling. **Auto-Start**: Agent automatically starts building when navigating with `?agent=true&prompt=...` URL parameters.
-  
-  **Replit AI Agent V3 Parity Features (Latest):**
-  - **Model Selection API**: Backend service (`AgentPreferencesService`) with GET/PUT endpoints for user preferences including model selection (GPT-4, Claude 3.5 Sonnet, Claude 3 Opus, Gemini), extended thinking toggle, auto web search, custom instructions, and more. Routes: `/api/agent/models` (list available models), `/api/agent/preferences` (CRUD user preferences), `/api/agent/recommend-model` (intelligent model recommendation).
-  - **Extended Thinking Streaming**: Fully implemented in `ai-streaming.ts` with real-time streaming of AI reasoning via `thinking_start`, `thinking_update`, and `thinking_complete` SSE events. Supports Anthropic's extended thinking mode with 10k token budget for chain-of-thought reasoning. **INTEGRATED**: ExtendedThinkingDisplay component now wired into ReplitAgent.tsx chat message stream, displaying thinking steps in real-time during AI responses.
-  - **Conversation Persistence**: Complete database integration using `aiConversations` and `agentMessages` tables. All conversations and messages are persisted to PostgreSQL with proper type safety, token tracking, and metadata storage (thinking steps, reasoning, attachments). Hybrid memory + DB architecture for fast access with permanent storage.
-  - **Security Hardening**: All admin-only agent routes (sessions, file ops, commands, tools, workflows) protected with `ensureAdmin` middleware. Public routes (models, preferences) accessible to authenticated users. Prevents privilege escalation.
-  - **Autonomous Mode (Phase 1 - NEW)**: Full autonomous agent execution with intelligent risk-based auto-approval system. Features include:
-    - **Risk Scoring Engine**: 0-100 risk assessment algorithm with configurable thresholds (Low/80, Medium/50, High/30, Critical/10). Actions below threshold auto-execute, above require human approval.
-    - **Plan Generation**: AI-powered strategic planning breaks down complex goals into sequential tasks with dependency analysis, critical path calculation, parallel execution opportunities, and risk mitigation strategies.
-    - **Autonomous Engine Service**: `agent-autonomous-engine.service.ts` manages autonomous sessions, evaluates action risk, and maintains audit trail of all auto-approved actions.
-    - **Plan Generator Service**: `agent-plan-generator.service.ts` uses GPT-4 to decompose goals into executable tasks with time estimates, dependencies, and alternative approaches.
-    - **API Routes**: `/api/agent/autonomous/*` endpoints for enabling/disabling autonomous mode, assessing risk, executing actions. `/api/agent/plan/*` endpoints for generating and retrieving execution plans.
-    - **AutonomousControls Component**: Production-ready UI with mode toggle, risk threshold selector (4 levels), real-time status display, and safety information. Includes TanStack Query cache invalidation for state synchronization.
-    - **PlanVisualizer Component**: Interactive task breakdown display with dependency visualization, critical path highlighting, parallel execution groups, risk assessment cards, and alternative approaches. Collapsible task details with progress tracking.
-    - **ReplitAgent Integration**: New "Autonomous" tab in agent UI with full plan generation workflow. Supports both manual "Generate Plan" button and automatic plan generation for prompts like "plan to build X".
-    - **25 Total Tools**: Extended from 15 to 25 tools with 10 new additions: `browser_open`, `take_screenshot`, `web_scrape`, `package_inspector`, `collect_metrics`, `watch_file_changes`, `deploy_project`, `scan_security`, `read_env` (allow-listed), `write_env` (audited).
-    - **Database Schema**: `autonomous_actions` table tracks all autonomous executions. `agentSessions` table extended with `autonomousModeEnabled`, `riskThreshold`, `autoApprovalCount`, and `rejectionCount` columns.
-  - **Frontend Components - FULLY INTEGRATED**: Production-ready React components created and integrated into AI Agent UI:
-    - `ModelSelector.tsx`: Comprehensive dropdown UI with model categorization (GPT/Claude/Gemini), capability badges (extended thinking, speed, cost), detailed descriptions, and search. **INTEGRATED**: Now visible in AI Agent header with full state management, model preference persistence via `/api/agent/preferences`, and toast notifications on model changes.
-    - `ExtendedThinkingDisplay.tsx`: Collapsible reasoning viewer with streaming support, color-coded thinking steps, timestamps, and skeleton loading states. **INTEGRATED**: Renders below assistant messages in chat when thinking data is available, with real-time updates during SSE streaming.
-  - **UI Integration Details**: 
-    - ModelSelector positioned in ReplitAgent header with 200px fixed width to prevent layout overlap
-    - ExtendedThinkingDisplay conditionally renders for assistant messages with `message.thinking` property
-    - Autonomous tab provides dedicated interface for plan generation, execution control, and progress tracking
-    - Message interface extended with `thinking` property containing steps, streaming status, tokens, and timing
-    - SSE handlers in `sendMessage` function process `thinking_start`, `thinking_update`, `thinking_complete` events
-    - State management uses React hooks with proper scoping per assistant message
-    - Preferences load on component mount and sync automatically on changes
+- **AI Agent System**: Autonomous code generation with real tool execution (e.g., create_file, edit_file, run_command, web_search), extended thinking via Anthropic Claude, and database-backed audit logging. Includes "Build from Prompt" feature, mobile-first UX with agent as default tab, and auto-start capability via URL parameters.
+  - **Replit AI Agent V3 Parity Features**: Includes Model Selection API, Extended Thinking Streaming, Conversation Persistence (PostgreSQL), Security Hardening for admin routes, and Autonomous Mode.
+  - **Autonomous Mode**: Features a risk-based auto-approval system, AI-powered plan generation, an Autonomous Engine Service, Plan Generator Service, dedicated API routes, and UI components (`AutonomousControls`, `PlanVisualizer`).
+  - **Tools**: Extended set of 25 tools including `browser_open`, `web_scrape`, `take_screenshot`, `package_inspector`, and secure `read_env`/`write_env` with security hardening and rate limiting.
+  - **Frontend Components**: Fully integrated `ModelSelector.tsx` and `ExtendedThinkingDisplay.tsx` for AI agent UI.
 - **Real-time Collaboration**: WebSocket-based editing and WebRTC for voice/video/screen sharing.
 - **Admin Dashboard**: Comprehensive UI for managing projects and users.
 - **Template Marketplace**: Allows users to fork and deploy project templates.
 - **Production Hardening**: Redis caching, CDN optimization, multi-tier rate limiting, security middleware, DB connection pooling, performance monitoring, input validation, and sanitization.
 - **Workspace Parity**: True backend integration for IDE panels (LSP/Problems, Build Logs/Output, Testing, Security Scanner) with real-time WebSocket updates, including a functional Mobile Monaco Editor, Mobile Terminal, Mobile File Tree, and Floating Action Button (FAB).
-- **Responsive UI**: Desktop, Tablet, and Mobile layouts are largely complete, with specific features like Command Palette, Multi-Editor, Git, Debugger, Breadcrumbs, Minimap for Desktop; TabletIDEView, Split View, Gestures for Tablet; and Bottom Tabs (with Agent as default), Gesture Framework (disabled on agent tab), Monaco Editor, xterm Terminal, File Tree, FAB for Mobile.
-- **Multi-Tab Editor System**: Maintains independent Monaco editor instances per tab via MultiEditorManager, preserving state.
+- **Responsive UI**: Desktop, Tablet, and Mobile layouts are largely complete, with specific features for each.
+- **Multi-Tab Editor System**: Maintains independent Monaco editor instances per tab via MultiEditorManager.
 
 **System Design Choices:**
 - **Vertical Slice Approach**: End-to-end feature development.
-- **Storage Layer**: `IStorage` interface with `DatabaseStorage` implementation using PostgreSQL and Drizzle ORM. Extended with agent-specific methods: `getDynamicIntelligenceSettings`, `updateDynamicIntelligenceSettings`, `getAiConversation`, `createAiConversation`, `updateAiConversation`, `addMessageToConversation`.
-- **Type Safety**: Zod, TypeScript, Drizzle ORM. Agent preferences validated using `insertAgentPreferencesSchema` and `aiModelEnum` type.
-- **Real-time Updates**: Hybrid WebSocket + HTTP polling. AI streaming uses Server-Sent Events (SSE) for token streaming, thinking updates, and tool execution progress.
-- **Hybrid Security Model**: AI-generated actions require approval, manual file operations use immediate validation with audit logging. Agent routes split into public (models/preferences) and admin-only (sessions/operations) tiers.
-- **Production Compliance**: Fortune 500-readiness with PostgreSQL persistence, tamper-proof append-only logging, and queryable audit trail. All agent conversations and messages persisted with full metadata.
+- **Storage Layer**: `IStorage` interface with `DatabaseStorage` implementation using PostgreSQL and Drizzle ORM, extended for agent-specific methods.
+- **Type Safety**: Zod, TypeScript, Drizzle ORM.
+- **Real-time Updates**: Hybrid WebSocket + HTTP polling, with SSE for AI token streaming and thinking updates.
+- **Hybrid Security Model**: AI-generated actions require approval, manual file operations use immediate validation with audit logging. Agent routes split into public and admin-only tiers.
+- **Production Compliance**: Fortune 500-readiness with PostgreSQL persistence, tamper-proof append-only logging, and queryable audit trail for all agent conversations and messages.
 
 ## External Dependencies
 - **AI Integration**: Anthropic Claude API, OpenAI API, Together AI, Replicate, Hugging Face, Groq, Anyscale.
