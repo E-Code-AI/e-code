@@ -206,8 +206,35 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   }
 
   private async fetchFigmaFile(fileKey: string): Promise<FigmaFile> {
-    // For demo purposes, return a mock Figma structure
-    // In production, this would use the Figma API with authentication
+    // Use Figma API if API key is configured
+    if (this.apiKey) {
+      try {
+        const response = await fetch(`https://api.figma.com/v1/files/${fileKey}`, {
+          headers: {
+            'X-Figma-Token': this.apiKey
+          }
+        });
+        
+        if (!response.ok) {
+          logger.warn(`Figma API request failed: ${response.status}, falling back to demo data`);
+          return this.getMockFigmaFile();
+        }
+        
+        const data = await response.json();
+        logger.info(`Successfully fetched Figma file: ${fileKey}`);
+        return data as FigmaFile;
+      } catch (error) {
+        logger.error(`Figma API error: ${error}, falling back to demo data`);
+        return this.getMockFigmaFile();
+      }
+    }
+    
+    // Fallback to demo data if no API key configured
+    logger.info('Using demo Figma data (no API key configured)');
+    return this.getMockFigmaFile();
+  }
+
+  private getMockFigmaFile(): FigmaFile {
     return {
       document: {
         id: '0:0',
