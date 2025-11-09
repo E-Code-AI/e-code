@@ -21,7 +21,13 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    // Enhanced logging to capture actual error details
+    console.error('Error caught by boundary:', {
+      message: error?.message || 'Unknown error',
+      name: error?.name || 'Unknown',
+      stack: error?.stack || 'No stack trace',
+      errorInfo: errorInfo?.componentStack || 'No component stack'
+    });
   }
 
   handleReset = () => {

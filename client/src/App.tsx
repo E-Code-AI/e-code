@@ -8,6 +8,7 @@ import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { motion, AnimatePresence } from "framer-motion";
+import { instrumentedLazy } from "./utils/instrumented-lazy";
 
 // Performance optimizations imports
 import performanceMonitor from "./utils/performance";
@@ -17,16 +18,16 @@ import { prefetchResources } from "./utils/network-optimization";
 import { addImagePreloadLinks } from "./utils/image-optimization";
 
 // Lazy load all pages for better performance
-const NotFound = lazy(() => import("@/pages/not-found"));
-const Home = lazy(() => import("@/pages/Home"));
-const Editor = lazy(() => import("@/pages/Editor"));
-const ResponsiveEditorRoute = lazy(() => import("@/pages/ResponsiveEditorRoute"));
-const AuthPage = lazy(() => import("@/pages/auth-page"));
-const ProjectsPage = lazy(() => import("@/pages/ProjectsPage"));
+const NotFound = instrumentedLazy(() => import("@/pages/not-found"), "NotFound");
+const Home = instrumentedLazy(() => import("@/pages/Home"), "Home");
+const Editor = instrumentedLazy(() => import("@/pages/Editor"), "Editor");
+const ResponsiveEditorRoute = instrumentedLazy(() => import("@/pages/ResponsiveEditorRoute"), "ResponsiveEditorRoute");
+const AuthPage = instrumentedLazy(() => import("@/pages/auth-page"), "AuthPage");
+const ProjectsPage = instrumentedLazy(() => import("@/pages/ProjectsPage"), "ProjectsPage");
 
-const Login = lazy(() => import("@/pages/Login"));
-const Register = lazy(() => import("@/pages/Register"));
-const ProjectPage = lazy(() => import("@/pages/ProjectPage"));
+const Login = instrumentedLazy(() => import("@/pages/Login"), "Login");
+const Register = instrumentedLazy(() => import("@/pages/Register"), "Register");
+const ProjectPage = instrumentedLazy(() => import("@/pages/ProjectPage"), "ProjectPage");
 const RuntimesPage = lazy(() => import("@/pages/RuntimesPage"));
 const RuntimeDiagnosticsPage = lazy(() => import("@/pages/RuntimeDiagnosticsPage"));
 const RuntimePublicPage = lazy(() => import("@/pages/RuntimePublicPage"));
@@ -59,10 +60,10 @@ const AdminFormRequests = lazy(() => import("@/pages/admin/FormRequests"));
 const PitchDeck = lazy(() => import("@/pages/admin/PitchDeck"));
 const ChatGPTAdmin = lazy(() => import("@/pages/ChatGPTAdmin"));
 // Public pages
-const Landing = lazy(() => import("@/pages/Landing"));
-const Pricing = lazy(() => import("@/pages/Pricing"));
-const Features = lazy(() => import("@/pages/Features"));
-const About = lazy(() => import("@/pages/About"));
+const Landing = instrumentedLazy(() => import("@/pages/Landing"), "Landing");
+const Pricing = instrumentedLazy(() => import("@/pages/Pricing"), "Pricing");
+const Features = instrumentedLazy(() => import("@/pages/Features"), "Features");
+const About = instrumentedLazy(() => import("@/pages/About"), "About");
 const Careers = lazy(() => import("@/pages/Careers"));
 const Blog = lazy(() => import("@/pages/Blog"));
 const BlogDetail = lazy(() => import("@/pages/BlogDetail"));
@@ -197,7 +198,7 @@ const placeholderRoutes = [
   { path: "/console", feature: "console" },
   { path: "/authentication", feature: "authentication" },
   { path: "/preview", feature: "preview" },
-  { path: "/agent", feature: "agent" },
+  // REMOVED: /agent placeholder - real implementation at /ai-agent
   { path: "/code-search", feature: "code-search" },
   { path: "/packages", feature: "packages" },
   { path: "/extensions", feature: "extensions" },
@@ -405,10 +406,22 @@ function AppContent() {
           <Route path="/mobile-workspace" component={MobileWorkspace} />
           <Route path="/ai" component={AI} />
           <Route path="/ai-documentation" component={AIDocumentation} />
+          {/* AI Agent Routes - Real Implementation */}
+          <Route path="/agent" component={() => {
+            // Redirect /agent to /ai-agent (real implementation)
+            const [, navigate] = useLocation();
+            useEffect(() => navigate('/ai-agent'), []);
+            return null;
+          }} />
           <Route path="/ai-agent" component={AIAgent} />
           <ProtectedRoute path="/ai-agent/studio" component={() => (
             <ReplitLayout showSidebar={false}>
               <AIAgentStudio />
+            </ReplitLayout>
+          )} />
+          <ProtectedRoute path="/replit-ai-agent" component={() => (
+            <ReplitLayout showSidebar={false}>
+              <ReplitAIAgentPage />
             </ReplitLayout>
           )} />
           <Route path="/code-generation" component={CodeGeneration} />
