@@ -23,7 +23,7 @@ export function AuthenticationDemo() {
   const handleLogin = async () => {
     setIsLogging(true);
     try {
-      const response = await apiRequest('POST', '/api/login', { username, password });
+      const response = await apiRequest('POST', '/api/login', { email: username, password });
       const userData = await response.json();
       
       toast({

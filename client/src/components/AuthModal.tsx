@@ -56,7 +56,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         setMode('login');
       } else {
         await apiRequest('POST', '/api/login', {
-          username,
+          email: username,
           password,
         });
 
