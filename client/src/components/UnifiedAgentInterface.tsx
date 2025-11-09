@@ -252,11 +252,7 @@ export function UnifiedAgentInterface({ projectId }: UnifiedAgentInterfaceProps)
   const executeMCPTool = async (toolName: string, args: any) => {
     try {
       console.log(`[MCP] 🔧 Executing tool: ${toolName}`, args);
-      const response = await fetch(`http://localhost:3200/tools/${toolName}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(args),
-      });
+      const response = await apiRequest('POST', `http://localhost:3200/tools/${toolName}`, args);
       const result = await response.json();
       console.log(`[MCP] ✅ Tool ${toolName} result:`, result);
       return result;

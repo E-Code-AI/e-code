@@ -87,11 +87,7 @@ export function PackageViewer({ projectId }: { projectId: string }) {
   // Install package mutation
   const installPackageMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      const response = await fetch(`/api/packages/${projectId}/install`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ package: packageName })
-      });
+      const response = await apiRequest('POST', `/api/packages/${projectId}/install`, { package: packageName });
       if (!response.ok) throw new Error('Failed to install package');
       return response.json();
     },
@@ -114,11 +110,7 @@ export function PackageViewer({ projectId }: { projectId: string }) {
   // Uninstall package mutation
   const uninstallPackageMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      const response = await fetch(`/api/packages/${projectId}/uninstall`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ package: packageName })
-      });
+      const response = await apiRequest('POST', `/api/packages/${projectId}/uninstall`, { package: packageName });
       if (!response.ok) throw new Error('Failed to uninstall package');
       return response.json();
     },

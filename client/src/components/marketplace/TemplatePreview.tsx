@@ -77,10 +77,7 @@ export function TemplatePreview({
   // Submit rating mutation
   const submitRating = useMutation({
     mutationFn: async ({ rating, review }: { rating: number; review: string }) => {
-      return apiRequest(`/api/marketplace/rate/${template.id}`, {
-        method: 'POST',
-        body: JSON.stringify({ rating, review }),
-      });
+      return apiRequest('POST', `/api/marketplace/rate/${template.id}`, { rating, review });
     },
     onSuccess: () => {
       toast({

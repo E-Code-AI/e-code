@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import {
   Send,
   Sparkles,
@@ -57,22 +58,15 @@ export function ReplitAgentPanel({ projectId, className }: ReplitAgentPanelProps
 
     try {
       // Use the streaming endpoint
-      const response = await fetch('/api/agent/chat/stream', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          projectId: projectId || 1,
-          conversationId: `conv-${Date.now()}`,
-          provider: 'openai',
-          context: messages.slice(-5).map(m => ({
-            role: m.role,
-            content: m.content
-          }))
-        }),
-        credentials: 'include'
+      const response = await apiRequest('POST', '/api/agent/chat/stream', {
+        message: userMessage.content,
+        projectId: projectId || 1,
+        conversationId: `conv-${Date.now()}`,
+        provider: 'openai',
+        context: messages.slice(-5).map(m => ({
+          role: m.role,
+          content: m.content
+        }))
       });
 
       if (!response.ok) {

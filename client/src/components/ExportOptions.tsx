@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +21,6 @@ import {
   AlertCircle,
   Box
 } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
 
 interface ExportJob {
@@ -65,16 +65,17 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
   // Fetch export history
   const { data: exportHistory = [] } = useQuery<ExportJob[]>({
     queryKey: ['/api/exports', projectId],
-    queryFn: () => apiRequest(`/api/exports/${projectId}`)
+    queryFn: async () => {
+      const response = await fetch(`/api/exports/${projectId}`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch export history');
+      return response.json();
+    }
   });
 
   // Create export
   const createExportMutation = useMutation({
     mutationFn: (data: { type: ExportJob['type']; options: typeof exportOptions }) =>
-      apiRequest(`/api/exports/${projectId}`, {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }),
+      apiRequest('POST', `/api/exports/${projectId}`, data),
     onSuccess: () => {
       toast({
         title: "Export started",

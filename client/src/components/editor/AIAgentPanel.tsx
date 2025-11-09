@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
@@ -68,24 +69,17 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
 
     try {
       // Create EventSource for Server-Sent Events
-      const response = await fetch('/api/agent/chat/stream', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          projectId,
-          conversationId,
-          provider: selectedModel,
-          context: messages.slice(-10), // Send last 10 messages as context
-          systemPrompt: extendedThinking ? 
-            'Think step by step through the problem. Show your reasoning process.' : 
-            undefined,
-          temperature: highPower ? 0.9 : 0.7,
-          maxTokens: highPower ? 8192 : 4096
-        }),
-        credentials: 'include'
+      const response = await apiRequest('POST', '/api/agent/chat/stream', {
+        message: userMessage.content,
+        projectId,
+        conversationId,
+        provider: selectedModel,
+        context: messages.slice(-10), // Send last 10 messages as context
+        systemPrompt: extendedThinking ? 
+          'Think step by step through the problem. Show your reasoning process.' : 
+          undefined,
+        temperature: highPower ? 0.9 : 0.7,
+        maxTokens: highPower ? 8192 : 4096
       });
 
       if (!response.ok) {

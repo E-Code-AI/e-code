@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
@@ -230,12 +231,7 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
 
   const updateToolSetting = async (toolId: string, enabled: boolean) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/agent/tools`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toolId, enabled })
-      });
+      const response = await apiRequest('POST', `/api/projects/${projectId}/agent/tools`, { toolId, enabled });
       
       if (!response.ok) {
         throw new Error('Failed to update tool setting');
@@ -271,21 +267,16 @@ export const MainAgentInterface: React.FC<MainAgentInterfaceProps> = ({
 
     try {
       // Send to AI agent with MCP backend
-      const response = await fetch(`/api/projects/${projectId}/ai/chat`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          context: {
-            sessionId,
-            extendedThinking: modes.find(m => m.id === 'extended_thinking')?.enabled,
-            highPowerMode: modes.find(m => m.id === 'high_power')?.enabled,
-            webSearch: modes.find(m => m.id === 'web_search')?.enabled,
-            imageGeneration: modes.find(m => m.id === 'image_generation')?.enabled,
-            isPaused
-          }
-        })
+      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/chat`, {
+        message: text,
+        context: {
+          sessionId,
+          extendedThinking: modes.find(m => m.id === 'extended_thinking')?.enabled,
+          highPowerMode: modes.find(m => m.id === 'high_power')?.enabled,
+          webSearch: modes.find(m => m.id === 'web_search')?.enabled,
+          imageGeneration: modes.find(m => m.id === 'image_generation')?.enabled,
+          isPaused
+        }
       });
 
       if (!response.ok) {

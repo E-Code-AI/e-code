@@ -39,6 +39,7 @@ import {
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
 import { ToolExecutionList } from './ToolExecutionDisplay';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ToolExecution {
   id: string;
@@ -203,27 +204,20 @@ export function ReplitAgentPanelV3({
           try {
             const provider = extendedThinkingEnabled ? 'anthropic' : 'openai';
             
-            const response = await fetch('/api/agent/chat/stream', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                message: userMessage.content,
-                projectId: projectId,
-                conversationId: `conv-${Date.now()}`,
-                provider,
-                context: messages.slice(-5).map(m => ({
-                  role: m.role,
-                  content: m.content
-                })),
-                capabilities: {
-                  extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
-                  webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
-                  highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
-                }
-              }),
-              credentials: 'include'
+            const response = await apiRequest('POST', '/api/agent/chat/stream', {
+              message: userMessage.content,
+              projectId: projectId,
+              conversationId: `conv-${Date.now()}`,
+              provider,
+              context: messages.slice(-5).map(m => ({
+                role: m.role,
+                content: m.content
+              })),
+              capabilities: {
+                extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
+                webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
+                highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
+              }
             });
 
             if (!response.ok) {
@@ -453,27 +447,20 @@ export function ReplitAgentPanelV3({
       // Use Anthropic when Extended Thinking is enabled (required for thinking stream)
       const provider = extendedThinkingEnabled ? 'anthropic' : 'openai';
       
-      const response = await fetch('/api/agent/chat/stream', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          projectId: projectId,
-          conversationId: `conv-${Date.now()}`,
-          provider,
-          context: messages.slice(-5).map(m => ({
-            role: m.role,
-            content: m.content
-          })),
-          capabilities: {
-            extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
-            webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
-            highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
-          }
-        }),
-        credentials: 'include'
+      const response = await apiRequest('POST', '/api/agent/chat/stream', {
+        message: userMessage.content,
+        projectId: projectId,
+        conversationId: `conv-${Date.now()}`,
+        provider,
+        context: messages.slice(-5).map(m => ({
+          role: m.role,
+          content: m.content
+        })),
+        capabilities: {
+          extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
+          webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
+          highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
+        }
       });
 
       if (!response.ok) {
