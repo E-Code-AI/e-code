@@ -37,6 +37,7 @@ import { csrfTokenEndpoint } from "../middleware/csrf";
 import { GitRouter } from "./git.router";
 import debugRouter from "./debug.router";
 import agentAutonomousRouter from "./agent-autonomous.router";
+import agentTestingRouter from "./agent-testing.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -90,6 +91,9 @@ export class MainRouter {
     
     // Autonomous agent routes (authenticated users) - single mount point
     app.use('/api/agent', agentAutonomousRouter);
+    
+    // Agent testing routes (browser testing, element selector, recording) - Phase 2
+    app.use('/api/agent', agentTestingRouter);
     
     // Test agent routes (for testing without auth)
     app.use(testAgentRouter);

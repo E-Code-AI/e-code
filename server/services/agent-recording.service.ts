@@ -163,7 +163,8 @@ export class AgentRecordingService extends EventEmitter {
 
     if (video) {
       const videoPath = await video.path();
-      // In production, upload to S3/object storage
+      // TODO [Phase 2 Production]: Replace with object storage abstraction (S3/R2)
+      // Current implementation uses filesystem paths - production should use cloud storage
       videoUrl = `/session-videos/${recordingId}/video.webm`;
       
       // Get video file size

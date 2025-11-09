@@ -33,12 +33,18 @@ export class AgentElementSelectorService {
   
   /**
    * Generate selectors for an element on a page
+   * SECURITY: URL allowlist enforced to prevent SSRF attacks
    */
   async generateSelector(
     context: SelectorContext,
     pageUrl: string,
     elementDescription: string
   ): Promise<ElementSelectorResult> {
+    // SECURITY: URL validation to prevent SSRF
+    if (!this.isAllowedUrl(pageUrl)) {
+      throw new Error('URL not allowed. Only localhost and replit.app domains are permitted for security.');
+    }
+
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
 
@@ -58,11 +64,11 @@ export class AgentElementSelectorService {
       const testId = await this.extractTestId(page, element);
 
       // Get element info
-      const elementInfo = await page.evaluate((el) => {
+      const elementInfo = await page.evaluate((el: Element) => {
         return {
           tagName: el.tagName.toLowerCase(),
           text: el.textContent?.trim() || '',
-          attributes: Array.from(el.attributes).reduce((acc, attr) => {
+          attributes: Array.from(el.attributes).reduce((acc: Record<string, string>, attr) => {
             acc[attr.name] = attr.value;
             return acc;
           }, {} as Record<string, string>)
@@ -124,14 +130,16 @@ export class AgentElementSelectorService {
     // Strategy 1: Try finding by text content
     const byText = page.getByText(description, { exact: false });
     if (await byText.count() > 0) {
-      return byText.first();
+      const handle = await byText.first().elementHandle();
+      if (handle) return handle;
     }
 
     // Strategy 2: Try finding by role and name
     try {
       const byRole = page.getByRole('button', { name: description });
       if (await byRole.count() > 0) {
-        return byRole.first();
+        const handle = await byRole.first().elementHandle();
+        if (handle) return handle;
       }
     } catch (e) {
       // Role might not match, continue
@@ -141,7 +149,8 @@ export class AgentElementSelectorService {
     try {
       const byPlaceholder = page.getByPlaceholder(description);
       if (await byPlaceholder.count() > 0) {
-        return byPlaceholder.first();
+        const handle = await byPlaceholder.first().elementHandle();
+        if (handle) return handle;
       }
     } catch (e) {
       // Placeholder might not match
@@ -151,7 +160,8 @@ export class AgentElementSelectorService {
     try {
       const byLabel = page.getByLabel(description);
       if (await byLabel.count() > 0) {
-        return byLabel.first();
+        const handle = await byLabel.first().elementHandle();
+        if (handle) return handle;
       }
     } catch (e) {
       // Label might not match
@@ -252,6 +262,35 @@ export class AgentElementSelectorService {
       return 0.25;
     } catch (error) {
       return 0.1;
+    }
+  }
+
+  /**
+   * SECURITY: URL allowlist to prevent SSRF attacks
+   */
+  private isAllowedUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      const hostname = parsed.hostname.toLowerCase();
+      
+      // Allow localhost and 127.0.0.1
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+        return true;
+      }
+      
+      // Allow replit.app domains
+      if (hostname.endsWith('.replit.app') || hostname === 'replit.app') {
+        return true;
+      }
+      
+      // Allow replit.dev domains
+      if (hostname.endsWith('.replit.dev') || hostname === 'replit.dev') {
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 
