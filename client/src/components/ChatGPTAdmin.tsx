@@ -98,10 +98,8 @@ export function ChatGPTAdmin() {
   // Create new session mutation
   const createSession = useMutation({
     mutationFn: async (projectId?: string) => {
-      return apiRequest('/api/admin/chatgpt/sessions', {
-        method: 'POST',
-        body: JSON.stringify({ projectId })
-      });
+      const response = await apiRequest('POST', '/api/admin/chatgpt/sessions', { projectId });
+      return response.json();
     },
     onSuccess: (data) => {
       setCurrentSessionId(data.id);
@@ -118,10 +116,8 @@ export function ChatGPTAdmin() {
     mutationFn: async (params: { message: string; includeProjectContext: boolean }) => {
       if (!currentSessionId) throw new Error('No active session');
       
-      return apiRequest(`/api/admin/chatgpt/sessions/${currentSessionId}/messages`, {
-        method: 'POST',
-        body: JSON.stringify(params)
-      });
+      const response = await apiRequest('POST', `/api/admin/chatgpt/sessions/${currentSessionId}/messages`, params);
+      return response.json();
     },
     onSuccess: () => {
       setMessage('');
@@ -142,13 +138,11 @@ export function ChatGPTAdmin() {
     mutationFn: async (params: { request: string; language: string }) => {
       if (!currentSessionId) throw new Error('No active session');
       
-      return apiRequest('/api/admin/chatgpt/generate-code', {
-        method: 'POST',
-        body: JSON.stringify({
-          sessionId: currentSessionId,
-          ...params
-        })
+      const response = await apiRequest('POST', '/api/admin/chatgpt/generate-code', {
+        sessionId: currentSessionId,
+        ...params
       });
+      return response.json();
     },
     onSuccess: (data) => {
       toast({
@@ -172,9 +166,8 @@ export function ChatGPTAdmin() {
     mutationFn: async () => {
       if (!currentSessionId) throw new Error('No active session');
       
-      return apiRequest(`/api/admin/chatgpt/sessions/${currentSessionId}/messages`, {
-        method: 'DELETE'
-      });
+      const response = await apiRequest('DELETE', `/api/admin/chatgpt/sessions/${currentSessionId}/messages`);
+      return response.json();
     },
     onSuccess: () => {
       refetchCurrentSession();
@@ -188,9 +181,8 @@ export function ChatGPTAdmin() {
   // Delete session mutation
   const deleteSession = useMutation({
     mutationFn: async (sessionId: string) => {
-      return apiRequest(`/api/admin/chatgpt/sessions/${sessionId}`, {
-        method: 'DELETE'
-      });
+      const response = await apiRequest('DELETE', `/api/admin/chatgpt/sessions/${sessionId}`);
+      return response.json();
     },
     onSuccess: () => {
       if (currentSessionId === deleteSession.variables) {
@@ -217,16 +209,9 @@ export function ChatGPTAdmin() {
     setMessage('');
     
     try {
-      const response = await fetch(`/api/admin/chatgpt/sessions/${currentSessionId}/stream`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          message: userMessage,
-          includeProjectContext
-        })
+      const response = await apiRequest('POST', `/api/admin/chatgpt/sessions/${currentSessionId}/stream`, {
+        message: userMessage,
+        includeProjectContext
       });
       
       if (!response.ok) {
@@ -418,7 +403,7 @@ export function ChatGPTAdmin() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => clearSession.mutate()}
+                  onClick={() => clearSession.mutate({})}
                   data-testid="button-clear-session"
                 >
                   <RefreshCw className="w-4 h-4 mr-1" />
@@ -439,7 +424,7 @@ export function ChatGPTAdmin() {
             {/* Messages area */}
             <ScrollArea className="flex-1 p-6 bg-gray-50">
               <div className="max-w-4xl mx-auto space-y-4">
-                {currentSession.messages.slice(1).map((msg, index) => (
+                {currentSession.messages.slice(1).map((msg: any, index: number) => (
                   <div
                     key={index}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}

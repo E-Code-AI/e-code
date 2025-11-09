@@ -11,6 +11,7 @@ import {
   Clock, Activity, Lock, Unlock, Copy, Check
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Collaborator {
   id: string;
@@ -71,14 +72,9 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
     if (!inviteEmail.trim()) return;
 
     try {
-      const response = await fetch(`/api/collaboration/${projectId}/invite`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          email: inviteEmail,
-          role: 'editor' 
-        })
+      const response = await apiRequest('POST', `/api/collaboration/${projectId}/invite`, { 
+        email: inviteEmail,
+        role: 'editor' 
       });
 
       if (response.ok) {
@@ -100,12 +96,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
 
   const updateCollaboratorRole = async (collaboratorId: string, role: string) => {
     try {
-      const response = await fetch(`/api/collaboration/${projectId}/users/${collaboratorId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ role })
-      });
+      const response = await apiRequest('PATCH', `/api/collaboration/${projectId}/users/${collaboratorId}`, { role });
 
       if (response.ok) {
         fetchCollaborators();
@@ -125,10 +116,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
 
   const removeCollaborator = async (collaboratorId: string) => {
     try {
-      const response = await fetch(`/api/collaboration/${projectId}/users/${collaboratorId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await apiRequest('DELETE', `/api/collaboration/${projectId}/users/${collaboratorId}`);
 
       if (response.ok) {
         fetchCollaborators();

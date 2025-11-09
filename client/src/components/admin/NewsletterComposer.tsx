@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { Plus, Trash2, Sparkles } from 'lucide-react';
 
 interface SectionDraft {
@@ -117,12 +118,7 @@ export default function NewsletterComposer() {
 
     setIsSending(true);
     try {
-      const response = await fetch('/api/newsletter/campaigns/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
+      const response = await apiRequest('POST', '/api/newsletter/campaigns/send', payload);
       const data = await response.json();
 
       if (response.ok) {
@@ -161,12 +157,7 @@ export default function NewsletterComposer() {
 
     setIsTesting(true);
     try {
-      const response = await fetch('/api/newsletter/test-send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: testEmail.trim() }),
-      });
-
+      const response = await apiRequest('POST', '/api/newsletter/test-send', { email: testEmail.trim() });
       const data = await response.json();
       if (response.ok) {
         toast({
