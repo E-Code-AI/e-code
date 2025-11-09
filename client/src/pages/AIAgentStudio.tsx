@@ -128,7 +128,7 @@ export default function AIAgentStudio() {
         prompt: trimmedPrompt,
         language,
         projectId: parsedProjectId,
-      }) as PreviewResponse;
+      }) as unknown as PreviewResponse;
       return data;
     },
     onSuccess: (data) => {
@@ -164,20 +164,8 @@ export default function AIAgentStudio() {
 
       const data = await apiRequest('POST', `/api/ai/apply-preview/${result.id}`, {
         projectId: parsedProjectId,
-      });
-
-      if (!data) {
-        let errorMessage = "Failed to apply preview";
-        try {
-          const errorBody = await response.json();
-          errorMessage = errorBody?.error || errorBody?.message || errorMessage;
-        } catch (error) {
-          console.error("Failed to parse apply error", error);
-        }
-        throw new Error(errorMessage);
-      }
-
-      return (await response.json()) as { success: boolean; message?: string };
+      }) as unknown as { success: boolean; message?: string };
+      return data;
     },
     onSuccess: (data) => {
       toast({
