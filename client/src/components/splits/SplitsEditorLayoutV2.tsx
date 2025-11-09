@@ -29,6 +29,7 @@ import { CommandPalette, generateDefaultCommands } from '../command-palette/Comm
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLayoutStore } from '@/../../shared/stores/layoutStore';
 import useSplitsStore from '@/stores/splits-store';
+import { useDeviceType } from '@/hooks/use-media-query';
 import { createEditorDefaultLayout, TOOL_DOCK_TO_TAB_MAP } from './EditorDefaultLayout';
 import { Play, Share2, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,10 @@ export function SplitsEditorLayoutV2({
   const commandPalette = useCommandPalette();
   const { activeTool, setActiveTool } = useLayoutStore();
   
+  // Device detection for responsive UI (tablet gets compact mode, laptop gets desktop mode)
+  const rawDeviceType = useDeviceType();
+  const agentMode = rawDeviceType === 'laptop' ? 'desktop' : rawDeviceType;
+  
   const {
     root,
     initializeLayout,
@@ -90,7 +95,7 @@ export function SplitsEditorLayoutV2({
         ),
         search: <ReplitSearchPanel />,
         git: <ReplitGitPanel projectId={projectId} />,
-        agent: <ReplitAgentPanelV3 projectId={projectId || '1'} mode="desktop" />,
+        agent: <ReplitAgentPanelV3 projectId={projectId || '1'} mode={agentMode as 'desktop' | 'tablet' | 'mobile'} />,
         debugger: <ReplitDebuggerPanel projectId={projectId} />,
         testing: <ReplitTestingPanel projectId={projectId} />,
         database: <ReplitDatabasePanel projectId={projectId} />,
