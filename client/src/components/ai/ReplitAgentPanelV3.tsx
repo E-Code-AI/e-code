@@ -44,6 +44,7 @@ import { useWorkflowManager } from '@/hooks/use-workflow-manager';
 import { AgentWorkflowSelector } from './AgentWorkflowSelector';
 import { DesignPrototypeViewer } from './DesignPrototypeViewer';
 import { MVPCompletionDialog } from './MVPCompletionDialog';
+import { ModeSelector } from './ModeSelector';
 
 interface ToolExecution {
   id: string;
@@ -118,6 +119,10 @@ export function ReplitAgentPanelV3({
   onMinimize,
   mode = 'desktop'
 }: ReplitAgentPanelV3Props) {
+  // Conversation state
+  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [agentMode, setAgentMode] = useState<'plan' | 'build'>('build');
+  
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -161,6 +166,59 @@ export function ReplitAgentPanelV3({
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
+
+  // Bootstrap conversation on mount
+  useEffect(() => {
+    const bootstrapConversation = async () => {
+      try {
+        const response = await apiRequest('POST', '/api/agent/conversation', {
+          projectId: projectId.toString()
+        }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
+
+        setConversationId(response.conversationId);
+        setAgentMode(response.agentMode);
+      } catch (error) {
+        console.error('Failed to bootstrap conversation:', error);
+        toast({
+          title: "Conversation Setup Failed",
+          description: "Could not initialize agent conversation",
+          variant: "destructive"
+        });
+      }
+    };
+
+    bootstrapConversation();
+  }, [projectId, toast]);
+
+  // Handler for mode changes
+  const handleModeChange = async (newMode: 'plan' | 'build') => {
+    if (!conversationId) {
+      console.error('Cannot change mode: no conversationId');
+      return;
+    }
+
+    try {
+      await apiRequest('POST', `/api/agent/conversation/${conversationId}/mode`, {
+        mode: newMode
+      });
+
+      setAgentMode(newMode);
+      
+      toast({
+        title: `Switched to ${newMode.toUpperCase()} Mode`,
+        description: newMode === 'plan' 
+          ? "Agent will brainstorm without making code changes"
+          : "Agent can now execute code changes",
+      });
+    } catch (error) {
+      console.error('Failed to update mode:', error);
+      toast({
+        title: "Mode Update Failed",
+        description: "Could not switch agent mode",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Auto-scroll to bottom using instant scroll for reliability
   useEffect(() => {
@@ -951,26 +1009,37 @@ export function ReplitAgentPanelV3({
 
       {/* Input area */}
       <div className="p-4 border-t border-border">
-        <div className="relative">
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Ask me anything..."
-            className="pr-12 resize-none text-sm min-h-[60px] max-h-[200px]"
-            disabled={isWorking}
-            data-testid="input-message"
-          />
-          <Button
-            size="icon"
-            onClick={handleSend}
-            disabled={!input.trim() || isWorking}
-            className="absolute bottom-2 right-2 h-7 w-7 rounded"
-            data-testid="button-send"
-          >
-            <Send className="h-3.5 w-3.5" />
-          </Button>
+        <div className="space-y-2">
+          <div className="relative">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Ask me anything..."
+              className="pr-12 resize-none text-sm min-h-[60px] max-h-[200px]"
+              disabled={isWorking}
+              data-testid="input-message"
+            />
+            <Button
+              size="icon"
+              onClick={handleSend}
+              disabled={!input.trim() || isWorking}
+              className="absolute bottom-2 right-2 h-7 w-7 rounded"
+              data-testid="button-send"
+            >
+              <Send className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          
+          {/* Mode Selector */}
+          {conversationId && (
+            <ModeSelector 
+              mode={agentMode} 
+              onModeChange={handleModeChange}
+              disabled={isWorking}
+            />
+          )}
         </div>
         
         {/* Quick actions */}
