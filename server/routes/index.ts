@@ -36,6 +36,7 @@ import { setupAuthBypass } from "../dev-auth-bypass";
 import { csrfTokenEndpoint } from "../middleware/csrf";
 import { GitRouter } from "./git.router";
 import debugRouter from "./debug.router";
+import agentAutonomousRouter from "./agent-autonomous.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -86,6 +87,10 @@ export class MainRouter {
     
     // Agent routes (admin only)
     app.use('/api/admin/agent', agentRouter);
+    
+    // Autonomous agent routes (authenticated users)
+    app.use('/api/agent/autonomous', agentAutonomousRouter);
+    app.use('/api/agent/plan', agentAutonomousRouter);
     
     // Test agent routes (for testing without auth)
     app.use(testAgentRouter);
