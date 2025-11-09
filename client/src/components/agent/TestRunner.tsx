@@ -263,7 +263,7 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
               </div>
 
               <Button
-                onClick={() => executeMutation.mutate()}
+                onClick={() => executeMutation.mutate(undefined)}
                 disabled={executeMutation.isPending || !testScript.trim()}
                 className="w-full"
                 data-testid="button-run-test"
