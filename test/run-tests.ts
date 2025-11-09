@@ -8,6 +8,7 @@ setupTestGlobals();
 import './security.test';
 import './ai-ux-features.test';
 import './newsletter.test';
+import './apiRequest-csrf.test';
 
 (async () => {
   const pattern = process.argv[2];
