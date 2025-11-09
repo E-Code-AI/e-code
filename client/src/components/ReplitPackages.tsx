@@ -11,6 +11,7 @@ import {
   Terminal, Code, Settings, Star, TrendingUp
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface PackageInfo {
   name: string;
@@ -99,14 +100,9 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
     try {
       setInstalling(prev => [...prev, packageName]);
       
-      const response = await fetch(`/api/packages/${projectId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          name: packageName,
-          version: version || 'latest'
-        })
+      const response = await apiRequest('POST', `/api/packages/${projectId}`, { 
+        name: packageName,
+        version: version || 'latest'
       });
 
       if (response.ok) {
@@ -136,10 +132,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
 
   const uninstallPackage = async (packageName: string) => {
     try {
-      const response = await fetch(`/api/packages/${projectId}/${encodeURIComponent(packageName)}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await apiRequest('DELETE', `/api/packages/${projectId}/${encodeURIComponent(packageName)}`);
 
       if (response.ok) {
         toast({
@@ -159,10 +152,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
 
   const updateAllPackages = async () => {
     try {
-      const response = await fetch(`/api/packages/${projectId}/update`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/packages/${projectId}/update`);
 
       if (response.ok) {
         toast({

@@ -123,9 +123,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
   // Enroll in course
   const enrollMutation = useMutation({
     mutationFn: (courseId: number) =>
-      apiRequest(`/api/education/courses/${courseId}/enroll`, {
-        method: 'POST'
-      }),
+      apiRequest('POST', `/api/education/courses/${courseId}/enroll`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/education/progress'] });
       toast({
@@ -138,9 +136,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
   // Complete lesson
   const completeLessonMutation = useMutation({
     mutationFn: ({ courseId, lessonId }: { courseId: number; lessonId: number }) =>
-      apiRequest(`/api/education/courses/${courseId}/lessons/${lessonId}/complete`, {
-        method: 'POST'
-      }),
+      apiRequest('POST', `/api/education/courses/${courseId}/lessons/${lessonId}/complete`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/education/progress'] });
     }
@@ -149,10 +145,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
   // Create classroom
   const createClassroomMutation = useMutation({
     mutationFn: (data: { name: string }) =>
-      apiRequest('/api/education/classrooms', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }),
+      apiRequest('POST', '/api/education/classrooms', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/education/classrooms'] });
       toast({

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface SearchResult {
   fileId: number;
@@ -53,19 +54,12 @@ export function ProjectSearch({ projectId, onFileSelect, className }: ProjectSea
     setIsSearching(true);
     try {
       // Use real search API
-      const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          query: searchQuery,
-          projectId,
-          type: 'files',
-          caseSensitive,
-          useRegex
-        })
+      const response = await apiRequest('POST', '/api/search', {
+        query: searchQuery,
+        projectId,
+        type: 'files',
+        caseSensitive,
+        useRegex
       });
       
       if (!response.ok) {

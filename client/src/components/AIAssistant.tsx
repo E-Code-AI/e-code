@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { CustomPromptsModal } from './CustomPromptsModal';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface AIAssistantProps {
   projectId: number;
@@ -132,14 +133,10 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     if (!selectedCode) return;
 
     try {
-      const response = await fetch(`/api/ai/${projectId}/suggestions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: selectedCode,
-          file: selectedFile,
-          projectId
-        })
+      const response = await apiRequest('POST', `/api/ai/${projectId}/suggestions`, {
+        code: selectedCode,
+        file: selectedFile,
+        projectId
       });
 
       if (response.ok) {
@@ -170,18 +167,14 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/ai/${projectId}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage.content,
-          context: {
-            projectId,
-            file: selectedFile,
-            code: selectedCode,
-            history: messages.slice(-5)
-          }
-        })
+      const response = await apiRequest('POST', `/api/ai/${projectId}/chat`, {
+        message: userMessage.content,
+        context: {
+          projectId,
+          file: selectedFile,
+          code: selectedCode,
+          history: messages.slice(-5)
+        }
       });
 
       if (!response.ok) throw new Error('Failed to get AI response');
@@ -226,11 +219,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
 
   const handleFeedback = async (messageId: string, feedback: 'positive' | 'negative') => {
     try {
-      await fetch('/api/ai/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messageId, feedback })
-      });
+      await apiRequest('POST', '/api/ai/feedback', { messageId, feedback });
       
       toast({
         title: "Feedback Recorded",

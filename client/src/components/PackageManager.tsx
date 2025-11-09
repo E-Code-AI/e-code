@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface PackageManagerProps {
   projectId: number;
@@ -94,14 +95,7 @@ export function PackageManager({ projectId, language = 'javascript', className }
     
     try {
       // Use real API endpoint
-      const response = await fetch(`/api/projects/${projectId}/packages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ name: packageName, version, language })
-      });
+      const response = await apiRequest('POST', `/api/projects/${projectId}/packages`, { name: packageName, version, language });
       
       if (!response.ok) {
         throw new Error('Installation failed');
@@ -137,10 +131,7 @@ export function PackageManager({ projectId, language = 'javascript', className }
   const handleUninstall = async (packageName: string) => {
     try {
       // Use real API endpoint
-      const response = await fetch(`/api/projects/${projectId}/packages/${encodeURIComponent(packageName)}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await apiRequest('DELETE', `/api/projects/${projectId}/packages/${encodeURIComponent(packageName)}`);
       
       if (!response.ok) {
         throw new Error('Uninstall failed');
@@ -165,14 +156,7 @@ export function PackageManager({ projectId, language = 'javascript', className }
     
     try {
       // Use real API endpoint
-      const response = await fetch(`/api/projects/${projectId}/packages/update`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ packages: [packageName] })
-      });
+      const response = await apiRequest('POST', `/api/projects/${projectId}/packages/update`, { packages: [packageName] });
       
       if (!response.ok) {
         throw new Error('Update failed');
