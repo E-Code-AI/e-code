@@ -243,13 +243,227 @@ export const contextTools: AgentTool[] = [
 ];
 
 /**
+ * Browser Testing & Quality Assurance Tools (Phase 2)
+ */
+export const testingTools: AgentTool[] = [
+  {
+    name: 'run_browser_test',
+    description: 'Execute a Playwright browser test to validate UI functionality. Tests interactions, navigation, and visual regression.',
+    parameters: {
+      type: 'object',
+      properties: {
+        test_script: {
+          type: 'string',
+          description: 'Playwright test script (e.g., "await page.goto(\'/\'); await page.click(\'[data-testid=button-login]\');")'
+        },
+        browser_type: {
+          type: 'string',
+          enum: ['chromium', 'firefox', 'webkit'],
+          description: 'Browser to use for testing (default: chromium)'
+        },
+        record_video: {
+          type: 'boolean',
+          description: 'Whether to record video of the test execution (default: false)'
+        },
+        trace_enabled: {
+          type: 'boolean',
+          description: 'Whether to capture Playwright trace for debugging (default: false)'
+        }
+      },
+      required: ['test_script']
+    }
+  },
+  {
+    name: 'analyze_performance',
+    description: 'Analyze web performance metrics including load time, first contentful paint, and resource sizes.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: 'URL to analyze (e.g., "http://localhost:5000" or production URL)'
+        },
+        metrics: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: ['fcp', 'lcp', 'cls', 'ttfb', 'tti']
+          },
+          description: 'Performance metrics to measure (default: all)'
+        }
+      },
+      required: ['url']
+    }
+  },
+  {
+    name: 'check_accessibility',
+    description: 'Run WCAG 2.1 accessibility checks to ensure the application is usable by people with disabilities.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: 'URL to check for accessibility issues'
+        },
+        level: {
+          type: 'string',
+          enum: ['A', 'AA', 'AAA'],
+          description: 'WCAG conformance level (default: AA)'
+        },
+        selectors: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Specific elements to check (optional, defaults to entire page)'
+        }
+      },
+      required: ['url']
+    }
+  },
+  {
+    name: 'generate_selectors',
+    description: 'Generate robust CSS and XPath selectors for UI elements by analyzing the page structure.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: 'Page URL to analyze for element selectors'
+        },
+        selector_type: {
+          type: 'string',
+          enum: ['css', 'xpath'],
+          description: 'Type of selector to generate (default: css)'
+        }
+      },
+      required: ['url']
+    }
+  },
+  {
+    name: 'start_recording',
+    description: 'Start recording a browser session with video capture and timeline markers for debugging and documentation.',
+    parameters: {
+      type: 'object',
+      properties: {
+        browser_type: {
+          type: 'string',
+          enum: ['chromium', 'firefox', 'webkit'],
+          description: 'Browser to use (default: chromium)'
+        },
+        viewport: {
+          type: 'object',
+          properties: {
+            width: { type: 'number' },
+            height: { type: 'number' }
+          },
+          description: 'Browser viewport size (default: 1920x1080)'
+        }
+      }
+    }
+  },
+  {
+    name: 'stop_recording',
+    description: 'Stop an active recording session and process the captured video.',
+    parameters: {
+      type: 'object',
+      properties: {
+        recording_id: {
+          type: 'string',
+          description: 'ID of the active recording to stop'
+        }
+      },
+      required: ['recording_id']
+    }
+  },
+  {
+    name: 'add_marker',
+    description: 'Add a timeline marker to an active recording session to mark important events, errors, or milestones.',
+    parameters: {
+      type: 'object',
+      properties: {
+        recording_id: {
+          type: 'string',
+          description: 'ID of the recording to add marker to'
+        },
+        label: {
+          type: 'string',
+          description: 'Marker label (e.g., "User logged in", "Payment processed")'
+        },
+        type: {
+          type: 'string',
+          enum: ['event', 'error', 'milestone'],
+          description: 'Type of marker (default: event)'
+        }
+      },
+      required: ['recording_id', 'label']
+    }
+  },
+  {
+    name: 'get_test_results',
+    description: 'Retrieve results from previous test executions including pass/fail status, errors, and artifacts.',
+    parameters: {
+      type: 'object',
+      properties: {
+        execution_id: {
+          type: 'string',
+          description: 'Specific execution ID to retrieve (optional, returns recent if not specified)'
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of results to return (default: 10)'
+        }
+      }
+    }
+  },
+  {
+    name: 'get_selectors',
+    description: 'Retrieve previously generated element selectors with their metadata and usage examples.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: 'Filter selectors by URL (optional)'
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of selectors to return (default: 20)'
+        }
+      }
+    }
+  },
+  {
+    name: 'get_recordings',
+    description: 'Retrieve session recordings with playback URLs and timeline markers.',
+    parameters: {
+      type: 'object',
+      properties: {
+        recording_id: {
+          type: 'string',
+          description: 'Specific recording ID (optional, returns recent if not specified)'
+        },
+        status: {
+          type: 'string',
+          enum: ['recording', 'stopped', 'processing', 'ready', 'error'],
+          description: 'Filter by recording status (optional)'
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of recordings to return (default: 10)'
+        }
+      }
+    }
+  }
+];
+
+/**
  * All Tools Combined
  */
 export const allTools: AgentTool[] = [
   ...fileTools,
   ...commandTools,
   ...searchTools,
-  ...contextTools
+  ...contextTools,
+  ...testingTools
 ];
 
 /**
