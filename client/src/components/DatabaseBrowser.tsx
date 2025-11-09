@@ -81,11 +81,7 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
   // Execute query mutation
   const executeQueryMutation = useMutation({
     mutationFn: async (query: string) => {
-      const response = await fetch(`/api/database/${projectId}/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
-      });
+      const response = await apiRequest('POST', `/api/database/${projectId}/query`, { query });
       if (!response.ok) throw new Error('Failed to execute query');
       return response.json();
     },

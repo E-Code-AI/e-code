@@ -20,6 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ReplitDBProps {
   projectId: number;
@@ -156,11 +157,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         parsedValue = null;
       }
 
-      const response = await fetch(`/api/database/${projectId}/replitdb`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: newKey, value: parsedValue })
-      });
+      const response = await apiRequest('POST', `/api/database/${projectId}/replitdb`, { key: newKey, value: parsedValue });
 
       if (response.ok) {
         await loadEntries();
@@ -196,11 +193,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         parsedValue = JSON.parse(editValue);
       }
 
-      const response = await fetch(`/api/database/${projectId}/replitdb/${selectedEntry.key}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value: parsedValue })
-      });
+      const response = await apiRequest('PUT', `/api/database/${projectId}/replitdb/${selectedEntry.key}`, { value: parsedValue });
 
       if (response.ok) {
         await loadEntries();
@@ -221,9 +214,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
 
   const handleDelete = async (key: string) => {
     try {
-      const response = await fetch(`/api/database/${projectId}/replitdb/${key}`, {
-        method: 'DELETE'
-      });
+      const response = await apiRequest('DELETE', `/api/database/${projectId}/replitdb/${key}`, {});
 
       if (response.ok) {
         await loadEntries();
@@ -280,11 +271,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
       const text = await file.text();
       const data = JSON.parse(text);
 
-      const response = await fetch(`/api/database/${projectId}/replitdb/import`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data })
-      });
+      const response = await apiRequest('POST', `/api/database/${projectId}/replitdb/import`, { data });
 
       if (response.ok) {
         await loadEntries();

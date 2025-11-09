@@ -11,6 +11,7 @@ import {
   Shield, AlertTriangle, Trash2, Edit
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Secret {
   id: string;
@@ -78,12 +79,7 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
     }
 
     try {
-      const response = await fetch(`/api/secrets/${projectId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(newSecret)
-      });
+      const response = await apiRequest('POST', `/api/secrets/${projectId}`, newSecret);
 
       if (response.ok) {
         toast({
@@ -113,10 +109,7 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
 
   const deleteSecret = async (secretId: string) => {
     try {
-      const response = await fetch(`/api/secrets/${projectId}/${secretId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await apiRequest('DELETE', `/api/secrets/${projectId}/${secretId}`, {});
 
       if (response.ok) {
         toast({

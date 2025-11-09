@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { apiRequest } from '@/lib/queryClient';
 
 interface BillingSystemProps {
   userId: number;
@@ -215,14 +216,9 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
   const handleSubscribe = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/billing/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          planId: selectedPlan,
-          interval: billingInterval
-        })
+      const response = await apiRequest('POST', '/api/billing/subscribe', {
+        planId: selectedPlan,
+        interval: billingInterval
       });
 
       if (response.ok) {
@@ -247,10 +243,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/billing/cancel`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await apiRequest('POST', `/api/billing/cancel`, {});
 
       if (response.ok) {
         await loadSubscription();

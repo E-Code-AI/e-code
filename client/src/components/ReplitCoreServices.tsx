@@ -25,6 +25,7 @@ import {
   Network,
   Users
 } from "lucide-react";
+import { apiRequest } from '@/lib/queryClient';
 
 interface SecurityIssue {
   type: string;
@@ -121,19 +122,13 @@ export function ReplitCoreServices() {
         });
       }, 200);
 
-      const response = await fetch('/api/security/quick-scan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: `
-            const API_KEY = "sk-1234567890abcdef";
-            const password = "p@ssw0rd";
-            app.use(cors());
-            eval(userInput);
-          `
-        }),
+      const response = await apiRequest('POST', '/api/security/quick-scan', {
+        code: `
+          const API_KEY = "sk-1234567890abcdef";
+          const password = "p@ssw0rd";
+          app.use(cors());
+          eval(userInput);
+        `
       });
 
       const issues = await response.json();
@@ -160,17 +155,11 @@ export function ReplitCoreServices() {
     setLoading(true);
     
     try {
-      const response = await fetch('/api/export/1', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          format: exportType,
-          includeFiles: true,
-          includeSecrets: false,
-          includeGitHistory: true
-        }),
+      const response = await apiRequest('POST', '/api/export/1', {
+        format: exportType,
+        includeFiles: true,
+        includeSecrets: false,
+        includeGitHistory: true
       });
 
       const result = await response.json();
@@ -226,15 +215,9 @@ export function ReplitCoreServices() {
     setLoading(true);
     
     try {
-      const response = await fetch('/api/ssh/keys', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newKeyName,
-          type: keyType
-        }),
+      const response = await apiRequest('POST', '/api/ssh/keys', {
+        name: newKeyName,
+        type: keyType
       });
 
       const newKey = await response.json();
@@ -271,17 +254,11 @@ export function ReplitCoreServices() {
     setLoading(true);
     
     try {
-      const response = await fetch('/api/database/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newDbName,
-          type: dbType,
-          plan: dbPlan,
-          projectId: 1
-        }),
+      const response = await apiRequest('POST', '/api/database/create', {
+        name: newDbName,
+        type: dbType,
+        plan: dbPlan,
+        projectId: 1
       });
 
       const newDb = await response.json();
