@@ -186,7 +186,7 @@ export function ReplitLayout({
         isOpen={showFileExplorer}
         onClose={() => setShowFileExplorer(false)}
         onFileSelect={handleFileSelect}
-        currentFile={projectId?.toString()}
+        currentFileId={projectId?.toString()}
       />
       
       {/* Mobile Tools Panel */}
