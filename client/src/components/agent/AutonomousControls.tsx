@@ -64,13 +64,9 @@ export function AutonomousControls({ sessionId, onModeChange }: AutonomousContro
     try {
       const endpoint = enabled ? '/api/agent/autonomous/enable' : '/api/agent/autonomous/disable';
       
-      await apiRequest(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          riskThreshold: enabled ? riskThreshold : undefined
-        })
+      await apiRequest('POST', endpoint, {
+        sessionId,
+        riskThreshold: enabled ? riskThreshold : undefined
       });
       
       setIsEnabled(enabled);
@@ -106,13 +102,9 @@ export function AutonomousControls({ sessionId, onModeChange }: AutonomousContro
     setIsLoading(true);
     
     try {
-      await apiRequest('/api/agent/autonomous/enable', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          riskThreshold: newThreshold
-        })
+      await apiRequest('POST', '/api/agent/autonomous/enable', {
+        sessionId,
+        riskThreshold: newThreshold
       });
       
       setRiskThreshold(newThreshold);
