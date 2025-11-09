@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
 
 interface GeneratedFile {
   id: string;
@@ -123,31 +124,11 @@ export default function AIAgentStudio() {
         }
       }
 
-      const response = await fetch("/api/ai/generate-preview", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: trimmedPrompt,
-          language,
-          projectId: parsedProjectId,
-        }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = "Failed to generate preview";
-        try {
-          const errorBody = await response.json();
-          errorMessage = errorBody?.error || errorBody?.message || errorMessage;
-        } catch (error) {
-          console.error("Failed to parse preview error", error);
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = (await response.json()) as PreviewResponse;
+      const data = await apiRequest('POST', '/api/ai/generate-preview', {
+        prompt: trimmedPrompt,
+        language,
+        projectId: parsedProjectId,
+      }) as PreviewResponse;
       return data;
     },
     onSuccess: (data) => {
@@ -181,16 +162,11 @@ export default function AIAgentStudio() {
         throw new Error("Project ID must be a number.");
       }
 
-      const response = await fetch(`/api/ai/apply-preview/${result.id}`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ projectId: parsedProjectId }),
+      const data = await apiRequest('POST', `/api/ai/apply-preview/${result.id}`, {
+        projectId: parsedProjectId,
       });
 
-      if (!response.ok) {
+      if (!data) {
         let errorMessage = "Failed to apply preview";
         try {
           const errorBody = await response.json();

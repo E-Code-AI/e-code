@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, CheckCircle, XCircle, AlertCircle, Send, Settings2 } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function NewsletterSettings() {
   const { toast } = useToast();
@@ -18,8 +19,7 @@ export default function NewsletterSettings() {
 
   const checkGandiStatus = async () => {
     try {
-      const response = await fetch('/api/newsletter/test-gandi');
-      const data = await response.json();
+      const data = await apiRequest('GET', '/api/newsletter/test-gandi');
       setGandiStatus(data);
     } catch (error) {
       toast({
@@ -35,24 +35,11 @@ export default function NewsletterSettings() {
   const testEmailSending = async () => {
     setTesting(true);
     try {
-      const response = await fetch('/api/newsletter/test-send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'test@example.com' })
+      await apiRequest('POST', '/api/newsletter/test-send', { email: 'test@example.com' });
+      toast({
+        title: "Test Sent",
+        description: "Check console logs for email output",
       });
-      
-      if (response.ok) {
-        toast({
-          title: "Test Sent",
-          description: "Check console logs for email output",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to send test email",
-          variant: "destructive",
-        });
-      }
     } catch (error) {
       toast({
         title: "Error",
