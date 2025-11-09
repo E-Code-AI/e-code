@@ -63,6 +63,58 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   const userId = (req as any).user?.id;
   
   try {
+    // PLAN MODE ENFORCEMENT: Check agent mode from database
+    let agentMode: 'plan' | 'build' = 'build';
+    let enforcedTools: any[] | undefined = undefined; // undefined = use defaults, [] = explicitly none
+    let modeSystemPrompt = '';
+    
+    if (conversationId) {
+      try {
+        // Query conversation to get agent_mode
+        const { db } = await import('../db');
+        const { aiConversations } = await import('../../shared/schema');
+        const { eq } = await import('drizzle-orm');
+        
+        const [conversation] = await db
+          .select({ agentMode: aiConversations.agentMode })
+          .from(aiConversations)
+          .where(eq(aiConversations.id, conversationId))
+          .limit(1);
+        
+        if (conversation?.agentMode) {
+          agentMode = conversation.agentMode;
+          
+          // PLAN MODE: Explicitly disable all tool execution
+          if (agentMode === 'plan') {
+            enforcedTools = []; // Explicitly empty = no tools allowed
+            modeSystemPrompt = `
+IMPORTANT: You are in PLAN MODE. Do NOT execute any code changes or file modifications.
+Your role is to:
+- Brainstorm ideas and explore approaches
+- Break down complex projects into task lists
+- Provide architectural guidance and planning
+- Discuss pros/cons of different solutions
+- Answer questions and provide strategic advice
+
+When the user is ready to implement, they will switch to BUILD MODE.
+Focus on planning, design, and collaboration - not implementation.`;
+          } else {
+            // BUILD MODE: Use client-provided tools or leave undefined for defaults
+            enforcedTools = tools && tools.length > 0 ? tools : undefined;
+            modeSystemPrompt = `
+You are in BUILD MODE. You can execute actions like creating files, running commands, and modifying code.`;
+          }
+        }
+      } catch (convError) {
+        logger.warn('Failed to load conversation mode, defaulting to build:', convError);
+        // On error, default to build mode with client tools or defaults
+        enforcedTools = tools && tools.length > 0 ? tools : undefined;
+      }
+    } else {
+      // No conversation ID = new conversation, default to build mode
+      enforcedTools = tools && tools.length > 0 ? tools : undefined;
+    }
+    
     // Get project context
     const contextProvider = new ProjectContextProvider(projectId);
     const projectContext = await contextProvider.getContext();
@@ -75,6 +127,8 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
         content: systemPrompt || `You are an expert AI coding assistant integrated into the E-Code Platform IDE. 
         You help users build, debug, and improve their applications with detailed explanations and high-quality code.
         You have access to the project context and can execute actions like creating files, running commands, and modifying code.
+        
+        ${modeSystemPrompt}
         
         ${contextPrompt}`
       },
@@ -92,10 +146,10 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     let fullResponse = '';
     let tokenCount = 0;
     
-    // Stream based on provider
+    // Stream based on provider (using enforcedTools to respect Plan Mode)
     switch (provider) {
       case 'openai':
-        await streamOpenAI(res, messages, { model, temperature, maxTokens, tools });
+        await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools });
         break;
         
       case 'anthropic':
@@ -103,17 +157,18 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
           model, 
           temperature, 
           maxTokens,
+          tools: enforcedTools,
           extendedThinking: capabilities.extendedThinking || false
         });
         break;
         
       case 'gemini':
-        await streamGemini(res, messages, { model, temperature, maxTokens });
+        await streamGemini(res, messages, { model, temperature, maxTokens, tools: enforcedTools });
         break;
         
       default:
         // Fallback to OpenAI
-        await streamOpenAI(res, messages, { model, temperature, maxTokens, tools });
+        await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools });
     }
     
     // Send completion event
@@ -156,8 +211,9 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   const openai = new OpenAI({ apiKey });
   const executor = new ToolExecutor(options.projectId || 'default');
   
-  // Add tools to the stream
-  const tools = toOpenAITools(allTools);
+  // Add tools to the stream (respect Plan Mode enforcement from options)
+  const requestedTools = options.tools !== undefined ? options.tools : allTools;
+  const tools = toOpenAITools(requestedTools);
   
   const stream = await openai.chat.completions.create({
     model: options.model || 'gpt-4-turbo-preview',
@@ -273,8 +329,9 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
   const systemMessage = messages.find(m => m.role === 'system');
   const userMessages = messages.filter(m => m.role !== 'system');
   
-  // Add tools to the request
-  const tools = toAnthropicTools(allTools);
+  // Add tools to the request (respect Plan Mode enforcement from options)
+  const requestedTools = options.tools !== undefined ? options.tools : allTools;
+  const tools = toAnthropicTools(requestedTools);
   
   const stream = await anthropic.messages.create({
     model: options.model || 'claude-3-5-sonnet-20241022',

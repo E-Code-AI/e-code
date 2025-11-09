@@ -41,6 +41,7 @@ export const aiModelEnum = pgEnum('ai_model', [
   'gemini-pro',
   'gemini-ultra'
 ]);
+export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build']);
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -910,6 +911,7 @@ export const aiConversations = pgTable('ai_conversations', {
   context: jsonb('context').default({}),
   totalTokensUsed: integer('total_tokens_used').default(0),
   model: varchar('model').notNull().default('claude-3-sonnet'),
+  agentMode: agentModeEnum('agent_mode').notNull().default('build'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
