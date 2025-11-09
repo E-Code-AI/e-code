@@ -40,6 +40,10 @@ import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './Thinkin
 import { ToolExecutionList } from './ToolExecutionDisplay';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useWorkflowManager } from '@/hooks/use-workflow-manager';
+import { AgentWorkflowSelector } from './AgentWorkflowSelector';
+import { DesignPrototypeViewer } from './DesignPrototypeViewer';
+import { MVPCompletionDialog } from './MVPCompletionDialog';
 
 interface ToolExecution {
   id: string;
@@ -56,6 +60,16 @@ interface ToolExecution {
   error?: string;
 }
 
+type WorkflowPhase = 
+  | 'generating_features'
+  | 'selecting_build_option'
+  | 'building_design'
+  | 'design_preview'
+  | 'building_full'
+  | 'mvp_complete'
+  | 'extended_build'
+  | 'complete';
+
 interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -65,6 +79,14 @@ interface Message {
   thinking?: ThinkingStep[];
   toolExecutions?: ToolExecution[];
   isStreaming?: boolean;
+  type?: 'text' | 'workflow_features' | 'workflow_build_choice' | 'workflow_design' | 'workflow_mvp';
+  workflowPhase?: WorkflowPhase;
+  workflowPayload?: {
+    featureList?: string[];
+    taskList?: string[];
+    designPreviewUrl?: string;
+    buildChoice?: 'full' | 'design';
+  };
   metadata?: {
     model?: string;
     tokens?: number;
