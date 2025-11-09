@@ -137,11 +137,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
         const formData = new FormData();
         formData.append('file', selectedFile);
         
-        response = await fetch(`/api/import-export/${projectId}/import`, {
-          method: 'POST',
-          credentials: 'include',
-          body: formData
-        });
+        response = await apiRequest('POST', `/api/import-export/${projectId}/import`, formData);
       } else if (importSource === 'github') {
         response = await apiRequest('POST', `/api/import-export/${projectId}/import`, {
           source: 'github',
