@@ -906,7 +906,6 @@ export const aiConversations = pgTable('ai_conversations', {
   id: serial('id').primaryKey(),
   projectId: varchar('project_id').notNull().references(() => projects.id),
   userId: varchar('user_id').notNull().references(() => users.id),
-  conversationId: varchar('conversation_id').notNull().unique(),
   messages: jsonb('messages').notNull().default([]),
   context: jsonb('context').default({}),
   totalTokensUsed: integer('total_tokens_used').default(0),

@@ -113,6 +113,66 @@ router.post('/recommend-model', async (req, res) => {
   }
 });
 
+// POST /api/agent/conversation/:id/mode - Update conversation mode (Plan vs Build)
+router.post('/conversation/:id/mode', async (req, res) => {
+  try {
+    const conversationIdStr = req.params.id;
+    const conversationId = parseInt(conversationIdStr, 10);
+    const { mode } = req.body;
+    const userId = req.user!.id;
+
+    // Validate conversation ID
+    if (isNaN(conversationId)) {
+      return res.status(400).json({
+        error: 'Invalid conversation ID',
+      });
+    }
+
+    // Validate mode
+    if (!mode || (mode !== 'plan' && mode !== 'build')) {
+      return res.status(400).json({
+        error: 'Invalid mode. Must be "plan" or "build"',
+      });
+    }
+
+    // Update conversation mode in database
+    const { aiConversations } = await import('@shared/schema');
+    const { eq, and } = await import('drizzle-orm');
+
+    // Verify conversation belongs to user
+    const [conversation] = await db
+      .select()
+      .from(aiConversations)
+      .where(and(
+        eq(aiConversations.id, conversationId),
+        eq(aiConversations.userId, userId)
+      ))
+      .limit(1);
+
+    if (!conversation) {
+      return res.status(404).json({
+        error: 'Conversation not found or access denied',
+      });
+    }
+
+    // Update mode
+    await db
+      .update(aiConversations)
+      .set({ agentMode: mode })
+      .where(eq(aiConversations.id, conversationId));
+
+    res.json({
+      success: true,
+      conversationId,
+      mode,
+      message: `Conversation mode updated to ${mode.toUpperCase()}`,
+    });
+  } catch (error: any) {
+    console.error('[AgentRouter] Error updating conversation mode:', error);
+    res.status(500).json({ error: 'Failed to update conversation mode' });
+  }
+});
+
 // ====== ADMIN-ONLY ROUTES ======
 // These routes require admin authentication
 // Create new agent session
