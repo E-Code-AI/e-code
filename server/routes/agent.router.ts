@@ -113,6 +113,63 @@ router.post('/recommend-model', async (req, res) => {
   }
 });
 
+// POST /api/agent/conversation - Create or get conversation for project
+router.post('/conversation', async (req, res) => {
+  try {
+    const { projectId } = req.body;
+    const userId = req.user!.id;
+
+    if (!projectId) {
+      return res.status(400).json({
+        error: 'projectId is required',
+      });
+    }
+
+    const { aiConversations } = await import('@shared/schema');
+    const { eq, and, desc } = await import('drizzle-orm');
+
+    // Try to find existing conversation for this project/user
+    const [existingConversation] = await db
+      .select()
+      .from(aiConversations)
+      .where(and(
+        eq(aiConversations.projectId, projectId.toString()),
+        eq(aiConversations.userId, userId)
+      ))
+      .orderBy(desc(aiConversations.createdAt))
+      .limit(1);
+
+    if (existingConversation) {
+      return res.json({
+        conversationId: existingConversation.id,
+        agentMode: existingConversation.agentMode,
+        existing: true,
+      });
+    }
+
+    // Create new conversation
+    const [newConversation] = await db
+      .insert(aiConversations)
+      .values({
+        projectId: projectId.toString(),
+        userId: userId,
+        messages: [],
+        agentMode: 'build', // Default to build mode
+        model: 'claude-3-5-sonnet',
+      })
+      .returning();
+
+    res.json({
+      conversationId: newConversation.id,
+      agentMode: newConversation.agentMode,
+      existing: false,
+    });
+  } catch (error: any) {
+    console.error('[AgentRouter] Error creating conversation:', error);
+    res.status(500).json({ error: 'Failed to create conversation' });
+  }
+});
+
 // POST /api/agent/conversation/:id/mode - Update conversation mode (Plan vs Build)
 router.post('/conversation/:id/mode', async (req, res) => {
   try {
