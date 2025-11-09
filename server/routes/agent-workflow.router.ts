@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireAuth } from './auth';
+import { ensureAuthenticated as requireAuth } from '../middleware/auth';
 
 const router = Router();
 
