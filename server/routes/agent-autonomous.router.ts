@@ -8,18 +8,92 @@
  * - Configure risk thresholds
  */
 
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { autonomousEngine } from '../services/agent-autonomous-engine.service';
 import { planGenerator } from '../services/agent-plan-generator.service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { createLogger } from '../utils/logger';
+import { db } from '../db';
+import { agentSessions } from '@shared/schema';
+import { eq, and } from 'drizzle-orm';
 
 const router = Router();
 const logger = createLogger('AutonomousRouter');
 
 // All routes require authentication
 router.use(ensureAuthenticated);
+
+/**
+ * Middleware to verify session ownership
+ * Loads the agent session and verifies it belongs to the authenticated user
+ */
+async function ensureSessionOwnership(req: Request, res: Response, next: NextFunction) {
+  try {
+    const sessionId = req.body.sessionId || req.params.sessionId;
+    const userId = req.user!.id;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'sessionId is required' });
+    }
+
+    // Query session with ownership check
+    const [session] = await db
+      .select()
+      .from(agentSessions)
+      .where(and(
+        eq(agentSessions.id, sessionId),
+        eq(agentSessions.userId, userId)
+      ))
+      .limit(1);
+
+    if (!session) {
+      logger.warn(`Session ownership check failed: sessionId=${sessionId}, userId=${userId}`);
+      return res.status(404).json({ error: 'Session not found or access denied' });
+    }
+
+    // Attach verified session to request for downstream use
+    (req as any).agentSession = session;
+    next();
+  } catch (error: any) {
+    logger.error('Error in session ownership check:', error);
+    res.status(500).json({ error: 'Failed to verify session ownership' });
+  }
+}
+
+/**
+ * Middleware to verify plan ownership
+ * Verifies the plan belongs to the authenticated user
+ */
+async function ensurePlanOwnership(req: Request, res: Response, next: NextFunction) {
+  try {
+    const planId = req.params.planId;
+    const userId = req.user!.id;
+
+    if (!planId) {
+      return res.status(400).json({ error: 'planId is required' });
+    }
+
+    const plan = planGenerator.getPlan(planId);
+    
+    if (!plan) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    // Verify plan ownership via userId tracking
+    if (plan.userId && plan.userId !== userId) {
+      logger.warn(`Plan ownership check failed: planId=${planId}, userId=${userId}`);
+      return res.status(404).json({ error: 'Plan not found or access denied' });
+    }
+
+    // Attach verified plan to request for downstream use
+    (req as any).agentPlan = plan;
+    next();
+  } catch (error: any) {
+    logger.error('Error in plan ownership check:', error);
+    res.status(500).json({ error: 'Failed to verify plan ownership' });
+  }
+}
 
 /**
  * POST /api/agent/autonomous/enable
@@ -92,20 +166,33 @@ router.post('/disable', async (req, res) => {
  */
 router.post('/assess-risk', async (req, res) => {
   try {
-    const { actionType, actionData } = req.body;
+    // Support both legacy format (actionType, actionData) and new format (action object)
+    let actionType: string;
+    let actionData: any;
+    
+    if (req.body.action) {
+      // New format: { action: { tool: 'file_read', parameters: {...} } }
+      actionType = req.body.action.tool;
+      actionData = req.body.action.parameters || {};
+    } else {
+      // Legacy format: { actionType: '...', actionData: {...} }
+      actionType = req.body.actionType;
+      actionData = req.body.actionData || {};
+    }
     
     if (!actionType) {
-      return res.status(400).json({ error: 'actionType is required' });
+      return res.status(400).json({ error: 'action.tool or actionType is required' });
     }
     
     const riskAssessment = await autonomousEngine.assessRisk(
       actionType,
-      actionData || {}
+      actionData
     );
     
     res.json({
-      actionType,
-      riskAssessment
+      riskScore: riskAssessment.score,
+      autoApprove: riskAssessment.autoApprove,
+      reasoning: riskAssessment.reasoning || riskAssessment.explanation
     });
   } catch (error: any) {
     logger.error('Error assessing risk:', error);
@@ -168,14 +255,16 @@ router.get('/actions/:sessionId', async (req, res) => {
 
 /**
  * POST /api/agent/plan/generate
- * Generate an execution plan from a goal
+ * Generate an execution plan from a goal or prompt
  */
 router.post('/plan/generate', async (req, res) => {
   try {
-    const { goal, context = {} } = req.body;
+    // Support both 'goal' and 'prompt' field names
+    const goal = req.body.goal || req.body.prompt;
+    const context = req.body.context || {};
     
     if (!goal) {
-      return res.status(400).json({ error: 'goal is required' });
+      return res.status(400).json({ error: 'goal or prompt is required' });
     }
     
     const plan = await planGenerator.generatePlan(goal, context);
