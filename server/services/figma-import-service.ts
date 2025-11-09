@@ -1,13 +1,14 @@
 import { storage } from '../storage';
-import { logger } from '../utils/logger';
+import { createLogger } from '../utils/logger';
 import fetch from 'node-fetch';
+
+const logger = createLogger('figma-import-service');
 
 interface FigmaNode {
   id: string;
   name: string;
   type: string;
   children?: FigmaNode[];
-  style?: any;
   layoutMode?: string;
   primaryAxisSizingMode?: string;
   counterAxisSizingMode?: string;
@@ -34,7 +35,7 @@ interface FigmaNode {
     height: number;
   };
   characters?: string;
-  style?: {
+  textStyle?: {
     fontFamily?: string;
     fontSize?: number;
     fontWeight?: number;
@@ -70,10 +71,9 @@ export class FigmaImportService {
       const project = await storage.createProject({
         name: projectName || `Figma Import - ${new Date().toISOString().split('T')[0]}`,
         description: `Imported from Figma file: ${fileKey}`,
-        language: 'react',
-        framework: 'vite-react',
+        language: 'javascript',
         visibility: 'private',
-        userId
+        ownerId: userId.toString()
       });
 
       // Fetch Figma file data
@@ -188,22 +188,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       });
       filesCreated++;
 
-      // Track import in analytics
-      await storage.trackActivity({
-        userId,
-        action: 'import_figma',
-        resourceType: 'project',
-        resourceId: project.id,
-        metadata: {
-          fileKey,
-          componentsCreated: Object.keys(components).length,
-          filesCreated
-        }
-      });
-
       logger.info(`Figma import completed: Project ${project.id}, ${filesCreated} files created`);
       
-      return { projectId: project.id, filesCreated };
+      return { projectId: Number(project.id), filesCreated };
     } catch (error) {
       logger.error('Figma import error:', error);
       throw error;
@@ -255,7 +242,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     name: 'Logo',
                     type: 'TEXT',
                     characters: 'MyApp',
-                    style: {
+                    textStyle: {
                       fontFamily: 'Inter',
                       fontSize: 24,
                       fontWeight: 700,
@@ -274,21 +261,21 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         name: 'Home',
                         type: 'TEXT',
                         characters: 'Home',
-                        style: { fontSize: 16 }
+                        textStyle: { fontSize: 16 }
                       },
                       {
                         id: '1:7',
                         name: 'About',
                         type: 'TEXT',
                         characters: 'About',
-                        style: { fontSize: 16 }
+                        textStyle: { fontSize: 16 }
                       },
                       {
                         id: '1:8',
                         name: 'Contact',
                         type: 'TEXT',
                         characters: 'Contact',
-                        style: { fontSize: 16 }
+                        textStyle: { fontSize: 16 }
                       }
                     ]
                   }
@@ -310,7 +297,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     name: 'Hero Title',
                     type: 'TEXT',
                     characters: 'Welcome to MyApp',
-                    style: {
+                    textStyle: {
                       fontSize: 48,
                       fontWeight: 700,
                       textAlignHorizontal: 'CENTER'
@@ -321,7 +308,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     name: 'Hero Description',
                     type: 'TEXT',
                     characters: 'Build something amazing with our platform',
-                    style: {
+                    textStyle: {
                       fontSize: 20,
                       textAlignHorizontal: 'CENTER'
                     }
@@ -345,7 +332,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         name: 'Button Text',
                         type: 'TEXT',
                         characters: 'Get Started',
-                        style: {
+                        textStyle: {
                           fontSize: 18,
                           fontWeight: 600,
                           textAlignHorizontal: 'CENTER'
@@ -507,12 +494,12 @@ ${indent}</${tag}>`;
       }
       
       // Text styles
-      if (n.style) {
-        if (n.style.fontSize) style.fontSize = `${n.style.fontSize}px`;
-        if (n.style.fontWeight) style.fontWeight = n.style.fontWeight;
-        if (n.style.fontFamily) style.fontFamily = n.style.fontFamily;
-        if (n.style.textAlignHorizontal) {
-          style.textAlign = n.style.textAlignHorizontal.toLowerCase();
+      if (n.textStyle) {
+        if (n.textStyle.fontSize) style.fontSize = `${n.textStyle.fontSize}px`;
+        if (n.textStyle.fontWeight) style.fontWeight = n.textStyle.fontWeight;
+        if (n.textStyle.fontFamily) style.fontFamily = n.textStyle.fontFamily;
+        if (n.textStyle.textAlignHorizontal) {
+          style.textAlign = n.textStyle.textAlignHorizontal.toLowerCase();
         }
       }
       

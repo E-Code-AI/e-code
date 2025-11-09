@@ -37,9 +37,10 @@ export default function FigmaImport() {
         figmaUrl
       });
 
-      if (response.json.success) {
+      const result = await response.json();
+      if (result.success) {
         setImportStatus('completed');
-        setImportDetails(response.json.import);
+        setImportDetails(result.import);
         toast({
           title: 'Import Successful',
           description: 'Your Figma design has been imported successfully!'
