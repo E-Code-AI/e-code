@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Play, Square, Shield, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface AutonomousControlsProps {
   sessionId: string;
@@ -76,6 +76,10 @@ export function AutonomousControls({ sessionId, onModeChange }: AutonomousContro
       setIsEnabled(enabled);
       onModeChange?.(enabled);
       
+      // Invalidate relevant queries to sync UI state
+      queryClient.invalidateQueries({ queryKey: ['/api/agent/autonomous/actions', sessionId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/agent/preferences'] });
+      
       toast({
         title: enabled ? 'Autonomous Mode Enabled' : 'Autonomous Mode Disabled',
         description: enabled 
@@ -112,6 +116,10 @@ export function AutonomousControls({ sessionId, onModeChange }: AutonomousContro
       });
       
       setRiskThreshold(newThreshold);
+      
+      // Invalidate relevant queries to sync UI state
+      queryClient.invalidateQueries({ queryKey: ['/api/agent/autonomous/actions', sessionId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/agent/preferences'] });
       
       toast({
         title: 'Risk Threshold Updated',

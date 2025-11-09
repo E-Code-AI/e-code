@@ -88,9 +88,8 @@ export class MainRouter {
     // Agent routes (admin only)
     app.use('/api/admin/agent', agentRouter);
     
-    // Autonomous agent routes (authenticated users)
-    app.use('/api/agent/autonomous', agentAutonomousRouter);
-    app.use('/api/agent/plan', agentAutonomousRouter);
+    // Autonomous agent routes (authenticated users) - single mount point
+    app.use('/api/agent', agentAutonomousRouter);
     
     // Test agent routes (for testing without auth)
     app.use(testAgentRouter);

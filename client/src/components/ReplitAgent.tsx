@@ -40,6 +40,8 @@ import { useLocation } from 'wouter';
 import { PendingApprovalsPanel } from './PendingApprovalsPanel';
 import { ModelSelector } from './agent/ModelSelector';
 import { ExtendedThinkingDisplay } from './agent/ExtendedThinkingDisplay';
+import { AutonomousControls } from './agent/AutonomousControls';
+import { PlanVisualizer } from './agent/PlanVisualizer';
 
 interface ReplitAgentProps {
   projectId: string | number;
@@ -775,7 +777,9 @@ What would you like me to build for you today?`,
   }>>([]);
   const [featureFlags, setFeatureFlags] = useState<any>(null);
   const [userPreferences, setUserPreferences] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'chat' | 'approvals' | 'progress'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'approvals' | 'progress' | 'autonomous'>('chat');
+  const [autonomousModeEnabled, setAutonomousModeEnabled] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<any>(null);
   const [progressLogs, setProgressLogs] = useState<Array<{
     id: string;
     timestamp: Date;
@@ -1402,6 +1406,15 @@ What would you like me to build for you today?`,
     const lowerContent = content.toLowerCase();
     const wantsToBuild = buildKeywords.some(keyword => lowerContent.includes(keyword)) && 
                         projectTypes.some(type => lowerContent.includes(type));
+    const wantsPlan = lowerContent.includes('plan') || lowerContent.includes('break down') || lowerContent.includes('steps');
+
+    // Check if user wants a plan first (Plan Mode)
+    if (wantsPlan && wantsToBuild) {
+      await generatePlan(content);
+      setIsLoading(false);
+      setIsTyping(false);
+      return;
+    }
 
     if (wantsToBuild) {
       await buildApplication(content);
@@ -1606,6 +1619,55 @@ What would you like me to build?`,
     } finally {
       setIsLoading(false);
       setIsTyping(false);
+    }
+  };
+
+  // Generate execution plan from user goal
+  const generatePlan = async (goal: string, context?: any) => {
+    try {
+      setIsLoading(true);
+      addProgressLog('info', `Generating execution plan for: ${goal}`);
+      
+      const response = await fetch('/api/agent/plan/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goal,
+          context: context || {
+            projectType: 'web application',
+            existingFiles: [],
+            technologies: ['React', 'TypeScript', 'Node.js'],
+            constraints: []
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate plan');
+      }
+      
+      const data = await response.json();
+      setCurrentPlan(data.plan);
+      setActiveTab('autonomous'); // Switch to autonomous tab to show plan
+      
+      addProgressLog('success', `Plan generated with ${data.plan.tasks.length} tasks`);
+      toast({
+        title: 'Execution Plan Ready',
+        description: `Generated ${data.plan.tasks.length} tasks. Review in Autonomous tab.`,
+      });
+      
+      return data.plan;
+    } catch (error: any) {
+      console.error('Plan generation error:', error);
+      addProgressLog('error', 'Failed to generate plan');
+      toast({
+        title: 'Plan Generation Failed',
+        description: error.message || 'Could not generate execution plan',
+        variant: 'destructive'
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1943,12 +2005,16 @@ What would you like me to build?`,
         </div>
       </div>
 
-      {/* Tabs for Chat, Approvals, and Progress - Fortune 500 Security */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'chat' | 'progress' | 'approvals')} className="flex-1 flex flex-col">
+      {/* Tabs for Chat, Approvals, Progress, and Autonomous - Fortune 500 Security */}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'chat' | 'progress' | 'approvals' | 'autonomous')} className="flex-1 flex flex-col">
         <TabsList className="w-full rounded-none border-b bg-white dark:bg-gray-900">
           <TabsTrigger value="chat" className="flex-1" data-testid="chat-tab">Chat</TabsTrigger>
           <TabsTrigger value="approvals" className="flex-1" data-testid="approvals-tab">
             🔒 Approvals
+          </TabsTrigger>
+          <TabsTrigger value="autonomous" className="flex-1" data-testid="autonomous-tab">
+            <Zap className="h-4 w-4 mr-1.5" />
+            Autonomous
           </TabsTrigger>
           {featureFlags?.aiUx?.progressTab !== false && (
             <TabsTrigger value="progress" className="flex-1" data-testid="progress-tab">Progress</TabsTrigger>
@@ -2024,6 +2090,74 @@ What would you like me to build?`,
                 });
               }}
             />
+          </div>
+        </ScrollArea>
+      </TabsContent>
+
+      {/* Autonomous Mode Tab - Phase 1 Feature */}
+      <TabsContent value="autonomous" className="flex-1 m-0" data-testid="autonomous-content">
+        <ScrollArea className="h-full">
+          <div className="p-4 space-y-4">
+            <AutonomousControls
+              sessionId={activeSessionId}
+              onModeChange={(enabled) => {
+                setAutonomousModeEnabled(enabled);
+                if (enabled) {
+                  addProgressLog('info', '🤖 Autonomous mode enabled - AI will work independently');
+                } else {
+                  addProgressLog('info', '👤 Autonomous mode disabled - manual approval required');
+                }
+              }}
+            />
+            
+            {currentPlan && (
+              <PlanVisualizer
+                plan={currentPlan}
+                onTaskClick={(taskId) => {
+                  console.log('Task clicked:', taskId);
+                }}
+                onApprove={() => {
+                  toast({
+                    title: 'Plan Approved',
+                    description: 'Starting execution...',
+                  });
+                  addProgressLog('success', `Starting execution of plan: ${currentPlan.goal}`);
+                }}
+                onReject={() => {
+                  toast({
+                    title: 'Plan Rejected',
+                    description: 'Plan cancelled',
+                  });
+                  setCurrentPlan(null);
+                }}
+              />
+            )}
+            
+            {!currentPlan && (
+              <div className="text-center text-muted-foreground py-12">
+                <Zap className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                <h3 className="text-lg font-medium mb-2">
+                  {autonomousModeEnabled ? 'No Active Plan' : 'Autonomous Mode'}
+                </h3>
+                <p className="text-sm max-w-md mx-auto mb-4">
+                  {autonomousModeEnabled 
+                    ? 'Generate an execution plan to see task breakdown, dependencies, and risk assessment.'
+                    : 'Enable autonomous mode to let AI work independently with smart risk-based approval. Configure your risk threshold above to control how much autonomy to grant.'}
+                </p>
+                <Button
+                  onClick={async () => {
+                    const goal = prompt('What would you like to build or accomplish?');
+                    if (goal) {
+                      await generatePlan(goal);
+                    }
+                  }}
+                  data-testid="button-generate-plan"
+                >
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  Generate Plan
+                </Button>
+              </div>
+            )}
           </div>
         </ScrollArea>
       </TabsContent>
