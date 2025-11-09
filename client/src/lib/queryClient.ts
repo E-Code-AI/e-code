@@ -31,12 +31,33 @@ async function fetchCSRFToken(): Promise<string | null> {
   return null;
 }
 
-export async function apiRequest(
+/**
+ * Type-safe API request helper with automatic CSRF token handling
+ * @template T - Expected response type (use 'void' for 204 No Content)
+ * @param method - HTTP method (GET, POST, PUT, PATCH, DELETE)
+ * @param url - API endpoint URL
+ * @param body - Request body (JSON object or FormData)
+ * @param options - Additional fetch options
+ * @returns Parsed JSON response of type T, or void for 204 responses
+ * 
+ * @example
+ * // With type safety
+ * const project = await apiRequest<Project>('POST', '/api/projects', { name: 'My Project' });
+ * 
+ * // For 204 No Content responses
+ * await apiRequest<void>('DELETE', `/api/projects/${id}`);
+ * 
+ * // FormData uploads
+ * const formData = new FormData();
+ * formData.append('file', file);
+ * await apiRequest<UploadResult>('POST', '/api/upload', formData);
+ */
+export async function apiRequest<T = any>(
   method: string,
   url: string,
   body?: any,
   options?: RequestInit,
-): Promise<any> {
+): Promise<T> {
   // For state-changing methods, ensure we have a CSRF token
   const needsCsrf = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase());
   
@@ -72,8 +93,21 @@ export async function apiRequest(
   // Throw if response not ok (following TanStack Query pattern)
   await throwIfResNotOk(res);
   
+  // Handle 204 No Content and other empty responses
+  if (res.status === 204 || res.headers.get('content-length') === '0') {
+    return undefined as T; // Safe for void types
+  }
+  
+  // Check if response has JSON content type
+  const contentType = res.headers.get('content-type');
+  if (!contentType?.includes('application/json')) {
+    // For non-JSON responses, return empty object or text
+    const text = await res.text();
+    return (text ? { data: text } : {}) as T;
+  }
+  
   // Auto-parse JSON response (following TanStack Query queryFn pattern)
-  return await res.json();
+  return await res.json() as T;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
