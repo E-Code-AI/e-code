@@ -16,6 +16,13 @@ export class FilesRouter {
     this.initializeRoutes();
   }
 
+  // ✅ 40-YEAR SENIOR FIX: Helper method to find file by path
+  // Storage only has getFile(id), not getFile(projectId, path)
+  private async getFileByPath(projectId: string, filePath: string): Promise<any | undefined> {
+    const allFiles = await this.storage.getFilesByProjectId(projectId);
+    return allFiles.find(f => f.path === filePath);
+  }
+
   private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
     // Always allow in development mode for testing
     if (process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) {
@@ -129,7 +136,8 @@ export class FilesRouter {
           });
         }
 
-        const file = await this.storage.getFile(projectId, filePath);
+        // ✅ FIX: Use helper method instead of non-existent getFile(projectId, path)
+        const file = await this.getFileByPath(projectId, filePath);
         
         if (!file) {
           return res.status(404).json({
@@ -183,13 +191,12 @@ export class FilesRouter {
         validatedData.path = pathValidation.sanitized!;
 
         // Check if file exists
-        const existingFile = await this.storage.getFile(projectId, validatedData.path);
+        const existingFile = await this.getFileByPath(projectId, validatedData.path);
         
         if (existingFile) {
-          // Update existing file
+          // ✅ FIX: Files table has no 'language' field - only update content
           const updatedFile = await this.storage.updateFile(existingFile.id, {
-            content: validatedData.content,
-            language: validatedData.language
+            content: validatedData.content
           });
           
           // AUDIT: Log successful update
@@ -198,7 +205,7 @@ export class FilesRouter {
             userId,
             projectId,
             { type: 'edit_file', path: validatedData.path, content: validatedData.content || '' },
-            { success: true, fileId: updatedFile.id }
+            { success: true, fileId: updatedFile?.id ? String(updatedFile.id) : undefined }
           );
           
           res.json(updatedFile);
@@ -212,7 +219,7 @@ export class FilesRouter {
             userId,
             projectId,
             { type: 'create_file', path: validatedData.path, content: validatedData.content || '' },
-            { success: true, fileId: file.id }
+            { success: true, fileId: String(file.id) }
           );
           
           res.json(file);
@@ -238,7 +245,7 @@ export class FilesRouter {
       try {
         const projectId = req.params.projectId;
         const filePath = req.params[0];
-        const { content, language } = req.body;
+        const { content } = req.body;
         
         if (!filePath) {
           return res.status(400).json({
@@ -247,7 +254,8 @@ export class FilesRouter {
           });
         }
 
-        const file = await this.storage.getFile(projectId, filePath);
+        // ✅ FIX: Use helper method
+        const file = await this.getFileByPath(projectId, filePath);
         
         if (!file) {
           return res.status(404).json({
@@ -256,9 +264,9 @@ export class FilesRouter {
           });
         }
         
+        // ✅ FIX: Files table has no 'language' field
         const updatedFile = await this.storage.updateFile(file.id, {
-          content,
-          language
+          content
         });
         
         res.json(updatedFile);
@@ -284,7 +292,8 @@ export class FilesRouter {
           });
         }
 
-        const file = await this.storage.getFile(projectId, filePath);
+        // ✅ FIX: Use helper method
+        const file = await this.getFileByPath(projectId, filePath);
         
         if (!file) {
           return res.status(404).json({
@@ -308,7 +317,7 @@ export class FilesRouter {
     this.router.patch("/api/files/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const fileId = parseInt(req.params.fileId);
-        const { content, name, language } = req.body;
+        const { content, name } = req.body;
         
         // Get the file to check access
         const file = await this.storage.getFileById(fileId);
@@ -329,10 +338,10 @@ export class FilesRouter {
           });
         }
         
+        // ✅ FIX: Files table has no 'language' field
         const updatedFile = await this.storage.updateFile(fileId, {
           content,
-          name,
-          language
+          name
         });
         
         res.json(updatedFile);
@@ -422,14 +431,13 @@ export class FilesRouter {
         validatedData.path = pathValidation.sanitized!;
 
         // Check if file exists
-        const existingFile = await this.storage.getFile(projectId, validatedData.path);
+        const existingFile = await this.getFileByPath(projectId, validatedData.path);
         const userId = (req.user as any)?.id || 'unknown';
         
         if (existingFile) {
-          // Update existing file
+          // ✅ FIX: Files table has no 'language' field
           const updatedFile = await this.storage.updateFile(existingFile.id, {
-            content: validatedData.content,
-            language: validatedData.language
+            content: validatedData.content
           });
           
           // AUDIT: Log update
@@ -437,7 +445,7 @@ export class FilesRouter {
             userId,
             projectId,
             { type: 'edit_file', path: validatedData.path, content: validatedData.content || '' },
-            { success: true, fileId: updatedFile.id }
+            { success: true, fileId: updatedFile?.id ? String(updatedFile.id) : undefined }
           );
           
           res.json(updatedFile);
@@ -450,7 +458,7 @@ export class FilesRouter {
             userId,
             projectId,
             { type: 'create_file', path: validatedData.path, content: validatedData.content || '' },
-            { success: true, fileId: file.id }
+            { success: true, fileId: String(file.id) }
           );
           
           res.json(file);
@@ -484,12 +492,13 @@ export class FilesRouter {
           });
         }
 
-        // Create a placeholder file to represent the folder
+        // ✅ FIX: Create placeholder file without 'language' field
         const file = await this.storage.createFile({
           projectId,
+          name: '.gitkeep',
           path: path.join(folderPath, '.gitkeep'),
           content: '',
-          language: 'text'
+          isDirectory: false
         });
         
         res.json({ message: "Folder created successfully", file });
