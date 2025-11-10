@@ -171,13 +171,19 @@ router.post('/commit', ensureAuthenticated, csrfProtection, async (req: Request,
   try {
     const { message } = req.body;
 
-    if (!message || typeof message !== 'string') {
+    if (!message || typeof message !== 'string' || message.trim() === '') {
       return res.status(400).json({ error: 'Commit message required' });
     }
 
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
       return res.status(400).json({ error: 'Not a git repository' });
+    }
+
+    // Check if there are staged changes
+    const { stdout: statusCheck } = await execa('git', ['diff', '--cached', '--name-only'], { cwd: PROJECT_ROOT });
+    if (!statusCheck.trim()) {
+      return res.status(422).json({ error: 'No staged changes to commit' });
     }
 
     const { stdout } = await execa('git', ['commit', '-m', message], { cwd: PROJECT_ROOT });
@@ -196,12 +202,26 @@ router.post('/push', ensureAuthenticated, csrfProtection, async (req: Request, r
       return res.status(400).json({ error: 'Not a git repository' });
     }
 
-    const { stdout, stderr } = await execa('git', ['push'], { cwd: PROJECT_ROOT });
+    // Check if remote is configured
+    const { stdout: remoteCheck } = await execa('git', ['remote', '-v'], { cwd: PROJECT_ROOT });
+    if (!remoteCheck.trim()) {
+      return res.status(422).json({ error: 'No remote repository configured' });
+    }
+
+    // Use timeout to prevent hanging on credential prompts
+    const { stdout, stderr } = await execa('git', ['push'], { 
+      cwd: PROJECT_ROOT,
+      timeout: 5000, // 5 second timeout
+      reject: false
+    });
 
     res.json({ success: true, output: stdout || stderr });
   } catch (error: any) {
     console.error('[Git] Push error:', error);
-    res.status(500).json({ error: error.message || error.stderr });
+    if (error.timedOut) {
+      return res.status(500).json({ error: 'Git push timed out - remote may require authentication' });
+    }
+    res.status(500).json({ error: error.message || error.stderr || 'Push failed' });
   }
 });
 
@@ -212,12 +232,26 @@ router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, r
       return res.status(400).json({ error: 'Not a git repository' });
     }
 
-    const { stdout } = await execa('git', ['pull'], { cwd: PROJECT_ROOT });
+    // Check if remote is configured
+    const { stdout: remoteCheck } = await execa('git', ['remote', '-v'], { cwd: PROJECT_ROOT });
+    if (!remoteCheck.trim()) {
+      return res.status(422).json({ error: 'No remote repository configured' });
+    }
+
+    // Use timeout to prevent hanging on credential prompts
+    const { stdout } = await execa('git', ['pull'], { 
+      cwd: PROJECT_ROOT,
+      timeout: 5000, // 5 second timeout
+      reject: false
+    });
 
     res.json({ success: true, output: stdout });
   } catch (error: any) {
     console.error('[Git] Pull error:', error);
-    res.status(500).json({ error: error.message });
+    if (error.timedOut) {
+      return res.status(500).json({ error: 'Git pull timed out - remote may require authentication' });
+    }
+    res.status(500).json({ error: error.message || 'Pull failed' });
   }
 });
 
