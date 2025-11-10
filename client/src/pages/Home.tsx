@@ -73,8 +73,8 @@ export default function Home() {
         setIsAuthModalOpen(true);
         throw new Error("Please log in to create projects");
       }
-      const res = await apiRequest('POST', '/api/projects', { name });
-      return res.json();
+      const project = await apiRequest('POST', '/api/projects', { name });
+      return project;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
