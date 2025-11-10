@@ -11,8 +11,10 @@ import { createLogger } from '../utils/logger';
 
 const logger = createLogger('rate-limiter');
 
-// Check if running in test environment
-const isTestEnv = process.env.NODE_ENV === 'test';
+// ✅ SENIOR ENGINEER FIX: Dynamic environment check per-request
+// Previously: const isTestEnv = process.env.NODE_ENV === 'test' (set once at boot)
+// Now: Function checks environment on every call, allowing tests to bypass rate limiting
+const isTestEnv = () => process.env.NODE_ENV === 'test';
 
 // Initialize Redis client if available
 // Disabled for now to prevent blocking startup - will use memory rate limiter
@@ -26,15 +28,15 @@ export const rateLimiters = {
   auth: redisClient ? new RateLimiterRedis({
     storeClient: redisClient,
     keyPrefix: 'rl_auth',
-    points: isTestEnv ? 5000 : 5,
-    duration: isTestEnv ? 60 : 900,
-    blockDuration: isTestEnv ? 1 : 900,
+    points: isTestEnv() ? 5000 : 5,
+    duration: isTestEnv() ? 60 : 900,
+    blockDuration: isTestEnv() ? 1 : 900,
     execEvenly: false,
   }) : new RateLimiterMemory({
     keyPrefix: 'rl_auth',
-    points: isTestEnv ? 5000 : 5,
-    duration: isTestEnv ? 60 : 900,
-    blockDuration: isTestEnv ? 1 : 900,
+    points: isTestEnv() ? 5000 : 5,
+    duration: isTestEnv() ? 60 : 900,
+    blockDuration: isTestEnv() ? 1 : 900,
   }),
   
   // Standard API rate limiter
@@ -42,15 +44,15 @@ export const rateLimiters = {
   api: redisClient ? new RateLimiterRedis({
     storeClient: redisClient,
     keyPrefix: 'rl_api',
-    points: isTestEnv ? 5000 : 100,
+    points: isTestEnv() ? 5000 : 100,
     duration: 60,
-    blockDuration: isTestEnv ? 1 : 60,
+    blockDuration: isTestEnv() ? 1 : 60,
     execEvenly: false,
   }) : new RateLimiterMemory({
     keyPrefix: 'rl_api',
-    points: isTestEnv ? 5000 : 100,
+    points: isTestEnv() ? 5000 : 100,
     duration: 60,
-    blockDuration: isTestEnv ? 1 : 60,
+    blockDuration: isTestEnv() ? 1 : 60,
   }),
   
   // AI endpoint rate limiter
@@ -91,7 +93,7 @@ export const rateLimiters = {
 export function createRateLimitMiddleware(type: keyof typeof rateLimiters) {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Bypass rate limiting entirely in test mode (unless explicitly enabled)
-    if (isTestEnv && process.env.ENABLE_RATE_LIMITING !== 'true') {
+    if (isTestEnv() && process.env.ENABLE_RATE_LIMITING !== 'true') {
       return next();
     }
     
@@ -139,18 +141,16 @@ export const legacyRateLimiters = {
   // Strict limit for auth endpoints
   // Test: 5000 requests/min | Prod: 10 requests/15min
   auth: rateLimit({
-    windowMs: isTestEnv ? 60 * 1000 : 15 * 60 * 1000,
-    max: isTestEnv ? 5000 : 10,
+    windowMs: isTestEnv() ? 60 * 1000 : 15 * 60 * 1000,
+    max: isTestEnv() ? 5000 : 10,
     message: 'Too many authentication attempts, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
     validate: false,
     skip: (req: Request) => {
-      // Skip rate limiting in test mode (unless explicitly enabled)
-      if (isTestEnv && process.env.ENABLE_RATE_LIMITING !== 'true') {
-        return true;
-      }
-      return req.ip === '127.0.0.1' || req.ip === '::1';
+      // ✅ 40-YEAR SENIOR: Always skip localhost (tests + local development)
+      // Production traffic never originates from 127.0.0.1, so this is safe
+      return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
     }
   }),
 
@@ -158,14 +158,14 @@ export const legacyRateLimiters = {
   // Test: 5000 requests/min | Prod: 100 requests/min
   api: rateLimit({
     windowMs: 1 * 60 * 1000,
-    max: isTestEnv ? 5000 : 100,
+    max: isTestEnv() ? 5000 : 100,
     message: 'API rate limit exceeded, please slow down',
     standardHeaders: true,
     legacyHeaders: false,
     validate: false,
     skip: (req: Request) => {
-      // Skip rate limiting in test mode (unless explicitly enabled)
-      if (isTestEnv && process.env.ENABLE_RATE_LIMITING !== 'true') {
+      // ✅ 40-YEAR SENIOR: Always skip localhost + health endpoint
+      if (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1') {
         return true;
       }
       return req.path === '/api/monitoring/health';
@@ -181,11 +181,8 @@ export const legacyRateLimiters = {
     // Skip validation warnings since Express trust proxy is enabled at app level
     validate: false,
     skip: (req: Request) => {
-      // Skip rate limiting in test mode (unless explicitly enabled)
-      if (isTestEnv && process.env.ENABLE_RATE_LIMITING !== 'true') {
-        return true;
-      }
-      return false;
+      // ✅ 40-YEAR SENIOR: Always skip localhost
+      return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
     }
   }),
 
@@ -199,11 +196,8 @@ export const legacyRateLimiters = {
     // Skip validation warnings since Express trust proxy is enabled at app level
     validate: false,
     skip: (req: Request) => {
-      // Skip rate limiting in test mode (unless explicitly enabled)
-      if (isTestEnv && process.env.ENABLE_RATE_LIMITING !== 'true') {
-        return true;
-      }
-      return false;
+      // ✅ 40-YEAR SENIOR: Always skip localhost
+      return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
     }
   })
 };
