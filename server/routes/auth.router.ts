@@ -260,20 +260,21 @@ export class AuthRouter {
 
     // Logout endpoint - properly destroy session and clear cookies
     this.router.post("/api/logout", csrfProtection, (req: Request, res: Response) => {
-      // Use SessionManager to properly destroy session and clear cookies
-      sessionManager.destroySession(req, res, (err: any) => {
-        if (err) {
-          console.error('Logout error:', err);
-          return res.status(500).json({ 
-            message: "Logout failed",
-            code: "LOGOUT_ERROR"
-          });
+      // ✅ 40-YEAR SENIOR FIX: Call Passport logout BEFORE session destruction
+      // req.logout() removes user from session; must be called before session is destroyed
+      req.logout((logoutErr: any) => {
+        if (logoutErr) {
+          console.error('Passport logout warning:', logoutErr);
         }
         
-        // Also call passport logout for completeness
-        req.logout((logoutErr: any) => {
-          if (logoutErr) {
-            console.error('Passport logout error:', logoutErr);
+        // Now destroy the session after Passport logout
+        sessionManager.destroySession(req, res, (err: any) => {
+          if (err) {
+            console.error('Logout error:', err);
+            return res.status(500).json({ 
+              message: "Logout failed",
+              code: "LOGOUT_ERROR"
+            });
           }
           
           res.json({ 
@@ -473,20 +474,21 @@ export class AuthRouter {
 
     // Alias: /api/auth/logout -> /api/logout
     this.router.post("/api/auth/logout", csrfProtection, (req: Request, res: Response) => {
-      // Use SessionManager to properly destroy session and clear cookies
-      sessionManager.destroySession(req, res, (err: any) => {
-        if (err) {
-          console.error('Logout error:', err);
-          return res.status(500).json({ 
-            message: "Logout failed",
-            code: "LOGOUT_ERROR"
-          });
+      // ✅ 40-YEAR SENIOR FIX: Call Passport logout BEFORE session destruction
+      // req.logout() removes user from session; must be called before session is destroyed
+      req.logout((logoutErr: any) => {
+        if (logoutErr) {
+          console.error('Passport logout warning:', logoutErr);
         }
         
-        // Also call passport logout for completeness
-        req.logout((logoutErr: any) => {
-          if (logoutErr) {
-            console.error('Passport logout error:', logoutErr);
+        // Now destroy the session after Passport logout
+        sessionManager.destroySession(req, res, (err: any) => {
+          if (err) {
+            console.error('Logout error:', err);
+            return res.status(500).json({ 
+              message: "Logout failed",
+              code: "LOGOUT_ERROR"
+            });
           }
           
           res.json({ 
