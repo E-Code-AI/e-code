@@ -17,6 +17,12 @@ const logger = createLogger('admin-service');
 export class AdminService {
   constructor(private storage: DatabaseStorage) {}
 
+  // ✅ 40-YEAR SENIOR FIX: Sanitize user responses to prevent password/secret exposure
+  private sanitizeUser(user: User): Omit<User, 'passwordHash' | 'twoFactorSecret' | 'passwordResetToken'> {
+    const { passwordHash, twoFactorSecret, passwordResetToken, ...safeUser } = user;
+    return safeUser;
+  }
+
   // User Management
   async getAllUsers(filter?: { 
     search?: string; 
@@ -24,7 +30,7 @@ export class AdminService {
     status?: string; 
     limit?: number; 
     offset?: number 
-  }): Promise<{ users: User[]; total: number }> {
+  }): Promise<{ users: any[]; total: number }> {
     const users = await this.storage.getAllUsers();
     
     let filteredUsers = users;
@@ -45,7 +51,8 @@ export class AdminService {
       filteredUsers = filteredUsers.slice(offset, offset + filter.limit);
     }
     
-    return { users: filteredUsers, total };
+    // ✅ Security: Strip sensitive fields before returning
+    return { users: filteredUsers.map(u => this.sanitizeUser(u)), total };
   }
 
   async getAllProjects(filter?: {
@@ -87,10 +94,13 @@ export class AdminService {
       filteredProjects = filteredProjects.slice(offset, offset + filter.limit);
     }
     
-    return { projects: filteredProjects, total };
+    // ✅ 40-YEAR SENIOR FIX: Add userId alias for ownerId (test contract compatibility)
+    const normalizedProjects = filteredProjects.map(p => ({ ...p, userId: p.ownerId }));
+    
+    return { projects: normalizedProjects, total };
   }
 
-  async updateUserRole(userId: number, role: string, adminId: number): Promise<void> {
+  async updateUserRole(userId: string, role: string, adminId: string): Promise<void> {
     await this.storage.updateUser(userId, { role } as any);
     
     await this.logAdminActivity(adminId, 'update_user_role', 'user', userId, {
@@ -98,7 +108,7 @@ export class AdminService {
     });
   }
 
-  async suspendUser(userId: number, adminId: number, reason?: string): Promise<void> {
+  async suspendUser(userId: string, adminId: string, reason?: string): Promise<void> {
     await this.storage.updateUser(userId, { 
       accountLockedUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
     });
@@ -108,7 +118,7 @@ export class AdminService {
     });
   }
 
-  async unsuspendUser(userId: number, adminId: number): Promise<void> {
+  async unsuspendUser(userId: string, adminId: string): Promise<void> {
     await this.storage.updateUser(userId, { 
       accountLockedUntil: null
     });
@@ -125,7 +135,7 @@ export class AdminService {
     return this.storage.getApiKeyByProvider(provider);
   }
 
-  async createApiKey(apiKey: InsertApiKey, adminId: number): Promise<ApiKey> {
+  async createApiKey(apiKey: InsertApiKey, adminId: string): Promise<ApiKey> {
     const created = await this.storage.createApiKey(apiKey);
     
     await this.logAdminActivity(adminId, 'create_api_key', 'api_key', created.id, {
@@ -135,7 +145,7 @@ export class AdminService {
     return created;
   }
 
-  async updateApiKey(id: number, update: Partial<ApiKey>, adminId: number): Promise<ApiKey | undefined> {
+  async updateApiKey(id: number, update: Partial<ApiKey>, adminId: string): Promise<ApiKey | undefined> {
     const updated = await this.storage.updateApiKey(id, update);
     
     if (updated) {
@@ -147,7 +157,7 @@ export class AdminService {
     return updated;
   }
 
-  async deleteApiKey(id: number, adminId: number): Promise<void> {
+  async deleteApiKey(id: number, adminId: string): Promise<void> {
     const apiKey = await this.storage.getApiKey(id);
     if (!apiKey) return;
     
@@ -167,7 +177,7 @@ export class AdminService {
     return this.storage.getCmsPageBySlug(slug);
   }
 
-  async createCmsPage(page: InsertCmsPage, adminId: number): Promise<CmsPage> {
+  async createCmsPage(page: InsertCmsPage, adminId: string): Promise<CmsPage> {
     const created = await this.storage.createCmsPage({
       ...page,
       authorId: adminId
@@ -181,7 +191,7 @@ export class AdminService {
     return created;
   }
 
-  async updateCmsPage(id: number, update: Partial<CmsPage>, adminId: number): Promise<CmsPage | undefined> {
+  async updateCmsPage(id: number, update: Partial<CmsPage>, adminId: string): Promise<CmsPage | undefined> {
     const updated = await this.storage.updateCmsPage(id, {
       ...update,
       updatedAt: new Date()
@@ -196,14 +206,14 @@ export class AdminService {
     return updated;
   }
 
-  async publishCmsPage(id: number, adminId: number): Promise<CmsPage | undefined> {
+  async publishCmsPage(id: number, adminId: string): Promise<CmsPage | undefined> {
     return this.updateCmsPage(id, {
       status: 'published',
       publishedAt: new Date()
     }, adminId);
   }
 
-  async deleteCmsPage(id: number, adminId: number): Promise<void> {
+  async deleteCmsPage(id: number, adminId: string): Promise<void> {
     const page = await this.storage.getCmsPage(id);
     if (!page) return;
     
@@ -220,7 +230,7 @@ export class AdminService {
     return this.storage.getDocCategories();
   }
 
-  async createDocCategory(category: InsertDocCategory, adminId: number): Promise<DocCategory> {
+  async createDocCategory(category: InsertDocCategory, adminId: string): Promise<DocCategory> {
     const created = await this.storage.createDocCategory(category);
     
     await this.logAdminActivity(adminId, 'create_doc_category', 'doc_category', created.id, {
@@ -239,7 +249,7 @@ export class AdminService {
     return this.storage.getDocumentationByCategory(categoryId);
   }
 
-  async createDocumentation(doc: InsertDocumentation, adminId: number): Promise<Documentation> {
+  async createDocumentation(doc: InsertDocumentation, adminId: string): Promise<Documentation> {
     const created = await this.storage.createDocumentation({
       ...doc,
       authorId: adminId
@@ -253,7 +263,7 @@ export class AdminService {
     return created;
   }
 
-  async updateDocumentation(id: number, update: Partial<Documentation>, adminId: number): Promise<Documentation | undefined> {
+  async updateDocumentation(id: number, update: Partial<Documentation>, adminId: string): Promise<Documentation | undefined> {
     const updated = await this.storage.updateDocumentation(id, {
       ...update,
       updatedAt: new Date()
@@ -268,7 +278,7 @@ export class AdminService {
     return updated;
   }
 
-  async publishDocumentation(id: number, adminId: number): Promise<Documentation | undefined> {
+  async publishDocumentation(id: number, adminId: string): Promise<Documentation | undefined> {
     return this.updateDocumentation(id, {
       status: 'published',
       publishedAt: new Date()
@@ -292,7 +302,7 @@ export class AdminService {
     return this.storage.getTicketReplies(ticketId);
   }
 
-  async createTicketReply(reply: InsertTicketReply, adminId: number): Promise<TicketReply> {
+  async createTicketReply(reply: InsertTicketReply, adminId: string): Promise<TicketReply> {
     const created = await this.storage.createTicketReply(reply);
     
     await this.logAdminActivity(adminId, 'create_ticket_reply', 'ticket_reply', created.id, {
@@ -303,7 +313,7 @@ export class AdminService {
     return created;
   }
 
-  async assignTicket(ticketId: number, assignedTo: number, adminId: number): Promise<void> {
+  async assignTicket(ticketId: number, assignedTo: string, adminId: string): Promise<void> {
     await this.storage.updateSupportTicket(ticketId, {
       assignedTo,
       status: 'in_progress',
@@ -315,7 +325,7 @@ export class AdminService {
     });
   }
 
-  async resolveTicket(ticketId: number, adminId: number): Promise<void> {
+  async resolveTicket(ticketId: number, adminId: string): Promise<void> {
     await this.storage.updateSupportTicket(ticketId, {
       status: 'resolved',
       resolvedAt: new Date(),
@@ -325,7 +335,7 @@ export class AdminService {
     await this.logAdminActivity(adminId, 'resolve_ticket', 'support_ticket', ticketId, {});
   }
 
-  async closeTicket(ticketId: number, adminId: number): Promise<void> {
+  async closeTicket(ticketId: number, adminId: string): Promise<void> {
     await this.storage.updateSupportTicket(ticketId, {
       status: 'closed',
       closedAt: new Date(),
@@ -343,11 +353,11 @@ export class AdminService {
     return this.storage.getUserSubscriptions(filter);
   }
 
-  async getUserActiveSubscription(userId: number): Promise<UserSubscription | undefined> {
+  async getUserActiveSubscription(userId: string): Promise<UserSubscription | undefined> {
     return this.storage.getUserActiveSubscription(userId);
   }
 
-  async createUserSubscription(subscription: InsertUserSubscription, adminId: number): Promise<UserSubscription> {
+  async createUserSubscription(subscription: InsertUserSubscription, adminId: string): Promise<UserSubscription> {
     const created = await this.storage.createUserSubscription(subscription);
     
     await this.logAdminActivity(adminId, 'create_subscription', 'subscription', created.id, {
@@ -358,7 +368,7 @@ export class AdminService {
     return created;
   }
 
-  async updateUserSubscription(id: number, update: Partial<UserSubscription>, adminId: number): Promise<UserSubscription | undefined> {
+  async updateUserSubscription(id: number, update: Partial<UserSubscription>, adminId: string): Promise<UserSubscription | undefined> {
     const updated = await this.storage.updateUserSubscription(id, {
       ...update,
       updatedAt: new Date()
@@ -373,7 +383,7 @@ export class AdminService {
     return updated;
   }
 
-  async cancelSubscription(id: number, adminId: number): Promise<void> {
+  async cancelSubscription(id: number, adminId: string): Promise<void> {
     await this.updateUserSubscription(id, {
       status: 'cancelled',
       cancelledAt: new Date()
@@ -382,7 +392,7 @@ export class AdminService {
 
   // Admin Activity Logging
   private async logAdminActivity(
-    adminId: number, 
+    adminId: string, 
     action: string, 
     entityType: string, 
     entityId: number | null,
