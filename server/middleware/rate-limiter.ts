@@ -11,40 +11,46 @@ import { createLogger } from '../utils/logger';
 
 const logger = createLogger('rate-limiter');
 
+// Check if running in test environment
+const isTestEnv = process.env.NODE_ENV === 'test';
+
 // Initialize Redis client if available
 // Disabled for now to prevent blocking startup - will use memory rate limiter
 let redisClient: Redis | null = null;
 
 // Enhanced rate limiters with Redis or memory fallback
+// In test environment, use much higher thresholds to prevent false failures
 export const rateLimiters = {
   // Strict rate limiter for auth endpoints
+  // Test: 5000 requests/min | Prod: 5 requests/15min
   auth: redisClient ? new RateLimiterRedis({
     storeClient: redisClient,
     keyPrefix: 'rl_auth',
-    points: 5, // 5 requests
-    duration: 900, // per 15 minutes
-    blockDuration: 900, // block for 15 minutes
+    points: isTestEnv ? 5000 : 5,
+    duration: isTestEnv ? 60 : 900,
+    blockDuration: isTestEnv ? 1 : 900,
     execEvenly: false,
   }) : new RateLimiterMemory({
     keyPrefix: 'rl_auth',
-    points: 5,
-    duration: 900,
-    blockDuration: 900,
+    points: isTestEnv ? 5000 : 5,
+    duration: isTestEnv ? 60 : 900,
+    blockDuration: isTestEnv ? 1 : 900,
   }),
   
   // Standard API rate limiter
+  // Test: 5000 requests/min | Prod: 100 requests/min
   api: redisClient ? new RateLimiterRedis({
     storeClient: redisClient,
     keyPrefix: 'rl_api',
-    points: 100, // 100 requests
-    duration: 60, // per minute
-    blockDuration: 60,
+    points: isTestEnv ? 5000 : 100,
+    duration: 60,
+    blockDuration: isTestEnv ? 1 : 60,
     execEvenly: false,
   }) : new RateLimiterMemory({
     keyPrefix: 'rl_api',
-    points: 100,
+    points: isTestEnv ? 5000 : 100,
     duration: 60,
-    blockDuration: 60,
+    blockDuration: isTestEnv ? 1 : 60,
   }),
   
   // AI endpoint rate limiter
@@ -123,28 +129,28 @@ export function createRateLimitMiddleware(type: keyof typeof rateLimiters) {
 
 // Legacy express-rate-limit middleware (kept for backward compatibility)
 // Configured to properly handle trusted proxies and extract real client IPs
+// In test environment, use much higher limits to prevent test failures
 export const legacyRateLimiters = {
   // Strict limit for auth endpoints
+  // Test: 5000 requests/min | Prod: 10 requests/15min
   auth: rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // 10 requests per window
+    windowMs: isTestEnv ? 60 * 1000 : 15 * 60 * 1000,
+    max: isTestEnv ? 5000 : 10,
     message: 'Too many authentication attempts, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
-    // Skip validation warnings since Express trust proxy is enabled at app level
-    // This is safe because we've configured app.set('trust proxy', true) in server/index.ts
     validate: false,
-    skip: (req: Request) => req.ip === '127.0.0.1' || req.ip === '::1' // Skip for localhost in dev
+    skip: (req: Request) => req.ip === '127.0.0.1' || req.ip === '::1'
   }),
 
   // Standard API rate limit
+  // Test: 5000 requests/min | Prod: 100 requests/min
   api: rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 100, // 100 requests per minute
+    windowMs: 1 * 60 * 1000,
+    max: isTestEnv ? 5000 : 100,
     message: 'API rate limit exceeded, please slow down',
     standardHeaders: true,
     legacyHeaders: false,
-    // Skip validation warnings since Express trust proxy is enabled at app level
     validate: false,
     skip: (req: Request) => req.path === '/api/monitoring/health'
   }),

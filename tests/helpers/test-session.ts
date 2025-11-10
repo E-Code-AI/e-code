@@ -100,16 +100,33 @@ class TestSessionImpl implements TestSession {
     // Add CSRF token for mutating requests
     const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
     if (mutatingMethods.includes(method.toUpperCase())) {
-      const csrf = await this.ensureCsrf();
+      // FORCE fresh token for every mutation to prevent invalidation
+      const csrf = await this.ensureCsrf(true);
       headers['x-csrf-token'] = csrf;
     }
     
-    return await this.client.request<T>({
+    const response = await this.client.request<T>({
       method,
       url,
       data,
       headers
     });
+    
+    // Clear cached token after successful mutation (token consumed)
+    if (mutatingMethods.includes(method.toUpperCase()) && response.status >= 200 && response.status < 300) {
+      this.csrfToken = null;
+      this.csrfFetchedAt = null;
+    }
+    
+    return response;
+  }
+  
+  /**
+   * Manually invalidate CSRF token (forces refresh on next use)
+   */
+  invalidateCsrf(): void {
+    this.csrfToken = null;
+    this.csrfFetchedAt = null;
   }
   
   async register(email: string, password: string, username: string): Promise<AxiosResponse> {
@@ -185,4 +202,99 @@ export async function createAdminSession(baseClient: AxiosInstance): Promise<Tes
   }
   
   return session;
+}
+
+/**
+ * Suite Session Pool - Shared sessions for an entire test suite
+ * Use in beforeAll/afterAll to reduce CSRF token requests
+ */
+export interface SuiteSessionPool {
+  /** Anonymous session (no authentication) */
+  anonymous: TestSession;
+  
+  /** Authenticated regular user session */
+  authenticated: TestSession;
+  
+  /** Admin session (null if admin user doesn't exist) */
+  admin: TestSession | null;
+  
+  /** Cleanup all sessions */
+  cleanup(): Promise<void>;
+}
+
+/**
+ * Create a pool of shared test sessions for an entire suite
+ * Reduces CSRF token requests from 160+ to ~5 per suite
+ * 
+ * Usage:
+ * ```typescript
+ * describe('My Suite', () => {
+ *   let sessions: SuiteSessionPool;
+ *   
+ *   beforeAll(async () => {
+ *     sessions = await useSuiteSessions(baseClient);
+ *   });
+ *   
+ *   afterAll(async () => {
+ *     await sessions.cleanup();
+ *   });
+ *   
+ *   it('test', async () => {
+ *     const response = await sessions.authenticated.client.get('/api/something');
+ *   });
+ * });
+ * ```
+ */
+export async function useSuiteSessions(baseClient: AxiosInstance): Promise<SuiteSessionPool> {
+  // Generate unique credentials for this suite
+  const timestamp = Date.now();
+  const email = `suite-${timestamp}@example.com`;
+  const password = 'SecurePass123!';
+  const username = `suite_${timestamp}`;
+  
+  // Create anonymous session
+  const anonymous = new TestSessionImpl(baseClient);
+  
+  // Create authenticated session
+  const authenticated = new TestSessionImpl(baseClient);
+  const registerRes = await authenticated.register(email, password, username);
+  if (registerRes.status !== 200) {
+    throw new Error(`Failed to create authenticated session: ${registerRes.status} - ${JSON.stringify(registerRes.data)}`);
+  }
+  
+  const loginRes = await authenticated.login(email, password);
+  if (loginRes.status !== 200) {
+    throw new Error(`Failed to login authenticated session: ${loginRes.status} - ${JSON.stringify(loginRes.data)}`);
+  }
+  
+  // Try to create admin session (may fail if admin user doesn't exist)
+  let admin: TestSession | null = null;
+  try {
+    admin = await createAdminSession(baseClient);
+  } catch (error) {
+    // Admin user doesn't exist - that's ok
+    console.warn('Admin session creation failed (admin user may not exist):', error);
+  }
+  
+  // Cleanup function to logout all sessions
+  const cleanup = async () => {
+    const logoutPromises: Promise<any>[] = [];
+    
+    if (authenticated) {
+      logoutPromises.push(authenticated.logout().catch(() => {}));
+    }
+    
+    if (admin) {
+      logoutPromises.push(admin.logout().catch(() => {}));
+    }
+    
+    await Promise.all(logoutPromises);
+  };
+  
+  return {
+    anonymous,
+    authenticated,
+    admin,
+    cleanup
+  };
 }
