@@ -252,7 +252,7 @@ export class AuthRouter {
     });
 
     // Logout endpoint - properly destroy session and clear cookies
-    this.router.post("/api/logout", (req: Request, res: Response) => {
+    this.router.post("/api/logout", csrfProtection, (req: Request, res: Response) => {
       // Use SessionManager to properly destroy session and clear cookies
       sessionManager.destroySession(req, res, (err: any) => {
         if (err) {
@@ -291,7 +291,7 @@ export class AuthRouter {
       });
     });
 
-    // Email verification endpoint
+    // Email verification endpoint (token-based, no CSRF needed - token provides protection)
     this.router.post("/api/verify-email", async (req: Request, res: Response) => {
       try {
         const { token } = z.object({ token: z.string() }).parse(req.body);
@@ -355,7 +355,7 @@ export class AuthRouter {
     });
 
     // Resend verification email endpoint
-    this.router.post("/api/resend-verification", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.post("/api/resend-verification", csrfProtection, this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const user = req.user;
         if (!user) {

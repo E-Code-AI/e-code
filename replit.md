@@ -28,6 +28,8 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 - **Code Splitting**: Optimized bundle splitting using React.lazy() for device-specific UI components.
 - **Performance**: Compression, code splitting, caching, build optimizations, service workers, network/image optimization.
 - **Security**: CSP headers, input validation, OWASP Top 10, production-ready CORS, path sandboxing, and admin authorization hardening.
+  - **Authentication**: Bcrypt password hashing (10 rounds), email-based login via Passport.js LocalStrategy, session-based authentication with PostgreSQL session store, session fixation protection (new session ID on login), secure cookies (HttpOnly, SameSite=Lax).
+  - **CSRF Protection**: Production-grade CSRF protection on all session-based mutations (register, login, logout, resend-verification) using singleton-backed tokens tied to session ID with 1-hour expiry and timing-safe comparison. Token-based endpoints (verify-email, forgot/reset-password) rely on high-entropy single-use tokens and are correctly excluded from CSRF requirements. Frontend automatically fetches and includes CSRF tokens via queryClient.ts for all POST/PUT/PATCH/DELETE requests.
 - **Deployment**: Dynamic 4-port configuration, non-blocking initialization, optimized for Replit Reserved VM.
 
 **Feature Specifications:**
