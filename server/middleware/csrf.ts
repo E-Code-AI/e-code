@@ -225,6 +225,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     || req.query?._csrf as string;
 
   if (!providedToken) {
+    console.log('[CSRF DEBUG] Token missing - sessionId:', sessionId, 'path:', req.path);
     return res.status(403).json({ 
       error: 'CSRF token missing',
       message: 'This request requires a valid CSRF token' 
@@ -233,6 +234,8 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
 
   // Validate token using singleton service
   if (!csrfService.verify(sessionId, providedToken)) {
+    console.log('[CSRF DEBUG] Validation failed - sessionId:', sessionId, 'provided:', providedToken.substring(0, 16) + '...', 'path:', req.path);
+    console.log('[CSRF DEBUG] - Token in map:', csrfService.getToken(sessionId)?.substring(0, 16) + '...');
     return res.status(403).json({ 
       error: 'CSRF validation failed',
       message: 'Invalid or expired CSRF token' 
