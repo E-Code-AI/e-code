@@ -152,8 +152,8 @@ export class FilesRouter {
           });
         }
         
-        // Return file content directly for text responses
-        res.json({ content: file.content, ...file });
+        // Return file object (already has content field)
+        res.json(file);
       } catch (error) {
         console.error('Error fetching file:', error);
         res.status(500).json({ 

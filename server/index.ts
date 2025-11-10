@@ -256,6 +256,18 @@ app.get('/api/cors-health', async (_req, res) => {
     // Server continues running even if routes fail to load
   }
 
+  // Error handler for PayloadTooLargeError (must come AFTER routes)
+  app.use((err: any, req: any, res: any, next: any) => {
+    if (err.type === 'entity.too.large' || err.status === 413) {
+      return res.status(413).json({
+        error: 'File too large',
+        message: 'File size limit exceeded (10MB maximum)',
+        code: 'FILE_TOO_LARGE'
+      });
+    }
+    next(err);
+  });
+
   // Add logging middleware to debug routing issues
   app.use((req, res, next) => {
     if (!req.path.startsWith('/api')) {
