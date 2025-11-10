@@ -10,6 +10,10 @@ export default defineConfig({
     teardownTimeout: 10000,
     include: ['tests/**/*.spec.ts'],
     exclude: ['node_modules', 'dist', 'tests/backend/*.test.ts'],
+    // Set NODE_ENV=test for rate limiter and other test-aware code
+    env: {
+      NODE_ENV: 'test',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
