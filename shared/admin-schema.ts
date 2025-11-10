@@ -1,6 +1,7 @@
 import { pgTable, varchar, text, timestamp, boolean, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { users } from "./schema";
 
 // API Keys Management
 export const apiKeys = pgTable("api_keys", {
@@ -32,7 +33,7 @@ export const cmsPages = pgTable("cms_pages", {
   metaKeywords: text("meta_keywords"),
   status: varchar("status", { length: 20 }).default("draft"), // draft, published, archived
   publishedAt: timestamp("published_at"),
-  authorId: integer("author_id"),
+  authorId: varchar("author_id").references(() => users.id),
   template: varchar("template", { length: 50 }).default("default"),
   customCss: text("custom_css"),
   customJs: text("custom_js"),
@@ -57,7 +58,7 @@ export const documentation = pgTable("documentation", {
   version: varchar("version", { length: 20 }),
   tags: jsonb("tags").$type<string[]>().default([]),
   relatedDocs: jsonb("related_docs").$type<number[]>().default([]),
-  authorId: integer("author_id"),
+  authorId: varchar("author_id").references(() => users.id),
   publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
@@ -87,14 +88,14 @@ export type DocCategory = typeof docCategories.$inferSelect;
 // Support Tickets
 export const supportTickets = pgTable("support_tickets", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
   ticketNumber: varchar("ticket_number", { length: 20 }).unique().notNull(),
   subject: varchar("subject", { length: 500 }).notNull(),
   description: text("description").notNull(),
   category: varchar("category", { length: 50 }), // billing, technical, account, other
   priority: varchar("priority", { length: 20 }).default("normal"), // low, normal, high, urgent
   status: varchar("status", { length: 20 }).default("open"), // open, in_progress, resolved, closed
-  assignedTo: integer("assigned_to"),
+  assignedTo: varchar("assigned_to").references(() => users.id),
   tags: jsonb("tags").$type<string[]>().default([]),
   attachments: jsonb("attachments").$type<{url: string, name: string}[]>().default([]),
   resolvedAt: timestamp("resolved_at"),
@@ -111,7 +112,7 @@ export type SupportTicket = typeof supportTickets.$inferSelect;
 export const ticketReplies = pgTable("ticket_replies", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   ticketId: integer("ticket_id").notNull(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
   message: text("message").notNull(),
   isInternal: boolean("is_internal").default(false), // Internal notes for staff
   attachments: jsonb("attachments").$type<{url: string, name: string}[]>().default([]),
@@ -126,7 +127,7 @@ export type TicketReply = typeof ticketReplies.$inferSelect;
 // User Subscriptions
 export const userSubscriptions = pgTable("user_subscriptions", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
   planId: varchar("plan_id", { length: 50 }).notNull(), // free, pro, enterprise
   status: varchar("status", { length: 20 }).default("active"), // active, cancelled, expired, paused
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
@@ -148,7 +149,7 @@ export type UserSubscription = typeof userSubscriptions.$inferSelect;
 // Admin Activity Logs
 export const adminActivityLogs = pgTable("admin_activity_logs", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  adminId: integer("admin_id").notNull(),
+  adminId: varchar("admin_id").notNull().references(() => users.id),
   action: varchar("action", { length: 100 }).notNull(),
   entityType: varchar("entity_type", { length: 50 }), // user, subscription, ticket, etc.
   entityId: integer("entity_id"),
