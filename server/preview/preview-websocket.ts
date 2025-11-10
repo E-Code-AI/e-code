@@ -35,7 +35,7 @@ class PreviewWebSocketService {
       try {
         // Extract and verify session
         const cookies = parseCookie(request.headers.cookie || '');
-        const sessionId = cookies['connect.sid'];
+        const sessionId = cookies['ecode.sid'];
         
         if (!sessionId) {
           socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');

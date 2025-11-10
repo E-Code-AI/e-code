@@ -309,8 +309,8 @@ export class BuildLogsService {
   private parseSessionId(cookieHeader: string): string | null {
     const cookies = cookieHeader.split(';').map(c => c.trim());
     for (const cookie of cookies) {
-      if (cookie.startsWith('connect.sid=')) {
-        const value = cookie.substring('connect.sid='.length);
+      if (cookie.startsWith('ecode.sid=')) {
+        const value = cookie.substring('ecode.sid='.length);
         return decodeURIComponent(value).replace('s:', '').split('.')[0];
       }
     }

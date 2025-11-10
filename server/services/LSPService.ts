@@ -308,8 +308,8 @@ export class LSPService {
   private parseSessionId(cookieHeader: string): string | null {
     const cookies = cookieHeader.split(';').map(c => c.trim());
     for (const cookie of cookies) {
-      if (cookie.startsWith('connect.sid=')) {
-        const value = cookie.substring('connect.sid='.length);
+      if (cookie.startsWith('ecode.sid=')) {
+        const value = cookie.substring('ecode.sid='.length);
         return decodeURIComponent(value).replace('s:', '').split('.')[0];
       }
     }
@@ -332,9 +332,9 @@ export class LSPService {
         return false;
       }
 
-      // Parse session ID from cookie (format: connect.sid=s%3A...)
+      // Parse session ID from cookie (format: ecode.sid=s%3A...)
       const sessionCookie = cookies.split(';')
-        .find(c => c.trim().startsWith('connect.sid='));
+        .find(c => c.trim().startsWith('ecode.sid='));
       
       if (!sessionCookie) {
         console.warn('[LSP] No session cookie found');

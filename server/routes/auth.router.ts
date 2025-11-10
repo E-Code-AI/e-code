@@ -197,12 +197,14 @@ export class AuthRouter {
         console.error("Registration error:", error);
         if (error.name === 'ZodError') {
           return res.status(400).json({ 
+            error: "Invalid input data",
             message: "Invalid input data",
             code: "INVALID_INPUT",
             errors: error.errors
           });
         }
         res.status(500).json({ 
+          error: "Registration failed",
           message: "Registration failed",
           code: "REGISTRATION_ERROR"
         });
@@ -219,6 +221,7 @@ export class AuthRouter {
         if (err) {
           console.error('Login error:', err);
           return res.status(500).json({ 
+            error: "Login failed",
             message: "Login failed",
             code: "LOGIN_ERROR"
           });
@@ -226,6 +229,7 @@ export class AuthRouter {
         
         if (!user) {
           return res.status(401).json({ 
+            error: info?.message || "Invalid credentials",
             message: info?.message || "Invalid credentials",
             code: "INVALID_CREDENTIALS"
           });
@@ -401,12 +405,14 @@ export class AuthRouter {
         console.error("Registration error:", error);
         if (error.name === 'ZodError') {
           return res.status(400).json({ 
+            error: "Invalid input data",
             message: "Invalid input data",
             code: "INVALID_INPUT",
             errors: error.errors
           });
         }
         res.status(500).json({ 
+          error: "Registration failed",
           message: "Registration failed",
           code: "REGISTRATION_ERROR"
         });
@@ -422,6 +428,7 @@ export class AuthRouter {
         if (err) {
           console.error('Login error:', err);
           return res.status(500).json({ 
+            error: "Login failed",
             message: "Login failed",
             code: "LOGIN_ERROR"
           });
@@ -429,6 +436,7 @@ export class AuthRouter {
         
         if (!user) {
           return res.status(401).json({ 
+            error: info?.message || "Invalid credentials",
             message: info?.message || "Invalid credentials",
             code: "INVALID_CREDENTIALS"
           });
