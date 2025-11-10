@@ -11,8 +11,6 @@ import {
   ChallengeSubmission,
   MentorshipSession,
   MobileDevice,
-  ReviewComment,
-  ReviewApproval,
   Deployment, InsertDeployment,
   Comment, InsertComment,
   Checkpoint, InsertCheckpoint,
@@ -45,7 +43,7 @@ import {
   AiApprovalQueue, InsertAiApprovalQueue,
   AiAuditLog, InsertAiAuditLog,
 
-  projects, files, users, apiKeys, codeReviews, reviewComments, reviewApprovals,
+  projects, files, users, apiKeys, codeReviews,
   emailVerificationTokens, passwordResetTokens,
   challenges, challengeSubmissions, challengeLeaderboard, mentorProfiles, mentorshipSessions,
   mobileDevices, pushNotifications, notificationPreferences, teams, teamMembers, deployments,
@@ -227,7 +225,7 @@ const normalizePreferences = (
   return { email, push, frequency };
 };
 
-import { eq, and, desc, isNull, sql, inArray, gte, lte, SQL, or, ilike } from "drizzle-orm";
+import { eq, and, desc, isNull, sql, inArray, gte, lte, lt, SQL, or, ilike } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";

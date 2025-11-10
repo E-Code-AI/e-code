@@ -59,18 +59,18 @@ export class AISecurityService {
    */
   validatePath(filePath: string, projectRoot: string = '/workspace'): { valid: boolean; sanitized?: string; reason?: string } {
     try {
-      // Normalize the path to remove any tricks
-      const normalized = path.normalize(filePath).replace(/^(\.\.[\/\\])+/, '');
-      
-      // Check for dangerous patterns
+      // Check for dangerous patterns BEFORE normalization (security fix)
       for (const pattern of DANGEROUS_PATTERNS) {
-        if (pattern.test(normalized)) {
+        if (pattern.test(filePath)) {
           return {
             valid: false,
             reason: `Path contains forbidden pattern: ${pattern.source}`
           };
         }
       }
+      
+      // Normalize the path to remove any tricks
+      const normalized = path.normalize(filePath).replace(/^(\.\.[\/\\])+/, '');
       
       // Check file extension
       const ext = path.extname(normalized).toLowerCase();
