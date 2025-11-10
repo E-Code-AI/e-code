@@ -45,6 +45,18 @@ router.get('/dashboard/stats', async (req, res) => {
   }
 });
 
+// Stats endpoint (alias for tests)
+router.get('/stats', async (req, res) => {
+  try {
+    const stats = await adminService.getDashboardStats();
+    res.json(stats);
+  } catch (error) {
+    logger.error('Error fetching stats', { error: error.message });
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ message: 'Failed to fetch stats' });
+  }
+});
+
 // User management
 router.get('/users', async (req, res) => {
   try {

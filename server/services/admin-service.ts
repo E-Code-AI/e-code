@@ -420,20 +420,51 @@ export class AdminService {
     publishedDocs: number;
     publishedPages: number;
   }> {
+    // Handle methods that might not exist in storage
+    let subscriptions: any[] = [];
+    try {
+      if (typeof this.storage.getUserSubscriptions === 'function') {
+        subscriptions = await this.storage.getUserSubscriptions({ status: 'active' });
+      }
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+    }
+
+    // Handle methods that might not exist in storage with safe fallbacks
+    let tickets: any[] = [];
+    let docs: any[] = [];
+    let pages: any[] = [];
+    
+    try {
+      if (typeof this.storage.getSupportTickets === 'function') {
+        tickets = await this.storage.getSupportTickets({ status: 'open' });
+      }
+    } catch (error) {
+      console.error('Error fetching support tickets:', error);
+    }
+    
+    try {
+      if (typeof this.storage.getDocumentation === 'function') {
+        docs = await this.storage.getDocumentation();
+      }
+    } catch (error) {
+      console.error('Error fetching documentation:', error);
+    }
+    
+    try {
+      if (typeof this.storage.getCmsPages === 'function') {
+        pages = await this.storage.getCmsPages();
+      }
+    } catch (error) {
+      console.error('Error fetching CMS pages:', error);
+    }
+
     const [
       users,
-      projects,
-      subscriptions,
-      tickets,
-      docs,
-      pages
+      projects
     ] = await Promise.all([
       this.storage.getAllUsers(),
-      this.storage.getAllProjects(),
-      this.storage.getUserSubscriptions({ status: 'active' }),
-      this.storage.getSupportTickets({ status: 'open' }),
-      this.storage.getDocumentation(),
-      this.storage.getCmsPages()
+      this.storage.getAllProjects()
     ]);
 
     const activeUsers = users.filter(u => 
