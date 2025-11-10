@@ -139,7 +139,7 @@ describe('Authentication API - Strict Verification', () => {
       expect(response.headers['set-cookie']).toBeDefined();
       
       authCookie = response.headers['set-cookie']?.[0] || '';
-      expect(authCookie).toContain('connect.sid');
+      expect(authCookie).toContain('ecode.sid');
     });
 
     it('should reject login with wrong password', async () => {
@@ -170,7 +170,7 @@ describe('Authentication API - Strict Verification', () => {
       const cookies = response.headers['set-cookie'];
       expect(cookies).toBeDefined();
       
-      const sessionCookie = cookies?.find(c => c.includes('connect.sid'));
+      const sessionCookie = cookies?.find(c => c.includes('ecode.sid'));
       expect(sessionCookie).toBeDefined();
       expect(sessionCookie).toContain('HttpOnly');
       expect(sessionCookie).toContain('SameSite');

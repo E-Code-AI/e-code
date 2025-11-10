@@ -138,7 +138,7 @@ describe('LSP WebSocket Authentication', () => {
       // Create mock request with session cookie
       const mockReq = {
         headers: {
-          cookie: `connect.sid=${testSessionId}`
+          cookie: `ecode.sid=${testSessionId}`
         }
       } as IncomingMessage;
 
@@ -165,7 +165,7 @@ describe('LSP WebSocket Authentication', () => {
       // Invalid session ID (not in store)
       const mockReq = {
         headers: {
-          cookie: 'connect.sid=invalid-session-id'
+          cookie: 'ecode.sid=invalid-session-id'
         }
       } as IncomingMessage;
 
@@ -180,7 +180,7 @@ describe('LSP WebSocket Authentication', () => {
       // Session belongs to different-user but claiming to be testUserId
       const mockReq = {
         headers: {
-          cookie: `connect.sid=${testSessionId}`
+          cookie: `ecode.sid=${testSessionId}`
         }
       } as IncomingMessage;
 
@@ -194,7 +194,7 @@ describe('LSP WebSocket Authentication', () => {
       // Project doesn't exist in storage
       const mockReq = {
         headers: {
-          cookie: `connect.sid=${testSessionId}`
+          cookie: `ecode.sid=${testSessionId}`
         }
       } as IncomingMessage;
 
@@ -209,7 +209,7 @@ describe('LSP WebSocket Authentication', () => {
       // User doesn't own project
       const mockReq = {
         headers: {
-          cookie: `connect.sid=${testSessionId}`
+          cookie: `ecode.sid=${testSessionId}`
         }
       } as IncomingMessage;
 
@@ -227,7 +227,7 @@ describe('LSP WebSocket Authentication', () => {
       
       const mockReq = {
         headers: {
-          cookie: `connect.sid=${testSessionId}`
+          cookie: `ecode.sid=${testSessionId}`
         }
       } as IncomingMessage;
 
@@ -383,7 +383,7 @@ describe('LSP WebSocket Authentication', () => {
 
       const mockReq = {
         headers: {
-          cookie: `connect.sid=${testSessionId}`
+          cookie: `ecode.sid=${testSessionId}`
         }
       } as IncomingMessage;
 
@@ -405,7 +405,7 @@ describe('LSP WebSocket Authentication', () => {
 
       const mockReq = {
         headers: {
-          cookie: `connect.sid=${testSessionId}`
+          cookie: `ecode.sid=${testSessionId}`
         }
       } as IncomingMessage;
 
@@ -454,7 +454,7 @@ describe('LSP WebSocket Authentication', () => {
       // Attacker makes requests WITHOUT valid session but claiming to be testUserId
       const attackerReq = {
         headers: {
-          cookie: 'connect.sid=invalid-session'
+          cookie: 'ecode.sid=invalid-session'
         }
       } as IncomingMessage;
 
@@ -471,7 +471,7 @@ describe('LSP WebSocket Authentication', () => {
       mockSessionStore.createSession(testSessionId, testUserId);
       const legitReq = {
         headers: {
-          cookie: `connect.sid=${testSessionId}`
+          cookie: `ecode.sid=${testSessionId}`
         }
       } as IncomingMessage;
 

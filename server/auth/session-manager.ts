@@ -148,7 +148,7 @@ export class SessionManager {
       }
       
       // Clear session cookie
-      res.clearCookie('connect.sid');
+      res.clearCookie('ecode.sid');
       res.clearCookie('csrf-token');
       
       logger.info('Session destroyed', {

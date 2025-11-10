@@ -66,7 +66,7 @@ export class SecurityScannerService {
         const cookies = request.headers.cookie;
         const sessionCookie = cookies?.split(';')
           .map(c => c.trim())
-          .find(c => c.startsWith('connect.sid='))
+          .find(c => c.startsWith('ecode.sid='))
           ?.split('=')[1];
         
         if (!sessionCookie) {
