@@ -1,0 +1,800 @@
+# 📐 STRUCTURE COMPLÈTE DE L'UI IDE - E-CODE
+
+---
+
+## 🎯 FICHIER PRINCIPAL
+
+**`/pages/IDEPage.tsx`** (1127 lignes)
+
+C'est le **cerveau** de l'IDE qui assemble tous les composants.
+
+---
+
+## 🏗️ ARCHITECTURE LAYOUT
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  TopNavBar (ligne 1031)                                         │
+│  - Logo, Project Name, Run/Stop, User Menu, Tabs               │
+├───────────────┬─────────────────────────────┬──────────────────┤
+│               │                             │                  │
+│  AI AGENT     │    MAIN CONTENT             │  FILE EXPLORER   │
+│  (Gauche)     │    (Centre)                 │  (Droite)        │
+│               │                             │                  │
+│  30% width    │    52% width                │  18% width       │
+│               │                             │                  │
+│  Brain Icon   │  - Code Editor              │  Tree View       │
+│  Zap Icon     │  - Preview                  │  Files/Folders   │
+│               │  - Console                  │                  │
+│               │  - Git                      │                  │
+│               │  - Database                 │                  │
+│               │  - Settings                 │                  │
+│               │  - etc.                     │                  │
+│               │                             │                  │
+├───────────────┴─────────────────────────────┴──────────────────┤
+│  StatusBar (ligne 1091)                                         │
+│  - File info, Language, Git branch, Running status             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📦 COMPOSANTS PRINCIPAUX
+
+### **1️⃣ TopNavBar** (ligne 1031)
+
+**Fichier**: `/components/TopNavBar.tsx`
+
+**Props**:
+```typescript
+{
+  projectName: string,
+  projectSlug: string,
+  ownerUsername: string,
+  isDeployed: boolean,
+  onRun: () => void,
+  isRunning: boolean,
+  showFileExplorer: boolean,
+  onToggleFileExplorer: () => void,
+  onAddTab: (toolId: string) => void,
+  onShowGuide: () => void,
+  tabs: Tab[],
+  activeTab: string,
+  onTabChange: (tabId: string) => void,
+  onTabClose: (tabId: string) => void,
+  onTabsReorder: (tabs: Tab[]) => void,
+  onNavigate: (path: string) => void,
+  onLogout: () => void,
+  files: FileNode[],
+  onOpenFile: (file: FileNode) => void
+}
+```
+
+**Contenu**:
+- Logo E-Code
+- Nom du projet
+- Bouton Run/Stop (vert/rouge)
+- Tabs horizontaux (fichiers ouverts)
+- Menu utilisateur (avatar + dropdown)
+
+---
+
+### **2️⃣ Panel AI Agent** (ligne 1060, GAUCHE)
+
+**Composant parent**: `ResizablePanel` (30% largeur)
+
+**Structure interne** (ligne 937):
+```typescript
+<Tabs defaultValue="agent">
+  <TabsList>
+    <TabsTrigger value="agent">Agent</TabsTrigger>
+    <TabsTrigger value="actions">Actions</TabsTrigger>
+  </TabsList>
+  
+  <TabsContent value="agent">
+    <AIAgent />
+  </TabsContent>
+  
+  <TabsContent value="actions">
+    <AgentWorkspace />
+  </TabsContent>
+</Tabs>
+```
+
+#### **Tab "Agent"** (ligne 951)
+
+**Composant**: `/components/AIAgent.tsx`
+
+**Props**:
+```typescript
+{
+  projectId: string,
+  initialPrompt?: string,
+  onCodeGenerate: (code: string, fileName: string) => void,
+  onFileModify: (filePath: string, code: string) => void,
+  onOpenPreview: () => void,
+  onStartServer: () => void,
+  onFilesCreated: (files: any[]) => void
+}
+```
+
+**Fonctionnalités**:
+- Chat avec l'AI
+- Génération de code automatique
+- Suggestions intelligentes
+- Modifications de fichiers
+
+#### **Tab "Actions"** (ligne 991)
+
+**Composant**: `/components/AgentWorkspace.tsx`
+
+**Props**:
+```typescript
+{
+  projectId: string,
+  onFileCreate: (path: string, content: string, language?: string) => Promise<void>,
+  onFileEdit: (path: string, content: string) => Promise<void>,
+  onPackageInstall: (packageName: string, dev: boolean) => Promise<void>,
+  onCommandRun: (command: string) => Promise<void>,
+  autoApprove: boolean
+}
+```
+
+**Fonctionnalités**:
+- Liste des actions en attente
+- Approbation/rejet des actions
+- Historique des modifications
+
+---
+
+### **3️⃣ Main Content Panel** (ligne 1067, CENTRE)
+
+**Composant parent**: `ResizablePanel` (52% largeur)
+
+**Fonction de rendu**: `renderMainContent()` (ligne 771)
+
+#### **Tabs disponibles**:
+
+| Tab ID | Composant | Ligne | Description |
+|--------|-----------|-------|-------------|
+| `file:*` | `ProfessionalCodeEditor` | 778 | Éditeur Monaco (fichiers ouverts) |
+| `preview` | `RealPreviewTab` | 796 | Prévisualisation live de l'app |
+| `files` | `FilesTab` | 802 | Vue alternative des fichiers |
+| `console` | `ConsoleTab` | 808 | Console logs (stdout/stderr) |
+| `publishing` | `PublishingTab` | 814 | Déploiement |
+| `git` | `GitTab` | 820 | Git integration |
+| `secrets` | `SecretsTab` | 826 | Variables d'environnement |
+| `database` | `ReplitDatabaseTab` | 832 | Database viewer |
+| `object-storage` | `ObjectStorageTab` | 838 | S3-like storage |
+| `integrations` | `IntegrationsTab` | 844 | Intégrations externes |
+| `shell` | `RealTerminal` | 850 | Terminal bash |
+| `code-search` | `CodeSearchTab` | 856 | Recherche dans le code |
+| `playground` | `PlaygroundTab` | 862 | Sandbox de test |
+| `auth` | `AuthTab` | 868 | Gestion auth |
+| `security-scanner` | `SecurityScannerTab` | 874 | Scan de sécurité |
+| `developer` | `DeveloperTab` | 880 | Outils dev |
+| `ssh-access` | `SSHAccessTab` | 886 | Accès SSH |
+| `collaboration` | `CollaborationTab` | 892 | Collaboration temps réel |
+| `workflows` | `WorkflowsTab` | 898 | CI/CD |
+| `backup-restore` | `BackupRestoreTab` | 904 | Backup |
+| `vnc` | `VNCTab` | 910 | VNC remote desktop |
+| `user-settings` | `UserSettingsTab` | 916 | Settings utilisateur |
+| `ui-tars` | `UITARSTab` | 922 | UI Builder AI |
+
+#### **Éditeur de code** (ligne 778)
+
+**Composant**: `/components/ProfessionalCodeEditor.tsx`
+
+**Props**:
+```typescript
+{
+  fileName: string,
+  initialContent: string,
+  onChange: (content: string) => void,
+  onSave: () => Promise<void>
+}
+```
+
+**Fonctionnalités**:
+- Monaco Editor (VS Code)
+- Syntax highlighting
+- Auto-complétion
+- IntelliSense
+- Auto-save (2 secondes d'inactivité)
+- Cmd/Ctrl+S pour save manuel
+
+---
+
+### **4️⃣ File Explorer Panel** (ligne 1077, DROITE)
+
+**Composant parent**: `ResizablePanel` (18% largeur)
+
+**Composant**: `/components/FileExplorer.tsx`
+
+**Props**:
+```typescript
+{
+  files: FileNode[],
+  selectedFile: string | null,
+  onFileSelect: (file: FileNode) => void,
+  onCreateFile: (parentId: string | null) => void,
+  onCreateFolder: (parentId: string | null) => void,
+  onClose: () => void
+}
+```
+
+**Fonctionnalités**:
+- Arborescence de fichiers/dossiers
+- Créer/supprimer fichiers
+- Créer/supprimer dossiers
+- Click pour ouvrir fichier
+- Drag & drop (si implémenté)
+- Bouton collapse (fermer le panel)
+
+---
+
+### **5️⃣ StatusBar** (ligne 1091)
+
+**Composant**: `/components/StatusBar.tsx`
+
+**Props**:
+```typescript
+{
+  onShowShortcuts: () => void,
+  isRunning: boolean
+}
+```
+
+**Contenu**:
+- Ligne:Colonne du curseur
+- Language du fichier actif
+- Encoding (UTF-8)
+- EOL (LF/CRLF)
+- Git branch
+- Running status (🟢 Running / ⚫ Stopped)
+- Bouton "?" pour afficher shortcuts
+
+---
+
+## ⌨️ MODALS & OVERLAYS
+
+### **Command Palette** (ligne 1096)
+
+**Composant**: `/components/CommandPalette.tsx`
+
+**Raccourci**: `Cmd/Ctrl + K`
+
+**Props**:
+```typescript
+{
+  open: boolean,
+  onOpenChange: (open: boolean) => void,
+  onExecuteCommand: (commandId: string) => void
+}
+```
+
+**Commandes disponibles** (ligne 734):
+- `toggle-file-explorer`
+- `quick-file-search`
+- `save-all`
+- `run-project`
+- `new-file`
+- `new-folder`
+- `open-console`
+- `open-git`
+- `open-settings`
+- `open-*` (tous les tabs)
+
+---
+
+### **Quick File Search** (ligne 1102)
+
+**Composant**: `/components/QuickFileSearch.tsx`
+
+**Raccourci**: `Cmd/Ctrl + P`
+
+**Props**:
+```typescript
+{
+  open: boolean,
+  onOpenChange: (open: boolean) => void,
+  files: FileNode[],
+  onFileSelect: (file: FileNode) => void
+}
+```
+
+**Fonctionnalité**:
+- Recherche fuzzy dans tous les fichiers
+- Navigation rapide
+- Ouvre le fichier sélectionné
+
+---
+
+### **Keyboard Shortcuts Overlay** (ligne 1109)
+
+**Composant**: `/components/KeyboardShortcutsOverlay.tsx`
+
+**Raccourci**: `Cmd/Ctrl + /`
+
+**Props**:
+```typescript
+{
+  open: boolean,
+  onOpenChange: (open: boolean) => void
+}
+```
+
+**Affiche tous les raccourcis clavier**
+
+---
+
+### **Welcome Guide** (ligne 1114)
+
+**Composant**: `/components/WelcomeGuide.tsx`
+
+**Trigger**: Au premier lancement (pas de localStorage)
+
+**Props**:
+```typescript
+{
+  onClose: () => void,
+  onOpenTool: (toolId: string) => void
+}
+```
+
+**Fonctionnalité**:
+- Tour guidé de l'IDE
+- Explications des features
+- Onboarding interactif
+
+---
+
+### **Shortcut Hint** (ligne 1124)
+
+**Composant**: `/components/ShortcutHint.tsx`
+
+**Affichage**: Toujours visible (toast-like)
+
+**Fonctionnalité**:
+- Affiche des hints contextuels
+- "Tip: Press Cmd+K to open command palette"
+- Disparaît après quelques secondes
+
+---
+
+## ⌨️ RACCOURCIS CLAVIER
+
+Définis à la ligne **670**:
+
+| Raccourci | Action | Description |
+|-----------|--------|-------------|
+| `Cmd/Ctrl + B` | Toggle File Explorer | Afficher/masquer l'explorateur |
+| `Cmd/Ctrl + K` | Command Palette | Ouvrir la palette de commandes |
+| `Cmd/Ctrl + P` | Quick File Search | Recherche rapide de fichiers |
+| `Cmd/Ctrl + S` | Save | Sauvegarder le fichier actif |
+| `Cmd/Ctrl + W` | Close Tab | Fermer l'onglet actif |
+| `Ctrl + \`` | Open Shell | Ouvrir le terminal |
+| `Cmd/Ctrl + Enter` | Run Project | Démarrer/arrêter le projet |
+| `Cmd/Ctrl + /` | Show Shortcuts | Afficher tous les raccourcis |
+
+---
+
+## 🎨 SYSTÈME DE TABS
+
+**State**: `tabs` (ligne 166)
+
+**Type**:
+```typescript
+interface Tab {
+  id: string;           // Ex: "preview", "file:123", "console"
+  label: string;        // Ex: "Preview", "App.tsx", "Console"
+  icon?: any;          // Lucide icon component
+  closable?: boolean;  // Si on peut fermer le tab (false pour preview)
+  filePath?: string;   // Pour les file tabs: "/src/App.tsx"
+  fileContent?: string; // Contenu actuel du fichier
+}
+```
+
+**Tabs par défaut** (ligne 166):
+```typescript
+[{ id: "preview", label: "Preview", icon: Eye, closable: false }]
+```
+
+**Gestion**:
+- `addTab(toolId)` - Ligne 374
+- `closeTab(tabId)` - Ligne 422
+- `reorderTabs(newTabs)` - Ligne 439
+- `openFileInTab(file)` - Ligne 452
+
+---
+
+## 📁 SYSTÈME DE FICHIERS
+
+**State**: `files` (ligne 163)
+
+**Type**:
+```typescript
+interface FileNode {
+  id: string;
+  name: string;
+  type: "file" | "folder";
+  content?: string;      // Pour les fichiers
+  children?: FileNode[]; // Pour les dossiers
+}
+```
+
+**Fichiers par défaut** (ligne 85):
+```
+my-project/
+├── src/
+│   ├── App.tsx
+│   ├── index.tsx
+│   └── App.css
+├── public/
+│   └── index.html
+├── package.json
+└── tsconfig.json
+```
+
+**Gestion**:
+- `handleFileSelect(file)` - Ligne 443
+- `openFileInTab(file)` - Ligne 452
+- `handleCreateFile(parentId)` - Ligne 577
+- `handleCreateFolder(parentId)` - Ligne 581
+- `handleCreateFileFromTab(fileName, location, content)` - Ligne 585
+
+---
+
+## 💾 AUTO-SAVE SYSTEM
+
+**Timer Ref**: `autoSaveTimerRef` (ligne 181)
+
+**Délai**: 2 secondes d'inactivité (ligne 511)
+
+**Fonction**: `saveFileToBackend(tabId, content)` (ligne 515)
+
+**Flow**:
+```
+1. User types in editor
+   ↓
+2. onChange triggered
+   ↓
+3. handleFileContentChange() called (ligne 496)
+   ↓
+4. Update tab content in state
+   ↓
+5. Clear existing timer
+   ↓
+6. Set new timer (2 seconds)
+   ↓
+7. If no typing for 2s → saveFileToBackend()
+   ↓
+8. PUT /projects/:projectId/files
+   ↓
+9. Update file tree in memory
+```
+
+---
+
+## 🔗 BACKEND INTEGRATION
+
+**Base URL**: `SERVER_URL` (ligne 154)
+```typescript
+const SERVER_URL = `https://${supabaseProjectId}.supabase.co/functions/v1/server`;
+```
+
+### **Endpoints utilisés**:
+
+#### **GET /projects/:projectId**
+Ligne 207 - Load project details
+
+#### **GET /projects/:projectId/files**
+Ligne 221 - Load project files
+
+#### **PUT /projects/:projectId/files**
+Ligne 521 - Save file content
+
+**Headers**:
+```typescript
+{
+  "Content-Type": "application/json",
+  "Authorization": `Bearer ${session.access_token}`
+}
+```
+
+---
+
+## 🎭 LAZY LOADING
+
+Tous les composants lourds sont lazy-loaded (lignes 11-40):
+
+```typescript
+const AIAgent = lazy(() => import("../components/AIAgent").then(m => ({ default: m.AIAgent })));
+const ProfessionalCodeEditor = lazy(() => import("../components/ProfessionalCodeEditor")...);
+// etc.
+```
+
+**Fallback** (utilisé partout):
+```typescript
+<Suspense fallback={
+  <div className="flex items-center justify-center h-full">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+}>
+  {/* Component */}
+</Suspense>
+```
+
+---
+
+## 🎬 LIFECYCLE & EFFECTS
+
+### **useEffect #1** (ligne 186)
+```typescript
+// Setup error suppression + Show welcome guide on first visit
+useEffect(() => {
+  setupErrorSuppression();
+  
+  const hasSeenGuide = localStorage.getItem("e-code-welcome-guide-seen");
+  if (!hasSeenGuide) {
+    setTimeout(() => setShowWelcomeGuide(true), 1000);
+  }
+}, []);
+```
+
+### **useEffect #2** (ligne 199)
+```typescript
+// Load project data and files from backend
+useEffect(() => {
+  async function loadProjectData() {
+    if (!projectId || !session) return;
+    
+    // Fetch project info
+    // Fetch project files
+    // Convert backend format to FileNode format
+  }
+  
+  loadProjectData();
+}, [projectId, session]);
+```
+
+### **useEffect #3** (ligne 345)
+```typescript
+// Sync selectedTool with activeTab
+useEffect(() => {
+  const toolId = toolConfigs[activeTab];
+  if (toolId && toolId !== selectedTool) {
+    setSelectedTool(toolId);
+  }
+}, [activeTab, selectedTool]);
+```
+
+---
+
+## 🧩 RESIZABLE PANELS
+
+**Library**: `shadcn/ui` Resizable (ligne 50)
+
+**Structure** (ligne 1058):
+```typescript
+<ResizablePanelGroup direction="horizontal">
+  
+  {/* AI Agent - 30% */}
+  <ResizablePanel defaultSize={30} minSize={25} maxSize={40}>
+    {renderRightPanel()}
+  </ResizablePanel>
+  
+  <ResizableHandle withHandle />
+  
+  {/* Main Content - 52% */}
+  <ResizablePanel defaultSize={52} minSize={30}>
+    {renderMainContent()}
+  </ResizablePanel>
+  
+  <ResizableHandle withHandle />
+  
+  {/* File Explorer - 18% */}
+  {showFileExplorer && (
+    <ResizablePanel defaultSize={18} minSize={15} maxSize={35}>
+      <FileExplorer ... />
+    </ResizablePanel>
+  )}
+  
+</ResizablePanelGroup>
+```
+
+**Fonctionnalités**:
+- Drag les handles pour redimensionner
+- Min/Max sizes enforced
+- Responsive (collapse automatique sur mobile)
+- State persisté dans localStorage (si configuré)
+
+---
+
+## 📊 STATE MANAGEMENT
+
+**Tous les states** (lignes 163-179):
+
+```typescript
+const [files, setFiles] = useState<FileNode[]>(initialFiles);
+const [selectedFile, setSelectedFile] = useState<string | null>(null);
+const [showFileExplorer, setShowFileExplorer] = useState(true);
+const [tabs, setTabs] = useState<Tab[]>([...]);
+const [activeTab, setActiveTab] = useState("preview");
+const [isRunning, setIsRunning] = useState(false);
+const [showToolsPanel, setShowToolsPanel] = useState(false);
+const [selectedTool, setSelectedTool] = useState<string | null>(null);
+const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+const [quickFileSearchOpen, setQuickFileSearchOpen] = useState(false);
+const [shortcutsOverlayOpen, setShortcutsOverlayOpen] = useState(false);
+const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
+const [projectInfo, setProjectInfo] = useState<any>(null);
+const [loadingProject, setLoadingProject] = useState(false);
+```
+
+**Refs**:
+```typescript
+const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+const consoleRef = useRef<ConsoleTabHandle>(null);
+const shellRef = useRef<ShellTabHandle>(null);
+```
+
+---
+
+## 🎯 PROPS PRINCIPALES
+
+### **URL Params** (ligne 159)
+```typescript
+const { username, projectSlug, projectId } = useParams();
+const [searchParams] = useSearchParams();
+const initialPrompt = searchParams.get("prompt");
+```
+
+**Exemples d'URLs**:
+```
+/ide/henri/my-project/abc123
+/ide/henri/my-project/abc123?prompt=Create%20a%20todo%20app
+```
+
+### **Auth Context** (ligne 158)
+```typescript
+const { user, session, signOut } = useAuth();
+```
+
+**Usage**:
+- `session.access_token` pour les API calls
+- `user` pour afficher info utilisateur
+- `signOut()` pour déconnexion
+
+---
+
+## 🎨 STYLING
+
+**Base**: Tailwind CSS v4
+
+**Classes principales**:
+- `h-screen` - Fullscreen height
+- `flex flex-col` - Vertical layout
+- `bg-background` - Theme-aware background
+- `overflow-hidden` - Prevent scrollbars
+- `ResizablePanel` - Shadcn component
+
+**Thème**: 
+- Défini dans `/styles/globals.css`
+- Supporte dark/light mode
+- Variables CSS custom
+
+---
+
+## 🚀 FONCTIONNALITÉS CLÉS
+
+### **1. Multi-Tab Editing**
+- Ouvrir plusieurs fichiers simultanément
+- Tabs closables (sauf Preview)
+- Drag & drop pour réorganiser (via onTabsReorder)
+
+### **2. Auto-Save**
+- 2 secondes après dernière modification
+- Indicateur visuel (optionnel)
+- Backup en cas d'erreur réseau
+
+### **3. AI Integration**
+- Agent IA dans panel gauche
+- Génération de code
+- Modifications automatiques
+- Actions workspace
+
+### **4. Command Palette**
+- Recherche fuzzy de commandes
+- Raccourcis clavier
+- Navigation rapide
+
+### **5. Real-time Collaboration** (si activé)
+- CollaborationTab
+- Live cursors
+- Sync automatique
+
+### **6. Git Integration**
+- GitTab pour commits
+- Branches
+- Push/Pull
+
+### **7. Database Viewer**
+- ReplitDatabaseTab
+- CRUD operations
+- SQL console
+
+---
+
+## 📝 POUR EXTRAIRE L'UI
+
+Si vous voulez **juste l'UI sans logique**:
+
+### **Option 1: Version Simplifiée**
+
+Créer `/pages/IDESimpleUI.tsx`:
+- Garder le layout
+- Supprimer les API calls
+- Remplacer par données mockées
+- Garder les animations et interactions
+
+### **Option 2: Composants Isolés**
+
+Extraire chaque composant individuellement:
+```bash
+/components/TopNavBar.tsx      # Barre du haut
+/components/FileExplorer.tsx   # Explorateur fichiers
+/components/StatusBar.tsx      # Barre du bas
+/components/ProfessionalCodeEditor.tsx  # Monaco Editor
+/components/RealPreviewTab.tsx # Preview
+```
+
+### **Option 3: Storybook**
+
+Créer des stories pour chaque composant:
+```typescript
+// TopNavBar.stories.tsx
+export const Default = {
+  args: {
+    projectName: "Demo Project",
+    isRunning: false,
+    // etc.
+  }
+};
+```
+
+---
+
+## 🔧 PROCHAINES ÉTAPES
+
+**Voulez-vous que je**:
+
+1. ✅ **Créer une version simplifiée** (`IDESimpleUI.tsx`)
+   - Layout uniquement
+   - Pas de backend
+   - UI interactive
+
+2. ✅ **Extraire des composants spécifiques**
+   - Ex: TopNavBar standalone
+   - Ex: FileExplorer standalone
+   - Avec mocks de données
+
+3. ✅ **Créer un Storybook**
+   - Tous les composants documentés
+   - Variants visuels
+   - Props playground
+
+4. ✅ **Documenter l'architecture complète**
+   - Diagrammes
+   - Flow charts
+   - Sequence diagrams
+
+**Dites-moi ce qui vous intéresse!** 🚀
+
+---
+
+**Généré le**: ${new Date().toLocaleDateString('fr-FR')}  
+**Fichier source**: `/pages/IDEPage.tsx`  
+**Total lignes**: 1127  
+**Composants lazy**: 30+  
+**Tabs disponibles**: 22+
