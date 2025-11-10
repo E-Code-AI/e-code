@@ -69,6 +69,9 @@ export class MainRouter {
     // CSRF token endpoint
     app.get('/api/csrf-token', csrfTokenEndpoint);
     
+    // CSRF token endpoint alias (RESTful compatibility)
+    app.get('/api/auth/csrf-token', csrfTokenEndpoint);
+    
     // Setup auth bypass for development
     setupAuthBypass(app);
     
