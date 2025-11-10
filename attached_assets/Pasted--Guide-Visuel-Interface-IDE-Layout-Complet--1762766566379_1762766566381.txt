@@ -1,0 +1,573 @@
+# 🎨 Guide Visuel - Interface IDE
+
+## 📐 Layout Complet
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                 │
+│  ┌─────┐  my-project         [Preview] [App.tsx] [+]           [▶ Run] [⚙]    │
+│  │ E-C │                                                                         │
+│  └─────┘                                                                         │
+│                                                                                 │
+├─────────────────────┬───────────────────────────────────┬──────────────────────┤
+│                     │                                   │                      │
+│  ┌───────────────┐ │  ┌─────────────────────────────┐ │  ┌────────────────┐ │
+│  │ 🧠 Agent      │ │  │  App.tsx    TS  UTF-8  LF  │ │  │ 📁 Files       │ │
+│  │ ⚡ Actions    │ │  ├─────────────────────────────┤ │  ├────────────────┤ │
+│  ├───────────────┤ │  │  1  import React from 'r... │ │  │ ▼ my-project   │ │
+│  │               │ │  │  2                          │ │  │   ▼ src        │ │
+│  │ 👋 Hello! I'm │ │  │  3  function App() {       │ │  │     App.tsx    │ │
+│  │ your AI       │ │  │  4    return (             │ │  │     index.tsx  │ │
+│  │ assistant.    │ │  │  5      <div>              │ │  │     App.css    │ │
+│  │               │ │  │  6        <h1>Welcome</h1> │ │  │   ▶ public     │ │
+│  │ [Input here]  │ │  │  7      </div>             │ │  │   package.json │ │
+│  │               │ │  │  8    );                   │ │  │                │ │
+│  │ [Send]        │ │  │  9  }                      │ │  │ [+ File]       │ │
+│  │               │ │  │                             │ │  │ [+ Folder]     │ │
+│  └───────────────┘ │  └─────────────────────────────┘ │  └────────────────┘ │
+│                     │                                   │                      │
+│  30% width          │  52% width                        │  18% width           │
+│                     │                                   │                      │
+├─────────────────────┴───────────────────────────────────┴──────────────────────┤
+│                                                                                 │
+│  main  🟢 Running  Ln 1, Col 1  TypeScript  UTF-8  ⌘ Shortcuts                │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🎨 Composants Détaillés
+
+### **1️⃣ Top Navigation Bar**
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ┌─────┐                                                                │
+│  │ E-C │  my-project     [Preview] [App.tsx] [index.tsx] [+]    [▶ Run]│
+│  └─────┘                     ↑         ↑          ↑        ↑        ↑   │
+│   Logo    Project Name      Tab1     Tab2      Tab3    Add Tab  Run Btn│
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Elements:**
+- **Logo**: E-Code icon (Code icon)
+- **Project Name**: "my-project" (editable in real version)
+- **Tabs**: Horizontal tabs for open files/tools
+- **Add Button**: Open new tab menu
+- **Run Button**: Green = Run, Red = Stop
+- **Settings**: User menu dropdown
+
+---
+
+### **2️⃣ AI Agent Panel** (Gauche)
+
+```
+┌─────────────────────────┐
+│  ┌───────────────────┐  │
+│  │ 🧠 Agent          │  │  ← Tab 1: Chat AI
+│  │ ⚡ Actions        │  │  ← Tab 2: Actions
+│  └───────────────────┘  │
+├─────────────────────────┤
+│                         │
+│  👋 Hello! I'm your AI  │  ← Message Assistant
+│  coding assistant.      │
+│  How can I help?        │
+│                         │
+│  ┌───────────────────┐ │
+│  │ Create a todo app │ │  ← Message User
+│  └───────────────────┘ │
+│                         │
+│  I'll help you create   │  ← Response AI
+│  a todo application!    │
+│                         │
+├─────────────────────────┤
+│                         │
+│  [Type your message...] │  ← Input field
+│  [Send]                 │  ← Send button
+│                         │
+└─────────────────────────┘
+```
+
+**Tab "Actions":**
+```
+┌─────────────────────────┐
+│  Pending Actions        │
+├─────────────────────────┤
+│  ┌───────────────────┐ │
+│  │ 📄 Create App.tsx │ │
+│  │ AI wants to create│ │
+│  │ a component       │ │
+│  │ [Reject] [Approve]│ │
+│  └───────────────────┘ │
+│                         │
+│  ┌───────────────────┐ │
+│  │ ✓ Commit changes  │ │
+│  │ 2 mins ago        │ │
+│  └───────────────────┘ │
+└─────────────────────────┘
+```
+
+---
+
+### **3️⃣ Main Content Panel** (Centre)
+
+#### **A. File Editor (App.tsx)**
+
+```
+┌─────────────────────────────────────┐
+│  📄 App.tsx    TS  UTF-8  LF        │  ← Toolbar
+├─────────────────────────────────────┤
+│  1  import React from 'react';      │  ← Line numbers
+│  2  import './App.css';             │
+│  3                                  │
+│  4  function App() {                │
+│  5    return (                      │
+│  6      <div className="App">       │
+│  7        <h1>Welcome to E-Code</h1>│
+│  8        <p>Start building!</p>    │
+│  9      </div>                      │
+│ 10    );                            │
+│ 11  }                               │
+│ 12                                  │
+│ 13  export default App;             │
+│     ↑                               │
+│   Cursor                            │
+└─────────────────────────────────────┘
+```
+
+#### **B. Preview Tab**
+
+```
+┌─────────────────────────────────────┐
+│  👁 Preview  http://localhost:3000  │
+├─────────────────────────────────────┤
+│                                     │
+│                                     │
+│         Welcome to E-Code           │  ← Live preview
+│         Start building!             │
+│                                     │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+#### **C. Console Tab**
+
+```
+┌─────────────────────────────────────┐
+│  🖥 Console                          │
+├─────────────────────────────────────┤
+│  $ npm start                        │  ← Green text
+│  Starting development server...     │
+│  ✓ Compiled successfully!           │
+│  Server running on localhost:3000   │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+#### **D. Shell Tab**
+
+```
+┌─────────────────────────────────────┐
+│  🐚 Shell                            │
+├─────────────────────────────────────┤
+│  user@e-code:~/my-project$          │  ← Prompt
+│  Type commands here...              │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+---
+
+### **4️⃣ File Explorer Panel** (Droite)
+
+```
+┌────────────────────┐
+│  📁 Files      [X] │  ← Header
+├────────────────────┤
+│  ▼ my-project      │  ← Root folder (expanded)
+│    ▼ src           │  ← Subfolder (expanded)
+│      📄 App.tsx    │  ← File (selected)
+│      📄 index.tsx  │  ← File
+│      📄 App.css    │  ← File
+│    ▶ public        │  ← Subfolder (collapsed)
+│    📄 package.json │  ← File
+│    📄 tsconfig.json│  ← File
+├────────────────────┤
+│  [+ File]          │  ← Create file button
+│  [+ Folder]        │  ← Create folder button
+└────────────────────┘
+```
+
+**Icons:**
+- **▼** = Folder expanded
+- **▶** = Folder collapsed
+- **📁** = Folder icon
+- **📄** = File icon
+- **Highlight** = Selected item
+
+---
+
+### **5️⃣ Status Bar** (Bas)
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  main  🟢 Running  Ln 1, Col 1  TypeScript  UTF-8  ⌘ Shortcuts      │
+│   ↑        ↑           ↑            ↑         ↑         ↑            │
+│  Git    Status      Cursor      Language   Encoding  Shortcuts       │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+**Elements:**
+- **Git branch**: Current branch name
+- **Status**: 🟢 Running / ⚫ Stopped
+- **Cursor**: Line and column position
+- **Language**: File language (TypeScript, JavaScript, etc.)
+- **Encoding**: File encoding (UTF-8)
+- **Shortcuts**: Click to show keyboard shortcuts
+
+---
+
+## 🎨 Color Scheme
+
+### **Light Mode**
+```
+Background:    #FFFFFF (white)
+Text:          #1A1A1A (almost black)
+Border:        #E5E5E5 (light gray)
+Primary:       #667EEA (purple-blue)
+Accent:        #F3F4F6 (light gray)
+Success:       #10B981 (green)
+Error:         #EF4444 (red)
+```
+
+### **Dark Mode**
+```
+Background:    #1A1A1A (dark gray)
+Text:          #FFFFFF (white)
+Border:        #333333 (gray)
+Primary:       #667EEA (purple-blue)
+Accent:        #262626 (darker gray)
+Success:       #10B981 (green)
+Error:         #EF4444 (red)
+```
+
+---
+
+## 📱 Responsive Breakpoints
+
+### **Desktop** (> 1200px)
+```
+┌─────────────┬─────────────┬─────────────┐
+│ AI Agent    │ Main        │ File Explor │
+│ 30%         │ 52%         │ 18%         │
+└─────────────┴─────────────┴─────────────┘
+```
+
+### **Tablet** (768px - 1200px)
+```
+┌─────────────┬─────────────┐
+│ Main        │ File Explor │
+│ 70%         │ 30%         │
+└─────────────┴─────────────┘
+AI Agent → Hidden (toggle button)
+```
+
+### **Mobile** (< 768px)
+```
+┌───────────────────────────┐
+│ Main Content              │
+│ (Full width)              │
+└───────────────────────────┘
+AI Agent → Bottom drawer
+File Explorer → Side drawer
+```
+
+---
+
+## 🎯 Interactions Flow
+
+### **Ouvrir un fichier**
+```
+User clicks "App.tsx"
+    ↓
+File Explorer selects it
+    ↓
+New tab created/focused
+    ↓
+Editor loads file content
+    ↓
+Toast: "Opened App.tsx"
+```
+
+### **Modifier du code (IDEPage uniquement)**
+```
+User types in editor
+    ↓
+onChange event fires
+    ↓
+Update tab content
+    ↓
+Start 2-second timer
+    ↓
+Timer expires
+    ↓
+Save to backend
+    ↓
+Update file tree
+```
+
+### **Run/Stop projet**
+```
+User clicks "Run" button
+    ↓
+Button turns red
+    ↓
+Status changes to "🟢 Running"
+    ↓
+Console shows output
+    ↓
+Toast: "Project started"
+```
+
+### **Chat avec AI**
+```
+User types message
+    ↓
+Press Enter or click Send
+    ↓
+Message added to chat
+    ↓
+AI response appears
+    ↓
+(In real version: API call to OpenAI)
+```
+
+---
+
+## 🎨 Component Hierarchy
+
+```
+IDESimpleUI
+├── TopNavBar (inline)
+│   ├── Logo
+│   ├── ProjectName
+│   ├── TabsList
+│   │   ├── Tab (Preview)
+│   │   ├── Tab (App.tsx)
+│   │   └── AddTabButton
+│   ├── RunButton
+│   └── SettingsButton
+│
+├── ResizablePanelGroup (horizontal)
+│   │
+│   ├── ResizablePanel (AI Agent - 30%)
+│   │   └── Tabs
+│   │       ├── TabsList
+│   │       │   ├── Agent tab
+│   │       │   └── Actions tab
+│   │       ├── TabContent (Agent)
+│   │       │   ├── ScrollArea (messages)
+│   │       │   └── InputArea
+│   │       └── TabContent (Actions)
+│   │           └── ActionsList
+│   │
+│   ├── ResizableHandle
+│   │
+│   ├── ResizablePanel (Main Content - 52%)
+│   │   └── renderMainContent()
+│   │       ├── FileEditor (if file tab)
+│   │       ├── Preview (if preview tab)
+│   │       ├── Console (if console tab)
+│   │       └── Shell (if shell tab)
+│   │
+│   ├── ResizableHandle
+│   │
+│   └── ResizablePanel (File Explorer - 18%)
+│       ├── Header (with close button)
+│       ├── ScrollArea
+│       │   └── renderFileTree()
+│       │       └── FileNodes (recursive)
+│       └── ActionsBar
+│           ├── CreateFileButton
+│           └── CreateFolderButton
+│
+└── StatusBar (inline)
+    ├── GitInfo
+    ├── RunningStatus
+    ├── CursorPosition
+    ├── Language
+    ├── Encoding
+    └── ShortcutsButton
+```
+
+---
+
+## 🎨 Animations
+
+### **Panel Resize**
+```
+User drags ResizableHandle
+    ↓
+Smooth transition (150ms)
+    ↓
+Panels resize proportionally
+    ↓
+Content reflows
+```
+
+### **Tab Switch**
+```
+User clicks tab
+    ↓
+Tab background changes (accent color)
+    ↓
+Fade out current content (100ms)
+    ↓
+Fade in new content (100ms)
+```
+
+### **File Select**
+```
+User clicks file
+    ↓
+Highlight background (accent color)
+    ↓
+Create/switch to tab (200ms slide)
+    ↓
+Toast notification
+```
+
+### **Toast Notifications**
+```
+Action triggered
+    ↓
+Toast slides in from top-right (300ms)
+    ↓
+Display for 3 seconds
+    ↓
+Slide out (300ms)
+```
+
+---
+
+## 🎯 State Management
+
+### **Global State (useState)**
+```typescript
+files           → FileNode[]
+selectedFile    → string | null
+tabs            → Tab[]
+activeTab       → string
+isRunning       → boolean
+showFileExplorer→ boolean
+aiMessages      → Message[]
+aiInput         → string
+```
+
+### **State Flow**
+```
+User Action
+    ↓
+Event Handler
+    ↓
+setState()
+    ↓
+React Re-render
+    ↓
+UI Updates
+    ↓
+(Optional) Toast Feedback
+```
+
+---
+
+## 🎨 Icons Reference
+
+| Component | Icon | Library |
+|-----------|------|---------|
+| E-Code Logo | `<Code />` | Lucide |
+| Preview | `<Eye />` | Lucide |
+| File | `<FileIcon />` | Lucide |
+| Folder | `<Folder />` | Lucide |
+| Folder Open | `<FolderTree />` | Lucide |
+| Chevron Right | `<ChevronRight />` | Lucide |
+| Chevron Down | `<ChevronDown />` | Lucide |
+| Run | `<Play />` | Lucide |
+| Stop | `<X />` | Lucide |
+| Settings | `<Settings />` | Lucide |
+| Console | `<Terminal />` | Lucide |
+| Shell | `<Shell />` | Lucide |
+| Git | `<GitBranch />` | Lucide |
+| Database | `<Database />` | Lucide |
+| Brain | `<Brain />` | Lucide |
+| Zap | `<Zap />` | Lucide |
+| Plus | `<Plus />` | Lucide |
+| Save | `<Save />` | Lucide |
+| Search | `<Search />` | Lucide |
+
+---
+
+## 📐 Spacing System
+
+```
+Padding Scale:
+p-1  = 4px
+p-2  = 8px
+p-3  = 12px
+p-4  = 16px
+p-6  = 24px
+p-8  = 32px
+
+Margin Scale:
+m-1  = 4px
+m-2  = 8px
+m-3  = 12px
+m-4  = 16px
+m-6  = 24px
+m-8  = 32px
+
+Gap Scale:
+gap-1 = 4px
+gap-2 = 8px
+gap-3 = 12px
+gap-4 = 16px
+```
+
+---
+
+## 🎨 Typography
+
+```
+Text Sizes:
+text-xs   = 12px  (Status bar, file tree)
+text-sm   = 14px  (Tabs, buttons, general UI)
+text-base = 16px  (Editor content)
+text-lg   = 18px  (Headings)
+text-xl   = 20px  (Large headings)
+
+Font Weights:
+font-normal    = 400 (Regular text)
+font-medium    = 500 (Emphasized text)
+font-semibold  = 600 (Section titles)
+font-bold      = 700 (Important text)
+
+Font Families:
+font-sans  = Inter, system-ui (UI text)
+font-mono  = 'Fira Code', monospace (Code)
+```
+
+---
+
+## 🎯 Conclusion
+
+Cette interface est conçue pour être:
+- ✅ **Intuitive**: Layout familier type VS Code
+- ✅ **Responsive**: S'adapte à tous les écrans
+- ✅ **Performante**: Chargement rapide
+- ✅ **Accessible**: Keyboard navigation
+- ✅ **Moderne**: Design clean et professionnel
+
+**Accédez-y sur**: `http://localhost:3000/demo-ide`
+
+🚀 **Happy coding!**

@@ -1,0 +1,341 @@
+# 🎨 IDE Simple UI - Guide d'utilisation
+
+## 📍 Accès
+
+L'interface IDE simplifiée est accessible via **2 routes**:
+
+### **1. Route publique** (sans authentification)
+```
+http://localhost:3000/demo-ide
+```
+✅ Accessible par tous  
+✅ Pas besoin de login  
+✅ Démonstration visuelle  
+
+### **2. Route protégée** (avec authentification)
+```
+http://localhost:3000/ide-simple
+```
+🔒 Nécessite login  
+🔒 Pour utilisateurs authentifiés  
+
+---
+
+## ✨ Qu'est-ce que l'IDE Simple UI?
+
+**Version épurée de l'IDE E-Code** avec:
+
+✅ **Layout complet** (3 panels redimensionnables)  
+✅ **Interface interactive** (tabs, fichiers, AI chat)  
+✅ **Données mockées** (pas de backend)  
+✅ **Animations fluides** (transitions, hover effects)  
+✅ **Design fidèle** (Shadcn/UI + Tailwind CSS)  
+
+❌ **Pas de backend** (pas d'API calls)  
+❌ **Pas d'authentification réelle**  
+❌ **Pas de sauvegarde persistante**  
+❌ **Pas d'exécution de code**  
+
+---
+
+## 🎯 Fonctionnalités
+
+### **1️⃣ Top Navigation Bar**
+- Logo E-Code
+- Nom du projet ("my-project")
+- Tabs horizontaux (Preview, fichiers ouverts)
+- Bouton Run/Stop (toggle visuel)
+- Bouton Settings
+
+### **2️⃣ Panel Gauche - AI Agent** (30% largeur)
+**2 onglets:**
+
+#### **Tab "Agent"**
+- Chat interface
+- Messages AI mockés
+- Input pour poser des questions
+- Réponses automatiques
+
+#### **Tab "Actions"**
+- Liste d'actions en attente
+- Boutons Approve/Reject
+- Historique des actions
+
+### **3️⃣ Panel Centre - Main Content** (52% largeur)
+**Plusieurs tabs disponibles:**
+
+#### **Preview Tab**
+- Aperçu de l'application
+- Simule un rendu React
+- Background blanc avec texte coloré
+
+#### **File Tabs** (App.tsx, index.tsx, etc.)
+- Éditeur de code mocké
+- Syntax highlighting simulé
+- Numéros de ligne
+- Toolbar avec info fichier
+
+#### **Console Tab**
+- Interface terminal
+- Background noir, texte vert
+- Logs mockés de compilation
+
+#### **Shell Tab**
+- Terminal bash simulé
+- Background noir, texte blanc
+- Prompt user@e-code
+
+### **4️⃣ Panel Droit - File Explorer** (18% largeur)
+- Arborescence de fichiers
+- Dossiers expandables (chevron icons)
+- Click pour ouvrir un fichier
+- Boutons "Create File" et "Create Folder"
+- Bouton fermer (X)
+
+### **5️⃣ Status Bar** (en bas)
+**Affiche:**
+- Git branch (main)
+- Running status (🟢 Running / ⚫ Stopped)
+- Ligne/colonne curseur (Ln 1, Col 1)
+- Language (TypeScript)
+- Encoding (UTF-8)
+- Raccourcis clavier (icône Command)
+
+---
+
+## 🎮 Interactions disponibles
+
+### **Gestion des fichiers**
+✅ Click sur fichier → Ouvre dans un tab  
+✅ Click sur dossier → Expand/Collapse  
+✅ Bouton "Create File" → Toast notification  
+✅ Bouton "Create Folder" → Toast notification  
+
+### **Gestion des tabs**
+✅ Click sur tab → Switch de tab  
+✅ Click sur X → Ferme le tab (sauf Preview)  
+✅ Bouton + → Ouvre Console  
+
+### **AI Agent**
+✅ Type message → Envoie (demo response)  
+✅ Enter key → Envoie le message  
+✅ Tab Agent/Actions → Switch entre les vues  
+
+### **Bouton Run/Stop**
+✅ Click → Toggle running status  
+✅ Toast notification de succès  
+✅ Status bar mise à jour  
+
+### **Panels redimensionnables**
+✅ Drag les handles → Resize les panels  
+✅ Min/Max sizes respectés  
+✅ Responsive design  
+
+---
+
+## 🎨 Fichiers mockés
+
+```
+my-project/
+├── src/
+│   ├── App.tsx        ✅ React component
+│   ├── index.tsx      ✅ Entry point
+│   └── App.css        ✅ Styles
+├── public/
+│   └── index.html     ✅ HTML template
+└── package.json       ✅ Dependencies
+```
+
+**Chaque fichier contient du vrai code** pour simuler un projet React réel.
+
+---
+
+## 🚀 Cas d'usage
+
+### **1. Démonstration**
+Montrer l'interface IDE aux clients/investisseurs sans setup complexe.
+
+### **2. Design Review**
+Valider le design et l'UX avant d'implémenter la logique backend.
+
+### **3. Tests UI**
+Tester les interactions visuelles sans dépendances backend.
+
+### **4. Prototypage**
+Itérer rapidement sur le design sans toucher au backend.
+
+### **5. Documentation**
+Créer des screenshots/vidéos pour la documentation.
+
+---
+
+## 🔧 Personnalisation
+
+Pour modifier l'UI, éditez `/pages/IDESimpleUI.tsx`:
+
+### **Changer les fichiers mockés**
+```typescript
+const mockFiles: FileNode[] = [
+  {
+    id: "root",
+    name: "your-project",
+    type: "folder",
+    children: [
+      // Ajoutez vos fichiers ici
+    ]
+  }
+];
+```
+
+### **Ajouter un nouveau tab**
+```typescript
+const addTab = (toolId: string, label: string, icon: any) => {
+  // Logique existante
+};
+
+// Exemple: Ajouter un tab Database
+addTab("database", "Database", Database);
+```
+
+### **Modifier les messages AI**
+```typescript
+const [aiMessages, setAiMessages] = useState([
+  { role: "assistant", content: "Votre message ici" },
+]);
+```
+
+### **Changer les couleurs**
+Éditez les classes Tailwind dans le JSX:
+```typescript
+<div className="bg-black text-green-400">
+  // Votre contenu
+</div>
+```
+
+---
+
+## 📊 Différences avec IDEPage.tsx
+
+| Feature | IDEPage.tsx (Full) | IDESimpleUI.tsx (Simple) |
+|---------|-------------------|--------------------------|
+| **Backend** | ✅ Supabase calls | ❌ Mock data |
+| **Auth** | ✅ User sessions | ❌ No auth |
+| **File save** | ✅ Auto-save API | ❌ Memory only |
+| **AI real** | ✅ OpenAI/Claude | ❌ Fake responses |
+| **Code execution** | ✅ Real server | ❌ Simulated |
+| **Git** | ✅ Real Git ops | ❌ Visual only |
+| **Database** | ✅ Supabase DB | ❌ Mock data |
+| **Lazy loading** | ✅ 30+ components | ❌ All inline |
+| **File size** | 1127 lignes | 700 lignes |
+| **Complexity** | High | Low |
+| **Performance** | Optimized | Fast |
+
+---
+
+## 🎯 Prochaines étapes possibles
+
+### **Option 1: Ajouter plus de tabs**
+Créer les vues pour:
+- Git (commits, branches)
+- Database (tables, queries)
+- Settings (preferences)
+- etc.
+
+### **Option 2: Monaco Editor**
+Intégrer un vrai éditeur de code:
+```bash
+npm install @monaco-editor/react
+```
+
+### **Option 3: Connecter au backend**
+Transformer en version connectée:
+- Remplacer mock data par API calls
+- Ajouter authentication
+- Implémenter auto-save
+
+### **Option 4: Storybook**
+Documenter chaque composant:
+```bash
+npm install @storybook/react
+```
+
+### **Option 5: Tests E2E**
+Ajouter des tests Playwright:
+```bash
+npm install @playwright/test
+```
+
+---
+
+## 🐛 Debug
+
+Si l'interface ne s'affiche pas:
+
+### **1. Vérifier les imports**
+```bash
+# Dans la console navigateur
+❌ Error: Cannot find module './components/ui/resizable'
+✅ Tous les composants Shadcn doivent être installés
+```
+
+### **2. Vérifier les routes**
+```bash
+# Dans routes.tsx
+✅ IDESimpleUI doit être importé
+✅ Routes /demo-ide et /ide-simple doivent exister
+```
+
+### **3. Vérifier Tailwind**
+```bash
+# Dans styles/globals.css
+✅ @tailwind directives doivent être présentes
+```
+
+### **4. Console logs**
+Ouvrir DevTools → Console:
+```typescript
+// Ajouter des logs pour debug
+console.log('[IDESimpleUI] Mounted');
+```
+
+---
+
+## 💡 Astuces
+
+### **Toast notifications**
+Toutes les actions affichent des toasts pour feedback visuel.
+
+### **Keyboard shortcuts**
+Actuellement désactivés (pour simplifier), mais peuvent être réactivés.
+
+### **Responsive**
+Les panels se redimensionnent automatiquement sur mobile.
+
+### **Dark/Light mode**
+L'UI respecte le thème système via Tailwind classes.
+
+---
+
+## 📚 Documentation liée
+
+- [DOCUMENTATION_IDE_UI_STRUCTURE.md](/DOCUMENTATION_IDE_UI_STRUCTURE.md) - Structure complète de IDEPage.tsx
+- [/pages/IDESimpleUI.tsx](/pages/IDESimpleUI.tsx) - Code source
+- [/routes.tsx](/routes.tsx) - Configuration des routes
+
+---
+
+## 🎉 Conclusion
+
+**IDESimpleUI** est une version **UI-only** de l'IDE E-Code, parfaite pour:
+- Démonstrations
+- Prototypage rapide
+- Design review
+- Tests d'interface
+- Documentation visuelle
+
+**Accédez-y maintenant sur**:
+```
+http://localhost:3000/demo-ide
+```
+
+🚀 **Enjoy!**

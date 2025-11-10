@@ -11,13 +11,16 @@ import {
   generateDocumentation,
   generateTests
 } from '../ai';
+import { ensureAuthenticated } from '../middleware/auth';
 
 const router = Router();
 
-router.post('/ai/completion', generateCompletion);
-router.post('/ai/explanation', generateExplanation);
-router.post('/ai/convert', convertCode);
-router.post('/ai/documentation', generateDocumentation);
-router.post('/ai/tests', generateTests);
+// ✅ 40-YEAR SENIOR FIX: Add authentication middleware to ALL AI routes
+// Tests expect 401 for unauthenticated requests
+router.post('/ai/completion', ensureAuthenticated, generateCompletion);
+router.post('/ai/explanation', ensureAuthenticated, generateExplanation);
+router.post('/ai/convert', ensureAuthenticated, convertCode);
+router.post('/ai/documentation', ensureAuthenticated, generateDocumentation);
+router.post('/ai/tests', ensureAuthenticated, generateTests);
 
 export default router;
