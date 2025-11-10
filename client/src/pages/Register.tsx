@@ -110,42 +110,56 @@ export default function Register() {
     setIsLoading(true);
     
     try {
-      const response = await apiRequest('POST', '/api/register', {
+      // apiRequest already parses JSON and throws on error, so we just await the data
+      const data = await apiRequest('POST', '/api/register', {
         username: formData.username,
         email: formData.email,
         password: formData.password,
         displayName: formData.displayName || formData.username
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        toast({
-          title: 'Success!',
-          description: data.message || 'Account created successfully. Please check your email to verify.',
-        });
-        
-        const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
-        const urlParams = new URLSearchParams(window.location.search);
-        const shouldRedirectToAgent = urlParams.get('build') === 'true';
-        
-        setTimeout(() => {
-          if (shouldRedirectToAgent && pendingAppDescription) {
-            navigate('/login?build=true');
-          } else {
-            navigate('/login');
-          }
-        }, 2000);
-      } else {
-        const error = await response.json();
-        if (error.errors && Array.isArray(error.errors)) {
-          setErrors(error.errors);
+      // Success - apiRequest only returns on 2xx responses
+      toast({
+        title: 'Success!',
+        description: data.message || 'Account created successfully. Please check your email to verify.',
+      });
+      
+      const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
+      const urlParams = new URLSearchParams(window.location.search);
+      const shouldRedirectToAgent = urlParams.get('build') === 'true';
+      
+      setTimeout(() => {
+        if (shouldRedirectToAgent && pendingAppDescription) {
+          navigate('/ai-agent/studio?mode=plan');
         } else {
-          setErrors([error.message || 'Registration failed']);
+          navigate('/dashboard');
         }
-      }
-    } catch (error) {
+      }, 1500);
+    } catch (error: any) {
       console.error('Registration error:', error);
-      setErrors(['Something went wrong. Please try again.']);
+      
+      // Parse error message from thrown error
+      try {
+        // Extract error details from the thrown error message
+        const errorText = error.message || String(error);
+        
+        // Try to extract JSON from error message (format: "400: {...}")
+        const jsonMatch = errorText.match(/\d+:\s*(\{.*\})/);
+        if (jsonMatch) {
+          const errorData = JSON.parse(jsonMatch[1]);
+          if (errorData.errors && Array.isArray(errorData.errors)) {
+            setErrors(errorData.errors.map((e: any) => e.message || e));
+          } else if (errorData.message) {
+            setErrors([errorData.message]);
+          } else {
+            setErrors(['Registration failed. Please try again.']);
+          }
+        } else {
+          setErrors([errorText || 'Something went wrong. Please try again.']);
+        }
+      } catch (parseError) {
+        setErrors(['Something went wrong. Please try again.']);
+      }
     } finally {
       setIsLoading(false);
     }
