@@ -1,5 +1,7 @@
 import type { AxiosInstance, AxiosResponse } from 'axios';
 import axios from 'axios';
+import { wrapper } from 'axios-cookiejar-support';
+import { CookieJar } from 'tough-cookie';
 
 /**
  * Test Session Interface
@@ -39,29 +41,23 @@ class TestSessionImpl implements TestSession {
   private csrfToken: string | null = null;
   private csrfFetchedAt: number | null = null;
   private readonly CSRF_EXPIRY = 60 * 60 * 1000; // 1 hour
+  private readonly jar: CookieJar;
   
   public readonly client: AxiosInstance;
   
   constructor(baseClient: AxiosInstance) {
-    // Clone base client with session-specific defaults
-    this.client = axios.create({
+    // Create cookie jar for automatic cookie management
+    this.jar = new CookieJar();
+    
+    // Create axios client with cookie jar support (Node.js environment)
+    const wrappedClient = wrapper(axios.create({
       ...baseClient.defaults,
       validateStatus: () => true,
       withCredentials: true,
-    });
+      jar: this.jar,
+    }));
     
-    // Intercept responses to persist set-cookie headers
-    this.client.interceptors.response.use((response) => {
-      const setCookie = response.headers['set-cookie'];
-      if (setCookie && setCookie.length > 0) {
-        // Extract cookie name=value (before first semicolon)
-        // Set-Cookie format: "name=value; Path=/; Expires=...; HttpOnly"
-        // Cookie header format: "name=value"
-        const fullCookie = setCookie[0];
-        this.cookie = fullCookie.split(';')[0].trim();
-      }
-      return response;
-    });
+    this.client = wrappedClient as AxiosInstance;
   }
   
   getCookie(): string | null {
@@ -79,10 +75,9 @@ class TestSessionImpl implements TestSession {
       return this.csrfToken;
     }
     
-    // Fetch fresh token
-    const headers = this.cookie ? { Cookie: this.cookie } : {};
-    console.log('[TestSession] Fetching CSRF token with cookie:', this.cookie ? 'YES' : 'NO');
-    const response = await this.client.get('/api/auth/csrf-token', { headers });
+    // Fetch fresh token (cookie jar handles cookies automatically)
+    console.log('[TestSession] Fetching CSRF token...');
+    const response = await this.client.get('/api/auth/csrf-token');
     console.log('[TestSession] CSRF response status:', response.status);
     console.log('[TestSession] CSRF response set-cookie:', response.headers['set-cookie']?.[0] || 'NONE');
     
@@ -93,18 +88,13 @@ class TestSessionImpl implements TestSession {
     this.csrfToken = response.data.csrfToken;
     this.csrfFetchedAt = Date.now();
     console.log('[TestSession] CSRF token saved:', this.csrfToken.substring(0, 16) + '...');
-    console.log('[TestSession] Cookie after CSRF fetch:', this.cookie ? 'YES' : 'NO');
     
     return this.csrfToken;
   }
   
   async request<T = any>(method: string, url: string, data?: any): Promise<AxiosResponse<T>> {
-    // Get headers (cookie + CSRF for mutations)
+    // Cookie jar handles cookies automatically, just add CSRF for mutations
     const headers: any = {};
-    
-    if (this.cookie) {
-      headers.Cookie = this.cookie;
-    }
     
     // Add CSRF token for mutating requests
     const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
@@ -113,7 +103,6 @@ class TestSessionImpl implements TestSession {
       const csrf = await this.ensureCsrf(true);
       headers['x-csrf-token'] = csrf;
       console.log('[TestSession] Making', method, url);
-      console.log('[TestSession] - Cookie:', this.cookie ? 'YES (length: ' + this.cookie.length + ')' : 'NO');
       console.log('[TestSession] - CSRF token:', csrf.substring(0, 16) + '...');
     }
     
