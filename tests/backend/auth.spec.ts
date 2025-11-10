@@ -228,14 +228,14 @@ describe('Authentication API - Strict Verification', () => {
     });
 
     it('should grant admin access to admin-only endpoints', async () => {
-      // Login as admin
-      const loginRes = await loginUser(client, ADMIN_EMAIL, ADMIN_PASSWORD);
-      const adminCookie = loginRes.headers['set-cookie']?.[0] || '';
+      // Login as admin using TestSession for proper cookie handling
+      const adminSession = createTestSession(baseClient);
+      const loginRes = await adminSession.login(ADMIN_EMAIL, ADMIN_PASSWORD);
+      
+      expect(loginRes.status).toBe(200);
 
-      // Try to access admin endpoint
-      const response = await client.get('/api/admin/stats', {
-        headers: { Cookie: adminCookie }
-      });
+      // Try to access admin endpoint using the authenticated session
+      const response = await adminSession.request('get', '/api/admin/stats');
 
       expect(response.status).toBe(200);
       expect(response.data).toBeDefined();

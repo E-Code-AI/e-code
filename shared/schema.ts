@@ -1233,6 +1233,11 @@ export const insertUserSchema = createInsertSchema(users).omit({ id: true, creat
   email: z.string().email("Invalid email address"),
   username: z.string().min(3, "Username must be at least 3 characters").max(50, "Username must be at most 50 characters"),
 });
+
+// Registration-specific schema with password validation (NOT for database insertion)
+export const userRegistrationSchema = insertUserSchema.extend({
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
 export const insertEmailVerificationTokenSchema = createInsertSchema(emailVerificationTokens).omit({ id: true, createdAt: true });
 export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({ id: true, createdAt: true });
 export const insertProjectSchema = createInsertSchema(projects).omit({ id: true, createdAt: true, updatedAt: true });

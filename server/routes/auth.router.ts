@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import passport from "passport";
-import { insertUserSchema, securityLogs, emailVerificationTokens, passwordResetTokens } from "@shared/schema";
+import { userRegistrationSchema, securityLogs, emailVerificationTokens, passwordResetTokens } from "@shared/schema";
 import { type IStorage } from "../storage";
 import { devAuthBypass, isAuthBypassEnabled } from "../dev-auth-bypass";
 import { csrfProtection } from "../middleware/csrf";
@@ -86,11 +86,8 @@ export class AuthRouter {
     // Register endpoint
     this.router.post("/api/register", csrfProtection, async (req: Request, res: Response) => {
       try {
-        // Extend the schema to include password for registration
-        const registerSchema = insertUserSchema.extend({
-          password: z.string().min(8).max(100)
-        });
-        const validatedData = registerSchema.parse(req.body);
+        // Use registration schema with password validation
+        const validatedData = userRegistrationSchema.parse(req.body);
         
         // Validate required fields
         if (!validatedData.username || !validatedData.email) {
@@ -104,6 +101,7 @@ export class AuthRouter {
         const existingUser = await this.storage.getUserByUsername(validatedData.username);
         if (existingUser) {
           return res.status(400).json({ 
+            error: "Username already exists",
             message: "Username already exists",
             code: "USERNAME_EXISTS"
           });
@@ -113,6 +111,7 @@ export class AuthRouter {
         const existingEmail = await this.storage.getUserByEmail(validatedData.email);
         if (existingEmail) {
           return res.status(400).json({
+            error: "Email already registered",
             message: "Email already registered",
             code: "EMAIL_EXISTS"
           });
@@ -121,9 +120,10 @@ export class AuthRouter {
         // Hash password
         const hashedPassword = await bcrypt.hash(validatedData.password, 10);
         
-        // Create user with emailVerified set to false
+        // Create user with emailVerified set to false (exclude plain password from storage)
+        const { password, ...userDataWithoutPassword } = validatedData;
         const user = await this.storage.createUser({
-          ...validatedData,
+          ...userDataWithoutPassword,
           passwordHash: hashedPassword,
           emailVerified: false
         });
@@ -196,9 +196,15 @@ export class AuthRouter {
       } catch (error: any) {
         console.error("Registration error:", error);
         if (error.name === 'ZodError') {
+          // Check if error is about password
+          const hasPasswordError = error.errors?.some((e: any) => e.path?.includes('password'));
+          const errorMessage = hasPasswordError 
+            ? "Invalid password. Password must be at least 8 characters." 
+            : "Invalid input data";
+          
           return res.status(400).json({ 
-            error: "Invalid input data",
-            message: "Invalid input data",
+            error: errorMessage,
+            message: errorMessage,
             code: "INVALID_INPUT",
             errors: error.errors
           });
@@ -294,11 +300,8 @@ export class AuthRouter {
     // Alias: /api/auth/register -> /api/register
     this.router.post("/api/auth/register", csrfProtection, async (req: Request, res: Response) => {
       try {
-        // Extend the schema to include password for registration
-        const registerSchema = insertUserSchema.extend({
-          password: z.string().min(8).max(100)
-        });
-        const validatedData = registerSchema.parse(req.body);
+        // Use registration schema with password validation
+        const validatedData = userRegistrationSchema.parse(req.body);
         
         // Validate required fields
         if (!validatedData.username || !validatedData.email) {
@@ -312,6 +315,7 @@ export class AuthRouter {
         const existingUser = await this.storage.getUserByUsername(validatedData.username);
         if (existingUser) {
           return res.status(400).json({ 
+            error: "Username already exists",
             message: "Username already exists",
             code: "USERNAME_EXISTS"
           });
@@ -321,6 +325,7 @@ export class AuthRouter {
         const existingEmail = await this.storage.getUserByEmail(validatedData.email);
         if (existingEmail) {
           return res.status(400).json({
+            error: "Email already registered",
             message: "Email already registered",
             code: "EMAIL_EXISTS"
           });
@@ -329,9 +334,10 @@ export class AuthRouter {
         // Hash password
         const hashedPassword = await bcrypt.hash(validatedData.password, 10);
         
-        // Create user with emailVerified set to false
+        // Create user with emailVerified set to false (exclude plain password from storage)
+        const { password, ...userDataWithoutPassword } = validatedData;
         const user = await this.storage.createUser({
-          ...validatedData,
+          ...userDataWithoutPassword,
           passwordHash: hashedPassword,
           emailVerified: false
         });
@@ -404,9 +410,15 @@ export class AuthRouter {
       } catch (error: any) {
         console.error("Registration error:", error);
         if (error.name === 'ZodError') {
+          // Check if error is about password
+          const hasPasswordError = error.errors?.some((e: any) => e.path?.includes('password'));
+          const errorMessage = hasPasswordError 
+            ? "Invalid password. Password must be at least 8 characters." 
+            : "Invalid input data";
+          
           return res.status(400).json({ 
-            error: "Invalid input data",
-            message: "Invalid input data",
+            error: errorMessage,
+            message: errorMessage,
             code: "INVALID_INPUT",
             errors: error.errors
           });
