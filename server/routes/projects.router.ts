@@ -20,38 +20,43 @@ export class ProjectsRouter {
     this.initializeRoutes();
   }
 
-  private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    // Always allow in development mode for testing
+  private restoreSessionUser(req: Request): boolean {
+    if (req.isAuthenticated()) {
+      return true;
+    }
+    
     if (process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) {
-      if (!req.user) {
-        req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
+      console.log('[AUTH DEBUG] Session state:', {
+        hasSession: !!req.session,
+        hasPassport: !!req.session?.passport,
+        hasUser: !!req.session?.passport?.user,
+        sessionKeys: req.session ? Object.keys(req.session) : [],
+        isAuthenticated: req.isAuthenticated()
+      });
+      
+      if (req.session?.passport?.user) {
+        req.user = req.session.passport.user;
+        return true;
       }
+    }
+    
+    return false;
+  }
+
+  private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+    if (this.restoreSessionUser(req)) {
       return next();
     }
     
-    // Apply auth bypass middleware
-    devAuthBypass(req, res, () => {
-      if (req.isAuthenticated()) {
-        return next();
-      }
-      
-      res.status(401).json({ 
-        message: "Unauthorized",
-        code: "AUTH_REQUIRED",
-        path: req.path 
-      });
+    res.status(401).json({ 
+      message: "Unauthorized",
+      code: "AUTH_REQUIRED",
+      path: req.path 
     });
   };
 
   private ensureProjectAccess = async (req: Request, res: Response, next: NextFunction) => {
-    // In development, bypass auth for easier testing
-    if (process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) {
-      if (!req.user) {
-        req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
-      }
-    }
-    
-    if (!req.isAuthenticated() && !req.user) {
+    if (!this.restoreSessionUser(req)) {
       return res.status(401).json({ 
         message: "Unauthorized",
         code: "AUTH_REQUIRED" 
@@ -343,10 +348,8 @@ export class ProjectsRouter {
           });
         }
         
-        // In development, bypass auth for easier testing only if user is not authenticated
-        if ((process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) && !req.user) {
-          req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
-        }
+        // Restore session user (session-aware auth)
+        this.restoreSessionUser(req);
         
         // Check access for private projects
         if (project.visibility === 'private') {
