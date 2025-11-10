@@ -1,45 +1,49 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import axios, { AxiosInstance } from 'axios';
+import { createTestSession, createAuthenticatedSession, createAdminSession, type TestSession } from '../helpers/test-session';
+import { fetchCsrfToken, registerUser, loginUser, logoutUser } from '../helpers/auth-helpers';
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:5000';
 
 describe('Authentication API - Strict Verification', () => {
-  let client: AxiosInstance;
+  let baseClient: AxiosInstance;
+  let client: AxiosInstance; // Alias for backward compatibility
+  let session: TestSession;
   let testEmail: string;
   let testPassword: string;
   let testUsername: string;
-  let csrfToken: string;
   let authCookie: string;
 
   beforeAll(() => {
-    client = axios.create({
+    baseClient = axios.create({
       baseURL: BASE_URL,
       validateStatus: () => true, // Don't throw on any status
       withCredentials: true,
     });
+    client = baseClient; // Alias for backward compatibility
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     const timestamp = Date.now();
     testEmail = `test-${timestamp}@example.com`;
     testPassword = 'SecurePass123!';
     testUsername = `user_${timestamp}`;
+    
+    // Create fresh session for each test (handles CSRF automatically)
+    session = createTestSession(baseClient);
   });
 
   describe('CSRF Token Management', () => {
     it('should generate CSRF token', async () => {
-      const response = await client.get('/api/auth/csrf-token');
+      const csrfToken = await session.ensureCsrf();
       
-      expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty('csrfToken');
-      expect(typeof response.data.csrfToken).toBe('string');
-      expect(response.data.csrfToken.length).toBeGreaterThan(10);
-      
-      csrfToken = response.data.csrfToken;
+      expect(csrfToken).toBeDefined();
+      expect(typeof csrfToken).toBe('string');
+      expect(csrfToken.length).toBeGreaterThan(10);
     });
 
     it('should reject mutations without CSRF token', async () => {
-      const response = await client.post('/api/auth/register', {
+      const response = await session.client.post('/api/auth/register', {
         email: testEmail,
         password: testPassword,
         username: testUsername
@@ -51,19 +55,9 @@ describe('Authentication API - Strict Verification', () => {
   });
 
   describe('User Registration', () => {
-    beforeEach(async () => {
-      const csrfRes = await client.get('/api/auth/csrf-token');
-      csrfToken = csrfRes.data.csrfToken;
-    });
 
     it('should register new user successfully', async () => {
-      const response = await client.post('/api/auth/register', {
-        email: testEmail,
-        password: testPassword,
-        username: testUsername
-      }, {
-        headers: { 'x-csrf-token': csrfToken }
-      });
+      const response = await session.register(testEmail, testPassword, testUsername);
 
       expect(response.status).toBe(200);
       expect(response.data).toHaveProperty('message');
@@ -98,13 +92,7 @@ describe('Authentication API - Strict Verification', () => {
 
     it('should reject duplicate email registration', async () => {
       // Register first time
-      await client.post('/api/auth/register', {
-        email: testEmail,
-        password: testPassword,
-        username: testUsername
-      }, {
-        headers: { 'x-csrf-token': csrfToken }
-      });
+      await session.register(testEmail, testPassword, testUsername);
 
       // Try to register again with same email
       const csrfRes2 = await client.get('/api/auth/csrf-token');
@@ -122,13 +110,7 @@ describe('Authentication API - Strict Verification', () => {
 
     it('should reject duplicate username registration', async () => {
       // Register first time
-      await client.post('/api/auth/register', {
-        email: testEmail,
-        password: testPassword,
-        username: testUsername
-      }, {
-        headers: { 'x-csrf-token': csrfToken }
-      });
+      await session.register(testEmail, testPassword, testUsername);
 
       // Try to register again with same username
       const csrfRes2 = await client.get('/api/auth/csrf-token');
@@ -160,27 +142,14 @@ describe('Authentication API - Strict Verification', () => {
 
   describe('User Login', () => {
     beforeEach(async () => {
-      const csrfRes = await client.get('/api/auth/csrf-token');
-      csrfToken = csrfRes.data.csrfToken;
-
+      // CSRF token already obtained in parent beforeEach
+      
       // Register a user first
-      await client.post('/api/auth/register', {
-        email: testEmail,
-        password: testPassword,
-        username: testUsername
-      }, {
-        headers: { 'x-csrf-token': csrfToken }
-      });
+      await session.register(testEmail, testPassword, testUsername);
     });
 
     it('should login with valid credentials', async () => {
-      const csrfRes = await client.get('/api/auth/csrf-token');
-      const response = await client.post('/api/auth/login', {
-        email: testEmail,
-        password: testPassword
-      }, {
-        headers: { 'x-csrf-token': csrfRes.data.csrfToken }
-      });
+      const response = await session.login(testEmail, testPassword);
 
       expect(response.status).toBe(200);
       expect(response.data).toHaveProperty('user');
@@ -231,13 +200,7 @@ describe('Authentication API - Strict Verification', () => {
     });
 
     it('should set secure session cookie on login', async () => {
-      const csrfRes = await client.get('/api/auth/csrf-token');
-      const response = await client.post('/api/auth/login', {
-        email: testEmail,
-        password: testPassword
-      }, {
-        headers: { 'x-csrf-token': csrfRes.data.csrfToken }
-      });
+      const response = await session.login(testEmail, testPassword);
 
       expect(response.status).toBe(200);
       const cookies = response.headers['set-cookie'];
@@ -252,33 +215,17 @@ describe('Authentication API - Strict Verification', () => {
 
   describe('Session Management', () => {
     beforeEach(async () => {
-      const csrfRes = await client.get('/api/auth/csrf-token');
-      csrfToken = csrfRes.data.csrfToken;
-
       // Register and login
-      await client.post('/api/auth/register', {
-        email: testEmail,
-        password: testPassword,
-        username: testUsername
-      }, {
-        headers: { 'x-csrf-token': csrfToken }
-      });
+      await session.register(testEmail, testPassword, testUsername);
 
-      const csrfRes2 = await client.get('/api/auth/csrf-token');
-      const loginRes = await client.post('/api/auth/login', {
-        email: testEmail,
-        password: testPassword
-      }, {
-        headers: { 'x-csrf-token': csrfRes2.data.csrfToken }
-      });
+      // Get fresh CSRF token for login
+      const loginRes = await session.login(testEmail, testPassword);
 
       authCookie = loginRes.headers['set-cookie']?.[0] || '';
     });
 
     it('should retrieve current user from session', async () => {
-      const response = await client.get('/api/auth/user', {
-        headers: { Cookie: authCookie }
-      });
+      const response = await session.getUser();
 
       expect(response.status).toBe(200);
       expect(response.data).toHaveProperty('email', testEmail);
@@ -287,20 +234,12 @@ describe('Authentication API - Strict Verification', () => {
     });
 
     it('should logout and invalidate session', async () => {
-      const csrfRes = await client.get('/api/auth/csrf-token');
-      const logoutRes = await client.post('/api/auth/logout', {}, {
-        headers: { 
-          Cookie: authCookie,
-          'x-csrf-token': csrfRes.data.csrfToken
-        }
-      });
+      const logoutRes = await logoutUser(client, authCookie);
 
       expect(logoutRes.status).toBe(200);
 
       // Verify session is invalid
-      const userRes = await client.get('/api/auth/user', {
-        headers: { Cookie: authCookie }
-      });
+      const userRes = await session.getUser();
 
       expect(userRes.status).toBe(401);
     });
@@ -316,13 +255,8 @@ describe('Authentication API - Strict Verification', () => {
     const ADMIN_PASSWORD = 'admin123';
 
     it('should allow admin login with correct credentials', async () => {
-      const csrfRes = await client.get('/api/auth/csrf-token');
-      const response = await client.post('/api/auth/login', {
-        email: ADMIN_EMAIL,
-        password: ADMIN_PASSWORD
-      }, {
-        headers: { 'x-csrf-token': csrfRes.data.csrfToken }
-      });
+      const adminSession = createTestSession(baseClient);
+      const response = await adminSession.login(ADMIN_EMAIL, ADMIN_PASSWORD);
 
       expect(response.status).toBe(200);
       expect(response.data).toHaveProperty('user');
@@ -331,14 +265,7 @@ describe('Authentication API - Strict Verification', () => {
 
     it('should grant admin access to admin-only endpoints', async () => {
       // Login as admin
-      const csrfRes = await client.get('/api/auth/csrf-token');
-      const loginRes = await client.post('/api/auth/login', {
-        email: ADMIN_EMAIL,
-        password: ADMIN_PASSWORD
-      }, {
-        headers: { 'x-csrf-token': csrfRes.data.csrfToken }
-      });
-
+      const loginRes = await loginUser(client, ADMIN_EMAIL, ADMIN_PASSWORD);
       const adminCookie = loginRes.headers['set-cookie']?.[0] || '';
 
       // Try to access admin endpoint
@@ -361,20 +288,13 @@ describe('Authentication API - Strict Verification', () => {
   });
 
   describe('Security Features', () => {
-    beforeEach(async () => {
-      const csrfRes = await client.get('/api/auth/csrf-token');
-      csrfToken = csrfRes.data.csrfToken;
-    });
 
     it('should enforce rate limiting on repeated login attempts', async () => {
-      const attempts = Array.from({ length: 10 }, () =>
-        client.post('/api/auth/login', {
-          email: 'nonexistent@example.com',
-          password: 'wrongpassword'
-        }, {
-          headers: { 'x-csrf-token': csrfToken }
-        })
-      );
+      // Use session.login() for each attempt (automatically handles CSRF)
+      const attempts = Array.from({ length: 10 }, async () => {
+        const testSession = createTestSession(baseClient);
+        return await testSession.login('nonexistent@example.com', 'wrongpassword');
+      });
 
       const responses = await Promise.all(attempts);
       const statusCodes = responses.map(r => r.status);
@@ -387,24 +307,14 @@ describe('Authentication API - Strict Verification', () => {
     }, 60000);
 
     it('should hash passwords with bcrypt', async () => {
-      const response = await client.post('/api/auth/register', {
-        email: testEmail,
-        password: testPassword,
-        username: testUsername
-      }, {
-        headers: { 'x-csrf-token': csrfToken }
-      });
+      // Use fresh session for registration
+      const testSession = createTestSession(baseClient);
+      const registerRes = await testSession.register(testEmail, testPassword, testUsername);
 
-      expect(response.status).toBe(200);
+      expect(registerRes.status).toBe(200);
 
       // Verify we can login with the password (proves it was hashed/compared correctly)
-      const csrfRes2 = await client.get('/api/auth/csrf-token');
-      const loginRes = await client.post('/api/auth/login', {
-        email: testEmail,
-        password: testPassword
-      }, {
-        headers: { 'x-csrf-token': csrfRes2.data.csrfToken }
-      });
+      const loginRes = await testSession.login(testEmail, testPassword);
 
       expect(loginRes.status).toBe(200);
     });
