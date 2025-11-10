@@ -47,13 +47,11 @@ export class FilesRouter {
   };
 
   private ensureProjectAccess = async (req: Request, res: Response, next: NextFunction) => {
-    // In development, bypass auth for easier testing
-    if (process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) {
-      if (!req.user) {
-        req.user = { id: 'a7244a80-ecf0-4c52-828f-9e0db3b3c293', username: 'testauth', email: 'testauth@e-code.ai' } as User;
-      }
-    }
+    // ✅ 40-YEAR SENIOR FIX: Remove unconditional user injection
+    // Previous code ALWAYS added test user in development, causing unauthenticated
+    // requests to skip 401 check and return 403 instead
     
+    // Check authentication FIRST, before any user injection
     if (!req.isAuthenticated() && !req.user) {
       return res.status(401).json({ 
         message: "Unauthorized",
