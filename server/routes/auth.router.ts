@@ -274,6 +274,209 @@ export class AuthRouter {
       });
     });
 
+    // ===== COMPATIBILITY LAYER: /api/auth/* aliases =====
+    // These routes provide backward compatibility and align with RESTful naming
+    // Eventually, we should deprecate the flat /api/* routes and use only /api/auth/*
+    
+    // Alias: /api/auth/user -> /api/me
+    this.router.get("/api/auth/user", this.ensureAuthenticated, (req: Request, res: Response) => {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      res.json(this.sanitizeUser(user));
+    });
+
+    // Alias: /api/auth/register -> /api/register
+    this.router.post("/api/auth/register", csrfProtection, async (req: Request, res: Response) => {
+      try {
+        // Extend the schema to include password for registration
+        const registerSchema = insertUserSchema.extend({
+          password: z.string().min(8).max(100)
+        });
+        const validatedData = registerSchema.parse(req.body);
+        
+        // Validate required fields
+        if (!validatedData.username || !validatedData.email) {
+          return res.status(400).json({
+            message: "Username and email are required",
+            code: "MISSING_FIELDS"
+          });
+        }
+        
+        // Check if user exists
+        const existingUser = await this.storage.getUserByUsername(validatedData.username);
+        if (existingUser) {
+          return res.status(400).json({ 
+            message: "Username already exists",
+            code: "USERNAME_EXISTS"
+          });
+        }
+
+        // Check if email is already used
+        const existingEmail = await this.storage.getUserByEmail(validatedData.email);
+        if (existingEmail) {
+          return res.status(400).json({
+            message: "Email already registered",
+            code: "EMAIL_EXISTS"
+          });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+        
+        // Create user with emailVerified set to false
+        const user = await this.storage.createUser({
+          ...validatedData,
+          passwordHash: hashedPassword,
+          emailVerified: false
+        });
+
+        // Generate and save email verification token
+        const verificationToken = generateEmailVerificationToken();
+        const hashedToken = hashToken(verificationToken);
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24 hours
+        
+        await this.storage.saveEmailVerificationToken(
+          user.id,
+          user.email!,
+          hashedToken,
+          expiresAt
+        );
+
+        // Send verification email (non-blocking - don't fail registration if email fails)
+        try {
+          await sendVerificationEmail(
+            user.id,
+            user.email!,
+            user.displayName || user.username || 'User',
+            verificationToken // Send unhashed token to user
+          );
+        } catch (emailError: any) {
+          console.error('Failed to send verification email:', emailError.message || emailError);
+          // Only log tokens in development mode for testing
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Verification token (for testing):', verificationToken);
+            console.log('Verification link:', `${process.env.APP_URL || 'http://localhost:5000'}/verify-email?token=${verificationToken}`);
+          }
+        }
+
+        // Log registration event
+        await db.insert(securityLogs).values({
+          userId: user.id,
+          ip: req.ip || 'unknown',
+          action: 'user_registration',
+          resource: user.email || 'unknown',
+          result: 'success',
+          userAgent: req.headers['user-agent'] || '',
+          metadata: { username: user.username }
+        });
+        
+        // Log the user in automatically if session is available
+        if (req.login && typeof req.login === 'function') {
+          req.login(user, (err: any) => {
+            if (err) {
+              console.error('Login after registration failed:', err);
+              // Still return success for registration
+              return res.json({ 
+                message: "Registration successful. Please check your email to verify your account. Login manually to continue.",
+                user: this.sanitizeUser(user)
+              });
+            }
+            
+            res.json({ 
+              message: "Registration successful. Please check your email to verify your account.",
+              user: this.sanitizeUser(user)
+            });
+          });
+        } else {
+          // No session available (e.g., during testing)
+          res.json({ 
+            message: "Registration successful. Please check your email to verify your account.",
+            user: this.sanitizeUser(user)
+          });
+        }
+      } catch (error: any) {
+        console.error("Registration error:", error);
+        if (error.name === 'ZodError') {
+          return res.status(400).json({ 
+            message: "Invalid input data",
+            code: "INVALID_INPUT",
+            errors: error.errors
+          });
+        }
+        res.status(500).json({ 
+          message: "Registration failed",
+          code: "REGISTRATION_ERROR"
+        });
+      }
+    });
+
+    // Alias: /api/auth/login -> /api/login
+    this.router.post("/api/auth/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
+      console.log('[LOGIN] Authentication attempt - Email:', req.body?.email);
+      console.log('[LOGIN] Password present:', req.body?.password ? 'YES' : 'NO');
+      
+      passport.authenticate('local', (err: any, user: User, info: any) => {
+        if (err) {
+          console.error('Login error:', err);
+          return res.status(500).json({ 
+            message: "Login failed",
+            code: "LOGIN_ERROR"
+          });
+        }
+        
+        if (!user) {
+          return res.status(401).json({ 
+            message: info?.message || "Invalid credentials",
+            code: "INVALID_CREDENTIALS"
+          });
+        }
+        
+        req.login(user, (loginErr: any) => {
+          if (loginErr) {
+            console.error('Session creation failed:', loginErr);
+            return res.status(500).json({ 
+              message: "Session creation failed",
+              code: "SESSION_ERROR"
+            });
+          }
+          
+          res.json({ 
+            message: "Login successful",
+            user: this.sanitizeUser(user)
+          });
+        });
+      })(req, res, next);
+    });
+
+    // Alias: /api/auth/logout -> /api/logout
+    this.router.post("/api/auth/logout", csrfProtection, (req: Request, res: Response) => {
+      // Use SessionManager to properly destroy session and clear cookies
+      sessionManager.destroySession(req, res, (err: any) => {
+        if (err) {
+          console.error('Logout error:', err);
+          return res.status(500).json({ 
+            message: "Logout failed",
+            code: "LOGOUT_ERROR"
+          });
+        }
+        
+        // Also call passport logout for completeness
+        req.logout((logoutErr: any) => {
+          if (logoutErr) {
+            console.error('Passport logout error:', logoutErr);
+          }
+          
+          res.json({ 
+            message: "Logout successful",
+            code: "LOGOUT_SUCCESS"
+          });
+        });
+      });
+    });
+
     // Check authentication status
     this.router.get("/api/auth/check", (req: Request, res: Response) => {
       res.json({ 
