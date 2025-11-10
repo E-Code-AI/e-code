@@ -54,7 +54,11 @@ class TestSessionImpl implements TestSession {
     this.client.interceptors.response.use((response) => {
       const setCookie = response.headers['set-cookie'];
       if (setCookie && setCookie.length > 0) {
-        this.cookie = setCookie[0];
+        // Extract cookie name=value (before first semicolon)
+        // Set-Cookie format: "name=value; Path=/; Expires=...; HttpOnly"
+        // Cookie header format: "name=value"
+        const fullCookie = setCookie[0];
+        this.cookie = fullCookie.split(';')[0].trim();
       }
       return response;
     });
@@ -77,7 +81,10 @@ class TestSessionImpl implements TestSession {
     
     // Fetch fresh token
     const headers = this.cookie ? { Cookie: this.cookie } : {};
+    console.log('[TestSession] Fetching CSRF token with cookie:', this.cookie ? 'YES' : 'NO');
     const response = await this.client.get('/api/auth/csrf-token', { headers });
+    console.log('[TestSession] CSRF response status:', response.status);
+    console.log('[TestSession] CSRF response set-cookie:', response.headers['set-cookie']?.[0] || 'NONE');
     
     if (response.status !== 200 || !response.data?.csrfToken) {
       throw new Error(`Failed to fetch CSRF token: ${response.status}`);
@@ -85,6 +92,8 @@ class TestSessionImpl implements TestSession {
     
     this.csrfToken = response.data.csrfToken;
     this.csrfFetchedAt = Date.now();
+    console.log('[TestSession] CSRF token saved:', this.csrfToken.substring(0, 16) + '...');
+    console.log('[TestSession] Cookie after CSRF fetch:', this.cookie ? 'YES' : 'NO');
     
     return this.csrfToken;
   }
@@ -103,6 +112,9 @@ class TestSessionImpl implements TestSession {
       // FORCE fresh token for every mutation to prevent invalidation
       const csrf = await this.ensureCsrf(true);
       headers['x-csrf-token'] = csrf;
+      console.log('[TestSession] Making', method, url);
+      console.log('[TestSession] - Cookie:', this.cookie ? 'YES (length: ' + this.cookie.length + ')' : 'NO');
+      console.log('[TestSession] - CSRF token:', csrf.substring(0, 16) + '...');
     }
     
     const response = await this.client.request<T>({
@@ -111,6 +123,8 @@ class TestSessionImpl implements TestSession {
       data,
       headers
     });
+    
+    console.log('[TestSession] Response status:', response.status);
     
     // Clear cached token after successful mutation (token consumed)
     if (mutatingMethods.includes(method.toUpperCase()) && response.status >= 200 && response.status < 300) {
