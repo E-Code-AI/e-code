@@ -70,30 +70,20 @@ export default function ReplitAIAgentPage() {
 
     // Create a new project for this AI session
     try {
-      const response = await apiRequest('POST', '/api/projects', {
+      const projectData = await apiRequest('POST', '/api/projects', {
         name: promptText.slice(0, 30),
         description: promptText,
         language: 'javascript',
         visibility: 'private',
       });
 
-      if (response.ok) {
-        const projectData = await response.json();
-        setProjectId(projectData.id);
-        setProject(projectData);
-        setShowAgent(true);
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Failed to create project",
-          description: error.message || "Please try again later",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+      setProjectId(projectData.id);
+      setProject(projectData);
+      setShowAgent(true);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to connect to server. Please try again.",
+        description: error.message || "Failed to create project. Please try again.",
         variant: "destructive",
       });
     }
@@ -112,30 +102,20 @@ export default function ReplitAIAgentPage() {
         visibility: 'private',
       };
       
-      const response = await apiRequest('POST', '/api/projects', requestBody);
-
-      if (response.ok) {
-        const projectData = await response.json();
-        setProjectId(projectData.id);
-        setProject(projectData);
-        setShowAgent(true);
-        
-        toast({
-          title: "Project created",
-          description: "Starting to build your application...",
-        });
-      } else {
-        const errorData = await response.json();
-        toast({
-          title: "Failed to create project",
-          description: errorData.message || "Please try again later",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+      const projectData = await apiRequest('POST', '/api/projects', requestBody);
+      
+      setProjectId(projectData.id);
+      setProject(projectData);
+      setShowAgent(true);
+      
+      toast({
+        title: "Project created",
+        description: "Starting to build your application...",
+      });
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to connect to server. Please try again.",
+        description: error.message || "Failed to connect to server. Please try again.",
         variant: "destructive",
       });
     }
