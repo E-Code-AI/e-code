@@ -4,6 +4,7 @@ import { storage } from '../storage';
 import { z } from 'zod';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { ensureAuthenticated } from '../middleware/auth';
+import { csrfProtection } from '../middleware/csrf';
 import { createLogger } from '../utils/logger';
 
 const router = Router();
@@ -18,6 +19,15 @@ const getAuthUser = (req: any): Express.User => req.user!;
 // No dev bypasses - authorization must ALWAYS be enforced
 router.use(ensureAuthenticated);
 router.use(ensureAdmin);
+
+// ✅ 40-YEAR SENIOR FIX: Router-level CSRF protection for all mutating requests
+// Applied AFTER auth/admin checks to prevent token leakage to unauthorized users
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    return csrfProtection(req, res, next);
+  }
+  return next();
+});
 
 // Security audit logging middleware
 router.use((req, res, next) => {
