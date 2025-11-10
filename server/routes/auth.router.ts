@@ -29,6 +29,34 @@ export class AuthRouter {
     this.initializeRoutes();
   }
 
+  /**
+   * Sanitize user object by removing sensitive fields
+   * Returns only safe fields for client consumption
+   */
+  private sanitizeUser(user: User) {
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      displayName: user.displayName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profileImageUrl: user.profileImageUrl,
+      bio: user.bio,
+      website: user.website,
+      githubUsername: user.githubUsername,
+      twitterUsername: user.twitterUsername,
+      linkedinUsername: user.linkedinUsername,
+      reputation: user.reputation,
+      isMentor: user.isMentor,
+      isAdmin: user.isAdmin,
+      emailVerified: user.emailVerified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+      // EXCLUDED: passwordHash, twoFactorSecret, passwordResetToken, stripeCustomerId, etc.
+    };
+  }
+
   private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
     // Apply auth bypass middleware ONLY if explicitly enabled via bypass token
     // DO NOT auto-inject testauth user - this prevents E2E testing
@@ -46,13 +74,13 @@ export class AuthRouter {
   };
 
   private initializeRoutes() {
-    // Get current user
+    // Get current user (sanitized - no sensitive fields)
     this.router.get("/api/me", this.ensureAuthenticated, (req: Request, res: Response) => {
       const user = req.user;
       if (!user) {
         return res.status(401).json({ message: "Not authenticated" });
       }
-      res.json(user);
+      res.json(this.sanitizeUser(user));
     });
 
     // Register endpoint
@@ -149,44 +177,20 @@ export class AuthRouter {
               // Still return success for registration
               return res.json({ 
                 message: "Registration successful. Please check your email to verify your account. Login manually to continue.",
-                user: {
-                  id: user.id,
-                  username: user.username,
-                  email: user.email,
-                  displayName: user.displayName,
-                  profileImageUrl: user.profileImageUrl,
-                  bio: user.bio,
-                  emailVerified: false
-                }
+                user: this.sanitizeUser(user)
               });
             }
             
             res.json({ 
               message: "Registration successful. Please check your email to verify your account.",
-              user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                displayName: user.displayName,
-                profileImageUrl: user.profileImageUrl,
-                bio: user.bio,
-                emailVerified: false
-              }
+              user: this.sanitizeUser(user)
             });
           });
         } else {
           // No session available (e.g., during testing)
           res.json({ 
             message: "Registration successful. Please check your email to verify your account.",
-            user: {
-              id: user.id,
-              username: user.username,
-              email: user.email,
-              displayName: user.displayName,
-              profileImageUrl: user.profileImageUrl,
-              bio: user.bio,
-              emailVerified: false
-            }
+            user: this.sanitizeUser(user)
           });
         }
       } catch (error: any) {
@@ -238,14 +242,7 @@ export class AuthRouter {
           
           res.json({ 
             message: "Login successful",
-            user: {
-              id: user.id,
-              username: user.username,
-              email: user.email,
-              displayName: user.displayName,
-              profileImageUrl: user.profileImageUrl,
-              bio: user.bio
-            }
+            user: this.sanitizeUser(user)
           });
         });
       })(req, res, next);
@@ -281,13 +278,7 @@ export class AuthRouter {
     this.router.get("/api/auth/check", (req: Request, res: Response) => {
       res.json({ 
         authenticated: req.isAuthenticated(),
-        user: req.user ? {
-          id: req.user.id,
-          username: req.user.username,
-          email: req.user.email,
-          displayName: req.user.displayName,
-          profileImageUrl: req.user.profileImageUrl
-        } : null
+        user: req.user ? this.sanitizeUser(req.user) : null
       });
     });
 
@@ -388,6 +379,14 @@ export class AuthRouter {
           await this.storage.deleteEmailVerificationToken(token.token);
         }
 
+        // Validate email exists
+        if (!user.email) {
+          return res.status(400).json({ 
+            message: "User email is not set",
+            code: "EMAIL_MISSING"
+          });
+        }
+
         // Save new token
         await this.storage.saveEmailVerificationToken(
           user.id,
@@ -400,7 +399,7 @@ export class AuthRouter {
         await resendVerificationEmail(
           user.id,
           user.email,
-          user.displayName || user.username,
+          user.displayName || user.username || 'User',
           verificationToken
         );
 
@@ -440,7 +439,7 @@ export class AuthRouter {
 
         // Check if user exists
         const user = await this.storage.getUserByEmail(email);
-        if (!user) {
+        if (!user || !user.email) {
           // Don't reveal if email exists
           return res.json(successResponse);
         }
@@ -488,7 +487,7 @@ export class AuthRouter {
           await sendPasswordResetEmail(
             user.id,
             user.email,
-            user.displayName || user.username,
+            user.displayName || user.username || 'User',
             resetToken
           );
         } catch (emailError) {

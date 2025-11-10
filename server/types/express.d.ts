@@ -1,17 +1,14 @@
 /**
  * Type augmentation for Express Request
  * Adds proper typing for req.user after Passport authentication
- * User ID is a UUID string from the database schema
+ * User type extends the full database User schema
  */
+
+import type { User as DBUser } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User {
-      id: string;
-      username: string | null;
-      email: string | null;
-      isAdmin: boolean | null;
-    }
+    interface User extends DBUser {}
   }
 }
 
