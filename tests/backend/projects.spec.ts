@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
+import { createTestSession, type TestSession } from '../helpers/test-session';
 
 describe('Projects API - Strict Verification', () => {
-  let client: AxiosInstance;
-  let csrfToken: string;
-  let authCookie: string;
+  let baseClient: AxiosInstance;
+  let session: TestSession;
   let testEmail: string;
   let testPassword: string;
   let testUsername: string;
 
   beforeAll(() => {
     const baseURL = process.env.VITE_API_URL || 'http://localhost:5000';
-    client = axios.create({
+    baseClient = axios.create({
       baseURL,
       validateStatus: () => true,
       withCredentials: true,
@@ -25,48 +25,22 @@ describe('Projects API - Strict Verification', () => {
     testPassword = 'SecurePass123!';
     testUsername = `user_${timestamp}`;
     
-    // Register user
-    const csrfRes1 = await client.get('/api/auth/csrf-token');
-    csrfToken = csrfRes1.data.csrfToken;
+    // Create session with automatic cookie management
+    session = createTestSession(baseClient);
     
-    await client.post('/api/auth/register', {
-      email: testEmail,
-      password: testPassword,
-      username: testUsername
-    }, {
-      headers: { 'x-csrf-token': csrfToken }
-    });
-
-    // Login user
-    const csrfRes2 = await client.get('/api/auth/csrf-token');
-    const loginRes = await client.post('/api/auth/login', {
-      email: testEmail,
-      password: testPassword
-    }, {
-      headers: { 'x-csrf-token': csrfRes2.data.csrfToken }
-    });
-
-    authCookie = loginRes.headers['set-cookie']?.[0] || '';
+    // Register and login user
+    await session.register(testEmail, testPassword, testUsername);
+    await session.login(testEmail, testPassword);
   });
 
   describe('Project Creation', () => {
     it('should create a new project with valid data', async () => {
-      // Get fresh CSRF token
-      const csrfRes = await client.get('/api/auth/csrf-token', {
-        headers: { Cookie: authCookie }
-      });
-      const csrf = csrfRes.data.csrfToken;
-
-      const response = await client.post('/api/projects', {
+      // Use session.request() which handles CSRF automatically
+      const response = await session.request('POST', '/api/projects', {
         name: 'Test Project',
         description: 'A test project',
         template: 'blank',
         visibility: 'private'
-      }, {
-        headers: { 
-          'x-csrf-token': csrf,
-          Cookie: authCookie
-        }
       });
 
       console.log('[TEST] Create project response:', {
@@ -81,11 +55,10 @@ describe('Projects API - Strict Verification', () => {
     });
 
     it('should reject project creation without CSRF token', async () => {
-      const response = await client.post('/api/projects', {
+      // Directly use client without session to bypass CSRF handling
+      const response = await session.client.post('/api/projects', {
         name: 'Test Project',
         template: 'blank'
-      }, {
-        headers: { Cookie: authCookie }
       });
 
       expect(response.status).toBe(403);
@@ -93,10 +66,11 @@ describe('Projects API - Strict Verification', () => {
     });
 
     it('should reject project creation without authentication', async () => {
-      const csrfRes = await client.get('/api/auth/csrf-token');
-      const csrf = csrfRes.data.csrfToken;
+      // Create new anonymous session (no login)
+      const anonSession = createTestSession(baseClient);
+      const csrf = await anonSession.ensureCsrf();
 
-      const response = await client.post('/api/projects', {
+      const response = await anonSession.client.post('/api/projects', {
         name: 'Test Project',
         template: 'blank'
       }, {
@@ -109,9 +83,8 @@ describe('Projects API - Strict Verification', () => {
 
   describe('Project Retrieval', () => {
     it('should list user projects', async () => {
-      const response = await client.get('/api/projects', {
-        headers: { Cookie: authCookie }
-      });
+      // Use session.request() for authenticated request
+      const response = await session.request('GET', '/api/projects');
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.data)).toBe(true);

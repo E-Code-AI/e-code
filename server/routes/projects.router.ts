@@ -21,23 +21,16 @@ export class ProjectsRouter {
   }
 
   private restoreSessionUser(req: Request): boolean {
+    // Standard Passport authentication check (production path)
     if (req.isAuthenticated()) {
       return true;
     }
     
-    if (process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) {
-      console.log('[AUTH DEBUG] Session state:', {
-        hasSession: !!req.session,
-        hasPassport: !!req.session?.passport,
-        hasUser: !!req.session?.passport?.user,
-        sessionKeys: req.session ? Object.keys(req.session) : [],
-        isAuthenticated: req.isAuthenticated()
-      });
-      
-      if (req.session?.passport?.user) {
-        req.user = req.session.passport.user;
-        return true;
-      }
+    // Development fallback: Passport deserializeUser populates req.user
+    // but isAuthenticated() may return false due to timing or session state
+    // This allows tests with valid session cookies to proceed
+    if ((process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) && req.user) {
+      return true;
     }
     
     return false;
