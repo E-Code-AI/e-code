@@ -152,7 +152,8 @@ export class FilesRouter {
           });
         }
         
-        res.json(file);
+        // Return file content directly for text responses
+        res.json({ content: file.content, ...file });
       } catch (error) {
         console.error('Error fetching file:', error);
         res.status(500).json({ 
@@ -166,6 +167,16 @@ export class FilesRouter {
     this.router.post("/api/projects/:projectId/files", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
+        
+        // ✅ File size validation (DoS prevention) - 5MB limit
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+        if (req.body.content && req.body.content.length > MAX_FILE_SIZE) {
+          return res.status(413).json({
+            error: "File too large",
+            message: "File size limit exceeded (5MB maximum)",
+            code: "FILE_TOO_LARGE"
+          });
+        }
         
         // ✅ 40-YEAR SENIOR FIX: Auto-derive 'name' from 'path' if not provided
         // Tests send { path, content, language } but schema requires 'name' field
