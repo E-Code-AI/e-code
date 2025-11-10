@@ -182,15 +182,23 @@ export function generateCSRFToken(): string {
  * IMPORTANT: Uses shared token map via singleton to prevent per-request state loss
  */
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
+  console.log('[CSRF] Request:', req.method, req.path);
+  console.log('[CSRF] DISABLE_CSRF env:', process.env.DISABLE_CSRF);
+  console.log('[CSRF] NODE_ENV:', process.env.NODE_ENV);
+  
   // Skip CSRF protection in development if explicitly disabled
   if (process.env.NODE_ENV === 'development' && process.env.DISABLE_CSRF === 'true') {
+    console.log('[CSRF] Skipping - explicitly disabled');
     return next();
   }
 
   // Skip for excluded paths
   if (EXCLUDED_PATHS.some(path => req.path.startsWith(path))) {
+    console.log('[CSRF] Skipping - excluded path');
     return next();
   }
+  
+  console.log('[CSRF] Protection active - validating...');
 
   // Initialize session if not present
   if (!req.session) {
