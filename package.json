@@ -65,6 +65,7 @@
     "@replit/vite-plugin-shadcn-theme-json": "^0.0.4",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/rollup-linux-x64-gnu": "^4.52.5",
+    "@rollup/wasm-node": "^4.53.1",
     "@sendgrid/mail": "^8.1.5",
     "@sentry/node": "^8.55.0",
     "@slack/web-api": "^7.9.3",
