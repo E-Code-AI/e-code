@@ -4,10 +4,15 @@ import { hashToken } from './auth-utils';
 import { securityLogs } from '@shared/schema';
 import { db } from '../db';
 
-// Initialize SendGrid with API key
+// Check if running in test environment
+const isTestEnv = process.env.NODE_ENV === 'test';
+
+// Initialize SendGrid with API key (skip in test mode to prevent 401 errors)
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
-if (SENDGRID_API_KEY) {
+if (SENDGRID_API_KEY && !isTestEnv) {
   sgMail.setApiKey(SENDGRID_API_KEY);
+} else if (isTestEnv) {
+  console.log('[SendGrid] Test mode: Email sending mocked');
 }
 
 // Configuration
@@ -255,6 +260,12 @@ async function logEmailEvent(userId: string | null, action: string, email: strin
 
 // Send verification email
 export async function sendVerificationEmail(userId: string, email: string, displayName: string, token: string): Promise<void> {
+  // Mock email sending in test mode
+  if (isTestEnv) {
+    console.log('[SendGrid Mock] Verification email sent to:', email);
+    return;
+  }
+  
   if (!SENDGRID_API_KEY) {
     // Only log tokens in development mode for testing
     if (process.env.NODE_ENV === 'development') {
@@ -294,6 +305,12 @@ export async function sendVerificationEmail(userId: string, email: string, displ
 
 // Send password reset email
 export async function sendPasswordResetEmail(userId: string, email: string, displayName: string, token: string): Promise<void> {
+  // Mock email sending in test mode
+  if (isTestEnv) {
+    console.log('[SendGrid Mock] Password reset email sent to:', email);
+    return;
+  }
+  
   if (!SENDGRID_API_KEY) {
     // Only log tokens in development mode for testing
     if (process.env.NODE_ENV === 'development') {
