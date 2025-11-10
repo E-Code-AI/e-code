@@ -206,9 +206,10 @@ export class FilesRouter {
         const existingFile = await this.getFileByPath(projectId, validatedData.path);
         
         if (existingFile) {
-          // ✅ FIX: Files table has no 'language' field - only update content
+          // Update file with content and language
           const updatedFile = await this.storage.updateFile(existingFile.id, {
-            content: validatedData.content
+            content: validatedData.content,
+            language: validatedData.language
           });
           
           // AUDIT: Log successful update
