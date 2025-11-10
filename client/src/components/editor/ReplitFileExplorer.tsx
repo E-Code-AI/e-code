@@ -78,7 +78,7 @@ interface FileNode {
 }
 
 interface ReplitFileExplorerProps {
-  projectId: number;
+  projectId: string | number;
   onFileSelect?: (file: FileNode) => void;
   selectedFileId?: number;
 }
