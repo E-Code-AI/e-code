@@ -168,22 +168,28 @@ export function createTestSession(baseClient: AxiosInstance): TestSession {
  */
 export async function createAuthenticatedSession(
   baseClient: AxiosInstance,
-  email: string,
-  password: string,
-  username: string
+  email?: string,
+  password?: string,
+  username?: string
 ): Promise<TestSession> {
+  // Generate default credentials if not provided
+  const timestamp = Date.now();
+  const defaultEmail = email || `test-${timestamp}@example.com`;
+  const defaultPassword = password || 'password123';
+  const defaultUsername = username || `testuser${timestamp}`;
+  
   const session = new TestSessionImpl(baseClient);
   
   // Register
-  const registerRes = await session.register(email, password, username);
+  const registerRes = await session.register(defaultEmail, defaultPassword, defaultUsername);
   if (registerRes.status !== 200) {
     throw new Error(`Failed to register user: ${registerRes.status} - ${JSON.stringify(registerRes.data)}`);
   }
   
   // Login
-  const loginRes = await session.login(email, password);
+  const loginRes = await session.login(defaultEmail, defaultPassword);
   if (loginRes.status !== 200) {
-    throw new Error(`Failed to login user: ${loginRes.status} - ${JSON.stringify(loginRes.data)}`);
+    throw new Error(`Failed to login user: ${loginRes.status} - ${JSON.stringify(registerRes.data)}`);
   }
   
   return session;

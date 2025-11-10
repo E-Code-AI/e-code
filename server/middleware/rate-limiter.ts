@@ -90,6 +90,11 @@ export const rateLimiters = {
  */
 export function createRateLimitMiddleware(type: keyof typeof rateLimiters) {
   return async (req: Request, res: Response, next: NextFunction) => {
+    // Bypass rate limiting entirely in test mode (unless explicitly enabled)
+    if (isTestEnv && process.env.ENABLE_RATE_LIMITING !== 'true') {
+      return next();
+    }
+    
     try {
       const key = (req.user as any)?.id || req.ip || 'unknown';
       await rateLimiters[type].consume(key);
@@ -140,7 +145,13 @@ export const legacyRateLimiters = {
     standardHeaders: true,
     legacyHeaders: false,
     validate: false,
-    skip: (req: Request) => req.ip === '127.0.0.1' || req.ip === '::1'
+    skip: (req: Request) => {
+      // Skip rate limiting in test mode (unless explicitly enabled)
+      if (isTestEnv && process.env.ENABLE_RATE_LIMITING !== 'true') {
+        return true;
+      }
+      return req.ip === '127.0.0.1' || req.ip === '::1';
+    }
   }),
 
   // Standard API rate limit
@@ -152,7 +163,13 @@ export const legacyRateLimiters = {
     standardHeaders: true,
     legacyHeaders: false,
     validate: false,
-    skip: (req: Request) => req.path === '/api/monitoring/health'
+    skip: (req: Request) => {
+      // Skip rate limiting in test mode (unless explicitly enabled)
+      if (isTestEnv && process.env.ENABLE_RATE_LIMITING !== 'true') {
+        return true;
+      }
+      return req.path === '/api/monitoring/health';
+    }
   }),
 
   // Relaxed limit for static assets
@@ -162,7 +179,14 @@ export const legacyRateLimiters = {
     standardHeaders: true,
     legacyHeaders: false,
     // Skip validation warnings since Express trust proxy is enabled at app level
-    validate: false
+    validate: false,
+    skip: (req: Request) => {
+      // Skip rate limiting in test mode (unless explicitly enabled)
+      if (isTestEnv && process.env.ENABLE_RATE_LIMITING !== 'true') {
+        return true;
+      }
+      return false;
+    }
   }),
 
   // Very strict limit for expensive operations
@@ -173,7 +197,14 @@ export const legacyRateLimiters = {
     standardHeaders: true,
     legacyHeaders: false,
     // Skip validation warnings since Express trust proxy is enabled at app level
-    validate: false
+    validate: false,
+    skip: (req: Request) => {
+      // Skip rate limiting in test mode (unless explicitly enabled)
+      if (isTestEnv && process.env.ENABLE_RATE_LIMITING !== 'true') {
+        return true;
+      }
+      return false;
+    }
   })
 };
 
