@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { execa } from 'execa';
 import path from 'path';
 import { ensureAuthenticated } from '../middleware/auth';
+import { csrfProtection } from '../middleware/csrf';
 
 const router = Router();
 
@@ -122,7 +123,7 @@ router.get('/diff/:filePath(*)', ensureAuthenticated, async (req: Request, res: 
   }
 });
 
-router.post('/stage', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/stage', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
     const { files } = req.body;
 
@@ -144,7 +145,7 @@ router.post('/stage', ensureAuthenticated, async (req: Request, res: Response) =
   }
 });
 
-router.post('/unstage', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/unstage', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
     const { files } = req.body;
 
@@ -166,7 +167,7 @@ router.post('/unstage', ensureAuthenticated, async (req: Request, res: Response)
   }
 });
 
-router.post('/commit', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/commit', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
     const { message } = req.body;
 
@@ -188,7 +189,7 @@ router.post('/commit', ensureAuthenticated, async (req: Request, res: Response) 
   }
 });
 
-router.post('/push', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/push', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
@@ -204,7 +205,7 @@ router.post('/push', ensureAuthenticated, async (req: Request, res: Response) =>
   }
 });
 
-router.post('/pull', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
