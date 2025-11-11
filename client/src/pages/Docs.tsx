@@ -199,7 +199,7 @@ const documentationArticles: Record<DocKey, DocArticle> = {
         <section className="space-y-3">
           <h2 className="text-2xl font-semibold">Editor, terminals, and preview</h2>
           <p>
-            The project workspace is rendered by <code>client/src/pages/EditorPage.tsx</code>. It binds together the Monaco editor, file tree,
+            The project workspace is rendered by <code>client/src/pages/IDEPage.tsx</code>. It binds together the Monaco editor, file tree,
             shell processes, and live preview frames. Terminals are backed by the WebSocket bridge in <code>server/terminal</code>, while the
             preview iframe proxies through <code>server/preview</code> so every project port is accessible from the main origin.
           </p>
