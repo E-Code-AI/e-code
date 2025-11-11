@@ -16,11 +16,19 @@ export class ProjectAIAgentService {
   constructor(storage: IStorage) {
     this.storage = storage;
     
-    // Initialize OpenAI client with Replit AI Integrations
-    // Uses AI_INTEGRATIONS_OPENAI_BASE_URL and AI_INTEGRATIONS_OPENAI_API_KEY from Replit AI Integrations
+    // Initialize OpenAI client with user's API key
+    // Prioritize user's OPENAI_API_KEY, fallback to AI Integrations
+    const apiKey = process.env.OPENAI_API_KEY || 
+                   process.env.AI_INTEGRATIONS_OPENAI_API_KEY || 
+                   '_DUMMY_API_KEY_';
+    
+    const baseURL = process.env.OPENAI_API_KEY 
+      ? undefined // Use OpenAI's default endpoint
+      : (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'http://localhost:1106/modelfarm/openai');
+    
     this.openai = new OpenAI({
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'http://localhost:1106/modelfarm/openai',
-      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || '_DUMMY_API_KEY_',
+      apiKey,
+      ...(baseURL && { baseURL }),
     });
   }
 
