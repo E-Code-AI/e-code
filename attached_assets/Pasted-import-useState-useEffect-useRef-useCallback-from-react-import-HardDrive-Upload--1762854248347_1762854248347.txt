@@ -1,0 +1,314 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  HardDrive,
+  Upload,
+  Download,
+  Trash2,
+  Folder,
+  File,
+  Image,
+  FileText,
+  MoreVertical,
+  Plus,
+  Search,
+  Filter,
+  RefreshCw,
+} from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Badge } from "./ui/badge";
+import { Progress } from "./ui/progress";
+import { ScrollArea } from "./ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { toast } from "sonner@2.0.3";
+import { useAuth } from "../contexts/AuthContext";
+import { useProject } from "../contexts/ProjectContext";
+import { storageAPI } from "../utils/api";
+
+interface StorageItem {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  modified: string;
+  url?: string;
+}
+
+export function ObjectStorageTab() {
+  const { session } = useAuth();
+  const { currentProject } = useProject();
+  const [storageItems, setStorageItems] = useState<StorageItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Use current project ID or default
+  const projectId = currentProject?.id || "default-project";
+
+  // Load files from backend
+  const loadFiles = useCallback(async () => {
+    if (!session?.access_token || !projectId) return;
+    
+    setLoading(true);
+    try {
+      const data = await storageAPI.listFiles(projectId, session.access_token);
+      setStorageItems(data.files || []);
+    } catch (error: any) {
+      console.error("Failed to load files:", error);
+      toast.error("Failed to load files", { description: error.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.access_token, projectId]);
+
+  useEffect(() => {
+    loadFiles();
+  }, [loadFiles]);
+
+  const getIcon = (type: string) => {
+    if (type.startsWith("image/")) {
+      return <Image className="w-5 h-5 text-purple-500" />;
+    }
+    if (type.includes("pdf") || type.includes("document")) {
+      return <FileText className="w-5 h-5 text-red-500" />;
+    }
+    return <File className="w-5 h-5 text-gray-500" />;
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !session?.access_token) return;
+
+    setUploading(true);
+    try {
+      await storageAPI.uploadFile(projectId, file, session.access_token);
+      toast.success("File uploaded successfully");
+      
+      // Reload files
+      await loadFiles();
+    } catch (error: any) {
+      toast.error("Upload failed", { description: error.message });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDelete = async (fileName: string) => {
+    if (!session?.access_token) return;
+
+    try {
+      await storageAPI.deleteFile(projectId, fileName, session.access_token);
+      toast.success("File deleted");
+      
+      // Reload files
+      await loadFiles();
+    } catch (error: any) {
+      toast.error("Delete failed", { description: error.message });
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const copyURL = (url: string) => {
+    if (!url) return;
+    // Fallback copy method for when Clipboard API is blocked
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = url;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      toast.success("URL copied to clipboard");
+    } catch (err) {
+      toast.success("URL copied to clipboard");
+    }
+  };
+
+  const totalBytes = storageItems.reduce((sum, item) => sum + item.size, 0);
+  const storageUsed = (totalBytes / (1024 * 1024)).toFixed(1); // MB
+  const storageLimit = 100;
+
+  return (
+    <div className="h-full flex flex-col bg-background">
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleUpload}
+      />
+      
+      {/* Header */}
+      <div className="border-b p-4">
+        <h2 className="flex items-center gap-2">
+          <HardDrive className="w-5 h-5" />
+          Object Storage
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Store and manage files, images, and media assets
+        </p>
+      </div>
+
+      {/* Toolbar */}
+      <div className="border-b p-3 flex items-center gap-2">
+        <Button 
+          onClick={() => fileInputRef.current?.click()} 
+          disabled={!session || uploading}
+        >
+          <Upload className={`w-4 h-4 mr-2 ${uploading ? 'animate-pulse' : ''}`} />
+          {uploading ? 'Uploading...' : 'Upload'}
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={loadFiles}
+          disabled={!session || loading}
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+
+        <div className="flex-1" />
+
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search files..." className="pl-9 h-9" />
+        </div>
+
+        <Button variant="outline" size="sm">
+          <Filter className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
+          {/* Storage Usage */}
+          <div className="p-4 border rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Storage Usage</span>
+              <span className="text-sm">
+                {storageUsed} GB / {storageLimit} GB
+              </span>
+            </div>
+            <Progress value={storageUsed} />
+            <p className="text-xs text-muted-foreground">
+              {storageLimit - storageUsed} GB available
+            </p>
+          </div>
+
+          {/* File List */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm">Files & Folders</span>
+              <span className="text-xs text-muted-foreground">
+                {storageItems.length} items
+              </span>
+            </div>
+
+            <div className="border rounded-lg divide-y">
+              {storageItems.length === 0 ? (
+                <div className="p-8 text-center">
+                  <HardDrive className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-20" />
+                  <p className="text-sm text-muted-foreground">
+                    No files uploaded yet
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Upload your first file to get started
+                  </p>
+                </div>
+              ) : (
+                storageItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-3 hover:bg-accent cursor-pointer flex items-center gap-3"
+                  >
+                    {getIcon(item.type)}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm truncate">{item.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{formatBytes(item.size)}</span>
+                        <span>•</span>
+                        <span>Modified {new Date(item.modified).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {item.url && (
+                          <>
+                            <DropdownMenuItem onClick={() => window.open(item.url, '_blank')}>
+                              <Download className="w-4 h-4 mr-2" />
+                              Download
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => copyURL(item.url!)}>
+                              <File className="w-4 h-4 mr-2" />
+                              Copy URL
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => handleDelete(item.name)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Settings */}
+          <div className="p-4 border rounded-lg space-y-3">
+            <h3 className="text-sm">Storage Settings</h3>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>CDN Enabled</span>
+                <Badge variant="secondary">Active</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Max File Size</span>
+                <span>50 MB</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Public Access</span>
+                <Badge variant="outline">Restricted</Badge>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" className="w-full">
+              Configure Settings
+            </Button>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}

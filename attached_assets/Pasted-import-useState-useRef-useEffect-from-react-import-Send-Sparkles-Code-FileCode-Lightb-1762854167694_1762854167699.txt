@@ -1,0 +1,213 @@
+import { useState, useRef, useEffect } from "react";
+import { Send, Sparkles, Code, FileCode, Lightbulb, Trash2, RotateCcw } from "lucide-react";
+import { toast } from "sonner@2.0.3";
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
+import { ScrollArea } from "./ui/scroll-area";
+import { Badge } from "./ui/badge";
+
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
+
+interface AIAssistantProps {
+  onCodeGenerate?: (code: string, fileName: string) => void;
+}
+
+export function AIAssistant({ onCodeGenerate }: AIAssistantProps) {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      role: "assistant",
+      content: "Hi! I'm your AI coding assistant. I can help you write code, fix bugs, explain concepts, and more. What would you like to build today?",
+      timestamp: new Date(),
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: input,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+
+    // Simulate AI response
+    setTimeout(() => {
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: generateMockResponse(input),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, aiMessage]);
+      setIsLoading(false);
+    }, 1000 + Math.random() * 1000);
+  };
+
+  const generateMockResponse = (userInput: string): string => {
+    const lowerInput = userInput.toLowerCase();
+    
+    if (lowerInput.includes("react") || lowerInput.includes("component")) {
+      return "I can help you create a React component! Here's a basic example:\n\n```tsx\nimport React from 'react';\n\ninterface Props {\n  title: string;\n}\n\nexport function MyComponent({ title }: Props) {\n  return (\n    <div>\n      <h1>{title}</h1>\n    </div>\n  );\n}\n```\n\nWould you like me to customize this further?";
+    }
+    
+    if (lowerInput.includes("button") || lowerInput.includes("click")) {
+      return "Here's a button component with click handling:\n\n```tsx\nimport { useState } from 'react';\nimport { Button } from './components/ui/button';\n\nexport function ClickButton() {\n  const [count, setCount] = useState(0);\n  \n  return (\n    <Button onClick={() => setCount(count + 1)}>\n      Clicked {count} times\n    </Button>\n  );\n}\n```";
+    }
+    
+    if (lowerInput.includes("help") || lowerInput.includes("how")) {
+      return "I'm here to help! I can assist with:\n\n• Writing React/TypeScript code\n• Debugging and fixing errors\n• Explaining programming concepts\n• Creating components and features\n• Optimizing performance\n• And much more!\n\nJust describe what you need, and I'll help you build it.";
+    }
+    
+    return "I understand you're working on: \"" + userInput + "\". Let me help you with that. Could you provide more details about what specific functionality you need?";
+  };
+
+  const handleClearChat = () => {
+    setMessages([
+      {
+        id: "1",
+        role: "assistant",
+        content: "Hi! I'm your AI coding assistant. I can help you write code, fix bugs, explain concepts, and more. What would you like to build today?",
+        timestamp: new Date(),
+      },
+    ]);
+    toast.success("Chat cleared");
+  };
+
+  const quickPrompts = [
+    { icon: Code, text: "Create a component", prompt: "Help me create a new React component" },
+    { icon: FileCode, text: "Generate API route", prompt: "Create an API endpoint" },
+    { icon: Lightbulb, text: "Fix my code", prompt: "Help me debug this code" },
+  ];
+
+  return (
+    <div className="h-full flex flex-col bg-background border-l">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-purple-500" />
+          <span>AI Assistant</span>
+        </div>
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={handleClearChat}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef}>
+        <div className="space-y-4">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[85%] rounded-lg px-4 py-2 ${
+                  message.role === "user"
+                    ? "bg-primary text-primary-foreground ml-auto"
+                    : "bg-muted"
+                }`}
+              >
+                {message.role === "assistant" && (
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="w-4 h-4 text-purple-500" />
+                    <span className="text-xs text-muted-foreground">AI Assistant</span>
+                  </div>
+                )}
+                <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-muted rounded-lg px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Thinking...</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Quick Prompts */}
+      {messages.length <= 1 && (
+        <div className="px-4 py-2 border-t">
+          <p className="text-xs text-muted-foreground mb-2">Quick actions:</p>
+          <div className="flex flex-wrap gap-2">
+            {quickPrompts.map((prompt, index) => (
+              <Badge
+                key={index}
+                variant="secondary"
+                className="cursor-pointer hover:bg-accent"
+                onClick={() => setInput(prompt.prompt)}
+              >
+                <prompt.icon className="w-3 h-3 mr-1" />
+                {prompt.text}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Input */}
+      <div className="p-4 border-t">
+        <div className="flex gap-2">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="Ask me anything about your code..."
+            className="min-h-[60px] resize-none"
+          />
+          <Button
+            onClick={handleSend}
+            disabled={!input.trim() || isLoading}
+            className="h-[60px] px-4"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Press Enter to send, Shift+Enter for new line
+        </p>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,937 @@
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner@2.0.3";
+import { Key, Plus, Eye, EyeOff, MoreVertical, Copy, Edit, Trash2, Info, Link2, X, Upload, Download, History, Filter, Calendar, RefreshCw } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { useProject } from "../contexts/ProjectContext";
+import { secretsAPI } from "../utils/api";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
+import { Alert, AlertDescription } from "./ui/alert";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Textarea } from "./ui/textarea";
+import { Badge } from "./ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { ScrollArea } from "./ui/scroll-area";
+
+interface SecretVersion {
+  version: number;
+  value: string;
+  timestamp: string;
+  changedBy: string;
+}
+
+interface Secret {
+  id: string;
+  key: string;
+  value: string;
+  isLinked?: boolean;
+  hasInfo?: boolean;
+  category?: string;
+  tags?: string[];
+  versions?: SecretVersion[];
+}
+
+export function SecretsContent() {
+  const { session } = useAuth();
+  const { currentProject } = useProject();
+  const [activeTab, setActiveTab] = useState("app");
+  const [visibleSecrets, setVisibleSecrets] = useState<Set<string>>(new Set());
+  const [showNewSecretDialog, setShowNewSecretDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showVersionDialog, setShowVersionDialog] = useState(false);
+  const [selectedSecret, setSelectedSecret] = useState<Secret | null>(null);
+  const [newSecretKey, setNewSecretKey] = useState("");
+  const [newSecretValue, setNewSecretValue] = useState("");
+  const [newSecretCategory, setNewSecretCategory] = useState("");
+  const [newSecretTags, setNewSecretTags] = useState("");
+  const [importFormat, setImportFormat] = useState<"json" | "env">("json");
+  const [importData, setImportData] = useState("");
+  const [exportFormat, setExportFormat] = useState<"json" | "env">("json");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Categories
+  const categories = ["all", "database", "authentication", "storage", "api", "monitoring", "redis"];
+  
+  const projectId = currentProject?.id || "default-project";
+
+  // App Secrets - now loaded from backend
+  const [appSecrets, setAppSecrets] = useState<Secret[]>([]);
+  
+  // Load secrets from backend
+  const loadSecrets = useCallback(async () => {
+    if (!session?.access_token || !projectId) return;
+    
+    setLoading(true);
+    try {
+      const data = await secretsAPI.getAll(projectId, session.access_token);
+      // Transform backend data to Secret format
+      const secrets: Secret[] = (data.secrets || []).map((s: any, idx: number) => ({
+        id: String(idx + 1),
+        key: s.key,
+        value: "********", // Don't show actual value from backend
+        category: "api",
+        tags: [],
+        versions: []
+      }));
+      setAppSecrets(secrets);
+    } catch (error: any) {
+      console.error("Failed to load secrets:", error);
+      toast.error("Failed to load secrets", { description: error.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.access_token, projectId]);
+
+  useEffect(() => {
+    loadSecrets();
+  }, [loadSecrets]);
+
+  // System Secrets (for demo, kept in state)
+  const [systemSecrets] = useState<Secret[]>([
+    { 
+      id: "1", 
+      key: "PGDATABASE", 
+      value: "postgres_db_12345",
+      category: "database",
+      tags: ["postgres", "production"],
+      versions: [
+        { version: 2, value: "postgres_db_12345", timestamp: "2025-10-20 10:30:00", changedBy: "user@example.com" },
+        { version: 1, value: "postgres_db_old", timestamp: "2025-10-15 14:20:00", changedBy: "admin@example.com" }
+      ]
+    },
+    { 
+      id: "2", 
+      key: "PGHOST", 
+      value: "db.example.com",
+      category: "database",
+      tags: ["postgres", "connection"],
+      versions: [
+        { version: 1, value: "db.example.com", timestamp: "2025-10-15 14:20:00", changedBy: "admin@example.com" }
+      ]
+    },
+    { 
+      id: "3", 
+      key: "PGPORT", 
+      value: "5432",
+      category: "database",
+      tags: ["postgres", "connection"],
+      versions: [
+        { version: 1, value: "5432", timestamp: "2025-10-15 14:20:00", changedBy: "admin@example.com" }
+      ]
+    },
+    { 
+      id: "4", 
+      key: "PGUSER", 
+      value: "admin_user",
+      category: "database",
+      tags: ["postgres", "credentials"],
+      versions: [
+        { version: 1, value: "admin_user", timestamp: "2025-10-15 14:20:00", changedBy: "admin@example.com" }
+      ]
+    },
+    { 
+      id: "5", 
+      key: "PGPASSWORD", 
+      value: "super_secret_password_123",
+      category: "database",
+      tags: ["postgres", "credentials", "sensitive"],
+      versions: [
+        { version: 3, value: "super_secret_password_123", timestamp: "2025-10-18 16:45:00", changedBy: "security@example.com" },
+        { version: 2, value: "old_password_456", timestamp: "2025-10-10 09:30:00", changedBy: "admin@example.com" },
+        { version: 1, value: "initial_pass_789", timestamp: "2025-10-01 12:00:00", changedBy: "setup@example.com" }
+      ]
+    },
+    { 
+      id: "6", 
+      key: "DEFAULT_OBJECT_STORAGE_BUCKET_ID", 
+      value: "bucket_abc123xyz",
+      category: "storage",
+      tags: ["s3", "bucket"],
+      versions: [
+        { version: 1, value: "bucket_abc123xyz", timestamp: "2025-10-16 11:20:00", changedBy: "devops@example.com" }
+      ]
+    },
+    { 
+      id: "7", 
+      key: "PUBLIC_OBJECT_SEARCH_PATHS", 
+      value: "/public/assets",
+      category: "storage",
+      tags: ["paths", "public"],
+      versions: [
+        { version: 1, value: "/public/assets", timestamp: "2025-10-16 11:20:00", changedBy: "devops@example.com" }
+      ]
+    },
+    { 
+      id: "8", 
+      key: "PRIVATE_OBJECT_DIR", 
+      value: "/private/data",
+      category: "storage",
+      tags: ["paths", "private"],
+      versions: [
+        { version: 1, value: "/private/data", timestamp: "2025-10-16 11:20:00", changedBy: "devops@example.com" }
+      ]
+    },
+    { 
+      id: "9", 
+      key: "MCP_API_Key", 
+      value: "mcp_key_987654321",
+      category: "api",
+      tags: ["mcp", "integration"],
+      versions: [
+        { version: 1, value: "mcp_key_987654321", timestamp: "2025-10-17 15:30:00", changedBy: "integration@example.com" }
+      ]
+    },
+    { 
+      id: "10", 
+      key: "ADMIN_PASSWORD", 
+      value: "admin_pass_xyz",
+      category: "authentication",
+      tags: ["admin", "credentials", "sensitive"],
+      versions: [
+        { version: 2, value: "admin_pass_xyz", timestamp: "2025-10-19 08:15:00", changedBy: "security@example.com" },
+        { version: 1, value: "admin_pass_old", timestamp: "2025-10-01 12:00:00", changedBy: "setup@example.com" }
+      ]
+    },
+    { 
+      id: "11", 
+      key: "MCP_AUTH_TOKEN", 
+      value: "token_abcdef123456",
+      category: "authentication",
+      tags: ["mcp", "token"],
+      versions: [
+        { version: 1, value: "token_abcdef123456", timestamp: "2025-10-17 15:30:00", changedBy: "integration@example.com" }
+      ]
+    },
+    { 
+      id: "12", 
+      key: "WEBSOCKET_SECRET", 
+      value: "ws_secret_key_789",
+      category: "api",
+      tags: ["websocket", "realtime"],
+      versions: [
+        { version: 1, value: "ws_secret_key_789", timestamp: "2025-10-16 13:45:00", changedBy: "backend@example.com" }
+      ]
+    },
+    { 
+      id: "13", 
+      key: "BACKUP_ENCRYPTION_KEY", 
+      value: "backup_key_456def",
+      category: "storage",
+      tags: ["backup", "encryption", "sensitive"],
+      versions: [
+        { version: 1, value: "backup_key_456def", timestamp: "2025-10-16 11:20:00", changedBy: "devops@example.com" }
+      ]
+    },
+    { 
+      id: "14", 
+      key: "MONITORING_PASSWORD", 
+      value: "monitor_pass_123",
+      category: "monitoring",
+      tags: ["grafana", "credentials"],
+      versions: [
+        { version: 1, value: "monitor_pass_123", timestamp: "2025-10-18 10:00:00", changedBy: "monitoring@example.com" }
+      ]
+    },
+    { 
+      id: "15", 
+      key: "API_ACCOUNT_KEY", 
+      value: "api_key_account_xyz",
+      category: "api",
+      tags: ["external", "integration"],
+      versions: [
+        { version: 1, value: "api_key_account_xyz", timestamp: "2025-10-17 15:30:00", changedBy: "integration@example.com" }
+      ]
+    },
+    { 
+      id: "16", 
+      key: "REDIS_PASSWORD", 
+      value: "redis_pass_secure",
+      category: "redis",
+      tags: ["redis", "credentials", "cache"],
+      versions: [
+        { version: 1, value: "redis_pass_secure", timestamp: "2025-10-16 14:30:00", changedBy: "backend@example.com" }
+      ]
+    },
+    { 
+      id: "17", 
+      key: "DOKPLOY_API_KEY", 
+      value: "dokploy_key_123abc",
+      category: "api",
+      tags: ["dokploy", "deployment"],
+      versions: [
+        { version: 1, value: "dokploy_key_123abc", timestamp: "2025-10-19 09:00:00", changedBy: "devops@example.com" }
+      ]
+    },
+    { 
+      id: "18", 
+      key: "REDIS_URL", 
+      value: "redis://localhost:6379",
+      category: "redis",
+      tags: ["redis", "connection", "cache"],
+      versions: [
+        { version: 1, value: "redis://localhost:6379", timestamp: "2025-10-16 14:30:00", changedBy: "backend@example.com" }
+      ]
+    },
+    { 
+      id: "19", 
+      key: "APP_URL", 
+      value: "https://app.e-code.ai",
+      category: "api",
+      tags: ["url", "config"],
+      versions: [
+        { version: 1, value: "https://app.e-code.ai", timestamp: "2025-10-15 14:00:00", changedBy: "admin@example.com" }
+      ]
+    },
+    { 
+      id: "20", 
+      key: "JWT_REFRESH_SECRET", 
+      value: "jwt_refresh_secret_xyz",
+      category: "authentication",
+      tags: ["jwt", "token", "sensitive"],
+      versions: [
+        { version: 1, value: "jwt_refresh_secret_xyz", timestamp: "2025-10-15 14:10:00", changedBy: "admin@example.com" }
+      ]
+    },
+    { 
+      id: "21", 
+      key: "JWT_SECRET", 
+      value: "jwt_secret_key_abc123",
+      category: "authentication",
+      tags: ["jwt", "token", "sensitive"],
+      versions: [
+        { version: 1, value: "jwt_secret_key_abc123", timestamp: "2025-10-15 14:10:00", changedBy: "admin@example.com" }
+      ]
+    },
+    { 
+      id: "22", 
+      key: "SESSION_SECRET", 
+      value: "session_secret_def456",
+      category: "authentication",
+      tags: ["session", "sensitive"],
+      versions: [
+        { version: 1, value: "session_secret_def456", timestamp: "2025-10-15 14:10:00", changedBy: "admin@example.com" }
+      ]
+    },
+  ]);
+
+  // Account Secrets
+  const [accountSecrets] = useState<Secret[]>([
+    { id: "a1", key: "ANTHROPIC_API_KEY", value: "sk-ant-api03-1234567890abcdef", isLinked: true },
+    { id: "a2", key: "AWS_ACCESS_KEY_ID", value: "AKIAIOSFODNN7EXAMPLE", hasInfo: true },
+    { id: "a3", key: "AWS_REGION", value: "us-east-1", hasInfo: true },
+    { id: "a4", key: "AWS_SECRET_ACCESS_KEY", value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", hasInfo: true },
+    { id: "a5", key: "DATABASE_URL", value: "postgresql://user:pass@host:5432/db", hasInfo: true },
+    { id: "a6", key: "DROPBOX_CLIENT_ID", value: "abc123xyz789", hasInfo: true },
+    { id: "a7", key: "DROPBOX_CLIENT_SECRET", value: "secret_dropbox_123", hasInfo: true },
+    { id: "a8", key: "ELASTICSEARCH_API_KEY", value: "es_api_key_xyz123", hasInfo: true },
+    { id: "a9", key: "ELASTICSEARCH_URL", value: "https://elastic.example.com", hasInfo: true },
+    { id: "a10", key: "GANDI_EMAIL", value: "user@example.com", hasInfo: true },
+    { id: "a11", key: "GANDI_PASSWORD", value: "gandi_pass_123", hasInfo: true },
+    { id: "a12", key: "GITHUB_CLIENT_ID", value: "Iv1.a1b2c3d4e5f6g7h8", isLinked: true },
+    { id: "a13", key: "GITHUB_CLIENT_SECRET", value: "1234567890abcdef1234567890abcdef12345678", isLinked: true },
+    { id: "a14", key: "GOOGLE_AI_API_KEY", value: "AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6", isLinked: true },
+    { id: "a15", key: "GOOGLE_API_KEY", value: "AIzaSyB2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7", isLinked: true },
+    { id: "a16", key: "GOOGLE_CLIENT_ID", value: "123456789012-abcdefghijklmnop.apps.googleusercontent.com", isLinked: true },
+    { id: "a17", key: "GOOGLE_CLIENT_SECRET", value: "GOCSPX-1234567890abcdefghij", isLinked: true },
+    { id: "a18", key: "GROQ_API_KEY", value: "gsk_1234567890abcdefghijklmnopqrstuvwxyz", isLinked: true },
+  ]);
+
+  const toggleSecretVisibility = (id: string) => {
+    setVisibleSecrets((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const copyToClipboard = (value: string, key: string) => {
+    navigator.clipboard.writeText(value);
+    toast.success("Copied to clipboard", { description: `Copied ${key}` });
+  };
+
+  const handleAddSecret = async () => {
+    if (!newSecretKey || !newSecretValue) {
+      toast.error("Key and value are required");
+      return;
+    }
+    
+    if (!session?.access_token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      await secretsAPI.set(projectId, newSecretKey, newSecretValue, session.access_token);
+      toast.success("Secret added", { description: `Added ${newSecretKey}` });
+      setShowNewSecretDialog(false);
+      setNewSecretKey("");
+      setNewSecretValue("");
+      setNewSecretCategory("");
+      setNewSecretTags("");
+      
+      // Reload secrets
+      await loadSecrets();
+    } catch (error: any) {
+      toast.error("Failed to add secret", { description: error.message });
+    }
+  };
+  
+  const handleDeleteSecret = async (key: string) => {
+    if (!session?.access_token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    try {
+      await secretsAPI.delete(projectId, key, session.access_token);
+      toast.success("Secret deleted", { description: `Deleted ${key}` });
+      
+      // Reload secrets
+      await loadSecrets();
+    } catch (error: any) {
+      toast.error("Failed to delete secret", { description: error.message });
+    }
+  };
+
+  const handleEditAsJSON = () => {
+    toast.info("Edit as JSON", { description: "Opening JSON editor..." });
+  };
+
+  const handleEditAsEnv = () => {
+    toast.info("Edit as .env", { description: "Opening .env editor..." });
+  };
+
+  // Import/Export functions
+  const handleImport = () => {
+    try {
+      if (importFormat === "json") {
+        const parsed = JSON.parse(importData);
+        toast.success("Import successful", { description: `Imported ${Object.keys(parsed).length} secrets` });
+      } else {
+        const lines = importData.split("\n").filter(line => line.trim() && !line.startsWith("#"));
+        toast.success("Import successful", { description: `Imported ${lines.length} secrets` });
+      }
+      setShowImportDialog(false);
+      setImportData("");
+    } catch (error) {
+      toast.error("Import failed", { description: "Invalid format. Please check your data." });
+    }
+  };
+
+  const handleExport = () => {
+    const secretsToExport = appSecrets.reduce((acc, secret) => {
+      acc[secret.key] = secret.value;
+      return acc;
+    }, {} as Record<string, string>);
+
+    let exportText = "";
+    if (exportFormat === "json") {
+      exportText = JSON.stringify(secretsToExport, null, 2);
+    } else {
+      exportText = Object.entries(secretsToExport)
+        .map(([key, value]) => `${key}=${value}`)
+        .join("\n");
+    }
+
+    navigator.clipboard.writeText(exportText);
+    toast.success("Exported to clipboard", { 
+      description: `Exported ${appSecrets.length} secrets as ${exportFormat.toUpperCase()}` 
+    });
+    setShowExportDialog(false);
+  };
+
+  const handleViewVersions = (secret: Secret) => {
+    setSelectedSecret(secret);
+    setShowVersionDialog(true);
+  };
+
+  const handleRestoreVersion = (version: SecretVersion) => {
+    toast.success("Version restored", { 
+      description: `Restored ${selectedSecret?.key} to version ${version.version}` 
+    });
+    setShowVersionDialog(false);
+  };
+
+  // Filter secrets
+  const filteredAppSecrets = appSecrets.filter(secret => {
+    const matchesCategory = selectedCategory === "all" || secret.category === selectedCategory;
+    const matchesSearch = searchQuery === "" || 
+      secret.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      secret.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesCategory && matchesSearch;
+  });
+
+  const renderSecret = (secret: Secret, showActions = true) => (
+    <div 
+      key={secret.id} 
+      className="flex items-center justify-between py-3 px-4 hover:bg-accent/50 border-b last:border-b-0"
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {secret.isLinked ? (
+          <Link2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        ) : (
+          <Key className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        )}
+        <div className="flex flex-col gap-1 min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm truncate">{secret.key}</span>
+            {secret.hasInfo && (
+              <Info className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+            )}
+          </div>
+          {secret.tags && secret.tags.length > 0 && (
+            <div className="flex gap-1 flex-wrap">
+              {secret.tags.map((tag, idx) => (
+                <Badge key={idx} variant="secondary" className="text-xs px-1.5 py-0">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-3 ml-4">
+        <div className="flex items-center gap-2">
+          <Copy className="w-3 h-3 text-muted-foreground" />
+          <span className="text-sm font-mono">
+            {visibleSecrets.has(secret.id) ? secret.value : "•".repeat(8)}
+          </span>
+        </div>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={() => toggleSecretVisibility(secret.id)}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+        
+        {showActions && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => copyToClipboard(secret.value, secret.key)}>
+                <Copy className="w-4 h-4 mr-2" />
+                Copy Value
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              {secret.versions && secret.versions.length > 0 && (
+                <DropdownMenuItem onClick={() => handleViewVersions(secret)}>
+                  <History className="w-4 h-4 mr-2" />
+                  Version History
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem 
+                className="text-red-600"
+                onClick={() => handleDeleteSecret(secret.key)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="h-full flex flex-col bg-background">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <div className="border-b px-6">
+          <div className="flex items-center justify-between py-3">
+            <TabsList>
+              <TabsTrigger value="app">App Secrets</TabsTrigger>
+              <TabsTrigger value="account">Account Secrets</TabsTrigger>
+            </TabsList>
+            
+            <div className="flex items-center gap-2">
+              {activeTab === "app" ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => setShowImportDialog(true)}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Export
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Docs
+                  </Button>
+                  <Button size="sm" onClick={() => setShowNewSecretDialog(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Secret
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm">
+                  Manage Account
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <TabsContent value="app" className="flex-1 mt-0 overflow-auto">
+          <div className="p-6 space-y-4">
+            <Alert className="bg-blue-50 border-blue-200">
+              <Info className="w-4 h-4 text-blue-600" />
+              <AlertDescription className="text-blue-900">
+                Secrets are accessible to anyone who has access to this App. To restrict secret access, you must update App invite permissions.{" "}
+                <span className="text-blue-600">For more information, visit our documentation.</span>
+              </AlertDescription>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="absolute top-2 right-2 h-6 w-6 p-0"
+                onClick={() => {}}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </Alert>
+
+            {/* Filter and Search */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 flex-1">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(cat => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 max-w-md">
+                <Input
+                  placeholder="Search by key or tag..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            <div className="bg-card border rounded-lg overflow-hidden">
+              <div className="divide-y">
+                {filteredAppSecrets.length > 0 ? (
+                  filteredAppSecrets.map(secret => renderSecret(secret))
+                ) : (
+                  <div className="py-8 text-center text-muted-foreground">
+                    No secrets found matching your filters
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleEditAsJSON}>
+                Edit as JSON
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleEditAsEnv}>
+                Edit as .env
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="account" className="flex-1 mt-0 overflow-auto">
+          <div className="p-6 space-y-4">
+            <Alert className="bg-orange-50 border-orange-200">
+              <AlertDescription className="text-orange-900">
+                You've reached the limit of 10 linked secrets. Please unlink some secrets before adding more.
+              </AlertDescription>
+            </Alert>
+
+            <div className="bg-accent/30 border rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm">Account secrets are only visible to you.</p>
+                <Button variant="outline" size="sm">
+                  Link to this App
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Linked secrets will stay in sync with your Account Secrets.
+              </p>
+            </div>
+
+            <div className="bg-card border rounded-lg overflow-hidden">
+              <div className="divide-y">
+                {accountSecrets.map(secret => renderSecret(secret, false))}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* New Secret Dialog */}
+      <Dialog open={showNewSecretDialog} onOpenChange={setShowNewSecretDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Secret</DialogTitle>
+            <DialogDescription>
+              Create a new environment variable for your application
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Key</Label>
+              <Input
+                placeholder="API_KEY"
+                value={newSecretKey}
+                onChange={(e) => setNewSecretKey(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Value</Label>
+              <Input
+                type="password"
+                placeholder="your-secret-value"
+                value={newSecretValue}
+                onChange={(e) => setNewSecretValue(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Category (Optional)</Label>
+              <Select value={newSecretCategory} onValueChange={setNewSecretCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.filter(c => c !== "all").map(cat => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Tags (Optional)</Label>
+              <Input
+                placeholder="tag1, tag2, tag3"
+                value={newSecretTags}
+                onChange={(e) => setNewSecretTags(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Separate tags with commas</p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewSecretDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddSecret}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Secret
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Import Secrets</DialogTitle>
+            <DialogDescription>
+              Import secrets from JSON or .env format
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Format</Label>
+              <Select value={importFormat} onValueChange={(val: "json" | "env") => setImportFormat(val)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="json">JSON</SelectItem>
+                  <SelectItem value="env">.env</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Data</Label>
+              <Textarea
+                placeholder={importFormat === "json" 
+                  ? '{\n  "API_KEY": "your-key-here",\n  "DATABASE_URL": "postgres://..."\n}'
+                  : 'API_KEY=your-key-here\nDATABASE_URL=postgres://...'
+                }
+                value={importData}
+                onChange={(e) => setImportData(e.target.value)}
+                className="font-mono text-sm h-64"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImportDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleImport}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Export Secrets</DialogTitle>
+            <DialogDescription>
+              Export all secrets to JSON or .env format
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Format</Label>
+              <Select value={exportFormat} onValueChange={(val: "json" | "env") => setExportFormat(val)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="json">JSON</SelectItem>
+                  <SelectItem value="env">.env</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Alert>
+              <Info className="w-4 h-4" />
+              <AlertDescription>
+                Exporting will copy {appSecrets.length} secrets to your clipboard in {exportFormat.toUpperCase()} format.
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowExportDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Export to Clipboard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Version History Dialog */}
+      <Dialog open={showVersionDialog} onOpenChange={setShowVersionDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Version History: {selectedSecret?.key}</DialogTitle>
+            <DialogDescription>
+              View and restore previous versions of this secret
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="h-96">
+            <div className="space-y-3">
+              {selectedSecret?.versions?.map((version, idx) => (
+                <div 
+                  key={idx}
+                  className="flex items-start justify-between p-4 border rounded-lg"
+                >
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <Badge variant={idx === 0 ? "default" : "secondary"}>
+                        v{version.version}
+                      </Badge>
+                      {idx === 0 && (
+                        <Badge variant="outline" className="text-green-600 border-green-600">
+                          Current
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{version.timestamp}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">Changed by:</span>
+                        <span>{version.changedBy}</span>
+                      </div>
+                      <div className="font-mono text-sm bg-muted p-2 rounded mt-2">
+                        {visibleSecrets.has(`${selectedSecret.id}-v${version.version}`) 
+                          ? version.value 
+                          : "•".repeat(version.value.length)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 ml-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const key = `${selectedSecret.id}-v${version.version}`;
+                        setVisibleSecrets(prev => {
+                          const next = new Set(prev);
+                          if (next.has(key)) {
+                            next.delete(key);
+                          } else {
+                            next.add(key);
+                          }
+                          return next;
+                        });
+                      }}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    {idx !== 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRestoreVersion(version)}
+                      >
+                        Restore
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowVersionDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
