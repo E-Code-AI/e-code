@@ -40,7 +40,7 @@ export function MobileNavigation({ projectId, showNewProject }: MobileNavigation
       badge: notificationCount > 0 ? notificationCount : null,
     },
     {
-      path: projectId ? `/editor/${projectId}` : null,
+      path: projectId ? `/ide/${projectId}` : null,
       label: 'Editor',
       icon: Code2,
       disabled: !projectId,

@@ -138,7 +138,7 @@ export function ReplitLayout({
 
   const handleCreateProject = (template: any) => {
     console.log('Creating project with template:', template);
-    navigate('/editor/new');
+    navigate('/ide/new');
   };
 
   const handleRefresh = async () => {

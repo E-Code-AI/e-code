@@ -676,11 +676,16 @@ function AppContent() {
           <Route path="/u/:username" component={UserProfileWrapper} />
           
           {/* IMPORTANT: Specific routes MUST come before parameterized routes */}
-          {/* /editor/new must be before /editor/:id to avoid treating "new" as project ID */}
-          <ProtectedRoute path="/editor/new" component={() => (
+          {/* /ide/new must be before /ide/:id to avoid treating "new" as project ID */}
+          <ProtectedRoute path="/ide/new" component={() => (
             <ReplitLayout showSidebar={false}>
               <Dashboard />
             </ReplitLayout>
+          )} />
+          
+          {/* DEPRECATED: Legacy /editor/new route - redirects to /ide/new for backward compatibility */}
+          <ProtectedRoute path="/editor/new" component={() => (
+            <EditorRedirect />
           )} />
           
           {/* DEPRECATED: Legacy /editor/:id route - redirects to /ide/:id for backward compatibility */}
