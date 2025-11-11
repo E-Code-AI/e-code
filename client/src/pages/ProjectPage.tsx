@@ -36,23 +36,9 @@ export default function ProjectPage() {
     enabled: shouldFetchSlug && !authLoading,
     retry: false,
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/u/${username}/${slug}`);
-      
-      // Check if the response is JSON before parsing
-      const contentType = response.headers.get("content-type");
-      const isJson = contentType?.includes("application/json");
-      
-      if (!isJson) {
-        throw new Error("Project not found");
-      }
-      
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload?.error ?? "Failed to load project");
-      }
-
-      return payload;
+      // apiRequest already handles response parsing and content-type checking
+      const project = await apiRequest<Project>("GET", `/api/u/${username}/${slug}`);
+      return project;
     },
   });
 

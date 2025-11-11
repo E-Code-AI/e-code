@@ -89,13 +89,15 @@ export function ReplitHeader() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
-  // Get project info from URL - supports both formats: /projects/:id and /@:username/:project
-  const pathMatch = location.match(/^\/project(?:s)?\/(\d+)/);
-  const projectId = pathMatch ? pathMatch[1] : null;
+  // Get project info from URL - supports: /ide/:id, /project/:id, /projects/:id, /@:username/:project, /u/:username/:project
+  const ideMatch = location.match(/^\/ide\/([^/?]+)/);
+  const legacyProjectMatch = location.match(/^\/project(?:s)?\/([^/?]+)/);
+  const projectId = ideMatch?.[1] || legacyProjectMatch?.[1] || null;
 
-  const replitStyleMatch = location.match(/^\/@([^/]+)\/([^/]+)/);
-  const username = replitStyleMatch ? replitStyleMatch[1] : null;
-  const projectSlug = replitStyleMatch ? replitStyleMatch[2] : null;
+  const replitStyleMatch = location.match(/^\/@([^/]+)\/([^/?]+)/);
+  const userStyleMatch = location.match(/^\/u\/([^/]+)\/([^/?]+)/);
+  const username = replitStyleMatch?.[1] || userStyleMatch?.[1] || null;
+  const projectSlug = replitStyleMatch?.[2] || userStyleMatch?.[2] || null;
 
   // Fetch project info if we're in a project view
   useEffect(() => {
@@ -104,11 +106,8 @@ export function ReplitHeader() {
         setProjectInfoLoading(true);
         setProjectInfoError(null);
         try {
-          const response = await apiRequest('GET', `/api/projects/${projectId}`);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch project: ${response.statusText}`);
-          }
-          const data = await response.json();
+          // apiRequest returns parsed data, not Response object
+          const data = await apiRequest('GET', `/api/projects/${projectId}`);
           setProjectInfo(data);
         } catch (error) {
           console.error('Failed to fetch project info:', error);
@@ -121,11 +120,8 @@ export function ReplitHeader() {
         setProjectInfoLoading(true);
         setProjectInfoError(null);
         try {
-          const response = await apiRequest('GET', `/api/users/${username}/projects/${projectSlug}`);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch project: ${response.statusText}`);
-          }
-          const data = await response.json();
+          // apiRequest returns parsed data, not Response object
+          const data = await apiRequest('GET', `/api/u/${username}/${projectSlug}`);
           setProjectInfo(data);
         } catch (error) {
           console.error('Failed to fetch project info:', error);
@@ -220,7 +216,7 @@ export function ReplitHeader() {
                     if (projectInfo?.owner?.username && projectInfo?.slug) {
                       navigate(`/@${projectInfo.owner.username}/${projectInfo.slug}`);
                     } else {
-                      navigate(`/project/${projectId}`);
+                      navigate(`/ide/${projectId}`);
                     }
                   }}
                 >
@@ -261,13 +257,13 @@ export function ReplitHeader() {
                   className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                   onClick={async () => {
                     try {
-                      const response = await apiRequest('POST', `/api/projects/${projectId}/fork`);
-                      const forkedProject = await response.json();
+                      // apiRequest returns parsed data, not Response object
+                      const forkedProject = await apiRequest('POST', `/api/projects/${projectId}/fork`);
                       toast({
                         title: "Project Forked",
                         description: `Successfully forked project as "${forkedProject.name}"`,
                       });
-                      navigate(`/project/${forkedProject.id}`);
+                      navigate(`/ide/${forkedProject.id}`);
                     } catch (error) {
                       toast({
                         title: "Fork Failed",
