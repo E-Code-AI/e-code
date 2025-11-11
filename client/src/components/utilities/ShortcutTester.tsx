@@ -4,6 +4,8 @@ import { Zap, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export function ShortcutTester() {
+  console.log('[ShortcutTester] Component mounted and rendering');
+  
   const [lastShortcut, setLastShortcut] = useState<string>("");
   const [showTester, setShowTester] = useState(false);
 

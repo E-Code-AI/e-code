@@ -2,6 +2,8 @@ import { useState, useEffect, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function ShortcutHint() {
+  console.log('[ShortcutHint] Component mounted and rendering');
+  
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
   const [showHint, setShowHint] = useState(false);
 
