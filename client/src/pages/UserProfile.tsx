@@ -78,12 +78,11 @@ export default function UserProfile() {
   const [isFollowing, setIsFollowing] = useState(false);
 
   // Fetch user profile
-  const { data: profile, isLoading, error } = useQuery<UserProfile>({
+  const { data: profile, isLoading, error} = useQuery<UserProfile>({
     queryKey: ['/api/users', username],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/users/${username}`);
-      if (!res.ok) throw new Error('Failed to fetch user profile');
-      return res.json();
+      // apiRequest already returns parsed JSON and throws on !ok
+      return await apiRequest('GET', `/api/users/${username}`);
     },
     enabled: !!username
   });
@@ -91,9 +90,8 @@ export default function UserProfile() {
   // Follow/unfollow mutation
   const followMutation = useMutation({
     mutationFn: async (action: 'follow' | 'unfollow') => {
-      const res = await apiRequest('POST', `/api/users/${username}/${action}`);
-      if (!res.ok) throw new Error(`Failed to ${action} user`);
-      return res.json();
+      // apiRequest already returns parsed JSON and throws on !ok
+      return await apiRequest('POST', `/api/users/${username}/${action}`);
     },
     onSuccess: (_, action) => {
       setIsFollowing(action === 'follow');

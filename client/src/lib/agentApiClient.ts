@@ -8,8 +8,8 @@ import { apiRequest } from './queryClient';
 
 const webApiClient: ApiClient = {
   post: async (url: string, data: any) => {
-    const response = await apiRequest('POST', url, data);
-    return response.json();
+    // apiRequest already returns parsed JSON, not a Response object
+    return await apiRequest('POST', url, data);
   }
 };
 

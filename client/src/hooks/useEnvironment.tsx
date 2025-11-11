@@ -62,21 +62,20 @@ export function EnvironmentProvider({
   } = useQuery<EnvironmentVariable[], Error>({
     queryKey: [`/api/environment/${projectId}`],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/environment/${projectId}`);
-      if (!res.ok) throw new Error('Failed to fetch environment variables');
-      return res.json();
+      // apiRequest already returns parsed JSON and throws on !ok
+      return await apiRequest('GET', `/api/environment/${projectId}`);
     },
     enabled: !!projectId,
   });
 
   const createVariableMutation = useMutation({
     mutationFn: async ({ projectId, variable }: { projectId: number; variable: EnvironmentVariableInput }) => {
-      const res = await apiRequest(
+      // apiRequest already returns parsed JSON
+      return await apiRequest(
         "POST",
         `/api/environment/${projectId}`,
         variable
       );
-      return await res.json();
     },
     onSuccess: (newVariable: EnvironmentVariable) => {
       queryClient.invalidateQueries({ queryKey: [`/api/environment/${projectId}`] });
@@ -104,12 +103,12 @@ export function EnvironmentProvider({
       projectId: number;
       variable: Partial<EnvironmentVariableInput>;
     }) => {
-      const res = await apiRequest(
+      // apiRequest already returns parsed JSON
+      return await apiRequest(
         "PATCH",
         `/api/environment/${projectId}/${id}`,
         variable
       );
-      return await res.json();
     },
     onSuccess: (updatedVariable: EnvironmentVariable) => {
       queryClient.invalidateQueries({ queryKey: [`/api/environment/${projectId}`] });
