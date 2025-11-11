@@ -23,7 +23,7 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 - Desktop UI includes Monaco minimap, breadcrumbs, multi-editor instances, and Command Palette.
 
 **Technical Implementations:**
-- **Routing**: Replit-style slug routing with authentication and device-aware views.
+- **Routing**: Unified `/ide/:id` workspace routing with SPA navigation. All project access (cards, slugs, direct links) resolves to `/ide/:id` for consistent UX. Slug URLs (`/@username/slug`) redirect via SPA to preserve client state. No full page reloads - pure React Router navigation.
 - **Device Detection**: Canonical breakpoints for mobile, tablet, laptop, and desktop via `useDeviceType()` hook.
 - **Code Splitting**: Optimized bundle splitting using React.lazy() for device-specific UI components.
 - **Performance**: Compression, code splitting, caching, build optimizations, service workers, network/image optimization.
@@ -43,15 +43,15 @@ The platform utilizes a polyglot backend architecture with Go for container orch
 - **Admin Dashboard**: Comprehensive UI for managing projects and users.
 - **Template Marketplace**: Allows users to fork and deploy project templates.
 - **Production Hardening**: Redis caching, CDN optimization, multi-tier rate limiting, security middleware, DB connection pooling, performance monitoring, input validation, and sanitization.
-- **Workspace Parity**: True backend integration for IDE panels (LSP/Problems, Build Logs/Output, Testing, Security Scanner) with real-time WebSocket updates, including a functional Mobile Monaco Editor, Mobile Terminal, Mobile File Tree, and Floating Action Button (FAB).
+- **Workspace Parity**: Complete IDE feature parity with unified `/ide/:id` route. IDEPage includes 18+ integrated panels (deployment, environment variables, database browser, package viewer, AI assistant, billing, extensions, test runner, shell, web preview, etc.) plus keyboard-activated overlays (CommandPalette Cmd+K, GlobalSearch Cmd+Shift+F, CollaborationPresence, ReplitDB). All panels use lazy loading for performance. True backend integration for LSP/Problems, Build Logs/Output, Testing, Security Scanner with real-time WebSocket updates. Includes functional Mobile Monaco Editor, Mobile Terminal, Mobile File Tree, and Floating Action Button (FAB).
 - **Responsive UI**: Desktop, Tablet, and Mobile layouts.
 - **Multi-Tab Editor System**: Maintains independent Monaco editor instances per tab via MultiEditorManager.
-- **Keyboard Utilities**: Production-ready keyboard shortcut helpers with opt-in feature flags across ALL IDE views (desktop/tablet/mobile):
+- **Keyboard Utilities & Shortcuts**: Production-ready keyboard shortcut system with opt-in feature flags across ALL IDE views (desktop/tablet/mobile):
   - **ShortcutHint**: Displays available shortcuts when modifier keys (Cmd/Ctrl/Alt/Shift) are pressed. Enabled by default, can be disabled via User Settings → Advanced Developer Settings → "Keyboard Shortcut Hint". Uses framer-motion for smooth animations, supports Mac/Windows cross-platform detection.
   - **ShortcutTester**: Developer tool showing last pressed keyboard shortcut combination. Disabled by default, can be enabled via User Settings → Advanced Developer Settings → "Keyboard Shortcut Tester". Useful for debugging custom keyboard shortcuts.
   - **Implementation**: Both utilities use localStorage for persistence (`keyboard-shortcut-hint`, `keyboard-shortcut-tester`), with SSR-safe initialization and real-time sync via custom events. Located in `client/src/components/utilities/`, integrated into ALL IDE shells (IDEPage.tsx, Editor.tsx, TabletIDEView, MobileIDEView), and configurable via WorkspaceSettings.tsx.
-  - **Route Coverage**: `/ide/:id` (IDEPage), `/editor/:id` (ResponsiveEditorRoute → desktop: Editor.tsx, tablet: TabletIDEView, mobile: MobileIDEView), `/@username/slug` (resolves to `/editor/:id`)
-  - **Keyboard Shortcut Mappings**: See KeyboardShortcutsOverlay.tsx for complete shortcut reference. Common shortcuts: Cmd/Ctrl+K (Command Palette), Cmd/Ctrl+P (Quick File Search), Cmd/Ctrl+B (Toggle File Explorer), Cmd/Ctrl+S (Save File), Cmd/Ctrl+L (Focus AI Chat).
+  - **Route Coverage**: `/ide/:id` (IDEPage - canonical workspace route), `/@username/slug` (resolves to `/ide/:id` via SPA redirect)
+  - **Keyboard Shortcut Mappings**: Cmd/Ctrl+K (CommandPalette - quick file search & tool selection), Cmd/Ctrl+Shift+F (GlobalSearch - project-wide search), Cmd/Ctrl+Shift+E (Toggle File Explorer), Cmd/Ctrl+B (Toggle sidebar), Cmd/Ctrl+S (Save File), Cmd/Ctrl+L (Focus AI Chat). See KeyboardShortcutsOverlay.tsx for complete reference.
 
 **System Design Choices:**
 - **Vertical Slice Approach**: End-to-end feature development.
