@@ -74,7 +74,7 @@ export default function TemplatesPage() {
         title: "Project created",
         description: "Your project has been created from the template.",
       });
-      navigate(`/editor/${data.slug}`);
+      navigate(`/ide/${data.slug}`);
     },
     onError: (error: Error) => {
       toast({

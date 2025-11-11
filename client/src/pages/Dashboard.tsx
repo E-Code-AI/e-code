@@ -353,8 +353,8 @@ export default function Dashboard() {
                     <Card
                       className="cursor-pointer hover:shadow-lg transition-shadow group"
                       onClick={() => {
-                        console.log('[Dashboard] Opening project:', { id: project.id, name: project.name, navigatingTo: `/editor/${project.id}` });
-                        navigate(`/editor/${project.id}`);
+                        console.log('[Dashboard] Opening project:', { id: project.id, name: project.name, navigatingTo: `/ide/${project.id}` });
+                        navigate(`/ide/${project.id}`);
                       }}
                       data-testid={`project-card-${project.id}`}
                     >
@@ -393,8 +393,8 @@ export default function Dashboard() {
                               data-testid={`button-open-${project.id}`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                console.log('[Dashboard] Play button clicked:', { id: project.id, navigatingTo: `/editor/${project.id}` });
-                                navigate(`/editor/${project.id}`);
+                                console.log('[Dashboard] Play button clicked:', { id: project.id, navigatingTo: `/ide/${project.id}` });
+                                navigate(`/ide/${project.id}`);
                               }}
                             >
                               <Play className="h-4 w-4" />
